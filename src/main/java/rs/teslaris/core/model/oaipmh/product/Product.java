@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 
@@ -24,7 +25,7 @@ import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Product implements ProductConvertable {
+public class Product implements ProductConvertable, HasOldId {
 
     private String id;
 

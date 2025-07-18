@@ -46,6 +46,11 @@ public class LanguageController {
             Collectors.toList());
     }
 
+    @GetMapping("/ui-languages")
+    public List<LanguageTagResponseDTO> getUISupportedLanguages() {
+        return languageTagService.getUISupportedLanguages();
+    }
+
     @GetMapping("/tags")
     public List<LanguageTagResponseDTO> getAllLanguageTags() {
         var allLanguageTags = languageTagService.findAll();

@@ -4,6 +4,7 @@
       "fieldName": "title_sr",
       "displayName": {
         "sr": "Naslov na srpskom",
+        "sr-cyr": "Наслов на српском",
         "en": "Serbian title"
       },
       "type": "text",
@@ -13,6 +14,7 @@
       "fieldName": "title_other",
       "displayName": {
         "sr": "Naslov na stranom jeziku",
+        "sr-cyr": "Наслов на страном језику",
         "en": "Foreign language title"
       },
       "type": "text",
@@ -22,6 +24,7 @@
       "fieldName": "description_sr",
       "displayName": {
         "sr": "Apstrakt na srpskom",
+        "sr-cyr": "Апстракт на српском",
         "en": "Serbian abstract"
       },
       "type": "text",
@@ -31,6 +34,7 @@
       "fieldName": "description_other",
       "displayName": {
         "sr": "Apstrakt na stranom jeziku",
+        "sr-cyr": "Апстракт на страном језику",
         "en": "Abstract on foreign language"
       },
       "type": "text",
@@ -40,6 +44,7 @@
       "fieldName": "keywords_sr",
       "displayName": {
         "sr": "Ključne reči na srpskom",
+        "sr-cyr": "Кључне речи на српском",
         "en": "Serbian keywords"
       },
       "type": "text",
@@ -50,6 +55,7 @@
       "fieldName": "keywords_other",
       "displayName": {
         "sr": "Ključne reči na stranom jeziku",
+        "sr-cyr": "Кључне речи на страном језику",
         "en": "Foreigh language keywords"
       },
       "type": "text",
@@ -60,6 +66,7 @@
       "fieldName": "full_text_sr",
       "displayName": {
         "sr": "Sadržaj na srpskom",
+        "sr-cyr": "Садржај на српском",
         "en": "Serbian full-text"
       },
       "type": "text",
@@ -69,6 +76,7 @@
       "fieldName": "full_text_other",
       "displayName": {
         "sr": "Sadržaj na stranom jeziku",
+        "sr-cyr": "Садржај на страном језику",
         "en": "Foreign language full-text"
       },
       "type": "text",
@@ -78,6 +86,7 @@
       "fieldName": "author_names",
       "displayName": {
         "sr": "Imena autora",
+        "sr-cyr": "Имена аутора",
         "en": "Author names"
       },
       "type": "text",
@@ -87,6 +96,7 @@
       "fieldName": "editor_names",
       "displayName": {
         "sr": "Imena urednika",
+        "sr-cyr": "Имена уредника",
         "en": "Editor names"
       },
       "type": "text",
@@ -96,6 +106,7 @@
       "fieldName": "board_member_names",
       "displayName": {
         "sr": "Imena članova odbora",
+        "sr-cyr": "Имена чланова одбора",
         "en": "Board member names"
       },
       "type": "text",
@@ -105,6 +116,7 @@
       "fieldName": "board_president_name",
       "displayName": {
         "sr": "Ime predsednika komisije",
+        "sr-cyr": "Име председника комисије",
         "en": "Board president name"
       },
       "type": "text",
@@ -114,6 +126,7 @@
       "fieldName": "advisor_names",
       "displayName": {
         "sr": "Imena savetnika",
+        "sr-cyr": "Имена саветника",
         "en": "Advisor names"
       },
       "type": "text",
@@ -123,6 +136,7 @@
       "fieldName": "reviewer_names",
       "displayName": {
         "sr": "Imena recenzenata",
+        "sr-cyr": "Имена рецензената",
         "en": "Reviewer names"
       },
       "type": "text",
@@ -132,6 +146,7 @@
       "fieldName": "year",
       "displayName": {
         "sr": "Godina",
+        "sr-cyr": "Година",
         "en": "Year"
       },
       "type": "number",
@@ -142,6 +157,7 @@
       "fieldName": "type",
       "displayName": {
         "sr": "Tip",
+        "sr-cyr": "Тип",
         "en": "Type"
       },
       "type": "text",
@@ -151,6 +167,7 @@
       "fieldName": "publication_type",
       "displayName": {
         "sr": "Tip publikacije",
+        "sr-cyr": "Тип публикације",
         "en": "Publication type"
       },
       "type": "text",
@@ -160,6 +177,7 @@
       "fieldName": "doi",
       "displayName": {
         "sr": "DOI",
+        "sr-cyr": "ДОИ",
         "en": "DOI"
       },
       "type": "text",
@@ -169,6 +187,7 @@
       "fieldName": "scopus_id",
       "displayName": {
         "sr": "Scopus ID",
+        "sr-cyr": "Scopus ID",
         "en": "Scopus ID"
       },
       "type": "text",
@@ -178,6 +197,7 @@
       "fieldName": "is_open_access",
       "displayName": {
         "sr": "Javno dostupno",
+        "sr-cyr": "Јавно доступно",
         "en": "Publicly available"
       },
       "type": "boolean",
@@ -187,6 +207,7 @@
       "fieldName": "event_id",
       "displayName": {
         "sr": "Konferencija",
+        "sr-cyr": "Конференција",
         "en": "Conference"
       },
       "type": "number",
@@ -197,6 +218,7 @@
       "fieldName": "journal_id",
       "displayName": {
         "sr": "Časopis",
+        "sr-cyr": "Часопис",
         "en": "Journal"
       },
       "type": "number",

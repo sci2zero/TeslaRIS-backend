@@ -12,6 +12,8 @@ import rs.teslaris.core.model.document.JournalPublication;
 @Service
 public interface JournalPublicationService {
 
+    JournalPublication findJournalPublicationById(Integer publicationId);
+
     JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId);
 
     List<DocumentPublicationIndex> findMyPublicationsInJournal(Integer journalId, Integer authorId);
@@ -29,4 +31,6 @@ public interface JournalPublicationService {
 
     void indexJournalPublication(JournalPublication publication,
                                  DocumentPublicationIndex index);
+
+    void indexJournalPublication(JournalPublication publication);
 }

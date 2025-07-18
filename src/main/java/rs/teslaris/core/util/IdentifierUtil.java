@@ -18,7 +18,7 @@ public class IdentifierUtil {
         String existsError
     ) {
         if (Objects.nonNull(identifier)) {
-            if (identifier.isBlank()) {
+            if (identifier.isBlank() || identifier.equals("NONE")) {
                 setter.accept("");
                 return;
             }
@@ -32,6 +32,8 @@ public class IdentifierUtil {
             } else {
                 throw new IdentifierException(formatError);
             }
+        } else {
+            setter.accept("");
         }
     }
 

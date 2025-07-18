@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -58,6 +59,7 @@ import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.EmailUpdateRequest;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -66,12 +68,13 @@ import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -109,7 +112,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final UserAccountActivationRepository userAccountActivationRepository;
 
-    private final LanguageService languageService;
+    private final LanguageTagService languageTagService;
 
     private final PersonService personService;
 
@@ -128,6 +131,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final Cache<String, Byte> passwordResetRequestCacheStore;
 
     private final CommissionRepository commissionRepository;
+
+    private final EmailUpdateRequestRepository emailUpdateRequestRepository;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -265,18 +270,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     public void deactivateUser(Integer userId) {
         var userToDeactivate = findOne(userId);
         if (userToDeactivate.getAuthority().getName().equals("ADMIN")) {
-            return;
+            throw new CantEditException("You can't deactivate an admin user.");
         }
 
         userToDeactivate.setLocked(!userToDeactivate.getLocked());
         userRepository.save(userToDeactivate);
 
-        var index = userAccountIndexRepository.findByDatabaseId(userId);
-        if (index.isPresent()) {
-            index.get().setActive(!userToDeactivate.getLocked());
-            userAccountIndexRepository.save(index.get());
-        }
-
+        updateActivationStatusInUserIndex(userToDeactivate);
         tokenUtil.revokeToken(userId);
     }
 
@@ -293,11 +293,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         userRepository.save(userToActivate);
         userAccountActivationRepository.delete(accountActivation);
 
-        var index = userAccountIndexRepository.findByDatabaseId(userToActivate.getId());
-        if (index.isPresent()) {
-            index.get().setActive(!userToActivate.getLocked());
-            userAccountIndexRepository.save(index.get());
-        }
+        updateActivationStatusInUserIndex(userToActivate);
     }
 
     @Override
@@ -334,8 +330,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new User(registrationRequest.getEmail(),
                 passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
-                languageService.findOne(registrationRequest.getPreferredLanguageId()),
-                languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
+                languageTagService.findOne(registrationRequest.getPreferredLanguageId()),
+                languageTagService.findOne(registrationRequest.getPreferredLanguageId()), authority,
                 person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
                 null, UserNotificationPeriod.NEVER);
         var savedUser = userRepository.save(newUser);
@@ -345,8 +341,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        var language = savedUser.getPreferredUILanguage().getLanguageCode().toLowerCase();
-        String activationLink =
+        var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
+        var activationLink =
             clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
                 "/activate-account/" + activationToken.getActivationToken();
 
@@ -424,8 +420,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             surname.trim(),
             true,
             false,
-            languageService.findOne(preferredLanguageId),
-            languageService.findOne(preferredLanguageId),
+            languageTagService.findOne(preferredLanguageId),
+            languageTagService.findOne(preferredLanguageId),
             authority,
             null,
             organisationUnit,
@@ -440,7 +436,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        var language = savedUser.getPreferredUILanguage().getLanguageCode().toLowerCase();
+        var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
         String activationLink =
             generateActivationLink(language, activationToken.getActivationToken());
 
@@ -485,63 +481,124 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     public AuthenticationResponseDTO updateUser(UserUpdateRequestDTO userUpdateRequest,
                                                 Integer userId, String fingerprint) {
         var userToUpdate = findOne(userId);
-
-        var preferredNotificationLanguage =
-            languageService.findOne(userUpdateRequest.getPreferredUILanguageId());
-        var preferredReferenceLanguage =
-            languageService.findOne(userUpdateRequest.getPreferredReferenceCataloguingLanguageId());
-
         var userRole = userToUpdate.getAuthority().getName();
-        if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
-            userToUpdate.setFirstname(userUpdateRequest.getFirstname());
-            userToUpdate.setLastName(userUpdateRequest.getLastName());
-            // TODO: Why did we allow this?
-            var orgUnit =
-                organisationUnitService.findOne(userUpdateRequest.getOrganisationalUnitId());
-            userToUpdate.setOrganisationUnit(orgUnit);
-        } else if (userRole.equals(UserRole.ADMIN.toString()) ||
-            userRole.equals(UserRole.COMMISSION.toString()) ||
-            userRole.equals(UserRole.VICE_DEAN_FOR_SCIENCE.toString()) ||
-            userRole.equals(UserRole.INSTITUTIONAL_LIBRARIAN.toString()) ||
-            userRole.equals(UserRole.HEAD_OF_LIBRARY.toString()) ||
-            userRole.equals(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString())) {
-            userToUpdate.setFirstname(userUpdateRequest.getFirstname());
-            userToUpdate.setLastName(userUpdateRequest.getLastName());
+
+        updateNameAndOrgIfAllowed(userUpdateRequest, userToUpdate, userRole);
+
+        updatePreferredLanguages(userToUpdate, userUpdateRequest);
+
+        if (emailChanged(userToUpdate, userUpdateRequest)) {
+            createAndSendEmailUpdateRequest(userToUpdate, userUpdateRequest.getEmail());
         }
 
-        userToUpdate.setEmail(userUpdateRequest.getEmail());
-        userToUpdate.setPreferredUILanguage(preferredNotificationLanguage);
-        userToUpdate.setPreferredReferenceCataloguingLanguage(preferredReferenceLanguage);
         userToUpdate.setUserNotificationPeriod(userUpdateRequest.getNotificationPeriod());
 
-        if (!userToUpdate.getUserNotificationPeriod().equals(UserNotificationPeriod.NEVER) &&
-            userToUpdate.getEmail().isBlank()) {
+        validateNotificationSettings(userToUpdate);
+
+        handlePasswordChange(userToUpdate, userUpdateRequest);
+
+        userRepository.save(userToUpdate);
+
+        updateUserIndex(userToUpdate);
+        tokenUtil.revokeToken(userToUpdate.getId());
+
+        var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
+        return new AuthenticationResponseDTO(
+            tokenUtil.generateToken(userToUpdate, fingerprint),
+            refreshTokenValue
+        );
+    }
+
+    private void updateNameAndOrgIfAllowed(UserUpdateRequestDTO dto, User user, String role) {
+        if (role.equals(UserRole.INSTITUTIONAL_EDITOR.toString())) {
+            user.setFirstname(dto.getFirstname());
+            user.setLastName(dto.getLastName());
+        } else if (Set.of(
+            UserRole.ADMIN.toString(),
+            UserRole.COMMISSION.toString(),
+            UserRole.VICE_DEAN_FOR_SCIENCE.toString(),
+            UserRole.INSTITUTIONAL_LIBRARIAN.toString(),
+            UserRole.HEAD_OF_LIBRARY.toString(),
+            UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString()
+        ).contains(role)) {
+            user.setFirstname(dto.getFirstname());
+            user.setLastName(dto.getLastName());
+        }
+    }
+
+    private void updatePreferredLanguages(User user, UserUpdateRequestDTO dto) {
+        var uiLang = languageTagService.findOne(dto.getPreferredUILanguageTagId());
+        var refLang =
+            languageTagService.findOne(dto.getPreferredReferenceCataloguingLanguageTagId());
+        user.setPreferredUILanguage(uiLang);
+        user.setPreferredReferenceCataloguingLanguage(refLang);
+    }
+
+    private boolean emailChanged(User user, UserUpdateRequestDTO dto) {
+        return !user.getEmail().equals(dto.getEmail());
+    }
+
+    private void createAndSendEmailUpdateRequest(User user, String newEmail) {
+        var emailUpdateRequest = new EmailUpdateRequest();
+        emailUpdateRequest.setEmailUpdateToken(UUID.randomUUID().toString());
+        emailUpdateRequest.setNewEmailAddress(newEmail);
+        emailUpdateRequest.setUser(user);
+        emailUpdateRequestRepository.save(emailUpdateRequest);
+
+        var languageCode = user.getPreferredUILanguage().getLanguageTag().toLowerCase();
+        var confirmationLink = clientAppAddress +
+            (clientAppAddress.endsWith("/") ? languageCode : "/" + languageCode) +
+            "/update-email/" + emailUpdateRequest.getEmailUpdateToken();
+
+        var subject = messageSource.getMessage("emailUpdateRequest.mailSubject", null,
+            Locale.forLanguageTag(languageCode));
+        var message = messageSource.getMessage("emailUpdateRequest.mailBody",
+            new Object[] {confirmationLink}, Locale.forLanguageTag(languageCode));
+
+        emailUtil.sendSimpleEmail(user.getEmail(), subject, message);
+    }
+
+    private void validateNotificationSettings(User user) {
+        if (!user.getUserNotificationPeriod().equals(UserNotificationPeriod.NEVER) &&
+            user.getEmail().isBlank()) {
             throw new IllegalArgumentException(
                 "You have to setup username before you can receive email notifications.");
         }
+    }
 
-        if (!userUpdateRequest.getOldPassword().isEmpty() &&
-            passwordEncoder.matches(userUpdateRequest.getOldPassword(),
-                userToUpdate.getPassword())) {
-
-            if (!PasswordUtil.validatePasswordStrength(userUpdateRequest.getNewPassword())) {
+    private void handlePasswordChange(User user, UserUpdateRequestDTO dto) {
+        if (!dto.getOldPassword().isEmpty()) {
+            if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+                throw new PasswordException("wrongOldPasswordError");
+            }
+            if (!PasswordUtil.validatePasswordStrength(dto.getNewPassword())) {
                 throw new PasswordException("weakPasswordError");
             }
+            user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        }
+    }
 
-            userToUpdate.setPassword(passwordEncoder.encode(userUpdateRequest.getNewPassword()));
-        } else if (!userUpdateRequest.getOldPassword().isEmpty()) {
-            throw new PasswordException("wrongOldPasswordError");
+    private void updateUserIndex(User user) {
+        var index = userAccountIndexRepository.findByDatabaseId(user.getId())
+            .orElse(new UserAccountIndex());
+        indexUser(user, index);
+    }
+
+    @Override
+    @Transactional
+    public boolean confirmEmailChange(String emailUpdateToken) {
+        var emailUpdateRequest =
+            emailUpdateRequestRepository.findByEmailUpdateToken(emailUpdateToken);
+
+        if (emailUpdateRequest.isPresent()) {
+            emailUpdateRequest.get().getUser()
+                .setEmail(emailUpdateRequest.get().getNewEmailAddress());
+            userRepository.save(emailUpdateRequest.get().getUser());
+            emailUpdateRequestRepository.delete(emailUpdateRequest.get());
+            return true;
         }
 
-        userRepository.save(userToUpdate);
-        var index = userAccountIndexRepository.findByDatabaseId(userToUpdate.getId())
-            .orElse(new UserAccountIndex());
-        indexUser(userToUpdate, index);
-
-        tokenUtil.revokeToken(userToUpdate.getId());
-        var refreshTokenValue = createAndSaveRefreshTokenForUser(userToUpdate);
-        return new AuthenticationResponseDTO(tokenUtil.generateToken(userToUpdate, fingerprint),
-            refreshTokenValue);
+        return false;
     }
 
     @Override
@@ -559,7 +616,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             var user = (User) loadUserByUsername(userEmail);
             tokenUtil.revokeToken(user.getId());
             var resetToken = UUID.randomUUID().toString();
-            var language = user.getPreferredUILanguage().getLanguageCode().toLowerCase();
+            var language = user.getPreferredUILanguage().getLanguageTag().toLowerCase();
 
             String resetLink =
                 clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
@@ -568,13 +625,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "resetPassword.mailSubject",
                 new Object[] {},
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
             String emailBody = messageSource.getMessage(
                 "resetPassword.mailBody",
                 new Object[] {resetLink},
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
 
             emailUtil.sendSimpleEmail(user.getEmail(), emailSubject, emailBody);
@@ -592,9 +649,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         resetRequest.getUser().setPassword(passwordEncoder.encode(
             resetPasswordRequest.getNewPassword()));
+        resetRequest.getUser().setLocked(false);
 
         userRepository.save(resetRequest.getUser());
         passwordResetTokenRepository.delete(resetRequest);
+        updateActivationStatusInUserIndex(resetRequest.getUser());
     }
 
     @Override
@@ -728,7 +787,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
 
-        var language = savedUser.getPreferredUILanguage().getLanguageCode().toLowerCase();
+        var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
 
         var subject = messageSource.getMessage(
             "adminPasswordReset.mailSubject",
@@ -785,9 +844,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         StringUtil.removeTrailingDelimiters(orgUnitNameSr, orgUnitNameOther);
         index.setOrganisationUnitNameSr(
-            orgUnitNameSr.length() > 0 ? orgUnitNameSr.toString() : orgUnitNameOther.toString());
+            !orgUnitNameSr.isEmpty() ? orgUnitNameSr.toString() : orgUnitNameOther.toString());
         index.setOrganisationUnitNameOther(
-            orgUnitNameOther.length() > 0 ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
+            !orgUnitNameOther.isEmpty() ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
     }
 
     private void indexUser(User user, UserAccountIndex index) {
@@ -826,19 +885,18 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                             mq -> mq.field("org_unit_name_other").query(cleanedToken))
                         ._toQuery());
                 } else {
-                    if (token.endsWith(".")) {
-                        var wildcard = token.replace(".", "") + "?";
+                    if (token.endsWith("\\*") || token.endsWith(".")) {
+                        var wildcard = token.replace("\\*", "").replace(".", "");
                         perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("full_name").value(wildcard).caseInsensitive(true))
-                            ._toQuery());
-                    } else if (token.endsWith("\\*")) {
-                        var wildcard = token.replace("\\*", "") + "*";
-                        perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("full_name").value(wildcard).caseInsensitive(true))
+                                m -> m.field("full_name")
+                                    .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
+                                    .caseInsensitive(true))
                             ._toQuery());
                     } else {
                         perTokenShould.add(WildcardQuery.of(
-                                m -> m.field("full_name").value(token + "*").caseInsensitive(true))
+                                m -> m.field("full_name")
+                                    .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
+                                    .caseInsensitive(true))
                             ._toQuery());
                     }
 
@@ -869,6 +927,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
             return q.must(mustClauses);
         })._toQuery();
+    }
+
+    private void updateActivationStatusInUserIndex(User user) {
+        userAccountIndexRepository.findByDatabaseId(user.getId()).ifPresent(index -> {
+            index.setActive(!user.getLocked());
+            userAccountIndexRepository.save(index);
+        });
     }
 
     @Scheduled(cron = "0 */10 * ? * *") // every ten minutes

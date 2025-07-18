@@ -31,6 +31,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -219,7 +220,8 @@ public class ConferenceServiceTest {
     public void shouldCreateConferenceBasicWhenProvidedWithValidData() {
         // given
         var conferenceDTO = new ConferenceBasicAdditionDTO();
-        conferenceDTO.setName(new ArrayList<>());
+        conferenceDTO.setName(
+            new ArrayList<>(List.of(new MultilingualContentDTO(1, "EN", "Content", 1))));
         conferenceDTO.setDateFrom(LocalDate.now());
         conferenceDTO.setDateTo(LocalDate.now());
 
@@ -236,7 +238,6 @@ public class ConferenceServiceTest {
         // then
         assertNotNull(savedConference);
         verify(conferenceJPAService, times(1)).save(any());
-        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "event");
     }
 
     @Test
@@ -254,7 +255,7 @@ public class ConferenceServiceTest {
         conferenceService.reindexConference(1);
 
         // then
-        verify(eventIndexRepository, times(1)).save(any());
+        verify(eventIndexRepository, times(2)).save(any());
     }
 
     @Test
@@ -377,13 +378,14 @@ public class ConferenceServiceTest {
         var oldId = 100;
         var conference = new Conference();
         conference.setId(1);
-        conference.setOldId(oldId);
+        conference.getOldIds().add(oldId);
 
         var expectedDTO = new ConferenceDTO();
         expectedDTO.setId(1);
         expectedDTO.setOldId(oldId);
 
-        when(conferenceRepository.findConferenceByOldId(oldId)).thenReturn(Optional.of(conference));
+        when(conferenceRepository.findConferenceByOldIdsContains(oldId)).thenReturn(
+            Optional.of(conference));
 
         // When
         var response = conferenceService.readConferenceByOldId(oldId);
@@ -398,7 +400,8 @@ public class ConferenceServiceTest {
     void shouldThrowNotFoundExceptionWhenOldIdDoesNotExist() {
         // Given
         var oldId = 200;
-        when(conferenceRepository.findConferenceByOldId(oldId)).thenReturn(Optional.empty());
+        when(conferenceRepository.findConferenceByOldIdsContains(oldId)).thenReturn(
+            Optional.empty());
 
         // When & Then
         var exception = assertThrows(NotFoundException.class,
@@ -512,5 +515,35 @@ public class ConferenceServiceTest {
         verify(eventIndex).setRelatedInstitutionIds(institutionIds.stream().toList());
         verify(eventIndex).setClassifiedBy(classifiedBy);
         verify(eventIndexRepository).save(eventIndex);
+    }
+
+    @Test
+    void shouldReturnRawConference() {
+        // Given
+        var entityId = 123;
+        var expected = new Conference();
+        expected.setId(entityId);
+        when(conferenceRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = conferenceService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(conferenceRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenConferenceDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(conferenceRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> conferenceService.findRaw(entityId));
+
+        assertEquals("Conference with given ID does not exist.", exception.getMessage());
+        verify(conferenceRepository).findRaw(entityId);
     }
 }

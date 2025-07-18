@@ -1,6 +1,8 @@
 package rs.teslaris.core.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -50,8 +52,21 @@ public class PersonEditCheckAspect {
             return joinPoint.proceed();
         }
 
-        var personId = Integer.parseInt(attributeMap.get("personId"));
-        validateEditPermission(role, userId, personId);
+        List<Integer> personIds = new ArrayList<>();
+        if (attributeMap.containsKey("personId")) {
+            personIds.add(Integer.parseInt(attributeMap.get("personId")));
+        } else if (attributeMap.containsKey("sourcePersonId") &&
+            attributeMap.containsKey("targetPersonId")) {
+            personIds.add(Integer.parseInt(attributeMap.get("sourcePersonId")));
+            personIds.add(Integer.parseInt(attributeMap.get("targetPersonId")));
+        } else {
+            throw new IllegalArgumentException(
+                "Missing person identifiers."); // should never happen in prod, only for testing
+        }
+
+        for (var personId : personIds) {
+            validateEditPermission(role, userId, personId);
+        }
 
         return joinPoint.proceed();
     }

@@ -31,6 +31,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -47,6 +48,8 @@ public class ConferenceController {
     private final JwtUtil tokenUtil;
 
     private final UserService userService;
+
+    private final EmailUtil emailUtil;
 
 
     @GetMapping("/{conferenceId}/can-edit")
@@ -75,19 +78,28 @@ public class ConferenceController {
         @RequestParam("returnOnlySerialEvents")
         @NotNull(message = "You have to provide search range.") Boolean returnOnlySerialEvents,
         @RequestParam(value = "forMyInstitution", defaultValue = "false") Boolean forMyInstitution,
+        @RequestParam(value = "commissionId", required = false) Integer commissionId,
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
 
-        if (!bearerToken.isEmpty() &&
-            tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
-            var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        if (!bearerToken.isEmpty()) {
+            if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.ADMIN.name())) {
+                return conferenceService.searchConferences(tokens, pageable,
+                    returnOnlyNonSerialEvents,
+                    returnOnlySerialEvents, null,
+                    unclassified ? commissionId : null);
+            } else if (tokenUtil.extractUserRoleFromToken(bearerToken)
+                .equals(UserRole.COMMISSION.name())) {
+                var userId = tokenUtil.extractUserIdFromToken(bearerToken);
 
-            return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents,
-                forMyInstitution ? userService.getUserOrganisationUnitId(userId) : null,
-                unclassified ? userService.getUserCommissionId(userId) : null);
+                return conferenceService.searchConferences(tokens, pageable,
+                    returnOnlyNonSerialEvents,
+                    returnOnlySerialEvents,
+                    forMyInstitution ? userService.getUserOrganisationUnitId(userId) : null,
+                    unclassified ? userService.getUserCommissionId(userId) : null);
+            }
         }
 
         return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
@@ -138,6 +150,11 @@ public class ConferenceController {
     public ConferenceBasicAdditionDTO createConferenceBasic(
         @RequestBody @Valid ConferenceBasicAdditionDTO conferenceDTO) {
         var newConference = conferenceService.createConference(conferenceDTO);
+
+        newConference.getName().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(newConference.getId(), mc.getContent(), "event");
+        });
+
         conferenceDTO.setId(newConference.getId());
         return conferenceDTO;
     }

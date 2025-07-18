@@ -1,8 +1,5 @@
 package rs.teslaris.core.service.impl.document;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,10 +15,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.person.DeclinedDocumentClaim;
-import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.document.PersonDocumentContributionRepository;
 import rs.teslaris.core.repository.person.DeclinedDocumentClaimRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -31,7 +25,6 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
-import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -100,50 +93,38 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
 
     @Override
     public void claimDocument(Integer userId, Integer documentId) {
+        personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId);
+
         var personId = personService.getPersonIdForUserId(userId);
         var person = personService.findOne(personId);
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(documentIndex -> {
+                var claimerIds = documentIndex.getClaimerIds();
+                var claimerOrdinals = documentIndex.getClaimerOrdinals();
 
-        var contributionsToClaim =
-            personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId);
-        contributionsToClaim = contributionsToClaim.stream()
-            .sorted(Comparator.comparing(PersonContribution::getOrderNumber)).toList();
-
-        var counter = 1;
-        for (var contribution : contributionsToClaim) {
-            var displayName = contribution.getAffiliationStatement().getDisplayPersonName();
-
-            if (isMatchingName(person, displayName)) {
-                contribution.setPerson(person);
-                personDocumentContributionRepository.save(contribution);
-
-                var document =
-                    documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-                        documentId);
-                if (document.isPresent()) {
-                    var authorIndex =
-                        getIndexOfNthUnmanagedAuthor(document.get().getAuthorIds(), counter);
-                    if (authorIndex >= 0) { // should always be true
-                        document.get().getAuthorIds().set(authorIndex, personId);
-                    }
-                    document.get().getClaimerIds().clear();
-                    documentPublicationIndexRepository.save(document.get());
+                int claimerIndex = claimerIds.indexOf(personId);
+                if (claimerIndex == -1) {
+                    return; // personId not found among claimers
                 }
-                break;
-            }
-            counter++;
-        }
-    }
 
-    private boolean isMatchingName(Person person, PersonName displayName) {
-        if (StringUtil.performSimpleSerbianPreprocessing(person.getName().toString())
-            .equals(StringUtil.performSimpleSerbianPreprocessing(displayName.toString()))) {
-            return true;
-        }
+                int authorIndex = claimerOrdinals.get(claimerIndex);
+                var document = documentPublicationService.findOne(documentId);
 
-        return person.getOtherNames().stream()
-            .anyMatch(
-                otherName -> StringUtil.performSimpleSerbianPreprocessing(otherName.toString())
-                    .equals(StringUtil.performSimpleSerbianPreprocessing(displayName.toString())));
+                var matchingContribution = document.getContributors().stream()
+                    .filter(contribution -> contribution.getOrderNumber() == (authorIndex + 1))
+                    .findFirst();
+
+                if (matchingContribution.isPresent()) {
+                    matchingContribution.get().setPerson(person);
+                    documentIndex.getAuthorIds().set(authorIndex, person.getId());
+
+                    documentIndex.getClaimerIds().clear();
+                    documentIndex.getClaimerOrdinals().clear();
+
+                    documentPublicationIndexRepository.save(documentIndex);
+                    documentPublicationService.save(document);
+                }
+            });
     }
 
     @Scheduled(cron = "${refresh-potential-claims.schedule}")
@@ -161,19 +142,24 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
 
             chunk.forEach((document) -> {
                 document.getClaimerIds().clear();
+                document.getClaimerOrdinals().clear();
                 var authorNames = document.getAuthorNames().split(";");
                 for (int i = 0; i < authorNames.length; i++) {
                     if (document.getAuthorIds().get(i) != -1) {
                         continue;
                     }
 
-                    var results =
-                        personSearchService.runQuery(buildNameQuery(authorNames[i].trim()),
-                            Pageable.unpaged(), PersonIndex.class, "person");
+                    var results = personService.findPeopleByNameAndEmployment(
+                        List.of(authorNames[i].trim().split(" ")), Pageable.unpaged(), false, null,
+                        false);
+                    int authorOrderNumber = i;
+
                     results.getContent().forEach(person -> {
-                        if (declinedDocumentClaimRepository.canBeClaimedByPerson(
-                            person.getDatabaseId(), document.getDatabaseId())) {
+                        if (!document.getAuthorIds().contains(person.getDatabaseId()) &&
+                            declinedDocumentClaimRepository.canBeClaimedByPerson(
+                                person.getDatabaseId(), document.getDatabaseId())) {
                             document.getClaimerIds().add(person.getDatabaseId());
+                            document.getClaimerOrdinals().add(authorOrderNumber);
                             if (Objects.nonNull(person.getUserId())) {
                                 userClaimCount.put(person.getUserId(),
                                     userClaimCount.getOrDefault(person.getUserId(), 0) + 1);
@@ -196,11 +182,5 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
                     userService.findOne(key))
             );
         });
-    }
-
-    private Query buildNameQuery(String authorName) {
-        return BoolQuery.of(q -> q
-            .must(mb -> mb.matchPhrase(m -> m.field("name").query(authorName)))
-        )._toQuery();
     }
 }

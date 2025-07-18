@@ -27,5 +27,4 @@ public class LanguageServiceImpl extends JPAServiceImpl<Language> implements Lan
         return languageRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Language with given ID does not exist."));
     }
-
 }

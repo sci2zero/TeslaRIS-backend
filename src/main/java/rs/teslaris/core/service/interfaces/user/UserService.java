@@ -93,4 +93,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     boolean generateNewPasswordForUser(Integer userId);
 
     void logout(String jti);
+
+    boolean confirmEmailChange(String emailUpdateToken);
 }

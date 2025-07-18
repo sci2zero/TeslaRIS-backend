@@ -2,6 +2,7 @@ package rs.teslaris.core.service.interfaces.commontypes;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.NotificationActionResult;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.service.interfaces.JPAService;
@@ -14,7 +15,8 @@ public interface NotificationService extends JPAService<Notification> {
 
     long getUserNotificationCount(Integer userId);
 
-    void performAction(Integer notificationId, Integer userId, NotificationAction action);
+    NotificationActionResult performAction(Integer notificationId, Integer userId,
+                                           NotificationAction action);
 
     void dismiss(Integer notificationId, Integer userId);
 

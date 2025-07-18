@@ -12,8 +12,8 @@ import rs.teslaris.importer.dto.JournalPublicationLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.CommonRecordConverter;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.importer.utility.RecordConverter;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @Slf4j
@@ -72,6 +72,7 @@ public class JournalPublicationConverter extends DocumentConverter
         dto.setEndPage(document.getEndPage());
         dto.setJournalEIssn(document.getEIssn());
         dto.setJournalPrintIssn(document.getPrintIssn());
+        dto.setJournalOpenAlexId(document.getJournalOpenAlexId());
 
         return dto;
     }

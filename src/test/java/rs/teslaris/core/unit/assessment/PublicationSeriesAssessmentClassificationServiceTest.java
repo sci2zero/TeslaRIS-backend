@@ -3,6 +3,7 @@ package rs.teslaris.core.unit.assessment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.times;
@@ -16,20 +17,21 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
-import rs.teslaris.assessment.model.AssessmentClassification;
-import rs.teslaris.assessment.model.PublicationSeriesAssessmentClassification;
-import rs.teslaris.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
-import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
-import rs.teslaris.assessment.service.impl.PublicationSeriesAssessmentClassificationServiceImpl;
+import rs.teslaris.assessment.dto.classification.PublicationSeriesAssessmentClassificationDTO;
+import rs.teslaris.assessment.model.classification.AssessmentClassification;
+import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
+import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRepository;
+import rs.teslaris.assessment.service.impl.classification.PublicationSeriesAssessmentClassificationServiceImpl;
 import rs.teslaris.assessment.service.impl.cruddelegate.PublicationSeriesAssessmentClassificationJPAServiceImpl;
-import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
+import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 
 @SpringBootTest
@@ -63,6 +65,9 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
 
     @Mock
     private TaskManagerService taskManagerService;
+
+    @Mock
+    private JournalService journalService;
 
     @InjectMocks
     private PublicationSeriesAssessmentClassificationServiceImpl
@@ -119,7 +124,9 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
         newPublicationSeriesAssessmentClassification.setAssessmentClassification(
             new AssessmentClassification());
 
-        when(publicationSeriesService.findOne(1)).thenReturn(new Journal());
+        when(publicationSeriesService.findOne(1)).thenReturn(new Journal() {{
+            setId(1);
+        }});
         when(publicationSeriesAssessmentClassificationJPAService.save(
             any(PublicationSeriesAssessmentClassification.class)))
             .thenReturn(newPublicationSeriesAssessmentClassification);
@@ -134,6 +141,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
         assertNotNull(result);
         verify(publicationSeriesAssessmentClassificationJPAService).save(
             any(PublicationSeriesAssessmentClassification.class));
+        verify(journalService).reindexJournalVolatileInformation(anyInt());
     }
 
     @Test
@@ -154,7 +162,9 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
         when(publicationSeriesAssessmentClassificationJPAService.findOne(
             publicationSeriesAssessmentClassificationId)).thenReturn(
             existingPublicationSeriesAssessmentClassification);
-        when(publicationSeriesService.findOne(1)).thenReturn(new Journal());
+        when(publicationSeriesService.findOne(1)).thenReturn(new Journal() {{
+            setId(1);
+        }});
         when(assessmentClassificationService.findOne(1)).thenReturn(new AssessmentClassification());
 
         // when
@@ -167,6 +177,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
             publicationSeriesAssessmentClassificationId);
         verify(publicationSeriesAssessmentClassificationJPAService).save(
             existingPublicationSeriesAssessmentClassification);
+        verify(journalService).reindexJournalVolatileInformation(anyInt());
     }
 
     @Test

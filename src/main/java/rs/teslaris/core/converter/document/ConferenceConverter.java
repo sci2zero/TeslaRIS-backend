@@ -12,7 +12,11 @@ public class ConferenceConverter {
         var conferenceDTO = new ConferenceDTO();
 
         conferenceDTO.setId(conference.getId());
-        conferenceDTO.setOldId(conference.getOldId());
+
+        if (Objects.nonNull(conference.getOldIds())) {
+            conference.getOldIds().stream().findFirst().ifPresent(conferenceDTO::setOldId);
+        }
+
         conferenceDTO.setName(
             MultilingualContentConverter.getMultilingualContentDTO(conference.getName()));
         conferenceDTO.setNameAbbreviation(MultilingualContentConverter.getMultilingualContentDTO(
@@ -38,6 +42,7 @@ public class ConferenceConverter {
         conferenceDTO.setFee(conference.getFee());
         conferenceDTO.setSerialEvent(conference.getSerialEvent());
         conferenceDTO.setConfId(conference.getConfId());
+        conferenceDTO.setOpenAlexId(conference.getOpenAlexId());
 
         conferenceDTO.setUris(conference.getUris());
 

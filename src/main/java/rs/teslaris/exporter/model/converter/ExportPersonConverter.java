@@ -49,7 +49,7 @@ public class ExportPersonConverter extends ExportConverterBase {
             commonExportPerson.getElectronicAddresses()
                 .add(person.getPersonalInfo().getContact().getContactEmail());
         }
-        commonExportPerson.setOldId(person.getOldId());
+        commonExportPerson.getOldIds().addAll(person.getOldIds());
 
         person.getInvolvements().forEach(involvement -> {
             if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||

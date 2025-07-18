@@ -12,6 +12,8 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 @Service
 public interface ProceedingsPublicationService {
 
+    ProceedingsPublication findProceedingsPublicationById(Integer publicationId);
+
     ProceedingsPublicationDTO readProceedingsPublicationById(Integer publicationId);
 
     List<ProceedingsPublicationResponseDTO> findAuthorsProceedingsForEvent(Integer eventId,
@@ -34,4 +36,6 @@ public interface ProceedingsPublicationService {
 
     void indexProceedingsPublication(ProceedingsPublication publication,
                                      DocumentPublicationIndex index);
+
+    void indexProceedingsPublication(ProceedingsPublication publication);
 }

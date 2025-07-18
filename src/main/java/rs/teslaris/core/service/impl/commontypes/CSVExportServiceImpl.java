@@ -1,9 +1,11 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -193,7 +195,7 @@ public class CSVExportServiceImpl implements CSVExportService {
 
         return switch (endpointType) {
             case PERSON_SEARCH -> (Page<T>) personService.findPeopleByNameAndEmployment(
-                endpointTokenParameters, pageable, false, null);
+                endpointTokenParameters, pageable, false, null, false);
             case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
@@ -206,16 +208,23 @@ public class CSVExportServiceImpl implements CSVExportService {
                     documentSpecificFilters.c, documentSpecificFilters.a);
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
-                    endpointTokenParameters, pageable,
-                    SearchRequestType.SIMPLE, null, null, null);
+                    Arrays.stream(endpointTokenParameters.getFirst().split("tokens="))
+                        .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
+                    SearchRequestType.SIMPLE, null,
+                    Integer.parseInt(endpointTokenParameters.getLast()), null, null);
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
                 Integer.parseInt(endpointTokenParameters.getFirst()), null, pageable);
             case ORGANISATION_UNIT_OUTPUTS ->
                 (Page<T>) documentPublicationService.findPublicationsForOrganisationUnit(
-                    Integer.parseInt(endpointTokenParameters.getFirst()), pageable);
+                    Integer.parseInt(endpointTokenParameters.getFirst()),
+                    Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
+                        .filter(t -> !t.isBlank()).toList(), documentSpecificFilters.a, pageable);
             case ORGANISATION_UNIT_EMPLOYEES ->
                 (Page<T>) personService.findPeopleForOrganisationUnit(
-                    Integer.parseInt(endpointTokenParameters.getFirst()), pageable, false);
+                    Integer.parseInt(endpointTokenParameters.getFirst()),
+                    Arrays.stream(endpointTokenParameters.get(1).split("tokens="))
+                        .filter(t -> !t.isBlank()).toList(), pageable,
+                    Boolean.parseBoolean(endpointTokenParameters.getLast()));
         };
     }
 }

@@ -11,6 +11,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -148,15 +149,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     @Nullable
-    public OrganisationUnitIndex findOrganisationUnitByScopusAfid(String scopusAfid) {
-        return organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(scopusAfid)
+    public OrganisationUnitIndex findOrganisationUnitByImportId(String importId) {
+        if (Objects.isNull(importId) || importId.isBlank()) {
+            return null;
+        }
+
+        return organisationUnitIndexRepository.findByScopusAfidOrOpenAlexId(importId)
             .orElse(null);
     }
 
     @Override
     @Nullable
     public OrganisationUnit findOrganisationUnitByOldId(Integer oldId) {
-        return organisationUnitRepository.findOrganisationUnitByOldId(oldId).orElse(null);
+        return organisationUnitRepository.findOrganisationUnitByOldIdsContains(oldId).orElse(null);
     }
 
     @Override
@@ -190,11 +195,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                                SearchRequestType type,
                                                                Integer personId,
                                                                Integer topLevelInstitutionId,
-                                                               Boolean onlyReturnOnesWhichCanHarvest) {
+                                                               Boolean onlyReturnOnesWhichCanHarvest,
+                                                               Boolean onlyIndependent) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId,
-                    onlyReturnOnesWhichCanHarvest),
+                    onlyReturnOnesWhichCanHarvest, onlyIndependent),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -206,7 +212,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
                                          Integer topLevelInstitutionId,
-                                         Boolean onlyReturnOnesWhichCanHarvest) {
+                                         Boolean onlyReturnOnesWhichCanHarvest,
+                                         Boolean onlyIndependent) {
         StringUtil.removeNotableStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -214,7 +221,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             addInstitutionFilter(b, personId, topLevelInstitutionId);
 
             if (Objects.nonNull(onlyReturnOnesWhichCanHarvest) && onlyReturnOnesWhichCanHarvest) {
-                b.must(mbb -> mbb.exists(e -> e.field("scopus_afid")));
+                b.must(mbb -> mbb.bool(bq -> bq
+                    .should(sh -> sh.exists(e -> e.field("scopus_afid")))
+                    .should(sh -> sh.exists(e -> e.field("open_alex_id")))
+                ));
             }
 
             tokens.forEach(token -> {
@@ -232,25 +242,21 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                         mq -> mq.field("name_sr").query(cleanedToken))._toQuery());
                     perTokenShould.add(MatchPhraseQuery.of(
                         mq -> mq.field("name_other").query(cleanedToken))._toQuery());
-                } else if (token.endsWith(".")) {
-                    var wildcard = token.replace(".", "") + "?";
+                } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                    var wildcard = token.replace("\\*", "").replace(".", "");
                     perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
+                            m -> m.field("name_sr")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true))
                         ._toQuery());
                     perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_other").value(wildcard).caseInsensitive(true))
-                        ._toQuery());
-                } else if (token.endsWith("\\*")) {
-                    var wildcard = token.replace("\\*", "") + "*";
-                    perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_sr").value(wildcard).caseInsensitive(true))
-                        ._toQuery());
-                    perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_other").value(wildcard).caseInsensitive(true))
+                            m -> m.field("name_other").value(wildcard + "*").caseInsensitive(true))
                         ._toQuery());
                 } else {
                     perTokenShould.add(WildcardQuery.of(
-                            m -> m.field("name_sr").value(token + "*").caseInsensitive(true))
+                            m -> m.field("name_sr")
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
+                                .caseInsensitive(true))
                         ._toQuery());
                     perTokenShould.add(WildcardQuery.of(
                             m -> m.field("name_other").value(token + "*").caseInsensitive(true))
@@ -277,6 +283,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 b.should(sb -> sb.match(
                     m -> m.field("super_ou_name_other").query(token).boost(0.3f)));
             });
+
+            if (Objects.nonNull(onlyIndependent) && onlyIndependent) {
+                b.mustNot(mn -> mn.exists(e -> e.field("super_ou_id")));
+            }
 
             return b;
         })))._toQuery();
@@ -429,6 +439,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnitToUpdate.getName().clear();
         organisationUnitToUpdate.getKeyword().clear();
         organisationUnitToUpdate.getResearchAreas().clear();
+        organisationUnitToUpdate.getUris().clear();
 
         setCommonOUFields(organisationUnitToUpdate, organisationUnitDTORequest);
 
@@ -464,7 +475,29 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             "scopusAfidExistsError"
         );
 
-        organisationUnit.setOldId(organisationUnitDTO.getOldId());
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getOpenAlexId(),
+            organisationUnit.getId(),
+            "^I\\d{4,10}$",
+            organisationUnitRepository::existsByOpenAlexId,
+            organisationUnit::setOpenAlexId,
+            "openAlexIdFormatError",
+            "openAlexIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getRor(),
+            organisationUnit.getId(),
+            "^0[0-9a-hj-km-np-z]{8}$",
+            organisationUnitRepository::existsByROR,
+            organisationUnit::setRor,
+            "rorFormatError",
+            "rorExistsError"
+        );
+
+        if (Objects.nonNull(organisationUnitDTO.getOldId())) {
+            organisationUnit.getOldIds().add(organisationUnitDTO.getOldId());
+        }
 
         var researchAreas = researchAreaService.getResearchAreasByIds(
             organisationUnitDTO.getResearchAreasId());
@@ -483,7 +516,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public boolean isIdentifierInUse(String identifier, Integer organisationUnitId) {
-        return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId);
+        return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId) ||
+            organisationUnitRepository.existsByOpenAlexId(identifier, organisationUnitId);
     }
 
     @Override
@@ -561,8 +595,32 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         var organisationUnit = findOne(organisationUnitId);
 
-        return !Objects.isNull(organisationUnit.getScopusAfid()) &&
-            !organisationUnit.getScopusAfid().isEmpty();
+        return (!Objects.isNull(organisationUnit.getScopusAfid()) &&
+            !organisationUnit.getScopusAfid().isEmpty()) ||
+            (!Objects.isNull(organisationUnit.getOpenAlexId()) &&
+                !organisationUnit.getOpenAlexId().isEmpty());
+    }
+
+    @Override
+    public void indexOrganisationUnit(OrganisationUnit organisationUnit,
+                                      Integer organisationUnitId) {
+        organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(organisationUnitId)
+            .ifPresent(index -> {
+                indexOrganisationUnit(organisationUnit, index);
+            });
+    }
+
+    @Override
+    public void indexOrganisationUnit(OrganisationUnit organisationUnit) {
+        indexOrganisationUnit(organisationUnit,
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                organisationUnit.getId()).orElse(new OrganisationUnitIndex()));
+    }
+
+    @Override
+    public OrganisationUnit findRaw(Integer organisationUnitId) {
+        return organisationUnitRepository.findRaw(organisationUnitId).orElseThrow(
+            () -> new NotFoundException("Organisation Unit with given ID does not exist."));
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,
@@ -581,7 +639,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());
 
-        index.setScopusAfid(organisationUnit.getScopusAfid());
+        index.setScopusAfid(
+            (Objects.nonNull(organisationUnit.getScopusAfid()) &&
+                !organisationUnit.getScopusAfid().isBlank()) ? organisationUnit.getScopusAfid() :
+                null);
+        index.setOpenAlexId(
+            (Objects.nonNull(organisationUnit.getOpenAlexId()) &&
+                !organisationUnit.getOpenAlexId().isBlank()) ? organisationUnit.getOpenAlexId() :
+                null);
+        index.setRor(organisationUnit.getRor());
 
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getKeyword,
             OrganisationUnitIndex::setKeywordsSr,
@@ -757,7 +823,41 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         var savedRelation = organisationUnitsRelationJPAService.save(newRelation);
+        updateIndex(savedRelation);
 
+        return savedRelation;
+    }
+
+    @Override
+    public OrganisationUnitsRelationDTO addSubOrganisationUnit(Integer sourceId, Integer targetId) {
+        if (organisationUnitsRelationRepository.getSuperOU(targetId).isPresent()) {
+            throw new OrganisationUnitReferenceConstraintViolationException(
+                "Organisation unit already has a super relation.");
+        } else if (sourceId.equals(targetId)) {
+            throw new OrganisationUnitReferenceConstraintViolationException(
+                "cyclicOrgUnitRelationLabel");
+        }
+
+        var newRelation = new OrganisationUnitsRelation();
+        var creationDTO = new OrganisationUnitsRelationDTO() {{
+            setSourceOrganisationUnitId(targetId);
+            setTargetOrganisationUnitId(sourceId);
+            setRelationType(OrganisationUnitRelationType.BELONGS_TO);
+            setSourceAffiliationStatement(Collections.emptyList());
+            setTargetAffiliationStatement(Collections.emptyList());
+        }};
+        setCommonOURelationFields(newRelation, creationDTO);
+        newRelation.setApproveStatus(ApproveStatus.APPROVED);
+
+        var savedRelation = organisationUnitsRelationRepository.save(newRelation);
+        creationDTO.setId(savedRelation.getId());
+
+        updateIndex(savedRelation);
+
+        return creationDTO;
+    }
+
+    private void updateIndex(OrganisationUnitsRelation savedRelation) {
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             savedRelation.getSourceOrganisationUnit().getId());
         index.ifPresent(organisationUnitIndex -> {
@@ -765,8 +865,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 organisationUnitIndex);
             organisationUnitIndexRepository.save(organisationUnitIndex);
         });
-
-        return savedRelation;
     }
 
     @Override
@@ -784,7 +882,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     @Override
     public void deleteOrganisationUnitsRelation(Integer id) {
+        var relationToDelete = findOrganisationUnitsRelationById(id);
         organisationUnitsRelationJPAService.delete(id);
+
+        var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            relationToDelete.getSourceOrganisationUnit().getId());
+        index.ifPresent(organisationUnitIndex -> {
+            organisationUnitIndex.setSuperOUId(null);
+            organisationUnitIndex.setSuperOUNameSr(null);
+            organisationUnitIndex.setSuperOUNameSrSortable(null);
+            organisationUnitIndex.setSuperOUNameOther(null);
+            organisationUnitIndex.setSuperOUNameOtherSortable(null);
+            organisationUnitIndexRepository.save(organisationUnitIndex);
+        });
     }
 
     @Override

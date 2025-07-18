@@ -12,6 +12,8 @@ public interface MonographService {
 
     Monograph findMonographById(Integer monographId);
 
+    Monograph findRaw(Integer monographId);
+
     Page<DocumentPublicationIndex> searchMonographs(List<String> tokens, boolean onlyBooks);
 
     MonographDTO readMonographById(Integer monographId);
@@ -27,6 +29,8 @@ public interface MonographService {
     void reindexMonographs();
 
     void indexMonograph(Monograph monograph, DocumentPublicationIndex index);
+
+    void indexMonograph(Monograph monograph);
 
     boolean isIdentifierInUse(String identifier, Integer monographId);
 }

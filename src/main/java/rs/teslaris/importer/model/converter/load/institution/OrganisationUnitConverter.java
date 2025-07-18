@@ -15,8 +15,8 @@ import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.importer.utility.RecordConverter;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor

@@ -1,6 +1,7 @@
 package rs.teslaris.assessment.controller;
 
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -23,6 +25,7 @@ import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.annotation.CommissionEditCheck;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/api/assessment/commission")
@@ -31,6 +34,8 @@ import rs.teslaris.core.annotation.Traceable;
 public class CommissionController {
 
     private final CommissionService commissionService;
+
+    private final JwtUtil tokenUtil;
 
 
     @GetMapping
@@ -44,6 +49,17 @@ public class CommissionController {
                                                        @RequestParam("onlyClassification")
                                                        Boolean selectOnlyClassificationCommissions) {
         return commissionService.readAllCommissions(pageable, searchExpression, language,
+            selectOnlyLoadCommissions, selectOnlyClassificationCommissions);
+    }
+
+    @GetMapping("/all")
+    public Page<CommissionResponseDTO> readAllCommissions(@RequestParam("lang")
+                                                          String language,
+                                                          @RequestParam("onlyLoad")
+                                                          Boolean selectOnlyLoadCommissions,
+                                                          @RequestParam("onlyClassification")
+                                                          Boolean selectOnlyClassificationCommissions) {
+        return commissionService.readAllCommissions(Pageable.unpaged(), null, language,
             selectOnlyLoadCommissions, selectOnlyClassificationCommissions);
     }
 
@@ -90,5 +106,16 @@ public class CommissionController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCommission(@PathVariable Integer commissionId) {
         commissionService.deleteCommission(commissionId);
+    }
+
+    @GetMapping("/default")
+    public Integer getDefaultCommissionForUser(
+        @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+        if (Objects.isNull(bearerToken)) {
+            return commissionService.getDefaultCommission(null).getId();
+        } else {
+            return commissionService.getDefaultCommission(
+                tokenUtil.extractUserIdFromToken(bearerToken)).getId();
+        }
     }
 }

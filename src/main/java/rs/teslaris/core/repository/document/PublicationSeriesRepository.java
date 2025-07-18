@@ -19,18 +19,28 @@ public interface PublicationSeriesRepository extends JpaRepository<PublicationSe
     @Query("UPDATE Proceedings p SET p.publicationSeries = null WHERE p.publicationSeries.id = :publicationSeriesId")
     void unbindProceedings(Integer publicationSeriesId);
 
-
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM PublicationSeries p WHERE (p.eISSN = :eISSN OR p.printISSN = :eISSN) AND p.id <> :id")
+        "FROM PublicationSeries p WHERE (p.eISSN = :eISSN OR p.printISSN = :eISSN) AND (:id IS NULL OR p.id <> :id)")
     boolean existsByeISSN(String eISSN, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM PublicationSeries p WHERE (p.printISSN = :printISSN OR p.eISSN = :printISSN) AND p.id <> :id")
+        "FROM PublicationSeries p WHERE (p.printISSN = :printISSN OR p.eISSN = :printISSN) AND (:id IS NULL OR p.id <> :id)")
     boolean existsByPrintISSN(String printISSN, Integer id);
 
-    @Query("SELECT ps FROM PublicationSeries ps WHERE (ps.printISSN = :printISSN AND " +
-        "ps.eISSN = :eISSN) OR (ps.eISSN = :printISSN AND ps.printISSN = :eISSN)")
-    List<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN,
-                                                                    String printISSN);
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM PublicationSeries p WHERE p.openAlexId = :openAlexId AND (:id IS NULL OR p.id <> :id)")
+    boolean existsByOpenAlexId(String openAlexId, Integer id);
 
+    @Query("""
+        SELECT ps FROM PublicationSeries ps 
+        WHERE 
+            (:printISSN != '' AND ps.printISSN = :printISSN) 
+            OR 
+            (:eISSN != '' AND ps.eISSN = :eISSN)
+            OR 
+            (:printISSN != '' AND ps.eISSN = :printISSN)
+            OR 
+            (:eISSN != '' AND ps.printISSN = :eISSN)
+        """)
+    List<PublicationSeries> findPublicationSeriesByeISSNOrPrintISSN(String eISSN, String printISSN);
 }

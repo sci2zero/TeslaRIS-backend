@@ -26,4 +26,8 @@ public class PersonLoadDTO {
     private String orcid;
 
     private String scopusAuthorId;
+
+    private String openAlexId;
+
+    private String importId;
 }

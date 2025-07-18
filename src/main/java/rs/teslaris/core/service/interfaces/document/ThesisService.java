@@ -16,6 +16,8 @@ public interface ThesisService {
 
     ThesisResponseDTO readThesisById(Integer thesisId);
 
+    ThesisResponseDTO readThesisByOldId(Integer oldId);
+
     Thesis createThesis(ThesisDTO thesisDTO, Boolean index);
 
     void editThesis(Integer thesisId, ThesisDTO thesisDTO);
@@ -23,6 +25,8 @@ public interface ThesisService {
     void deleteThesis(Integer thesisId);
 
     void reindexTheses();
+
+    void indexThesis(Thesis thesis);
 
     DocumentFileResponseDTO addThesisAttachment(Integer thesisId, DocumentFileDTO document,
                                                 ThesisAttachmentType attachmentType);

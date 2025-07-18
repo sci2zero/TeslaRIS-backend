@@ -123,6 +123,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    public Proceedings findRaw(Integer proceedingsId) {
+        return proceedingsRepository.findRaw(proceedingsId)
+            .orElseThrow(() -> new NotFoundException("Proceedings with given ID does not exist."));
+    }
+
+    @Override
     public Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index) {
         var proceedings = new Proceedings();
 
@@ -214,6 +220,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    public void indexProceedings(Proceedings proceedings) {
+        indexProceedings(proceedings,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                proceedings.getId()).orElse(new DocumentPublicationIndex()));
+    }
+
+    @Override
     public void reindexProceedings() {
         // Super service does the initial deletion
 
@@ -294,5 +307,35 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         return proceedingsRepository.existsByeISBN(identifier, proceedingsId) ||
             proceedingsRepository.existsByPrintISBN(identifier, proceedingsId) ||
             super.isIdentifierInUse(identifier, proceedingsId);
+    }
+
+    @Override
+    public Proceedings findProceedingsByIsbn(String eIsbn, String printIsbn) {
+        boolean isEisbnBlank = (Objects.isNull(eIsbn) || eIsbn.isBlank());
+        boolean isPrintIsbnBlank = (Objects.isNull(printIsbn) || printIsbn.isBlank());
+
+        if (isEisbnBlank && isPrintIsbnBlank) {
+            return null;
+        }
+
+        if (isEisbnBlank) {
+            eIsbn = printIsbn;
+        } else if (isPrintIsbnBlank) {
+            printIsbn = eIsbn;
+        }
+
+        var results = proceedingsRepository.findByISBN(eIsbn, printIsbn);
+        if (results.isEmpty()) {
+            return null;
+        }
+
+        return results.getFirst();
+    }
+
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var proceedings = findOne(id);
+        proceedings.getOldIds().add(oldId);
+        save(proceedings);
     }
 }

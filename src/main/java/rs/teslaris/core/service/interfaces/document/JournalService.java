@@ -20,7 +20,7 @@ public interface JournalService {
     Page<JournalResponseDTO> readAllJournals(Pageable pageable);
 
     Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
-                                      Integer institutionId);
+                                      Integer institutionId, Integer commissionId);
 
     Journal findJournalByJournalName(String journalName, LanguageTag defaultLanguage,
                                      String eIssn, String printIssn);
@@ -35,7 +35,11 @@ public interface JournalService {
 
     JournalIndex readJournalByIssn(String eIssn, String printIssn);
 
+    JournalIndex readJournalByIdentifiers(String eIssn, String printIssn, String openAlexId);
+
     Journal findJournalById(Integer journalId);
+
+    Journal findRaw(Integer journalId);
 
     Optional<Journal> tryToFindById(Integer journalId);
 
@@ -53,9 +57,15 @@ public interface JournalService {
 
     CompletableFuture<Void> reindexJournals();
 
+    void indexJournal(Journal journal);
+
     void indexJournal(Journal journal, JournalIndex index);
 
     void reindexJournalVolatileInformation(Integer journalId);
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
+
+    void addOldId(Integer id, Integer oldId);
+
+    void save(Journal journal);
 }

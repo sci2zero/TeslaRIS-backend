@@ -213,4 +213,11 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
         documentPublicationIndexRepository.save(index);
     }
+
+    @Override
+    public void indexMonographPublication(MonographPublication monographPublication) {
+        indexMonographPublication(monographPublication,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                monographPublication.getId()).orElse(new DocumentPublicationIndex()));
+    }
 }

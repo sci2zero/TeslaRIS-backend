@@ -8,8 +8,8 @@ import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.oaipmh.product.Product;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.importer.utility.RecordConverter;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor

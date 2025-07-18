@@ -171,7 +171,7 @@ public class OrganisationUnitServiceTest {
         Integer id = 1;
 
         // when
-        when(organisationUnitRepository.findOrganisationUnitByOldId(id)).thenReturn(
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(id)).thenReturn(
             Optional.empty());
 
         // then (NotFoundException should be thrown)
@@ -185,7 +185,7 @@ public class OrganisationUnitServiceTest {
         var organisationUnit = new OrganisationUnit();
         organisationUnit.setId(21);
 
-        when(organisationUnitRepository.findOrganisationUnitByOldId(12))
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(12))
             .thenReturn(Optional.of(organisationUnit));
 
         // when
@@ -288,6 +288,10 @@ public class OrganisationUnitServiceTest {
     public void shouldDeleteOrganisationUnitsRelation() {
         // given
         var relationId = 1;
+        when(organisationUnitsRelationJPAService.findOne(relationId)).thenReturn(
+            new OrganisationUnitsRelation() {{
+                setSourceOrganisationUnit(new OrganisationUnit());
+            }});
 
         // when
         organisationUnitService.deleteOrganisationUnitsRelation(relationId);
@@ -599,7 +603,7 @@ public class OrganisationUnitServiceTest {
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
                 SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-                onlyReturnOnesWhichCanHarvest);
+                onlyReturnOnesWhichCanHarvest, null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
@@ -684,7 +688,7 @@ public class OrganisationUnitServiceTest {
         // Given
         var oldId = 123;
         var expectedUnit = new OrganisationUnit();
-        when(organisationUnitRepository.findOrganisationUnitByOldId(oldId)).thenReturn(
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(oldId)).thenReturn(
             Optional.of(expectedUnit));
 
         // When
@@ -692,14 +696,14 @@ public class OrganisationUnitServiceTest {
 
         // Then
         assertEquals(expectedUnit, actualUnit);
-        verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldId(oldId);
+        verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldIdsContains(oldId);
     }
 
     @Test
     void shouldReturnNullWhenOldIdDoesNotExist() {
         // Given
         Integer oldId = 123;
-        when(organisationUnitRepository.findOrganisationUnitByOldId(oldId)).thenReturn(
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(oldId)).thenReturn(
             Optional.empty());
 
         // When
@@ -707,7 +711,7 @@ public class OrganisationUnitServiceTest {
 
         // Then
         assertNull(actualUnit);
-        verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldId(oldId);
+        verify(organisationUnitRepository, times(1)).findOrganisationUnitByOldIdsContains(oldId);
     }
 
     @Test
@@ -757,29 +761,29 @@ public class OrganisationUnitServiceTest {
     }
 
     @Test
-    public void shouldFindOUByScopusAfid() {
+    public void shouldFindOUByImportId() {
         // Given
         var ou = new OrganisationUnitIndex();
         ou.setScopusAfid("12345");
 
-        when(organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(
+        when(organisationUnitIndexRepository.findByScopusAfidOrOpenAlexId(
             "12345")).thenReturn(Optional.of(ou));
 
         // When
-        var foundOu = organisationUnitService.findOrganisationUnitByScopusAfid("12345");
+        var foundOu = organisationUnitService.findOrganisationUnitByImportId("12345");
 
         // Then
         assertEquals(ou, foundOu);
     }
 
     @Test
-    public void shouldNotFindOUByScopusAfidWhenOUDoesNotExist() {
+    public void shouldNotFindOUByImportIdWhenOUDoesNotExist() {
         // Given
-        when(organisationUnitIndexRepository.findOrganisationUnitIndexByScopusAfid(
+        when(organisationUnitIndexRepository.findByScopusAfidOrOpenAlexId(
             "12345")).thenReturn(Optional.empty());
 
         // When
-        var foundOu = organisationUnitService.findOrganisationUnitByScopusAfid("12345");
+        var foundOu = organisationUnitService.findOrganisationUnitByImportId("12345");
 
         // Then
         assertNull(foundOu);
@@ -1109,6 +1113,105 @@ public class OrganisationUnitServiceTest {
 
         var result = organisationUnitService.canOUEmployeeScanDataSources(3);
         assertTrue(result);
+    }
+
+    @Test
+    void shouldAddSubUnit() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+        when(organisationUnitsRelationRepository.getSuperOU(targetId))
+            .thenReturn(Optional.empty());
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(sourceId)).thenReturn(
+            Optional.of(new OrganisationUnit() {{
+                setId(1);
+            }}));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(targetId)).thenReturn(
+            Optional.of(new OrganisationUnit() {{
+                setId(2);
+            }}));
+
+        OrganisationUnit sourceOU = new OrganisationUnit();
+        sourceOU.setId(targetId);
+        OrganisationUnit targetOU = new OrganisationUnit();
+        targetOU.setId(sourceId);
+
+        OrganisationUnitsRelation savedRelation = new OrganisationUnitsRelation();
+        savedRelation.setId(100);
+        savedRelation.setSourceOrganisationUnit(sourceOU);
+        savedRelation.setTargetOrganisationUnit(targetOU);
+
+        when(organisationUnitsRelationRepository.save(any())).thenReturn(savedRelation);
+        OrganisationUnitIndex mockIndex = new OrganisationUnitIndex();
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(targetId))
+            .thenReturn(Optional.of(mockIndex));
+
+        // When
+        OrganisationUnitsRelationDTO result =
+            organisationUnitService.addSubOrganisationUnit(sourceId, targetId);
+
+        // Then
+        assertEquals(100, result.getId());
+        assertEquals(sourceId, result.getTargetOrganisationUnitId());
+        assertEquals(targetId, result.getSourceOrganisationUnitId());
+        assertEquals(OrganisationUnitRelationType.BELONGS_TO, result.getRelationType());
+
+        verify(organisationUnitsRelationRepository).save(any());
+        verify(organisationUnitIndexRepository).save(mockIndex);
+    }
+
+    @Test
+    void givenExistingSuperRelation_whenAddSubOrganisationUnit_thenThrowsException() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(sourceId)).thenReturn(
+            Optional.of(new OrganisationUnit() {{
+                setId(1);
+            }}));
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(targetId)).thenReturn(
+            Optional.of(new OrganisationUnit() {{
+                setId(2);
+            }}));
+        when(organisationUnitsRelationRepository.getSuperOU(targetId))
+            .thenReturn(Optional.of(new OrganisationUnitsRelation()));
+
+        // When / Then
+        assertThrows(OrganisationUnitReferenceConstraintViolationException.class, () ->
+            organisationUnitService.addSubOrganisationUnit(sourceId, targetId)
+        );
+
+        verify(organisationUnitsRelationRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldReturnRawOrganisationUnit() {
+        // Given
+        var entityId = 123;
+        var expected = new OrganisationUnit();
+        expected.setId(entityId);
+        when(organisationUnitRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = organisationUnitService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(organisationUnitRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenOrganisationUnitDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(organisationUnitRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> organisationUnitService.findRaw(entityId));
+
+        assertEquals("Organisation Unit with given ID does not exist.", exception.getMessage());
+        verify(organisationUnitRepository).findRaw(entityId);
     }
 
     private MultipartFile createMockMultipartFile() {

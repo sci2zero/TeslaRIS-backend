@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.person.PersonName;
-import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
 import rs.teslaris.core.util.notificationhandling.NotificationHandler;
@@ -16,7 +16,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationHandler;
 @Transactional
 public class NewOtherNameNotificationHandler implements NotificationHandler {
 
-    private final PersonRepository personRepository;
+    private final PersonService personService;
 
     @Override
     public void handle(Notification notification, NotificationAction action) {
@@ -30,6 +30,6 @@ public class NewOtherNameNotificationHandler implements NotificationHandler {
         var middlename = notification.getValues().get("middlename");
         person.getOtherNames().add(new PersonName(firstname, middlename, lastname, null, null));
 
-        personRepository.save(person);
+        personService.indexPerson(personService.save(person));
     }
 }

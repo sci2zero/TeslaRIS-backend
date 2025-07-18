@@ -20,12 +20,30 @@ public interface CommonLoader {
 
     Integer countRemainingDocumentsForLoading(Integer userId, Integer institutionId);
 
-    OrganisationUnitDTO createInstitution(String scopusAfid, Integer userId, Integer institutionId);
+    OrganisationUnitDTO createInstitution(String importId, Integer userId, Integer institutionId);
 
-    PersonResponseDTO createPerson(String scopusAuthorId, Integer userId, Integer institutionId);
+    PersonResponseDTO createPerson(String importId, Integer userId, Integer institutionId);
 
     PublicationSeriesDTO createJournal(String eIssn, String printIssn, Integer userId,
                                        Integer institutionId);
 
     ProceedingsDTO createProceedings(Integer userId, Integer institutionId);
+
+    void updateManuallySelectedPersonIdentifiers(String importId, Integer selectedPersonId,
+                                                 Integer userId, Integer institutionId);
+
+    void updateManuallySelectedInstitutionIdentifiers(String importId,
+                                                      Integer selectedInstitutionId, Integer userId,
+                                                      Integer institutionId);
+
+    void updateManuallySelectedPublicationSeriesIdentifiers(String eIssn, String printIssn,
+                                                            Integer selectedPubSeriesId,
+                                                            Integer userId,
+                                                            Integer institutionId);
+
+    void updateManuallySelectedConferenceIdentifiers(Integer selectedConferenceId, Integer userId,
+                                                     Integer institutionId);
+
+    void prepareOldDocumentForOverwriting(Integer userId, Integer institutionId,
+                                          Integer oldDocumentId);
 }

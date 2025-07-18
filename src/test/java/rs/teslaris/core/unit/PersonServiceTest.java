@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -179,19 +180,20 @@ public class PersonServiceTest {
         personalInfo.setPostalAddress(new PostalAddress());
         expectedPerson.setPersonalInfo(personalInfo);
 
-        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.of(expectedPerson));
+        when(personRepository.findPersonByOldIdsContains(1)).thenReturn(
+            Optional.of(expectedPerson));
 
         // when
         var actualPerson = personService.readPersonWithBasicInfoForOldId(1);
 
         // then
-        verify(personRepository, times(1)).findPersonByOldId(1);
+        verify(personRepository, times(1)).findPersonByOldIdsContains(1);
     }
 
     @Test
     public void shouldThrowNotFoundExceptionWhenPersonDoesNotExistWithOldId() {
         // given
-        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.empty());
+        when(personRepository.findPersonByOldIdsContains(1)).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,
@@ -587,7 +589,7 @@ public class PersonServiceTest {
             new PageImpl<>(List.of(new PersonIndex(), new PersonIndex())));
 
         // when
-        var result = personService.findPeopleByNameAndEmployment(tokens, pageable, false, 0);
+        var result = personService.findPeopleByNameAndEmployment(tokens, pageable, false, 0, false);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -602,17 +604,13 @@ public class PersonServiceTest {
 
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
             employmentInstitutionId)).thenReturn(List.of(employmentInstitutionId));
-        when(personIndexRepository.findByEmploymentInstitutionsIdIn(pageable,
-            List.of(employmentInstitutionId))).thenReturn(
-            new PageImpl<>(List.of(new PersonIndex())));
-        when(personIndexRepository.findByPastEmploymentInstitutionIdsIn(pageable,
-            List.of(employmentInstitutionId))).thenReturn(
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(
             new PageImpl<>(List.of(new PersonIndex())));
 
         // when
         var result =
-            personService.findPeopleForOrganisationUnit(employmentInstitutionId, pageable,
-                fetchAlumni);
+            personService.findPeopleForOrganisationUnit(employmentInstitutionId, List.of("*"),
+                pageable, fetchAlumni);
 
         // then
         assertEquals(result.getTotalElements(), 1L);
@@ -723,28 +721,29 @@ public class PersonServiceTest {
         // Given
         var oldId = 123;
         var expectedPerson = new Person();
-        when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.of(expectedPerson));
+        when(personRepository.findPersonByOldIdsContains(oldId)).thenReturn(
+            Optional.of(expectedPerson));
 
         // When
         var actualPerson = personService.findPersonByOldId(oldId);
 
         // Then
         assertEquals(expectedPerson, actualPerson);
-        verify(personRepository, times(1)).findPersonByOldId(oldId);
+        verify(personRepository, times(1)).findPersonByOldIdsContains(oldId);
     }
 
     @Test
     void shouldReturnNullWhenOldIdDoesNotExist() {
         // Given
         var oldId = 123;
-        when(personRepository.findPersonByOldId(oldId)).thenReturn(Optional.empty());
+        when(personRepository.findPersonByOldIdsContains(oldId)).thenReturn(Optional.empty());
 
         // When
         var actualPerson = personService.findPersonByOldId(oldId);
 
         // Then
         assertNull(actualPerson);
-        verify(personRepository, times(1)).findPersonByOldId(oldId);
+        verify(personRepository, times(1)).findPersonByOldIdsContains(oldId);
     }
 
     @Test
@@ -783,10 +782,11 @@ public class PersonServiceTest {
         var person = new PersonIndex();
         person.setScopusAuthorId("12345");
 
-        when(personIndexRepository.findByScopusAuthorId("12345")).thenReturn(Optional.of(person));
+        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexId("12345")).thenReturn(
+            Optional.of(person));
 
         // When
-        var foundPerson = personService.findPersonByScopusAuthorId("12345");
+        var foundPerson = personService.findPersonByImportIdentifier("12345");
 
         // Then
         assertEquals(person, foundPerson);
@@ -795,10 +795,11 @@ public class PersonServiceTest {
     @Test
     public void testFindPersonByScopusAuthorId_PersonDoesNotExist() {
         // Given
-        when(personIndexRepository.findByScopusAuthorId("12345")).thenReturn(Optional.empty());
+        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexId("12345")).thenReturn(
+            Optional.empty());
 
         // When
-        var foundPerson = personService.findPersonByScopusAuthorId("12345");
+        var foundPerson = personService.findPersonByImportIdentifier("12345");
 
         // Then
         assertNull(foundPerson);
@@ -1253,5 +1254,103 @@ public class PersonServiceTest {
             verify(fileService, never()).store(any(), anyString());
             verify(personRepository).save(person);
         }
+    }
+
+    @Test
+    void testFindPersonsByLRUHarvest() {
+        // Given
+        var pageable = PageRequest.of(0, 10);
+        var mockPeople = List.of(new Person(), new Person());
+        var mockPage = new PageImpl<>(mockPeople, pageable, mockPeople.size());
+
+        when(personRepository.findPersonsByLRUHarvest(pageable)).thenReturn(mockPage);
+
+        // When
+        Page<Person> result = personService.findPersonsByLRUHarvest(pageable);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(mockPage, result);
+        verify(personRepository, times(1)).findPersonsByLRUHarvest(pageable);
+    }
+
+    @Test
+    void shouldReturnRawPerson() {
+        // Given
+        var entityId = 123;
+        var expected = new Person();
+        expected.setId(entityId);
+        when(personRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = personService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(personRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenPersonDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(personRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> personService.findRaw(entityId));
+
+        assertEquals("Person with given ID does not exist.", exception.getMessage());
+        verify(personRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldReturnEmptyWithNullIdentifier() {
+        // When
+        var result = personService.findPersonByIdentifier(null);
+
+        // Then
+        assertThat(result).isEmpty();
+        verifyNoInteractions(personRepository);
+    }
+
+    @Test
+    void shouldReturnEmptyWithBlankIdentifier() {
+        // When
+        var result = personService.findPersonByIdentifier("   ");
+
+        // Then
+        assertThat(result).isEmpty();
+        verifyNoInteractions(personRepository);
+    }
+
+    @Test
+    void shouldReturnPersonWithValidIdentifier() {
+        // Given
+        var identifier = "ORCID-1234";
+        var person = new Person();
+        when(personRepository.findPersonForIdentifier(identifier)).thenReturn(Optional.of(person));
+
+        // When
+        var result = personService.findPersonByIdentifier(identifier);
+
+        // Then
+        assertThat(result).contains(person);
+        verify(personRepository).findPersonForIdentifier(identifier);
+    }
+
+    @Test
+    void shouldReturnEmptyWithNonExistingIdentifier() {
+        // Given
+        var identifier = "SCOPUS-5678";
+        when(personRepository.findPersonForIdentifier(identifier)).thenReturn(Optional.empty());
+
+        // When
+        var result = personService.findPersonByIdentifier(identifier);
+
+        // Then
+        assertThat(result).isEmpty();
+        verify(personRepository).findPersonForIdentifier(identifier);
     }
 }

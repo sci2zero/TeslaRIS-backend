@@ -69,6 +69,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/user/register-researcher").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
+                .requestMatchers(HttpMethod.PATCH, "/api/user/confirm-email-change").permitAll()
 
                 // PERSON
                 .requestMatchers(HttpMethod.GET, "/api/person/simple-search").permitAll()
@@ -96,6 +97,7 @@ public class SecurityConfiguration {
 
                 // LANGUAGE
                 .requestMatchers(HttpMethod.GET, "/api/language").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/language/ui-languages").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/language/tags").permitAll()
 
                 // DOCUMENT
@@ -180,12 +182,23 @@ public class SecurityConfiguration {
 
                 // FILE
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/file/logo/{organisationUnitId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/file/image/{personId}").permitAll()
 
                 // ERROR
                 .requestMatchers("/error").permitAll()
 
                 // EXPORT
                 .requestMatchers(HttpMethod.GET, "/api/export/{handlerName}").permitAll()
+
+                // SEARCH TABLE EXPORT
+                .requestMatchers(HttpMethod.GET, "/api/csv-export/records-per-page").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/csv-export").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/dissertation-report")
+                .permitAll()
 
                 // ASSESSMENT
                 .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")
@@ -205,6 +218,9 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/assessment/research-area").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/assessment/commission").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/assessment/commission/default").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/external-indicator-configuration/document/{documentId}").permitAll()
 
                 // STATISTICS
                 .requestMatchers(HttpMethod.GET, "/api/statistics/{statisticsType}").permitAll()
@@ -239,6 +255,9 @@ public class SecurityConfiguration {
                 .permitAll()
 
                 // CSV EXPORT
+                .requestMatchers(HttpMethod.GET, "/api/document/fields").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/fields").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/fields").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
@@ -250,9 +269,12 @@ public class SecurityConfiguration {
                     "/api/thesis-library/search/wordcloud/{queryType}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
                 .requestMatchers(HttpMethod.PATCH,
-                    "/api/registry-book/cancel-attendance/{attendanceId}").permitAll()
+                    "/api/registry-book/cancel-attendance").permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/public-review-page-content/for-institution-and-type/{organisationUnitId}")
                 .permitAll()
 
                 // COOKIES
@@ -266,6 +288,9 @@ public class SecurityConfiguration {
 
                 // HEALTH CHECK
                 .requestMatchers(HttpMethod.GET, "/api/health-check/version").permitAll()
+
+                // FEEDBACK
+                .requestMatchers(HttpMethod.POST, "/api/feedback").permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

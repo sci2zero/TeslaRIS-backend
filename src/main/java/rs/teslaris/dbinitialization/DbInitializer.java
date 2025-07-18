@@ -36,6 +36,7 @@ import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 import rs.teslaris.core.util.seeding.SKOSLoader;
 
@@ -177,6 +178,14 @@ public class DbInitializer implements ApplicationRunner {
         var generateNewEmployeePassword = new Privilege("GENERATE_NEW_EMPLOYEE_PASSWORD");
         var saveLoadingConfiguration = new Privilege("SAVE_LOADING_CONFIG");
         var performLoading = new Privilege("PERFORM_IMPORT_AND_LOADING");
+        var editExternalIndicatorConfiguration = new Privilege("EDIT_EXT_INDICATOR_CONFIGURATION");
+        var harvestIdfMetadata = new Privilege("HARVEST_IDF_METADATA");
+        var addSubUnit = new Privilege("ADD_SUB_UNIT");
+        var deleteOrganisationUnit = new Privilege("DELETE_ORGANISATION_UNITS");
+        var saveOUPageConfiguration = new Privilege("SAVE_OU_PAGE_CONFIGURATION");
+        var migrateAllEntities = new Privilege("MIGRATE_ALL_ENTITIES");
+        var migrateInstitutionEntities = new Privilege("MIGRATE_INSTITUTION_ENTITIES");
+        var performOaiMigration = new Privilege("PERFORM_OAI_MIGRATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -204,9 +213,11 @@ public class DbInitializer implements ApplicationRunner {
                 addToPromotion, removeFromPromotion, addToRegistryBook, deleteUserAccount,
                 removeFromRegistryBook, updateRegistryBook, managePromotions, performMigration,
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
-                generateThesisLibraryBackup, generateOutputBackup, performHealthCheck,
-                generateNewEmployeePassword, createConference, createPublisher,
-                saveLoadingConfiguration, performLoading));
+                generateThesisLibraryBackup, generateOutputBackup, performHealthCheck, addSubUnit,
+                generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
+                saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
+                deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
+                migrateInstitutionEntities, performOaiMigration));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -235,7 +246,9 @@ public class DbInitializer implements ApplicationRunner {
                 generatePromotionReport, allowRegEntrySingleUpdate, generateRegBookReport,
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
-                saveLoadingConfiguration, performLoading
+                saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
+                harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
+                migrateAllEntities, performOaiMigration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -243,7 +256,7 @@ public class DbInitializer implements ApplicationRunner {
                 editDocumentFiles, editDocumentIndicators, claimDocument, createConference,
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
-                createPublisher, performLoading)));
+                createPublisher, performLoading, harvestIdfMetadata)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -251,7 +264,11 @@ public class DbInitializer implements ApplicationRunner {
                     updateProfile, allowAccountTakeover, manageThesisAttachments,
                     putThesisOnPublicReview, createUserBasic, editPersonalInfo, createJournal,
                     editDocumentFiles, editEmploymentInstitution, generateOutputBackup,
-                    createConference, saveLoadingConfiguration, performLoading)));
+                    createConference, saveLoadingConfiguration, performLoading,
+                    editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit,
+                    mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
+                    mergeOUEmployments, mergeDocumentsMetadata, deletePerson,
+                    deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -270,7 +287,7 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
                 putThesisOnPublicReview, editDocumentFiles, archiveThesis,
-                addToRegistryBook, generateThesisLibraryBackup
+                addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata
             )));
 
         var headOfLibraryAuthority =
@@ -359,7 +376,7 @@ public class DbInitializer implements ApplicationRunner {
         // ADMIN USER
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage, englishLanguage, adminAuthority, null,
+                "Markovic", false, false, serbianTag, englishTag, adminAuthority, null,
                 null, null,
                 UserNotificationPeriod.DAILY);
         userRepository.save(adminUser);
@@ -367,13 +384,13 @@ public class DbInitializer implements ApplicationRunner {
         // RESEARCH AREAS - NOT COMPLETE
         var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
-            new HashSet<>(), null);
+            new HashSet<>(), null, "elektrotehnicko i racunarsko inzenjerstvo");
         var researchArea2 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Softversko inzenjerstvo", 2))),
-            new HashSet<>(), researchArea1);
+            new HashSet<>(), researchArea1, "softversko inzenjerstvo");
         var researchArea3 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Cybersecurity", 2))),
-            new HashSet<>(), researchArea2);
+            new HashSet<>(), researchArea2, "cybersecurity");
 
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
 
@@ -406,8 +423,7 @@ public class DbInitializer implements ApplicationRunner {
         if (Arrays.stream(environment.getActiveProfiles())
             .anyMatch(profile -> profile.equalsIgnoreCase("test"))) {
             testingDataInitializer.initializeIntegrationTestingData(serbianTag, serbianLanguage,
-                englishTag,
-                germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
+                englishTag, germanTag, researchArea3, researcherAuthority, commissionAuthority,
                 viceDeanForScienceAuthority, institutionalEditorAuthority,
                 institutionalLibrarianAuthority, headOfLibraryAuthority,
                 promotionRegistryAdministratorAuthority, commissions.a, commissions.b);
@@ -442,6 +458,11 @@ public class DbInitializer implements ApplicationRunner {
             }
         }
         country.setName(names);
+        country.setProcessedName("");
+        country.getName().forEach(name -> {
+            country.setProcessedName(country.getProcessedName() + " " +
+                StringUtil.performSimpleLatinPreprocessing(name.getContent()));
+        });
         countryRepository.save(country);
     }
 

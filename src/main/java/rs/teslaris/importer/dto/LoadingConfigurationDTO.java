@@ -17,4 +17,7 @@ public class LoadingConfigurationDTO {
 
     @NotNull(message = "You have to specify whether loaded entities are unmanaged.")
     private Boolean loadedEntitiesAreUnmanaged;
+
+    @NotNull(message = "You have to specify whether priority loading is enabled.")
+    private Boolean priorityLoading;
 }

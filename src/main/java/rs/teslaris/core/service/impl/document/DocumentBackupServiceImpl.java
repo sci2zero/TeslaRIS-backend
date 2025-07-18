@@ -6,6 +6,7 @@ import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -110,6 +111,9 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                                        String language,
                                                        ExportFileType metadataFormat) {
         int chunkSize = 10;
+        var institutionIds = new HashSet<>(
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId)
+        );
 
         BackupZipBuilder zipBuilder = null;
         try {
@@ -121,7 +125,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                 boolean hasNextPage = true;
 
                 var documentIdsForType =
-                    getDocumentDatabaseIdsForBackup(from, to, List.of(institutionId),
+                    getDocumentDatabaseIdsForBackup(from, to, institutionIds.stream().toList(),
                         documentType.name());
                 while (hasNextPage) {
                     List<Document> chunk = fetchProcessableChunk(documentIdsForType,

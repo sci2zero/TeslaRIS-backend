@@ -1,5 +1,6 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -11,8 +12,8 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
 import rs.teslaris.importer.utility.RecordConverter;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @Slf4j
@@ -33,6 +34,24 @@ public class ProceedingsConverter extends DocumentConverter
         this.languageTagService = languageTagService;
     }
 
+    private static String deduceLanguageTagValue(Publication record) {
+        var languageTagValue = record.getLanguage().trim().toUpperCase();
+        if (languageTagValue.isEmpty()) {
+            languageTagValue = LanguageAbbreviations.ENGLISH;
+        }
+
+        // Common language tag mistakes
+        if (languageTagValue.equals("GE")) {
+            languageTagValue = LanguageAbbreviations.GERMAN;
+        } else if (languageTagValue.equals("SP")) {
+            languageTagValue = LanguageAbbreviations.SPANISH;
+        } else if (languageTagValue.equals("RS")) {
+            languageTagValue = LanguageAbbreviations.SERBIAN;
+        }
+
+        return languageTagValue;
+    }
+
     @Override
     public ProceedingsDTO toDTO(Publication record) {
         var dto = new ProceedingsDTO();
@@ -43,10 +62,7 @@ public class ProceedingsConverter extends DocumentConverter
         dto.setEISBN(record.getIsbn());
 
         if (Objects.nonNull(record.getLanguage())) {
-            var languageTagValue = record.getLanguage().trim().toUpperCase();
-            if (languageTagValue.isEmpty()) {
-                languageTagValue = LanguageAbbreviations.ENGLISH;
-            }
+            var languageTagValue = deduceLanguageTagValue(record);
 
             var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
             if (Objects.nonNull(languageTag.getId())) {
@@ -56,7 +72,7 @@ public class ProceedingsConverter extends DocumentConverter
                 return null;
             }
         } else {
-            dto.setLanguageTagIds(List.of());
+            dto.setLanguageTagIds(Collections.emptyList());
         }
 
         if (Objects.nonNull(record.getOutputFrom().getEvent().getOldId()) &&

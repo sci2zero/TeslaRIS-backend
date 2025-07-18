@@ -22,7 +22,9 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
         "WHERE ou.id = :id")
     Optional<OrganisationUnit> findByIdWithLangDataAndResearchArea(Integer id);
 
-    Optional<OrganisationUnit> findOrganisationUnitByOldId(Integer oldId);
+    @Query(value = "SELECT * FROM organisation_units WHERE " +
+        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+    Optional<OrganisationUnit> findOrganisationUnitByOldIdsContains(Integer oldId);
 
     @Query(value = "SELECT ou FROM OrganisationUnit ou left " +
         "JOIN FETCH ou.keyword left " +
@@ -53,6 +55,14 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
         "FROM OrganisationUnit ou WHERE ou.scopusAfid = :scopusAfid AND (:id IS NULL OR ou.id <> :id)")
     boolean existsByScopusAfid(String scopusAfid, Integer id);
 
+    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM OrganisationUnit ou WHERE ou.openAlexId = :openAlexId AND (:id IS NULL OR ou.id <> :id)")
+    boolean existsByOpenAlexId(String openAlexId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM OrganisationUnit ou WHERE ou.ror = :ror AND (:id IS NULL OR ou.id <> :id)")
+    boolean existsByROR(String ror, Integer id);
+
     @Query(value = "SELECT * FROM organisation_units ou WHERE " +
         "ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<OrganisationUnit> findAllModifiedInLast24Hours(Pageable pageable);
@@ -81,4 +91,8 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
         "JOIN ou.accountingIds aid " +
         "WHERE aid = :id AND ou.approveStatus = 1")
     Optional<OrganisationUnit> findApprovedOrganisationUnitByAccountingId(String id);
+
+    @Query(value = "SELECT * FROM organisation_units ou WHERE ou.id = :organisationUnitId",
+        nativeQuery = true)
+    Optional<OrganisationUnit> findRaw(Integer organisationUnitId);
 }

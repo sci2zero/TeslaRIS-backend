@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Getter
 @Setter
@@ -46,5 +47,25 @@ public class PersonName extends BaseEntity {
         }
 
         return MessageFormat.format("{0} {1} {2}", firstname, otherName, lastname);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        PersonName that = (PersonName) o;
+
+        String name = StringUtil.performSimpleLatinPreprocessing(firstname), surname =
+            StringUtil.performSimpleLatinPreprocessing(lastname);
+        String thatName = StringUtil.performSimpleLatinPreprocessing(that.firstname),
+            thatSurname = StringUtil.performSimpleLatinPreprocessing(that.lastname);
+
+        return (Objects.equals(name, thatName) && Objects.equals(surname, thatSurname)) ||
+            (Objects.equals(surname, thatName) && Objects.equals(name, thatSurname));
     }
 }

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,6 +19,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 @Document(collection = "documentImports")
 public class DocumentImport {
 
@@ -101,4 +103,10 @@ public class DocumentImport {
 
     @Field(name = "issue")
     private String issue;
+
+    @Field(name = "journal_open_alex_id")
+    private String journalOpenAlexId;
+
+    @Field(name = "open_alex_id")
+    private String openAlexId;
 }

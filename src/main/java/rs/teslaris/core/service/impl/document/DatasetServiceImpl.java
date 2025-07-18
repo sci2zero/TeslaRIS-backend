@@ -60,6 +60,11 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    public Dataset findDatasetById(Integer datasetId) {
+        return datasetJPAService.findOne(datasetId);
+    }
+
+    @Override
     public DatasetDTO readDatasetById(Integer datasetId) {
         Dataset dataset;
         try {
@@ -157,6 +162,13 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+    }
+
+    @Override
+    public void indexDataset(Dataset dataset) {
+        indexDataset(dataset,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                dataset.getId()).orElse(new DocumentPublicationIndex()));
     }
 
     private void indexDataset(Dataset dataset, DocumentPublicationIndex index) {

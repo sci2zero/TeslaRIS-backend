@@ -1,6 +1,7 @@
 package rs.teslaris.core.repository.document;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,11 +22,11 @@ public interface ProceedingsRepository extends JpaRepository<Proceedings, Intege
     boolean hasPublications(Integer proceedingsId);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Proceedings p WHERE (p.eISBN = :eISBN OR p.printISBN = :eISBN) AND p.id <> :id")
+        "FROM Proceedings p WHERE (p.eISBN = :eISBN OR p.printISBN = :eISBN) AND (:id IS NULL OR p.id <> :id)")
     boolean existsByeISBN(String eISBN, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Proceedings p WHERE (p.printISBN = :printISBN OR p.eISBN = :printISBN) AND p.id <> :id")
+        "FROM Proceedings p WHERE (p.printISBN = :printISBN OR p.eISBN = :printISBN) AND (:id IS NULL OR p.id <> :id)")
     boolean existsByPrintISBN(String printISBN, Integer id);
 
     @Query(value = "SELECT * FROM proceedings p WHERE " +
@@ -36,4 +37,14 @@ public interface ProceedingsRepository extends JpaRepository<Proceedings, Intege
     @Query("UPDATE ProceedingsPublication pp SET pp.deleted = true " +
         "WHERE pp.proceedings.id = :proceedingsId")
     void deleteAllPublicationsInProceedings(Integer proceedingsId);
+
+    @Query("SELECT p FROM Proceedings p WHERE " +
+        "p.printISBN = :printISBN OR " +
+        "p.printISBN = :eISBN OR " +
+        "p.eISBN = :eISBN OR " +
+        "p.eISBN = :printISBN")
+    List<Proceedings> findByISBN(String eISBN, String printISBN);
+
+    @Query(value = "SELECT * FROM proceedings p WHERE p.id = :proceedingsId", nativeQuery = true)
+    Optional<Proceedings> findRaw(Integer proceedingsId);
 }

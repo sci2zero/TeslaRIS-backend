@@ -19,10 +19,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
 @Setter
@@ -32,11 +35,11 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Table(name = "documents", indexes = {
     @Index(name = "idx_document_doi", columnList = "doi"),
     @Index(name = "idx_document_scopus", columnList = "scopus_id"),
-    @Index(name = "idx_document_old_id", columnList = "cris_uns_id")
+    @Index(name = "idx_document_open_alex", columnList = "open_alex_id")
 })
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public abstract class Document extends BaseEntity {
+public abstract class Document extends BaseEntity implements Mergeable {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();
@@ -74,12 +77,20 @@ public abstract class Document extends BaseEntity {
     @Column(name = "scopus_id")
     private String scopusId;
 
+    @Column(name = "open_alex_id")
+    private String openAlexId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", referencedColumnName = "id")
     private Event event;
 
-    @Column(name = "cris_uns_id")
-    private Integer oldId;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "old_ids")
+    private Set<Integer> oldIds = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "merged_ids")
+    private Set<Integer> mergedIds = new HashSet<>();
 
 
     public void addDocumentContribution(PersonDocumentContribution contribution) {

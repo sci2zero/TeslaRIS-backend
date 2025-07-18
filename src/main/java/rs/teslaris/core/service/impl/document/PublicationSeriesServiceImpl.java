@@ -21,7 +21,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.email.EmailUtil;
 
 @Service
 @Primary
@@ -38,8 +37,6 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     protected final LanguageTagService languageTagService;
 
     protected final PersonContributionService personContributionService;
-
-    protected final EmailUtil emailUtil;
 
     protected final IndexBulkUpdateService indexBulkUpdateService;
 
@@ -75,7 +72,9 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
             multilingualContentService.getMultilingualContent(
                 publicationSeriesDTO.getNameAbbreviation()));
 
-        publicationSeries.setOldId(publicationSeriesDTO.getOldId());
+        if (Objects.nonNull(publicationSeriesDTO.getOldId())) {
+            publicationSeries.getOldIds().add(publicationSeriesDTO.getOldId());
+        }
 
         IdentifierUtil.setUris(publicationSeries.getUris(), publicationSeriesDTO.getUris());
         setCommonIdentifiers(publicationSeries, publicationSeriesDTO);
@@ -113,12 +112,23 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
             "printIssnFormatError",
             "printIssnExistsError"
         );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            publicationSeriesDTO.getOpenAlexId(),
+            publicationSeries.getId(),
+            "^[SV]\\d{4,10}$",
+            publicationSeriesRepository::existsByOpenAlexId,
+            publicationSeries::setOpenAlexId,
+            "openAlexIdFormatError",
+            "openAlexIdExistsError"
+        );
     }
 
     @Override
     public boolean isIdentifierInUse(String identifier, Integer publicationSeriesId) {
         return publicationSeriesRepository.existsByeISSN(identifier, publicationSeriesId) ||
-            publicationSeriesRepository.existsByPrintISSN(identifier, publicationSeriesId);
+            publicationSeriesRepository.existsByPrintISSN(identifier, publicationSeriesId) ||
+            publicationSeriesRepository.existsByOpenAlexId(identifier, publicationSeriesId);
     }
 
     @Override

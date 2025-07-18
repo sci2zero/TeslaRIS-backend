@@ -79,10 +79,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private final SearchService<DocumentFileIndex> searchService;
 
     private final ExpressionTransformer expressionTransformer;
-
+    private final Tika tika = new Tika();
     @Value("${document_file.approved_by_default}")
     private Boolean documentFileApprovedByDefault;
-
 
     @Override
     protected JpaRepository<DocumentFile, Integer> getEntityRepository() {
@@ -98,7 +97,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public DocumentFile getDocumentByServerFilename(String serverFilename) {
-        return documentFileRepository.getReferenceByServerFilename(serverFilename);
+        return documentFileRepository.getReferenceByServerFilename(serverFilename)
+            .orElseThrow(() -> new NotFoundException("Document with given name does not exist."));
     }
 
     @Override
@@ -273,9 +273,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public void deleteDocumentFile(String serverFilename) {
-        var documentToDelete = documentFileRepository.getReferenceByServerFilename(serverFilename);
-        fileService.delete(serverFilename);
-        delete(documentToDelete.getId());
+        documentFileRepository.getReferenceByServerFilename(serverFilename)
+            .ifPresent(documentToDelete -> {
+                fileService.delete(serverFilename);
+                delete(documentToDelete.getId());
+            });
     }
 
     @Override
@@ -395,7 +397,18 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     private boolean isPdfFile(MultipartFile multipartFile) {
-        return Objects.equals(multipartFile.getContentType(), "application/pdf");
+        try {
+            var isSpecifiedPDF = Objects.equals(multipartFile.getContentType(), "application/pdf");
+            var detectedType = tika.detect(multipartFile.getInputStream());
+
+            if (isSpecifiedPDF && !detectedType.equals("application/pdf")) {
+                throw new LoadingException("MIME type mismatch for indexable document.");
+            }
+
+            return isSpecifiedPDF;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {

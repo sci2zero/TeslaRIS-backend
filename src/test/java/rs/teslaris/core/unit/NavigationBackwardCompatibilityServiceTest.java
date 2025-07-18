@@ -52,7 +52,8 @@ public class NavigationBackwardCompatibilityServiceTest {
         // given
         var jp = new JournalPublication();
         jp.setId(123);
-        when(documentRepository.findDocumentByOldId(1)).thenReturn(Optional.of(jp));
+        when(documentRepository.findDocumentByOldIdsContains(1)).thenReturn(Optional.of(123));
+        when(documentRepository.findById(123)).thenReturn(Optional.of(jp));
 
         // when
         var result = service.readResourceByOldId(1, "sourceA", "en");
@@ -68,8 +69,8 @@ public class NavigationBackwardCompatibilityServiceTest {
         // given
         var journal = new Journal();
         journal.setId(555);
-        when(documentRepository.findDocumentByOldId(1)).thenReturn(Optional.empty());
-        when(journalRepository.findJournalByOldId(1)).thenReturn(Optional.of(journal));
+        when(documentRepository.findDocumentByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(journalRepository.findByOldIdsContains(1)).thenReturn(Optional.of(journal));
 
         // when
         var result = service.readResourceByOldId(1, "sourceB", "sr");
@@ -85,10 +86,10 @@ public class NavigationBackwardCompatibilityServiceTest {
         // given
         var person = new Person();
         person.setId(777);
-        when(documentRepository.findDocumentByOldId(1)).thenReturn(Optional.empty());
-        when(journalRepository.findJournalByOldId(1)).thenReturn(Optional.empty());
-        when(bookSeriesRepository.findBookSeriesByOldId(1)).thenReturn(Optional.empty());
-        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.of(person));
+        when(documentRepository.findDocumentByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(journalRepository.findByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(bookSeriesRepository.findBookSeriesByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(personRepository.findPersonByOldIdsContains(1)).thenReturn(Optional.of(person));
 
         // when
         var result = service.readResourceByOldId(1, "sourceC", "de");
@@ -104,11 +105,11 @@ public class NavigationBackwardCompatibilityServiceTest {
         // given
         var org = new OrganisationUnit();
         org.setId(888);
-        when(documentRepository.findDocumentByOldId(1)).thenReturn(Optional.empty());
-        when(journalRepository.findJournalByOldId(1)).thenReturn(Optional.empty());
-        when(bookSeriesRepository.findBookSeriesByOldId(1)).thenReturn(Optional.empty());
-        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.empty());
-        when(organisationUnitRepository.findOrganisationUnitByOldId(1)).thenReturn(
+        when(documentRepository.findDocumentByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(journalRepository.findByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(bookSeriesRepository.findBookSeriesByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(personRepository.findPersonByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(1)).thenReturn(
             Optional.of(org));
 
         // when
@@ -123,11 +124,11 @@ public class NavigationBackwardCompatibilityServiceTest {
     @Test
     public void shouldReturnNotFoundWhenNoEntityMatchesOldId() {
         // given
-        when(documentRepository.findDocumentByOldId(1)).thenReturn(Optional.empty());
-        when(journalRepository.findJournalByOldId(1)).thenReturn(Optional.empty());
-        when(bookSeriesRepository.findBookSeriesByOldId(1)).thenReturn(Optional.empty());
-        when(personRepository.findPersonByOldId(1)).thenReturn(Optional.empty());
-        when(organisationUnitRepository.findOrganisationUnitByOldId(1)).thenReturn(
+        when(documentRepository.findDocumentByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(journalRepository.findByOldIdsContains(71)).thenReturn(Optional.empty());
+        when(bookSeriesRepository.findBookSeriesByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(personRepository.findPersonByOldIdsContains(1)).thenReturn(Optional.empty());
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(1)).thenReturn(
             Optional.empty());
 
         // when

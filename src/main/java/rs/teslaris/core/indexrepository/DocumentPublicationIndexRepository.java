@@ -59,6 +59,28 @@ public interface DocumentPublicationIndexRepository extends
                                                                  Integer startYear, Integer endYear,
                                                                  Pageable pageable);
 
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "author_ids": "?0" } }
+            ],
+            "filter": {
+              "bool": {
+                "should": [
+                  { "range": { "year": { "gte": "?1", "lte": "?2" } } },
+                  { "term": { "year": -1 } }
+                ]
+              }
+            }
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> findByAuthorIdAndYearRangeOrUnknown(Integer authorId,
+                                                                       Integer startYear,
+                                                                       Integer endYear,
+                                                                       Pageable pageable);
+
     Page<DocumentPublicationIndex> findByOrganisationUnitIdsIn(List<Integer> organisationUnitIds,
                                                                Pageable pageable);
 
@@ -246,4 +268,18 @@ public interface DocumentPublicationIndexRepository extends
                                                                                 List<Integer> institutionIds,
                                                                                 String thesisType,
                                                                                 Pageable pageable);
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must_not": {
+              "term": {
+                "type": "PROCEEDINGS"
+              }
+            }
+          }
+        }
+        """)
+    long countPublications();
+
 }

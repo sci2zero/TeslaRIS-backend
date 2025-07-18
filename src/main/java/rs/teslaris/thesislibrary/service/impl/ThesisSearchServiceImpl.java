@@ -23,6 +23,7 @@ import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
@@ -157,6 +158,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                 b.must(m -> m.term(tq -> tq.field("is_open_access").value(true)));
             }
 
+            b.must(m -> m.exists(e -> e.field("thesis_defence_date")));
             return b;
         })._toQuery();
     }
@@ -173,13 +175,16 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                     ));
                 }
                 eq.should(sb -> sb.wildcard(
-                        m -> m.field("title_sr").value(token + "*").caseInsensitive(true)))
+                        m -> m.field("title_sr")
+                            .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
+                            .caseInsensitive(true)))
                     .should(sb -> sb.match(m -> m.field("title_sr").query(token)))
                     .should(sb -> sb.wildcard(
                         m -> m.field("title_other").value(token + "*").caseInsensitive(true)))
                     .should(sb -> sb.match(m -> m.field("description_sr").query(token)))
                     .should(sb -> sb.match(m -> m.field("description_other").query(token)))
-                    .should(sb -> sb.wildcard(m -> m.field("keywords_sr").value("*" + token + "*")))
+                    .should(sb -> sb.wildcard(m -> m.field("keywords_sr")
+                        .value("*" + StringUtil.performSimpleLatinPreprocessing(token) + "*")))
                     .should(
                         sb -> sb.wildcard(m -> m.field("keywords_other").value("*" + token + "*")))
                     .should(sb -> sb.match(m -> m.field("full_text_sr").query(token)))

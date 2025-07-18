@@ -2,6 +2,7 @@ package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -124,8 +125,8 @@ public class DocumentPublicationController {
     @GetMapping("/deduplication-search")
     public Page<DocumentPublicationIndex> deduplicationSearch(
         @RequestParam("titles") List<String> titles, @RequestParam("doi") String doi,
-        @RequestParam("scopusId") String scopusId) {
-        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId);
+        @RequestParam("scopusId") String scopusId, @RequestParam("openAlexId") String openAlexId) {
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId, openAlexId);
     }
 
     @GetMapping("/for-researcher/{personId}")
@@ -134,7 +135,7 @@ public class DocumentPublicationController {
                                                                      List<Integer> ignore,
                                                                      Pageable pageable) {
         return documentPublicationService.findResearcherPublications(personId,
-            Objects.requireNonNullElse(ignore, List.of()), pageable);
+            Objects.requireNonNullElse(ignore, Collections.emptyList()), pageable);
     }
 
     @GetMapping("/research-output/{documentId}")
@@ -171,10 +172,14 @@ public class DocumentPublicationController {
 
     @GetMapping("/for-organisation-unit/{organisationUnitId}")
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "allowedTypes", required = false)
+        List<DocumentPublicationType> allowedTypes,
         @PathVariable Integer organisationUnitId,
         Pageable pageable) {
         return documentPublicationService.findPublicationsForOrganisationUnit(organisationUnitId,
-            pageable);
+            tokens, allowedTypes, pageable);
     }
 
     @GetMapping("/count")
@@ -243,6 +248,11 @@ public class DocumentPublicationController {
     public boolean checkIdentifierUsage(@PathVariable Integer documentId,
                                         @RequestParam String identifier) {
         return documentPublicationService.isIdentifierInUse(identifier, documentId);
+    }
+
+    @GetMapping("/doi-usage")
+    public boolean checkDoiUsage(@RequestParam String doi) {
+        return documentPublicationService.isDoiInUse(doi);
     }
 
     @GetMapping("/fields")

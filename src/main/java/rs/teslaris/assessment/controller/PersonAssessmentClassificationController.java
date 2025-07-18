@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.ResearcherAssessmentResponseDTO;
-import rs.teslaris.assessment.service.interfaces.PersonAssessmentClassificationService;
+import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
 import rs.teslaris.core.annotation.Traceable;
 
 @RestController

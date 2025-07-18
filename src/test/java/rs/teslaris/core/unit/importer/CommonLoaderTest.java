@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -241,7 +240,8 @@ public class CommonLoaderTest {
             mongoTemplate)).thenReturn(progressReport);
 
         if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
-            when(documentPublicationService.findDocumentDuplicates(any(), any(), any())).thenReturn(
+            when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
+                any())).thenReturn(
                 new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                     setDatabaseId(1);
                 }})));
@@ -268,7 +268,7 @@ public class CommonLoaderTest {
 
         if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
             verify(documentPublicationService, times(1)).findDocumentDuplicates(any(), any(),
-                any());
+                any(), any());
             if (deleteOldPublication) {
                 verify(documentPublicationService, times(1)).deleteDocumentPublication(1);
             } else {
@@ -405,7 +405,7 @@ public class CommonLoaderTest {
 
         var currentlyLoadedEntity = new DocumentImport();
         var institution = new OrganisationUnit();
-        institution.setScopusAfid(scopusAfid);
+        institution.setImportId(scopusAfid);
         var contribution = new PersonDocumentContribution();
         contribution.setInstitutions(List.of(institution));
         currentlyLoadedEntity.setContributions(List.of(contribution));
@@ -424,9 +424,9 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(
             currentlyLoadedEntity);
-        when(organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid)).thenReturn(null);
+        when(organisationUnitService.findOrganisationUnitByImportId(scopusAfid)).thenReturn(null);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
-            userId)).thenReturn(new LoadingConfigurationDTO(true, false));
+            userId)).thenReturn(new LoadingConfigurationDTO(true, false, true));
 
         var createdInstitution = new OrganisationUnitDTO();
         when(organisationUnitService.createOrganisationUnit(any(), any())).thenReturn(
@@ -457,7 +457,7 @@ public class CommonLoaderTest {
         nextRecordQuery.addCriteria(Criteria.where("identifier").gt(lastLoadedId));
 
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
-            userId)).thenReturn(new LoadingConfigurationDTO(true, false));
+            userId)).thenReturn(new LoadingConfigurationDTO(true, false, false));
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(null);
 
         // When & Then
@@ -488,7 +488,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(
             currentlyLoadedEntity);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
-            userId)).thenReturn(new LoadingConfigurationDTO(true, false));
+            userId)).thenReturn(new LoadingConfigurationDTO(true, false, false));
 
         // When & Then
         assertThrows(NotFoundException.class,
@@ -505,7 +505,7 @@ public class CommonLoaderTest {
         var currentlyLoadedEntity = new DocumentImport();
         var person = new Person();
         person.setName(new PersonName());
-        person.setScopusAuthorId(scopusAuthorId);
+        person.setImportId(scopusAuthorId);
         var contribution = new PersonDocumentContribution();
         contribution.setPerson(person);
         currentlyLoadedEntity.setContributions(List.of(contribution));
@@ -515,7 +515,7 @@ public class CommonLoaderTest {
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
-            userId)).thenReturn(new LoadingConfigurationDTO(true, false));
+            userId)).thenReturn(new LoadingConfigurationDTO(true, false, true));
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
@@ -555,7 +555,7 @@ public class CommonLoaderTest {
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
-            userId)).thenReturn(new LoadingConfigurationDTO(true, false));
+            userId)).thenReturn(new LoadingConfigurationDTO(true, false, false));
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
@@ -584,7 +584,7 @@ public class CommonLoaderTest {
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
-            userId)).thenReturn(new LoadingConfigurationDTO(true, false));
+            userId)).thenReturn(new LoadingConfigurationDTO(true, false, false));
 
         var nextRecordQuery = new Query();
         nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
@@ -797,7 +797,7 @@ public class CommonLoaderTest {
         var currentlyLoadedEntity = new DocumentImport();
         var person = new Person();
         person.setName(new PersonName());
-        person.setScopusAuthorId(scopusAuthorId);
+        person.setImportId(scopusAuthorId);
         var contribution = new PersonDocumentContribution();
         contribution.setPerson(person);
         currentlyLoadedEntity.setContributions(List.of(contribution));
@@ -817,9 +817,9 @@ public class CommonLoaderTest {
             "documentImports")).thenReturn(
             currentlyLoadedEntity);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(userId))
-            .thenReturn(new LoadingConfigurationDTO(true, true));
+            .thenReturn(new LoadingConfigurationDTO(true, true, false));
 
-        when(personService.findPersonByScopusAuthorId(scopusAuthorId)).thenReturn(null);
+        when(personService.findPersonByImportIdentifier(scopusAuthorId)).thenReturn(null);
 
         // When
         var response = commonLoader.createPerson(scopusAuthorId, userId, null);
@@ -829,7 +829,7 @@ public class CommonLoaderTest {
         assertNotNull(response.getPersonName());
 
         verify(personService, never()).save(any());
-        verify(personService, never()).indexPerson(any(), anyInt());
+        verify(personService, never()).indexPerson(any());
     }
 
     @Test
@@ -841,7 +841,7 @@ public class CommonLoaderTest {
 
         var currentlyLoadedEntity = new DocumentImport();
         var institution = new OrganisationUnit();
-        institution.setScopusAfid(scopusAfid);
+        institution.setImportId(scopusAfid);
         var contribution = new PersonDocumentContribution();
         contribution.setInstitutions(List.of(institution));
         currentlyLoadedEntity.setContributions(List.of(contribution));
@@ -860,9 +860,9 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
             "documentImports")).thenReturn(
             currentlyLoadedEntity);
-        when(organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid)).thenReturn(null);
+        when(organisationUnitService.findOrganisationUnitByImportId(scopusAfid)).thenReturn(null);
         when(loadingConfigurationService.getLoadingConfigurationForResearcherUser(
-            userId)).thenReturn(new LoadingConfigurationDTO(true, true));
+            userId)).thenReturn(new LoadingConfigurationDTO(true, true, false));
 
         // When
         var result = commonLoader.createInstitution(scopusAfid, userId, null);
@@ -870,5 +870,178 @@ public class CommonLoaderTest {
         // Then
         assertNull(result.getId());
         verify(organisationUnitService, never()).createOrganisationUnit(any(), anyBoolean());
+    }
+
+    @Test
+    void updateManuallySelectedPersonIdentifiersShouldThrowWhenNoEntityLoaded() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var lastLoadedId = "1234";
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            null);
+
+        // When & Then
+        assertThrows(NotFoundException.class,
+            () -> commonLoader.updateManuallySelectedPersonIdentifiers("imp1", 1, userId,
+                institutionId));
+    }
+
+    @Test
+    void updateManuallySelectedInstitutionIdentifiersShouldThrowWhenNoEntityLoaded() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var lastLoadedId = "1234";
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            null);
+
+        // When & Then
+        assertThrows(NotFoundException.class,
+            () -> commonLoader.updateManuallySelectedInstitutionIdentifiers("imp1", 1, userId,
+                institutionId));
+    }
+
+    @Test
+    void updateManuallySelectedPublicationSeriesIdentifiersShouldThrowWhenNoEntityLoaded() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var lastLoadedId = "1234";
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate))
+            .thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class, "documentImports"))
+            .thenReturn(null);
+
+        // When & Then
+        assertThrows(NotFoundException.class, () -> commonLoader
+            .updateManuallySelectedPublicationSeriesIdentifiers("1234-5678", null, 1, userId,
+                institutionId));
+    }
+
+    @Test
+    void updateManuallySelectedConferenceIdentifiersShouldThrowWhenNoEntityLoaded() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var lastLoadedId = "1234";
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
+            mongoTemplate))
+            .thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_users_id").in(userId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class, "documentImports"))
+            .thenReturn(null);
+
+        // When & Then
+        assertThrows(NotFoundException.class, () -> commonLoader
+            .updateManuallySelectedConferenceIdentifiers(1, userId, institutionId));
+    }
+
+    @Test
+    void prepareOldDocumentForOverwritingShouldClearIdentifiersWhenOldDocumentIsInDuplicates() {
+        // Given
+        var userId = 1;
+        var institutionId = 2;
+        var oldDocumentId = 1;
+        var lastLoadedId = "54321";
+
+        var currentlyLoadedEntity = new DocumentImport();
+
+        var progressReport = new LoadProgressReport();
+        progressReport.setLastLoadedIdentifier(lastLoadedId);
+        progressReport.setLastLoadedId(new ObjectId(ProgressReportUtility.DEFAULT_HEX_ID));
+        when(
+            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
+                mongoTemplate)).thenReturn(progressReport);
+
+        var nextRecordQuery = new Query();
+        nextRecordQuery.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
+        nextRecordQuery.addCriteria(Criteria.where("is_loaded").is(false));
+        nextRecordQuery.addCriteria(Criteria.where("identifier").is(lastLoadedId));
+
+        when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class,
+            "documentImports")).thenReturn(
+            currentlyLoadedEntity);
+
+        var mockDoc = new JournalPublication();
+        mockDoc.setId(oldDocumentId);
+        mockDoc.setDoi("some-doi");
+        mockDoc.setScopusId("some-scopus");
+        mockDoc.setOpenAlexId("some-openalex");
+        when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
+            any())).thenReturn(
+            new PageImpl<>(List.of(new DocumentPublicationIndex() {{
+                setDatabaseId(1);
+            }})));
+
+        when(documentPublicationService.findOne(oldDocumentId)).thenReturn(mockDoc);
+
+        // When
+        commonLoader.prepareOldDocumentForOverwriting(userId, institutionId, oldDocumentId);
+
+        // Then
+        assertEquals("", mockDoc.getDoi());
+        assertEquals("", mockDoc.getScopusId());
+        assertEquals("", mockDoc.getOpenAlexId());
+        verify(documentPublicationService).save(mockDoc);
+    }
+
+    @Test
+    void prepareOldDocumentForOverwritingShouldThrowWhenNoEntityLoaded() {
+        // Given
+        when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, 1, 2,
+            mongoTemplate)).thenReturn(null);
+
+        // Then
+        assertThrows(NotFoundException.class, () ->
+            commonLoader.prepareOldDocumentForOverwriting(1, 2, 100));
     }
 }

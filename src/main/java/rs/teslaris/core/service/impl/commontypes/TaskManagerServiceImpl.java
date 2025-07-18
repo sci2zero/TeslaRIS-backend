@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -118,7 +119,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         boolean isAdmin = UserRole.ADMIN.name().equals(role);
 
         List<Integer> subOUs = isAdmin
-            ? List.of()
+            ? Collections.emptyList()
             : getUserSubOrganisationUnits(userId);
 
         return tasks.values().stream()

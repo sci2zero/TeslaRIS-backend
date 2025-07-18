@@ -83,9 +83,9 @@ public class OrganisationUnitController {
         return organisationUnitService.readOrganisationUnitForOldId(organisationUnitOldId);
     }
 
-    @GetMapping("/scopus-afid/{scopusAfid}")
-    public OrganisationUnitIndex getOrganisationUnitByScopusAfid(@PathVariable String scopusAfid) {
-        return organisationUnitService.findOrganisationUnitByScopusAfid(scopusAfid);
+    @GetMapping("/import-identifier/{importId}")
+    public OrganisationUnitIndex getOrganisationUnitByScopusAfid(@PathVariable String importId) {
+        return organisationUnitService.findOrganisationUnitByImportId(importId);
     }
 
     @GetMapping("/simple-search")
@@ -96,11 +96,12 @@ public class OrganisationUnitController {
         @RequestParam(value = "topLevelInstitutionId", required = false)
         Integer topLevelInstitutionId,
         @RequestParam(required = false) Boolean onlyReturnOnesWhichCanHarvest,
+        @RequestParam(required = false) Boolean onlyIndependent,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
             SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-            onlyReturnOnesWhichCanHarvest);
+            onlyReturnOnesWhichCanHarvest, onlyIndependent);
     }
 
     @GetMapping("/advanced-search")
@@ -109,7 +110,7 @@ public class OrganisationUnitController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.ADVANCED, null, null, null);
+            SearchRequestType.ADVANCED, null, null, null, null);
     }
 
     @PostMapping
@@ -148,7 +149,8 @@ public class OrganisationUnitController {
     }
 
     @DeleteMapping("/{organisationUnitId}")
-    @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNITS')")
+    @PreAuthorize("hasAuthority('DELETE_ORGANISATION_UNITS')")
+    @OrgUnitEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrganisationUnit(@PathVariable Integer organisationUnitId) {
         organisationUnitService.deleteOrganisationUnit(organisationUnitId);

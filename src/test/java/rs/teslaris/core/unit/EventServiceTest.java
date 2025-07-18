@@ -208,28 +208,28 @@ public class EventServiceTest {
         // Given
         var oldId = 123;
         var expected = new Conference();
-        when(eventRepository.findEventByOldId(oldId)).thenReturn(Optional.of(expected));
+        when(eventRepository.findEventByOldIdsContains(oldId)).thenReturn(Optional.of(expected));
 
         // When
         var actual = eventService.findEventByOldId(oldId);
 
         // Then
         assertEquals(expected, actual);
-        verify(eventRepository, times(1)).findEventByOldId(oldId);
+        verify(eventRepository, times(1)).findEventByOldIdsContains(oldId);
     }
 
     @Test
     void shouldReturnNullWhenOldIdDoesNotExist() {
         // Given
         var oldId = 123;
-        when(eventRepository.findEventByOldId(oldId)).thenReturn(Optional.empty());
+        when(eventRepository.findEventByOldIdsContains(oldId)).thenReturn(Optional.empty());
 
         // When
         var actual = eventService.findEventByOldId(oldId);
 
         // Then
         assertNull(actual);
-        verify(eventRepository, times(1)).findEventByOldId(oldId);
+        verify(eventRepository, times(1)).findEventByOldIdsContains(oldId);
     }
 
     @Test

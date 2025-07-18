@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.document;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                                 Pageable pageable);
 
     Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(Integer organisationUnitId,
+                                                                       List<String> tokens,
+                                                                       List<DocumentPublicationType> allowedTypes,
                                                                        Pageable pageable);
 
     Long getPublicationCount();
@@ -64,7 +67,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               List<DocumentPublicationType> allowedTypes);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
-                                                          String scopusId);
+                                                          String scopusId, String openAlexId);
 
     Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
                                                               Integer personId,
@@ -93,4 +96,9 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
                                                            boolean foreignLanguage);
+
+    Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
+                                                      String scopusId);
+
+    boolean isDoiInUse(String doi);
 }

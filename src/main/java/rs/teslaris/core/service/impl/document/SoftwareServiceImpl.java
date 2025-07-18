@@ -60,6 +60,11 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    public Software findSoftwareById(Integer softwareId) {
+        return softwareJPAService.findOne(softwareId);
+    }
+
+    @Override
     public SoftwareDTO readSoftwareById(Integer softwareId) {
         Software software;
         try {
@@ -157,6 +162,13 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+    }
+
+    @Override
+    public void indexSoftware(Software software) {
+        indexSoftware(software,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                software.getId()).orElse(new DocumentPublicationIndex()));
     }
 
     private void indexSoftware(Software software, DocumentPublicationIndex index) {

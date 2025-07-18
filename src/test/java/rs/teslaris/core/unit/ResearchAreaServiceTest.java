@@ -134,7 +134,7 @@ public class ResearchAreaServiceTest {
         when(multilingualContentService.getMultilingualContent(
             researchAreaDTO.getDescription())).thenReturn(descriptionMultilingualContent);
         when(researchAreaRepository.getReferenceById(1)).thenReturn(
-            new ResearchArea(new HashSet<>(), new HashSet<>(), null));
+            new ResearchArea(new HashSet<>(), new HashSet<>(), null, ""));
 
         // when
         researchAreaService.editResearchArea(researchAreaDTO, 1);
@@ -159,7 +159,6 @@ public class ResearchAreaServiceTest {
         when(researchAreaRepository.isSuperArea(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedBySomeone(researchAreaId)).thenReturn(false);
         when(researchAreaRepository.isResearchedInMonograph(researchAreaId)).thenReturn(false);
-        when(researchAreaRepository.isResearchedInThesis(researchAreaId)).thenReturn(false);
 
         // when
         researchAreaService.deleteResearchArea(researchAreaId);
@@ -168,7 +167,6 @@ public class ResearchAreaServiceTest {
         verify(researchAreaRepository, times(1)).isSuperArea(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedBySomeone(researchAreaId);
         verify(researchAreaRepository, times(1)).isResearchedInMonograph(researchAreaId);
-        verify(researchAreaRepository, times(1)).isResearchedInThesis(researchAreaId);
         verify(researchAreaRepository, times(1)).save(researchArea);
         verify(researchAreaRepository, times(1)).findById(any());
         verifyNoMoreInteractions(researchAreaRepository);
@@ -228,20 +226,22 @@ public class ResearchAreaServiceTest {
     @Test
     public void shouldSearchCountries() {
         // given
+        var searchTerm = "Search Term";
         var researchAreaPage = new PageImpl<>(List.of(new ResearchArea()));
         var pageable = PageRequest.of(0, 10);
         when(
-            researchAreaRepository.searchResearchAreas("Search Term", LanguageAbbreviations.SERBIAN,
+            researchAreaRepository.searchResearchAreas(searchTerm.toLowerCase(),
+                LanguageAbbreviations.SERBIAN,
                 pageable)).thenReturn(
             researchAreaPage);
 
         // when
-        var result = researchAreaService.searchResearchAreas(pageable, "Search Term",
+        var result = researchAreaService.searchResearchAreas(pageable, searchTerm,
             LanguageAbbreviations.SERBIAN);
 
         // then
         assertNotNull(result);
-        verify(researchAreaRepository).searchResearchAreas("Search Term",
+        verify(researchAreaRepository).searchResearchAreas(searchTerm.toLowerCase(),
             LanguageAbbreviations.SERBIAN, pageable);
     }
 

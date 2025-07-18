@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -25,8 +26,12 @@ import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.JournalIndex;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
@@ -38,6 +43,12 @@ public class JournalController {
     private final JournalService journalService;
 
     private final DeduplicationService deduplicationService;
+
+    private final UserService userService;
+
+    private final JwtUtil tokenUtil;
+
+    private final EmailUtil emailUtil;
 
 
     @GetMapping("/{journalId}/can-edit")
@@ -62,9 +73,26 @@ public class JournalController {
         @RequestParam("tokens")
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(value = "institutionId", required = false) Integer institutionId,
+        @RequestParam(value = "commissionId", required = false) Integer commissionId,
+        @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
+        @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
-        return journalService.searchJournals(tokens, pageable, institutionId);
+
+        if (!bearerToken.isEmpty()) {
+            if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.ADMIN.name())) {
+                return journalService.searchJournals(tokens, pageable, institutionId,
+                    unclassified ? commissionId : null);
+            } else if (tokenUtil.extractUserRoleFromToken(bearerToken)
+                .equals(UserRole.COMMISSION.name())) {
+                var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+
+                return journalService.searchJournals(tokens, pageable, institutionId,
+                    unclassified ? userService.getUserCommissionId(userId) : null);
+            }
+        }
+
+        return journalService.searchJournals(tokens, pageable, institutionId, null);
     }
 
     @GetMapping("/{journalId}")
@@ -72,9 +100,10 @@ public class JournalController {
         return journalService.readJournal(journalId);
     }
 
-    @GetMapping("/issn")
-    public JournalIndex readJournal(@RequestParam String eIssn, @RequestParam String printIssn) {
-        return journalService.readJournalByIssn(eIssn, printIssn);
+    @GetMapping("/identifier")
+    public JournalIndex readJournal(@RequestParam String eIssn, @RequestParam String printIssn,
+                                    @RequestParam String openAlexId) {
+        return journalService.readJournalByIdentifiers(eIssn, printIssn, openAlexId);
     }
 
     @PostMapping
@@ -83,6 +112,11 @@ public class JournalController {
     @Idempotent
     public PublicationSeriesDTO createJournal(@RequestBody @Valid PublicationSeriesDTO journalDTO) {
         var savedJournal = journalService.createJournal(journalDTO, true);
+
+        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
+        });
+
         journalDTO.setId(savedJournal.getId());
         return journalDTO;
     }
@@ -94,6 +128,11 @@ public class JournalController {
     public JournalBasicAdditionDTO createJournal(
         @RequestBody @Valid JournalBasicAdditionDTO journalDTO) {
         var savedJournal = journalService.createJournal(journalDTO);
+
+        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
+        });
+
         journalDTO.setId(savedJournal.getId());
         return journalDTO;
     }

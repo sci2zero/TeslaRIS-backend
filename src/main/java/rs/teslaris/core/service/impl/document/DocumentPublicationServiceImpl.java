@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -127,8 +128,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     @Nullable
-    public Document findDocumentByOldId(Integer documentId) {
-        return documentRepository.findDocumentByOldId(documentId).orElse(null);
+    public Document findDocumentByOldId(Integer documentOldId) {
+        var documentId = documentRepository.findDocumentByOldIdsContains(documentOldId);
+        return documentId.map(this::findOne).orElse(null);
     }
 
     @Override
@@ -155,17 +157,38 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
-        Integer organisationUnitId, Pageable pageable) {
+        Integer organisationUnitId, List<String> tokens, List<DocumentPublicationType> allowedTypes,
+        Pageable pageable) {
         var allOUIdsFromSubHierarchy =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
-        return documentPublicationIndexRepository.findByOrganisationUnitIdsIn(
-            allOUIdsFromSubHierarchy, pageable);
+        if (Objects.isNull(tokens)) {
+            tokens = List.of("*");
+        }
+
+        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, allowedTypes);
+
+        var institutionFilter = TermsQuery.of(t -> t
+            .field("organisation_unit_ids")
+            .terms(v -> v.value(
+                allOUIdsFromSubHierarchy.stream()
+                    .map(String::valueOf)
+                    .map(FieldValue::of)
+                    .toList()))
+        )._toQuery();
+
+        var combinedQuery = BoolQuery.of(bq -> bq
+            .must(simpleSearchQuery)
+            .must(institutionFilter)
+        )._toQuery();
+
+        return searchService.runQuery(combinedQuery, pageable, DocumentPublicationIndex.class,
+            "document_publication");
     }
 
     @Override
     public Long getPublicationCount() {
-        return documentPublicationIndexRepository.count();
+        return documentPublicationIndexRepository.countPublications();
     }
 
     @Override
@@ -261,6 +284,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setTitleOtherSortable(index.getTitleOther());
         index.setDoi(document.getDoi());
         index.setScopusId(document.getScopusId());
+        index.setOpenAlexId(document.getOpenAlexId());
         index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
         indexDescription(document, index);
         indexKeywords(document, index);
@@ -270,8 +294,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             index.setEventId(document.getEvent().getId());
         }
 
-        var aaa = StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
-            index.getKeywordsSr());
         index.setWordcloudTokensSr(
             StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
                 index.getKeywordsSr()));
@@ -354,7 +376,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private void setAdditionalMetadata(Document document, DocumentPublicationIndex index) {
         index.setAssessedBy(
-            commissionRepository.findCommissionsThatClassifiedEvent(document.getId()));
+            commissionRepository.findCommissionsThatAssessedDocument(document.getId()));
     }
 
     @Override
@@ -480,13 +502,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
-        document.setOldId(documentDTO.getOldId());
+        if (Objects.nonNull(documentDTO.getOldId())) {
+            document.getOldIds().add(documentDTO.getOldId());
+        }
+
         document.setDocumentDate(documentDTO.getDocumentDate());
 
         IdentifierUtil.setUris(document.getUris(), documentDTO.getUris());
         setCommonIdentifiers(document, documentDTO);
-
-        document.setScopusId(documentDTO.getScopusId());
 
         if (Objects.nonNull(documentDTO.getEventId())) {
             var event = eventService.findOne(documentDTO.getEventId());
@@ -520,12 +543,28 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "scopusIdFormatError",
             "scopusIdExistsError"
         );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getOpenAlexId(),
+            document.getId(),
+            "^W\\d{4,10}$",
+            documentRepository::existsByOpenAlexId,
+            document::setOpenAlexId,
+            "openAlexIdFormatError",
+            "openAlexIdExistsError"
+        );
     }
 
     @Override
     public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
-            documentRepository.existsByScopusId(identifier, documentPublicationId);
+            documentRepository.existsByScopusId(identifier, documentPublicationId) ||
+            documentRepository.existsByOpenAlexId(identifier, documentPublicationId);
+    }
+
+    @Override
+    public boolean isDoiInUse(String doi) {
+        return documentRepository.existsByDoi(doi, null);
     }
 
     @Override
@@ -568,6 +607,30 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             .limit(30)
             .map(entry -> new Pair<>(entry.getKey(), entry.getValue()))
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
+                                                             String scopusId) {
+        if (Objects.isNull(doi) || doi.isBlank()) {
+            doi = "NOT_PRESENT";
+        } else {
+            doi = doi.replace("https://doi.org/", "");
+        }
+
+        if (Objects.isNull(openAlexId) || openAlexId.isBlank()) {
+            openAlexId = "NOT_PRESENT";
+        } else {
+            openAlexId = openAlexId.replace("https://openalex.org/", "");
+        }
+
+        if (Objects.isNull(scopusId) || scopusId.isBlank()) {
+            scopusId = "NOT_PRESENT";
+        } else {
+            scopusId = scopusId.replace("SCOPUS:", "");
+        }
+
+        return documentRepository.findByOpenAlexIdOrDoiOrScopusId(openAlexId, doi, scopusId);
     }
 
     protected void clearCommonFields(Document publication) {
@@ -620,9 +683,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
-                                                                 String scopusId) {
-        var query = buildDeduplicationSearchQuery(titles, doi, scopusId);
+    public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles,
+                                                                 String doi,
+                                                                 String scopusId,
+                                                                 String openAlexId) {
+        var query = buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId);
         return searchService.runQuery(query,
             Pageable.ofSize(5),
             DocumentPublicationIndex.class, "document_publication");
@@ -724,7 +789,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
     }
 
-    private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId) {
+    private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId,
+                                                String openAlexId) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
@@ -734,22 +800,22 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         eq.should(sb -> sb.matchPhrase(
                             m -> m.field("title_other").query(title)));
                     });
-                    eq.should(sb -> sb.match(
-                        m -> m.field("scopusId").query(scopusId)));
-                    eq.should(sb -> sb.match(
-                        m -> m.field("doi").query(doi)));
-                    return eq;
-                });
-                return bq;
-            });
-            b.must(bq -> {
-                bq.bool(eq -> {
-                    eq.should(sb -> sb.match(
-                        m -> m.field("type")
-                            .query(DocumentPublicationType.JOURNAL_PUBLICATION.name())));
-                    eq.should(sb -> sb.match(
-                        m -> m.field("type")
-                            .query(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name())));
+
+                    if (Objects.nonNull(scopusId) && !scopusId.isBlank()) {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("scopusId").query(scopusId)));
+                    }
+
+                    if (Objects.nonNull(doi) && !doi.isBlank()) {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("doi").query(doi)));
+                    }
+
+                    if (Objects.nonNull(openAlexId) && !openAlexId.isBlank()) {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("open_alex_id").query(openAlexId)));
+                    }
+
                     return eq;
                 });
                 return bq;
@@ -790,31 +856,28 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         .should(sb -> sb.matchPhrase(
                             mq -> mq.field("author_names").query(token.replace("\\\"", ""))))
                     ));
-                } else if (token.endsWith(".")) {
-                    var wildcard = token.replace(".", "") + "?";
+                } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                    var wildcard = token.replace("\\*", "").replace(".", "");
                     eq.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_other").value(wildcard + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("author_names").value(wildcard).caseInsensitive(true)))
-                    ));
-                } else if (token.endsWith("\\*")) {
-                    var wildcard = token.replace("\\*", "") + "*";
-                    eq.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("author_names").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("author_names")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true)))
                     ));
                 } else {
                     var wildcard = token + "*";
                     eq.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.match(
@@ -823,8 +886,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                             mq -> mq.field("title_other").query(wildcard)))
                         .should(sb -> sb.match(mq -> mq.field("author_names").query(token)))
                         .should(
-                            sb -> sb.wildcard(mq -> mq.field("author_names").value(wildcard)
+                            sb -> sb.wildcard(mq -> mq.field("author_names")
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                 .caseInsensitive(true)))
+                        .should(sb -> sb.term(mq -> mq.field("keywords_sr").value(token)))
+                        .should(sb -> sb.term(mq -> mq.field("keywords_other").value(token)))
                     ));
                 }
 
@@ -832,8 +898,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     .should(sb -> sb.match(m -> m.field("description_sr").query(token).boost(0.7f)))
                     .should(
                         sb -> sb.match(m -> m.field("description_other").query(token).boost(0.7f)))
-                    .should(sb -> sb.term(m -> m.field("keywords_sr").value(token)))
-                    .should(sb -> sb.term(m -> m.field("keywords_other").value(token)))
                     .should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
                     .should(
                         sb -> sb.match(m -> m.field("full_text_other").query(token).boost(0.7f)))
@@ -852,8 +916,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                          Integer institutionId,
                                          Integer commissionId,
                                          List<DocumentPublicationType> allowedTypes) {
-
-        int minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        int minShouldMatch;
+        if (tokens.size() <= 2) {
+            minShouldMatch = 1; // Allow partial match for very short queries
+        } else {
+            minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        }
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildSimpleMetadataQuery(institutionId, commissionId, allowedTypes));

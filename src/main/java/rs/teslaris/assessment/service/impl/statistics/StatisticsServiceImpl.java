@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -22,18 +23,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.model.DocumentIndicator;
-import rs.teslaris.assessment.model.EntityIndicator;
-import rs.teslaris.assessment.model.EventIndicator;
-import rs.teslaris.assessment.model.OrganisationUnitIndicator;
-import rs.teslaris.assessment.model.PersonIndicator;
-import rs.teslaris.assessment.model.PublicationSeriesIndicator;
-import rs.teslaris.assessment.repository.DocumentIndicatorRepository;
-import rs.teslaris.assessment.repository.EventIndicatorRepository;
-import rs.teslaris.assessment.repository.OrganisationUnitIndicatorRepository;
-import rs.teslaris.assessment.repository.PersonIndicatorRepository;
-import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
-import rs.teslaris.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.assessment.model.indicator.DocumentIndicator;
+import rs.teslaris.assessment.model.indicator.EntityIndicator;
+import rs.teslaris.assessment.model.indicator.EventIndicator;
+import rs.teslaris.assessment.model.indicator.OrganisationUnitIndicator;
+import rs.teslaris.assessment.model.indicator.PersonIndicator;
+import rs.teslaris.assessment.model.indicator.PublicationSeriesIndicator;
+import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;
+import rs.teslaris.assessment.repository.indicator.EventIndicatorRepository;
+import rs.teslaris.assessment.repository.indicator.OrganisationUnitIndicatorRepository;
+import rs.teslaris.assessment.repository.indicator.PersonIndicatorRepository;
+import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRepository;
+import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.statistics.StatisticsService;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
@@ -64,6 +65,7 @@ import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.util.deduplication.Mergeable;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
@@ -365,8 +367,15 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                 indicatorCodes,
                 documentPublicationIndexRepository,
                 documentRepository,
-                (start, document) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndDocumentId(
-                    start, LocalDateTime.now(), statisticsType.name(), document.getDatabaseId()),
+                (start, ids) -> {
+                    var totalCount = new AtomicInteger(0);
+                    ids.forEach(id -> {
+                        totalCount.addAndGet(
+                            statisticsIndexRepository.countByTimestampBetweenAndTypeAndDocumentId(
+                                start, LocalDateTime.now(), statisticsType.name(), id));
+                    });
+                    return totalCount.get();
+                },
                 DocumentPublicationIndex::getDatabaseId,
                 documentIndicatorRepository::findIndicatorForCodeAndDocumentId,
                 id -> new DocumentIndicator(),
@@ -382,8 +391,15 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                 indicatorCodes,
                 personIndexRepository,
                 personRepository,
-                (start, person) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndPersonId(
-                    start, LocalDateTime.now(), statisticsType.name(), person.getDatabaseId()),
+                (start, ids) -> {
+                    var totalCount = new AtomicInteger(0);
+                    ids.forEach(id -> {
+                        totalCount.addAndGet(
+                            statisticsIndexRepository.countByTimestampBetweenAndTypeAndPersonId(
+                                start, LocalDateTime.now(), statisticsType.name(), id));
+                    });
+                    return totalCount.get();
+                },
                 PersonIndex::getDatabaseId,
                 personIndicatorRepository::findIndicatorForCodeAndPersonId,
                 id -> new PersonIndicator(),
@@ -399,8 +415,15 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                 indicatorCodes,
                 organisationUnitIndexRepository,
                 organisationUnitRepository,
-                (start, ou) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndOrganisationUnitId(
-                    start, LocalDateTime.now(), statisticsType.name(), ou.getDatabaseId()),
+                (start, ids) -> {
+                    var totalCount = new AtomicInteger(0);
+                    ids.forEach(id -> {
+                        totalCount.addAndGet(
+                            statisticsIndexRepository.countByTimestampBetweenAndTypeAndOrganisationUnitId(
+                                start, LocalDateTime.now(), statisticsType.name(), id));
+                    });
+                    return totalCount.get();
+                },
                 OrganisationUnitIndex::getDatabaseId,
                 organisationUnitIndicatorRepository::findIndicatorForCodeAndOrganisationUnitId,
                 id -> new OrganisationUnitIndicator(),
@@ -416,8 +439,15 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                 indicatorCodes,
                 journalIndexRepository,
                 publicationSeriesRepository,
-                (start, journal) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndPublicationSeriesId(
-                    start, LocalDateTime.now(), statisticsType.name(), journal.getDatabaseId()),
+                (start, ids) -> {
+                    var totalCount = new AtomicInteger(0);
+                    ids.forEach(id -> {
+                        totalCount.addAndGet(
+                            statisticsIndexRepository.countByTimestampBetweenAndTypeAndPublicationSeriesId(
+                                start, LocalDateTime.now(), statisticsType.name(), id));
+                    });
+                    return totalCount.get();
+                },
                 JournalIndex::getDatabaseId,
                 publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
                 id -> new PublicationSeriesIndicator(),
@@ -433,8 +463,15 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                 indicatorCodes,
                 bookSeriesIndexRepository,
                 bookSeriesRepository,
-                (start, bookSeries) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndPublicationSeriesId(
-                    start, LocalDateTime.now(), statisticsType.name(), bookSeries.getDatabaseId()),
+                (start, ids) -> {
+                    var totalCount = new AtomicInteger(0);
+                    ids.forEach(id -> {
+                        totalCount.addAndGet(
+                            statisticsIndexRepository.countByTimestampBetweenAndTypeAndPublicationSeriesId(
+                                start, LocalDateTime.now(), statisticsType.name(), id));
+                    });
+                    return totalCount.get();
+                },
                 BookSeriesIndex::getDatabaseId,
                 publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
                 id -> new PublicationSeriesIndicator(),
@@ -450,8 +487,15 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                 indicatorCodes,
                 eventIndexRepository,
                 eventRepository,
-                (start, event) -> statisticsIndexRepository.countByTimestampBetweenAndTypeAndEventId(
-                    start, LocalDateTime.now(), statisticsType.name(), event.getDatabaseId()),
+                (start, ids) -> {
+                    var totalCount = new AtomicInteger(0);
+                    ids.forEach(id -> {
+                        totalCount.addAndGet(
+                            statisticsIndexRepository.countByTimestampBetweenAndTypeAndEventId(
+                                start, LocalDateTime.now(), statisticsType.name(), id));
+                    });
+                    return totalCount.get();
+                },
                 EventIndex::getDatabaseId,
                 eventIndicatorRepository::findIndicatorsForCodeAndEvent,
                 id -> new EventIndicator(),
@@ -468,17 +512,17 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         try {
             allTasks.get();
         } catch (InterruptedException | ExecutionException e) {
-            log.error("Error while updating statistics for " + statisticsType.name(), e);
+            log.error("Error while updating statistics for {}", statisticsType.name(), e);
             Thread.currentThread().interrupt();
         }
     }
 
-    private <T, D, I extends EntityIndicator> void updateEntityStatisticInPeriod(
+    private <T, D extends Mergeable, I extends EntityIndicator> void updateEntityStatisticInPeriod(
         List<LocalDateTime> startPeriods,
         List<String> indicatorCodes,
         ElasticsearchRepository<T, String> indexRepository,
         JpaRepository<D, Integer> entityRepository,
-        BiFunction<LocalDateTime, T, Integer> countFunction,
+        BiFunction<LocalDateTime, List<Integer>, Integer> countFunction,
         Function<T, Integer> getEntityId,
         BiFunction<String, Integer, Optional<I>> findIndicatorByEntityId,
         Function<Integer, I> createNewIndicator,
@@ -499,8 +543,11 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
 
                 entityRepository.findById(entityId).ifPresentOrElse(dbEntity -> {
                     FunctionalUtil.forEachWithCounter(indicatorCodes, (i, indicatorCode) -> {
+                        var allEntityIds = new ArrayList<>(dbEntity.getMergedIds());
+                        allEntityIds.add(entityId);
+
                         Integer statisticsCount =
-                            countFunction.apply(startPeriods.get(i), indexEntity);
+                            countFunction.apply(startPeriods.get(i), allEntityIds);
 
                         var exclusions = IndicatorMappingConfigurationLoader.getExclusionsForClass(
                             dbEntity.getClass().getName());

@@ -27,6 +27,8 @@ public interface ConferenceService {
 
     Conference findConferenceById(Integer conferenceId);
 
+    Conference findRaw(Integer conferenceId);
+
     Conference findConferenceByConfId(String confId);
 
     Conference createConference(ConferenceDTO conferenceDTO, Boolean index);
@@ -52,4 +54,8 @@ public interface ConferenceService {
     ConferenceDTO readConferenceByOldId(Integer oldId);
 
     boolean isIdentifierInUse(String identifier, Integer conferenceId);
+
+    void indexConference(Conference conference);
+
+    void save(Conference conference);
 }

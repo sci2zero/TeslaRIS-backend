@@ -91,4 +91,19 @@ public class OrganisationUnitControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
     }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testAddSubUnit() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/organisation-unit-relation/{organisationUnitId}/{subUnitId}",
+                        1, 2)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_OU_SUB_RELATION"))
+            .andExpect(status().isCreated());
+    }
 }

@@ -12,7 +12,26 @@ import rs.teslaris.core.model.document.Document;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
-    Optional<Document> findDocumentByOldId(Integer oldId);
+    @Query(value = """
+        SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM software WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM journal_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM proceedings_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM monograph_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM theses WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        """, nativeQuery = true)
+    Optional<Integer> findDocumentByOldIdsContains(Integer oldId);
 
     @Query("SELECT d FROM Document d " +
         "JOIN FETCH d.contributors " +
@@ -22,12 +41,16 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findDocumentByIdIn(List<Integer> ids, Pageable pageable);
 
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Document d WHERE d.doi = :doi AND d.id <> :id")
+        "FROM Document d WHERE d.doi = :doi AND (:id IS NULL OR d.id <> :id)")
     boolean existsByDoi(String doi, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Document d WHERE d.scopusId = :scopusId AND d.id <> :id")
+        "FROM Document d WHERE d.scopusId = :scopusId AND (:id IS NULL OR d.id <> :id)")
     boolean existsByScopusId(String scopusId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Document d WHERE d.openAlexId = :openAlexId AND (:id IS NULL OR d.id <> :id)")
+    boolean existsByOpenAlexId(String openAlexId, Integer id);
 
     @Query("SELECT d FROM Document d " +
         "JOIN PersonDocumentContribution dc ON d.id = dc.document.id " +
@@ -56,4 +79,11 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @Query("SELECT COUNT(d) > 0 FROM Document d LEFT JOIN d.fileItems fi WHERE " +
         "d.id = :documentId AND fi.resourceType = 1 AND fi.accessRights = 2")
     boolean isDocumentPubliclyAvailable(Integer documentId);
+
+    @Query("SELECT d FROM Document d WHERE " +
+        "d.openAlexId = :openAlexId OR " +
+        "d.doi = :doi OR " +
+        "d.scopusId = :scopusId")
+    Optional<Document> findByOpenAlexIdOrDoiOrScopusId(String openAlexId, String doi,
+                                                       String scopusId);
 }

@@ -22,6 +22,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.BookSeries;
+import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.BookSeriesJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -30,7 +31,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
@@ -49,24 +49,27 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final BookSeriesRepository bookSeriesRepository;
+
 
     @Autowired
     public BookSeriesServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
                                  MultilingualContentService multilingualContentService,
                                  LanguageTagService languageTagService,
                                  PersonContributionService personContributionService,
-                                 EmailUtil emailUtil,
                                  IndexBulkUpdateService indexBulkUpdateService,
                                  BookSeriesJPAServiceImpl bookSeriesJPAService,
                                  BookSeriesIndexRepository bookSeriesIndexRepository,
                                  SearchService<BookSeriesIndex> searchService,
-                                 DocumentPublicationIndexRepository documentPublicationIndexRepository) {
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 BookSeriesRepository bookSeriesRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
-            personContributionService, emailUtil, indexBulkUpdateService);
+            personContributionService, indexBulkUpdateService);
         this.bookSeriesJPAService = bookSeriesJPAService;
         this.bookSeriesIndexRepository = bookSeriesIndexRepository;
         this.searchService = searchService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
+        this.bookSeriesRepository = bookSeriesRepository;
     }
 
     @Override
@@ -106,6 +109,12 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Override
     public BookSeries findBookSeriesById(Integer bookSeriesId) {
         return bookSeriesJPAService.findOne(bookSeriesId);
+    }
+
+    @Override
+    public BookSeries findRaw(Integer bookSeriesId) {
+        return bookSeriesRepository.findRaw(bookSeriesId)
+            .orElseThrow(() -> new NotFoundException("Book Series with given ID does not exist."));
     }
 
     @Override
@@ -187,6 +196,17 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         return null;
     }
 
+    @Override
+    public void indexBookSeries(BookSeries bookSeries) {
+        indexBookSeries(bookSeries, bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(
+            bookSeries.getId()).orElse(new BookSeriesIndex()));
+    }
+
+    @Override
+    public void save(BookSeries bookSeries) {
+        bookSeriesJPAService.save(bookSeries);
+    }
+
     private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {
         if (Objects.nonNull(bookSeriesDTO.getContributions())) {
             personContributionService.setPersonPublicationSeriesContributionsForBookSeries(
@@ -219,6 +239,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(bookSeries.getEISSN());
         index.setPrintISSN(bookSeries.getPrintISSN());
+        index.setOpenAlexId(bookSeries.getOpenAlexId());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
@@ -249,27 +270,24 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("print_issn").value(normalizedToken)))
                     ));
-                } else if (token.endsWith(".")) {
-                    var wildcard = token.replace(".", "") + "?";
+                } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                    var wildcard = token.replace("\\*", "").replace(".", "");
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
-                    ));
-                } else if (token.endsWith("\\*")) {
-                    var wildcard = token.replace("\\*", "") + "*";
-                    b.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_other").value(wildcard + "*")
+                                .caseInsensitive(true)))
                     ));
                 } else {
                     var wildcard = token + "*";
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.match(

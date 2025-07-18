@@ -2,9 +2,9 @@ package rs.teslaris.assessment.converter;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
-import rs.teslaris.assessment.model.EntityAssessmentClassification;
-import rs.teslaris.assessment.model.PublicationSeriesAssessmentClassification;
+import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.assessment.model.classification.EntityAssessmentClassification;
+import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 
 public class EntityAssessmentClassificationConverter {

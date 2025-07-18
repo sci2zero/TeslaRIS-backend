@@ -2,11 +2,11 @@ package rs.teslaris.assessment.ruleengine;
 
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
-import rs.teslaris.assessment.model.AssessmentClassification;
-import rs.teslaris.assessment.model.EntityIndicatorSource;
-import rs.teslaris.assessment.repository.PublicationSeriesAssessmentClassificationRepository;
-import rs.teslaris.assessment.repository.PublicationSeriesIndicatorRepository;
-import rs.teslaris.assessment.service.interfaces.AssessmentClassificationService;
+import rs.teslaris.assessment.model.classification.AssessmentClassification;
+import rs.teslaris.assessment.model.indicator.EntityIndicatorSource;
+import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRepository;
+import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.repository.document.JournalRepository;

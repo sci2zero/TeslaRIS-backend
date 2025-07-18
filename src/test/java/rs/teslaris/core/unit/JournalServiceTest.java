@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -40,6 +41,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.JournalServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -49,6 +51,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
 public class JournalServiceTest {
@@ -85,6 +88,9 @@ public class JournalServiceTest {
 
     @Mock
     private IndexBulkUpdateService indexBulkUpdateService;
+
+    @Mock
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private JournalServiceImpl journalService;
@@ -142,7 +148,7 @@ public class JournalServiceTest {
         // then
         assertNotNull(savedJournal);
         verify(journalJPAService, times(1)).save(any());
-        verify(emailUtil, times(1)).notifyInstitutionalEditor(1, "journal");
+        verify(commissionRepository).findCommissionsThatClassifiedJournal(any());
     }
 
     @Test
@@ -286,7 +292,8 @@ public class JournalServiceTest {
 
         // when
         var result =
-            journalService.searchJournals(new ArrayList<>(tokens), pageable, institutionId);
+            journalService.searchJournals(new ArrayList<>(tokens), pageable, institutionId,
+                institutionId + 1);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -295,9 +302,15 @@ public class JournalServiceTest {
     @Test
     public void shouldReindexJournals() {
         // Given
-        var journal1 = new Journal();
-        var journal2 = new Journal();
-        var journal3 = new Journal();
+        var journal1 = new Journal() {{
+            setId(1);
+        }};
+        var journal2 = new Journal() {{
+            setId(2);
+        }};
+        var journal3 = new Journal() {{
+            setId(3);
+        }};
         var journals = Arrays.asList(journal1, journal2, journal3);
         var page1 = new PageImpl<>(journals.subList(0, 2), PageRequest.of(0, 10), journals.size());
         var page2 = new PageImpl<>(journals.subList(2, 3), PageRequest.of(1, 10), journals.size());
@@ -311,6 +324,7 @@ public class JournalServiceTest {
         verify(journalIndexRepository, times(1)).deleteAll();
         verify(journalJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(journalIndexRepository, atLeastOnce()).save(any(JournalIndex.class));
+        verify(commissionRepository, times(2)).findCommissionsThatClassifiedJournal(anyInt());
     }
 
     @Test
@@ -318,7 +332,7 @@ public class JournalServiceTest {
         // Given
         var journalId = 123;
         var expectedJournal = new Journal();
-        when(journalRepository.findJournalByOldId(journalId)).thenReturn(
+        when(journalRepository.findByOldIdsContains(journalId)).thenReturn(
             Optional.of(expectedJournal));
 
         // When
@@ -332,7 +346,7 @@ public class JournalServiceTest {
     public void shouldReturnNullWhenJournalDoesNotExist() {
         // Given
         var journalId = 123;
-        when(journalRepository.findJournalByOldId(journalId)).thenReturn(Optional.empty());
+        when(journalRepository.findByOldIdsContains(journalId)).thenReturn(Optional.empty());
 
         // When
         var actualJournal = journalService.findJournalByOldId(journalId);
@@ -365,6 +379,35 @@ public class JournalServiceTest {
 
         // When
         var foundJournal = journalService.readJournalByIssn("12345", "6789");
+
+        // Then
+        assertNull(foundJournal);
+    }
+
+    @Test
+    public void shouldFindJournalByIdentifiers() {
+        // Given
+        var journalIndex = new JournalIndex();
+        journalIndex.setOpenAlexId("S1234");
+
+        when(journalIndexRepository.findByAnyIdentifiers(
+            "12345", "6789", "S1234")).thenReturn(Optional.of(journalIndex));
+
+        // When
+        var foundJournal = journalService.readJournalByIdentifiers("12345", "6789", "S1234");
+
+        // Then
+        assertEquals(journalIndex.getOpenAlexId(), foundJournal.getOpenAlexId());
+    }
+
+    @Test
+    public void shouldNotFindJournalByIdentifiersWhenJournalDoesNotExist() {
+        // Given
+        when(journalIndexRepository.findByAnyIdentifiers(
+            "12345", "6789", "S1234")).thenReturn(Optional.empty());
+
+        // When
+        var foundJournal = journalService.readJournalByIdentifiers("12345", "6789", "S1234");
 
         // Then
         assertNull(foundJournal);
@@ -454,7 +497,9 @@ public class JournalServiceTest {
 
         when(searchService.runQuery(any(), any(), any(), anyString()))
             .thenReturn(new PageImpl<>(List.of()));
-        when(journalJPAService.save(any())).thenReturn(new Journal());
+        when(journalJPAService.save(any())).thenReturn(new Journal() {{
+            setId(1);
+        }});
 
         // When
         var result = journalService.findOrCreatePublicationSeries(
@@ -464,6 +509,7 @@ public class JournalServiceTest {
         assertNotNull(result);
         verify(languageTagService).findLanguageTagByValue(defaultLanguageTag);
         verify(journalRepository, never()).save(any());
+        verify(commissionRepository).findCommissionsThatClassifiedJournal(any());
     }
 
     @Test
@@ -510,7 +556,9 @@ public class JournalServiceTest {
         defaultLanguage.setId(1);
         when(searchService.runQuery(any(), any(), any(), anyString()))
             .thenReturn(new PageImpl<>(List.of()));
-        when(journalJPAService.save(any())).thenReturn(new Journal());
+        when(journalJPAService.save(any())).thenReturn(new Journal() {{
+            setId(1);
+        }});
 
         // When
         var result =
@@ -519,6 +567,7 @@ public class JournalServiceTest {
         // Then
         assertNotNull(result);
         verify(searchService).runQuery(any(), any(), any(), anyString());
+        verify(commissionRepository).findCommissionsThatClassifiedJournal(any());
     }
 
     @Test
@@ -573,6 +622,7 @@ public class JournalServiceTest {
         // Then
         assertTrue(journalIndex.getRelatedInstitutionIds().isEmpty());
         verify(journalIndexRepository).save(journalIndex);
+        verify(commissionRepository).findCommissionsThatClassifiedJournal(anyInt());
     }
 
     @Test
@@ -592,5 +642,36 @@ public class JournalServiceTest {
         // Then
         verify(journalIndex).setRelatedInstitutionIds(institutionIds.stream().toList());
         verify(journalIndexRepository).save(journalIndex);
+        verify(commissionRepository).findCommissionsThatClassifiedJournal(anyInt());
+    }
+
+    @Test
+    void shouldReturnRawJournal() {
+        // Given
+        var entityId = 123;
+        var expected = new Journal();
+        expected.setId(entityId);
+        when(journalRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = journalService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(journalRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenJournalDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(journalRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> journalService.findRaw(entityId));
+
+        assertEquals("Journal with given ID does not exist.", exception.getMessage());
+        verify(journalRepository).findRaw(entityId);
     }
 }

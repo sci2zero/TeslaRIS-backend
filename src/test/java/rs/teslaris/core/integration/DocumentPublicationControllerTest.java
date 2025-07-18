@@ -1,6 +1,7 @@
 package rs.teslaris.core.integration;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -123,5 +124,26 @@ public class DocumentPublicationControllerTest extends BaseTest {
                         foreignLanguage)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testCheckDoiUsageDoiExists() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/document/doi-usage?doi=10.1109/tsmc.2014.2347265")
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testCheckDoiUsageDoiDoesNotExist() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/document/doi-usage?doi=10.1109/tsmc.2014.2347264")
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(content().string("false"));
     }
 }

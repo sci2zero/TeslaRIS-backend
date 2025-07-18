@@ -1,6 +1,7 @@
 package rs.teslaris.assessment.controller;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +19,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.annotation.EntityClassificationEditCheck;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
-import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
-import rs.teslaris.assessment.dto.PublicationSeriesAssessmentClassificationDTO;
-import rs.teslaris.assessment.model.EntityClassificationSource;
-import rs.teslaris.assessment.service.interfaces.PublicationSeriesAssessmentClassificationService;
+import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.assessment.dto.classification.PublicationSeriesAssessmentClassificationDTO;
+import rs.teslaris.assessment.model.classification.EntityClassificationSource;
+import rs.teslaris.assessment.service.interfaces.classification.PublicationSeriesAssessmentClassificationService;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.user.UserRole;
@@ -96,7 +97,7 @@ public class PublicationSeriesAssessmentClassificationController {
         @RequestHeader("Authorization") String bearerToken) {
         publicationSeriesAssessmentClassificationService.scheduleClassification(timestamp,
             commissionId, tokenUtil.extractUserIdFromToken(bearerToken), classificationYears,
-            Objects.nonNull(journalIds) ? journalIds : List.of());
+            Objects.nonNull(journalIds) ? journalIds : Collections.emptyList());
     }
 
     @PostMapping("/schedule-classification-load")

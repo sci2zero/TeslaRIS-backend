@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -41,6 +42,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -57,18 +59,19 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
@@ -106,9 +109,6 @@ public class ThesisServiceTest {
     private PublisherService publisherService;
 
     @Mock
-    private ResearchAreaService researchAreaService;
-
-    @Mock
     private LanguageTagService languageService;
 
     @Mock
@@ -116,6 +116,12 @@ public class ThesisServiceTest {
 
     @Mock
     private ThesisResearchOutputRepository thesisResearchOutputRepository;
+
+    @Mock
+    private ThesisRepository thesisRepository;
+
+    @Mock
+    private OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -166,7 +172,7 @@ public class ThesisServiceTest {
         var result = thesisService.createThesis(dto, true);
 
         // Then
-        verify(multilingualContentService, times(4)).getMultilingualContent(any());
+        verify(multilingualContentService, times(7)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(thesisJPAService).save(eq(document));
@@ -296,6 +302,7 @@ public class ThesisServiceTest {
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(new DocumentFile()));
         when(thesis.getPreliminarySupplements()).thenReturn(Set.of(new DocumentFile()));
         when(thesis.getCommissionReports()).thenReturn(Set.of(new DocumentFile()));
+        when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, false);
@@ -377,6 +384,7 @@ public class ThesisServiceTest {
         when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
         when(thesis.getCommissionReports()).thenReturn(Set.of(mock(DocumentFile.class)));
+        when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, true);
@@ -405,6 +413,7 @@ public class ThesisServiceTest {
         when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
         when(thesis.getCommissionReports()).thenReturn(Set.of(mock(DocumentFile.class)));
+        when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, true);
@@ -523,6 +532,8 @@ public class ThesisServiceTest {
         var thesisId = 1;
         thesis.getPreliminaryFiles().addAll(createMockDocuments(files));
         thesis.getCommissionReports().addAll(createMockDocuments(reports));
+        thesis.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
+        thesis.setOrganisationUnit(new OrganisationUnit());
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 
@@ -584,6 +595,47 @@ public class ThesisServiceTest {
         // Then
         assertFalse(thesis.getIsArchived());
         verify(thesisJPAService).save(thesis);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenThesisDoesNotExist() {
+        // Given
+        var oldId = 123;
+        when(thesisRepository.findThesisByOldIdsContains(oldId)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThrows(NotFoundException.class, () -> thesisService.readThesisByOldId(oldId));
+        verify(thesisRepository).findThesisByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenThesisIsNotApproved() {
+        // Given
+        var oldId = 456;
+        var thesis = new Thesis();
+        thesis.setApproveStatus(ApproveStatus.REQUESTED);
+        when(thesisRepository.findThesisByOldIdsContains(oldId)).thenReturn(Optional.of(thesis));
+
+        // When / Then
+        assertThrows(NotFoundException.class, () -> thesisService.readThesisByOldId(oldId));
+        verify(thesisRepository).findThesisByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldReturnDtoWhenThesisIsApproved() {
+        // Given
+        var oldId = 789;
+        var thesis = new Thesis();
+        thesis.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(thesisRepository.findThesisByOldIdsContains(oldId)).thenReturn(Optional.of(thesis));
+
+        // When
+        var result = thesisService.readThesisByOldId(oldId);
+
+        // Then
+        assertNotNull(result);
+        verify(thesisRepository).findThesisByOldIdsContains(oldId);
     }
 
     private Set<DocumentFile> createMockDocuments(int count) {

@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -19,7 +20,9 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user_password_reset_requests")
+@Table(name = "user_password_reset_requests", indexes = {
+    @Index(name = "idx_password_reset_token", columnList = "password_reset_token")
+})
 @SQLRestriction("deleted=false")
 public class PasswordResetToken extends BaseEntity {
 

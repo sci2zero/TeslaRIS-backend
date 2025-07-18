@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 
 @XmlType(name = "TPerson", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
@@ -24,7 +25,7 @@ import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Person implements PersonConvertable {
+public class Person implements PersonConvertable, HasOldId {
 
     private String id;
 

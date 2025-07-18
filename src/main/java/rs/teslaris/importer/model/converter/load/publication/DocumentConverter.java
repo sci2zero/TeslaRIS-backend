@@ -19,7 +19,7 @@ import rs.teslaris.importer.dto.PersonLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor
@@ -41,6 +41,8 @@ public abstract class DocumentConverter {
         person.setApvnt(importContribution.getPerson().getApvnt());
         person.setOrcid(importContribution.getPerson().getOrcid());
         person.setScopusAuthorId(importContribution.getPerson().getScopusAuthorId());
+        person.setOpenAlexId(importContribution.getPerson().getOpenAlexId());
+        person.setImportId(importContribution.getPerson().getImportId());
         return person;
     }
 
@@ -102,6 +104,7 @@ public abstract class DocumentConverter {
         dto.setUris(new HashSet<>(document.getUris()));
 
         dto.setDoi(document.getDoi());
+        dto.setOpenAlexId(document.getOpenAlexId());
         dto.setScopusId(document.getScopusId());
 
         setContributionInformation(document, dto);
@@ -151,6 +154,8 @@ public abstract class DocumentConverter {
                 multilingualContentConverter.toLoaderDTO(importInstitution.getName()));
             institution.setNameAbbreviation(importInstitution.getNameAbbreviation());
             institution.setScopusAfid(importInstitution.getScopusAfid());
+            institution.setOpenAlexId(importInstitution.getOpenAlexId());
+            institution.setImportId(importInstitution.getImportId());
 
             dto.getInstitutions().add(institution);
         });

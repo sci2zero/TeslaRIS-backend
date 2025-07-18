@@ -1,13 +1,16 @@
 package rs.teslaris.core.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,6 +18,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -23,6 +27,9 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -41,6 +48,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
@@ -56,6 +64,7 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Publisher;
+import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
@@ -66,6 +75,9 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.Prize;
+import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -410,7 +422,7 @@ public class MergeServiceTest {
         // then
         verify(personService).findOne(personId);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(personId);
-        verify(personService).indexPerson(person, personId);
+        verify(personService).indexPerson(person);
     }
 
     @Test
@@ -418,7 +430,7 @@ public class MergeServiceTest {
         // given
         var sourceOUId = 1;
         var targetOUId = 2;
-        var personId = 3;
+        var searchTokens = List.of("*");
         var person = new Person();
         var employment = new Employment();
         employment.setInvolvementType(InvolvementType.EMPLOYED_AT);
@@ -430,7 +442,8 @@ public class MergeServiceTest {
         var pageRequest = PageRequest.of(0, 10);
         var page = new PageImpl<>(List.of(personIndex));
         when(
-            personService.findPeopleForOrganisationUnit(sourceOUId, pageRequest, false)).thenReturn(
+            personService.findPeopleForOrganisationUnit(sourceOUId, searchTokens, pageRequest,
+                false)).thenReturn(
             page);
         when(personService.findOne(any())).thenReturn(person);
 
@@ -439,7 +452,7 @@ public class MergeServiceTest {
 
         // then
         verify(personService, atLeastOnce()).findPeopleForOrganisationUnit(eq(sourceOUId),
-            any(PageRequest.class), eq(false));
+            eq(searchTokens), any(PageRequest.class), eq(false));
     }
 
     @Test
@@ -583,20 +596,88 @@ public class MergeServiceTest {
         });
 
         // When
-        mergeService.switchInvolvements(involvementIds, sourcePersonId, targetPersonId);
+        mergeService.switchInvolvements(involvementIds, sourcePersonId, targetPersonId, null);
 
         // Then
         involvementIds.forEach(id -> {
-            var involvement = new Involvement();
-            involvement.setId(id);
-            verify(involvementService, times(1)).save(any(Involvement.class));
+            verify(involvementService, times(1)).save(
+                argThat(inv -> Objects.equals(inv.getId(), id)));
         });
         verify(personService).save(sourcePerson);
         verify(personService).save(targetPerson);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
-        verify(personService).indexPerson(sourcePerson, sourcePersonId);
-        verify(personService).indexPerson(targetPerson, targetPersonId);
+        verify(personService).indexPerson(sourcePerson);
+        verify(personService).indexPerson(targetPerson);
+    }
+
+    @Test
+    void shouldSwitchInvolvementsWithInstitutionFilter() {
+        // Given
+        var sourcePersonId = 1;
+        var targetPersonId = 2;
+        var institutionId = 99;
+        var involvementIds = List.of(100, 101, 102);
+
+        var sourcePerson = new Person();
+        sourcePerson.setId(sourcePersonId);
+        var targetPerson = new Person();
+        targetPerson.setId(targetPersonId);
+
+        var ou1 = new OrganisationUnit();
+        ou1.setId(999); // in subhierarchy
+
+        var ou2 = new OrganisationUnit();
+        ou2.setId(888); // not in subhierarchy
+
+        var involvement1 = new Involvement();
+        involvement1.setId(100);
+        involvement1.setInvolvementType(InvolvementType.EMPLOYED_AT);
+        involvement1.setOrganisationUnit(ou1);
+
+        var involvement2 = new Involvement();
+        involvement2.setId(101);
+        involvement2.setInvolvementType(InvolvementType.HIRED_BY);
+        involvement2.setOrganisationUnit(ou2);
+
+        var involvement3 = new Involvement();
+        involvement3.setId(102);
+        involvement3.setInvolvementType(InvolvementType.MEMBER_OF);
+        involvement3.setOrganisationUnit(ou1);
+
+        sourcePerson.setInvolvements(
+            new HashSet<>(List.of(involvement1, involvement2, involvement3)));
+        targetPerson.setInvolvements(new HashSet<>());
+
+        when(personService.findOne(sourcePersonId)).thenReturn(sourcePerson);
+        when(personService.findOne(targetPersonId)).thenReturn(targetPerson);
+
+        when(involvementService.findOne(100)).thenReturn(involvement1);
+        when(involvementService.findOne(101)).thenReturn(involvement2);
+        when(involvementService.findOne(102)).thenReturn(involvement3);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(List.of(999));
+
+        // When
+        mergeService.switchInvolvements(involvementIds, sourcePersonId, targetPersonId,
+            institutionId);
+
+        // Then
+        verify(involvementService, never()).save(argThat(inv -> inv.getId() == 100));
+
+        // involvement2 and 3 should be switched
+        verify(involvementService, times(1)).save(argThat(inv -> inv.getId() == 101));
+        verify(involvementService, times(1)).save(argThat(inv -> inv.getId() == 102));
+
+        verify(personService).save(sourcePerson);
+        verify(personService).save(targetPerson);
+
+        verify(userService).updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
+        verify(userService).updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
+
+        verify(personService).indexPerson(sourcePerson);
+        verify(personService).indexPerson(targetPerson);
     }
 
     @Test
@@ -634,14 +715,13 @@ public class MergeServiceTest {
 
         // Then
         skillIds.forEach(id -> {
-            var skill = new ExpertiseOrSkill();
-            skill.setId(id);
             verify(expertiseOrSkillService).findOne(id);
-            assertFalse(sourcePerson.getExpertisesAndSkills().contains(skill));
-            assertTrue(targetPerson.getExpertisesAndSkills().contains(skill));
+            assertTrue(sourcePerson.getExpertisesAndSkills().stream()
+                .noneMatch(skill -> skill.getId().equals(id)));
+            assertTrue(targetPerson.getExpertisesAndSkills().stream()
+                .anyMatch(skill -> skill.getId().equals(id)));
         });
-        verify(personService).save(sourcePerson);
-        verify(personService).save(targetPerson);
+        verify(expertiseOrSkillService, times(3)).save(any());
     }
 
     @Test
@@ -679,14 +759,13 @@ public class MergeServiceTest {
 
         // Then
         prizeIds.forEach(id -> {
-            var prize = new Prize();
-            prize.setId(id);
             verify(prizeService).findOne(id);
-            assertFalse(sourcePerson.getPrizes().contains(prize));
-            assertTrue(targetPerson.getPrizes().contains(prize));
+            assertTrue(sourcePerson.getPrizes().stream()
+                .noneMatch(prize -> prize.getId().equals(id)));
+            assertTrue(targetPerson.getPrizes().stream()
+                .anyMatch(prize -> prize.getId().equals(id)));
         });
-        verify(personService).save(sourcePerson);
-        verify(personService).save(targetPerson);
+        verify(prizeService, times(3)).save(any());
     }
 
     @Test
@@ -698,6 +777,14 @@ public class MergeServiceTest {
         var rightData = new ProceedingsDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedProceedingsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -783,6 +870,14 @@ public class MergeServiceTest {
         var rightData = new SoftwareDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedSoftwareMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -800,6 +895,14 @@ public class MergeServiceTest {
         var rightData = new DatasetDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedDatasetsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -817,6 +920,14 @@ public class MergeServiceTest {
         var rightData = new PatentDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedPatentsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -876,6 +987,14 @@ public class MergeServiceTest {
         leftData.setScopusId("");
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedProceedingsPublicationMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -919,6 +1038,14 @@ public class MergeServiceTest {
         leftData.setScopusId("");
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedJournalPublicationMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -942,6 +1069,14 @@ public class MergeServiceTest {
         var rightData = new MonographDTO();
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedMonographsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -961,6 +1096,14 @@ public class MergeServiceTest {
         leftData.setDoi("10.1000/xyz123");
 
         // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         mergeService.saveMergedMonographPublicationsMetadata(leftId, rightId, leftData, rightData);
 
         // then
@@ -1122,5 +1265,167 @@ public class MergeServiceTest {
         verify(publisherService, atLeastOnce()).editPublisher(leftId, leftData);
         verify(publisherService).editPublisher(rightId, rightData);
         verify(publisherService, times(2)).editPublisher(leftId, leftData);
+    }
+
+    @Test
+    void testIdentifierMigrationForBookSeries() {
+        BookSeries deletion = new BookSeries();
+        deletion.getMergedIds().add(100);
+        deletion.getOldIds().add(200);
+        BookSeries merged = new BookSeries();
+
+        when(bookSeriesService.findRaw(1)).thenReturn(deletion);
+        when(bookSeriesService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.BOOK_SERIES);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(100, 1);
+        assertThat(merged.getOldIds()).containsExactly(200);
+        verify(bookSeriesService, atLeastOnce()).save(deletion);
+        verify(bookSeriesService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForMonograph() {
+        Monograph deletion = new Monograph();
+        deletion.getMergedIds().add(101);
+        deletion.getOldIds().add(201);
+        Monograph merged = new Monograph();
+
+        when(monographService.findRaw(1)).thenReturn(deletion);
+        when(monographService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.MONOGRAPH);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(101, 1);
+        assertThat(merged.getOldIds()).containsExactly(201);
+        verify(documentPublicationService, atLeastOnce()).save(deletion);
+        verify(documentPublicationService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForProceedings() {
+        Proceedings deletion = new Proceedings();
+        deletion.getMergedIds().add(102);
+        deletion.getOldIds().add(202);
+        Proceedings merged = new Proceedings();
+
+        when(proceedingsService.findRaw(1)).thenReturn(deletion);
+        when(proceedingsService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PROCEEDINGS);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(102, 1);
+        assertThat(merged.getOldIds()).containsExactly(202);
+        verify(documentPublicationService, atLeastOnce()).save(deletion);
+        verify(documentPublicationService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForPublication() {
+        var deletion = new Software();
+        deletion.getMergedIds().add(103);
+        deletion.getOldIds().add(203);
+        var merged = new Software();
+
+        when(documentPublicationService.findOne(1)).thenReturn(deletion);
+        when(documentPublicationService.findOne(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PUBLICATION);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(103, 1);
+        assertThat(merged.getOldIds()).containsExactly(203);
+        verify(documentPublicationService, atLeastOnce()).save(deletion);
+        verify(documentPublicationService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForEvent() {
+        Conference deletion = new Conference();
+        deletion.getMergedIds().add(104);
+        deletion.getOldIds().add(204);
+        Conference merged = new Conference();
+
+        when(conferenceService.findRaw(1)).thenReturn(deletion);
+        when(conferenceService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.EVENT);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(104, 1);
+        assertThat(merged.getOldIds()).containsExactly(204);
+        verify(conferenceService, atLeastOnce()).save(deletion);
+        verify(conferenceService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForJournal() {
+        Journal deletion = new Journal();
+        deletion.getMergedIds().add(105);
+        deletion.getOldIds().add(205);
+        Journal merged = new Journal();
+
+        when(journalService.findRaw(1)).thenReturn(deletion);
+        when(journalService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.JOURNAL);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(105, 1);
+        assertThat(merged.getOldIds()).containsExactly(205);
+        verify(journalService, atLeastOnce()).save(deletion);
+        verify(journalService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForOrganisationUnit() {
+        OrganisationUnit deletion = new OrganisationUnit();
+        deletion.getMergedIds().add(106);
+        deletion.getOldIds().add(206);
+        OrganisationUnit merged = new OrganisationUnit();
+
+        when(organisationUnitService.findRaw(1)).thenReturn(deletion);
+        when(organisationUnitService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.ORGANISATION_UNIT);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(106, 1);
+        assertThat(merged.getOldIds()).containsExactly(206);
+        verify(organisationUnitService, atLeastOnce()).save(deletion);
+        verify(organisationUnitService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForPerson() {
+        Person deletion = new Person();
+        deletion.getMergedIds().add(107);
+        deletion.getOldIds().add(207);
+        Person merged = new Person();
+
+        when(personService.findRaw(1)).thenReturn(deletion);
+        when(personService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PERSON);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(107, 1);
+        assertThat(merged.getOldIds()).containsExactly(207);
+        verify(personService, atLeastOnce()).save(deletion);
+        verify(personService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForPublisher() {
+        Publisher deletion = new Publisher();
+        deletion.getMergedIds().add(108);
+        deletion.getOldIds().add(208);
+        Publisher merged = new Publisher();
+
+        when(publisherService.findRaw(1)).thenReturn(deletion);
+        when(publisherService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PUBLISHER);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(108, 1);
+        assertThat(merged.getOldIds()).containsExactly(208);
+        verify(publisherService, atLeastOnce()).save(deletion);
+        verify(publisherService, atLeastOnce()).save(merged);
     }
 }

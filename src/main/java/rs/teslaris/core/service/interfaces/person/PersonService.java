@@ -31,20 +31,22 @@ public interface PersonService extends JPAService<Person> {
     Long getResearcherCount();
 
     Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
-                                                    boolean strict, Integer institutionId);
+                                                    boolean strict, Integer institutionId,
+                                                    boolean onlyHarvestable);
 
     Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
+                                                    List<String> tokens,
                                                     Pageable pageable, Boolean fetchAlumni);
 
     Page<PersonIndex> advancedSearch(List<String> tokens, Pageable pageable);
 
-    PersonIndex findPersonByScopusAuthorId(String scopusAuthorId);
+    PersonIndex findPersonByImportIdentifier(String identifier);
 
     Person findPersonById(Integer id);
 
     PersonResponseDTO readPersonByScopusId(String scopusAuthorId);
 
-    Optional<User> findUserByScopusAuthorId(String scopusAuthorId);
+    Optional<User> findUserByIdentifier(String identifier);
 
     Person findPersonByOldId(Integer id);
 
@@ -84,7 +86,7 @@ public interface PersonService extends JPAService<Person> {
 
     CompletableFuture<Void> reindexPersons();
 
-    void indexPerson(Person savedPerson, Integer personDatabaseId);
+    void indexPerson(Person savedPerson);
 
     Integer getPersonIdForUserId(Integer userId);
 
@@ -107,4 +109,12 @@ public interface PersonService extends JPAService<Person> {
         Boolean onlyExportFields);
 
     Person findPersonByAccountingId(String accountingId);
+
+    Page<Person> findPersonsByLRUHarvest(Pageable pageable);
+
+    Person findRaw(Integer personId);
+
+    void addOldId(Integer id, Integer oldId);
+
+    Optional<Person> findPersonByIdentifier(String identifier);
 }

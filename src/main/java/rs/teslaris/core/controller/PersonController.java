@@ -100,22 +100,27 @@ public class PersonController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(required = false, defaultValue = "false") boolean strict,
         @RequestParam(required = false, defaultValue = "0") Integer institutionId,
+        @RequestParam(required = false, defaultValue = "false") boolean harvestable,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return personService.findPeopleByNameAndEmployment(tokens,
-            pageable, strict, institutionId);
+            pageable, strict, institutionId, harvestable);
     }
 
-    @GetMapping("/scopus-author/{scopusId}")
-    public PersonIndex findByScopusId(@PathVariable("scopusId") String scopusId) {
-        return personService.findPersonByScopusAuthorId(scopusId);
+    @GetMapping("/import-identifier/{identifier}")
+    public PersonIndex findByImportIdentifier(@PathVariable("identifier") String identifier) {
+        return personService.findPersonByImportIdentifier(identifier);
     }
 
     @GetMapping("/employed-at/{organisationUnitId}")
-    public Page<PersonIndex> findEmployeesForInstitution(@PathVariable Integer organisationUnitId,
-                                                         @RequestParam Boolean fetchAlumni,
-                                                         Pageable pageable) {
-        return personService.findPeopleForOrganisationUnit(organisationUnitId, pageable,
+    public Page<PersonIndex> findEmployeesForInstitution(
+        @RequestParam("tokens")
+        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @PathVariable Integer organisationUnitId,
+        @RequestParam Boolean fetchAlumni,
+        Pageable pageable) {
+        StringUtil.sanitizeTokens(tokens);
+        return personService.findPeopleForOrganisationUnit(organisationUnitId, tokens, pageable,
             fetchAlumni);
     }
 
@@ -202,6 +207,7 @@ public class PersonController {
 
     @DeleteMapping("/{personId}")
     @PreAuthorize("hasAuthority('DELETE_PERSON')")
+    @PersonEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePerson(@PathVariable Integer personId) {
         personService.deletePerson(personId);

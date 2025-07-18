@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.converter.IndicatorConverter;
-import rs.teslaris.assessment.dto.IndicatorDTO;
-import rs.teslaris.assessment.dto.IndicatorResponseDTO;
-import rs.teslaris.assessment.model.ApplicableEntityType;
-import rs.teslaris.assessment.service.interfaces.IndicatorService;
+import rs.teslaris.assessment.dto.indicator.IndicatorDTO;
+import rs.teslaris.assessment.dto.indicator.IndicatorResponseDTO;
+import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
+import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
 

@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,24 +85,62 @@ public class StringUtil {
     }
 
     @Nonnull
-    public static String performSimpleSerbianPreprocessing(String input) {
+    public static String performSimpleLatinPreprocessing(String input) {
         if (input == null) {
             return "";
         }
+
+        // Handle Serbian-specific digraph mappings
+        input = input
+            .replace("ђ", "dj")
+            .replace("Ђ", "Dj")
+            .replace("њ", "nj")
+            .replace("Њ", "Nj")
+            .replace("љ", "lj")
+            .replace("Љ", "Lj")
+            .replace("đ", "dj")
+            .replace("Đ", "Dj")
+            .replace("џ", "dz")
+            .replace("Џ", "Dz");
 
         var transliterator =
             Transliterator.getInstance("Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC");
 
         var result = transliterator.transliterate(input.toLowerCase());
 
+        result = applyASCIIFolding(result);
+
         var normalizer = Normalizer2.getNFDInstance();
         result = normalizer.normalize(result);
 
-        result = result.replaceAll("[^a-z0-9 ]", "");
-
         result = result.toLowerCase();
 
+        result = result.replaceAll("[^a-z0-9 ]", "");
+
         return result;
+    }
+
+    private static String applyASCIIFolding(String input) {
+        try (var tokenizer = new WhitespaceTokenizer()) {
+            tokenizer.setReader(new StringReader(input));
+            var tokenStream = new ASCIIFoldingFilter(tokenizer);
+            tokenStream.reset();
+
+            var folded = new StringBuilder();
+            var attr = tokenStream.getAttribute(CharTermAttribute.class);
+
+            while (tokenStream.incrementToken()) {
+                folded.append(attr.toString()).append(" ");
+            }
+
+            tokenStream.end();
+            tokenStream.close();
+
+            return folded.toString().trim();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to apply ASCII folding",
+                e); // Should never happen with StringReader
+        }
     }
 
     public static String formatIssn(String issn) {

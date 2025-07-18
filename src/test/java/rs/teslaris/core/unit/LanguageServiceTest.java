@@ -19,8 +19,10 @@ public class LanguageServiceTest {
 
     @Mock
     private LanguageRepository languageRepository;
+
     @InjectMocks
     private LanguageServiceImpl languageService;
+
 
     @Test
     public void shouldReturnLanguageWhenLanguageExists() {

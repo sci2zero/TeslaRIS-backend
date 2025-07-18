@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -415,7 +414,7 @@ public class InvolvementServiceTest {
         assertNotNull(employment.getDateTo());
         assertEquals(LocalDate.now(), employment.getDateTo());
         verify(employmentRepository).save(employment);
-        verify(personService).indexPerson(employment.getPersonInvolved(), personId);
+        verify(personService).indexPerson(employment.getPersonInvolved());
     }
 
     @Test
@@ -432,7 +431,7 @@ public class InvolvementServiceTest {
         assertThrows(NotFoundException.class,
             () -> involvementService.endEmployment(institutionId, personId));
         verify(employmentRepository, never()).save(any(Employment.class));
-        verify(personService, never()).indexPerson(any(), anyInt());
+        verify(personService, never()).indexPerson(any());
     }
 
     @Test
@@ -509,7 +508,7 @@ public class InvolvementServiceTest {
         verify(personService).save(person);
         verify(organisationUnitService).save(unit);
         verify(employmentRepository).save(any(Employment.class));
-        verify(personService).indexPerson(person, person.getId());
+        verify(personService).indexPerson(person);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(person.getId());
     }
 

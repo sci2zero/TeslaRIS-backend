@@ -32,6 +32,7 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -39,7 +40,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
@@ -59,26 +59,29 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final CommissionRepository commissionRepository;
+
 
     @Autowired
     public JournalServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
                               MultilingualContentService multilingualContentService,
                               LanguageTagService languageTagService,
                               PersonContributionService personContributionService,
-                              EmailUtil emailUtil,
                               IndexBulkUpdateService indexBulkUpdateService,
                               JournalJPAServiceImpl journalJPAService,
                               SearchService<JournalIndex> searchService,
                               JournalIndexRepository journalIndexRepository,
                               JournalRepository journalRepository,
-                              DocumentPublicationIndexRepository documentPublicationIndexRepository) {
+                              DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                              CommissionRepository commissionRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
-            personContributionService, emailUtil, indexBulkUpdateService);
+            personContributionService, indexBulkUpdateService);
         this.journalJPAService = journalJPAService;
         this.searchService = searchService;
         this.journalIndexRepository = journalIndexRepository;
         this.journalRepository = journalRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
+        this.commissionRepository = commissionRepository;
     }
 
     @Override
@@ -88,8 +91,8 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public Page<JournalIndex> searchJournals(List<String> tokens, Pageable pageable,
-                                             Integer institutionId) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId),
+                                             Integer institutionId, Integer commissionId) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, institutionId, commissionId),
             pageable, JournalIndex.class, "journal");
     }
 
@@ -109,7 +112,27 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public JournalIndex readJournalByIssn(String eIssn, String printIssn) {
+        boolean isEissnBlank = (Objects.isNull(eIssn) || eIssn.isBlank());
+        boolean isPrintIssnBlank = (Objects.isNull(printIssn) || printIssn.isBlank());
+
+        if (isEissnBlank && isPrintIssnBlank) {
+            return null;
+        }
+
+        if (isEissnBlank) {
+            eIssn = printIssn;
+        } else if (isPrintIssnBlank) {
+            printIssn = eIssn;
+        }
+
         return journalIndexRepository.findJournalIndexByeISSNOrPrintISSN(eIssn, printIssn)
+            .orElse(null);
+    }
+
+    @Override
+    public JournalIndex readJournalByIdentifiers(String eIssn, String printIssn,
+                                                 String openAlexId) {
+        return journalIndexRepository.findByAnyIdentifiers(eIssn, printIssn, openAlexId)
             .orElse(null);
     }
 
@@ -119,13 +142,19 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public Journal findRaw(Integer journalId) {
+        return journalRepository.findRaw(journalId)
+            .orElseThrow(() -> new NotFoundException("Journal with given ID does not exist."));
+    }
+
+    @Override
     public Optional<Journal> tryToFindById(Integer journalId) {
         return journalRepository.findById(journalId);
     }
 
     @Override
     public Journal findJournalByOldId(Integer journalId) {
-        return journalRepository.findJournalByOldId(journalId).orElse(null);
+        return journalRepository.findByOldIdsContains(journalId).orElse(null);
     }
 
     @Override
@@ -157,8 +186,6 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         indexJournal(journal,
             journalIndexRepository.findJournalIndexByDatabaseId(journal.getId())
                 .orElse(new JournalIndex()));
-
-        emailUtil.notifyInstitutionalEditor(savedJournal.getId(), "journal");
 
         return savedJournal;
     }
@@ -239,10 +266,18 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public void indexJournal(Journal journal) {
+        journalIndexRepository.findJournalIndexByDatabaseId(journal.getId()).ifPresent(index -> {
+            indexJournal(journal, index);
+        });
+    }
+
+    @Override
     public void indexJournal(Journal journal, JournalIndex index) {
         index.setDatabaseId(journal.getId());
 
         indexCommonFields(journal, index);
+        reindexJournalVolatileInformation(journal.getId());
         journalIndexRepository.save(index);
     }
 
@@ -252,9 +287,23 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             journalIndex.setRelatedInstitutionIds(
                 journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journalId)
                     .stream().toList());
+            journalIndex.setClassifiedBy(
+                commissionRepository.findCommissionsThatClassifiedJournal(journalId));
 
             journalIndexRepository.save(journalIndex);
         });
+    }
+
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var journal = findOne(id);
+        journal.getOldIds().add(oldId);
+        save(journal);
+    }
+
+    @Override
+    public void save(Journal journal) {
+        journalRepository.save(journal);
     }
 
     @Override
@@ -290,7 +339,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                                             String eIssn, String printIssn) {
         var potentialHits = searchJournals(
             Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2),
-            null).getContent();
+            null, null).getContent();
 
         for (var potentialHit : potentialHits) {
             for (var title : potentialHit.getTitleOther().split("\\|")) {
@@ -350,13 +399,17 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         index.setTitleOtherSortable(index.getTitleOther());
         index.setEISSN(journal.getEISSN());
         index.setPrintISSN(journal.getPrintISSN());
+        index.setOpenAlexId(journal.getOpenAlexId());
 
         index.setRelatedInstitutionIds(
             journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(journal.getId())
                 .stream().toList());
+        index.setClassifiedBy(
+            commissionRepository.findCommissionsThatClassifiedJournal(journal.getId()));
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId) {
+    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
+                                         Integer commissionId) {
         var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -389,27 +442,24 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("print_issn").value(normalizedToken)))
                     ));
-                } else if (token.endsWith(".")) {
-                    var wildcard = token.replace(".", "") + "?";
+                } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                    var wildcard = token.replace("\\*", "").replace(".", "");
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
-                    ));
-                } else if (token.endsWith("\\*")) {
-                    var wildcard = token.replace("\\*", "") + "*";
-                    b.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_other").value(wildcard + "*")
+                                .caseInsensitive(true)))
                     ));
                 } else {
                     var wildcard = token + "*";
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_sr")
+                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
+                                .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
                         .should(sb -> sb.match(
@@ -419,6 +469,14 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                     ));
                 }
             });
+
+            if (Objects.nonNull(commissionId)) {
+                b.mustNot(mnb -> {
+                    mnb.term(m -> m.field("classified_by").value(commissionId));
+                    return mnb;
+                });
+            }
+
             return b.minimumShouldMatch(Integer.toString(minShouldMatch));
         })))._toQuery();
     }

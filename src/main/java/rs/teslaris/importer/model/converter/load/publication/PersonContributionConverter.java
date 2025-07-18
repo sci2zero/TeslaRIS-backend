@@ -19,7 +19,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
-import rs.teslaris.importer.utility.OAIPMHParseUtility;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor
@@ -165,10 +165,12 @@ public class PersonContributionConverter {
 
     @Nullable
     private EmploymentTitle getEmploymentTitleFromName(String name) {
+        name = name.toLowerCase();
         switch (name) {
             case "docent":
                 return EmploymentTitle.ASSISTANT_PROFESSOR;
-            case "vanredni profesor":
+            case "vanredni profesor",
+                 "vаnredni profesor": // for some reason "n" has different encoding
                 return EmploymentTitle.ASSOCIATE_PROFESSOR;
             case "redovni profesor":
                 return EmploymentTitle.FULL_PROFESSOR;

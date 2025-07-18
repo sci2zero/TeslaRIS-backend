@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import rs.teslaris.assessment.dto.DocumentAssessmentClassificationDTO;
-import rs.teslaris.assessment.dto.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.ImaginaryPublicationAssessmentRequestDTO;
 import rs.teslaris.assessment.dto.ImaginaryPublicationAssessmentResponseDTO;
 import rs.teslaris.assessment.dto.PublicationAssessmentRequestDTO;
-import rs.teslaris.assessment.service.interfaces.DocumentAssessmentClassificationService;
+import rs.teslaris.assessment.dto.classification.DocumentAssessmentClassificationDTO;
+import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.assessment.service.interfaces.classification.DocumentAssessmentClassificationService;
 import rs.teslaris.core.annotation.ApiKeyValidation;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
@@ -96,9 +96,9 @@ public class DocumentAssessmentClassificationController {
     @PostMapping("/imaginary-journal-publication")
     public ImaginaryPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
         @RequestBody @Valid
-        ImaginaryPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest,
-        @RequestParam String token) {
-        if (reCaptchaService.isCaptchaValid(token)) {
+        ImaginaryPublicationAssessmentRequestDTO imaginaryJournalPublicationAssessmentRequest) {
+        if (!reCaptchaService.isCaptchaValid(
+            imaginaryJournalPublicationAssessmentRequest.getCaptchaToken())) {
             throw new CaptchaException("Invalid captcha solution.");
         }
 
@@ -117,9 +117,9 @@ public class DocumentAssessmentClassificationController {
     @PostMapping("/imaginary-proceedings-publication")
     public ImaginaryPublicationAssessmentResponseDTO assessImaginaryProceedingsPublication(
         @RequestBody @Valid
-        ImaginaryPublicationAssessmentRequestDTO imaginaryProceedingsPublicationAssessmentRequest,
-        @RequestParam String token) {
-        if (reCaptchaService.isCaptchaValid(token)) {
+        ImaginaryPublicationAssessmentRequestDTO imaginaryProceedingsPublicationAssessmentRequest) {
+        if (!reCaptchaService.isCaptchaValid(
+            imaginaryProceedingsPublicationAssessmentRequest.getCaptchaToken())) {
             throw new CaptchaException("Invalid captcha solution.");
         }
 

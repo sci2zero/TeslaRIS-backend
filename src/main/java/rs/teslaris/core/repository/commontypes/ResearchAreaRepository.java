@@ -30,15 +30,14 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
     @Query("SELECT COUNT(m) > 0 FROM Monograph m JOIN m.researchArea WHERE m.researchArea.id = :researchAreaId")
     boolean isResearchedInMonograph(Integer researchAreaId);
 
-    @Query("SELECT COUNT(t) > 0 FROM Thesis t join t.researchArea WHERE t.researchArea.id = :researchAreaId")
-    boolean isResearchedInThesis(Integer researchAreaId);
-
     @Query(value =
-        "SELECT ra FROM ResearchArea ra LEFT JOIN ra.name name WHERE name.language.languageTag = :languageTag AND " +
-            "LOWER(name.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))",
+        "SELECT ra FROM ResearchArea ra LEFT JOIN ra.name name WHERE (name.language.languageTag = :languageTag AND " +
+            "LOWER(name.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))) OR " +
+            "ra.processedName LIKE CONCAT('%', :searchExpression, '%')",
         countQuery =
-            "SELECT count(DISTINCT ra) FROM ResearchArea ra JOIN ra.name n WHERE n.language.languageTag = :languageTag AND " +
-                "LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))")
+            "SELECT count(DISTINCT ra) FROM ResearchArea ra JOIN ra.name n WHERE (n.language.languageTag = :languageTag AND " +
+                "LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))) OR " +
+                "ra.processedName LIKE CONCAT('%', :searchExpression, '%')")
     Page<ResearchArea> searchResearchAreas(String searchExpression, String languageTag,
                                            Pageable pageable);
 }

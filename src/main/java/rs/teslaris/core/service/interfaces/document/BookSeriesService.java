@@ -25,6 +25,8 @@ public interface BookSeriesService {
 
     BookSeries findBookSeriesById(Integer bookSeriesId);
 
+    BookSeries findRaw(Integer bookSeriesId);
+
     BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index);
 
     void updateBookSeries(Integer bookSeriesId, BookSeriesDTO bookSeriesDTO);
@@ -36,4 +38,8 @@ public interface BookSeriesService {
     CompletableFuture<Void> reindexBookSeries();
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
+
+    void indexBookSeries(BookSeries bookSeries);
+
+    void save(BookSeries bookSeries);
 }

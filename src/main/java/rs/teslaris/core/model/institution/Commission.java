@@ -68,4 +68,7 @@ public class Commission extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<Person> excludedResearchers = new HashSet<>();
+
+    @Column(name = "is_default")
+    private Boolean isDefault;
 }

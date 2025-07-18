@@ -2,6 +2,7 @@ package rs.teslaris.importer.controller;
 
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -13,7 +14,7 @@ import rs.teslaris.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.importer.service.interfaces.OAIPMHLoader;
 import rs.teslaris.importer.utility.DataSet;
-import rs.teslaris.importer.utility.OAIPMHSource;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHSource;
 
 @RestController
 @RequestMapping("/api/import")
@@ -28,6 +29,7 @@ public class OAIPMHHarvestController {
 
 
     @GetMapping("/harvest")
+    @PreAuthorize("hasAuthority('PERFORM_OAI_MIGRATION')")
     public void harvest(@RequestParam("dataSet") DataSet dataSet,
                         @RequestParam("source") OAIPMHSource source,
                         @RequestHeader("Authorization") String bearerToken) {
@@ -36,6 +38,7 @@ public class OAIPMHHarvestController {
     }
 
     @GetMapping("/load")
+    @PreAuthorize("hasAuthority('PERFORM_OAI_MIGRATION')")
     public void loadAuto(@RequestParam("dataSet") DataSet dataSet,
                          @RequestParam("performIndex") Boolean performIndex,
                          @RequestHeader("Authorization") String bearerToken) {
@@ -44,6 +47,7 @@ public class OAIPMHHarvestController {
     }
 
     @PatchMapping("/skip")
+    @PreAuthorize("hasAuthority('PERFORM_OAI_MIGRATION')")
     public void skipRecord(@RequestHeader("Authorization") String bearerToken,
                            @RequestParam("dataSet") DataSet dataSet) {
         oaipmhLoader.skipRecord(dataSet,
@@ -51,6 +55,7 @@ public class OAIPMHHarvestController {
     }
 
     @PatchMapping("/mark-as-loaded")
+    @PreAuthorize("hasAuthority('PERFORM_OAI_MIGRATION')")
     public void markRecordAsLoaded(@RequestHeader("Authorization") String bearerToken,
                                    @RequestParam("dataSet") DataSet dataSet) {
         oaipmhLoader.markRecordAsLoaded(dataSet,
@@ -58,6 +63,7 @@ public class OAIPMHHarvestController {
     }
 
     @GetMapping("/load-wizard/count-remaining")
+    @PreAuthorize("hasAuthority('PERFORM_OAI_MIGRATION')")
     public RemainingRecordsCountResponseDTO getRemainingRecordsCount(
         @RequestHeader("Authorization") String bearerToken) {
         return oaipmhLoader.countRemainingDocumentsForLoading(
@@ -65,6 +71,7 @@ public class OAIPMHHarvestController {
     }
 
     @GetMapping("/load-wizard")
+    @PreAuthorize("hasAuthority('PERFORM_OAI_MIGRATION')")
     @SuppressWarnings("unchecked")
     private <R> R loadUsingWizard(@RequestParam("dataSet") DataSet dataSet,
                                   @RequestHeader("Authorization") String bearerToken) {

@@ -33,4 +33,6 @@ public interface MonographPublicationService {
 
     void indexMonographPublication(MonographPublication monographPublication,
                                    DocumentPublicationIndex index);
+
+    void indexMonographPublication(MonographPublication monographPublication);
 }

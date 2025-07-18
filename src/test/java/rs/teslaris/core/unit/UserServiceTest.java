@@ -53,7 +53,6 @@ import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
-import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.Commission;
@@ -63,6 +62,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
+import rs.teslaris.core.model.user.EmailUpdateRequest;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -71,17 +71,19 @@ import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
+import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.user.UserServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
@@ -108,7 +110,7 @@ public class UserServiceTest {
     private SearchService<UserAccountIndex> searchService;
 
     @Mock
-    private LanguageService languageService;
+    private LanguageTagService languageTagService;
 
     @Mock
     private AuthorityRepository authorityRepository;
@@ -142,6 +144,9 @@ public class UserServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private EmailUpdateRequestRepository emailUpdateRequestRepository;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -184,12 +189,8 @@ public class UserServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        // when
-        userService.deactivateUser(userId);
-
-        // then
-        assertFalse(user.getLocked());
-        verify(userRepository, never()).save(user);
+        // when & then
+        assertThrows(CantEditException.class, () -> userService.deactivateUser(userId));
     }
 
     @Test
@@ -214,9 +215,9 @@ public class UserServiceTest {
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
 
-        var language = new Language();
-        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
-        when(languageService.findOne(1)).thenReturn(language);
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
 
         var authority = new Authority();
         authority.setName(UserRole.RESEARCHER.toString());
@@ -269,9 +270,9 @@ public class UserServiceTest {
         registrationRequest.setName("Name");
         registrationRequest.setSurname("Surname");
 
-        var language = new Language();
-        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
-        when(languageService.findOne(1)).thenReturn(language);
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
 
         var authority = new Authority();
         authority.setName(UserRole.INSTITUTIONAL_EDITOR.toString());
@@ -321,9 +322,9 @@ public class UserServiceTest {
         registrationRequest.setName("Name");
         registrationRequest.setSurname("Surname");
 
-        var language = new Language();
-        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
-        when(languageService.findOne(1)).thenReturn(language);
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
 
         var authority = new Authority();
         authority.setName(UserRole.VICE_DEAN_FOR_SCIENCE.toString());
@@ -374,9 +375,9 @@ public class UserServiceTest {
         registrationRequest.setName("Promotion");
         registrationRequest.setSurname("Admin");
 
-        var language = new Language();
-        language.setLanguageCode(LanguageAbbreviations.ENGLISH);
-        when(languageService.findOne(1)).thenReturn(language);
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.ENGLISH);
+        when(languageTagService.findOne(1)).thenReturn(language);
 
         var authority = new Authority();
         authority.setName(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.toString());
@@ -429,9 +430,9 @@ public class UserServiceTest {
         registrationRequest.setName("Name");
         registrationRequest.setSurname("Surname");
 
-        var language = new Language();
-        language.setLanguageCode(LanguageAbbreviations.SERBIAN);
-        when(languageService.findOne(1)).thenReturn(language);
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
 
         var authority = new Authority();
         authority.setName(UserRole.COMMISSION.toString());
@@ -508,7 +509,7 @@ public class UserServiceTest {
         UserAccountActivation accountActivation = new UserAccountActivation(activationTokenValue,
             new User("johndoe@example.com", "password123", "",
                 "John", "Doe", true,
-                true, new Language(), new Language(), new Authority(), null, null, null,
+                true, new LanguageTag(), new LanguageTag(), new Authority(), null, null, null,
                 UserNotificationPeriod.NEVER));
         when(
             userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
@@ -560,7 +561,7 @@ public class UserServiceTest {
         requestDTO.setOldPassword("oldPassword");
         requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
-        requestDTO.setPreferredUILanguageId(1);
+        requestDTO.setPreferredUILanguageTagId(1);
         requestDTO.setOrganisationalUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.WEEKLY);
 
@@ -572,8 +573,8 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setLocked(false);
         user.setCanTakeRole(false);
-        user.setPreferredUILanguage(new Language());
-        user.setPreferredReferenceCataloguingLanguage(new Language());
+        user.setPreferredUILanguage(new LanguageTag());
+        user.setPreferredReferenceCataloguingLanguage(new LanguageTag());
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
@@ -583,11 +584,12 @@ public class UserServiceTest {
         orgUnit.setId(4);
         user.setOrganisationUnit(orgUnit);
 
-        var preferredLanguage = new Language();
+        var preferredLanguage = new LanguageTag();
+        preferredLanguage.setLanguageTag("SR");
         var organisationalUnit = new OrganisationUnit();
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(languageTagService.findOne(1)).thenReturn(preferredLanguage);
         when(organisationUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
@@ -599,7 +601,7 @@ public class UserServiceTest {
         userService.updateUser(requestDTO, 1, "fingerprint");
 
         // then
-        assertEquals("test@example.com", user.getEmail());
+        assertEquals("oldemail@example.com", user.getEmail());
         assertEquals("Jane", user.getFirstname());
         assertEquals("Doe", user.getLastName());
         assertFalse(user.getCanTakeRole());
@@ -618,8 +620,8 @@ public class UserServiceTest {
         requestDTO.setNewPassword("newPassword123");
         requestDTO.setFirstname("JOHN");
         requestDTO.setLastName("SMITH");
-        requestDTO.setPreferredUILanguageId(1);
-        requestDTO.setPreferredReferenceCataloguingLanguageId(1);
+        requestDTO.setPreferredUILanguageTagId(1);
+        requestDTO.setPreferredReferenceCataloguingLanguageTagId(1);
         requestDTO.setOrganisationalUnitId(3);
         requestDTO.setNotificationPeriod(UserNotificationPeriod.DAILY);
 
@@ -631,22 +633,23 @@ public class UserServiceTest {
         user.setLastName("Doe");
         user.setCanTakeRole(false);
         user.setLocked(false);
-        user.setPreferredUILanguage(new Language());
-        user.setPreferredReferenceCataloguingLanguage(new Language());
+        user.setPreferredUILanguage(new LanguageTag());
+        user.setPreferredReferenceCataloguingLanguage(new LanguageTag());
         var person = new Person();
         user.setPerson(person);
         var orgUnit = new OrganisationUnit();
         orgUnit.setId(4);
         user.setOrganisationUnit(orgUnit);
 
-        var preferredLanguage = new Language();
+        var preferredLanguage = new LanguageTag();
+        preferredLanguage.setLanguageTag("SR");
         var organisationalUnit = new OrganisationUnit();
         organisationalUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(languageTagService.findOne(1)).thenReturn(preferredLanguage);
         when(organisationUnitService.findOne(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("oldPassword", "oldPassword")).thenReturn(true);
@@ -658,13 +661,12 @@ public class UserServiceTest {
         userService.updateUser(requestDTO, 1, "fingerprint");
 
         // then
-        assertEquals("test@example.com", user.getEmail());
+        assertEquals("oldemail@example.com", user.getEmail());
         assertEquals("JOHN", user.getFirstname());
         assertEquals("SMITH", user.getLastName());
         assertFalse(user.getCanTakeRole());
         assertEquals(preferredLanguage, user.getPreferredReferenceCataloguingLanguage());
         assertEquals(person, user.getPerson());
-        assertEquals(organisationalUnit, user.getOrganisationUnit());
         assertEquals("encodedNewPassword", user.getPassword());
     }
 
@@ -693,13 +695,15 @@ public class UserServiceTest {
         var user = new User();
         user.setAuthority(new Authority(UserRole.RESEARCHER.toString(), null));
         user.setPassword("currentPassword");
-        var preferredLanguage = new Language();
-        requestDTO.setPreferredUILanguageId(1);
+        user.setEmail("old.email@example.com");
+        var preferredLanguage = new LanguageTag();
+        preferredLanguage.setLanguageTag("SR");
+        requestDTO.setPreferredUILanguageTagId(1);
         var organisationalUnit = new OrganisationUnit();
         requestDTO.setOrganisationalUnitId(3);
 
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
-        when(languageService.findOne(1)).thenReturn(preferredLanguage);
+        when(languageTagService.findOne(1)).thenReturn(preferredLanguage);
         when(organisationUnitService.findOrganisationUnitById(3)).thenReturn(
             organisationalUnit);
         when(passwordEncoder.matches("wrongPassword", "currentPassword")).thenReturn(false);
@@ -861,7 +865,7 @@ public class UserServiceTest {
         var user = new User();
         user.setEmail("test@example.com");
         user.setPreferredUILanguage(
-            new Language(LanguageAbbreviations.SERBIAN, new HashSet<>()));
+            new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
@@ -957,8 +961,8 @@ public class UserServiceTest {
         // Given
         var personId = 1;
         var user = new User();
-        user.setPreferredUILanguage(new Language());
-        user.setPreferredReferenceCataloguingLanguage(new Language());
+        user.setPreferredUILanguage(new LanguageTag());
+        user.setPreferredReferenceCataloguingLanguage(new LanguageTag());
 
         when(userRepository.findForResearcher(personId)).thenReturn(Optional.of(user));
 
@@ -1126,8 +1130,8 @@ public class UserServiceTest {
         var user = new User();
         user.setId(8);
         user.setEmail("employee@example.com");
-        user.setPreferredUILanguage(new Language() {{
-            setLanguageCode("SR");
+        user.setPreferredUILanguage(new LanguageTag() {{
+            setLanguageTag("SR");
         }});
         when(userRepository.findById(8)).thenReturn(Optional.of(user));
         when(messageSource.getMessage(eq("adminPasswordReset.mailSubject"), any(), any()))
@@ -1153,8 +1157,8 @@ public class UserServiceTest {
         var user = new User();
         user.setId(9);
         user.setEmail("employee@example.com");
-        user.setPreferredUILanguage(new Language() {{
-            setLanguageCode("SR");
+        user.setPreferredUILanguage(new LanguageTag() {{
+            setLanguageTag("SR");
         }});
         when(userRepository.findById(9)).thenReturn(Optional.of(user));
         when(messageSource.getMessage(any(), any(), any())).thenReturn("msg");
@@ -1181,5 +1185,46 @@ public class UserServiceTest {
         // Then
         verify(tokenUtil).revokeToken(jti);
         verifyNoMoreInteractions(tokenUtil);
+    }
+
+    @Test
+    public void shouldConfirmEmailChangeWhenTokenIsValid() {
+        // given
+        var token = "valid-token";
+        var user = new User();
+        user.setEmail("old@example.com");
+
+        var emailUpdateRequest = new EmailUpdateRequest();
+        emailUpdateRequest.setEmailUpdateToken(token);
+        emailUpdateRequest.setNewEmailAddress("new@example.com");
+        emailUpdateRequest.setUser(user);
+
+        when(emailUpdateRequestRepository.findByEmailUpdateToken(token))
+            .thenReturn(Optional.of(emailUpdateRequest));
+
+        // when
+        boolean result = userService.confirmEmailChange(token);
+
+        // then
+        assertTrue(result);
+        assertEquals("new@example.com", user.getEmail());
+        verify(userRepository).save(user);
+        verify(emailUpdateRequestRepository).delete(emailUpdateRequest);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenTokenIsInvalid() {
+        // given
+        var token = "invalid-token";
+        when(emailUpdateRequestRepository.findByEmailUpdateToken(token))
+            .thenReturn(Optional.empty());
+
+        // when
+        boolean result = userService.confirmEmailChange(token);
+
+        // then
+        assertFalse(result);
+        verify(userRepository, never()).save(any());
+        verify(emailUpdateRequestRepository, never()).delete(any());
     }
 }

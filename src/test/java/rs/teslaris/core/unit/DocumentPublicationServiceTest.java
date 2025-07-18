@@ -41,6 +41,7 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
@@ -321,14 +322,14 @@ public class DocumentPublicationServiceTest {
     public void shouldGetDocumentPublicationCount() {
         // Given
         var expectedCount = 42L;
-        when(documentPublicationIndexRepository.count()).thenReturn(expectedCount);
+        when(documentPublicationIndexRepository.countPublications()).thenReturn(expectedCount);
 
         // When
         long actualCount = documentPublicationService.getPublicationCount();
 
         // Then
         assertEquals(expectedCount, actualCount);
-        verify(documentPublicationIndexRepository, times(1)).count();
+        verify(documentPublicationIndexRepository, times(1)).countPublications();
     }
 
     @Test
@@ -424,7 +425,8 @@ public class DocumentPublicationServiceTest {
 
         // when
         var result =
-            documentPublicationService.findDocumentDuplicates(titles, "DOI", "scopusId");
+            documentPublicationService.findDocumentDuplicates(titles, "DOI", "scopusId",
+                "openAlexId");
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -602,7 +604,7 @@ public class DocumentPublicationServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenDoiExists() {
+    void shouldReturnTrueWhenIdentifierExists() {
         // given
         var identifier = "10.1234/example-doi";
         var documentPublicationId = 1;
@@ -828,5 +830,88 @@ public class DocumentPublicationServiceTest {
         assertEquals(3, result.size());
         assertEquals("uno", result.getFirst().a);
         assertEquals(2L, result.getFirst().b);
+    }
+
+    @Test
+    void testFindDocumentByCommonIdentifier_WithValidIds() {
+        // Given
+        var doi = "https://doi.org/10.1234/test";
+        var openAlexId = "https://openalex.org/W123456789";
+        var mockDocument = new JournalPublication();
+        Optional<Document> expected = Optional.of(mockDocument);
+
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("W123456789", "10.1234/test",
+            "1234567"))
+            .thenReturn(expected);
+
+        // When
+        var result =
+            documentPublicationService.findDocumentByCommonIdentifier(doi, openAlexId, "1234567");
+
+        // Then
+        assertTrue(result.isPresent());
+        assertEquals(mockDocument, result.get());
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("W123456789", "10.1234/test",
+            "1234567");
+    }
+
+    @Test
+    void testFindDocumentByCommonIdentifier_WithNullValues() {
+        // Given
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT"))
+            .thenReturn(Optional.empty());
+
+        // When
+        var result = documentPublicationService.findDocumentByCommonIdentifier(null, null, null);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT");
+    }
+
+    @Test
+    void testFindDocumentByCommonIdentifier_WithBlankValues() {
+        // Given
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT"))
+            .thenReturn(Optional.empty());
+
+        // When
+        var result = documentPublicationService.findDocumentByCommonIdentifier(" ", " ", " ");
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT");
+    }
+
+    @Test
+    void shouldReturnTrueWhenDoiExists() {
+        // Given
+        var doi = "10.1234/example";
+        when(documentRepository.existsByDoi(doi, null)).thenReturn(true);
+
+        // When
+        boolean result = documentPublicationService.isDoiInUse(doi);
+
+        // Then
+        assertTrue(result);
+        verify(documentRepository).existsByDoi(doi, null);
+    }
+
+    @Test
+    void shouldReturnFalseWhenDoiDoesNotExist() {
+        // Given
+        var doi = "10.5678/unused";
+        when(documentRepository.existsByDoi(doi, null)).thenReturn(false);
+
+        // When
+        boolean result = documentPublicationService.isDoiInUse(doi);
+
+        // Then
+        assertFalse(result);
+        verify(documentRepository).existsByDoi(doi, null);
     }
 }

@@ -34,7 +34,7 @@ public class NotificationFactory {
                 "notification.newOtherNameDetected",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -53,7 +53,7 @@ public class NotificationFactory {
                 "notification.addedToPublication",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -72,12 +72,35 @@ public class NotificationFactory {
                 "notification.newImportsHarvested",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
         }
         return new Notification(message, notificationValues, NotificationType.NEW_IMPORTS_HARVESTED,
+            user);
+    }
+
+    public static Notification contructNewEntityCreationNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {
+                notificationValues.get("entityType"),
+                notificationValues.get("entityName")
+            };
+
+        try {
+            message = messageSource.getMessage(
+                "notification.newEntityCreation",
+                args,
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues, NotificationType.NEW_ENTITY_CREATION,
             user);
     }
 
@@ -91,7 +114,7 @@ public class NotificationFactory {
                 "notification.deduplicationScanFinished",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -110,7 +133,7 @@ public class NotificationFactory {
                 "notification.potentialClaimsFound",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -130,7 +153,7 @@ public class NotificationFactory {
                 "notification.newEventsForClassification",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -150,7 +173,7 @@ public class NotificationFactory {
                 "notification.newPublicationsForAssessment",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -170,7 +193,7 @@ public class NotificationFactory {
                 "promotion.candidatePulledFromPromotion",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -189,7 +212,7 @@ public class NotificationFactory {
                 success ? "notification.scheduleTaskCompleted" : "notification.scheduleTaskFailed",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -209,7 +232,7 @@ public class NotificationFactory {
                     "notification.scheduleReportGenerationFailed",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);
@@ -229,7 +252,7 @@ public class NotificationFactory {
                     "notification.scheduleBackupGenerationFailed",
                 args,
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
             message = fallbackToDefaultLocale(args);

@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.NotificationActionResult;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
@@ -76,8 +77,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
-    public void performAction(Integer notificationId, Integer userId,
-                              NotificationAction notificationAction) {
+    public NotificationActionResult performAction(Integer notificationId, Integer userId,
+                                                  NotificationAction notificationAction) {
         var notification = findOne(notificationId);
 
         if (!notification.getUser().getId().equals(userId)) {
@@ -85,6 +86,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 "Exception you are trying to approve does not belong to you.");
         }
 
+        var result = new NotificationActionResult("");
         switch (notification.getNotificationType()) {
             case NEW_PAPER_HARVESTED:
                 //TODO: To be implemented...
@@ -107,9 +109,12 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             case PROMOTION_NOTIFICATION:
                 // Redirection to promotions management page done by frontend logic.
                 break;
+            case NEW_ENTITY_CREATION:
+                result = new NotificationActionResult(notification.getValues().get("entityUrl"));
         }
 
         delete(notificationId);
+        return result;
     }
 
     @Override
@@ -190,7 +195,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     private Locale getLocale(List<Notification> notifications) {
         var language =
-            notifications.getFirst().getUser().getPreferredUILanguage().getLanguageCode()
+            notifications.getFirst().getUser().getPreferredUILanguage().getLanguageTag()
                 .toLowerCase();
         return Locale.forLanguageTag(language);
     }

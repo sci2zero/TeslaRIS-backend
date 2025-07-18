@@ -131,11 +131,17 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "scopus_id", store = true)
     private String scopusId;
 
+    @Field(type = FieldType.Keyword, name = "open_alex_id", store = true)
+    private String openAlexId;
+
     @Field(type = FieldType.Integer, name = "organisation_unit_ids", store = true)
     private List<Integer> organisationUnitIds = new ArrayList<>();
 
     @Field(type = FieldType.Integer, name = "claimer_ids", store = true)
     private List<Integer> claimerIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "claimer_ordinals", store = true)
+    private List<Integer> claimerOrdinals = new ArrayList<>();
 
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
@@ -154,6 +160,30 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Date, name = "public_review_start_dates", store = true)
     private List<LocalDate> publicReviewStartDates = new ArrayList<>();
+
+    @Field(type = FieldType.Keyword, name = "scientific_field", store = true)
+    private String scientificField;
+
+    @Field(type = FieldType.Date, name = "latest_public_review_start_date", store = true)
+    private LocalDate latestPublicReviewStartDate;
+
+    @Field(type = FieldType.Boolean, name = "is_on_public_review", store = true)
+    private Boolean isOnPublicReview;
+
+    @Field(type = FieldType.Boolean, name = "is_public_review_completed", store = true)
+    private Boolean isPublicReviewCompleted;
+
+    @Field(type = FieldType.Integer, name = "thesis_institution_id", store = true)
+    private Integer thesisInstitutionId;
+
+    @Field(type = FieldType.Text, name = "thesis_institution_name_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
+    private String thesisInstitutionNameSr;
+
+    @Field(type = FieldType.Text, name = "thesis_institution_name_other", store = true, analyzer = "english", searchAnalyzer = "english")
+    private String thesisInstitutionNameOther;
+
+    @Field(type = FieldType.Text, name = "thesis_author_name", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String thesisAuthorName;
 
     @Field(type = FieldType.Boolean, name = "is_open_access", store = true)
     private Boolean isOpenAccess;
