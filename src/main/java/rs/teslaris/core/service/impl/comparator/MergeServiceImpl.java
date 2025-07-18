@@ -927,7 +927,6 @@ public class MergeServiceImpl implements MergeService {
         mergedEntity.getMergedIds().add(deletionEntityId);
         mergedEntity.getOldIds().addAll(deletionEntity.getOldIds());
 
-        saveMethod.accept(deletionEntity);
         saveMethod.accept(mergedEntity);
     }
 
