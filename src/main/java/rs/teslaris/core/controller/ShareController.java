@@ -1,6 +1,7 @@
 package rs.teslaris.core.controller;
 
 import java.util.Set;
+import org.apache.commons.text.StringEscapeUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -32,10 +33,10 @@ public class ShareController {
                                                     @RequestParam String lang) {
         var document = documentPublicationService.findOne(id);
 
-        var title = getContentForLanguage(document.getTitle(), lang);
-        var description = getContentForLanguage(document.getDescription(), lang);
-        var url = frontendUrl + lang + "/scientific-results/" +
-            getPageNameFromDocumentType(documentType) + "/" + id;
+        var title = StringEscapeUtils.escapeHtml4(getContentForLanguage(document.getTitle(), lang));
+        var description = StringEscapeUtils.escapeHtml4(getContentForLanguage(document.getDescription(), lang));
+        var url = StringEscapeUtils.escapeHtml4(frontendUrl + StringEscapeUtils.escapeHtml4(lang) + "/scientific-results/" +
+            getPageNameFromDocumentType(documentType) + "/" + id);
 
         var html = """
             <!DOCTYPE html>
