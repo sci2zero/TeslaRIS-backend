@@ -916,7 +916,7 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    private <T extends Mergeable> void migrateIdentifierHistory(Function<Integer, T> fetchFunction,
+    protected <T extends Mergeable> void migrateIdentifierHistory(Function<Integer, T> fetchFunction,
                                                                 Consumer<T> saveMethod,
                                                                 Integer deletionEntityId,
                                                                 Integer mergedEntityId) {
