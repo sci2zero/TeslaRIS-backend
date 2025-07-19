@@ -292,6 +292,10 @@ public class SecurityConfiguration {
                 // FEEDBACK
                 .requestMatchers(HttpMethod.POST, "/api/feedback").permitAll()
 
+                // SHARE
+                .requestMatchers(HttpMethod.GET, "/api/share/document/{documentType}/{id}")
+                .permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );
