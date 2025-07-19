@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.TransliterationMessageSource;
 
 @Configuration
 @Slf4j
@@ -85,6 +87,7 @@ public class BeanConfiguration {
     }
 
     @Bean
+    @Primary
     public MessageSource messageSource() {
         var messageSource = new ReloadableResourceBundleMessageSource();
 
@@ -94,7 +97,7 @@ public class BeanConfiguration {
         messageSource.setDefaultEncoding("UTF-8");
         messageSource.setFallbackToSystemLocale(true);
 
-        return messageSource;
+        return new TransliterationMessageSource(messageSource);
     }
 
     private String resolveValidMessageSourceBaseName() {

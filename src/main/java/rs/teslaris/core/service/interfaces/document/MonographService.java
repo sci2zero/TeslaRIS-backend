@@ -12,6 +12,8 @@ public interface MonographService {
 
     Monograph findMonographById(Integer monographId);
 
+    Monograph findRaw(Integer monographId);
+
     Page<DocumentPublicationIndex> searchMonographs(List<String> tokens, boolean onlyBooks);
 
     MonographDTO readMonographById(Integer monographId);

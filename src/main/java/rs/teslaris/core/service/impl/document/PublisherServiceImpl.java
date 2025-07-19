@@ -32,7 +32,6 @@ import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.StringUtil;
@@ -48,8 +47,6 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     private final PublisherIndexRepository publisherIndexRepository;
 
     private final MultilingualContentService multilingualContentService;
-
-    private final EmailUtil emailUtil;
 
     private final SearchService<PublisherIndex> searchService;
 
@@ -112,11 +109,6 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         }
 
         var savedPublisher = this.save(publisher);
-
-        savedPublisher.getName().stream().findFirst().ifPresent(mc -> {
-            emailUtil.notifyInstitutionalEditor(savedPublisher.getId(), mc.getContent(),
-                "publisher");
-        });
 
         indexPublisher(publisher, new PublisherIndex());
 
@@ -197,6 +189,12 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     public void indexPublisher(Publisher publisher) {
         indexPublisher(publisher, publisherIndexRepository.findByDatabaseId(publisher.getId())
             .orElse(new PublisherIndex()));
+    }
+
+    @Override
+    public Publisher findRaw(Integer publisherId) {
+        return publisherRepository.findRaw(publisherId)
+            .orElseThrow(() -> new NotFoundException("Publisher with given ID does not exist."));
     }
 
     private void setCommonFields(Publisher publisher, PublisherDTO publisherDTO) {

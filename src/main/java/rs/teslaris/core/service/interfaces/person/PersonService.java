@@ -111,4 +111,10 @@ public interface PersonService extends JPAService<Person> {
     Person findPersonByAccountingId(String accountingId);
 
     Page<Person> findPersonsByLRUHarvest(Pageable pageable);
+
+    Person findRaw(Integer personId);
+
+    void addOldId(Integer id, Integer oldId);
+
+    Optional<Person> findPersonByIdentifier(String identifier);
 }

@@ -34,7 +34,6 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -57,7 +56,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  EventRepository eventRepository,
                                  IndexBulkUpdateService indexBulkUpdateService,
                                  EventsRelationRepository eventsRelationRepository,
-                                 SearchService<EventIndex> searchService, EmailUtil emailUtil,
+                                 SearchService<EventIndex> searchService,
                                  CountryService countryService,
                                  CommissionRepository commissionRepository,
                                  ConferenceJPAServiceImpl conferenceJPAService,
@@ -66,8 +65,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         super(eventIndexRepository, multilingualContentService, personContributionService,
             eventRepository, indexBulkUpdateService, commissionRepository,
             eventsRelationRepository,
-            searchService,
-            emailUtil, countryService);
+            searchService, countryService);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
         this.conferenceRepository = conferenceRepository;
@@ -80,7 +78,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
     @Override
     public ConferenceDTO readConferenceByOldId(Integer oldId) {
-        return ConferenceConverter.toDTO(conferenceRepository.findConferenceByOldId(oldId)
+        return ConferenceConverter.toDTO(conferenceRepository.findConferenceByOldIdsContains(oldId)
             .orElseThrow(() -> new NotFoundException(
                 "Conference with old ID " + oldId + " does not exist.")));
     }
@@ -121,6 +119,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    public Conference findRaw(Integer conferenceId) {
+        return conferenceRepository.findRaw(conferenceId)
+            .orElseThrow(() -> new NotFoundException("Conference with given ID does not exist."));
+    }
+
+    @Override
     @Nullable
     public Conference findConferenceByConfId(String confId) {
         return conferenceRepository.findConferenceByConfId(confId).orElse(null);
@@ -153,10 +157,6 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         conference.setSerialEvent(false);
 
         var savedConference = conferenceJPAService.save(conference);
-
-        savedConference.getName().stream().findFirst().ifPresent(mc -> {
-            notifyAboutBasicCreation(savedConference.getId(), mc.getContent());
-        });
 
         indexConference(savedConference, new EventIndex());
 

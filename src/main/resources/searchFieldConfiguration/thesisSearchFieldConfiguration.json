@@ -4,6 +4,7 @@
       "fieldName": "title_sr",
       "displayName": {
         "sr": "Naslov na srpskom",
+        "sr-cyr": "Наслов на српском",
         "en": "Serbian title"
       },
       "type": "text",
@@ -13,6 +14,7 @@
       "fieldName": "title_other",
       "displayName": {
         "sr": "Naslov na stranom jeziku",
+        "sr-cyr": "Наслов на страном језику",
         "en": "Foreign language title"
       },
       "type": "text",
@@ -22,6 +24,7 @@
       "fieldName": "description_sr",
       "displayName": {
         "sr": "Apstrakt na srpskom",
+        "sr-cyr": "Апстракт на српском",
         "en": "Serbian abstract"
       },
       "type": "text",
@@ -31,6 +34,7 @@
       "fieldName": "description_other",
       "displayName": {
         "sr": "Apstrakt na stranom jeziku",
+        "sr-cyr": "Апстракт на страно језику",
         "en": "Abstract on foreign language"
       },
       "type": "text",
@@ -40,6 +44,7 @@
       "fieldName": "keywords_sr",
       "displayName": {
         "sr": "Ključne reči na srpskom",
+        "sr-cyr": "Књучне речи на српском",
         "en": "Serbian keywords"
       },
       "type": "text",
@@ -49,6 +54,7 @@
       "fieldName": "keywords_other",
       "displayName": {
         "sr": "Ključne reči na stranom jeziku",
+        "sr-cyr": "Кључне речи на страном језику",
         "en": "Foreigh language keywords"
       },
       "type": "text",
@@ -58,6 +64,7 @@
       "fieldName": "full_text_sr",
       "displayName": {
         "sr": "Sadržaj na srpskom",
+        "sr-cyr": "Садржај на српском",
         "en": "Serbian full-text"
       },
       "type": "text",
@@ -67,6 +74,7 @@
       "fieldName": "full_text_other",
       "displayName": {
         "sr": "Sadržaj na stranom jeziku",
+        "sr-cyr": "Садржај на страном језику",
         "en": "Foreign language full-text"
       },
       "type": "text",
@@ -76,6 +84,7 @@
       "fieldName": "author_names",
       "displayName": {
         "sr": "Imena autora",
+        "sr-cyr": "Имена аутора",
         "en": "Author names"
       },
       "type": "text",
@@ -85,6 +94,7 @@
       "fieldName": "editor_names",
       "displayName": {
         "sr": "Imena urednika",
+        "sr-cyr": "Имена уредника",
         "en": "Editor names"
       },
       "type": "text",
@@ -94,6 +104,7 @@
       "fieldName": "board_member_names",
       "displayName": {
         "sr": "Imena članova odbora",
+        "sr-cyr": "Имена чланова одбора",
         "en": "Board member names"
       },
       "type": "text",
@@ -103,6 +114,7 @@
       "fieldName": "board_president_name",
       "displayName": {
         "sr": "Ime predsednika komisije",
+        "sr-cyr": "Име председника комисије",
         "en": "Board president name"
       },
       "type": "text",
@@ -112,6 +124,7 @@
       "fieldName": "advisor_names",
       "displayName": {
         "sr": "Imena savetnika",
+        "sr-cyr": "Имена саветника",
         "en": "Advisor names"
       },
       "type": "text",

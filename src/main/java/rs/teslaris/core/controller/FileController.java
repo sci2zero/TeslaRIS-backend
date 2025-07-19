@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.tika.Tika;
+import org.hibernate.Hibernate;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
@@ -79,16 +81,22 @@ public class FileController {
         var file = fileService.loadAsResource(filename);
         var documentFile = documentFileService.getDocumentByServerFilename(filename);
         var accessRights = documentFile.getAccessRights();
-        var isThesisDocument = documentFile.getIsVerifiedData();
+        var isVerifierDocument = documentFile.getIsVerifiedData();
         var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
         var isOpenAccess = isOpenAccess(accessRights);
+        var isThesisDocument = Objects.nonNull(documentFile.getDocument()) &&
+            Hibernate.getClass(documentFile.getDocument()).equals(Thesis.class);
+
+        if (isThesisDocument && ((Thesis) documentFile.getDocument()).getIsOnPublicReview()) {
+            return serveFile(filename, documentFile, file, inline);
+        }
 
         if (!isOpenAccess && !authenticatedUser) {
             return ErrorResponseUtil.buildUnavailableResponse(request,
                 "loginToViewDocumentMessage");
         }
 
-        if (isOpenAccess && !authenticatedUser && !isThesisDocument) {
+        if (isOpenAccess && !authenticatedUser && !isVerifierDocument) {
             return ErrorResponseUtil.buildUnavailableResponse(request,
                 "loginToViewCCDocumentMessage");
         }
@@ -159,6 +167,12 @@ public class FileController {
             }
         }
 
+        return serveFile(filename, documentFile, file, inline);
+    }
+
+    private ResponseEntity<Object> serveFile(String filename, DocumentFile documentFile,
+                                             GetObjectResponse file, Boolean inline)
+        throws IOException {
         recordDownloadIfApplicable(filename, documentFile.getResourceType());
 
         byte[] fileBytes = file.readAllBytes();

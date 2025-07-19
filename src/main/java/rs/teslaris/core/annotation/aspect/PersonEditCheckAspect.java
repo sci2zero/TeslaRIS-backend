@@ -57,7 +57,9 @@ public class PersonEditCheckAspect {
             personIds.add(Integer.parseInt(attributeMap.get("personId")));
         } else if (attributeMap.containsKey("sourcePersonId") &&
             attributeMap.containsKey("targetPersonId")) {
-            personIds.add(Integer.parseInt(attributeMap.get("sourcePersonId")));
+            if (!annotation.value().equalsIgnoreCase("MERGE")) {
+                personIds.add(Integer.parseInt(attributeMap.get("sourcePersonId")));
+            }
             personIds.add(Integer.parseInt(attributeMap.get("targetPersonId")));
         } else {
             throw new IllegalArgumentException(

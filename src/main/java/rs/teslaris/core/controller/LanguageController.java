@@ -47,8 +47,8 @@ public class LanguageController {
     }
 
     @GetMapping("/ui-languages")
-    public List<LanguageResponseDTO> getUISupportedLanguages() {
-        return languageService.getUISupportedLanguages();
+    public List<LanguageTagResponseDTO> getUISupportedLanguages() {
+        return languageTagService.getUISupportedLanguages();
     }
 
     @GetMapping("/tags")

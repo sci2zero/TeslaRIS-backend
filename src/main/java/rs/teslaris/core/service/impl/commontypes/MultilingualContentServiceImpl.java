@@ -122,7 +122,9 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
                                               Function<String, String> contentTransformer) {
         contentList.forEach(content -> {
             String transformedContent = contentTransformer.apply(content.getContent());
-            if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN)) {
+            if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.SERBIAN) ||
+                content.getLanguage().getLanguageTag()
+                    .equals(LanguageAbbreviations.SERBIAN_CYRILLIC)) {
                 serbianBuilder.append(transformedContent).append(" | ");
             } else {
                 if (content.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH) &&

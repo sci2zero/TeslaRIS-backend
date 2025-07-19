@@ -1,16 +1,20 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -18,10 +22,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.commontypes.LanguageTagDTO;
+import rs.teslaris.core.dto.commontypes.LanguageTagResponseDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.repository.commontypes.LanguageTagRepository;
 import rs.teslaris.core.service.impl.commontypes.LanguageTagServiceImpl;
 import rs.teslaris.core.util.exceptionhandling.exception.LanguageTagReferenceConstraintException;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
@@ -187,4 +193,52 @@ public class LanguageTagServiceTest {
         verify(languageTagRepository).searchLanguageTags(searchExpression, pageable);
     }
 
+    @Test
+    public void shouldReturnSupportedLanguagesFromMessageFiles() {
+        // given
+        var english = new LanguageTag();
+        english.setId(1);
+        english.setLanguageTag("EN");
+        english.setDisplay("English");
+
+        var serbian = new LanguageTag();
+        serbian.setId(2);
+        serbian.setLanguageTag("SR");
+        serbian.setDisplay("Srpski");
+
+        var german = new LanguageTag();
+        german.setId(3);
+        german.setLanguageTag("DE");
+        german.setDisplay("German");
+
+        var allLanguages = List.of(english, serbian, german);
+        when(languageTagRepository.findAll()).thenReturn(allLanguages);
+
+        // when
+        var result = languageTagService.getUISupportedLanguages();
+
+        // then
+        var languageCodes = result.stream()
+            .map(LanguageTagResponseDTO::getLanguageCode)
+            .collect(Collectors.toSet());
+
+        assertTrue(languageCodes.contains("EN"));
+        assertTrue(languageCodes.contains("SR"));
+        assertFalse(languageCodes.contains("DE"));
+    }
+
+    @Test
+    public void shouldThrowLoadingExceptionWhenMessageFilesCannotBeScanned() {
+        // given
+        LanguageTagServiceImpl service = new LanguageTagServiceImpl(languageTagRepository) {
+            @Override
+            protected org.springframework.core.io.Resource[] getResourcesForMessages()
+                throws IOException {
+                throw new IOException("test");
+            }
+        };
+
+        // when & then
+        assertThrows(LoadingException.class, service::getUISupportedLanguages);
+    }
 }

@@ -54,6 +54,11 @@ public class ThesisController {
         return thesisService.readThesisById(documentId);
     }
 
+    @GetMapping("/old-id/{oldId}")
+    public ThesisResponseDTO readThesisByOldId(@PathVariable Integer oldId) {
+        return thesisService.readThesisByOldId(oldId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")

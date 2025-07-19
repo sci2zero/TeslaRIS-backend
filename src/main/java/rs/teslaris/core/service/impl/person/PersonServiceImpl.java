@@ -156,7 +156,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Nullable
     public Person findPersonByOldId(Integer oldId) {
-        return personRepository.findPersonByOldId(oldId).orElse(null);
+        return personRepository.findPersonByOldIdsContains(oldId).orElse(null);
     }
 
     @Override
@@ -290,7 +290,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var person = new Person();
         person.setName(personName);
         person.setPersonalInfo(personalInfo);
-        person.setOldId(personDTO.getOldId());
+
+        if (Objects.nonNull(personDTO.getOldId())) {
+            person.getOldIds().add(personDTO.getOldId());
+        }
+
         person.setApproveStatus(status);
 
         if (isImport) {
@@ -1183,5 +1187,27 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     public Page<Person> findPersonsByLRUHarvest(Pageable pageable) {
         return personRepository.findPersonsByLRUHarvest(pageable);
+    }
+
+    @Override
+    public Person findRaw(Integer personId) {
+        return personRepository.findRaw(personId)
+            .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
+    }
+
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var person = findOne(id);
+        person.getOldIds().add(oldId);
+        save(person);
+    }
+
+    @Override
+    public Optional<Person> findPersonByIdentifier(String identifier) {
+        if (Objects.isNull(identifier) || identifier.isBlank()) {
+            return Optional.empty();
+        }
+
+        return personRepository.findPersonForIdentifier(identifier);
     }
 }

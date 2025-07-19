@@ -4,7 +4,10 @@ import jakarta.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +16,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
+import rs.teslaris.core.dto.person.ImportPersonDTO;
+import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.event.Event;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnitRelation;
@@ -303,12 +308,50 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             .endsWith("c_f744")) { // COAR type: conference proceedings
                             var creationDTO = proceedingsConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                proceedingsService.createProceedings(creationDTO, performIndex);
+                                try {
+                                    proceedingsService.createProceedings(creationDTO, performIndex);
+                                } catch (Exception e) {
+                                    log.warn(
+                                        "Skipped loading object of type 'PROCEEDINGS' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                    if (e.getMessage().endsWith("isbnExistsError")) {
+                                        var potentialMatch =
+                                            proceedingsService.findProceedingsByIsbn(
+                                                creationDTO.getEISBN(), creationDTO.getPrintISBN());
+                                        if (Objects.nonNull(potentialMatch)) {
+                                            proceedingsService.addOldId(potentialMatch.getId(),
+                                                creationDTO.getOldId());
+                                            log.info(
+                                                "Successfully merged PROCEEDINGS '{}' using ISBN ({}, {}).",
+                                                record.getOldId(), creationDTO.getEISBN(),
+                                                creationDTO.getPrintISBN());
+                                        }
+                                    }
+                                }
                             }
                         } else if (record.getType().endsWith("c_0640")) { // COAR type: journal
                             var creationDTO = journalConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                journalService.createJournal(creationDTO, performIndex);
+                                try {
+                                    journalService.createJournal(creationDTO, performIndex);
+                                } catch (Exception e) {
+                                    log.warn(
+                                        "Skipped loading object of type 'JOURNAL' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                    if (e.getMessage().endsWith("issnExistsError")) {
+                                        var potentialMatch =
+                                            journalService.readJournalByIssn(creationDTO.getEissn(),
+                                                creationDTO.getPrintISSN());
+                                        if (Objects.nonNull(potentialMatch)) {
+                                            journalService.addOldId(potentialMatch.getDatabaseId(),
+                                                creationDTO.getOldId());
+                                            log.info(
+                                                "Successfully merged JOURNAL '{}' using ISSN ({}, {}).",
+                                                record.getOldId(), creationDTO.getEissn(),
+                                                creationDTO.getPrintISSN());
+                                        }
+                                    }
+                                }
                             }
                         }
                     });
@@ -329,13 +372,38 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
         handleDataRelations(requestDataSet, performIndex);
     }
 
-    private <T, D, R> boolean loadBatch(Class<T> entityClass, RecordConverter<T, D> converter,
-                                        CreatorMethod<D, R> creatorMethod, Query query,
-                                        boolean performIndex, int batchSize) {
+    private <T extends HasOldId, D, R> boolean loadBatch(Class<T> entityClass,
+                                                         RecordConverter<T, D> converter,
+                                                         CreatorMethod<D, R> creatorMethod,
+                                                         Query query,
+                                                         boolean performIndex, int batchSize) {
         List<T> batch = mongoTemplate.find(query, entityClass);
         batch.forEach(record -> {
             D creationDTO = converter.toDTO(record);
-            creatorMethod.apply(creationDTO, performIndex);
+            try {
+                creatorMethod.apply(creationDTO, performIndex);
+            } catch (Exception e) {
+                log.warn("Skipped loading object of type '{}' with id '{}'. Reason: '{}'.",
+                    creationDTO.getClass(), record.getOldId(), e.getMessage());
+                if (entityClass.equals(Person.class) &&
+                    creationDTO instanceof ImportPersonDTO importDTO) {
+                    Map<String, Function<ImportPersonDTO, String>> identifierResolvers = Map.of(
+                        "scopusAuthorIdExistsError", ImportPersonDTO::getScopusAuthorId,
+                        "orcidIdExistsError", ImportPersonDTO::getOrcid
+                    );
+
+                    Optional.ofNullable(identifierResolvers.get(e.getMessage()))
+                        .map(resolver -> resolver.apply(importDTO))
+                        .flatMap(personService::findPersonByIdentifier)
+                        .ifPresent(person -> {
+                            personService.addOldId(person.getId(), importDTO.getOldId());
+                            log.info(
+                                "Successfully merged PERSON '{}' using identifiers ({}, {}).",
+                                record.getOldId(), importDTO.getOrcid(),
+                                importDTO.getScopusAuthorId());
+                        });
+                }
+            }
         });
         return batch.size() == batchSize;
     }
@@ -365,8 +433,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     personBatch.forEach((person) -> {
                         var savedPerson = personService.findPersonByOldId(
                             OAIPMHParseUtility.parseBISISID(person.getOldId()));
-                        if (Objects.isNull(person.getAffiliation()) &&
-                            Objects.nonNull(savedPerson)) {
+                        if (Objects.isNull(person.getAffiliation()) ||
+                            Objects.isNull(savedPerson)) {
                             return;
                         }
                         if (Objects.nonNull(person.getAffiliation().getOrgUnits())) {
@@ -400,30 +468,42 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             .endsWith("c_2df8fbb1")) { // COAR type: research article
                             var creationDTO = journalPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                journalPublicationService.createJournalPublication(creationDTO,
-                                    performIndex);
+                                try {
+                                    journalPublicationService.createJournalPublication(creationDTO,
+                                        performIndex);
+                                } catch (Exception e) {
+                                    log.warn(
+                                        "Skipped loading object of type 'JOURNAL_PUBLICATION' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
                             }
-                        } else if (record.getType()
-                            .endsWith("c_5794")) { // COAR type: conference paper
+                        } else if (
+                            record.getType().endsWith("c_5794") ||
+                                record.getType().endsWith(
+                                    "c_0640")) { // COAR type: conference paper or conference output
                             var creationDTO = proceedingsPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                proceedingsPublicationService.createProceedingsPublication(
-                                    creationDTO,
-                                    performIndex);
-                            }
-                        } else if (record.getType()
-                            .endsWith("c_0640")) { // COAR type: conference output
-                            var creationDTO = proceedingsPublicationConverter.toDTO(record);
-                            if (Objects.nonNull(creationDTO)) {
-                                proceedingsPublicationService.createProceedingsPublication(
-                                    creationDTO,
-                                    performIndex);
+                                try {
+                                    proceedingsPublicationService.createProceedingsPublication(
+                                        creationDTO,
+                                        performIndex);
+                                } catch (Exception e) {
+                                    log.warn(
+                                        "Skipped loading object of type 'PROCEEDINGS_PUBLICATION' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
                             }
                         } else if (record.getType()
                             .endsWith("c_db06")) { // COAR type: dissertation (thesis)
                             var creationDTO = dissertationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                thesisService.createThesis(creationDTO, performIndex);
+                                try {
+                                    thesisService.createThesis(creationDTO, performIndex);
+                                } catch (Exception e) {
+                                    log.warn(
+                                        "Skipped loading object of type 'THESIS' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
                             }
                         }
                     });

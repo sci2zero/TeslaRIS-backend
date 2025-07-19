@@ -218,7 +218,7 @@ public class RegistryBookGenerationUtil {
     public static String getTransliteratedContent(Set<MultiLingualContent> multilingualContent) {
         MultiLingualContent fallback = null;
         for (var content : multilingualContent) {
-            if ("SR".equalsIgnoreCase(content.getLanguage().getLanguageTag())) {
+            if (content.getLanguage().getLanguageTag().toUpperCase().startsWith("SR")) {
                 return SerbianTransliteration.toCyrillic(content.getContent());
             }
             fallback = content;

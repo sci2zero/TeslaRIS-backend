@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 
 @XmlType(name = "TOrgUnit", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
@@ -24,7 +25,7 @@ import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(callSuper = false)
-public class OrgUnit implements OrgUnitConvertable {
+public class OrgUnit implements OrgUnitConvertable, HasOldId {
 
     private String id;
 

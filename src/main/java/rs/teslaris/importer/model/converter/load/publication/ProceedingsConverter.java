@@ -34,6 +34,24 @@ public class ProceedingsConverter extends DocumentConverter
         this.languageTagService = languageTagService;
     }
 
+    private static String deduceLanguageTagValue(Publication record) {
+        var languageTagValue = record.getLanguage().trim().toUpperCase();
+        if (languageTagValue.isEmpty()) {
+            languageTagValue = LanguageAbbreviations.ENGLISH;
+        }
+
+        // Common language tag mistakes
+        if (languageTagValue.equals("GE")) {
+            languageTagValue = LanguageAbbreviations.GERMAN;
+        } else if (languageTagValue.equals("SP")) {
+            languageTagValue = LanguageAbbreviations.SPANISH;
+        } else if (languageTagValue.equals("RS")) {
+            languageTagValue = LanguageAbbreviations.SERBIAN;
+        }
+
+        return languageTagValue;
+    }
+
     @Override
     public ProceedingsDTO toDTO(Publication record) {
         var dto = new ProceedingsDTO();
@@ -44,10 +62,7 @@ public class ProceedingsConverter extends DocumentConverter
         dto.setEISBN(record.getIsbn());
 
         if (Objects.nonNull(record.getLanguage())) {
-            var languageTagValue = record.getLanguage().trim().toUpperCase();
-            if (languageTagValue.isEmpty()) {
-                languageTagValue = LanguageAbbreviations.ENGLISH;
-            }
+            var languageTagValue = deduceLanguageTagValue(record);
 
             var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
             if (Objects.nonNull(languageTag.getId())) {

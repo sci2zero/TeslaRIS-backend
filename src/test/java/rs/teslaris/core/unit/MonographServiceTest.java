@@ -53,7 +53,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
-public class MographServiceTest {
+public class MonographServiceTest {
 
     @Mock
     private MonographJPAServiceImpl monographJPAService;
@@ -441,5 +441,35 @@ public class MographServiceTest {
         assertFalse(result);
         verify(monographRepository).existsByeISBN(identifier, publicationSeriesId);
         verify(monographRepository).existsByPrintISBN(identifier, publicationSeriesId);
+    }
+
+    @Test
+    void shouldReturnRawMonograph() {
+        // Given
+        var entityId = 123;
+        var expected = new Monograph();
+        expected.setId(entityId);
+        when(monographRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = monographService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(monographRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenMonographDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(monographRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> monographService.findRaw(entityId));
+
+        assertEquals("Monograph with given ID does not exist.", exception.getMessage());
+        verify(monographRepository).findRaw(entityId);
     }
 }

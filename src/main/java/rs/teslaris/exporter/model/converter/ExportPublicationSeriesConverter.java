@@ -39,7 +39,7 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
                 publicationSeries.getNameAbbreviation()));
         commonExportPublicationSeries.setEIssn(publicationSeries.getEISSN());
         commonExportPublicationSeries.setPrintIssn(publicationSeries.getPrintISSN());
-        commonExportPublicationSeries.setOldId(publicationSeries.getOldId());
+        commonExportPublicationSeries.getOldIds().addAll(publicationSeries.getOldIds());
 
         publicationSeries.getContributions().forEach(contribution -> {
             if (contribution.getContributionType()

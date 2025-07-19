@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.commontypes;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,4 +23,6 @@ public interface LanguageTagService extends JPAService<LanguageTag> {
     void updateLanguageTag(Integer languageTagId, LanguageTagDTO languageTagDTO);
 
     void deleteLanguageTag(Integer languageTagId);
+
+    List<LanguageTagResponseDTO> getUISupportedLanguages();
 }

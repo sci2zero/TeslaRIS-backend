@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 
 @XmlType(name = "TEvent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
@@ -22,7 +23,7 @@ import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Event implements EventConvertable {
+public class Event implements EventConvertable, HasOldId {
 
     private String id;
 

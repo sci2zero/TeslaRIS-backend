@@ -161,7 +161,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Override
     @Nullable
     public OrganisationUnit findOrganisationUnitByOldId(Integer oldId) {
-        return organisationUnitRepository.findOrganisationUnitByOldId(oldId).orElse(null);
+        return organisationUnitRepository.findOrganisationUnitByOldIdsContains(oldId).orElse(null);
     }
 
     @Override
@@ -495,7 +495,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             "rorExistsError"
         );
 
-        organisationUnit.setOldId(organisationUnitDTO.getOldId());
+        if (Objects.nonNull(organisationUnitDTO.getOldId())) {
+            organisationUnit.getOldIds().add(organisationUnitDTO.getOldId());
+        }
 
         var researchAreas = researchAreaService.getResearchAreasByIds(
             organisationUnitDTO.getResearchAreasId());
@@ -613,6 +615,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         indexOrganisationUnit(organisationUnit,
             organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
                 organisationUnit.getId()).orElse(new OrganisationUnitIndex()));
+    }
+
+    @Override
+    public OrganisationUnit findRaw(Integer organisationUnitId) {
+        return organisationUnitRepository.findRaw(organisationUnitId).orElseThrow(
+            () -> new NotFoundException("Organisation Unit with given ID does not exist."));
     }
 
     private void indexOrganisationUnit(OrganisationUnit organisationUnit,

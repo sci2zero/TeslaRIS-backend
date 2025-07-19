@@ -305,4 +305,34 @@ public class BookSeriesServiceTest {
         verify(bookSeriesJPAService).delete(bookSeriesId);
         verify(bookSeriesIndexRepository, never()).delete(any());
     }
+
+    @Test
+    void shouldReturnRawBookSeries() {
+        // Given
+        var entityId = 123;
+        var expected = new BookSeries();
+        expected.setId(entityId);
+        when(bookSeriesRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = bookSeriesService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(bookSeriesRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenBookSeriesDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(bookSeriesRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> bookSeriesService.findRaw(entityId));
+
+        assertEquals("Book Series with given ID does not exist.", exception.getMessage());
+        verify(bookSeriesRepository).findRaw(entityId);
+    }
 }

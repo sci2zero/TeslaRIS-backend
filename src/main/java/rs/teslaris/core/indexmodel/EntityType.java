@@ -8,5 +8,7 @@ public enum EntityType {
     ORGANISATION_UNIT,
     PERSON,
     PUBLISHER,
-    USER_ACCOUNT
+    USER_ACCOUNT,
+    MONOGRAPH,
+    PROCEEDINGS
 }

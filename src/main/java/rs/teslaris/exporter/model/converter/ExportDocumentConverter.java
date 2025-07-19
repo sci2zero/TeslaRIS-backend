@@ -334,7 +334,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setDocumentDate(document.getDocumentDate());
         commonExportDocument.setDoi(document.getDoi());
         commonExportDocument.setScopus(document.getScopusId());
-        commonExportDocument.setOldId(document.getOldId());
+        commonExportDocument.getOldIds().addAll(document.getOldIds());
 
         if (Objects.nonNull(document.getEvent())) {
             var event = new ExportEvent();

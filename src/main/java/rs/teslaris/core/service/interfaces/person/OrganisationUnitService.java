@@ -113,4 +113,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     void indexOrganisationUnit(OrganisationUnit organisationUnit, Integer organisationUnitId);
 
     void indexOrganisationUnit(OrganisationUnit organisationUnit);
+
+    OrganisationUnit findRaw(Integer organisationUnitId);
 }

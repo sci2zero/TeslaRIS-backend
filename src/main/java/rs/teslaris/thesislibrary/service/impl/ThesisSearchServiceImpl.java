@@ -158,6 +158,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                 b.must(m -> m.term(tq -> tq.field("is_open_access").value(true)));
             }
 
+            b.must(m -> m.exists(e -> e.field("thesis_defence_date")));
             return b;
         })._toQuery();
     }

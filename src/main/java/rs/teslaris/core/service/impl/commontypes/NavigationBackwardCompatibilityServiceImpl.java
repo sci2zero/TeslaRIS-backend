@@ -48,9 +48,10 @@ public class NavigationBackwardCompatibilityServiceImpl implements
     @Nullable
     public Pair<String, Integer> readResourceByOldId(Integer oldId, String source,
                                                      String language) {
-        var documentOpt = documentRepository.findDocumentByOldId(oldId);
+        var documentOpt = documentRepository.findDocumentByOldIdsContains(oldId);
         if (documentOpt.isPresent()) {
-            var document = documentOpt.get();
+            var documentId = documentOpt.get();
+            var document = documentRepository.findById(documentId).get();
             switch (document) {
                 case JournalPublication ignored -> {
                     log.info("NAVIGATION SUCCESS - JOURNAL_PUBLICATION {} from {} in LANGUAGE {}",
@@ -102,28 +103,28 @@ public class NavigationBackwardCompatibilityServiceImpl implements
             }
         }
 
-        var journalOpt = journalRepository.findJournalByOldId(oldId);
+        var journalOpt = journalRepository.findByOldIdsContains(oldId);
         if (journalOpt.isPresent()) {
             log.info("NAVIGATION SUCCESS - JOURNAL {} from {} in LANGUAGE {}",
                 journalOpt.get().getId(), source, language);
             return new Pair<>("JOURNAL", journalOpt.get().getId());
         }
 
-        var bookSeriesOpt = bookSeriesRepository.findBookSeriesByOldId(oldId);
+        var bookSeriesOpt = bookSeriesRepository.findBookSeriesByOldIdsContains(oldId);
         if (bookSeriesOpt.isPresent()) {
             log.info("NAVIGATION SUCCESS - BOOK_SERIES {} from {} in LANGUAGE {}",
                 bookSeriesOpt.get().getId(), source, language);
             return new Pair<>("BOOK_SERIES", bookSeriesOpt.get().getId());
         }
 
-        var personOpt = personRepository.findPersonByOldId(oldId);
+        var personOpt = personRepository.findPersonByOldIdsContains(oldId);
         if (personOpt.isPresent()) {
             log.info("NAVIGATION SUCCESS - PERSON {} from {} in LANGUAGE {}",
                 personOpt.get().getId(), source, language);
             return new Pair<>("PERSON", personOpt.get().getId());
         }
 
-        var orgUnitOpt = organisationUnitRepository.findOrganisationUnitByOldId(oldId);
+        var orgUnitOpt = organisationUnitRepository.findOrganisationUnitByOldIdsContains(oldId);
         if (orgUnitOpt.isPresent()) {
             log.info("NAVIGATION SUCCESS - ORGANISATION_UNIT {} from {} in LANGUAGE {}",
                 orgUnitOpt.get().getId(), source, language);

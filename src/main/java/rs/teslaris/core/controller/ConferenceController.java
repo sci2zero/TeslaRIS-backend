@@ -31,6 +31,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -47,6 +48,8 @@ public class ConferenceController {
     private final JwtUtil tokenUtil;
 
     private final UserService userService;
+
+    private final EmailUtil emailUtil;
 
 
     @GetMapping("/{conferenceId}/can-edit")
@@ -147,6 +150,11 @@ public class ConferenceController {
     public ConferenceBasicAdditionDTO createConferenceBasic(
         @RequestBody @Valid ConferenceBasicAdditionDTO conferenceDTO) {
         var newConference = conferenceService.createConference(conferenceDTO);
+
+        newConference.getName().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(newConference.getId(), mc.getContent(), "event");
+        });
+
         conferenceDTO.setId(newConference.getId());
         return conferenceDTO;
     }

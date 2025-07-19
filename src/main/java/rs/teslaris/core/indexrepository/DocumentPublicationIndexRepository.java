@@ -268,4 +268,18 @@ public interface DocumentPublicationIndexRepository extends
                                                                                 List<Integer> institutionIds,
                                                                                 String thesisType,
                                                                                 Pageable pageable);
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must_not": {
+              "term": {
+                "type": "PROCEEDINGS"
+              }
+            }
+          }
+        }
+        """)
+    long countPublications();
+
 }

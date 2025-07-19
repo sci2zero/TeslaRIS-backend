@@ -11,7 +11,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import rs.teslaris.core.annotation.PublicationEditCheck;
+import rs.teslaris.core.annotation.PublicationMergeCheck;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -43,7 +43,7 @@ public class PublicationMergeCheckAspect {
             RequestContextHolder.getRequestAttributes())).getRequest();
 
         var method = AspectUtil.getMethod(joinPoint);
-        var annotation = method.getAnnotation(PublicationEditCheck.class);
+        var annotation = method.getAnnotation(PublicationMergeCheck.class);
 
         var tokenValue = AspectUtil.extractToken(request);
         var attributeMap = AspectUtil.getUriVariables(request);
@@ -55,7 +55,9 @@ public class PublicationMergeCheckAspect {
         List<Integer> documentIds = new ArrayList<>();
         if (attributeMap.containsKey("leftDocumentId") &&
             attributeMap.containsKey("rightDocumentId")) {
-            documentIds.add(Integer.parseInt(attributeMap.get("leftDocumentId")));
+            if (!annotation.value().equalsIgnoreCase("MERGE")) {
+                documentIds.add(Integer.parseInt(attributeMap.get("leftDocumentId")));
+            }
             documentIds.add(Integer.parseInt(attributeMap.get("rightDocumentId")));
         }
 

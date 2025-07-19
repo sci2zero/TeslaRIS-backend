@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.document;
 
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,4 +33,7 @@ public interface MonographRepository extends JpaRepository<Monograph, Integer> {
     @Query("UPDATE MonographPublication mp SET mp.deleted = true " +
         "WHERE mp.monograph.id = :monographId")
     void deleteAllPublicationsInMonograph(Integer monographId);
+
+    @Query(value = "SELECT * FROM monographs m WHERE m.id = :monographId", nativeQuery = true)
+    Optional<Monograph> findRaw(Integer monographId);
 }

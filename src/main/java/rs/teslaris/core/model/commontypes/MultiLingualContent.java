@@ -28,7 +28,7 @@ public class MultiLingualContent extends BaseEntity {
     @JoinColumn(name = "language_tag_id", nullable = false)
     private LanguageTag language;
 
-    @Length(max = 15000)
+    @Length(max = 50000)
     @Column(name = "content", nullable = false)
     private String content;
 

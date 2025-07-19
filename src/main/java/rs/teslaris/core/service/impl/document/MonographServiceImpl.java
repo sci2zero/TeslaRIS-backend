@@ -98,6 +98,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    public Monograph findRaw(Integer monographId) {
+        return monographRepository.findRaw(monographId)
+            .orElseThrow(() -> new NotFoundException("Monograph with given ID does not exist."));
+    }
+
+    @Override
     public Page<DocumentPublicationIndex> searchMonographs(List<String> tokens, boolean onlyBooks) {
         return searchService.runQuery(buildSimpleSearchQuery(tokens, onlyBooks),
             PageRequest.of(0, 5),

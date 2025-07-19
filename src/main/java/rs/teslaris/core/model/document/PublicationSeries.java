@@ -17,10 +17,13 @@ import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.util.deduplication.Mergeable;
 
 
 @Getter
@@ -28,12 +31,11 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Entity
 @Table(name = "publication_series", indexes = {
     @Index(name = "idx_pub_series_e_issn", columnList = "e_issn"),
-    @Index(name = "idx_pub_series_print_issn", columnList = "print_issn"),
-    @Index(name = "idx_pub_series_old_id", columnList = "cris_uns_id")
+    @Index(name = "idx_pub_series_print_issn", columnList = "print_issn")
 })
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public abstract class PublicationSeries extends BaseEntity {
+public abstract class PublicationSeries extends BaseEntity implements Mergeable {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();
@@ -56,8 +58,13 @@ public abstract class PublicationSeries extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> nameAbbreviation = new HashSet<>();
 
-    @Column(name = "cris_uns_id")
-    private Integer oldId;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "old_ids")
+    private Set<Integer> oldIds = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "merged_ids")
+    private Set<Integer> mergedIds = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> uris = new HashSet<>();

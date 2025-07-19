@@ -160,7 +160,7 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
         switch (name) {
             case "saradnik":
                 return EmploymentPosition.COLLABORATOR;
-            case "saradnik praktikant":
+            case "saradnik praktikant", "asistent - pripravnik":
                 return EmploymentPosition.ASSISTANT_TRAINEE;
             case "saradnik u nastavi":
                 return EmploymentPosition.TEACHING_ASSOCIATE;
@@ -172,7 +172,8 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
                 return EmploymentPosition.ASSISTANT_WITH_DOCTORATE;
             case "docent":
                 return EmploymentPosition.ASSISTANT_PROFESSOR;
-            case "vanredni profesor":
+            case "vanredni profesor",
+                 "vаnredni profesor": // for some reason "n" has different encoding
                 return EmploymentPosition.ASSOCIATE_PROFESSOR;
             case "redovni profesor":
                 return EmploymentPosition.FULL_PROFESSOR;
@@ -192,6 +193,8 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
                 return EmploymentPosition.RESEARCH_TRAINEE;
             case "istraživač - saradnik":
                 return EmploymentPosition.RESEARCH_ASSOCIATE;
+            case "istraživač":
+                return EmploymentPosition.RESEARCHER;
             case "naučni - saradnik":
                 return EmploymentPosition.SCIENTIFIC_COLLABORATOR;
             case "viši naučni - saradnik":
@@ -204,6 +207,10 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
                 return EmploymentPosition.SENIOR_EXPERT_ASSOCIATE;
             case "stručni savetnik":
                 return EmploymentPosition.EXPERT_ADVISOR;
+            case "viši predavač":
+                return EmploymentPosition.SENIOR_LECTURER;
+            case "asistent sa master diplomom":
+                return EmploymentPosition.ASSISTANT_WITH_MASTER;
         }
 
         log.info("Unable to deduce employment position while performing migration: '{}'", name);
