@@ -441,7 +441,7 @@ public class MergeController {
 
     @PatchMapping("/migrate-identifier-history/publication/{publicationType}/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAnyAuthority('MIGRATE_ALL_ENTITIES', 'MIGRATE_INSTITUTION_ENTITIES')")
-    @PublicationMergeCheck
+    @PublicationMergeCheck("MERGE")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void migratePublicationIdentifierHistory(@PathVariable String publicationType,
                                                     @PathVariable("leftDocumentId")
@@ -460,7 +460,7 @@ public class MergeController {
 
     @PatchMapping("/migrate-identifier-history/person/{sourcePersonId}/{targetPersonId}")
     @PreAuthorize("hasAnyAuthority('MIGRATE_ALL_ENTITIES', 'MIGRATE_INSTITUTION_ENTITIES')")
-    @PersonEditCheck
+    @PersonEditCheck("MERGE")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void migratePersonIdentifierHistory(
         @PathVariable("sourcePersonId") Integer deletionEntityId,
