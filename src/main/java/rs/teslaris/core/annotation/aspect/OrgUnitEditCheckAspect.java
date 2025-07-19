@@ -8,6 +8,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.annotation.OrgUnitEditCheck;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -33,13 +34,16 @@ public class OrgUnitEditCheckAspect {
         var attributeMap = AspectUtil.getUriVariables(request);
 
         var role = UserRole.valueOf(tokenUtil.extractUserRoleFromToken(tokenValue));
+        var annotation = AspectUtil.getMethod(joinPoint).getAnnotation(OrgUnitEditCheck.class);
 
         List<Integer> organisationUnitIds = new ArrayList<>();
         if (attributeMap.containsKey("organisationUnitId")) {
             organisationUnitIds.add(Integer.parseInt(attributeMap.get("organisationUnitId")));
         } else if (attributeMap.containsKey("leftOrganisationUnitId") &&
             attributeMap.containsKey("rightOrganisationUnitId")) {
-            organisationUnitIds.add(Integer.parseInt(attributeMap.get("leftOrganisationUnitId")));
+            if (!annotation.value().equalsIgnoreCase("MERGE")) {
+                organisationUnitIds.add(Integer.parseInt(attributeMap.get("leftOrganisationUnitId")));
+            }
             organisationUnitIds.add(Integer.parseInt(attributeMap.get("rightOrganisationUnitId")));
         } else if (attributeMap.containsKey("relationId")) {
             // TODO: Check if we should check both source and target OU IDs!

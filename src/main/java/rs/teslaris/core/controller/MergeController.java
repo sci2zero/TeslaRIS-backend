@@ -471,7 +471,7 @@ public class MergeController {
 
     @PatchMapping("/migrate-identifier-history/organisation-unit/{leftOrganisationUnitId}/{rightOrganisationUnitId}")
     @PreAuthorize("hasAnyAuthority('MIGRATE_ALL_ENTITIES', 'MIGRATE_INSTITUTION_ENTITIES')")
-    @OrgUnitEditCheck
+    @OrgUnitEditCheck("MERGE")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void migrateOrganisationUnitIdentifierHistory(
         @PathVariable("leftOrganisationUnitId") Integer deletionEntityId,
