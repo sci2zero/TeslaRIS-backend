@@ -186,6 +186,9 @@ public class DbInitializer implements ApplicationRunner {
         var migrateAllEntities = new Privilege("MIGRATE_ALL_ENTITIES");
         var migrateInstitutionEntities = new Privilege("MIGRATE_INSTITUTION_ENTITIES");
         var performOaiMigration = new Privilege("PERFORM_OAI_MIGRATION");
+        var saveOUTrustConfiguration = new Privilege("SAVE_OU_TRUST_CONFIGURATION");
+        var validateMetadata = new Privilege("VALIDATE_METADATA");
+        var validateUploadedFiles = new Privilege("VALIDATE_UPLOADED_FILES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -217,7 +220,8 @@ public class DbInitializer implements ApplicationRunner {
                 generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
-                migrateInstitutionEntities, performOaiMigration));
+                migrateInstitutionEntities, performOaiMigration, saveOUTrustConfiguration,
+                validateMetadata, validateUploadedFiles));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -248,7 +252,8 @@ public class DbInitializer implements ApplicationRunner {
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
-                migrateAllEntities, performOaiMigration
+                migrateAllEntities, performOaiMigration, saveOUTrustConfiguration, validateMetadata,
+                validateUploadedFiles
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -267,8 +272,9 @@ public class DbInitializer implements ApplicationRunner {
                     createConference, saveLoadingConfiguration, performLoading,
                     editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit,
                     mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
-                    mergeOUEmployments, mergeDocumentsMetadata, deletePerson,
-                    deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities)));
+                    mergeOUEmployments, mergeDocumentsMetadata, deletePerson, validateMetadata,
+                    deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities,
+                    saveOUTrustConfiguration, validateUploadedFiles)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -287,7 +293,8 @@ public class DbInitializer implements ApplicationRunner {
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
                 putThesisOnPublicReview, editDocumentFiles, archiveThesis,
-                addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata
+                addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
+                validateMetadata, validateUploadedFiles
             )));
 
         var headOfLibraryAuthority =

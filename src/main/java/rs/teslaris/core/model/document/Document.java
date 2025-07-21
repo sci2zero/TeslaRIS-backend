@@ -92,6 +92,12 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(columnDefinition = "jsonb", name = "merged_ids")
     private Set<Integer> mergedIds = new HashSet<>();
 
+    @Column(name = "is_metadata_valid")
+    private Boolean isMetadataValid = true;
+
+    @Column(name = "are_files_valid")
+    private Boolean areFilesValid = true;
+
 
     public void addDocumentContribution(PersonDocumentContribution contribution) {
         contribution.setDocument(this);

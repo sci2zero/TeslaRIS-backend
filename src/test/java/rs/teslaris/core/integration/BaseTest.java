@@ -32,6 +32,20 @@ public abstract class BaseTest {
         return authenticationResponseDTO.getToken();
     }
 
+    protected String authenticateInstitutionalEditorAndGetToken() throws Exception {
+        String authResponse = mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
+                    .content("{\"email\": \"editor@editor.com\", \"password\": \"editor\"}")
+                    .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn()
+            .getResponse().getContentAsString();
+
+        var objectMapper = new ObjectMapper();
+        var authenticationResponseDTO =
+            objectMapper.readValue(authResponse, AuthenticationResponseDTO.class);
+
+        return authenticationResponseDTO.getToken();
+    }
+
     protected String authenticateLibrarianAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")

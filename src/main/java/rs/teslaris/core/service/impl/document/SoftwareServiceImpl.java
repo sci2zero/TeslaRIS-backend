@@ -22,11 +22,13 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Traceable
@@ -49,12 +51,14 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                EventService eventService,
                                CommissionRepository commissionRepository,
                                SearchFieldsLoader searchFieldsLoader,
+                               OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                SoftwareJPAServiceImpl softwareJPAService,
                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }
@@ -74,7 +78,8 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
             throw e;
         }
 
-        if (!software.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !software.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -94,12 +99,9 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                 publisherService.findOne(softwareDTO.getPublisherId()));
         }
 
-        newSoftware.setApproveStatus(
-            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
         var savedSoftware = softwareJPAService.save(newSoftware);
 
-        if (newSoftware.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+        if (index) {
             indexSoftware(savedSoftware, new DocumentPublicationIndex());
         }
 
@@ -124,12 +126,9 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
         softwareJPAService.save(softwareToUpdate);
 
-        if (softwareToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexSoftware(softwareToUpdate,
-                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-                        softwareId)
-                    .orElse(new DocumentPublicationIndex()));
-        }
+        indexSoftware(softwareToUpdate,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(softwareId)
+                .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(softwareToUpdate);
     }

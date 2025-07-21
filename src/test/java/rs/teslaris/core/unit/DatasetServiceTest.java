@@ -50,6 +50,7 @@ import rs.teslaris.core.service.impl.document.cruddelegate.DatasetJPAServiceImpl
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 
 @SpringBootTest
@@ -78,6 +79,9 @@ public class DatasetServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
 
     @InjectMocks
     private DatasetServiceImpl datasetService;

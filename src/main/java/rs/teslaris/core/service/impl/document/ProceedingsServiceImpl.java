@@ -30,13 +30,15 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Transactional
@@ -73,6 +75,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   EventService eventService,
                                   CommissionRepository commissionRepository,
                                   SearchFieldsLoader searchFieldsLoader,
+                                  OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageTagService languageTagService,
@@ -83,7 +86,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
@@ -104,7 +108,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             throw e;
         }
 
-        if (!proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }
 
@@ -139,9 +144,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         var savedProceedings = proceedingsJPAService.save(proceedings);
 
-        if (proceedings.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
-            indexProceedings(savedProceedings, new DocumentPublicationIndex());
-        }
+        indexProceedings(savedProceedings, new DocumentPublicationIndex());
 
         sendNotifications(savedProceedings);
 
@@ -158,10 +161,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         setCommonFields(proceedingsToUpdate, proceedingsDTO);
         setProceedingsRelatedFields(proceedingsToUpdate, proceedingsDTO);
 
-        if (proceedingsToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            var proceedingsIndex = findDocumentPublicationIndexByDatabaseId(proceedingsId);
-            indexProceedings(proceedingsToUpdate, proceedingsIndex);
-        }
+        var proceedingsIndex = findDocumentPublicationIndexByDatabaseId(proceedingsId);
+        indexProceedings(proceedingsToUpdate, proceedingsIndex);
 
         proceedingsJPAService.save(proceedingsToUpdate);
 
@@ -180,10 +181,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 //        deleteProofsAndFileItems(proceedingsToDelete);
         proceedingsJPAService.delete(proceedingsId);
 
-        if (proceedingsToDelete.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            documentPublicationIndexRepository.delete(
-                findDocumentPublicationIndexByDatabaseId(proceedingsId));
-        }
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(proceedingsId));
     }
 
     @Override

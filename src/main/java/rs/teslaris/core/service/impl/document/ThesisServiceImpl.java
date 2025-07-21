@@ -49,13 +49,15 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @Service
@@ -97,17 +99,18 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
                              SearchFieldsLoader searchFieldsLoader,
+                             OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                              ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
-                             LanguageService languageService,
-                             LanguageTagService languageTagService,
+                             LanguageService languageService, LanguageTagService languageTagService,
                              ThesisRepository thesisRepository,
                              ThesisResearchOutputRepository thesisResearchOutputRepository,
                              OrganisationUnitIndexRepository organisationUnitIndexRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;
@@ -132,7 +135,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             throw e;
         }
 
-        if (!thesis.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !thesis.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -142,7 +146,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Override
     public ThesisResponseDTO readThesisByOldId(Integer oldId) {
         var thesis = thesisRepository.findThesisByOldIdsContains(oldId);
-        if (thesis.isEmpty() || !thesis.get().getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (thesis.isEmpty() || (!SessionTrackingUtil.isUserLoggedIn() &&
+            !thesis.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -161,12 +166,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         setCommonFields(newThesis, thesisDTO);
         setThesisRelatedFields(newThesis, thesisDTO);
 
-        newThesis.setApproveStatus(
-            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
         var savedThesis = thesisJPAService.save(newThesis);
 
-        if (newThesis.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+        if (index) {
             indexThesis(savedThesis, new DocumentPublicationIndex());
         }
 
@@ -203,12 +205,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         thesisJPAService.save(thesisToUpdate);
 
-        if (thesisToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexThesis(thesisToUpdate,
-                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-                        thesisId)
-                    .orElse(new DocumentPublicationIndex()));
-        }
+        indexThesis(thesisToUpdate,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+                .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(thesisToUpdate);
     }

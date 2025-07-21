@@ -45,6 +45,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -86,6 +87,9 @@ public class MonographPublicationServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
 
     @InjectMocks
     private MonographPublicationServiceImpl monographPublicationService;
@@ -172,6 +176,9 @@ public class MonographPublicationServiceTest {
         // Given
         var monographPublicationDTO = new MonographPublicationDTO();
         var newMonographPublication = new MonographPublication();
+        newMonographPublication.setMonograph(new Monograph() {{
+            setId(1);
+        }});
         newMonographPublication.setApproveStatus(ApproveStatus.REQUESTED);
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
@@ -308,7 +315,7 @@ public class MonographPublicationServiceTest {
         // Then
         verify(monographPublicationJPAService, times(1)).findOne(monographPublicationId);
         verify(monographPublicationJPAService, times(1)).delete(monographPublicationId);
-        verify(documentPublicationIndexRepository, times(0)).delete(
+        verify(documentPublicationIndexRepository, times(1)).delete(
             any(DocumentPublicationIndex.class));
     }
 
@@ -369,7 +376,7 @@ public class MonographPublicationServiceTest {
         var pageable = PageRequest.of(0, 10);
         var mockPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
 
-        when(documentPublicationIndexRepository.findByTypeAndMonographId(
+        when(documentPublicationIndexRepository.findByTypeAndMonographIdAndIsApprovedTrue(
             DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable))
             .thenReturn(mockPage);
 
@@ -381,8 +388,8 @@ public class MonographPublicationServiceTest {
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
         verify(documentPublicationIndexRepository, times(1))
-            .findByTypeAndMonographId(DocumentPublicationType.MONOGRAPH_PUBLICATION.name(),
-                monographId, pageable);
+            .findByTypeAndMonographIdAndIsApprovedTrue(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
     }
 
     @Test

@@ -29,6 +29,10 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> findByTypeAndProceedingsId(String type, Integer proceedingsId,
                                                               Pageable pageable);
 
+    Page<DocumentPublicationIndex> findByTypeAndProceedingsIdAndIsApprovedTrue(String type,
+                                                                               Integer proceedingsId,
+                                                                               Pageable pageable);
+
     List<DocumentPublicationIndex> findByTypeAndJournalIdAndAuthorIds(String type,
                                                                       Integer journalId,
                                                                       Integer authorId);
@@ -87,12 +91,20 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> findByTypeAndJournalId(String type, Integer journalId,
                                                           Pageable pageable);
 
+    Page<DocumentPublicationIndex> findByTypeAndJournalIdAndIsApprovedTrue(String type,
+                                                                           Integer journalId,
+                                                                           Pageable pageable);
+
     Page<DocumentPublicationIndex> findByTypeInAndPublicationSeriesId(List<String> types,
                                                                       Integer publicationSeriesId,
                                                                       Pageable pageable);
 
     Page<DocumentPublicationIndex> findByTypeAndMonographId(String type, Integer monographId,
                                                             Pageable pageable);
+
+    Page<DocumentPublicationIndex> findByTypeAndMonographIdAndIsApprovedTrue(String type,
+                                                                             Integer monographId,
+                                                                             Pageable pageable);
 
     Page<DocumentPublicationIndex> findByPublisherId(Integer publisherId, Pageable pageable);
 
@@ -281,5 +293,20 @@ public interface DocumentPublicationIndexRepository extends
         }
         """)
     long countPublications();
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "is_approved": "true" } }
+            ],
+            "must_not": [
+              { "term": { "type": "PROCEEDINGS" } }
+            ]
+          }
+        }
+        """)
+    long countApprovedPublications();
+
 
 }

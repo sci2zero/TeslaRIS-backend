@@ -322,14 +322,15 @@ public class DocumentPublicationServiceTest {
     public void shouldGetDocumentPublicationCount() {
         // Given
         var expectedCount = 42L;
-        when(documentPublicationIndexRepository.countPublications()).thenReturn(expectedCount);
+        when(documentPublicationIndexRepository.countApprovedPublications()).thenReturn(
+            expectedCount);
 
         // When
         long actualCount = documentPublicationService.getPublicationCount();
 
         // Then
         assertEquals(expectedCount, actualCount);
-        verify(documentPublicationIndexRepository, times(1)).countPublications();
+        verify(documentPublicationIndexRepository, times(1)).countApprovedPublications();
     }
 
     @Test

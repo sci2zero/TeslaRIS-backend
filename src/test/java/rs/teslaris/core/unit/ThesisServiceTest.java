@@ -69,7 +69,8 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
@@ -122,6 +123,9 @@ public class ThesisServiceTest {
 
     @Mock
     private OrganisationUnitIndexRepository organisationUnitIndexRepository;
+
+    @Mock
+    private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -185,6 +189,7 @@ public class ThesisServiceTest {
         var thesisDTO = new ThesisDTO();
         thesisDTO.setDocumentDate("2024");
         thesisDTO.setOrganisationUnitId(1);
+        thesisDTO.setThesisType(ThesisType.PHD);
 
         var thesisToUpdate = new Thesis();
         thesisToUpdate.setApproveStatus(ApproveStatus.REQUESTED);

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,10 +46,12 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -57,7 +60,8 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Pair;
@@ -71,6 +75,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Primary
@@ -101,6 +106,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final CommissionRepository commissionRepository;
 
     private final SearchFieldsLoader searchFieldsLoader;
+
+    private final OrganisationUnitTrustConfigurationService
+        organisationUnitTrustConfigurationService;
 
     private final Pattern doiPattern =
         Pattern.compile("\"^10\\\\.\\\\d{4,9}\\\\/[-,._;()/:A-Z0-9]+$\"", Pattern.CASE_INSENSITIVE);
@@ -188,7 +196,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Long getPublicationCount() {
-        return documentPublicationIndexRepository.countPublications();
+        if (SessionTrackingUtil.isUserLoggedIn()) {
+            return documentPublicationIndexRepository.countPublications();
+        }
+
+        return documentPublicationIndexRepository.countApprovedPublications();
     }
 
     @Override
@@ -271,6 +283,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         setBasicMetadata(document, index);
         setContributors(document, index);
         setAdditionalMetadata(document, index);
+
+        index.setIsApproved(Objects.nonNull(document.getApproveStatus()) &&
+            document.getApproveStatus().equals(ApproveStatus.APPROVED));
     }
 
     private void setBasicMetadata(Document document, DocumentPublicationIndex index) {
@@ -521,6 +536,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             document.setEvent(event);
         }
+
+        if (!documentApprovedByDefault) {
+            document.setIsMetadataValid(false);
+        } else {
+            document.setIsMetadataValid(!shouldMetadataBeValidated(document));
+        }
+
+        document.setApproveStatus((document.getIsMetadataValid() && document.getAreFilesValid()) ?
+            ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
     }
 
     private void setCommonIdentifiers(Document document, DocumentDTO documentDTO) {
@@ -840,6 +864,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 b.must(createTypeTermsQuery(allowedTypes));
             }
 
+            if (!SessionTrackingUtil.isUserLoggedIn()) {
+                b.must(q -> q.term(t -> t.field("is_approved").value(true)));
+            }
+
             return b;
         })._toQuery();
     }
@@ -994,5 +1022,51 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             documentDTO.getDocumentDate().isBlank()) {
             throw new MissingDataException("This document requires a specified document date.");
         }
+    }
+
+    protected Boolean shouldMetadataBeValidated(Document document) {
+        var loggedInUser = SessionTrackingUtil.getLoggedInUser();
+
+        if (Objects.isNull(loggedInUser)) {
+            return true; // only for tests, impossible to reach during runtime
+        }
+
+        if (loggedInUser.getAuthority().getName().equals(UserRole.RESEARCHER.name())) {
+            if (!documentApprovedByDefault) {
+                return true;
+            }
+
+            return shouldSectionBeValidated(document, true);
+        } else {
+            return !loggedInUser.getAuthority().getAuthority().equals(UserRole.ADMIN.name()) &&
+                !loggedInUser.getAuthority().getAuthority()
+                    .equals(UserRole.INSTITUTIONAL_EDITOR.name()) &&
+                !loggedInUser.getAuthority().getAuthority()
+                    .equals(UserRole.INSTITUTIONAL_LIBRARIAN.name());
+        }
+    }
+
+    protected Boolean shouldFileItemsBeValidated(Document document) {
+        var loggedInUser = SessionTrackingUtil.getLoggedInUser();
+        if (Objects.nonNull(loggedInUser) &&
+            loggedInUser.getAuthority().getName().equals(UserRole.RESEARCHER.name())) {
+            return shouldSectionBeValidated(document, false);
+        }
+
+        return false;
+    }
+
+    private Boolean shouldSectionBeValidated(Document document, boolean metadata) {
+        var allDocumentInstitutions = new HashSet<Integer>();
+        document.getContributors().stream().filter(
+            c -> c.getContributionType().equals(DocumentContributionType.AUTHOR) &&
+                Objects.nonNull(c.getPerson()) && !c.getInstitutions().isEmpty()).forEach(c ->
+            allDocumentInstitutions.addAll(
+                c.getInstitutions().stream().map(BaseEntity::getId).toList())
+        );
+        return allDocumentInstitutions.stream().map(
+                organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
+            .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
+                !configuration.trustNewDocumentFiles());
     }
 }

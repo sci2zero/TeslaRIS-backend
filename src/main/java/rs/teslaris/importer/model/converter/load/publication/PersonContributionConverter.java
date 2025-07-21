@@ -16,7 +16,7 @@ import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.document.PersonalTitle;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;

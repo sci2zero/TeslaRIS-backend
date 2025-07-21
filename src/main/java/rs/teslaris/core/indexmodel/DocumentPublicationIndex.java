@@ -193,4 +193,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Keyword, name = "wordcloud_tokens_other", normalizer = "english_normalizer")
     private List<String> wordcloudTokensOther = new ArrayList<>();
+
+    @Field(type = FieldType.Boolean, name = "is_approved", store = true)
+    private Boolean isApproved;
 }

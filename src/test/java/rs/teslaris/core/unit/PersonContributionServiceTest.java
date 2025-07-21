@@ -31,7 +31,7 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.person.PersonContributionServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 
 @SpringBootTest

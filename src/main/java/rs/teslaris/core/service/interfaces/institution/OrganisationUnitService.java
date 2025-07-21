@@ -1,4 +1,4 @@
-package rs.teslaris.core.service.interfaces.person;
+package rs.teslaris.core.service.interfaces.institution;
 
 import java.io.IOException;
 import java.util.List;

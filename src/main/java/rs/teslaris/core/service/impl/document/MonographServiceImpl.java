@@ -32,7 +32,8 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
@@ -40,6 +41,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Traceable
@@ -74,6 +76,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 EventService eventService,
                                 CommissionRepository commissionRepository,
                                 SearchFieldsLoader searchFieldsLoader,
+                                OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                 MonographJPAServiceImpl monographJPAService,
                                 LanguageTagService languageTagService,
                                 JournalService journalService,
@@ -83,7 +86,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
         this.journalService = journalService;
@@ -120,7 +124,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             throw e;
         }
 
-        if (monograph.getApproveStatus().equals(ApproveStatus.DECLINED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !monograph.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Monograph with ID " + monographId + " does not exist.");
         }
 
@@ -134,12 +139,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         setCommonFields(newMonograph, monographDTO);
         setMonographRelatedFields(newMonograph, monographDTO);
 
-        newMonograph.setApproveStatus(
-            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
         var savedMonograph = monographJPAService.save(newMonograph);
 
-        if (newMonograph.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+        if (index) {
             indexMonograph(savedMonograph, new DocumentPublicationIndex());
         }
 
@@ -158,10 +160,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         setCommonFields(monographToUpdate, monographDTO);
         setMonographRelatedFields(monographToUpdate, monographDTO);
 
-        if (monographToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            var monographIndex = findDocumentPublicationIndexByDatabaseId(monographId);
-            indexMonograph(monographToUpdate, monographIndex);
-        }
+        var monographIndex = findDocumentPublicationIndexByDatabaseId(monographId);
+        indexMonograph(monographToUpdate, monographIndex);
 
         monographJPAService.save(monographToUpdate);
 
@@ -170,7 +170,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     @Override
     public void deleteMonograph(Integer monographId) {
-        var monographToDelete = monographJPAService.findOne(monographId);
+        monographJPAService.findOne(monographId);
 
         if (monographRepository.hasPublication(monographId)) {
             throw new MonographReferenceConstraintViolationException(
@@ -179,10 +179,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
         monographJPAService.delete(monographId);
 
-        if (monographToDelete.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            documentPublicationIndexRepository.delete(
-                findDocumentPublicationIndexByDatabaseId(monographId));
-        }
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(monographId));
     }
 
     @Override
