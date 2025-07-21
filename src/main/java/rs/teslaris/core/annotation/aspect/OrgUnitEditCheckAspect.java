@@ -42,7 +42,8 @@ public class OrgUnitEditCheckAspect {
         } else if (attributeMap.containsKey("leftOrganisationUnitId") &&
             attributeMap.containsKey("rightOrganisationUnitId")) {
             if (!annotation.value().equalsIgnoreCase("MERGE")) {
-                organisationUnitIds.add(Integer.parseInt(attributeMap.get("leftOrganisationUnitId")));
+                organisationUnitIds.add(
+                    Integer.parseInt(attributeMap.get("leftOrganisationUnitId")));
             }
             organisationUnitIds.add(Integer.parseInt(attributeMap.get("rightOrganisationUnitId")));
         } else if (attributeMap.containsKey("relationId")) {
