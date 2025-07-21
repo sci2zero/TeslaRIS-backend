@@ -593,23 +593,29 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         var optionalIndicator = findIndicator.apply(indicatorCode, id);
         R indicatorEntity;
         if (optionalIndicator.isEmpty()) {
+            var fetchedEntity = findEntityById.apply(id);
+            if (fetchedEntity.isEmpty()) {
+                // Should not happen, but just in case
+                log.warn(
+                    "Entity with ID '{}' does not exist in the DB. Skipping calculating '{}'.", id,
+                    indicatorCode);
+                return;
+            }
+
             indicatorEntity = createIndicator.apply(id);
 
             if (indicatorEntity instanceof DocumentIndicator) {
-                ((DocumentIndicator) indicatorEntity).setDocument(
-                    (Document) findEntityById.apply(id).orElseThrow());
+                ((DocumentIndicator) indicatorEntity).setDocument((Document) fetchedEntity.get());
             } else if (indicatorEntity instanceof PersonIndicator) {
-                ((PersonIndicator) indicatorEntity).setPerson(
-                    (Person) findEntityById.apply(id).orElseThrow());
+                ((PersonIndicator) indicatorEntity).setPerson((Person) fetchedEntity.get());
             } else if (indicatorEntity instanceof OrganisationUnitIndicator) {
                 ((OrganisationUnitIndicator) indicatorEntity).setOrganisationUnit(
-                    (OrganisationUnit) findEntityById.apply(id).orElseThrow());
+                    (OrganisationUnit) fetchedEntity.get());
             } else if (indicatorEntity instanceof PublicationSeriesIndicator) {
                 ((PublicationSeriesIndicator) indicatorEntity).setPublicationSeries(
-                    (PublicationSeries) findEntityById.apply(id).orElseThrow());
+                    (PublicationSeries) fetchedEntity.get());
             } else if (indicatorEntity instanceof EventIndicator) {
-                ((EventIndicator) indicatorEntity).setEvent(
-                    (Event) findEntityById.apply(id).orElseThrow());
+                ((EventIndicator) indicatorEntity).setEvent((Event) fetchedEntity.get());
             }
 
             ((EntityIndicator) indicatorEntity).setIndicator(
