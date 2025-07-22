@@ -15,6 +15,7 @@ import rs.teslaris.core.annotation.OrgUnitEditCheck;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.dto.institution.OrganisationUnitTrustConfigurationDTO;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
+import rs.teslaris.core.util.Pair;
 
 @RestController
 @RequestMapping("/api/organisation-unit/trust-configuration")
@@ -59,5 +60,14 @@ public class OrganisationUnitTrustConfigurationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void approvePublicationDocuments(@PathVariable Integer documentId) {
         organisationUnitTrustConfigurationService.approvePublicationUploadedDocuments(documentId);
+    }
+
+    @GetMapping("/document/{documentId}")
+    @PreAuthorize("hasAuthority('VALIDATE_UPLOADED_FILES')")
+    @PublicationEditCheck
+    public Pair<Boolean, Boolean> fetchValidationStatusForDocument(
+        @PathVariable Integer documentId) {
+        return organisationUnitTrustConfigurationService.fetchValidationStatusForDocument(
+            documentId);
     }
 }

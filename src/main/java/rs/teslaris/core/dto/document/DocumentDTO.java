@@ -60,4 +60,8 @@ public class DocumentDTO {
     private List<DocumentFileResponseDTO> fileItems = new ArrayList<>();
 
     private List<DocumentFileResponseDTO> proofs = new ArrayList<>();
+
+    private Boolean isMetadataValid;
+
+    private Boolean areFilesValid;
 }

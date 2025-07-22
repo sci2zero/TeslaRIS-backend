@@ -8,11 +8,13 @@ import rs.teslaris.core.dto.institution.OrganisationUnitTrustConfigurationDTO;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnitTrustConfiguration;
+import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitTrustConfigurationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
+import rs.teslaris.core.util.Pair;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,8 @@ public class OrganisationUnitTrustConfigurationServiceImpl
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final DocumentFileRepository documentFileRepository;
+
 
     @Override
     protected JpaRepository<OrganisationUnitTrustConfiguration, Integer> getEntityRepository() {
@@ -43,12 +47,11 @@ public class OrganisationUnitTrustConfigurationServiceImpl
             organisationUnitTrustConfigurationRepository.findConfigurationForOrganisationUnit(
                 organisationUnitId);
 
-        // TODO: Should it be this permissive?
         return configuration.map(
                 organisationUnitTrustConfiguration -> new OrganisationUnitTrustConfigurationDTO(
                     organisationUnitTrustConfiguration.getTrustNewPublications(),
                     organisationUnitTrustConfiguration.getTrustNewDocumentFiles()))
-            .orElseGet(() -> new OrganisationUnitTrustConfigurationDTO(true, true));
+            .orElseGet(() -> new OrganisationUnitTrustConfigurationDTO(true, false));
     }
 
     @Override
@@ -75,11 +78,8 @@ public class OrganisationUnitTrustConfigurationServiceImpl
     public void approvePublicationMetadata(Integer documentId) {
         documentRepository.findById(documentId).ifPresent(document -> {
             document.setIsMetadataValid(true);
-
-            if (document.getAreFilesValid()) {
-                document.setApproveStatus(ApproveStatus.APPROVED);
-                updateDocumentIndex(documentId);
-            }
+            document.setApproveStatus(ApproveStatus.APPROVED);
+            updateDocumentIndex(documentId);
 
             documentRepository.save(document);
 
@@ -89,16 +89,29 @@ public class OrganisationUnitTrustConfigurationServiceImpl
     @Override
     public void approvePublicationUploadedDocuments(Integer documentId) {
         documentRepository.findById(documentId).ifPresent(document -> {
+
+            document.getFileItems().forEach(file -> {
+                file.setIsVerifiedData(true);
+                documentFileRepository.save(file);
+            });
+
+            document.getProofs().forEach(file -> {
+                file.setIsVerifiedData(true);
+                documentFileRepository.save(file);
+            });
+
             document.setAreFilesValid(true);
-
-            if (document.getIsMetadataValid()) {
-                document.setApproveStatus(ApproveStatus.APPROVED);
-                updateDocumentIndex(documentId);
-            }
-
             documentRepository.save(document);
-
         });
+    }
+
+    @Override
+    public Pair<Boolean, Boolean> fetchValidationStatusForDocument(Integer documentId) {
+        var document = documentRepository.findById(documentId);
+
+        return document.map(
+                value -> new Pair<>(value.getIsMetadataValid(), value.getAreFilesValid()))
+            .orElseGet(() -> new Pair<>(false, false));
     }
 
     private void updateDocumentIndex(Integer documentId) {

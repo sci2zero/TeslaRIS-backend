@@ -8,6 +8,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -125,6 +127,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
+
+    @Value("${default.region-code}")
+    private String defaultRegionCode;
 
 
     @Override
@@ -453,8 +458,28 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             personalInfoToUpdate.getContact()
                 .setContactEmail(personalInfo.getContact().getContactEmail());
-            personalInfoToUpdate.getContact()
-                .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
+
+            var rawNumber = personalInfo.getContact().getPhoneNumber();
+            if (Objects.nonNull(rawNumber)) {
+                String phoneNumber;
+                var phoneUtil = PhoneNumberUtil.getInstance();
+
+                try {
+                    if (rawNumber.startsWith("+")) {
+                        phoneNumber = phoneUtil.format(
+                            phoneUtil.parse(rawNumber, null),
+                            PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL); // Country code is in number
+                    } else {
+                        phoneNumber =
+                            phoneUtil.format(phoneUtil.parse(rawNumber, defaultRegionCode),
+                                PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                    }
+                } catch (NumberParseException ignored) {
+                    phoneNumber = rawNumber;
+                }
+
+                personalInfoToUpdate.getContact().setPhoneNumber(phoneNumber);
+            }
         }
 
         save(personToUpdate);

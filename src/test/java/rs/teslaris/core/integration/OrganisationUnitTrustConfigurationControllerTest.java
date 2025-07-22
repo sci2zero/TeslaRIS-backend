@@ -81,4 +81,18 @@ public class OrganisationUnitTrustConfigurationControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser(username = "test.editor@test.com", password = "testEditor")
+    public void testFetchDocumentValidationStatus() throws Exception {
+        String jwtToken = authenticateInstitutionalEditorAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/organisation-unit/trust-configuration/document/{documentId}",
+                        13)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
 }

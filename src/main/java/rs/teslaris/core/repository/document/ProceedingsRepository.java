@@ -30,7 +30,8 @@ public interface ProceedingsRepository extends JpaRepository<Proceedings, Intege
     boolean existsByPrintISBN(String printISBN, Integer id);
 
     @Query(value = "SELECT * FROM proceedings p WHERE " +
-        "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
+        "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
+        "p.approveStatus = 1", nativeQuery = true)
     Page<Proceedings> findAllModifiedInLast24Hours(Pageable pageable);
 
     @Modifying

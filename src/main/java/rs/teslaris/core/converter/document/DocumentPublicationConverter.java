@@ -35,6 +35,9 @@ public class DocumentPublicationConverter {
         publicationDTO.setDoi(publication.getDoi());
         publicationDTO.setScopusId(publication.getScopusId());
 
+        publicationDTO.setIsMetadataValid(publication.getIsMetadataValid());
+        publicationDTO.setAreFilesValid(publication.getAreFilesValid());
+
         if (Objects.nonNull(publication.getEvent())) {
             publicationDTO.setEventId(publication.getEvent().getId());
         }

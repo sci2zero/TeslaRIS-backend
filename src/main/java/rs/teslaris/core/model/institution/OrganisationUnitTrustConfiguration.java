@@ -28,5 +28,5 @@ public class OrganisationUnitTrustConfiguration extends BaseEntity {
     private Boolean trustNewPublications = true;
 
     @Column(name = "trust_new_document_files")
-    private Boolean trustNewDocumentFiles = true;
+    private Boolean trustNewDocumentFiles = false;
 }

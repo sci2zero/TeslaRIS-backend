@@ -220,15 +220,21 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
                                                    Boolean isProof) {
         var document = findOne(documentId);
-        var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof, document);
+        var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof, document,
+            !shouldFileItemsBeValidated(document));
         if (isProof) {
             document.getProofs().add(documentFile);
         } else {
             document.getFileItems().add(documentFile);
         }
+
+        if (!documentFile.getIsVerifiedData()) {
+            document.setAreFilesValid(false);
+        }
+
         documentRepository.save(document);
 
-        if (!isProof && document.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
@@ -247,7 +253,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var isProof =
             document.getProofs().stream().anyMatch((proof) -> proof.getId().equals(documentFileId));
 
-        if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
+        document.getFileItems().remove(documentFile);
+        document.getProofs().remove(documentFile);
+
+        document.setAreFilesValid(document.getFileItems().stream()
+            .noneMatch(file -> file.getIsVerifiedData().equals(false)) &&
+            document.getProofs().stream()
+                .noneMatch(file -> file.getIsVerifiedData().equals(false)));
+
+        if (!isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
@@ -543,8 +557,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.setIsMetadataValid(!shouldMetadataBeValidated(document));
         }
 
-        document.setApproveStatus((document.getIsMetadataValid() && document.getAreFilesValid()) ?
-            ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
+        document.setApproveStatus(
+            document.getIsMetadataValid() ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
     }
 
     private void setCommonIdentifiers(Document document, DocumentDTO documentDTO) {
@@ -1025,45 +1039,50 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     protected Boolean shouldMetadataBeValidated(Document document) {
+        return shouldValidate(document, true);
+    }
+
+    protected Boolean shouldFileItemsBeValidated(Document document) {
+        return shouldValidate(document, false);
+    }
+
+    private Boolean shouldValidate(Document document, boolean isMetadata) {
         var loggedInUser = SessionTrackingUtil.getLoggedInUser();
 
         if (Objects.isNull(loggedInUser)) {
             return true; // only for tests, impossible to reach during runtime
         }
 
-        if (loggedInUser.getAuthority().getName().equals(UserRole.RESEARCHER.name())) {
+        var roleName = loggedInUser.getAuthority().getName();
+        var roleAuthority = loggedInUser.getAuthority().getAuthority();
+
+        if (roleName.equals(UserRole.RESEARCHER.name())) {
             if (!documentApprovedByDefault) {
                 return true;
             }
-
-            return shouldSectionBeValidated(document, true);
+            return shouldSectionBeValidated(document, isMetadata);
         } else {
-            return !loggedInUser.getAuthority().getAuthority().equals(UserRole.ADMIN.name()) &&
-                !loggedInUser.getAuthority().getAuthority()
-                    .equals(UserRole.INSTITUTIONAL_EDITOR.name()) &&
-                !loggedInUser.getAuthority().getAuthority()
-                    .equals(UserRole.INSTITUTIONAL_LIBRARIAN.name());
+            return !roleAuthority.equals(UserRole.ADMIN.name()) &&
+                !roleAuthority.equals(UserRole.INSTITUTIONAL_EDITOR.name()) &&
+                !roleAuthority.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name());
         }
-    }
-
-    protected Boolean shouldFileItemsBeValidated(Document document) {
-        var loggedInUser = SessionTrackingUtil.getLoggedInUser();
-        if (Objects.nonNull(loggedInUser) &&
-            loggedInUser.getAuthority().getName().equals(UserRole.RESEARCHER.name())) {
-            return shouldSectionBeValidated(document, false);
-        }
-
-        return false;
     }
 
     private Boolean shouldSectionBeValidated(Document document, boolean metadata) {
         var allDocumentInstitutions = new HashSet<Integer>();
-        document.getContributors().stream().filter(
-            c -> c.getContributionType().equals(DocumentContributionType.AUTHOR) &&
-                Objects.nonNull(c.getPerson()) && !c.getInstitutions().isEmpty()).forEach(c ->
-            allDocumentInstitutions.addAll(
-                c.getInstitutions().stream().map(BaseEntity::getId).toList())
-        );
+
+        if (document instanceof Thesis &&
+            Objects.nonNull(((Thesis) document).getOrganisationUnit())) {
+            allDocumentInstitutions.add(((Thesis) document).getOrganisationUnit().getId());
+        } else {
+            document.getContributors().stream().filter(
+                c -> c.getContributionType().equals(DocumentContributionType.AUTHOR) &&
+                    Objects.nonNull(c.getPerson()) && !c.getInstitutions().isEmpty()).forEach(c ->
+                allDocumentInstitutions.addAll(
+                    c.getInstitutions().stream().map(BaseEntity::getId).toList())
+            );
+        }
+
         return allDocumentInstitutions.stream().map(
                 organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
             .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :

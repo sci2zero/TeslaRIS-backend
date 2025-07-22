@@ -81,7 +81,7 @@ public class OrganisationUnitTrustConfigurationServiceTest {
 
         // Then
         assertTrue(result.trustNewPublications());
-        assertTrue(result.trustNewDocumentFiles());
+        assertFalse(result.trustNewDocumentFiles());
     }
 
     @Test
@@ -175,7 +175,7 @@ public class OrganisationUnitTrustConfigurationServiceTest {
 
         // Then
         assertTrue(document.getIsMetadataValid());
-        assertNull(document.getApproveStatus()); // Not approved because files are not valid
+        assertEquals(ApproveStatus.APPROVED, document.getApproveStatus());
         verify(documentRepository).save(document);
         verify(documentPublicationIndexRepository, never()).save(any());
     }
@@ -199,11 +199,9 @@ public class OrganisationUnitTrustConfigurationServiceTest {
 
         // Then
         assertTrue(document.getAreFilesValid());
-        assertEquals(ApproveStatus.APPROVED, document.getApproveStatus());
-        assertTrue(index.getIsApproved());
 
         verify(documentRepository).save(document);
-        verify(documentPublicationIndexRepository).save(index);
+        verify(documentPublicationIndexRepository, never()).save(index);
     }
 
     @Test
@@ -224,5 +222,38 @@ public class OrganisationUnitTrustConfigurationServiceTest {
 
         verify(documentRepository).save(document);
         verify(documentPublicationIndexRepository, never()).save(any());
+    }
+
+    @Test
+    public void shouldReturnValidationStatusWhenDocumentExists() {
+        // Given
+        var documentId = 1;
+        var document = new Thesis();
+        document.setIsMetadataValid(true);
+        document.setAreFilesValid(false);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        var result = service.fetchValidationStatusForDocument(documentId);
+
+        // Then
+        assertEquals(true, result.a);
+        assertEquals(false, result.b);
+    }
+
+    @Test
+    public void shouldReturnFalseFalseWhenDocumentDoesNotExist() {
+        // Given
+        var documentId = 99;
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+
+        // When
+        var result = service.fetchValidationStatusForDocument(documentId);
+
+        // Then
+        assertEquals(false, result.a);
+        assertEquals(false, result.b);
     }
 }

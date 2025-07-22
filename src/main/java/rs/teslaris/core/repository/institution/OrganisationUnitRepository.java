@@ -64,7 +64,8 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     boolean existsByROR(String ror, Integer id);
 
     @Query(value = "SELECT * FROM organisation_units ou WHERE " +
-        "ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
+        "ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
+        "ou.approveStatus = 1", nativeQuery = true)
     Page<OrganisationUnit> findAllModifiedInLast24Hours(Pageable pageable);
 
     @Query("SELECT t FROM Thesis t WHERE t.organisationUnit.id = :organisationUnitId")

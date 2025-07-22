@@ -27,7 +27,7 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
     DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index);
 
     DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
-                                            Document document);
+                                            Document document, boolean trusted);
 
     DocumentFile saveNewPersonalDocument(DocumentFileDTO documentFile, Boolean index,
                                          Person person);

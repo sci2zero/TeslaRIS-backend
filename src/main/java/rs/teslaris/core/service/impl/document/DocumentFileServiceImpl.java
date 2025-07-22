@@ -39,6 +39,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -54,6 +55,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -154,11 +156,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
-                                                   Document document) {
+                                                   Document document, boolean trusted) {
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
-        newDocumentFile.setIsVerifiedData(document instanceof Thesis);
+        newDocumentFile.setIsVerifiedData(document instanceof Thesis || trusted);
         newDocumentFile.setDocument(document);
 
         if (!index) {
@@ -230,6 +232,25 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 });
         }
 
+        if (SessionTrackingUtil.isUserLoggedIn()) {
+            var loggedInUser = SessionTrackingUtil.getLoggedInUser();
+            if (Objects.nonNull(loggedInUser) &&
+                (loggedInUser.getAuthority().getName().equals(UserRole.ADMIN.name()) ||
+                    loggedInUser.getAuthority().getName()
+                        .equals(UserRole.INSTITUTIONAL_EDITOR.name()) ||
+                    loggedInUser.getAuthority().getName()
+                        .equals(UserRole.INSTITUTIONAL_LIBRARIAN.name()))) {
+                var file = findDocumentFileById(documentFile.getId());
+                file.setIsVerifiedData(true);
+                save(file);
+            } else if (Objects.nonNull(loggedInUser) &&
+                loggedInUser.getAuthority().getName().equals(UserRole.RESEARCHER.name())) {
+                var file = findDocumentFileById(documentFile.getId());
+                file.setIsVerifiedData(false);
+                save(file);
+            }
+        }
+
         return documentFileResponse;
     }
 
@@ -274,9 +295,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Override
     public void deleteDocumentFile(String serverFilename) {
         documentFileRepository.getReferenceByServerFilename(serverFilename)
-            .ifPresent(documentToDelete -> {
+            .ifPresent(documentFileToDelete -> {
                 fileService.delete(serverFilename);
-                delete(documentToDelete.getId());
+                delete(documentFileToDelete.getId());
             });
     }
 

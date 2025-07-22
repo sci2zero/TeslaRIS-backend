@@ -204,7 +204,7 @@ public class DocumentPublicationServiceTest {
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class), eq(false),
-            eq(document))).thenReturn(
+            eq(document), anyBoolean())).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -225,10 +225,11 @@ public class DocumentPublicationServiceTest {
         document.setApproveStatus(ApproveStatus.REQUESTED);
         var documentFile = new DocumentFile();
         documentFile.setId(1);
+        documentFile.setMimeType("text/xml");
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class),
-            eq(!isProof), eq(document))).thenReturn(
+            eq(!isProof), eq(document), anyBoolean())).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
