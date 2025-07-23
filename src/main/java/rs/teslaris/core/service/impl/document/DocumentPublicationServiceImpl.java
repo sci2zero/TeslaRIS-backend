@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -300,6 +301,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         index.setIsApproved(Objects.nonNull(document.getApproveStatus()) &&
             document.getApproveStatus().equals(ApproveStatus.APPROVED));
+        index.setAreFilesValid(document.getAreFilesValid());
     }
 
     private void setBasicMetadata(Document document, DocumentPublicationIndex index) {
@@ -332,19 +334,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private void setContributors(Document document, DocumentPublicationIndex index) {
-        var organisationUnitIds = new ArrayList<Integer>();
+        var organisationUnitIds = new HashSet<Integer>();
 
         document.getContributors().stream()
             .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
             .forEach(contribution -> processContribution(contribution, index, organisationUnitIds));
 
-        index.setOrganisationUnitIds(organisationUnitIds);
+        index.setOrganisationUnitIds(new ArrayList<>(organisationUnitIds.stream().toList()));
         index.setAuthorNamesSortable(index.getAuthorNames());
     }
 
     private void processContribution(PersonDocumentContribution contribution,
                                      DocumentPublicationIndex index,
-                                     List<Integer> organisationUnitIds) {
+                                     Set<Integer> organisationUnitIds) {
         var personExists = Objects.nonNull(contribution.getPerson());
         var contributorName =
             contribution.getAffiliationStatement().getDisplayPersonName().toString();
@@ -430,6 +432,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setFullTextSr("");
         index.setFullTextOther("");
         index.setIsOpenAccess(false);
+        index.setAreFilesValid(document.getAreFilesValid());
 
         document.getFileItems().forEach(documentFile -> {
             index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
@@ -866,15 +869,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                            Integer commissionId,
                                            List<DocumentPublicationType> allowedTypes) {
         return BoolQuery.of(b -> {
-            if (institutionId != null && institutionId > 0) {
+            if (Objects.nonNull(institutionId) && institutionId > 0) {
                 b.must(q -> q.term(t -> t.field("organisation_unit_ids").value(institutionId)));
             }
 
-            if (commissionId != null && commissionId > 0) {
+            if (Objects.nonNull(commissionId) && commissionId > 0) {
                 b.mustNot(q -> q.term(t -> t.field("assessed_by").value(commissionId)));
             }
 
-            if (allowedTypes != null && !allowedTypes.isEmpty()) {
+            if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
                 b.must(createTypeTermsQuery(allowedTypes));
             }
 

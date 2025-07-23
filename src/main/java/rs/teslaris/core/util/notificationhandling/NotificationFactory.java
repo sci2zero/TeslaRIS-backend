@@ -261,6 +261,25 @@ public class NotificationFactory {
             NotificationType.SCHEDULED_TASK_COMPLETED, user);
     }
 
+    public static Notification contructNewDocumentsForValidationNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args =
+            new Object[] {notificationValues.get("nonValidatedDocumentsCount")};
+        try {
+            message = messageSource.getMessage(
+                "notification.documentsForValidation",
+                args,
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args);
+        }
+        return new Notification(message, notificationValues,
+            NotificationType.NEW_DOCUMENTS_FOR_VALIDATION, user);
+    }
+
     private static String fallbackToDefaultLocale(Object[] args) {
         return messageSource.getMessage(
             "notification.addedToPublication",

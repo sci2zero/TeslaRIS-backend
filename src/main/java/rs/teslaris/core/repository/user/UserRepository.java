@@ -57,6 +57,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT u FROM User u WHERE u.authority.name = 'ADMIN'")
     List<User> findAllSystemAdminUsers();
 
+    @Query("SELECT u FROM User u WHERE " +
+        "u.authority.name = 'INSTITUTIONAL_EDITOR' AND " +
+        "u.organisationUnit.id = :institutionId")
+    List<User> findInstitutionalEditorUsersForInstitutionId(Integer institutionId);
+
     @Query("SELECT u FROM User u WHERE u.authority.name = 'PROMOTION_REGISTRY_ADMINISTRATOR'")
     List<User> findAllRegistryAdmins();
 

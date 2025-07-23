@@ -125,6 +125,12 @@ public class PublicationEditCheckAspect {
                         (joinPoint.getArgs()[0] instanceof MonographDTO))) {
                     throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
                 }
+
+                if (!contributors.contains(personId) &&
+                    annotation.value().equalsIgnoreCase("EDIT")) {
+                    throw new CantEditException("unauthorizedPublicationEditAttemptMessage");
+                }
+
                 break;
             case INSTITUTIONAL_EDITOR:
                 if (noResearchersFromUserInstitution(contributors, userId) &&

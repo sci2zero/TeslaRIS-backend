@@ -196,4 +196,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "is_approved", store = true)
     private Boolean isApproved;
+
+    @Field(type = FieldType.Boolean, name = "are_files_valid", store = true)
+    private Boolean areFilesValid;
 }

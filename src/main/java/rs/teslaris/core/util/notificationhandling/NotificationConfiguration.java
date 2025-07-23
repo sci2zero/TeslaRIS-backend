@@ -31,5 +31,7 @@ public class NotificationConfiguration {
             List.of(NotificationAction.GO_TO_HARVESTER_PAGE));
         allowedActions.put(NotificationType.NEW_ENTITY_CREATION,
             List.of(NotificationAction.NAVIGATE_TO_URL));
+        allowedActions.put(NotificationType.NEW_DOCUMENTS_FOR_VALIDATION,
+            List.of(NotificationAction.GO_TO_VALIDATION_PAGE));
     }
 }

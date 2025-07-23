@@ -86,6 +86,8 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     List<User> findAllSystemAdminUsers();
 
+    List<User> findInstitutionalEditorUsersForInstitutionId(Integer institutionId);
+
     void deleteUserAccount(Integer userId);
 
     void migrateUserAccountData(Integer userToUpdateId, Integer userToDeleteId);

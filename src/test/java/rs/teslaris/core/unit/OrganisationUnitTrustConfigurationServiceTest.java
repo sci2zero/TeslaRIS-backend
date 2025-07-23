@@ -1,23 +1,35 @@
 package rs.teslaris.core.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.institution.OrganisationUnitTrustConfigurationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Dataset;
@@ -29,10 +41,13 @@ import rs.teslaris.core.model.institution.OrganisationUnitTrustConfiguration;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitTrustConfigurationRepository;
 import rs.teslaris.core.service.impl.institution.OrganisationUnitTrustConfigurationServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 
 @SpringBootTest
 public class OrganisationUnitTrustConfigurationServiceTest {
+
+    private final Pageable pageable = PageRequest.of(0, 10);
 
     @Mock
     private OrganisationUnitTrustConfigurationRepository configurationRepository;
@@ -46,9 +61,11 @@ public class OrganisationUnitTrustConfigurationServiceTest {
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    @Mock
+    private SearchService<DocumentPublicationIndex> searchService;
+
     @InjectMocks
     private OrganisationUnitTrustConfigurationServiceImpl service;
-
 
     @Test
     public void shouldReturnExistingTrustConfiguration() {
@@ -201,7 +218,7 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         assertTrue(document.getAreFilesValid());
 
         verify(documentRepository).save(document);
-        verify(documentPublicationIndexRepository, never()).save(index);
+        verify(documentPublicationIndexRepository).save(index);
     }
 
     @Test
@@ -255,5 +272,106 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         // Then
         assertEquals(false, result.a);
         assertEquals(false, result.b);
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenValidationFlagsAreNull() {
+        // Given
+        Boolean nonValidatedMetadata = null;
+        Boolean nonValidatedFiles = null;
+
+        // When
+        var result =
+            service.fetchNonValidatedPublications(1, nonValidatedMetadata, nonValidatedFiles,
+                List.of(), pageable);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(searchService);
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenValidationFlagsAreFalse() {
+        // Given
+        var nonValidatedMetadata = false;
+        var nonValidatedFiles = false;
+
+        // When
+        var result =
+            service.fetchNonValidatedPublications(1, nonValidatedMetadata, nonValidatedFiles,
+                List.of(), pageable);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(searchService);
+    }
+
+    @Test
+    void shouldBuildQueryWhenOnlyNonValidatedMetadataIsTrue() {
+        // Given
+        var expectedResult = List.of(mock(DocumentPublicationIndex.class));
+        when(searchService.runQuery(any(), eq(pageable), eq(DocumentPublicationIndex.class),
+            eq("document_publication")))
+            .thenReturn(new PageImpl<>(expectedResult));
+
+        // When
+        var result = service.fetchNonValidatedPublications(null, true, false, null, pageable);
+
+        // Then
+        assertThat(result).containsExactlyElementsOf(expectedResult);
+
+        var captor = ArgumentCaptor.forClass(Query.class);
+        verify(searchService).runQuery(captor.capture(), eq(pageable),
+            eq(DocumentPublicationIndex.class), eq("document_publication"));
+
+        var boolQuery = captor.getValue();
+        assertThat(boolQuery.bool().must()).anyMatch(q ->
+            q.bool() != null &&
+                q.bool().should().stream()
+                    .anyMatch(inner -> inner.term().field().equals("is_approved"))
+        );
+    }
+
+    @Test
+    void shouldBuildQueryWithInstitutionAndTypeFilter() {
+        // Given
+        var subOrgIds = List.of(10, 20);
+        var types = List.of(DocumentPublicationType.DATASET, DocumentPublicationType.SOFTWARE);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(5)).thenReturn(
+            subOrgIds);
+
+        var expectedResult = List.of(mock(DocumentPublicationIndex.class));
+        when(searchService.runQuery(any(), eq(pageable), eq(DocumentPublicationIndex.class),
+            eq("document_publication")))
+            .thenReturn(new PageImpl<>(expectedResult));
+
+        // When
+        var result = service.fetchNonValidatedPublications(5, true, true, types, pageable);
+
+        // Then
+        assertThat(result).containsExactlyElementsOf(expectedResult);
+
+        var captor = ArgumentCaptor.forClass(Query.class);
+        verify(searchService).runQuery(captor.capture(), eq(pageable),
+            eq(DocumentPublicationIndex.class), eq("document_publication"));
+
+        var finalQuery = captor.getValue();
+        var must = finalQuery.bool().must();
+
+        assertThat(must).anyMatch(q ->
+            q.isTerms() && q.terms() != null &&
+                q.terms().field().equals("organisation_unit_ids")
+        );
+
+        assertThat(must).anyMatch(q ->
+            q.isTerms() && q.terms() != null &&
+                q.terms().field().equals("type")
+        );
+
+        assertThat(must).anyMatch(q ->
+            q.isBool() && q.bool() != null &&
+                q.bool().should().size() == 2 &&
+                Objects.equals(q.bool().minimumShouldMatch(), "1")
+        );
     }
 }
