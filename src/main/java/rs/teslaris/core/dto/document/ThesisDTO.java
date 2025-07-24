@@ -53,9 +53,9 @@ public class ThesisDTO extends DocumentDTO {
     @Positive
     private Integer writingLanguageTagId;
 
-    private String scientificArea;
+    private List<MultilingualContentDTO> scientificArea = new ArrayList<>();
 
-    private String scientificSubArea;
+    private List<MultilingualContentDTO> scientificSubArea = new ArrayList<>();
 
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;
@@ -68,7 +68,7 @@ public class ThesisDTO extends DocumentDTO {
 
     private String eisbn;
 
-    private String placeOfKeep;
+    private List<MultilingualContentDTO> placeOfKeep = new ArrayList<>();
 
     private String udc;
 
@@ -78,5 +78,5 @@ public class ThesisDTO extends DocumentDTO {
 
     private List<MultilingualContentDTO> remark = new ArrayList<>();
 
-    private String typeOfTitle;
+    private List<MultilingualContentDTO> typeOfTitle = new ArrayList<>();
 }

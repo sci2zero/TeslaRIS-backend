@@ -101,13 +101,17 @@ public class ThesisConverter extends DocumentPublicationConverter {
             thesisDTO.setWritingLanguageTagId(thesis.getWritingLanguage().getId());
         }
 
-        thesisDTO.setScientificArea(thesis.getScientificArea());
-        thesisDTO.setScientificSubArea(thesis.getScientificSubArea());
+        thesisDTO.setScientificArea(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getScientificArea()));
+        thesisDTO.setScientificSubArea(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getScientificSubArea()));
         thesisDTO.setEisbn(thesis.getEISBN());
         thesisDTO.setPrintISBN(thesis.getPrintISBN());
-        thesisDTO.setPlaceOfKeep(thesis.getPlaceOfKeeping());
+        thesisDTO.setPlaceOfKeep(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getPlaceOfKeeping()));
         thesisDTO.setUdc(thesis.getUdc());
-        thesisDTO.setTypeOfTitle(thesis.getTypeOfTitle());
+        thesisDTO.setTypeOfTitle(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getTypeOfTitle()));
         thesisDTO.setPublicReviewCompleted(thesis.getPublicReviewCompleted());
 
         if (Objects.nonNull(thesis.getPublisher())) {

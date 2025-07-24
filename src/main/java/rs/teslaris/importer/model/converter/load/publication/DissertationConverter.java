@@ -42,7 +42,7 @@ public class DissertationConverter extends DocumentConverter
 
         dto.setThesisType(ThesisType.PHD);
 
-        if (record.getLanguage().equals("sr-Cyrl")) {
+        if (Objects.nonNull(record.getLanguage()) && record.getLanguage().equals("sr-Cyrl")) {
             record.setLanguage("SR-CYR");
         }
         dto.setWritingLanguageTagId(

@@ -161,8 +161,11 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Date, name = "public_review_start_dates", store = true)
     private List<LocalDate> publicReviewStartDates = new ArrayList<>();
 
-    @Field(type = FieldType.Keyword, name = "scientific_field", store = true)
-    private String scientificField;
+    @Field(type = FieldType.Keyword, name = "scientific_field_sr", store = true)
+    private String scientificFieldSr;
+
+    @Field(type = FieldType.Keyword, name = "scientific_field_other", store = true)
+    private String scientificFieldOther;
 
     @Field(type = FieldType.Date, name = "latest_public_review_start_date", store = true)
     private LocalDate latestPublicReviewStartDate;

@@ -18,7 +18,7 @@ public class TransliterationMessageSource implements MessageSource {
     public String getMessage(@NotNull String code, Object[] args, String defaultMessage,
                              @NotNull Locale locale) {
         String message = delegate.getMessage(code, args, defaultMessage, resolveLocale(locale));
-        return maybeTransliterate(message, locale);
+        return performNecessaryTransliteration(message, locale);
     }
 
     @NotNull
@@ -26,7 +26,7 @@ public class TransliterationMessageSource implements MessageSource {
     public String getMessage(@NotNull String code, Object[] args, @NotNull Locale locale)
         throws NoSuchMessageException {
         String message = delegate.getMessage(code, args, resolveLocale(locale));
-        return maybeTransliterate(message, locale);
+        return performNecessaryTransliteration(message, locale);
     }
 
     @NotNull
@@ -36,7 +36,7 @@ public class TransliterationMessageSource implements MessageSource {
         @NotNull Locale locale)
         throws NoSuchMessageException {
         String message = delegate.getMessage(resolvable, resolveLocale(locale));
-        return maybeTransliterate(message, locale);
+        return performNecessaryTransliteration(message, locale);
     }
 
     private Locale resolveLocale(Locale original) {
@@ -47,7 +47,7 @@ public class TransliterationMessageSource implements MessageSource {
         return original;
     }
 
-    private String maybeTransliterate(String message, Locale originalLocale) {
+    private String performNecessaryTransliteration(String message, Locale originalLocale) {
         if (Objects.nonNull(originalLocale) &&
             "sr-cyr".equalsIgnoreCase(originalLocale.toLanguageTag()) ||
             "sr-cyr".equalsIgnoreCase(Objects.requireNonNull(originalLocale).getLanguage())) {
