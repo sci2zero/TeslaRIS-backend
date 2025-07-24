@@ -81,7 +81,7 @@ public class FileController {
         var file = fileService.loadAsResource(filename);
         var documentFile = documentFileService.getDocumentByServerFilename(filename);
         var accessRights = documentFile.getAccessRights();
-        var isVerifierDocument = documentFile.getIsVerifiedData();
+        var isVerifiedDocument = documentFile.getIsVerifiedData();
         var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
         var isOpenAccess = isOpenAccess(accessRights);
         var isThesisDocument = Objects.nonNull(documentFile.getDocument()) &&
