@@ -388,7 +388,7 @@ public class TestingDataInitializer {
                 "Proficiency in web exploitation and reverse engineering.", 1)),
             Set.of(
                 new DocumentFile("ISACA Cybersecurity Fundamentals - Certificate.pdf", "1111.pdf",
-                    new HashSet<>(), "appllication/pdf", 200L, ResourceType.SUPPLEMENT,
+                    new HashSet<>(), "application/pdf", 200L, ResourceType.SUPPLEMENT,
                     AccessRights.RESTRICTED_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
                     LocalDateTime.now(),
                     false, false, null, null, person1)), person1));
@@ -406,7 +406,7 @@ public class TestingDataInitializer {
                 "1st place on a national cybersecurity competition finals. The competition is conducted in 5-man teams.",
                 1)),
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
-                new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
+                new HashSet<>(), "application/pdf", 127L, ResourceType.SUPPLEMENT,
                 AccessRights.OPEN_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
                 LocalDateTime.now(), false, false, null, null, person1)),
             LocalDate.of(2023, 4, 17), person1));
@@ -725,7 +725,7 @@ public class TestingDataInitializer {
                 documentIndicatorToDelete));
 
         documentIndicator1.getProofs().add(new DocumentFile("Proof 1", "3333.pdf",
-            new HashSet<>(), "appllication/pdf", 127L, ResourceType.SUPPLEMENT,
+            new HashSet<>(), "application/pdf", 127L, ResourceType.SUPPLEMENT,
             AccessRights.OPEN_ACCESS, License.BY_SA, ApproveStatus.APPROVED, true,
             LocalDateTime.now(),
             false, false, "123.pdf", null, null));

@@ -184,6 +184,7 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         var document = new Thesis();
         document.setId(2);
         document.setAreFilesValid(false);
+        document.setIsMetadataValid(false);
 
         when(documentRepository.findById(2)).thenReturn(Optional.of(document));
 
@@ -227,6 +228,7 @@ public class OrganisationUnitTrustConfigurationServiceTest {
         var document = new JournalPublication();
         document.setId(4);
         document.setIsMetadataValid(false);
+        document.setAreFilesValid(false);
 
         when(documentRepository.findById(4)).thenReturn(Optional.of(document));
 

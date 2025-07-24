@@ -104,7 +104,8 @@ public class ReindexServiceTest {
             EntityType.ORGANISATION_UNIT,
             EntityType.BOOK_SERIES,
             EntityType.EVENT,
-            EntityType.PUBLICATION
+            EntityType.PUBLICATION,
+            EntityType.DOCUMENT_FILE
         );
     }
 
@@ -126,6 +127,8 @@ public class ReindexServiceTest {
             CompletableFuture.completedFuture(null));
         when(conferenceService.reindexConferences()).thenReturn(
             CompletableFuture.completedFuture(null));
+        when(documentFileService.reindexDocumentFiles()).thenReturn(
+            CompletableFuture.completedFuture(null));
 
         // When
         reindexService.reindexDatabase(indexesToRepopulate);
@@ -145,9 +148,10 @@ public class ReindexServiceTest {
             indexType.equals(EntityType.BOOK_SERIES) ? times(1) : never()).reindexBookSeries();
         verify(conferenceService,
             indexType.equals(EntityType.EVENT) ? times(1) : never()).reindexConferences();
+        verify(documentFileService,
+            indexType.equals(EntityType.DOCUMENT_FILE) ? times(1) : never()).reindexDocumentFiles();
 
         if (indexType.equals(EntityType.PUBLICATION)) {
-            verify(documentFileService).deleteIndexes();
             verify(documentPublicationService).deleteIndexes();
             verify(journalPublicationService).reindexJournalPublications();
             verify(proceedingsPublicationService).reindexProceedingsPublications();
@@ -158,6 +162,9 @@ public class ReindexServiceTest {
             verify(monographPublicationService).reindexMonographPublications();
             verify(proceedingsService).reindexProceedings();
             verify(thesisService).reindexTheses();
+        } else if (indexType.equals(EntityType.DOCUMENT_FILE)) {
+            verify(documentFileService).deleteIndexes();
+            verify(documentFileService).reindexDocumentFiles();
         } else {
             verify(documentFileService, never()).deleteIndexes();
             verify(documentPublicationService, never()).deleteIndexes();

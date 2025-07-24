@@ -46,6 +46,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -226,6 +227,7 @@ public class DocumentPublicationServiceTest {
         var documentFile = new DocumentFile();
         documentFile.setId(1);
         documentFile.setMimeType("text/xml");
+        documentFile.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class),

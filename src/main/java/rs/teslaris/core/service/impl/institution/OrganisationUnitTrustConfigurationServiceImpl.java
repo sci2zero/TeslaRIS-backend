@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -49,6 +50,8 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 public class OrganisationUnitTrustConfigurationServiceImpl
     extends JPAServiceImpl<OrganisationUnitTrustConfiguration> implements
     OrganisationUnitTrustConfigurationService {
+
+    private static final ConcurrentHashMap<Integer, Object> locks = new ConcurrentHashMap<>();
 
     private final OrganisationUnitTrustConfigurationRepository
         organisationUnitTrustConfigurationRepository;
@@ -109,33 +112,52 @@ public class OrganisationUnitTrustConfigurationServiceImpl
 
     @Override
     public void approvePublicationMetadata(Integer documentId) {
+        var lock = locks.computeIfAbsent(documentId, id -> new Object());
         documentRepository.findById(documentId).ifPresent(document -> {
-            document.setIsMetadataValid(true);
-            document.setApproveStatus(ApproveStatus.APPROVED);
-            updateDocumentIndex(document);
+            if (document.getIsMetadataValid()) {
+                return;
+            }
 
-            documentRepository.save(document);
-
+            synchronized (lock) {
+                try {
+                    document.setIsMetadataValid(true);
+                    document.setApproveStatus(ApproveStatus.APPROVED);
+                    updateDocumentIndex(document);
+                    documentRepository.save(document);
+                } finally {
+                    locks.remove(documentId);
+                }
+            }
         });
     }
 
     @Override
     public void approvePublicationUploadedDocuments(Integer documentId) {
+        var lock = locks.computeIfAbsent(documentId, id -> new Object());
         documentRepository.findById(documentId).ifPresent(document -> {
+            if (document.getAreFilesValid()) {
+                return;
+            }
 
-            document.getFileItems().forEach(file -> {
-                file.setIsVerifiedData(true);
-                documentFileRepository.save(file);
-            });
+            synchronized (lock) {
+                try {
+                    document.getFileItems().forEach(file -> {
+                        file.setIsVerifiedData(true);
+                        documentFileRepository.save(file);
+                    });
 
-            document.getProofs().forEach(file -> {
-                file.setIsVerifiedData(true);
-                documentFileRepository.save(file);
-            });
+                    document.getProofs().forEach(file -> {
+                        file.setIsVerifiedData(true);
+                        documentFileRepository.save(file);
+                    });
 
-            document.setAreFilesValid(true);
-            updateDocumentIndex(document);
-            documentRepository.save(document);
+                    document.setAreFilesValid(true);
+                    updateDocumentIndex(document);
+                    documentRepository.save(document);
+                } finally {
+                    locks.remove(documentId);
+                }
+            }
         });
     }
 

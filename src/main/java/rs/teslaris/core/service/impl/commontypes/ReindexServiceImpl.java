@@ -105,6 +105,10 @@ public class ReindexServiceImpl implements ReindexService {
             futures.add(conferenceService.reindexConferences());
         }
 
+        if (indexesToRepopulate.contains(EntityType.DOCUMENT_FILE)) {
+            futures.add(reindexDocumentFiles());
+        }
+
         if (indexesToRepopulate.contains(EntityType.PUBLICATION)) {
             futures.add(reindexPublications());
         }
@@ -118,7 +122,6 @@ public class ReindexServiceImpl implements ReindexService {
 
     @Async("reindexExecutor")
     public CompletableFuture<Void> reindexPublications() {
-        documentFileService.deleteIndexes();
         documentPublicationService.deleteIndexes();
 
         journalPublicationService.reindexJournalPublications();
@@ -130,6 +133,14 @@ public class ReindexServiceImpl implements ReindexService {
         monographPublicationService.reindexMonographPublications();
         proceedingsService.reindexProceedings();
         thesisService.reindexTheses();
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("reindexExecutor")
+    public CompletableFuture<Void> reindexDocumentFiles() {
+        documentFileService.deleteIndexes();
+        documentFileService.reindexDocumentFiles();
 
         return CompletableFuture.completedFuture(null);
     }

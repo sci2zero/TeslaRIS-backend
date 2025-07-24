@@ -50,6 +50,7 @@ import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
@@ -435,9 +436,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setAreFilesValid(document.getAreFilesValid());
 
         document.getFileItems().forEach(documentFile -> {
+            if (!documentFile.getResourceType().equals(ResourceType.PREPRINT) &&
+                !documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION)) {
+                return;
+            }
+
             index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
 
-            if (!documentFile.getMimeType().contains("pdf")) {
+            if (!documentFile.getMimeType().endsWith("pdf")) {
                 return;
             }
 
@@ -943,14 +949,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     .should(sb -> sb.match(m -> m.field("description_sr").query(token).boost(0.7f)))
                     .should(
                         sb -> sb.match(m -> m.field("description_other").query(token).boost(0.7f)))
-                    .should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
-                    .should(
-                        sb -> sb.match(m -> m.field("full_text_other").query(token).boost(0.7f)))
                     .should(sb -> sb.match(m -> m.field("editor_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("reviewer_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("advisor_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("type").query(token)))
                     .should(sb -> sb.match(m -> m.field("doi").query(token)));
+
+                // TODO: Should we be this restrictive?
+                if (SessionTrackingUtil.isUserLoggedIn()) {
+                    eq.should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
+                        .should(sb -> sb.match(
+                            m -> m.field("full_text_other").query(token).boost(0.7f)));
+                }
             });
 
             return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
