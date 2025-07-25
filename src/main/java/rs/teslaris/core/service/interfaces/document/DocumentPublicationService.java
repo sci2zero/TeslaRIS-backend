@@ -101,4 +101,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                       String scopusId);
 
     boolean isDoiInUse(String doi);
+
+    void archiveDocument(Integer documentId);
+
+    void unarchiveDocument(Integer documentId);
 }

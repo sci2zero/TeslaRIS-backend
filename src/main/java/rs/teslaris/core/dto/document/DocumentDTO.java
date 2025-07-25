@@ -64,4 +64,6 @@ public class DocumentDTO {
     private Boolean isMetadataValid;
 
     private Boolean areFilesValid;
+
+    private Boolean isArchived;
 }

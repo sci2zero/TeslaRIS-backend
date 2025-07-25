@@ -140,8 +140,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         setCommonFields(proceedings, proceedingsDTO);
         setProceedingsRelatedFields(proceedings, proceedingsDTO);
 
-        proceedings.setApproveStatus(ApproveStatus.APPROVED);
-
         var savedProceedings = proceedingsJPAService.save(proceedings);
 
         indexProceedings(savedProceedings, new DocumentPublicationIndex());
@@ -277,6 +275,11 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             proceedings.setPublisher(
                 publisherService.findOne(proceedingsDTO.getPublisherId()));
         }
+
+        // Always valid
+        proceedings.setApproveStatus(ApproveStatus.APPROVED);
+        proceedings.setIsMetadataValid(true);
+        proceedings.setAreFilesValid(true);
     }
 
     private void setCommonIdentifiers(Proceedings proceedings, ProceedingsDTO proceedingsDTO) {

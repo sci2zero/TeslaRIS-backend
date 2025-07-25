@@ -68,6 +68,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
@@ -222,6 +223,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
                                                    Boolean isProof) {
         var document = findOne(documentId);
+
+        if (document.getIsArchived()) {
+            throw new CantEditException("Document is archived. Can't edit.");
+        }
+
         var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof, document,
             !shouldFileItemsBeValidated(document));
         if (isProof) {
@@ -248,6 +254,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Transactional
     public void deleteDocumentFile(Integer documentId, Integer documentFileId) {
         var document = findOne(documentId);
+
+        if (document.getIsArchived()) {
+            throw new CantEditException("Document is archived. Can't edit.");
+        }
+
         var documentFile = documentFileService.findOne(documentFileId);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
@@ -429,6 +440,31 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             documentId).orElse(fallbackDocument);
     }
 
+    @Override
+    public void archiveDocument(Integer documentId) {
+        var document = findOne(documentId);
+
+        if (document instanceof Thesis) {
+            throw new ThesisException("Use specific thesis library endpoint to archive theses.");
+        }
+
+        if (document.getTitle().isEmpty() || Objects.isNull(document.getDocumentDate()) ||
+            document.getDocumentDate().isBlank()) {
+            throw new MissingDataException("missingDataToArchiveMessage");
+        }
+
+        document.setIsArchived(true);
+        save(document);
+    }
+
+    @Override
+    public void unarchiveDocument(Integer documentId) {
+        var document = findOne(documentId);
+        document.setIsArchived(false);
+
+        save(document);
+    }
+
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
         index.setFullTextSr("");
         index.setFullTextOther("");
@@ -529,6 +565,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     protected void setCommonFields(Document document, DocumentDTO documentDTO) {
+        if (document.getIsArchived()) {
+            throw new CantEditException("Document is archived. Can't edit.");
+        }
+
         document.setTitle(
             multilingualContentService.getMultilingualContent(documentDTO.getTitle()));
         document.setSubTitle(

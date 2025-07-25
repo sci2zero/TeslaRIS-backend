@@ -98,6 +98,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(name = "are_files_valid")
     private Boolean areFilesValid = true;
 
+    @Column(name = "is_archived")
+    private Boolean isArchived = false;
+
 
     public void addDocumentContribution(PersonDocumentContribution contribution) {
         contribution.setDocument(this);

@@ -54,6 +54,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.InMemoryMultipartFile;
 import rs.teslaris.core.util.ResourceMultipartFile;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -167,7 +168,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
-        newDocumentFile.setIsVerifiedData(document instanceof Thesis || trusted);
+        if (documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
+            newDocumentFile.setIsVerifiedData(document instanceof Thesis || trusted);
+        } else {
+            newDocumentFile.setIsVerifiedData(true);
+        }
+
         newDocumentFile.setDocument(document);
 
         if (!index) {
@@ -252,20 +258,45 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 var file = findDocumentFileById(documentFile.getId());
                 file.setIsVerifiedData(true);
                 save(file);
+                refreshParentDocumentValidationStatus(file);
             } else if (Objects.nonNull(loggedInUser) &&
+                documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS) &&
                 loggedInUser.getAuthority().getName().equals(UserRole.RESEARCHER.name())) {
                 var file = findDocumentFileById(documentFile.getId());
                 file.setIsVerifiedData(false);
                 save(file);
+                refreshParentDocumentValidationStatus(file);
             }
         }
 
         return documentFileResponse;
     }
 
+    private void refreshParentDocumentValidationStatus(DocumentFile file) {
+        if (Objects.nonNull(file.getDocument())) {
+            documentRepository.findById(file.getDocument().getId()).ifPresent(document -> {
+                document.setAreFilesValid(document.getFileItems().stream()
+                    .allMatch(DocumentFile::getIsVerifiedData));
+                documentRepository.save(document);
+
+                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                    document.getId()).ifPresent(docIndex -> {
+                    docIndex.setAreFilesValid(document.getAreFilesValid());
+                    documentPublicationIndexRepository.save(docIndex);
+                });
+            });
+        }
+    }
+
     @Override
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index) {
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
+
+        if (Objects.nonNull(documentFileToEdit.getDocument()) &&
+            documentFileToEdit.getDocument().getIsArchived()) {
+            throw new CantEditException("Document is archived. Can't edit.");
+        }
+
         var oldResourceType = documentFileToEdit.getResourceType();
 
         if (!documentFileToEdit.getCanEdit()) {

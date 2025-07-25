@@ -268,4 +268,20 @@ public class DocumentPublicationController {
         return documentPublicationService.getWordCloudForSingleDocument(documentId,
             foreignLanguage);
     }
+
+    @PatchMapping("/archive/{documentId}")
+    @PreAuthorize("hasAuthority('ARCHIVE_DOCUMENT')")
+    @PublicationEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void archiveDocument(@PathVariable Integer documentId) {
+        documentPublicationService.archiveDocument(documentId);
+    }
+
+    @PatchMapping("/unarchive/{documentId}")
+    @PreAuthorize("hasAuthority('ARCHIVE_DOCUMENT')")
+    @PublicationEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unarchiveDocument(@PathVariable Integer documentId) {
+        documentPublicationService.unarchiveDocument(documentId);
+    }
 }

@@ -390,7 +390,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         var thesis = thesisJPAService.findOne(thesisId);
 
         if (thesis.getTitle().isEmpty() || Objects.isNull(thesis.getThesisDefenceDate()) ||
-            Objects.isNull(thesis.getDocumentDate())) {
+            Objects.isNull(thesis.getDocumentDate()) || thesis.getDocumentDate().isBlank()) {
             throw new ThesisException("missingDataToArchiveMessage");
         }
 

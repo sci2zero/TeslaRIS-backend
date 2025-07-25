@@ -37,6 +37,7 @@ public class DocumentPublicationConverter {
 
         publicationDTO.setIsMetadataValid(publication.getIsMetadataValid());
         publicationDTO.setAreFilesValid(publication.getAreFilesValid());
+        publicationDTO.setIsArchived(publication.getIsArchived());
 
         if (Objects.nonNull(publication.getEvent())) {
             publicationDTO.setEventId(publication.getEvent().getId());

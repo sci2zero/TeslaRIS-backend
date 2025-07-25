@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -41,13 +42,17 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
@@ -57,7 +62,9 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -917,5 +924,74 @@ public class DocumentPublicationServiceTest {
         // Then
         assertFalse(result);
         verify(documentRepository).existsByDoi(doi, null);
+    }
+
+    @Test
+    void shouldArchiveDocument() {
+        // Given
+        var documentId = 1;
+        var document = new Patent();
+        document.setId(documentId);
+        document.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
+        document.setDocumentDate("2023-05-01");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentPublicationService.archiveDocument(documentId);
+
+        // Then
+        assertTrue(document.getIsArchived());
+        verify(documentRepository).save(document);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenArchivingThesis() {
+        // Given
+        var documentId = 2;
+        var thesis = new Thesis();
+        thesis.setId(documentId);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(thesis));
+
+        // When & Then
+        assertThrows(ThesisException.class,
+            () -> documentPublicationService.archiveDocument(documentId));
+        verify(documentRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenArchivingWithMissingData() {
+        // Given
+        var documentId = 3;
+        var document = new Software();
+        document.setId(documentId);
+        document.setTitle(new HashSet<>());
+        document.setDocumentDate("2023-01-01");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When & Then
+        assertThrows(MissingDataException.class,
+            () -> documentPublicationService.archiveDocument(documentId));
+        verify(documentRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldUnarchiveDocument() {
+        // Given
+        var documentId = 4;
+        var document = new Dataset();
+        document.setId(documentId);
+        document.setIsArchived(true);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentPublicationService.unarchiveDocument(documentId);
+
+        // Then
+        assertFalse(document.getIsArchived());
+        verify(documentRepository).save(document);
     }
 }

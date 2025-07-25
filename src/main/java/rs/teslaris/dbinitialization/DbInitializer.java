@@ -189,6 +189,7 @@ public class DbInitializer implements ApplicationRunner {
         var saveOUTrustConfiguration = new Privilege("SAVE_OU_TRUST_CONFIGURATION");
         var validateMetadata = new Privilege("VALIDATE_METADATA");
         var validateUploadedFiles = new Privilege("VALIDATE_UPLOADED_FILES");
+        var archiveDocument = new Privilege("ARCHIVE_DOCUMENT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -221,7 +222,7 @@ public class DbInitializer implements ApplicationRunner {
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
                 migrateInstitutionEntities, performOaiMigration, saveOUTrustConfiguration,
-                validateMetadata, validateUploadedFiles));
+                validateMetadata, validateUploadedFiles, archiveDocument));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -253,7 +254,7 @@ public class DbInitializer implements ApplicationRunner {
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
                 migrateAllEntities, performOaiMigration, saveOUTrustConfiguration, validateMetadata,
-                validateUploadedFiles
+                validateUploadedFiles, archiveDocument
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -274,7 +275,7 @@ public class DbInitializer implements ApplicationRunner {
                     mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
                     mergeOUEmployments, mergeDocumentsMetadata, deletePerson, validateMetadata,
                     deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities,
-                    saveOUTrustConfiguration, validateUploadedFiles)));
+                    saveOUTrustConfiguration, validateUploadedFiles, archiveDocument)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
