@@ -96,7 +96,7 @@ public class FileController {
                 "loginToViewDocumentMessage");
         }
 
-        if (isOpenAccess && !authenticatedUser && !isVerifierDocument) {
+        if (isOpenAccess && !authenticatedUser && !isVerifiedDocument) {
             return ErrorResponseUtil.buildUnavailableResponse(request,
                 "loginToViewCCDocumentMessage");
         }

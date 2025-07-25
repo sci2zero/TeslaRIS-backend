@@ -186,6 +186,7 @@ public class DbInitializer implements ApplicationRunner {
         var migrateAllEntities = new Privilege("MIGRATE_ALL_ENTITIES");
         var migrateInstitutionEntities = new Privilege("MIGRATE_INSTITUTION_ENTITIES");
         var performOaiMigration = new Privilege("PERFORM_OAI_MIGRATION");
+        var setDefaultContent = new Privilege("SET_DEFAULT_CONTENT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -217,7 +218,7 @@ public class DbInitializer implements ApplicationRunner {
                 generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
-                migrateInstitutionEntities, performOaiMigration));
+                migrateInstitutionEntities, performOaiMigration, setDefaultContent));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -248,7 +249,7 @@ public class DbInitializer implements ApplicationRunner {
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
-                migrateAllEntities, performOaiMigration
+                migrateAllEntities, performOaiMigration, setDefaultContent
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -267,7 +268,7 @@ public class DbInitializer implements ApplicationRunner {
                     createConference, saveLoadingConfiguration, performLoading,
                     editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit,
                     mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
-                    mergeOUEmployments, mergeDocumentsMetadata, deletePerson,
+                    mergeOUEmployments, mergeDocumentsMetadata, deletePerson, setDefaultContent,
                     deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities)));
 
         var commissionAuthority =
@@ -286,7 +287,7 @@ public class DbInitializer implements ApplicationRunner {
         var institutionalLibrarianAuthority =
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
-                putThesisOnPublicReview, editDocumentFiles, archiveThesis,
+                putThesisOnPublicReview, editDocumentFiles, archiveThesis, setDefaultContent,
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata
             )));
 
