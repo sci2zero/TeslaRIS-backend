@@ -165,26 +165,42 @@ public class PersonContributionConverter {
 
     @Nullable
     private EmploymentTitle getEmploymentTitleFromName(String name) {
+        if (Objects.isNull(name) || name.isBlank()) {
+            return null;
+        }
+
         name = name.toLowerCase();
         switch (name) {
-            case "docent":
+            case "akademik":
+                return EmploymentTitle.ACADEMICIAN;
+            case "docent", "doc":
                 return EmploymentTitle.ASSISTANT_PROFESSOR;
             case "vanredni profesor",
-                 "vаnredni profesor": // for some reason "n" has different encoding
+                 "vаnredni profesor", // for some reason "n" has different encoding
+                 "vanred. prof",
+                 "vanr.prof.",
+                 "vanredan profesor":
                 return EmploymentTitle.ASSOCIATE_PROFESSOR;
-            case "redovni profesor":
+            case "redovni profesor",
+                 "profesor",
+                 "prof.",
+                 "prof. dr",
+                 "red. prof",
+                 "red prof.",
+                 "red.prof.",
+                 "redovan profesor":
                 return EmploymentTitle.FULL_PROFESSOR;
-            case "profesor emeritus":
+            case "profesor emeritus", "emeritus":
                 return EmploymentTitle.PROFESSOR_EMERITUS;
-            case "profesor u penziji":
+            case "profesor u penziji", "red. prof. u penziji":
                 return EmploymentTitle.RETIRED_PROFESSOR;
-            case "naučni - saradnik":
+            case "naučni - saradnik", "nauč.sar.":
                 return EmploymentTitle.SCIENTIFIC_COLLABORATOR;
-            case "viši naučni - saradnik":
+            case "viši naučni - saradnik", "viši nauč.sar.", "viši naučni saradnik":
                 return EmploymentTitle.SENIOR_SCIENTIFIC_COLLABORATOR;
-            case "naučni savetnik":
+            case "naučni savetnik", "nauč.sav.":
                 return EmploymentTitle.SCIENTIFIC_ADVISOR;
-            case "profesor inženjer habilitovan":
+            case "profesor inženjer habilitovan", "prof. inž. habil":
                 return EmploymentTitle.PROFESSOR_ENGINEER_HABILITATED;
         }
 

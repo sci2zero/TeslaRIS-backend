@@ -12,7 +12,8 @@ public enum EmploymentTitle {
     SENIOR_SCIENTIFIC_COLLABORATOR("виши науч. сар."),
     SCIENTIFIC_ADVISOR("науч. сав."),
     RETIRED_PROFESSOR("проф. у пензији"),
-    PROFESSOR_ENGINEER_HABILITATED("проф. инж. хабил.");
+    PROFESSOR_ENGINEER_HABILITATED("проф. инж. хабил."),
+    ACADEMICIAN("академик");
 
 
     private final String value;
