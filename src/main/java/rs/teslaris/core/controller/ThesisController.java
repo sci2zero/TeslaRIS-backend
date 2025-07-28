@@ -147,6 +147,15 @@ public class ThesisController {
         thesisService.deleteThesisAttachment(documentId, documentFileId, attachmentType);
     }
 
+    @PatchMapping("/make-official/{documentId}/{documentFileId}")
+    @PreAuthorize("hasAuthority('PROMOTE_PRELIMINARY_ATTACHMENTS')")
+    @PublicationEditCheck("THESIS")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void movePreprintAttachmentToOfficialPublication(@PathVariable Integer documentId,
+                                                            @PathVariable Integer documentFileId) {
+        thesisService.transferPreprintToOfficialPublication(documentId, documentFileId);
+    }
+
     @GetMapping("/library-formats/{documentId}")
     public ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(
         @PathVariable Integer documentId) {

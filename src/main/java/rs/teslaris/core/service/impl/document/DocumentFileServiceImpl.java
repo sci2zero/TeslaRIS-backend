@@ -42,7 +42,6 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.ResourceType;
-import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
@@ -169,7 +168,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         setCommonFields(newDocumentFile, documentFile);
         if (documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
-            newDocumentFile.setIsVerifiedData(document instanceof Thesis || trusted);
+            newDocumentFile.setIsVerifiedData(trusted);
         } else {
             newDocumentFile.setIsVerifiedData(true);
         }

@@ -727,6 +727,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    public List<User> findAllInstitutionalLibrarianUsers() {
+        return userRepository.findAllInstitutionalLibrarianUsers();
+    }
+
+    @Override
     public List<User> findInstitutionalEditorUsersForInstitutionId(Integer institutionId) {
         return userRepository.findInstitutionalEditorUsersForInstitutionId(institutionId);
     }

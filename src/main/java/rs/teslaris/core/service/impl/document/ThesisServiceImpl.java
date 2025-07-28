@@ -2,17 +2,25 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.xml.bind.JAXBException;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
@@ -30,8 +39,10 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.model.document.ThesisPhysicalDescription;
@@ -41,6 +52,7 @@ import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -52,7 +64,10 @@ import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -84,8 +99,21 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
+    private final UserService userService;
+
+    private final MessageSource messageSource;
+
+    private final BrandingInformationService brandingInformationService;
+
+    private final EmailUtil emailUtil;
+
+    private final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+
     @Value("${thesis.public-review.duration-days}")
     private Integer daysOnPublicReview;
+
+    @Value("${feedback.email}")
+    private String feedbackEmail;
 
 
     @Autowired
@@ -105,7 +133,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              LanguageService languageService, LanguageTagService languageTagService,
                              ThesisRepository thesisRepository,
                              ThesisResearchOutputRepository thesisResearchOutputRepository,
-                             OrganisationUnitIndexRepository organisationUnitIndexRepository) {
+                             OrganisationUnitIndexRepository organisationUnitIndexRepository,
+                             UserService userService, MessageSource messageSource,
+                             BrandingInformationService brandingInformationService,
+                             EmailUtil emailUtil) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
@@ -118,6 +149,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         this.thesisRepository = thesisRepository;
         this.thesisResearchOutputRepository = thesisResearchOutputRepository;
         this.organisationUnitIndexRepository = organisationUnitIndexRepository;
+        this.userService = userService;
+        this.messageSource = messageSource;
+        this.brandingInformationService = brandingInformationService;
+        this.emailUtil = emailUtil;
     }
 
     @Override
@@ -276,6 +311,24 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         thesisJPAService.save(thesis);
         return DocumentFileConverter.toDTO(documentFile);
+    }
+
+    @Override
+    public void transferPreprintToOfficialPublication(Integer thesisId, Integer documentFileId) {
+        var thesis = thesisJPAService.findOne(thesisId);
+
+        if (thesis.getFileItems().stream()
+            .anyMatch(f -> f.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION))) {
+            throw new ThesisException("Thesis already has an official file version uploaded.");
+        }
+
+        thesis.getPreliminaryFiles().stream().filter(file -> file.getId().equals(documentFileId) &&
+            file.getResourceType().equals(ResourceType.PREPRINT)).findFirst().ifPresent(file -> {
+            thesis.getPreliminaryFiles().remove(file);
+            thesis.getFileItems().add(file);
+            file.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+            thesisJPAService.save(thesis);
+        });
     }
 
     @Override
@@ -568,30 +621,153 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
     }
 
-    @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    @Scheduled(cron = "${thesis.check-public-review-end.period}")
     public void removeFromPublicReview() {
         var thesesOnPublicReview = thesisRepository.findAllOnPublicReview();
 
-        var now = new Date();
-        var thirtyDaysAgo =
-            (new Date(now.getTime() - (daysOnPublicReview * 24 * 60 * 60 * 1000))).toInstant()
-                .atZone(ZoneId.systemDefault()).toLocalDate();
+        var thirtyDaysAgo = LocalDate.now().minusDays(daysOnPublicReview);
+        var thesesByInstitution =
+            new ConcurrentHashMap<Integer, List<Triple<String, Set<MultiLingualContent>, String>>>();
 
         thesesOnPublicReview.stream()
-            .filter(thesis -> thesis.getPublicReviewStartDates().stream()
-                .max(Comparator.naturalOrder())
-                .filter(publicReviewStartDate -> publicReviewStartDate.isBefore(thirtyDaysAgo))
-                .isPresent())
+            .filter(thesis -> isPublicReviewExpired(thesis, thirtyDaysAgo))
             .forEach(thesis -> {
-                thesis.setIsOnPublicReview(false);
-                thesis.setPublicReviewCompleted(true);
-                thesisJPAService.save(thesis);
-                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-                    thesis.getId()).ifPresent(index -> {
-                    index.setIsOnPublicReview(false);
-                    index.setIsPublicReviewCompleted(true);
-                    documentPublicationIndexRepository.save(index);
-                });
+                updateThesisAndIndex(thesis);
+
+                var institutionId = thesis.getOrganisationUnit().getId();
+                thesesByInstitution.putIfAbsent(institutionId, new ArrayList<>());
+
+                var authorName = getAuthorName(thesis);
+                if (authorName == null) {
+                    return;
+                }
+
+                var latestReviewDate = thesis.getPublicReviewStartDates().stream()
+                    .max(Comparator.naturalOrder())
+                    .orElse(LocalDate.now());
+
+                thesesByInstitution.get(institutionId).add(
+                    new Triple<>(authorName, thesis.getTitle(),
+                        dtFormatter.format(latestReviewDate)));
             });
+
+        notifyLibrarians(thesesByInstitution);
+    }
+
+    private boolean isPublicReviewExpired(Thesis thesis, LocalDate cutoffDate) {
+        return thesis.getPublicReviewStartDates().stream()
+            .max(Comparator.naturalOrder())
+            .map(date -> date.isBefore(cutoffDate))
+            .orElse(false);
+    }
+
+    private void updateThesisAndIndex(Thesis thesis) {
+        thesis.setIsOnPublicReview(false);
+        thesis.setPublicReviewCompleted(true);
+        thesisJPAService.save(thesis);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesis.getId())
+            .ifPresent(index -> {
+                index.setIsOnPublicReview(false);
+                index.setIsPublicReviewCompleted(true);
+                documentPublicationIndexRepository.save(index);
+            });
+    }
+
+    private String getAuthorName(Thesis thesis) {
+        return thesis.getContributors().stream()
+            .filter(c -> c.getContributionType().equals(DocumentContributionType.AUTHOR))
+            .findFirst()
+            .map(c -> c.getAffiliationStatement().getDisplayPersonName().toString())
+            .orElse(null);
+    }
+
+    private void notifyLibrarians(
+        Map<Integer, List<Triple<String, Set<MultiLingualContent>, String>>> thesesByInstitution) {
+        userService.findAllInstitutionalLibrarianUsers().forEach(librarianUser -> {
+            var thesesList = new StringBuilder();
+            var preferredLocale = librarianUser.getPreferredUILanguage().getLanguageTag();
+
+            for (var institutionId : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                librarianUser.getOrganisationUnit().getId())) {
+
+                if (thesesByInstitution.containsKey(institutionId)) {
+                    var institutionName = organisationUnitService.findOne(institutionId).getName();
+
+                    thesesByInstitution.get(institutionId).forEach(content ->
+                        thesesList.append(StringEscapeUtils.escapeHtml4(content.a)).append(" - ")
+                            .append(StringEscapeUtils.escapeHtml4(
+                                getLocalisedContentString(institutionName, preferredLocale)))
+                            .append(" - ")
+                            .append(StringEscapeUtils.escapeHtml4(
+                                getLocalisedContentString(content.b, preferredLocale)))
+                            .append(" (").append(content.c).append(" - ")
+                            .append(dtFormatter.format(LocalDate.now()))
+                            .append(")<br/>"));
+                }
+            }
+
+            if (thesesList.isEmpty()) {
+                return;
+            }
+
+            var subject = getMessage("public-review-end.email.subject", new Object[] {},
+                preferredLocale.toLowerCase());
+
+            var applicationTitle = brandingInformationService.readBrandingInformation().title();
+            var body = getMessage("public-review-end.email.body",
+                new Object[] {
+                    thesesList.toString(),
+                    getLocalisedContentString(applicationTitle, preferredLocale),
+                    feedbackEmail
+                },
+                preferredLocale.toLowerCase());
+
+            emailUtil.sendHTMLSupportedEmail(librarianUser.getEmail(), subject, body);
+        });
+    }
+
+    private String getLocalisedContentString(Set<MultiLingualContent> contentList,
+                                             String languageTag) {
+        return getLocalisedContentStringGeneric(
+            contentList,
+            languageTag,
+            content -> content.getLanguage().getLanguageTag(),
+            MultiLingualContent::getContent
+        );
+    }
+
+    private String getLocalisedContentString(List<MultilingualContentDTO> contentList,
+                                             String languageTag) {
+        return getLocalisedContentStringGeneric(
+            contentList,
+            languageTag,
+            MultilingualContentDTO::getLanguageTag,
+            MultilingualContentDTO::getContent
+        );
+    }
+
+    private <T> String getLocalisedContentStringGeneric(Collection<T> contentList,
+                                                        String languageTag,
+                                                        Function<T, String> languageExtractor,
+                                                        Function<T, String> contentExtractor) {
+        for (T content : contentList) {
+            if (languageExtractor.apply(content).equalsIgnoreCase(languageTag)) {
+                return contentExtractor.apply(content);
+            }
+        }
+
+        return contentList.stream()
+            .findFirst()
+            .map(contentExtractor)
+            .orElse(""); // should never happen, just a failsafe
+    }
+
+    private String getMessage(String key, Object[] args, String locale) {
+        try {
+            return messageSource.getMessage(key, args, Locale.forLanguageTag(locale));
+        } catch (NoSuchMessageException e) {
+            return messageSource.getMessage(key, args, Locale.ENGLISH);
+        }
     }
 }

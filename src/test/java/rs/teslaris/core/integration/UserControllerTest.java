@@ -104,7 +104,7 @@ public class UserControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(MockMvcRequestBuilders.patch(
-                    "http://localhost:8081/api/user/reset-user-password/{employeeId}", 7)
+                    "http://localhost:8081/api/user/reset-user-password/{employeeId}", 11)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
     }

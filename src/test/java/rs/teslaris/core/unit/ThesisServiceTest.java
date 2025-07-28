@@ -50,6 +50,7 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.model.document.ThesisType;
@@ -641,6 +642,49 @@ public class ThesisServiceTest {
         // Then
         assertNotNull(result);
         verify(thesisRepository).findThesisByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldTransferPreprintToOfficialPublication() {
+        // Given
+        var preprintFile = new DocumentFile();
+        preprintFile.setId(42);
+        preprintFile.setResourceType(ResourceType.PREPRINT);
+
+        var thesis = new Thesis();
+        thesis.setId(1);
+        thesis.setPreliminaryFiles(new HashSet<>(List.of(preprintFile)));
+        thesis.setFileItems(new HashSet<>());
+
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        // When
+        thesisService.transferPreprintToOfficialPublication(1, 42);
+
+        // Then
+        assertTrue(thesis.getPreliminaryFiles().isEmpty());
+        assertEquals(1, thesis.getFileItems().size());
+        assertEquals(ResourceType.OFFICIAL_PUBLICATION,
+            thesis.getFileItems().iterator().next().getResourceType());
+
+        verify(thesisJPAService).save(thesis);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOfficialAlreadyExists() {
+        // Given
+        var officialFile = new DocumentFile();
+        officialFile.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+
+        var thesis = new Thesis();
+        thesis.setId(1);
+        thesis.setFileItems(new HashSet<>(List.of(officialFile)));
+
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        // When / Then
+        assertThrows(ThesisException.class,
+            () -> thesisService.transferPreprintToOfficialPublication(1, 123));
     }
 
     private Set<DocumentFile> createMockDocuments(int count) {

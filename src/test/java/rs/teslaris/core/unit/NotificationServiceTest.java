@@ -3,12 +3,17 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -145,5 +150,70 @@ public class NotificationServiceTest {
 
         // Then
         verify(notificationRepository, times(1)).deleteAllForUser(userId);
+    }
+
+    @Test
+    void shouldCleanPastNotificationsOfGivenType() {
+        // Given
+        int userId = 42;
+        var type = NotificationType.NEW_DOCUMENTS_FOR_VALIDATION;
+
+        var n1 = new Notification();
+        var n2 = new Notification();
+
+        when(notificationRepository.getNotificationsForUserAndType(userId, type))
+            .thenReturn(List.of(n1, n2));
+
+        // When
+        notificationService.cleanPastNotificationsOfType(userId, type);
+
+        // Then
+        verify(notificationRepository).getNotificationsForUserAndType(userId, type);
+        verify(notificationRepository, atLeastOnce()).delete(n1);
+        verify(notificationRepository, atLeastOnce()).delete(n2);
+        verifyNoMoreInteractions(notificationRepository);
+    }
+
+    @Test
+    void shouldDeleteOldPotentialClaimsAndSaveNew_whenNotificationIsOfTypePotentialClaims() {
+        // Given
+        var user = new User();
+        user.setId(101);
+
+        var notification = new Notification();
+        notification.setUser(user);
+        notification.setNotificationType(NotificationType.FOUND_POTENTIAL_CLAIMS);
+
+        when(notificationRepository.save(notification)).thenReturn(notification);
+
+        // When
+        var result = notificationService.createNotification(notification);
+
+        // Then
+        verify(notificationRepository).deleteNewPotentialClaimsNotificationsForUser(user.getId());
+        verify(notificationRepository).save(notification);
+        assertEquals(notification, result);
+    }
+
+    @Test
+    void shouldOnlySaveNotification_whenNotificationTypeIsNotPotentialClaims() {
+        // Given
+        var user = new User();
+        user.setId(202);
+
+        var notification = new Notification();
+        notification.setUser(user);
+        notification.setNotificationType(NotificationType.NEW_DOCUMENTS_FOR_VALIDATION);
+
+        when(notificationRepository.save(notification)).thenReturn(notification);
+
+        // When
+        var result = notificationService.createNotification(notification);
+
+        // Then
+        verify(notificationRepository, never())
+            .deleteNewPotentialClaimsNotificationsForUser(anyInt());
+        verify(notificationRepository).save(notification);
+        assertEquals(notification, result);
     }
 }

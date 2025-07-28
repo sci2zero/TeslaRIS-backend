@@ -54,6 +54,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -780,6 +781,8 @@ public class DocumentAssessmentClassificationServiceImpl
                 documentPublicationService.getAssessedDocumentCountsForCommission(
                     user.getOrganisationUnit().getId(), user.getCommission().getId());
 
+            notificationService.cleanPastNotificationsOfType(user.getId(),
+                NotificationType.NEW_PUBLICATIONS_TO_ASSESS);
             notificationService.createNotification(
                 NotificationFactory.contructNewPublicationsForAssessmentNotification(
                     Map.of("totalCount", String.valueOf(

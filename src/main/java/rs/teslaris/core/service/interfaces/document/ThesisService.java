@@ -43,4 +43,6 @@ public interface ThesisService {
     void unarchiveThesis(Integer thesisId);
 
     ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(Integer thesisId);
+
+    void transferPreprintToOfficialPublication(Integer thesisId, Integer documentFileId);
 }

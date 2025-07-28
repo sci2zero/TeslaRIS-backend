@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.NotificationActionResult;
 import rs.teslaris.core.dto.commontypes.NotificationDTO;
 import rs.teslaris.core.model.commontypes.Notification;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
 
@@ -23,4 +24,6 @@ public interface NotificationService extends JPAService<Notification> {
     void dismissAll(Integer userId);
 
     Notification createNotification(Notification notification);
+
+    void cleanPastNotificationsOfType(Integer userId, NotificationType notificationType);
 }

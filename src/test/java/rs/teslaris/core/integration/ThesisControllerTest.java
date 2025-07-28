@@ -163,6 +163,21 @@ public class ThesisControllerTest extends BaseTest {
 
     @Test
     @Order(Integer.MAX_VALUE)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testMovePreprintToOfficialPublication() throws Exception {
+        String jwtToken = authenticateLibrarianAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/make-official/{thesisId}/{documentPublicationId}",
+                        10, 999)
+                    .contentType(MediaType.APPLICATION_JSON) // document publication ID does not matter
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(Integer.MAX_VALUE)
     @WithMockUser(username = "test.head_of_library@test.com", password = "head_of_library")
     public void testGetThesisLibraryFormat() throws Exception {
         String jwtToken = authenticateLibrarianAndGetToken();

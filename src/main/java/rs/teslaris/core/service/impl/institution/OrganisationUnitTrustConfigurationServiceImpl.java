@@ -29,6 +29,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.institution.OrganisationUnitTrustConfiguration;
 import rs.teslaris.core.model.user.User;
@@ -308,6 +309,9 @@ public class OrganisationUnitTrustConfigurationServiceImpl
 
         institutionValidationCount.forEach((institutionId, amountToValidate) -> {
             findInstitutionalEditorsForInstitution(institutionId).forEach(user -> {
+                notificationRepository.getNotificationsForUserAndType(user.getId(),
+                        NotificationType.NEW_DOCUMENTS_FOR_VALIDATION)
+                    .forEach(notificationRepository::delete);
                 notificationRepository.save(
                     NotificationFactory.contructNewDocumentsForValidationNotification(
                         Map.of("nonValidatedDocumentsCount", String.valueOf(amountToValidate)),

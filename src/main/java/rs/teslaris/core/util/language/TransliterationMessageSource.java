@@ -40,19 +40,34 @@ public class TransliterationMessageSource implements MessageSource {
     }
 
     private Locale resolveLocale(Locale original) {
-        if (Objects.nonNull(original) && "sr-cyr".equalsIgnoreCase(original.toLanguageTag()) ||
+        var locale = original.toLanguageTag();
+        if (original.toLanguageTag().endsWith("cyr")) {
+            locale = "sr-cyr";
+        }
+
+        if ("sr-cyr".equalsIgnoreCase(locale) ||
             "sr-cyr".equalsIgnoreCase(Objects.requireNonNull(original).getLanguage())) {
             return Locale.forLanguageTag("sr");
         }
+
         return original;
     }
 
     private String maybeTransliterate(String message, Locale originalLocale) {
-        if (Objects.nonNull(originalLocale) &&
-            "sr-cyr".equalsIgnoreCase(originalLocale.toLanguageTag()) ||
+        if (Objects.isNull(originalLocale)) {
+            return message;
+        }
+
+        var locale = originalLocale.toLanguageTag();
+        if (originalLocale.toLanguageTag().endsWith("cyr")) {
+            locale = "sr-cyr";
+        }
+
+        if ("sr-cyr".equalsIgnoreCase(locale) ||
             "sr-cyr".equalsIgnoreCase(Objects.requireNonNull(originalLocale).getLanguage())) {
             return SerbianTransliteration.toCyrillic(message);
         }
+
         return message;
     }
 }
