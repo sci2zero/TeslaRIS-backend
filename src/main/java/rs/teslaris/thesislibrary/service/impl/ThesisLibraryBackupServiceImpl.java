@@ -18,6 +18,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileBackup;
@@ -91,13 +94,29 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "Library_Backup-" + institutionId +
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
                 thesisFileSections, defended, putOnReview, language, metadataFormat),
-            userId);
+            userId, RecurrenceType.ONCE);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, reportGenerationTime,
+                ScheduledTaskType.THESIS_LIBRARY_BACKUP, Map.of(
+                "institutionId", institutionId,
+                "from", from,
+                "to", to,
+                "types", types,
+                "thesisFileSections", thesisFileSections,
+                "defended", defended,
+                "putOnReview", putOnReview,
+                "userId", userId,
+                "language", language,
+                "metadataFormat", metadataFormat
+            ), RecurrenceType.ONCE));
+
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
 

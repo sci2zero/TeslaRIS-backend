@@ -22,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -193,7 +194,8 @@ public class RegistryBookReportServiceTest {
             idCaptor.capture(),
             eq(mockTime),
             taskCaptor.capture(),
-            eq(userId)
+            eq(userId),
+            eq(RecurrenceType.ONCE)
         );
 
         assertTrue(idCaptor.getValue().startsWith("Registry_Book-" + institutionId));

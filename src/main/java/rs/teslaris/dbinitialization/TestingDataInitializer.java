@@ -3,8 +3,10 @@ package rs.teslaris.dbinitialization;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +31,7 @@ import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessm
 import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;
 import rs.teslaris.assessment.repository.indicator.EventIndicatorRepository;
 import rs.teslaris.assessment.repository.indicator.IndicatorRepository;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -36,7 +39,10 @@ import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
@@ -44,6 +50,7 @@ import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.Journal;
@@ -82,6 +89,7 @@ import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.repository.commontypes.CountryRepository;
+import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
@@ -103,6 +111,7 @@ import rs.teslaris.thesislibrary.model.PageContentType;
 import rs.teslaris.thesislibrary.model.PageType;
 import rs.teslaris.thesislibrary.model.Promotion;
 import rs.teslaris.thesislibrary.model.PublicReviewPageContent;
+import rs.teslaris.thesislibrary.model.ThesisFileSection;
 import rs.teslaris.thesislibrary.repository.PromotionRepository;
 import rs.teslaris.thesislibrary.repository.PublicReviewPageContentRepository;
 
@@ -171,6 +180,8 @@ public class TestingDataInitializer {
     private final PromotionRepository promotionRepository;
 
     private final PublicReviewPageContentRepository publicReviewPageContentRepository;
+
+    private final ScheduledTaskMetadataRepository scheduledTaskMetadataRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1032,5 +1043,21 @@ public class TestingDataInitializer {
 
         publicReviewPageContentRepository.saveAll(
             List.of(pageContent1, pageContent2, pageContent3));
+
+        scheduledTaskMetadataRepository.save(
+            new ScheduledTaskMetadata("ID", LocalDateTime.now(),
+                ScheduledTaskType.THESIS_LIBRARY_BACKUP, Map.of(
+                "institutionId", 1,
+                "from", LocalDate.of(2000, 1, 1).toString(),
+                "to", LocalDate.now().toString(),
+                "types", new ArrayList<>(List.of(ThesisType.PHD)),
+                "thesisFileSections", new ArrayList<>(List.of(ThesisFileSection.PRELIMINARY_FILES,
+                    DocumentFileSection.FILE_ITEMS)),
+                "defended", true,
+                "putOnReview", false,
+                "userId", 1,
+                "language", "SR",
+                "metadataFormat", ExportFileType.CSV
+            ), RecurrenceType.ONCE));
     }
 }

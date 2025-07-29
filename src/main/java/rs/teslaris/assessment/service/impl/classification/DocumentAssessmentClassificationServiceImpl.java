@@ -55,6 +55,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.NotificationType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -234,7 +235,7 @@ public class DocumentAssessmentClassificationServiceImpl
                             orgUnitIds,
                             publishedInIds);
                 }
-            }, userId);
+            }, userId, RecurrenceType.ONCE);
     }
 
     @Override

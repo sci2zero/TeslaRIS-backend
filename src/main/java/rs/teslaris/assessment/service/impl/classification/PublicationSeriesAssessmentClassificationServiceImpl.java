@@ -37,6 +37,7 @@ import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -213,7 +214,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                 "-" + StringUtils.join(classificationYears, "_") +
                 "-" + UUID.randomUUID(), timeToRun,
             () -> performJournalClassification(commissionId, classificationYears, journalIds),
-            userId);
+            userId, RecurrenceType.ONCE);
     }
 
     @Override
@@ -222,13 +223,11 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                                               Integer userId, Integer commissionId) {
         Runnable handlerFunction = switch (source) {
             case MNO -> (() -> loadPublicationSeriesClassificationsFromMNOFiles(commissionId));
-            default -> null;
         };
 
         taskManagerService.scheduleTask(
             "Publication_Series_Classification_Load-" + source.name() + "-" + UUID.randomUUID(),
-            timeToRun,
-            handlerFunction, userId);
+            timeToRun, handlerFunction, userId, RecurrenceType.ONCE);
     }
 
     private void loadPublicationSeriesClassificationsFromMNOFiles(Integer commissionId) {

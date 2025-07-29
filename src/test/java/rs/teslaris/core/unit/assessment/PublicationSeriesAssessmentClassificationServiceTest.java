@@ -27,6 +27,7 @@ import rs.teslaris.assessment.service.impl.cruddelegate.PublicationSeriesAssessm
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -202,6 +203,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
             matches("Publication_Series_Classification-CustomRuleEngine-.*"),
             eq(timeToRun),
             any(Runnable.class),
-            eq(userId));
+            eq(userId),
+            eq(RecurrenceType.ONCE));
     }
 }

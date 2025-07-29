@@ -28,6 +28,7 @@ import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -99,8 +100,8 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
-                documentFileSections, language, metadataFormat),
-            userId);
+                documentFileSections, language, metadataFormat), userId, RecurrenceType.ONCE);
+
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
 

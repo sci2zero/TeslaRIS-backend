@@ -17,6 +17,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ReindexRequestDTO;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -50,7 +51,7 @@ public class ReindexController {
                 "-" + UUID.randomUUID(),
             timestamp,
             () -> reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate()),
-            tokenUtil.extractUserIdFromToken(bearerToken));
+            tokenUtil.extractUserIdFromToken(bearerToken), RecurrenceType.ONCE);
     }
 
     @PostMapping

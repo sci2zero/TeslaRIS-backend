@@ -24,6 +24,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileBackup;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -93,7 +94,8 @@ class DocumentBackupServiceTest {
             argThat(name -> name.contains("Document_Backup-" + institutionId)),
             eq(now),
             any(Runnable.class),
-            eq(userId)
+            eq(userId),
+            eq(RecurrenceType.ONCE)
         );
     }
 

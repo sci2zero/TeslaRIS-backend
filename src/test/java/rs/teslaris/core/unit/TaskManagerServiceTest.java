@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.service.impl.commontypes.TaskManagerServiceImpl;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -51,7 +52,7 @@ class TaskManagerServiceTest {
             invocation -> mock(ScheduledFuture.class));
 
         // When
-        taskManagerService.scheduleTask(taskId, executionTime, task, 1);
+        taskManagerService.scheduleTask(taskId, executionTime, task, 1, RecurrenceType.ONCE);
 
         // Then
         assertTrue(taskManagerService.isTaskScheduled(taskId));
@@ -71,8 +72,8 @@ class TaskManagerServiceTest {
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenAnswer(
             invocation -> mock(ScheduledFuture.class));
 
-        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1);
-        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 1);
+        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1, RecurrenceType.ONCE);
+        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 1, RecurrenceType.ONCE);
 
         // When
         var scheduledTasks = taskManagerService.listScheduledTasks();
@@ -99,8 +100,8 @@ class TaskManagerServiceTest {
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
             .thenAnswer(invocation -> mock(ScheduledFuture.class));
 
-        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1);
-        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 2);
+        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1, RecurrenceType.ONCE);
+        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 2, RecurrenceType.ONCE);
 
         // Mock behavior for non-admin roles
         boolean isAdmin = role.equals("ADMIN");

@@ -22,6 +22,7 @@ import rs.teslaris.assessment.service.interfaces.classification.PersonAssessment
 import rs.teslaris.assessment.util.AssessmentReportGenerator;
 import rs.teslaris.assessment.util.ReportTemplateEngine;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -70,7 +71,7 @@ public class ReportingServiceImpl implements ReportingService {
                 "-" + UUID.randomUUID(), timeToRun,
             () -> generateReport(reportType, assessmentYear, commissionIds, locale,
                 topLevelInstitutionId),
-            userId);
+            userId, RecurrenceType.ONCE);
     }
 
     @Override

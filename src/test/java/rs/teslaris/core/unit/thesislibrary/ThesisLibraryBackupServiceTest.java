@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileBackup;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
@@ -91,7 +92,8 @@ public class ThesisLibraryBackupServiceTest {
             argThat(name -> name.contains("Library_Backup-" + institutionId)),
             eq(now),
             any(Runnable.class),
-            eq(userId)
+            eq(userId),
+            eq(RecurrenceType.ONCE)
         );
     }
 

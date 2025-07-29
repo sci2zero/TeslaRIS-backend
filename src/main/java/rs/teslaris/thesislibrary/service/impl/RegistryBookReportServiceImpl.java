@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -86,7 +87,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                 "-" + from + "_" + to + "_" + lang +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateReport(from, to, authorName, authorTitle, institutionId, lang),
-            userId);
+            userId, RecurrenceType.ONCE);
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
 

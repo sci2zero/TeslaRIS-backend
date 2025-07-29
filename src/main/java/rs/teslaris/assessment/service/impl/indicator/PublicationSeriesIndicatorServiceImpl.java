@@ -43,6 +43,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -214,8 +215,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             "Publication_Series_IF5Rank_Compute-" + EntityIndicatorSource.WEB_OF_SCIENCE.name() +
                 "-" + StringUtils.join(classificationYears, "_") +
                 "-" + UUID.randomUUID(),
-            timeToRun,
-            () -> computeFiveYearIFRank(classificationYears), userId);
+            timeToRun, () -> computeFiveYearIFRank(classificationYears), userId,
+            RecurrenceType.ONCE);
     }
 
     @Override
@@ -293,8 +294,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
         taskManagerService.scheduleTask(
             "Publication_Series_Indicator_Load-" + source.name() + "-" + UUID.randomUUID(),
-            timeToRun,
-            handlerFunction, userId);
+            timeToRun, handlerFunction, userId, RecurrenceType.ONCE);
     }
 
     @Override

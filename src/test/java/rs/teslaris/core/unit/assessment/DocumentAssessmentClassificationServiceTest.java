@@ -31,6 +31,7 @@ import rs.teslaris.assessment.service.impl.cruddelegate.DocumentClassificationJP
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.institution.Commission;
@@ -125,7 +126,8 @@ public class DocumentAssessmentClassificationServiceTest {
                     documentPublicationType.name() + "_Assessment-From-" + fromDate)),
             eq(timeToRun),
             any(Runnable.class),
-            eq(userId)
+            eq(userId),
+            eq(RecurrenceType.ONCE)
         );
     }
 
