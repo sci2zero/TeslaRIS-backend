@@ -4,6 +4,7 @@ import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,6 +24,8 @@ import rs.teslaris.assessment.util.AssessmentReportGenerator;
 import rs.teslaris.assessment.util.ReportTemplateEngine;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -64,7 +67,7 @@ public class ReportingServiceImpl implements ReportingService {
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Locale " + locale + " does not exist."))
                 .getContent().replace(" ", "_");
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "ReportGeneration-" + userRepository.findOUIdForCommission(commissionIds.getFirst()) +
                 "-" + commissionName +
                 "-" + reportType + "-" + assessmentYear +
@@ -72,6 +75,17 @@ public class ReportingServiceImpl implements ReportingService {
             () -> generateReport(reportType, assessmentYear, commissionIds, locale,
                 topLevelInstitutionId),
             userId, RecurrenceType.ONCE);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.REPORT_GENERATION, new HashMap<>() {{
+                put("reportType", reportType);
+                put("assessmentYear", assessmentYear);
+                put("commissionIds", commissionIds);
+                put("locale", locale);
+                put("topLevelInstitutionId", topLevelInstitutionId);
+                put("userId", userId);
+            }}, RecurrenceType.ONCE));
     }
 
     @Override

@@ -6,6 +6,7 @@ import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +30,8 @@ import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -95,12 +98,25 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "Document_Backup-" + institutionId +
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
                 documentFileSections, language, metadataFormat), userId, RecurrenceType.ONCE);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, reportGenerationTime,
+                ScheduledTaskType.DOCUMENT_BACKUP, new HashMap<>() {{
+                put("institutionId", institutionId);
+                put("from", from);
+                put("to", to);
+                put("types", types);
+                put("documentFileSections", documentFileSections);
+                put("userId", userId);
+                put("language", language);
+                put("metadataFormat", metadataFormat);
+            }}, RecurrenceType.ONCE));
 
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }

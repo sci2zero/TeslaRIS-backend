@@ -11,12 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.FileSection;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
+import rs.teslaris.core.service.impl.commontypes.ScheduledTasksRestorer;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookReportService;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
@@ -24,6 +26,7 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class ScheduledLibraryTasksRestorer {
 
     private final ThesisLibraryBackupService thesisLibraryBackupService;
@@ -44,11 +47,17 @@ public class ScheduledLibraryTasksRestorer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void restoreTasksOnStartup() {
-        List<ScheduledTaskMetadata> allMetadata = metadataRepository.findAll();
+        List<ScheduledTaskMetadata> allMetadata = metadataRepository.findTasksByTypes(
+            List.of(
+                ScheduledTaskType.THESIS_LIBRARY_BACKUP,
+                ScheduledTaskType.REGISTRY_BOOK_REPORT_GENERATION
+            ));
 
         for (ScheduledTaskMetadata metadata : allMetadata) {
             try {
-                restoreTaskFromMetadata(metadata);
+                synchronized (ScheduledTasksRestorer.lock) {
+                    restoreTaskFromMetadata(metadata);
+                }
             } catch (Exception e) {
                 log.error("Failed to restore thesis library scheduled task: {}",
                     metadata.getTaskId(), e);
@@ -58,13 +67,15 @@ public class ScheduledLibraryTasksRestorer {
 
     private void restoreTaskFromMetadata(ScheduledTaskMetadata metadata) {
         if (metadata.getType().equals(ScheduledTaskType.THESIS_LIBRARY_BACKUP)) {
-            restoreThesisLibraryBackup(metadata);
+            restoreThesisLibraryBackupCreation(metadata);
         } else if (metadata.getType().equals(ScheduledTaskType.REGISTRY_BOOK_REPORT_GENERATION)) {
-            // TODO
+            restoreRegistryBookReportGeneration(metadata);
         }
+
+        metadataRepository.deleteTaskForTaskId(metadata.getTaskId());
     }
 
-    private void restoreThesisLibraryBackup(ScheduledTaskMetadata metadata) {
+    private void restoreThesisLibraryBackupCreation(ScheduledTaskMetadata metadata) {
         Map<String, Object> data = metadata.getMetadata();
 
         var institutionId = (Integer) data.get("institutionId");
@@ -90,6 +101,23 @@ public class ScheduledLibraryTasksRestorer {
 
         thesisLibraryBackupService.scheduleBackupGeneration(institutionId, from, to, types,
             fileSections, defended, putOnReview, userId, language, metadataFormat);
+    }
+
+    private void restoreRegistryBookReportGeneration(ScheduledTaskMetadata metadata) {
+        Map<String, Object> data = metadata.getMetadata();
+
+        var institutionId = (Integer) data.get("institutionId");
+        var from = LocalDate.parse((String) data.get("from"));
+        var to = LocalDate.parse((String) data.get("to"));
+
+        var authorName = (String) data.get("authorName");
+        var authorTitle = (String) data.get("authorTitle");
+
+        var lang = (String) data.get("lang");
+        var userId = (Integer) data.get("userId");
+
+        registryBookReportService.scheduleReportGeneration(from, to, institutionId,
+            lang, userId, authorName, authorTitle);
     }
 
     public List<FileSection> resolveFileSections(List<String> names) {

@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -38,6 +39,8 @@ import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -209,12 +212,21 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                                        Integer userId, List<Integer> classificationYears,
                                        List<Integer> journalIds) {
         var commission = commissionService.findOne(commissionId);
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "Publication_Series_Classification-" + commission.getFormalDescriptionOfRule() +
                 "-" + StringUtils.join(classificationYears, "_") +
                 "-" + UUID.randomUUID(), timeToRun,
             () -> performJournalClassification(commissionId, classificationYears, journalIds),
             userId, RecurrenceType.ONCE);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.JOURNAL_CLASSIFICATION, new HashMap<>() {{
+                put("commissionId", commissionId);
+                put("classificationYears", classificationYears);
+                put("journalIds", journalIds);
+                put("userId", userId);
+            }}, RecurrenceType.ONCE));
     }
 
     @Override
@@ -225,9 +237,17 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             case MNO -> (() -> loadPublicationSeriesClassificationsFromMNOFiles(commissionId));
         };
 
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "Publication_Series_Classification_Load-" + source.name() + "-" + UUID.randomUUID(),
             timeToRun, handlerFunction, userId, RecurrenceType.ONCE);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.JOURNAL_CLASSIFICATION_LOADING, new HashMap<>() {{
+                put("source", source);
+                put("commissionId", commissionId);
+                put("userId", userId);
+            }}, RecurrenceType.ONCE));
     }
 
     private void loadPublicationSeriesClassificationsFromMNOFiles(Integer commissionId) {

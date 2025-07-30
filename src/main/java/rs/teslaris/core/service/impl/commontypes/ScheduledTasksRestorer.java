@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -28,7 +30,10 @@ import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class ScheduledTasksRestorer {
+
+    public static final Object lock = new Object();
 
     private final DocumentBackupService documentBackupService;
 
@@ -43,11 +48,17 @@ public class ScheduledTasksRestorer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void restoreTasksOnStartup() {
-        List<ScheduledTaskMetadata> allMetadata = metadataRepository.findAll();
+        List<ScheduledTaskMetadata> allMetadata = metadataRepository.findTasksByTypes(
+            List.of(
+                ScheduledTaskType.DOCUMENT_BACKUP,
+                ScheduledTaskType.REINDEXING
+            ));
 
         for (ScheduledTaskMetadata metadata : allMetadata) {
             try {
-                restoreTaskFromMetadata(metadata);
+                synchronized (lock) {
+                    restoreTaskFromMetadata(metadata);
+                }
             } catch (Exception e) {
                 log.error("Failed to restore scheduled task: {}", metadata.getTaskId(), e);
             }
@@ -60,6 +71,8 @@ public class ScheduledTasksRestorer {
         } else if (metadata.getType().equals(ScheduledTaskType.REINDEXING)) {
             restoreReindexOperation(metadata);
         }
+
+        metadataRepository.deleteTaskForTaskId(metadata.getTaskId());
     }
 
     private void restoreDocumentBackup(ScheduledTaskMetadata metadata) {
@@ -83,12 +96,8 @@ public class ScheduledTasksRestorer {
         var userId = (Integer) data.get("userId");
         var metadataFormat = ExportFileType.valueOf((String) data.get("metadataFormat"));
 
-        var timeToRun = metadata.getTimeToRun();
-
-        if (timeToRun.isAfter(LocalDateTime.now())) {
-            documentBackupService.scheduleBackupGeneration(institutionId, from, to, types,
-                fileSections, userId, language, metadataFormat);
-        }
+        documentBackupService.scheduleBackupGeneration(institutionId, from, to, types,
+            fileSections, userId, language, metadataFormat);
     }
 
     private void restoreReindexOperation(ScheduledTaskMetadata metadata) {
@@ -107,7 +116,7 @@ public class ScheduledTasksRestorer {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "DatabaseReindex-" +
                 StringUtils.join(indexesToRepopulate.stream().map(
                     EntityType::name).toList(), "-") +
@@ -115,6 +124,13 @@ public class ScheduledTasksRestorer {
             timeToRun,
             () -> reindexService.reindexDatabase(indexesToRepopulate),
             userId, RecurrenceType.ONCE);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.REINDEXING, new HashMap<>() {{
+                put("indexesToRepopulate", indexesToRepopulate);
+                put("userId", userId);
+            }}, RecurrenceType.ONCE));
     }
 }
 

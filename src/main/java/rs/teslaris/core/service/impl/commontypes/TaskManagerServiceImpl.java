@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.SchedulingException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
@@ -33,6 +34,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @RequiredArgsConstructor
 @Slf4j
 @Traceable
+@Transactional
 public class TaskManagerServiceImpl implements TaskManagerService {
 
     private static final ConcurrentHashMap<String, ScheduledTask> tasks =
@@ -117,13 +119,14 @@ public class TaskManagerServiceImpl implements TaskManagerService {
                     }
                 } else {
                     // Remove from DB if reached end-of-life
-                    scheduledTaskMetadataRepository.deleteTaskForTaskId(taskId);
+                    scheduledTaskMetadataRepository.findTaskByTaskId(taskId)
+                        .ifPresent(scheduledTaskMetadataRepository::delete);
                 }
             }
         };
 
         ScheduledFuture<?> scheduledFuture = taskScheduler.schedule(wrappedTask, executionTime);
-        tasks.put(taskId, new ScheduledTask(taskId, scheduledFuture, dateTime));
+        tasks.put(taskId, new ScheduledTask(taskId, scheduledFuture, dateTime, recurrence));
 
         return taskId;
     }
@@ -131,11 +134,12 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     @Override
     public boolean cancelTask(String taskId) {
         ScheduledFuture<?> scheduledFuture = tasks.get(taskId).task();
-        if (scheduledFuture != null) {
+        if (Objects.nonNull(scheduledFuture)) {
             boolean isCancelled =
                 scheduledFuture.cancel(false); // Cancel the task without interrupting
             if (isCancelled) {
                 tasks.remove(taskId);
+                scheduledTaskMetadataRepository.deleteTaskForTaskId(taskId);
             }
             return isCancelled;
         }
@@ -150,7 +154,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     @Override
     public List<ScheduledTaskResponseDTO> listScheduledTasks() {
         return tasks.values().stream().map(scheduledTask -> new ScheduledTaskResponseDTO(
-            scheduledTask.id(), scheduledTask.executionTime)).collect(Collectors.toList());
+                scheduledTask.id(), scheduledTask.executionTime, scheduledTask.recurrenceType))
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -165,7 +170,24 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         return tasks.values().stream()
             .filter(task -> isReportGenerationTask(task.id) &&
                 (isAdmin || isTaskInSubOU(task.id, subOUs)))
-            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime))
+            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
+                task.recurrenceType))
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ScheduledTaskResponseDTO> listScheduledHarvestTasks(Integer userId, String role) {
+        boolean isAdmin = UserRole.ADMIN.name().equals(role);
+
+        List<Integer> subOUs = isAdmin
+            ? Collections.emptyList()
+            : getUserSubOrganisationUnits(userId);
+
+        return tasks.values().stream()
+            .filter(task -> isHarvestTask(task.id) &&
+                (isAdmin || isTaskInSubOU(task.id, subOUs)))
+            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
+                task.recurrenceType))
             .collect(Collectors.toList());
     }
 
@@ -194,6 +216,10 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         return taskId.startsWith("ReportGeneration-");
     }
 
+    private boolean isHarvestTask(String taskId) {
+        return taskId.startsWith("Harvest-");
+    }
+
     private boolean isTaskInSubOU(String taskId, List<Integer> subOUs) {
         try {
             int ouId = Integer.parseInt(taskId.split("-")[1]);
@@ -213,7 +239,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     private record ScheduledTask(
         String id,
         ScheduledFuture<?> task,
-        LocalDateTime executionTime
+        LocalDateTime executionTime,
+        RecurrenceType recurrenceType
     ) {
     }
 }

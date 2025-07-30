@@ -21,6 +21,8 @@ public interface TaskManagerService {
 
     List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks(Integer userId, String role);
 
+    List<ScheduledTaskResponseDTO> listScheduledHarvestTasks(Integer userId, String role);
+
     LocalDateTime findNextFreeExecutionTime();
 
     void saveTaskMetadata(ScheduledTaskMetadata scheduledTask);

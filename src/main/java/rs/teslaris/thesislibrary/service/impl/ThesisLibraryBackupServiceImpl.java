@@ -4,6 +4,7 @@ import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -104,18 +105,18 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, reportGenerationTime,
-                ScheduledTaskType.THESIS_LIBRARY_BACKUP, Map.of(
-                "institutionId", institutionId,
-                "from", from,
-                "to", to,
-                "types", types,
-                "thesisFileSections", thesisFileSections,
-                "defended", defended,
-                "putOnReview", putOnReview,
-                "userId", userId,
-                "language", language,
-                "metadataFormat", metadataFormat
-            ), RecurrenceType.ONCE));
+                ScheduledTaskType.THESIS_LIBRARY_BACKUP, new HashMap<>() {{
+                put("institutionId", institutionId);
+                put("from", from);
+                put("to", to);
+                put("types", types);
+                put("thesisFileSections", thesisFileSections);
+                put("defended", defended);
+                put("putOnReview", putOnReview);
+                put("userId", userId);
+                put("language", language);
+                put("metadataFormat", metadataFormat);
+            }}, RecurrenceType.ONCE));
 
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }

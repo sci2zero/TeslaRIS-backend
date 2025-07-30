@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,6 +57,8 @@ import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -222,7 +225,7 @@ public class DocumentAssessmentClassificationServiceImpl
                                                   List<Integer> authorIds,
                                                   List<Integer> orgUnitIds,
                                                   List<Integer> publishedInIds) {
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             documentPublicationType.name() + "_Assessment-From-" + fromDate + "-" +
                 UUID.randomUUID(), timeToRun,
             () -> {
@@ -236,6 +239,18 @@ public class DocumentAssessmentClassificationServiceImpl
                             publishedInIds);
                 }
             }, userId, RecurrenceType.ONCE);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.PUBLICATION_CLASSIFICATION, new HashMap<>() {{
+                put("fromDate", fromDate);
+                put("documentPublicationType", documentPublicationType);
+                put("commissionId", commissionId);
+                put("authorIds", authorIds);
+                put("orgUnitIds", orgUnitIds);
+                put("userId", userId);
+                put("publishedInIds", publishedInIds);
+            }}, RecurrenceType.ONCE));
     }
 
     @Override

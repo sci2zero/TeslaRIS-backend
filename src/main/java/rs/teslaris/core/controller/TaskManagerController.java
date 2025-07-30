@@ -39,8 +39,17 @@ public class TaskManagerController {
             tokenUtil.extractUserRoleFromToken(bearerToken));
     }
 
+    @GetMapping("/harvest")
+    @PreAuthorize("hasAuthority('SCHEDULE_DOCUMENT_HARVEST')")
+    public List<ScheduledTaskResponseDTO> listScheduledHarvestTasks(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return taskManagerService.listScheduledHarvestTasks(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            tokenUtil.extractUserRoleFromToken(bearerToken));
+    }
+
     @DeleteMapping("/{taskId}")
-    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION')")
+    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION', 'SCHEDULE_DOCUMENT_HARVEST')")
     public void cancelTask(@PathVariable String taskId) {
         taskManagerService.cancelTask(taskId);
     }

@@ -103,7 +103,6 @@ class TaskManagerServiceTest {
         taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1, RecurrenceType.ONCE);
         taskManagerService.scheduleTask(taskId2, executionTime2, task2, 2, RecurrenceType.ONCE);
 
-        // Mock behavior for non-admin roles
         boolean isAdmin = role.equals("ADMIN");
         if (!isAdmin) {
             when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
@@ -127,5 +126,59 @@ class TaskManagerServiceTest {
 
         assertTrue(scheduledTasks.stream().map(ScheduledTaskResponseDTO::executionTime).toList()
             .contains(executionTime1));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "INSTITUTIONAL_EDITOR"})
+    public void shouldListScheduledHarvestTasksForUserOrAdmin(String role) {
+        // Given
+        var taskId1 = "Harvest-1-....";
+        var taskId2 = "Harvest-2-....";
+        var nonHarvestTaskId = "SomeOtherTaskType-999";
+
+        var executionTime1 = LocalDateTime.now().plusDays(1);
+        var executionTime2 = LocalDateTime.now().plusDays(2);
+
+        var task1 = mock(Runnable.class);
+        var task2 = mock(Runnable.class);
+        var unrelatedTask = mock(Runnable.class);
+
+        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1, RecurrenceType.ONCE);
+        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 2, RecurrenceType.ONCE);
+        taskManagerService.scheduleTask(nonHarvestTaskId, executionTime2, unrelatedTask, 2,
+            RecurrenceType.ONCE);
+
+        boolean isAdmin = role.equals("ADMIN");
+
+        if (isAdmin) {
+            when(userService.getUserOrganisationUnitId(1)).thenReturn(10);
+            when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
+                .thenReturn(List.of(10, 1, 2));
+        } else {
+            when(userService.getUserOrganisationUnitId(2)).thenReturn(5);
+            when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(5))
+                .thenReturn(List.of(5, 6, 2));
+        }
+
+        // When
+        var scheduledTasks = taskManagerService.listScheduledHarvestTasks(isAdmin ? 1 : 2, role);
+
+        // Then
+        if (isAdmin) {
+            assertEquals(2, scheduledTasks.size());
+            assertTrue(scheduledTasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .containsAll(List.of(taskId1, taskId2)));
+        } else {
+            assertEquals(1, scheduledTasks.size());
+            assertEquals(taskId2, scheduledTasks.getFirst().taskId());
+        }
+
+        var executionTimes = scheduledTasks.stream()
+            .map(ScheduledTaskResponseDTO::executionTime)
+            .toList();
+
+        if (isAdmin) {
+            assertTrue(executionTimes.contains(executionTime2));
+        }
     }
 }
