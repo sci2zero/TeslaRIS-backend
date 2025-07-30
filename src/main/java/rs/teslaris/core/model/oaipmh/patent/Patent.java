@@ -43,6 +43,9 @@ public class Patent implements PatentConvertable, HasOldId {
     @XmlElement(name = "ApprovalDate")
     private Date approvalDate;
 
+    @XmlElement(name = "PublicationDate")
+    private Date publicationDate;
+
     @XmlElement(name = "PatentNumber")
     private String patentNumber;
 

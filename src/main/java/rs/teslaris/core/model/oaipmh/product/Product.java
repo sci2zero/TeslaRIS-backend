@@ -7,6 +7,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
+import java.util.Date;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -60,4 +61,9 @@ public class Product implements ProductConvertable, HasOldId {
     private List<Integer> importUserId;
 
     private Boolean loaded;
+
+    // Additional Migration fields - not part of the OAI-PMH specification
+
+    @XmlElement(name = "PublicationDate")
+    private Date publicationDate;
 }

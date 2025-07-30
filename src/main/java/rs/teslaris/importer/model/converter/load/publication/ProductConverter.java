@@ -1,5 +1,6 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,7 +33,10 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
         dto.setSubTitle(new ArrayList<>());
         dto.setDescription(new ArrayList<>());
         dto.setKeywords(new ArrayList<>());
-        dto.setDocumentDate("");
+
+        dto.setDocumentDate(String.valueOf(
+            record.getPublicationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                .getYear()));
 
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getCreators(),
