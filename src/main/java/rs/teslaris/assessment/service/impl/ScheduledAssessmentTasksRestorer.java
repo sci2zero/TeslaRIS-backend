@@ -115,7 +115,7 @@ public class ScheduledAssessmentTasksRestorer {
         }
 
         reportingService.scheduleReportGeneration(timeToRun, reportType, assessmentYear,
-            commissionIds, locale, topLevelInstitutionId, userId);
+            commissionIds, locale, topLevelInstitutionId, userId, metadata.getRecurrenceType());
     }
 
     private void restoreJournalClassification(ScheduledTaskMetadata metadata) {

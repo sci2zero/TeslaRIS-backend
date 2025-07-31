@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookReportService;
 
@@ -46,12 +47,13 @@ public class RegistryBookReportController {
                                  String authorTitle,
                                  @RequestParam Integer institutionId,
                                  @RequestParam String lang,
+                                 @RequestParam(defaultValue = "ONCE") RecurrenceType recurrence,
                                  @RequestHeader(value = "Authorization")
                                  String bearerToken) {
         return registryBookReportService.scheduleReportGeneration(
             Objects.nonNull(from) ? from : LocalDate.of(1000, 1, 1),
             Objects.nonNull(to) ? to : LocalDate.now(), institutionId, lang,
-            tokenUtil.extractUserIdFromToken(bearerToken), authorName, authorTitle);
+            tokenUtil.extractUserIdFromToken(bearerToken), authorName, authorTitle, recurrence);
     }
 
     @GetMapping("/list-reports")

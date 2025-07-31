@@ -84,7 +84,8 @@ public class ThesisLibraryBackupServiceTest {
         // When
         var result =
             thesisLibraryBackupService.scheduleBackupGeneration(institutionId, from, to, types,
-                fileSections, defended, putOnReview, userId, "sr", metadataFormat);
+                fileSections, defended, putOnReview, userId, "sr", metadataFormat,
+                RecurrenceType.DAILY);
 
         // Then
         assertEquals(result, "13:45h");
@@ -93,7 +94,7 @@ public class ThesisLibraryBackupServiceTest {
             eq(now),
             any(Runnable.class),
             eq(userId),
-            eq(RecurrenceType.ONCE)
+            eq(RecurrenceType.DAILY)
         );
     }
 

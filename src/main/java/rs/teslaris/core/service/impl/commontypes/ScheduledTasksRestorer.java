@@ -97,7 +97,7 @@ public class ScheduledTasksRestorer {
         var metadataFormat = ExportFileType.valueOf((String) data.get("metadataFormat"));
 
         documentBackupService.scheduleBackupGeneration(institutionId, from, to, types,
-            fileSections, userId, language, metadataFormat);
+            fileSections, userId, language, metadataFormat, metadata.getRecurrenceType());
     }
 
     private void restoreReindexOperation(ScheduledTaskMetadata metadata) {

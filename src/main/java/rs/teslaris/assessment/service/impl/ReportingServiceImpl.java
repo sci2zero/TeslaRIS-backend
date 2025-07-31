@@ -59,7 +59,7 @@ public class ReportingServiceImpl implements ReportingService {
     public void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
                                          Integer assessmentYear, List<Integer> commissionIds,
                                          String locale, Integer topLevelInstitutionId,
-                                         Integer userId) {
+                                         Integer userId, RecurrenceType recurrence) {
         checkCommissionAccessRights(commissionIds, userId);
         var commissionName =
             commissionService.findOne(commissionIds.getFirst()).getDescription().stream()
@@ -74,7 +74,7 @@ public class ReportingServiceImpl implements ReportingService {
                 "-" + UUID.randomUUID(), timeToRun,
             () -> generateReport(reportType, assessmentYear, commissionIds, locale,
                 topLevelInstitutionId),
-            userId, RecurrenceType.ONCE);
+            userId, recurrence);
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, timeToRun,
@@ -85,7 +85,7 @@ public class ReportingServiceImpl implements ReportingService {
                 put("locale", locale);
                 put("topLevelInstitutionId", topLevelInstitutionId);
                 put("userId", userId);
-            }}, RecurrenceType.ONCE));
+            }}, recurrence));
     }
 
     @Override

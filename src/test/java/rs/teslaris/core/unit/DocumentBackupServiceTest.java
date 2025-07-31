@@ -85,7 +85,8 @@ class DocumentBackupServiceTest {
 
         // When
         var result = documentBackupService.scheduleBackupGeneration(
-            institutionId, from, to, types, fileSections, userId, language, metadataFormat
+            institutionId, from, to, types, fileSections, userId, language, metadataFormat,
+            RecurrenceType.ONCE
         );
 
         // Then
@@ -208,7 +209,8 @@ class DocumentBackupServiceTest {
         // When & Then
         assertThrows(BackupException.class,
             () -> documentBackupService.scheduleBackupGeneration(
-                institutionId, from, to, types, fileSections, userId, language, metadataFormat
+                institutionId, from, to, types, fileSections, userId, language, metadataFormat,
+                RecurrenceType.WEEKLY
             ));
     }
 }

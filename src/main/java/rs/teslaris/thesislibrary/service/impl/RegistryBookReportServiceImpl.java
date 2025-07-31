@@ -79,7 +79,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
     @Override
     public String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
                                            String lang, Integer userId, String authorName,
-                                           String authorTitle) {
+                                           String authorTitle, RecurrenceType recurrence) {
         if (from.isAfter(to)) {
             throw new RegistryBookException("dateRangeIssueMessage");
         }
@@ -90,7 +90,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                 "-" + from + "_" + to + "_" + lang +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateReport(from, to, authorName, authorTitle, institutionId, lang),
-            userId, RecurrenceType.ONCE);
+            userId, recurrence);
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, reportGenerationTime,
@@ -102,7 +102,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                 put("userId", userId);
                 put("lang", lang);
                 put("authorName", authorName);
-            }}, RecurrenceType.ONCE));
+            }}, recurrence));
 
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }

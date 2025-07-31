@@ -176,6 +176,41 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     }
 
     @Override
+    public List<ScheduledTaskResponseDTO> listScheduledDocumentBackupGenerationTasks(Integer userId,
+                                                                                     String role) {
+        boolean isAdmin = UserRole.ADMIN.name().equals(role);
+
+        List<Integer> subOUs = isAdmin
+            ? Collections.emptyList()
+            : getUserSubOrganisationUnits(userId);
+
+        return tasks.values().stream()
+            .filter(task -> isDocumentBackupGenerationTask(task.id) &&
+                (isAdmin || isTaskInSubOU(task.id, subOUs)))
+            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
+                task.recurrenceType))
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ScheduledTaskResponseDTO> listScheduledThesisLibraryBackupGenerationTasks(
+        Integer userId,
+        String role) {
+        boolean isAdmin = UserRole.ADMIN.name().equals(role);
+
+        List<Integer> subOUs = isAdmin
+            ? Collections.emptyList()
+            : getUserSubOrganisationUnits(userId);
+
+        return tasks.values().stream()
+            .filter(task -> isThesisLibraryBackupGenerationTask(task.id) &&
+                (isAdmin || isTaskInSubOU(task.id, subOUs)))
+            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
+                task.recurrenceType))
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public List<ScheduledTaskResponseDTO> listScheduledHarvestTasks(Integer userId, String role) {
         boolean isAdmin = UserRole.ADMIN.name().equals(role);
 
@@ -214,6 +249,14 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     private boolean isReportGenerationTask(String taskId) {
         return taskId.startsWith("ReportGeneration-");
+    }
+
+    private boolean isDocumentBackupGenerationTask(String taskId) {
+        return taskId.startsWith("Document_Backup-");
+    }
+
+    private boolean isThesisLibraryBackupGenerationTask(String taskId) {
+        return taskId.startsWith("Library_Backup-");
     }
 
     private boolean isHarvestTask(String taskId) {

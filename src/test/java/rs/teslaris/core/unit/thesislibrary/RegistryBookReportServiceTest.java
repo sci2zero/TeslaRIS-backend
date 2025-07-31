@@ -184,7 +184,7 @@ public class RegistryBookReportServiceTest {
         // When
         String result =
             registryBookReportService.scheduleReportGeneration(from, to, institutionId, lang,
-                userId, "", "");
+                userId, "", "", RecurrenceType.YEARLY);
 
         // Then
         var taskCaptor = ArgumentCaptor.forClass(Runnable.class);
@@ -195,7 +195,7 @@ public class RegistryBookReportServiceTest {
             eq(mockTime),
             taskCaptor.capture(),
             eq(userId),
-            eq(RecurrenceType.ONCE)
+            eq(RecurrenceType.YEARLY)
         );
 
         assertTrue(idCaptor.getValue().startsWith("Registry_Book-" + institutionId));
@@ -205,8 +205,8 @@ public class RegistryBookReportServiceTest {
     @Test
     void shouldDeleteWhenReportExists() {
         // Given
-        String fileName = "report123.pdf";
-        RegistryBookReport mockReport = new RegistryBookReport();
+        var fileName = "report123.pdf";
+        var mockReport = new RegistryBookReport();
         when(registryBookReportRepository.findByReportFileName(fileName))
             .thenReturn(Optional.of(mockReport));
         when(userRepository.findOrganisationUnitIdForUser(1))
@@ -222,7 +222,7 @@ public class RegistryBookReportServiceTest {
     @Test
     void shouldNotDeleteWhenReportNotFound() {
         // Given
-        String fileName = "nonexistent.pdf";
+        var fileName = "nonexistent.pdf";
         when(registryBookReportRepository.findByReportFileName(fileName))
             .thenReturn(Optional.empty());
         when(userRepository.findOrganisationUnitIdForUser(1))

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -45,11 +46,13 @@ public class DocumentBackupController {
                                            @RequestParam List<DocumentFileSection> sections,
                                            @RequestParam String lang,
                                            @RequestParam ExportFileType metadataFormat,
+                                           @RequestParam(defaultValue = "ONCE")
+                                           RecurrenceType recurrence,
                                            @RequestHeader(value = "Authorization")
                                            String bearerToken) {
         return documentBackupService.scheduleBackupGeneration(institutionId, from,
             to, types, sections, tokenUtil.extractUserIdFromToken(bearerToken), lang,
-            metadataFormat);
+            metadataFormat, recurrence);
     }
 
     @GetMapping("/list-backups")

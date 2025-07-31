@@ -85,7 +85,8 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                                            List<FileSection> thesisFileSections,
                                            Boolean defended, Boolean putOnReview,
                                            Integer userId, String language,
-                                           ExportFileType metadataFormat) {
+                                           ExportFileType metadataFormat,
+                                           RecurrenceType recurrence) {
         if (!defended && !putOnReview) {
             throw new BackupException("You must select at least one of: defended or putOnReview.");
         }
@@ -101,7 +102,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
                 thesisFileSections, defended, putOnReview, language, metadataFormat),
-            userId, RecurrenceType.ONCE);
+            userId, recurrence);
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, reportGenerationTime,
@@ -116,7 +117,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                 put("userId", userId);
                 put("language", language);
                 put("metadataFormat", metadataFormat);
-            }}, RecurrenceType.ONCE));
+            }}, recurrence));
 
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }

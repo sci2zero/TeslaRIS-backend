@@ -44,6 +44,8 @@ public class ReindexController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleDatabaseReindex(@RequestParam("timestamp")
                                         LocalDateTime timestamp,
+                                        @RequestParam(defaultValue = "ONCE")
+                                        RecurrenceType recurrence,
                                         @RequestHeader("Authorization")
                                         String bearerToken,
                                         @RequestBody ReindexRequestDTO reindexRequest) {
@@ -54,14 +56,14 @@ public class ReindexController {
                 "-" + UUID.randomUUID(),
             timestamp,
             () -> reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate()),
-            tokenUtil.extractUserIdFromToken(bearerToken), RecurrenceType.ONCE);
+            tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, timestamp,
                 ScheduledTaskType.REINDEXING, new HashMap<>() {{
                 put("indexesToRepopulate", reindexRequest.getIndexesToRepopulate());
                 put("userId", tokenUtil.extractUserIdFromToken(bearerToken));
-            }}, RecurrenceType.ONCE));
+            }}, recurrence));
     }
 
     @PostMapping

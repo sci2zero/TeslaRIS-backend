@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -180,5 +181,89 @@ class TaskManagerServiceTest {
         if (isAdmin) {
             assertTrue(executionTimes.contains(executionTime2));
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "INSTITUTIONAL_EDITOR"})
+    void shouldListAllScheduledDocumentBackupGenerationTasks(String role) {
+        // Given
+        var taskId1 = "Document_Backup-1-...";
+        var taskId2 = "Document_Backup-2-...";
+        var executionTime1 = LocalDateTime.now().plusMinutes(15);
+        var executionTime2 = LocalDateTime.now().plusHours(2);
+        var task1 = mock(Runnable.class);
+        var task2 = mock(Runnable.class);
+
+        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+            .thenAnswer(invocation -> mock(ScheduledFuture.class));
+
+        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1, RecurrenceType.ONCE);
+        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 2, RecurrenceType.ONCE);
+
+        boolean isAdmin = role.equals("ADMIN");
+        if (!isAdmin) {
+            when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
+            when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+                .thenReturn(List.of(1));
+        }
+
+        // When
+        var tasks = taskManagerService.listScheduledDocumentBackupGenerationTasks(1, role);
+
+        // Then
+        if (isAdmin) {
+            assertTrue(tasks.size() >= 2);
+            assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .containsAll(List.of(taskId1, taskId2)));
+        } else {
+            assertTrue(!tasks.isEmpty());
+            assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .contains(taskId1));
+        }
+
+        assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::executionTime).toList()
+            .contains(executionTime1));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "INSTITUTIONAL_LIBRARIAN", "HEAD_OF_LIBRARY"})
+    void shouldListAllScheduledThesisLibraryBackupGenerationTasks(String role) {
+        // Given
+        var taskId1 = "Library_Backup-1-...";
+        var taskId2 = "Library_Backup-2-...";
+        var executionTime1 = LocalDateTime.now().plusMinutes(30);
+        var executionTime2 = LocalDateTime.now().plusHours(3);
+        var task1 = mock(Runnable.class);
+        var task2 = mock(Runnable.class);
+
+        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+            .thenAnswer(invocation -> mock(ScheduledFuture.class));
+
+        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1, RecurrenceType.ONCE);
+        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 2, RecurrenceType.ONCE);
+
+        boolean isAdmin = role.equals("ADMIN");
+        if (!isAdmin) {
+            when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
+            when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+                .thenReturn(List.of(1));
+        }
+
+        // When
+        var tasks = taskManagerService.listScheduledThesisLibraryBackupGenerationTasks(1, role);
+
+        // Then
+        if (isAdmin) {
+            assertTrue(tasks.size() >= 2);
+            assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .containsAll(List.of(taskId1, taskId2)));
+        } else {
+            assertFalse(tasks.isEmpty());
+            assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .contains(taskId1));
+        }
+
+        assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::executionTime).toList()
+            .contains(executionTime1));
     }
 }

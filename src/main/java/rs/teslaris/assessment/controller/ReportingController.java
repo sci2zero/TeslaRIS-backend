@@ -23,6 +23,7 @@ import rs.teslaris.assessment.model.ReportType;
 import rs.teslaris.assessment.service.interfaces.ReportingService;
 import rs.teslaris.core.annotation.ReportGenerationCheck;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
@@ -48,12 +49,13 @@ public class ReportingController {
         @RequestParam("lang") String lang,
         @RequestParam(value = "topLevelInstitutionId", required = false)
         Integer topLevelInstitutionId,
+        @RequestParam(defaultValue = "ONCE") RecurrenceType recurrence,
         @RequestHeader("Authorization") String bearerToken) {
         if (commissionIds.isEmpty()) {
             return;
         }
         reportingService.scheduleReportGeneration(timestamp, reportType, year, commissionIds, lang,
-            topLevelInstitutionId, tokenUtil.extractUserIdFromToken(bearerToken));
+            topLevelInstitutionId, tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
     }
 
     @GetMapping("/{commissionId}")

@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.ReportDTO;
 import rs.teslaris.assessment.model.ReportType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 
 @Service
 public interface ReportingService {
@@ -16,7 +17,8 @@ public interface ReportingService {
 
     void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
                                   Integer assessmentYear, List<Integer> commissionIds,
-                                  String locale, Integer topLevelInstitutionId, Integer userId);
+                                  String locale, Integer topLevelInstitutionId, Integer userId,
+                                  RecurrenceType recurrence);
 
     List<String> getAvailableReportsForCommission(Integer commissionId, Integer userId);
 

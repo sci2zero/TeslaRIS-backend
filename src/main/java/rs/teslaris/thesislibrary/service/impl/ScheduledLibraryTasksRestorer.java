@@ -100,7 +100,8 @@ public class ScheduledLibraryTasksRestorer {
         var metadataFormat = ExportFileType.valueOf((String) data.get("metadataFormat"));
 
         thesisLibraryBackupService.scheduleBackupGeneration(institutionId, from, to, types,
-            fileSections, defended, putOnReview, userId, language, metadataFormat);
+            fileSections, defended, putOnReview, userId, language, metadataFormat,
+            metadata.getRecurrenceType());
     }
 
     private void restoreRegistryBookReportGeneration(ScheduledTaskMetadata metadata) {
@@ -117,7 +118,7 @@ public class ScheduledLibraryTasksRestorer {
         var userId = (Integer) data.get("userId");
 
         registryBookReportService.scheduleReportGeneration(from, to, institutionId,
-            lang, userId, authorName, authorTitle);
+            lang, userId, authorName, authorTitle, metadata.getRecurrenceType());
     }
 
     public List<FileSection> resolveFileSections(List<String> names) {

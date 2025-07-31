@@ -48,6 +48,24 @@ public class TaskManagerController {
             tokenUtil.extractUserRoleFromToken(bearerToken));
     }
 
+    @GetMapping("/document-backup")
+    @PreAuthorize("hasAuthority('GENERATE_OUTPUT_BACKUP')")
+    public List<ScheduledTaskResponseDTO> listScheduledDocumentBackupTasks(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return taskManagerService.listScheduledDocumentBackupGenerationTasks(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            tokenUtil.extractUserRoleFromToken(bearerToken));
+    }
+
+    @GetMapping("/thesis-library-backup")
+    @PreAuthorize("hasAuthority('GENERATE_THESIS_LIBRARY_BACKUP')")
+    public List<ScheduledTaskResponseDTO> listScheduledThesisLibraryBackupTasks(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return taskManagerService.listScheduledThesisLibraryBackupGenerationTasks(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            tokenUtil.extractUserRoleFromToken(bearerToken));
+    }
+
     @DeleteMapping("/{taskId}")
     @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION', 'SCHEDULE_DOCUMENT_HARVEST')")
     public void cancelTask(@PathVariable String taskId) {

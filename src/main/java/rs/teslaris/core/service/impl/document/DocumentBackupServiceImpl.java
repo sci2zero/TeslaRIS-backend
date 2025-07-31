@@ -92,7 +92,8 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                            List<DocumentPublicationType> types,
                                            List<DocumentFileSection> documentFileSections,
                                            Integer userId, String language,
-                                           ExportFileType metadataFormat) {
+                                           ExportFileType metadataFormat,
+                                           RecurrenceType recurrence) {
         if (from > to) {
             throw new BackupException("dateRangeIssueMessage");
         }
@@ -103,7 +104,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
-                documentFileSections, language, metadataFormat), userId, RecurrenceType.ONCE);
+                documentFileSections, language, metadataFormat), userId, recurrence);
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, reportGenerationTime,
@@ -116,7 +117,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                 put("userId", userId);
                 put("language", language);
                 put("metadataFormat", metadataFormat);
-            }}, RecurrenceType.ONCE));
+            }}, recurrence));
 
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
