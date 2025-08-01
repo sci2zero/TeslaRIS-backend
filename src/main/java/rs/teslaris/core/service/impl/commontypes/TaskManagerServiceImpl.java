@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -133,6 +135,31 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     @Override
     public boolean cancelTask(String taskId) {
+        var taskMetadata = scheduledTaskMetadataRepository.findTaskByTaskId(taskId);
+
+        if (taskMetadata.isEmpty()) {
+            return false;
+        }
+
+        var userId = (Integer) taskMetadata.get().getMetadata().get("userId");
+        var currentUser = SessionTrackingUtil.getLoggedInUser();
+
+        if (Objects.isNull(currentUser)) {
+            return false; // should never happen
+        }
+
+        if (!currentUser.getAuthority().getName().equals(UserRole.ADMIN.name()) &&
+            !currentUser.getId().equals(userId)) {
+            var currentUserOus = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                userService.getUserOrganisationUnitId(currentUser.getId()));
+            var currentTaskInstitution = Integer.parseInt(taskId.split("-")[1]);
+
+            boolean hasAccess = currentUserOus.contains(currentTaskInstitution);
+            if (!hasAccess) {
+                return false;
+            }
+        }
+
         ScheduledFuture<?> scheduledFuture = tasks.get(taskId).task();
         if (Objects.nonNull(scheduledFuture)) {
             boolean isCancelled =
@@ -161,57 +188,34 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     @Override
     public List<ScheduledTaskResponseDTO> listScheduledReportGenerationTasks(Integer userId,
                                                                              String role) {
-        boolean isAdmin = UserRole.ADMIN.name().equals(role);
-
-        List<Integer> subOUs = isAdmin
-            ? Collections.emptyList()
-            : getUserSubOrganisationUnits(userId);
-
-        return tasks.values().stream()
-            .filter(task -> isReportGenerationTask(task.id) &&
-                (isAdmin || isTaskInSubOU(task.id, subOUs)))
-            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
-                task.recurrenceType))
-            .collect(Collectors.toList());
+        return listScheduledTasks(userId, role, this::isReportGenerationTask);
     }
 
     @Override
     public List<ScheduledTaskResponseDTO> listScheduledDocumentBackupGenerationTasks(Integer userId,
                                                                                      String role) {
-        boolean isAdmin = UserRole.ADMIN.name().equals(role);
-
-        List<Integer> subOUs = isAdmin
-            ? Collections.emptyList()
-            : getUserSubOrganisationUnits(userId);
-
-        return tasks.values().stream()
-            .filter(task -> isDocumentBackupGenerationTask(task.id) &&
-                (isAdmin || isTaskInSubOU(task.id, subOUs)))
-            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
-                task.recurrenceType))
-            .collect(Collectors.toList());
+        return listScheduledTasks(userId, role, this::isDocumentBackupGenerationTask);
     }
 
     @Override
     public List<ScheduledTaskResponseDTO> listScheduledThesisLibraryBackupGenerationTasks(
-        Integer userId,
-        String role) {
-        boolean isAdmin = UserRole.ADMIN.name().equals(role);
-
-        List<Integer> subOUs = isAdmin
-            ? Collections.emptyList()
-            : getUserSubOrganisationUnits(userId);
-
-        return tasks.values().stream()
-            .filter(task -> isThesisLibraryBackupGenerationTask(task.id) &&
-                (isAdmin || isTaskInSubOU(task.id, subOUs)))
-            .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
-                task.recurrenceType))
-            .collect(Collectors.toList());
+        Integer userId, String role) {
+        return listScheduledTasks(userId, role, this::isThesisLibraryBackupGenerationTask);
     }
 
     @Override
     public List<ScheduledTaskResponseDTO> listScheduledHarvestTasks(Integer userId, String role) {
+        return listScheduledTasks(userId, role, this::isHarvestTask);
+    }
+
+    @Override
+    public List<ScheduledTaskResponseDTO> listScheduledRegistryBookGenerationTasks(Integer userId,
+                                                                                   String role) {
+        return listScheduledTasks(userId, role, this::isRegistryBookTask);
+    }
+
+    private List<ScheduledTaskResponseDTO> listScheduledTasks(Integer userId, String role,
+                                                              Function<String, Boolean> taskFilter) {
         boolean isAdmin = UserRole.ADMIN.name().equals(role);
 
         List<Integer> subOUs = isAdmin
@@ -219,8 +223,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             : getUserSubOrganisationUnits(userId);
 
         return tasks.values().stream()
-            .filter(task -> isHarvestTask(task.id) &&
-                (isAdmin || isTaskInSubOU(task.id, subOUs)))
+            .filter(
+                task -> taskFilter.apply(task.id()) && (isAdmin || isTaskInSubOU(task.id, subOUs)))
             .map(task -> new ScheduledTaskResponseDTO(task.id(), task.executionTime,
                 task.recurrenceType))
             .collect(Collectors.toList());
@@ -261,6 +265,10 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     private boolean isHarvestTask(String taskId) {
         return taskId.startsWith("Harvest-");
+    }
+
+    private boolean isRegistryBookTask(String taskId) {
+        return taskId.startsWith("Registry_Book-");
     }
 
     private boolean isTaskInSubOU(String taskId, List<Integer> subOUs) {

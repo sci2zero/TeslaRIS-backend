@@ -29,6 +29,9 @@ public interface TaskManagerService {
     List<ScheduledTaskResponseDTO> listScheduledThesisLibraryBackupGenerationTasks(Integer userId,
                                                                                    String role);
 
+    List<ScheduledTaskResponseDTO> listScheduledRegistryBookGenerationTasks(Integer userId,
+                                                                            String role);
+
     LocalDateTime findNextFreeExecutionTime();
 
     void saveTaskMetadata(ScheduledTaskMetadata scheduledTask);

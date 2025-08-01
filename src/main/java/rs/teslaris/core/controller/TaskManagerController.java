@@ -66,6 +66,15 @@ public class TaskManagerController {
             tokenUtil.extractUserRoleFromToken(bearerToken));
     }
 
+    @GetMapping("/registry-book-report-generation")
+    @PreAuthorize("hasAuthority('GENERATE_THESIS_LIBRARY_BACKUP')")
+    public List<ScheduledTaskResponseDTO> listScheduledRegistryBookTasks(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return taskManagerService.listScheduledRegistryBookGenerationTasks(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            tokenUtil.extractUserRoleFromToken(bearerToken));
+    }
+
     @DeleteMapping("/{taskId}")
     @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION', 'SCHEDULE_DOCUMENT_HARVEST')")
     public void cancelTask(@PathVariable String taskId) {

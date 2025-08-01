@@ -18,7 +18,8 @@ public interface ThesisLibraryBackupService {
                                     List<ThesisType> types,
                                     List<FileSection> documentFileSections,
                                     Boolean defended, Boolean putOnReview,
-                                    Integer userId, String language, ExportFileType metadataFormat, RecurrenceType recurrence);
+                                    Integer userId, String language, ExportFileType metadataFormat,
+                                    RecurrenceType recurrence);
 
     List<String> listAvailableBackups(Integer userId);
 

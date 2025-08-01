@@ -45,7 +45,7 @@ class TaskManagerServiceTest {
     @Test
     public void shouldScheduleTaskSuccessfully() {
         // Given
-        String taskId = "task1";
+        var taskId = "task1";
         var executionTime = LocalDateTime.now().plusMinutes(10);
         Runnable task = mock(Runnable.class);
 
@@ -251,6 +251,48 @@ class TaskManagerServiceTest {
 
         // When
         var tasks = taskManagerService.listScheduledThesisLibraryBackupGenerationTasks(1, role);
+
+        // Then
+        if (isAdmin) {
+            assertTrue(tasks.size() >= 2);
+            assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .containsAll(List.of(taskId1, taskId2)));
+        } else {
+            assertFalse(tasks.isEmpty());
+            assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
+                .contains(taskId1));
+        }
+
+        assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::executionTime).toList()
+            .contains(executionTime1));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ADMIN", "PROMOTION_REGISTRY_ADMINISTRATOR"})
+    void shouldListAllScheduledRegistryBookTasks(String role) {
+        // Given
+        var taskId1 = "Registry_Book-1-...";
+        var taskId2 = "Registry_Book-2-...";
+        var executionTime1 = LocalDateTime.now().plusMinutes(30);
+        var executionTime2 = LocalDateTime.now().plusHours(3);
+        var task1 = mock(Runnable.class);
+        var task2 = mock(Runnable.class);
+
+        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
+            .thenAnswer(invocation -> mock(ScheduledFuture.class));
+
+        taskManagerService.scheduleTask(taskId1, executionTime1, task1, 1, RecurrenceType.ONCE);
+        taskManagerService.scheduleTask(taskId2, executionTime2, task2, 2, RecurrenceType.ONCE);
+
+        boolean isAdmin = role.equals("ADMIN");
+        if (!isAdmin) {
+            when(userService.getUserOrganisationUnitId(1)).thenReturn(1);
+            when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+                .thenReturn(List.of(1));
+        }
+
+        // When
+        var tasks = taskManagerService.listScheduledRegistryBookGenerationTasks(1, role);
 
         // Then
         if (isAdmin) {
