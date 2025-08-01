@@ -107,7 +107,8 @@ package person {
     -String eNaukaId
     -String orcid
     -String scopusAuthorId
-    -Integer oldId
+    -Set<Integer> oldIds
+    -Set<Integer> mergedIds
     -Set<ResearchArea> researchAreas
     -ApproveStatus approveStatus
   }
@@ -218,7 +219,8 @@ package institution {
       -Set<ResearchArea> researchAreas
       -GeoLocation location
       -ApproveStatus approveStatus
-      -Integer oldId
+      -Set<Integer> oldIds
+      -Set<Integer> mergedIds
       -String scopusAfid
     }
   !endsub
@@ -236,6 +238,11 @@ package institution {
     Set<DocumentFile> proofs
   }
 
+  class OrganisationUnitTrustConfiguration {
+    -Boolean trustNewPublications
+    -Boolean trustNewPublications
+  }
+  OrganisationUnitTrustConfiguration --> OrganisationUnit
 
   enum OrganisationUnitsRelationType {
     BELONGS_TO
@@ -260,6 +267,8 @@ package document {
     -Set<MultiLingualContent> name
     -Set<MultiLingualContent> place
     -Set<MultiLingualContent> state
+    -Set<Integer> oldIds
+    -Set<Integer> mergedIds
   }
 
   !startsub Person_Contribution
@@ -335,7 +344,8 @@ package document {
       -String note
       -String doi
       -String scopusId
-      -Integer oldId
+      -Set<Integer> oldIds
+      -Set<Integer> mergedIds
     }
   !endsub
 
@@ -372,7 +382,8 @@ package document {
       -Set<MultiLingualContent> state
       -Set<MultiLingualContent> place
       -Set<PersonEventContribution> contributors
-      -Integer oldId
+      -Set<Integer> oldIds
+      -Set<Integer> mergedIds
     }
   !endsub
 
@@ -438,7 +449,8 @@ package document {
     -Set<LanguageTag> languages
     -Set<MultiLingualContent> name
     -Set<MultiLingualContent> nameAbbreviation
-    -Integer oldId
+    -Set<Integer> oldIds
+    -Set<Integer> mergedIds
   }
 
   class Journal extends PublicationSeries {
