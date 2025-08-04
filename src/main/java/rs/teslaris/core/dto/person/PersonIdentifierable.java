@@ -15,4 +15,6 @@ public interface PersonIdentifierable {
     String getScopusAuthorId();
 
     String getOpenAlexId();
+
+    String getWebOfScienceId();
 }

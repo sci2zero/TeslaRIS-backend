@@ -67,7 +67,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               List<DocumentPublicationType> allowedTypes);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
-                                                          String scopusId, String openAlexId);
+                                                          String scopusId, String openAlexId,
+                                                          String webOfScienceId);
 
     Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
                                                               Integer personId,
@@ -98,7 +99,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                            boolean foreignLanguage);
 
     Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
-                                                      String scopusId);
+                                                      String scopusId, String webOfScienceId);
 
     boolean isDoiInUse(String doi);
 

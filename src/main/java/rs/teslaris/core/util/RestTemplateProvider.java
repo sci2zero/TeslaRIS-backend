@@ -41,7 +41,7 @@ public class RestTemplateProvider {
 
         if (proxyEnabled && proxyHost != null && proxyPort > 0) {
             Proxy.Type type =
-                "SOCKS".equalsIgnoreCase(proxyType) ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
+                "SOCKS" .equalsIgnoreCase(proxyType) ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
             Proxy proxy = new Proxy(type, new InetSocketAddress(proxyHost, proxyPort));
             factory.setProxy(proxy);
         }

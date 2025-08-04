@@ -80,6 +80,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(name = "open_alex_id")
     private String openAlexId;
 
+    @Column(name = "web_of_science_id")
+    private String webOfScienceId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", referencedColumnName = "id")
     private Event event;

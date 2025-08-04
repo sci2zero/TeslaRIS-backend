@@ -53,6 +53,8 @@ public class DocumentDTO {
 
     private String openAlexId;
 
+    private String webOfScienceId;
+
     @Positive(message = "Event Id must be a positive number.")
     private Integer eventId;
 

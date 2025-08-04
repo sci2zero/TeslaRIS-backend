@@ -40,7 +40,7 @@ public class EndNoteHarvesterImpl implements EndNoteHarvester {
                 String tag = line.length() >= 2 ? line.substring(0, 2) : "";
                 String content = line.length() > 3 ? line.substring(3).trim() : "";
 
-                if ("%0".equals(tag)) {
+                if ("%0" .equals(tag)) {
                     // New reference starts
                     if (Objects.nonNull(document)) {
                         TaggedBibliographicFormatUtility.finalizeAndSaveDocument(document, userId,

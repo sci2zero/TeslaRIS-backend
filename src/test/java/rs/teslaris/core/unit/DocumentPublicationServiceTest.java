@@ -437,7 +437,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.findDocumentDuplicates(titles, "DOI", "scopusId",
-                "openAlexId");
+                "openAlexId", "webOfScienceId");
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -851,51 +851,56 @@ public class DocumentPublicationServiceTest {
         var mockDocument = new JournalPublication();
         Optional<Document> expected = Optional.of(mockDocument);
 
-        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("W123456789", "10.1234/test",
-            "1234567"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusIdOrWOSId("W123456789", "10.1234/test",
+            "1234567", "123123123123123"))
             .thenReturn(expected);
 
         // When
         var result =
-            documentPublicationService.findDocumentByCommonIdentifier(doi, openAlexId, "1234567");
+            documentPublicationService.findDocumentByCommonIdentifier(doi, openAlexId, "1234567",
+                "WOS:123123123123123");
 
         // Then
         assertTrue(result.isPresent());
         assertEquals(mockDocument, result.get());
-        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("W123456789", "10.1234/test",
-            "1234567");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusIdOrWOSId("W123456789",
+            "10.1234/test",
+            "1234567", "123123123123123");
     }
 
     @Test
     void testFindDocumentByCommonIdentifier_WithNullValues() {
         // Given
-        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
-            "NOT_PRESENT"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusIdOrWOSId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT", "NOT_PRESENT"))
             .thenReturn(Optional.empty());
 
         // When
-        var result = documentPublicationService.findDocumentByCommonIdentifier(null, null, null);
+        var result =
+            documentPublicationService.findDocumentByCommonIdentifier(null, null, null, null);
 
         // Then
         assertTrue(result.isEmpty());
-        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
-            "NOT_PRESENT");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusIdOrWOSId("NOT_PRESENT",
+            "NOT_PRESENT",
+            "NOT_PRESENT", "NOT_PRESENT");
     }
 
     @Test
     void testFindDocumentByCommonIdentifier_WithBlankValues() {
         // Given
-        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
-            "NOT_PRESENT"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusIdOrWOSId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT", "NOT_PRESENT"))
             .thenReturn(Optional.empty());
 
         // When
-        var result = documentPublicationService.findDocumentByCommonIdentifier(" ", " ", " ");
+        var result = documentPublicationService.findDocumentByCommonIdentifier(" ", " ", " ", " ");
 
         // Then
         assertTrue(result.isEmpty());
-        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
-            "NOT_PRESENT");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusIdOrWOSId("NOT_PRESENT",
+            "NOT_PRESENT",
+            "NOT_PRESENT", "NOT_PRESENT");
     }
 
     @Test

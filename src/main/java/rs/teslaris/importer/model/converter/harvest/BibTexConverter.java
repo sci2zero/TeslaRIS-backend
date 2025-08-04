@@ -28,9 +28,10 @@ public class BibTexConverter {
         String entryType = bibEntry.getType().getValue();
         String citationKey = bibEntry.getKey().getValue();
 
-        boolean isArticle = "article".equalsIgnoreCase(entryType);
+        boolean isArticle = "article" .equalsIgnoreCase(entryType);
         boolean isProceedings =
-            "inproceedings".equalsIgnoreCase(entryType) || "conference".equalsIgnoreCase(entryType);
+            "inproceedings" .equalsIgnoreCase(entryType) ||
+                "conference" .equalsIgnoreCase(entryType);
         if (!isArticle && !isProceedings) {
             return Optional.empty();
         }
@@ -225,9 +226,9 @@ public class BibTexConverter {
 
     public static String cleanProceedingsTitleToEvent(String bookTitle) {
         if (bookTitle.toLowerCase().startsWith("proceedings of the ")) {
-            return bookTitle.substring("proceedings of the ".length()).trim();
+            return bookTitle.substring("proceedings of the " .length()).trim();
         } else if (bookTitle.toLowerCase().startsWith("proceedings ")) {
-            return bookTitle.substring("proceedings ".length()).trim();
+            return bookTitle.substring("proceedings " .length()).trim();
         }
         return bookTitle.trim();
     }

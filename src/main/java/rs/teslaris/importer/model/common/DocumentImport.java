@@ -86,6 +86,9 @@ public class DocumentImport {
     @Field("isbn")
     private String isbn;
 
+    @Field("e_isbn")
+    private String eisbn;
+
     @Field(name = "start_page")
     private String startPage;
 
@@ -109,4 +112,7 @@ public class DocumentImport {
 
     @Field(name = "open_alex_id")
     private String openAlexId;
+
+    @Field(name = "wos_id")
+    private String webOfScienceId;
 }

@@ -93,6 +93,9 @@ public class Person extends BaseEntity implements Mergeable {
     @Column(name = "open_alex_id")
     private String openAlexId;
 
+    @Column(name = "web_of_science_id")
+    private String webOfScienceId;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")
     private Set<Integer> oldIds = new HashSet<>();

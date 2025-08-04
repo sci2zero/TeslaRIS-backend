@@ -55,4 +55,6 @@ public class BasicPersonDTO implements PersonIdentifierable {
     private List<MultilingualContentDTO> displayTitle = new ArrayList<>();
 
     private String openAlexId;
+
+    private String webOfScienceId;
 }

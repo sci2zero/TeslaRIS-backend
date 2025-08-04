@@ -782,8 +782,8 @@ public class PersonServiceTest {
         var person = new PersonIndex();
         person.setScopusAuthorId("12345");
 
-        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexId("12345")).thenReturn(
-            Optional.of(person));
+        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(
+            "12345")).thenReturn(Optional.of(person));
 
         // When
         var foundPerson = personService.findPersonByImportIdentifier("12345");
@@ -795,8 +795,8 @@ public class PersonServiceTest {
     @Test
     public void testFindPersonByScopusAuthorId_PersonDoesNotExist() {
         // Given
-        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexId("12345")).thenReturn(
-            Optional.empty());
+        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(
+            "12345")).thenReturn(Optional.empty());
 
         // When
         var foundPerson = personService.findPersonByImportIdentifier("12345");
@@ -1074,7 +1074,7 @@ public class PersonServiceTest {
 
     private MultipartFile createMockMultipartFile() {
         return new MockMultipartFile("file", "test.txt", "text/plain",
-            "Test file content".getBytes());
+            "Test file content" .getBytes());
     }
 
     private MultipartFile createMockMultipartFile(byte[] content) {

@@ -385,12 +385,14 @@ public class CommonLoaderImpl implements CommonLoader {
         var doi = Objects.requireNonNullElse(record.getDoi(), "");
         var scopus =
             Objects.requireNonNullElse(record.getScopusId(), "");
-        var openALex =
+        var openAlex =
             Objects.requireNonNullElse(record.getOpenAlexId(), "");
+        var wos =
+            Objects.requireNonNullElse(record.getWebOfScienceId(), "");
         var titles = record.getTitle().stream().map(
             MultilingualContent::getContent).toList();
 
-        return documentPublicationService.findDocumentDuplicates(titles, doi, scopus, openALex)
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopus, openAlex, wos)
             .getContent()
             .stream().map(
                 DocumentPublicationIndex::getDatabaseId).toList();
@@ -411,6 +413,7 @@ public class CommonLoaderImpl implements CommonLoader {
             document.setDoi("");
             document.setScopusId("");
             document.setOpenAlexId("");
+            document.setWebOfScienceId("");
             documentPublicationService.save(document);
         }
     }
@@ -569,6 +572,11 @@ public class CommonLoaderImpl implements CommonLoader {
         if (Objects.nonNull(from.getScopusAuthorId()) &&
             (Objects.isNull(to.getScopusAuthorId()) || to.getScopusAuthorId().isBlank())) {
             to.setScopusAuthorId(from.getScopusAuthorId());
+        }
+
+        if (Objects.nonNull(from.getWebOfScienceId()) &&
+            (Objects.isNull(to.getWebOfScienceId()) || to.getWebOfScienceId().isBlank())) {
+            to.setWebOfScienceId(from.getWebOfScienceId());
         }
     }
 

@@ -808,9 +808,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         var person = findOne(personId);
-        return (!Objects.isNull(person.getScopusAuthorId()) &&
+        return (Objects.nonNull(person.getScopusAuthorId()) &&
             !person.getScopusAuthorId().isEmpty()) ||
-            (!Objects.isNull(person.getOpenAlexId()) && !person.getOpenAlexId().isEmpty());
+            (Objects.nonNull(person.getOpenAlexId()) && !person.getOpenAlexId().isEmpty()) ||
+            (Objects.nonNull(person.getWebOfScienceId()) && !person.getWebOfScienceId().isEmpty());
     }
 
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
@@ -849,6 +850,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setOpenAlexId(
             (Objects.nonNull(savedPerson.getOpenAlexId()) &&
                 !savedPerson.getOpenAlexId().isBlank()) ? savedPerson.getOpenAlexId() : null);
+        personIndex.setWebOfScienceId(
+            (Objects.nonNull(savedPerson.getWebOfScienceId()) &&
+                !savedPerson.getWebOfScienceId().isBlank()) ? savedPerson.getWebOfScienceId() :
+                null);
     }
 
     private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
@@ -1043,7 +1048,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         if (Objects.isNull(identifier) || identifier.isBlank()) {
             return null;
         }
-        return personIndexRepository.findByScopusAuthorIdOrOpenAlexId(identifier).orElse(null);
+        return personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(identifier)
+            .orElse(null);
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
@@ -1182,6 +1188,16 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             person::setOpenAlexId,
             "openAlexIdFormatError",
             "openAlexIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getWebOfScienceId(),
+            person.getId(),
+            "^[A-Z]{3}-\\d{4}-\\d{4}$",
+            personRepository::existsByWebOfScienceId,
+            person::setWebOfScienceId,
+            "webOfScienceIdFormatError",
+            "webOfScienceIdExistsError"
         );
     }
 

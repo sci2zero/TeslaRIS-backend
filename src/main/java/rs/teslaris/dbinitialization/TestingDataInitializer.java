@@ -212,6 +212,7 @@ public class TestingDataInitializer {
         person1.setOrcid("0000-0002-1825-0097");
         person1.setOpenAlexId("A5070362523");
         person1.setScopusAuthorId("35795419600");
+        person1.setWebOfScienceId("ETO-0338-2022");
         person1.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 1, 1));
         personRepository.save(person1);
 

@@ -125,8 +125,10 @@ public class DocumentPublicationController {
     @GetMapping("/deduplication-search")
     public Page<DocumentPublicationIndex> deduplicationSearch(
         @RequestParam("titles") List<String> titles, @RequestParam("doi") String doi,
-        @RequestParam("scopusId") String scopusId, @RequestParam("openAlexId") String openAlexId) {
-        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId, openAlexId);
+        @RequestParam("scopusId") String scopusId, @RequestParam("openAlexId") String openAlexId,
+        @RequestParam("webOfScienceId") String webOfScienceId) {
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId, openAlexId,
+            webOfScienceId);
     }
 
     @GetMapping("/for-researcher/{personId}")

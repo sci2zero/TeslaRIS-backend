@@ -37,7 +37,8 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query("SELECT u FROM User u WHERE " +
         "u.person.scopusAuthorId = :identifier OR " +
-        "u.person.openAlexId = :identifier")
+        "u.person.openAlexId = :identifier OR " +
+        "u.person.webOfScienceId = :identifier")
     Optional<User> findUserForPersonIdentifier(String identifier);
 
     @Query("SELECT p FROM Person p WHERE " +
@@ -75,6 +76,10 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Person p WHERE p.openAlexId = :openAlexId AND (:id IS NULL OR p.id <> :id)")
     boolean existsByOpenAlexId(String openAlexId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.webOfScienceId = :webOfScienceId AND (:id IS NULL OR p.id <> :id)")
+    boolean existsByWebOfScienceId(String webOfScienceId, Integer id);
 
     @Query(value = "SELECT * FROM persons p WHERE " +
         "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +

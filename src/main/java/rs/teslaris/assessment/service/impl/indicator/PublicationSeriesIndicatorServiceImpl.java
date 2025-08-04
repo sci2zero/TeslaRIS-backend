@@ -609,8 +609,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             case BOOL:
                 if (indicatorValue.isEmpty()) {
                     newJournalIndicator.setBooleanValue(false);
-                } else if ("true".equalsIgnoreCase(indicatorValue) ||
-                    "false".equalsIgnoreCase(indicatorValue)) {
+                } else if ("true" .equalsIgnoreCase(indicatorValue) ||
+                    "false" .equalsIgnoreCase(indicatorValue)) {
                     newJournalIndicator.setBooleanValue(
                         Boolean.parseBoolean(indicatorValue.trim()));
                 } else {

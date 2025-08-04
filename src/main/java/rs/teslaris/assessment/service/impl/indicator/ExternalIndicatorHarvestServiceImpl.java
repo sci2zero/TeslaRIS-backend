@@ -283,7 +283,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         allCitationCounts.add(citationCount.citationCount);
 
                         documentPublicationService.findDocumentByCommonIdentifier(citationCount.doi,
-                                citationCount.id, null)
+                                citationCount.id, null, null)
                             .ifPresent(document -> {
                                 if (Objects.isNull(totalCitationsIndicator)) {
                                     return;
@@ -435,8 +435,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         allCitationCounts.add(citationCount.citationCount);
 
                         documentPublicationService.findDocumentByCommonIdentifier(citationCount.doi,
-                                null,
-                                citationCount.id)
+                                null, citationCount.id, null)
                             .ifPresent(document -> {
                                 if (Objects.isNull(totalCitationsIndicator) ||
                                     citationCount.citationCount == 0) {

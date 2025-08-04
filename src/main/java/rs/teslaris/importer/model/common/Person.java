@@ -35,4 +35,7 @@ public class Person {
 
     @Field("open_alex_id")
     private String openAlexId;
+
+    @Field("web_of_science_id")
+    private String webOfScienceId;
 }

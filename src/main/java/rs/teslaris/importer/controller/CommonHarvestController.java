@@ -45,6 +45,7 @@ import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
+import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
 
 @RestController
 @RequestMapping("/api/import-common")
@@ -58,6 +59,8 @@ public class CommonHarvestController {
     private final ScopusHarvester scopusHarvester;
 
     private final OpenAlexHarvester openAlexHarvester;
+
+    private final WebOfScienceHarvester webOfScienceHarvester;
 
     private final BibTexHarvester bibTexHarvester;
 
@@ -148,6 +151,11 @@ public class CommonHarvestController {
                 .forEach((key, value) ->
                     newDocumentImportCountByUser.merge(key, value, Integer::sum)
                 );
+            webOfScienceHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo,
+                    new HashMap<>())
+                .forEach((key, value) ->
+                    newDocumentImportCountByUser.merge(key, value, Integer::sum)
+                );
         } else if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
             scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
                 dateTo,
@@ -159,6 +167,11 @@ public class CommonHarvestController {
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
+            webOfScienceHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
+                dateTo,
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
         } else if (userRole.equals(UserRole.ADMIN.name())) {
             scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
                 dateFrom, dateTo,
@@ -166,6 +179,11 @@ public class CommonHarvestController {
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
             openAlexHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
+                dateFrom, dateTo,
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+            webOfScienceHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
                 dateFrom, dateTo,
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
@@ -239,6 +257,11 @@ public class CommonHarvestController {
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
+            webOfScienceHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
+                dateTo, authorIds, allAuthors,
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
         } else if (userRole.equals(UserRole.ADMIN.name())) {
             scopusHarvester.harvestDocumentsForInstitution(userId, institutionId,
                 dateFrom, dateTo, authorIds, allAuthors,
@@ -246,6 +269,11 @@ public class CommonHarvestController {
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
             openAlexHarvester.harvestDocumentsForInstitution(userId, institutionId,
+                dateFrom, dateTo, authorIds, allAuthors,
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+            webOfScienceHarvester.harvestDocumentsForInstitution(userId, institutionId,
                 dateFrom, dateTo, authorIds, allAuthors,
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
@@ -277,6 +305,12 @@ public class CommonHarvestController {
     @GetMapping("/csv-file-format")
     public Pair<String, String> getCSVFormatDescription(@RequestParam String language) {
         return csvHarvester.getFormatDescription(language);
+    }
+
+    @GetMapping("/testWebOfScience")
+    public void testWebOfScience() {
+        webOfScienceHarvester.harvestDocumentsForAuthor(1, LocalDate.of(2000, 1, 2),
+            LocalDate.now(), null);
     }
 
     @PostMapping("/documents-from-file")

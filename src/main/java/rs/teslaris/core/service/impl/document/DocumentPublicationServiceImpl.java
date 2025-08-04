@@ -328,6 +328,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setDoi(document.getDoi());
         index.setScopusId(document.getScopusId());
         index.setOpenAlexId(document.getOpenAlexId());
+        index.setWebOfScienceId(document.getWebOfScienceId());
         index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
         indexDescription(document, index);
         indexKeywords(document, index);
@@ -640,13 +641,24 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "openAlexIdFormatError",
             "openAlexIdExistsError"
         );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getWebOfScienceId(),
+            document.getId(),
+            "\\d{15}$",
+            documentRepository::existsByWebOfScienceId,
+            document::setWebOfScienceId,
+            "webOfScienceIdFormatError",
+            "webOfScienceIdExistsError"
+        );
     }
 
     @Override
     public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
             documentRepository.existsByScopusId(identifier, documentPublicationId) ||
-            documentRepository.existsByOpenAlexId(identifier, documentPublicationId);
+            documentRepository.existsByOpenAlexId(identifier, documentPublicationId) ||
+            documentRepository.existsByWebOfScienceId(identifier, documentPublicationId);
     }
 
     @Override
@@ -698,7 +710,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
-                                                             String scopusId) {
+                                                             String scopusId,
+                                                             String webOfScienceId) {
         if (Objects.isNull(doi) || doi.isBlank()) {
             doi = "NOT_PRESENT";
         } else {
@@ -717,7 +730,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             scopusId = scopusId.replace("SCOPUS:", "");
         }
 
-        return documentRepository.findByOpenAlexIdOrDoiOrScopusId(openAlexId, doi, scopusId);
+        if (Objects.isNull(webOfScienceId) || webOfScienceId.isBlank()) {
+            webOfScienceId = "NOT_PRESENT";
+        } else {
+            webOfScienceId = webOfScienceId.replace("WOS:", "");
+        }
+
+        return documentRepository.findByOpenAlexIdOrDoiOrScopusIdOrWOSId(openAlexId, doi, scopusId,
+            webOfScienceId);
     }
 
     protected void clearCommonFields(Document publication) {
@@ -773,8 +793,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles,
                                                                  String doi,
                                                                  String scopusId,
-                                                                 String openAlexId) {
-        var query = buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId);
+                                                                 String openAlexId,
+                                                                 String webOfScienceId) {
+        var query =
+            buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId, webOfScienceId);
         return searchService.runQuery(query,
             Pageable.ofSize(5),
             DocumentPublicationIndex.class, "document_publication");
@@ -877,7 +899,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId,
-                                                String openAlexId) {
+                                                String openAlexId, String webOfScienceId) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
@@ -901,6 +923,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     if (Objects.nonNull(openAlexId) && !openAlexId.isBlank()) {
                         eq.should(sb -> sb.match(
                             m -> m.field("open_alex_id").query(openAlexId)));
+                    }
+
+                    if (Objects.nonNull(webOfScienceId) && !webOfScienceId.isBlank()) {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("web_of_science_id").query(webOfScienceId)));
                     }
 
                     return eq;
