@@ -801,19 +801,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personRepository.isBoundToUser(personId);
     }
 
-    @Override
-    public boolean canPersonScanDataSources(Integer personId) {
-        if (Objects.isNull(personId)) {
-            return false;
-        }
-
-        var person = findOne(personId);
-        return (Objects.nonNull(person.getScopusAuthorId()) &&
-            !person.getScopusAuthorId().isEmpty()) ||
-            (Objects.nonNull(person.getOpenAlexId()) && !person.getOpenAlexId().isEmpty()) ||
-            (Objects.nonNull(person.getWebOfScienceId()) && !person.getWebOfScienceId().isEmpty());
-    }
-
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
         return personIndexRepository.findByDatabaseId(personDatabaseId).orElse(new PersonIndex());
     }
@@ -1193,7 +1180,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         IdentifierUtil.validateAndSetIdentifier(
             personDTO.getWebOfScienceId(),
             person.getId(),
-            "^[A-Z]{3}-\\d{4}-\\d{4}$",
+            "^[A-Z]{1,3}-\\d{4}-\\d{4}$",
             personRepository::existsByWebOfScienceId,
             person::setWebOfScienceId,
             "webOfScienceIdFormatError",

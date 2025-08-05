@@ -86,7 +86,7 @@ public class TransliterationMessageSource implements MessageSource {
         }
 
         var script = locale.getScript();
-        if ("Cyrl" .equalsIgnoreCase(script)) {
+        if ("Cyrl".equalsIgnoreCase(script)) {
             return true;
         }
 

@@ -337,7 +337,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(nextRecord);
 
         // When
-        commonLoader.skipRecord(userId, null);
+        commonLoader.skipRecord(userId, null, false);
 
         // Then
         assertEquals(nextRecordId, progressReport.getLastLoadedIdentifier());
@@ -366,7 +366,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(null);
 
         // When
-        commonLoader.skipRecord(userId, null);
+        commonLoader.skipRecord(userId, null, false);
 
         // Then
         assertEquals(ProgressReportUtility.DEFAULT_HEX_ID,

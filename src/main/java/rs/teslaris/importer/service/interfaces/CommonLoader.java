@@ -13,7 +13,7 @@ public interface CommonLoader {
 
     <R> R loadSkippedRecordsWizard(Integer userId, Integer institutionId);
 
-    void skipRecord(Integer userId, Integer institutionId);
+    void skipRecord(Integer userId, Integer institutionId, Boolean removeFromRecord);
 
     void markRecordAsLoaded(Integer userId, Integer institutionId, Integer oldDocumentId,
                             Boolean deleteOldDocument);

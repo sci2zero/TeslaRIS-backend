@@ -192,6 +192,7 @@ public class DbInitializer implements ApplicationRunner {
         var archiveDocument = new Privilege("ARCHIVE_DOCUMENT");
         var promotePreliminaryAttachments = new Privilege("PROMOTE_PRELIMINARY_ATTACHMENTS");
         var scheduleDocumentHarvest = new Privilege("SCHEDULE_DOCUMENT_HARVEST");
+        var configureHarvestSources = new Privilege("CONFIGURE_HARVEST_SOURCES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -224,7 +225,7 @@ public class DbInitializer implements ApplicationRunner {
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
                 deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
                 migrateInstitutionEntities, performOaiMigration, saveOUTrustConfiguration,
-                validateMetadata, validateUploadedFiles, archiveDocument,
+                validateMetadata, validateUploadedFiles, archiveDocument, configureHarvestSources,
                 promotePreliminaryAttachments, scheduleDocumentHarvest));
 
         // AUTHORITIES
@@ -258,7 +259,7 @@ public class DbInitializer implements ApplicationRunner {
                 harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
                 migrateAllEntities, performOaiMigration, saveOUTrustConfiguration, validateMetadata,
                 validateUploadedFiles, archiveDocument, promotePreliminaryAttachments,
-                scheduleDocumentHarvest
+                scheduleDocumentHarvest, configureHarvestSources
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -280,7 +281,7 @@ public class DbInitializer implements ApplicationRunner {
                     mergeOUEmployments, mergeDocumentsMetadata, deletePerson, validateMetadata,
                     deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities,
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
-                    scheduleDocumentHarvest)));
+                    scheduleDocumentHarvest, configureHarvestSources)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

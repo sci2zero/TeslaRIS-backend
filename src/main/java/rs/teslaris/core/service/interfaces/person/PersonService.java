@@ -94,8 +94,6 @@ public interface PersonService extends JPAService<Person> {
 
     boolean isPersonBoundToAUser(Integer personId);
 
-    boolean canPersonScanDataSources(Integer personId);
-
     void switchToUnmanagedEntity(Integer personId);
 
     String setPersonProfileImage(Integer personId, ProfilePhotoOrLogoDTO profilePhotoDTO)

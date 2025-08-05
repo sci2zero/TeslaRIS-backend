@@ -588,20 +588,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    public boolean canOUEmployeeScanDataSources(Integer organisationUnitId) {
-        if (Objects.isNull(organisationUnitId)) {
-            return false;
-        }
-
-        var organisationUnit = findOne(organisationUnitId);
-
-        return (!Objects.isNull(organisationUnit.getScopusAfid()) &&
-            !organisationUnit.getScopusAfid().isEmpty()) ||
-            (!Objects.isNull(organisationUnit.getOpenAlexId()) &&
-                !organisationUnit.getOpenAlexId().isEmpty());
-    }
-
-    @Override
     public void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                       Integer organisationUnitId) {
         organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(organisationUnitId)

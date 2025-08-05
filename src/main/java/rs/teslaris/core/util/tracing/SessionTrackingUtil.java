@@ -24,7 +24,7 @@ public class SessionTrackingUtil {
         }
 
         for (var cookie : request.getCookies()) {
-            if ("JSESSIONID" .equals(cookie.getName())) {
+            if ("JSESSIONID".equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }

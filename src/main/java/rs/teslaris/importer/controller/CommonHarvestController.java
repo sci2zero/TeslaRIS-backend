@@ -32,8 +32,6 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -41,6 +39,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.importer.dto.AuthorCentricInstitutionHarvestRequestDTO;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
+import rs.teslaris.importer.service.interfaces.CommonHarvestService;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
@@ -74,9 +73,7 @@ public class CommonHarvestController {
 
     private final UserService userService;
 
-    private final PersonService personService;
-
-    private final OrganisationUnitService organisationUnitService;
+    private final CommonHarvestService commonHarvestService;
 
     private final TaskManagerService taskManagerService;
 
@@ -87,10 +84,9 @@ public class CommonHarvestController {
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
         if (userRole.equals(UserRole.RESEARCHER.name())) {
-            return personService.canPersonScanDataSources(
-                personService.getPersonIdForUserId(userId));
+            return commonHarvestService.canPersonScanDataSources(userId);
         } else if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
-            return organisationUnitService.canOUEmployeeScanDataSources(
+            return commonHarvestService.canOUEmployeeScanDataSources(
                 userService.getUserOrganisationUnitId(userId));
         }
 

@@ -214,7 +214,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
     }
 
     private static void addContributor(DC dcPublication, String name, String role) {
-        if ("creator" .equals(role)) {
+        if ("creator".equals(role)) {
             dcPublication.getCreator().add(name);
         } else {
             dcPublication.getContributor().add(new Contributor(name, role));

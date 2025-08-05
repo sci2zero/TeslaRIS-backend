@@ -41,7 +41,7 @@ public class RefManHarvesterImpl implements RefManHarvester {
                 String tag = line.length() >= 6 ? line.substring(0, 2) : "";
                 String content = line.length() >= 6 ? line.substring(6).trim() : "";
 
-                if (Objects.nonNull(document) && ("ER" .equals(tag) || tag.isBlank())) {
+                if (Objects.nonNull(document) && ("ER".equals(tag) || tag.isBlank())) {
                     TaggedBibliographicFormatUtility.finalizeAndSaveDocument(document, userId,
                         newEntriesCount,
                         affiliations, keywords);
@@ -49,7 +49,7 @@ public class RefManHarvesterImpl implements RefManHarvester {
                     continue;
                 }
 
-                if ("TY" .equals(tag)) {
+                if ("TY".equals(tag)) {
                     document = TaggedBibliographicFormatUtility.parseDocumentType(content);
                     continue;
                 }

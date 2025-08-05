@@ -259,7 +259,7 @@ public class DocumentFileServiceTest {
         when(documentFileRepository.findById(documentFileId)).thenReturn(Optional.of(documentFile));
         when(fileService.loadAsResource(any())).thenReturn(
             new GetObjectResponse(null, null, null, null,
-                new ByteArrayInputStream("Some test data" .getBytes())));
+                new ByteArrayInputStream("Some test data".getBytes())));
 
         // When
         documentFileService.changeApproveStatus(documentFileId, approved);

@@ -107,6 +107,8 @@ package person {
     -String eNaukaId
     -String orcid
     -String scopusAuthorId
+    -String openAlexId
+    -String webOfScienceId
     -Set<Integer> oldIds
     -Set<Integer> mergedIds
     -Set<ResearchArea> researchAreas
@@ -222,6 +224,8 @@ package institution {
       -Set<Integer> oldIds
       -Set<Integer> mergedIds
       -String scopusAfid
+      -String openAlexId
+      -String ror
     }
   !endsub
 
@@ -344,6 +348,8 @@ package document {
       -String note
       -String doi
       -String scopusId
+      -String openAlexId
+      -String webOfScienceId
       -Set<Integer> oldIds
       -Set<Integer> mergedIds
     }
@@ -384,6 +390,8 @@ package document {
       -Set<PersonEventContribution> contributors
       -Set<Integer> oldIds
       -Set<Integer> mergedIds
+      -String openAlexId
+      -String confId
     }
   !endsub
 
@@ -450,7 +458,8 @@ package document {
     -Set<MultiLingualContent> name
     -Set<MultiLingualContent> nameAbbreviation
     -Set<Integer> oldIds
-    -Set<Integer> mergedIds
+    -Set<Integer> mergedIds,
+    -String openAlexId
   }
 
   class Journal extends PublicationSeries {

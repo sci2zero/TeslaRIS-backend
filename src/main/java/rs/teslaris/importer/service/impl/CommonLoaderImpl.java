@@ -37,6 +37,7 @@ import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -48,6 +49,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -134,7 +136,7 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     @Override
-    public void skipRecord(Integer userId, Integer institutionId) {
+    public void skipRecord(Integer userId, Integer institutionId, Boolean removeFromRecord) {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
@@ -143,6 +145,23 @@ public class CommonLoaderImpl implements CommonLoader {
                     userId,
                     institutionId,
                     DataSet.DOCUMENT_IMPORTS));
+
+        if (removeFromRecord &&
+            Objects.requireNonNull(SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+                .equals(UserRole.RESEARCHER.name())) {
+            Query currentRecordQuery = new Query();
+            currentRecordQuery.addCriteria(
+                Criteria.where("_id")
+                    .is(new ObjectId(progressReport.getLastLoadedId().toHexString())));
+
+            var currentRecord = mongoTemplate.findOne(currentRecordQuery, DocumentImport.class);
+            if (Objects.nonNull(currentRecord)) {
+                currentRecord.getImportUsersId().remove(userId);
+
+                mongoTemplate.save(currentRecord);
+            }
+        }
+
         Query nextRecordQuery = new Query();
         if (Objects.nonNull(institutionId)) {
             nextRecordQuery.addCriteria(Criteria.where("import_institutions_id").in(institutionId));

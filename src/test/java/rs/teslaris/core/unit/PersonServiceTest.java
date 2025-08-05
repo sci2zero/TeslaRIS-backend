@@ -884,30 +884,6 @@ public class PersonServiceTest {
     }
 
     @Test
-    void shouldScanDataSourcesWhenScopusAuthorIdIsNonEmpty() {
-        var personId = 1;
-        var person = new Person();
-        person.setScopusAuthorId("1234");
-
-        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
-
-        var response = personService.canPersonScanDataSources(personId);
-
-        assertTrue(response);
-    }
-
-    @Test
-    void shouldReturnFalseWhenScopusAuthorIdIsEmpty() {
-        var personId = 1;
-
-        when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
-
-        var response = personService.canPersonScanDataSources(personId);
-
-        assertFalse(response);
-    }
-
-    @Test
     void shouldUpdateAndIndexPersonPrimaryNameWhenStatusIsApproved() {
         // Given
         var personId = 1;
@@ -1074,7 +1050,7 @@ public class PersonServiceTest {
 
     private MultipartFile createMockMultipartFile() {
         return new MockMultipartFile("file", "test.txt", "text/plain",
-            "Test file content" .getBytes());
+            "Test file content".getBytes());
     }
 
     private MultipartFile createMockMultipartFile(byte[] content) {

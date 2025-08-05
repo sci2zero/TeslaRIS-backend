@@ -35,5 +35,7 @@ public class DocumentLoadDTO {
 
     private String openAlexId;
 
+    private String webOfScienceId;
+
     private Integer eventId;
 }

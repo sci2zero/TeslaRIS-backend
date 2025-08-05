@@ -149,9 +149,9 @@ public class TaggedBibliographicFormatUtility {
         var doc = new DocumentImport();
         doc.setStartPage("");
         doc.setEndPage("");
-        if ("JOUR" .equalsIgnoreCase(content) || "Journal Article" .equalsIgnoreCase(content)) {
+        if ("JOUR".equalsIgnoreCase(content) || "Journal Article".equalsIgnoreCase(content)) {
             doc.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
-        } else if ("CONF" .equalsIgnoreCase(content) || "COnference Proceedings" .equals(content)) {
+        } else if ("CONF".equalsIgnoreCase(content) || "COnference Proceedings".equals(content)) {
             doc.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
         } else {
             return null;

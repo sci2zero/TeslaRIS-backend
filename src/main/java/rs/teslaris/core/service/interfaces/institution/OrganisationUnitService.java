@@ -108,8 +108,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     void removeOrganisationUnitLogo(Integer organisationUnitId);
 
-    boolean canOUEmployeeScanDataSources(Integer organisationUnitId);
-
     void indexOrganisationUnit(OrganisationUnit organisationUnit, Integer organisationUnitId);
 
     void indexOrganisationUnit(OrganisationUnit organisationUnit);

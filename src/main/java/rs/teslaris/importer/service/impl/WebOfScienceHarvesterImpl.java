@@ -17,6 +17,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.importer.model.converter.harvest.WebOfScienceConverter;
+import rs.teslaris.importer.service.interfaces.OrganisationUnitImportSourceConfigurationService;
 import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
 import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
@@ -39,14 +40,22 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
 
     private final InvolvementService involvementService;
 
+    private final OrganisationUnitImportSourceConfigurationService
+        organisationUnitImportSourceConfigurationService;
+
 
     @Override
     public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId, LocalDate startDate,
                                                                LocalDate endDate,
                                                                HashMap<Integer, Integer> newEntriesCount) {
         var personId = personService.getPersonIdForUserId(userId);
-        var person = personService.findOne(personId);
 
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForPerson(personId)
+            .importWebOfScience()) {
+            return newEntriesCount;
+        }
+
+        var person = personService.findOne(personId);
         if (Objects.isNull(person.getWebOfScienceId()) || person.getWebOfScienceId().isBlank()) {
             return newEntriesCount;
         }
@@ -73,10 +82,21 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
                                                                               HashMap<Integer, Integer> newEntriesCount) {
         var organisationUnitId = Objects.nonNull(institutionId) ? institutionId :
             userService.getUserOrganisationUnitId(userId);
+
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
+            organisationUnitId).importWebOfScience()) {
+            return newEntriesCount;
+        }
+
         var institution = organisationUnitService.findOne(organisationUnitId);
         var institutionName = institution.getName().stream()
             .filter(mc -> mc.getLanguage().getLanguageTag().equals(LanguageAbbreviations.ENGLISH))
             .findFirst();
+
+        // If no english name variant is specified, pick any other
+        if (institutionName.isEmpty()) {
+            institutionName = institution.getName().stream().findFirst();
+        }
 
         if (institutionName.isEmpty()) {
             return newEntriesCount;
@@ -107,6 +127,11 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
             userService.getUserOrganisationUnitId(userId);
 
         if (!performImportForAllAuthors && authorIds.isEmpty()) {
+            return newEntriesCount;
+        }
+
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
+            organisationUnitId).importWebOfScience()) {
             return newEntriesCount;
         }
 

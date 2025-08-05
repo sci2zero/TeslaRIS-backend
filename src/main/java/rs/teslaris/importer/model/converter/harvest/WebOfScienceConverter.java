@@ -1,5 +1,6 @@
 package rs.teslaris.importer.model.converter.harvest;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,10 +53,10 @@ public class WebOfScienceConverter {
 
             var event = new Event();
             event.getName().add(new MultilingualContent("EN", conferenceName, 1));
+            event.setDateFrom(LocalDate.of(record.source().publishYear(), 1, 1));
+            event.setDateTo(LocalDate.of(record.source().publishYear(), 12, 31));
             document.setEvent(event);
 
-            document.getPublishedIn()
-                .add(new MultilingualContent("EN", record.source().sourceTitle(), 1));
             if (Objects.nonNull(record.identifiers()) &&
                 Objects.nonNull(record.identifiers().isbn()) &&
                 !record.identifiers().isbn().contains("***")) {

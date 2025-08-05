@@ -89,10 +89,10 @@ public class CSVConverter {
                                                            String[] record) {
         String type = record[0];
 
-        if ("Article" .equals(type) && !record[16].isBlank()) {
+        if ("Article".equals(type) && !record[16].isBlank()) {
             document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
             document.getPublishedIn().add(new MultilingualContent("EN", record[16], 1));
-        } else if ("Conference paper" .equals(type) && !record[15].isBlank()) {
+        } else if ("Conference paper".equals(type) && !record[15].isBlank()) {
             document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
             document.getPublishedIn()
                 .add(new MultilingualContent("EN", "Proceedings of " + record[15], 1));
