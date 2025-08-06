@@ -3,6 +3,8 @@ package rs.teslaris.importer.utility;
 import ai.djl.translate.TranslateException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -43,12 +45,18 @@ public class CommonImportUtility {
         }
     }
 
+    @Nullable
     public static DocumentImport findExistingImport(String identifier) {
         var query = new Query(Criteria.where("identifier").is(identifier));
         return mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
     }
 
+    @Nullable
     public static DocumentImport findImportByDOI(String doi) {
+        if (Objects.isNull(doi) || doi.isBlank()) {
+            return null;
+        }
+
         var query = new Query(Criteria.where("doi").is(doi));
         return mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
     }

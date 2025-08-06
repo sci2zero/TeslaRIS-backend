@@ -319,6 +319,7 @@ public class TestingDataInitializer {
         person2.setName(
             new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null));
         person2.setScopusAuthorId("14619562900");
+        person2.setOrcid("0000-0001-7560-8254");
         person2.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 2, 1));
         personRepository.save(person2);
 

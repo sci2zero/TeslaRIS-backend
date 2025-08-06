@@ -1,0 +1,12 @@
+{
+  "sources": [
+    {
+      "sourceName": "Scindeks",
+      "baseUrl": "http://oai.scindeks.ceon.rs/oai2.aspx",
+      "dataset": "scindeks",
+      "metadataFormat": "oai_dc",
+      "responseObjectClass": "oaipmh.dublincore.DC",
+      "converterClass": "ScindeksConverter"
+    }
+  ]
+}

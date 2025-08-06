@@ -1,12 +1,12 @@
 package rs.teslaris.importer.utility.oaipmh;
 
-public enum OAIPMHSource {
+public enum OAIPMHMigrationSource {
 
     CRIS_UNS("https://cris.uns.ac.rs/OAIHandlerTeslaRISAll");
 
     private final String value;
 
-    OAIPMHSource(String value) {
+    OAIPMHMigrationSource(String value) {
         this.value = value;
     }
 
