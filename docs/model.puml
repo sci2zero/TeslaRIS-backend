@@ -23,6 +23,7 @@ package commonTypes {
   class Country {
     -String code ' ISO_3166_Alpha2_Code
     -Set<MultiLingualContent> name
+    -String processedName
   }
 
   !startsub Multilingual_Content
@@ -42,6 +43,7 @@ package commonTypes {
   class ResearchArea {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
+    String processedName
   }
   ResearchArea "1" --> "*" ResearchArea
 }
@@ -52,15 +54,20 @@ package user {
     ADMIN
     RESEARCHER
     INSTITUTIONAL_EDITOR
+    COMMISSION
+    VICE_DEAN_FOR_SCIENCE
+    INSTITUTIONAL_LIBRARIAN
+    HEAD_OF_LIBRARY
+    PROMOTION_REGISTRY_ADMINISTRATOR
   }
 
   class Privilege {
     -String name
   }
-  
+
   class Authority {
     -String name
-    -Set<Privilege> privileges 
+    -Set<Privilege> privileges
   }
 
 
@@ -70,16 +77,18 @@ package user {
     -String note
     -Stirng firstname
     -Stirng lastname
-    -LanguageTag preferedLanguage
-    -boolean isActive
+    -boolean locked
+    -boolean canTakeRole
+    -Language preferedUILanguage
+    -Language preferredReferenceCataloguingLanguage
     -Authority authority
     -Person person
     -OrganisationUnit OrganisationUnit
+    -Commission commission
   }
 
   class UserAccountActivation {
-    -String code
-    -LocalDateTime timestamp
+    -String activationToken
   }
   UserActivation -> User
 
@@ -115,7 +124,7 @@ package person {
     -ApproveStatus approveStatus
   }
 !endsub
-  
+
   class PersonName {
     -String firstname
     -String otherName
@@ -163,8 +172,8 @@ package person {
       HIRED_BY ' or selfemployed
   }
 
-  Involvement "*" --> "1" Person : person
-  Involvement "*" --> "0..1" OrganisationUnit : orgUnit
+  Involvement "*" --> "1" Person : personInvolved
+  Involvement "*" --> "0..1" OrganisationUnit : organisationUnit
 
 
   class Education extends Involvement {
@@ -174,9 +183,41 @@ package person {
   }
 
   class Employment extends Involvement {
-    -Position position
-    -Set<MultiLingualContent> title
+    -EmploymentPosition employmentPosition
     -Set<MultiLingualContent> role
+  }
+
+  enum EmploymentPosition {
+    SCIENTIFIC_ADVISOR
+    ASSISTANT_TRAINEE
+    EXPERT_ASSOCIATE
+    ASSISTANT
+    SENIOR_EXPERT_ASSOCIATE
+    INSTRUCTOR
+    EXPERT_ADVISOR
+    COLLABORATOR
+    SENIOR_INSTRUCTOR
+    TEACHER
+    TEACHER_OF_FOREIGN_LANGUAGES_AND_SKILLS
+    RESEARCHER
+    PROFESSOR_ENGINEER_HABILITATED
+    ASSISTANT_WITH_MASTER
+    ASSISTANT_WITH_MAGISTRATE
+    ASSISTANT_WITH_DOCTORATE
+    LECTURER
+    SENIOR_LECTURER
+    PROFESSOR_OF_VOCATIONAL_STUDIES
+    ASSISTANT_PROFESSOR
+    ASSOCIATE_PROFESSOR
+    TEACHING_ASSISTANT
+    FULL_PROFESSOR
+    PROFESSOR_EMERITUS
+    RETIRED_PROFESSOR
+    RESEARCH_TRAINEE
+    RESEARCH_ASSOCIATE
+    SCIENTIFIC_COLLABORATOR
+    SENIOR_SCIENTIFIC_COLLABORATOR
+    TEACHING_ASSOCIATE
   }
 
   class Membership extends Involvement {
@@ -189,6 +230,8 @@ package person {
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
   }
+
+  ExpertiseOrSkill "*" --> "1" Person : person
 
   class LanguageKnowledge extends ExpertiseOrSkill {
       Language language
@@ -204,6 +247,8 @@ package person {
     Set<DocumentFile> proofs
     LocalDate date
   }
+
+  Prize "*" --> "1" Person : person
 
   enum Sex {
     MALE
@@ -226,11 +271,13 @@ package institution {
       -String scopusAfid
       -String openAlexId
       -String ror
+      -Contact contact
+      -Set<String> uris
     }
   !endsub
 
-  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : source
-  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : target
+  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : sourceOrganisationUnit
+  OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : targetOrganisationUnit
 
   class OrganisationUnitsRelation {
     Set<MultiLingualContent> sourceAffiliationStatement
@@ -263,7 +310,7 @@ package document {
       EDITOR
       REVIEWER
       ADVISOR
-      ' TODO: check contribution types at https://credit.niso.org/ and https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonOutputContributions.xml
+      BOARD_MEMBER
     }
   !endsub
 
@@ -273,6 +320,7 @@ package document {
     -Set<MultiLingualContent> state
     -Set<Integer> oldIds
     -Set<Integer> mergedIds
+    -Country country
   }
 
   !startsub Person_Contribution
@@ -286,9 +334,9 @@ package document {
       ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
     }
 
-    PersonContribution "*" --> "0..1" OrganisationUnit
-    PersonContribution "*" --> "1" Person
-    PersonContribution "1" --> "0..1" AffiliationStatement
+    PersonContribution "*" --> "0..*" OrganisationUnit : institutions
+    PersonContribution "*" --> "1" Person : person
+    PersonContribution "1" --> "0..1" AffiliationStatement : affiliationStatement
   !endsub
 
   !startsub Person_Contribution
@@ -303,8 +351,11 @@ package document {
   !startsub Person_Document_Contribution
     class PersonDocumentContribution extends PersonContribution {
       -DocumentContributionType contributionType
-      -boolean mainContributor
-      -boolean correspondingContributor
+      -boolean isMainContributor
+      -boolean isCorrespondingContributor
+      -boolean isBoardPresident
+      -EmploymentTitle employmentTitle
+      -PersonalTitle personalTitle
     }
   !endsub
 
@@ -316,20 +367,37 @@ package document {
       String mimeType
       Long fileSize
       ResourceType resourceType
+      AccessRights accessRights
       License license
+      ApproveStatus approveStatus
+      boolean canEdit
+      LocalDateTime timestamp
+      boolean latest
+      boolean isVerifiedData
+      String legacyFilename
+      Document document
+      Person person
     }
   !endsub
 
   enum License {
-    BSD
-    CREATIVE_COMMONS
-    APACHE
+    BY
+    BY_SA
+    BY_NC
+    BY_NC_SA
+    BY_ND
+    BY_NC_ND
+    CC0
   }
 
   enum ResourceType {
     PREPRINT
     OFFICIAL_PUBLICATION
     SUPPLEMENT
+    PROOF
+    IMAGE
+    STATEMENT
+    ADVISOR_CONFLICT_OF_INTEREST
   }
 
   !startsub Document
@@ -337,7 +405,7 @@ package document {
       -Set<MultiLingualContent> title
       -Set<MultiLingualContent> subTitle
       -Set<MultiLingualContent> description
-      -Set<MultiLingualContent> note
+      -Set<MultiLingualContent> adminNote
       -Set<PersonDocumentContribution> contributors
       -Set<String> uris
       -String documentDate
@@ -345,7 +413,6 @@ package document {
       -Set<DocumentFile> proof
       -Set<MultiLingualContent> keywords
       -ApproveStatus approveStatus
-      -String note
       -String doi
       -String scopusId
       -String openAlexId
@@ -356,11 +423,23 @@ package document {
   !endsub
 
   class ProceedingsPublication extends Document {
+    -ProceedingsPublicationType proceedingsPublicationType
     -String startPage;
     -String endPage;
     -Integer numberOfPages
     -String articleNumber
   }
+
+  enum ProceedingsPublicationType {
+      REGULAR_FULL_ARTICLE
+      INVITED_FULL_ARTICLE
+      INVITED_ABSTRACT_ARTICLE
+      REGULAR_ABSTRACT_ARTICLE
+      PREFACE
+      LEXICOGRAPHIC_UNIT
+      POLEMICS
+      SCIENTIFIC_CRITIC
+    }
 
   class Proceedings extends Document {
     -String eISBN
@@ -374,6 +453,8 @@ package document {
   class Conference extends Event{
     -String number
     -String fee
+    -String confId
+    -String openAlexId
   }
 
   !startsub Event
@@ -385,13 +466,15 @@ package document {
       -Boolean serialEvent
       -LocalDate dateFrom
       -LocalDate dateTo
-      -Set<MultiLingualContent> state
+      -Country country
       -Set<MultiLingualContent> place
       -Set<PersonEventContribution> contributors
       -Set<Integer> oldIds
       -Set<Integer> mergedIds
       -String openAlexId
       -String confId
+      -Integer oldId
+      -Set<String> uris
     }
   !endsub
 
@@ -428,21 +511,22 @@ package document {
 ' the relation type above is used to link two events organized together
   }
 
-  ProceedingsPublication "1..*" --> "1" Proceedings
+  ProceedingsPublication "1..*" --> "1" Proceedings : proceedings
 ' Proceedings "1..*" --> "1" Conference the relation below should replace this one. However, the conference should have one or more linked proceedings,
 ' but also any event (for instance plenary presentation is an event which is part of conference) could have linked documents (presentation, dataset, etc.)
-  
+
   !startsub Document
     Document "*" --> "0..1" Event
-    Document "*" --> "1..*" PersonDocumentContribution
+    Document "1" --> "1..*" PersonDocumentContribution
   !endsub
-  
+
   Proceedings "1..*" --> "0..1" PublicationSeries : publicationSeries
 
   !startsub Journal_Publication
     class JournalPublication extends Document {
-      -String startPage;
-      -String endPage;
+      -JournalPublicationType journalPublicationType
+      -String startPage
+      -String endPage
       -Integer numberOfPages
       -String articleNumber
       -String volume
@@ -450,16 +534,28 @@ package document {
     }
   !endsub
 
+  enum JournalPublicationType {
+      REVIEW_ARTICLE
+      RESEARCH_ARTICLE
+      PREFACE
+      COMMENT
+      CORRECTION
+      LEXICOGRAPHIC_UNIT
+      POLEMICS
+      SCIENTIFIC_CRITIC
+    }
+
   class PublicationSeries {
     -String eISSN
     -String printISSN
     -Set<PersonJournalContribution> contributors
     -Set<LanguageTag> languages
-    -Set<MultiLingualContent> name
+    -Set<MultiLingualContent> title
     -Set<MultiLingualContent> nameAbbreviation
     -Set<Integer> oldIds
     -Set<Integer> mergedIds,
     -String openAlexId
+    -Set<String> uris
   }
 
   class Journal extends PublicationSeries {
@@ -469,30 +565,40 @@ package document {
     ' for instance https://www.springer.com/gp/computer-science/lncs
   }
 
-  class PersonJournalContribution extends PersonContribution {
-    -JournalContributionType contributionType
+  class PersonPublicationSeriesContribution extends PersonContribution {
+    -PublicationSeriesContributionType contributionType
     -LocalDate dateFrom
     -LocalDate dateTo
   }
 
-  enum JournalContributionType {
+  enum PublicationSeriesContributionType {
     EDITOR
     ASSOCIATE_EDITOR
     REVIEWER
     SCIENTIFIC_BOARD_MEMBER
   }
 
-
   JournalPublication "1..*" --> "1" Journal
 
   class MonographPublication extends Document {
+    -MonographPublicationType monographPublicationType
     -String startPage;
 	-String endPage
     -Integer numberOfPages
     -String articleNumber
   }
 
+  enum MonographPublicationType {
+      CHAPTER
+      RESEARCH_ARTICLE
+      PREFACE
+      LEXICOGRAPHIC_UNIT
+      POLEMICS
+      SCIENTIFIC_CRITIC
+    }
+
   class Monograph extends Document {
+    -MonographType monographType
     -String printISBN
     -String eISBN
     -Integer numberOfPages
@@ -504,12 +610,20 @@ package document {
     -ResearchArea researchArea
   }
 
+  enum MonographType {
+        RESEARCH_MONOGRAPH
+        BOOK
+        BIBLIOGRAPHY
+        TRANSLATION
+        STUDY
+      }
+
   Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
 
   MonographPublication "1..*" --> "1" Monograph
 
   class Patent extends Document {
-    -String number;
+    -String number
   }
 
   class InformativeAttachment extends Document {
@@ -518,33 +632,23 @@ package document {
   class EncyclopedicContribution extends Document {
   }
 
-  class LexicographicContribution extends Document {
-  }
-
-  class ScientificCritic extends Document {
-  }
-
-  ScientificCritic "1..*" --> "1" Journal
-
-  ScientificCritic "1..*" --> "1" Monograph
-
-  ScientificCritic "1..*" --> "1" Proceedings
-
-  class Polemics extends Document {
-  }
-
-  Polemics "1..*" --> "1" Journal
-
-  Polemics "1..*" --> "1" Monograph
-
-  Polemics "1..*" --> "1" Proceedings
-
   class Thesis extends Document {
     -OrganisationUnit OrganisationUnit
-    -ThesisCategory category
+    -Set<MultiLingualContent> externalOrganisationUnitName
+    -ThesisType thesisType
+    -LocalDate topicAcceptanceDate
+    -LocalDate thesisDefenceDate
     -Integer numberOfPages
     -Set<LanguageTag> languages
     -ResearchArea researchArea
+    -LanguageTag writingLanguage
+    -boolean isOnPublicReview
+    -boolean isOnPublicReviewPause
+    -Set<LocalDate> publicReviewStartDates
+    -Set<DocumentFile> preliminaryFiles
+    -Set<DocumentFile> preliminarySupplements
+    -Set<DocumentFile> commissionReports
+    -boolean isArchived
   }
 
   class Dataset extends Document {
@@ -555,16 +659,18 @@ package document {
     -String internalNumber
   }
 
-  enum ThesisCategory {
+  enum ThesisType {
+    BACHELOR
     MR
     PHD
     MASTER
-    BACHELOR
+    PHD_ART_PROJECT
+    BACHELOR_WITH_HONORS
+    UNDERGRADUATE_THESIS
   }
 
 
-  Document "1" --> "1..*" PersonDocumentContribution
-  Journal "1" --> "1..*" PersonJournalContribution
+  PublicationSeries "1" --> "1..*" PersonPublicationSeriesContribution
   Event "1" --> "1..*" PersonEventContribution
   Thesis "0..*" --> "1" Publisher
   Monograph "0..*" --> "1" Publisher
@@ -598,7 +704,7 @@ package project {
     Set<MultiLingualContent> description
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
-    Set<MultiLingualContent> note
+    Set<MultiLingualContent> adminNote
     Set<String> uris
     Set<PersonProjectContribution> contributors
     Set<ProjectDocument> documents
@@ -687,9 +793,10 @@ package project {
   }
 
   class AssessmentRulebook {
-    -MultiLingualContent title
-    -MultiLingualContent description
+    -Set<MultiLingualContent> name
+    -Set<MultiLingualContent> description
     -LocalDate issueDate
+    -boolean isDefault
     -DocumentFile pdf
   }
 
@@ -707,8 +814,8 @@ package project {
     ' examples of Serbian rule book:
     ' Uređivanje istaknutog međunarodnog naučnog   M28b  2,5  2,5  2,5  2,5  časopisa (gost urednik) ili publikacije sa monografskim delima kategorije M14
     ' Autor rada u istaknutom međunarodnom časopisu
-    -String formalDescriptionOfRule
-    ' rule is based on assessment classification and commission properties
+    -String pointRule
+    -String scalingRule
   }
 
   class AssessmentClassification {
