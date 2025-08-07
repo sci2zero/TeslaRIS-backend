@@ -105,7 +105,7 @@ public class TaggedBibliographicFormatUtility {
         }
 
         if (Objects.nonNull(embedding)) {
-            doc.setEmbedding(embedding.toFloatVector());
+            doc.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
         }
 
         count.merge(userId, 1, Integer::sum);

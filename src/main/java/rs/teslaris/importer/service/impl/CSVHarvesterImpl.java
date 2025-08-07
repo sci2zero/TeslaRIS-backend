@@ -77,7 +77,8 @@ public class CSVHarvesterImpl implements CSVHarvester {
                             }
 
                             if (Objects.nonNull(embedding)) {
-                                documentImport.setEmbedding(embedding.toFloatVector());
+                                documentImport.setEmbedding(
+                                    DeduplicationUtil.toDoubleList(embedding));
                             }
 
                             documentImport.getImportUsersId().add(userId);

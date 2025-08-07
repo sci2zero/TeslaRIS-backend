@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import jakarta.annotation.Nullable;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -333,6 +334,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         indexDescription(document, index);
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
+
+        index.getInternalIdentifiers().addAll(document.getInternalIdentifiers());
 
         if (Objects.nonNull(document.getEvent())) {
             index.setEventId(document.getEvent().getId());
@@ -761,6 +764,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.getEditorIds().clear();
         index.getReviewerIds().clear();
         index.getAdvisorIds().clear();
+
+        index.getInternalIdentifiers().clear();
     }
 
     protected void deleteProofsAndFileItems(Document publicationToDelete) {
@@ -794,9 +799,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                  String doi,
                                                                  String scopusId,
                                                                  String openAlexId,
-                                                                 String webOfScienceId) {
+                                                                 String webOfScienceId,
+                                                                 List<String> internalIdentifiers) {
         var query =
-            buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId, webOfScienceId);
+            buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId, webOfScienceId,
+                internalIdentifiers);
         return searchService.runQuery(query,
             Pageable.ofSize(5),
             DocumentPublicationIndex.class, "document_publication");
@@ -899,7 +906,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId,
-                                                String openAlexId, String webOfScienceId) {
+                                                String openAlexId, String webOfScienceId,
+                                                List<String> internalIdentifiers) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
@@ -928,6 +936,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     if (Objects.nonNull(webOfScienceId) && !webOfScienceId.isBlank()) {
                         eq.should(sb -> sb.match(
                             m -> m.field("web_of_science_id").query(webOfScienceId)));
+                    }
+
+                    if (Objects.nonNull(internalIdentifiers) && !internalIdentifiers.isEmpty()) {
+                        var internalIdentifierTerms = new TermsQueryField.Builder()
+                            .value(internalIdentifiers.stream().map(FieldValue::of).toList())
+                            .build();
+                        eq.should(sb -> sb.terms(
+                            t -> t.field("internal_identifiers").terms(internalIdentifierTerms)
+                        ));
                     }
 
                     return eq;

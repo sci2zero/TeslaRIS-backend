@@ -30,7 +30,7 @@ public class DocumentImport {
     private String identifier;
 
     @Field("embedding")
-    private float[] embedding;
+    private List<Double> embedding;
 
     @Field("import_users_id")
     private Set<Integer> importUsersId = new HashSet<>();
@@ -115,4 +115,7 @@ public class DocumentImport {
 
     @Field(name = "wos_id")
     private String webOfScienceId;
+
+    @Field(name = "internal_identifiers")
+    private Set<String> internalIdentifiers = new HashSet<>();
 }

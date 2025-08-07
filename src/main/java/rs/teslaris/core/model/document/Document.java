@@ -104,6 +104,10 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(name = "is_archived")
     private Boolean isArchived = false;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "internal_identifiers")
+    private Set<String> internalIdentifiers = new HashSet<>();
+
 
     public void addDocumentContribution(PersonDocumentContribution contribution) {
         contribution.setDocument(this);

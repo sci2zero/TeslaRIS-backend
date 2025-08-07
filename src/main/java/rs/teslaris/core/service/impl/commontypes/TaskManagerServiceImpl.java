@@ -205,7 +205,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     @Override
     public List<ScheduledTaskResponseDTO> listScheduledHarvestTasks(Integer userId, String role) {
-        return listScheduledTasks(userId, role, this::isHarvestTask);
+        return listScheduledTasks(userId, role, (taskId) -> isHarvestTask(taskId, role));
     }
 
     @Override
@@ -263,7 +263,11 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         return taskId.startsWith("Library_Backup-");
     }
 
-    private boolean isHarvestTask(String taskId) {
+    private boolean isHarvestTask(String taskId, String role) {
+        if (role.equals(UserRole.ADMIN.name()) && taskId.startsWith("OAIPMH_Harvest-")) {
+            return true;
+        }
+
         return taskId.startsWith("Harvest-");
     }
 

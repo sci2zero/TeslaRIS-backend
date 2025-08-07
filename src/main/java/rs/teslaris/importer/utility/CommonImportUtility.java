@@ -3,6 +3,8 @@ package rs.teslaris.importer.utility;
 import ai.djl.translate.TranslateException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.Nullable;
 import java.util.Objects;
 import java.util.Set;
@@ -36,7 +38,12 @@ public class CommonImportUtility {
 
     public static INDArray generateEmbedding(DocumentImport entry) {
         try {
-            var json = new ObjectMapper().writeValueAsString(entry);
+            var mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            mapper.disable(
+                SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Optional, for ISO-8601
+
+            var json = mapper.writeValueAsString(entry);
             var flattened = DeduplicationUtil.flattenJson(json);
             return DeduplicationUtil.getEmbedding(flattened);
         } catch (JsonProcessingException | TranslateException e) {
@@ -44,6 +51,7 @@ public class CommonImportUtility {
             return null;
         }
     }
+
 
     @Nullable
     public static DocumentImport findExistingImport(String identifier) {

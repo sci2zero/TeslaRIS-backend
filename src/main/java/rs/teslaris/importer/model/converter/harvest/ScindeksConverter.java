@@ -21,6 +21,7 @@ public class ScindeksConverter {
         var document = new DocumentImport();
         document.setIdentifier("SCINDEKS:" + record.getIdentifier().getFirst().split("=")[1]);
         document.setDocumentDate(record.getDate().getFirst());
+        document.getInternalIdentifiers().add(document.getIdentifier());
 
         document.getTitle().add(new MultilingualContent("EN", record.getTitle().getFirst(), 1));
         document.getDescription()

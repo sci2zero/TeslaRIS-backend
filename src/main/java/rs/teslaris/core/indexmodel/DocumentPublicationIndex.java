@@ -5,7 +5,9 @@ import jakarta.persistence.Id;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -202,4 +204,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "are_files_valid", store = true)
     private Boolean areFilesValid;
+
+    @Field(type = FieldType.Keyword, name = "internal_identifiers", store = true)
+    private Set<String> internalIdentifiers = new HashSet<>();
 }

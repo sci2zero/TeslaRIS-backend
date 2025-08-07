@@ -30,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.oaipmh.common.Metadata;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.model.oaipmh.common.ResumptionToken;
@@ -60,6 +61,8 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
     private final RestTemplateProvider restTemplateProvider;
 
     private final PersonService personService;
+
+    private final PersonIndexRepository personIndexRepository;
 
 
     @Override
@@ -214,7 +217,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                     }
 
                     if (Objects.nonNull(embedding)) {
-                        documentImport.setEmbedding(embedding.toFloatVector());
+                        documentImport.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
                     }
 
                     documentImport.getImportUsersId().addAll(adminUserIds);
@@ -241,6 +244,12 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                     personService.findUserByIdentifier(authorship.getPerson().getOrcid());
                 if (researcher.isPresent()) {
                     documentImport.getImportUsersId().add(researcher.get().getId());
+                    personIndexRepository.findByDatabaseId(
+                            personService.getPersonIdForUserId(researcher.get().getId()))
+                        .ifPresent(personIndex -> {
+                            documentImport.getImportInstitutionsId()
+                                .addAll(personIndex.getEmploymentInstitutionsIdHierarchy());
+                        });
                 } else {
                     bindImportUsers(documentImport, authorship);
                 }

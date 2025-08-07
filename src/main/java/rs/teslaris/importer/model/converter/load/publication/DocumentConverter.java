@@ -108,6 +108,7 @@ public abstract class DocumentConverter {
         dto.setOpenAlexId(document.getOpenAlexId());
         dto.setScopusId(document.getScopusId());
         dto.setWebOfScienceId(document.getWebOfScienceId());
+        dto.setInternalIdentifiers(document.getInternalIdentifiers().stream().toList());
 
         setContributionInformation(document, dto);
     }

@@ -241,7 +241,7 @@ public class CommonLoaderTest {
 
         if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
             when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
-                any(), any())).thenReturn(
+                any(), any(), any())).thenReturn(
                 new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                     setDatabaseId(1);
                 }})));
@@ -264,11 +264,11 @@ public class CommonLoaderTest {
                 any(FindAndModifyOptions.class), eq(entityClass));
 
         // When
-        commonLoader.markRecordAsLoaded(userId, null, oldPublicationId, deleteOldPublication);
+        commonLoader.markRecordAsLoaded(userId, null, oldPublicationId, deleteOldPublication, null);
 
         if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
             verify(documentPublicationService, times(1)).findDocumentDuplicates(any(), any(),
-                any(), any(), any());
+                any(), any(), any(), any());
             if (deleteOldPublication) {
                 verify(documentPublicationService, times(1)).deleteDocumentPublication(1);
             } else {
@@ -308,7 +308,7 @@ public class CommonLoaderTest {
         // When
         assertThrows(RecordAlreadyLoadedException.class,
             () -> commonLoader.markRecordAsLoaded(userId, null, oldPublicationId,
-                deleteOldPublication));
+                deleteOldPublication, null));
 
         // Then (RecordAlreadyLoadedException should be thrown)
     }
@@ -1017,7 +1017,7 @@ public class CommonLoaderTest {
         mockDoc.setScopusId("some-scopus");
         mockDoc.setOpenAlexId("some-openalex");
         when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
-            any(), any())).thenReturn(
+            any(), any(), any())).thenReturn(
             new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                 setDatabaseId(1);
             }})));

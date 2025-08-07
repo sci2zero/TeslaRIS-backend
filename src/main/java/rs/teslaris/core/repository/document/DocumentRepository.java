@@ -33,6 +33,27 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         """, nativeQuery = true)
     Optional<Integer> findDocumentByOldIdsContains(Integer oldId);
 
+    @Query(value = """
+        SELECT id FROM datasets WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM software WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM monographs WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM patents WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM proceedings WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM journal_publications WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM proceedings_publications WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM monograph_publications WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM theses WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        """, nativeQuery = true)
+    Optional<Integer> findDocumentByInternalIdentifiersContains(String internalId);
+
     @Query("SELECT d FROM Document d " +
         "JOIN FETCH d.contributors " +
         "LEFT JOIN FETCH d.fileItems " +

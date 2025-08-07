@@ -68,7 +68,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
                                                           String scopusId, String openAlexId,
-                                                          String webOfScienceId);
+                                                          String webOfScienceId,
+                                                          List<String> internalIdentifiers);
 
     Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
                                                               Integer personId,

@@ -155,6 +155,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     @Nullable
     public Optional<User> findUserByIdentifier(String identifier) {
+        if (Objects.isNull(identifier) || identifier.isBlank()) {
+            return Optional.empty();
+        }
+
         return personRepository.findUserForPersonIdentifier(identifier);
     }
 
@@ -1035,7 +1039,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         if (Objects.isNull(identifier) || identifier.isBlank()) {
             return null;
         }
-        return personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(identifier)
+        return personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceIdOrOrcid(
+                identifier)
             .orElse(null);
     }
 

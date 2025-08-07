@@ -22,12 +22,13 @@ public interface PersonIndexRepository extends ElasticsearchRepository<PersonInd
             "should": [
               { "term": { "scopus_author_id": "?0" }},
               { "term": { "open_alex_id": "?0" }},
-              { "term": { "web_of_science_id": "?0" }}
+              { "term": { "web_of_science_id": "?0" }},
+              { "term": { "orcid": "?0" }}
             ]
           }
         }
         """)
-    Optional<PersonIndex> findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(String importId);
+    Optional<PersonIndex> findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceIdOrOrcid(String importId);
 
     long count();
 }
