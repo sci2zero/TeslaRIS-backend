@@ -55,9 +55,10 @@ public class OAIPMHHarvestController {
                 "-" + UUID.randomUUID(), timestamp,
             () -> oaipmhHarvester.harvest(sourceName, from, until, userId), userId, recurrence);
 
+        // TODO: Add task restoration
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, timestamp,
-                ScheduledTaskType.DOCUMENT_BACKUP, new HashMap<>() {{
+                ScheduledTaskType.OAI_PMH_HARVEST, new HashMap<>() {{
                 put("sourceName", sourceName);
                 put("from", from.toString());
                 put("until", until.toString());
