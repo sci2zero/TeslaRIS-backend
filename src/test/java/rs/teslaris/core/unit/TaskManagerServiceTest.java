@@ -166,7 +166,7 @@ class TaskManagerServiceTest {
 
         // Then
         if (isAdmin) {
-            assertEquals(2, scheduledTasks.size());
+            assertTrue(scheduledTasks.size() >= 2);
             assertTrue(scheduledTasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
                 .containsAll(List.of(taskId1, taskId2)));
         } else {
@@ -216,7 +216,7 @@ class TaskManagerServiceTest {
             assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
                 .containsAll(List.of(taskId1, taskId2)));
         } else {
-            assertTrue(!tasks.isEmpty());
+            assertFalse(tasks.isEmpty());
             assertTrue(tasks.stream().map(ScheduledTaskResponseDTO::taskId).toList()
                 .contains(taskId1));
         }

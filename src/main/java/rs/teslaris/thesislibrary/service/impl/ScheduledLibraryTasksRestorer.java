@@ -2,7 +2,6 @@ package rs.teslaris.thesislibrary.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +12,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.FileSection;
@@ -79,8 +79,8 @@ public class ScheduledLibraryTasksRestorer {
         Map<String, Object> data = metadata.getMetadata();
 
         var institutionId = (Integer) data.get("institutionId");
-        var from = LocalDate.parse((String) data.get("from"));
-        var to = LocalDate.parse((String) data.get("to"));
+        var from = RelativeDateDTO.parse((String) data.get("from"));
+        var to = RelativeDateDTO.parse((String) data.get("to"));
 
         var fileSectionNames = objectMapper.convertValue(
             data.get("thesisFileSections"), new TypeReference<ArrayList<String>>() {
@@ -108,8 +108,8 @@ public class ScheduledLibraryTasksRestorer {
         Map<String, Object> data = metadata.getMetadata();
 
         var institutionId = (Integer) data.get("institutionId");
-        var from = LocalDate.parse((String) data.get("from"));
-        var to = LocalDate.parse((String) data.get("to"));
+        var from = RelativeDateDTO.parse((String) data.get("from"));
+        var to = RelativeDateDTO.parse((String) data.get("to"));
 
         var authorName = (String) data.get("authorName");
         var authorTitle = (String) data.get("authorTitle");
@@ -117,8 +117,10 @@ public class ScheduledLibraryTasksRestorer {
         var lang = (String) data.get("lang");
         var userId = (Integer) data.get("userId");
 
-        registryBookReportService.scheduleReportGeneration(from, to, institutionId,
-            lang, userId, authorName, authorTitle, metadata.getRecurrenceType());
+        registryBookReportService.scheduleReportGeneration(
+            from, to, institutionId, lang, userId,
+            authorName, authorTitle, metadata.getRecurrenceType()
+        );
     }
 
     public List<FileSection> resolveFileSections(List<String> names) {

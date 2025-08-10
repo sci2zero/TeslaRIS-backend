@@ -31,6 +31,7 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.DateUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -92,6 +93,8 @@ public class ReportingServiceImpl implements ReportingService {
     public void generateReport(ReportType reportType, Integer assessmentYear,
                                List<Integer> commissionIds, String locale,
                                Integer topLevelInstitutionId) {
+        assessmentYear = DateUtil.calculateYearFromProvidedValue(assessmentYear);
+
         String templateName = getTemplateName(reportType);
         int startYear = getStartYear(reportType, assessmentYear);
 

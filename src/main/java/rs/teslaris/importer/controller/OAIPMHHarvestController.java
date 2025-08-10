@@ -1,6 +1,5 @@
 package rs.teslaris.importer.controller;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
@@ -38,8 +38,9 @@ public class OAIPMHHarvestController {
     @GetMapping("/schedule")
     @PreAuthorize("hasAuthority('PERFORM_OAIPMH_HARVEST')")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void scheduleOAIPMHHarvest(@RequestParam String sourceName, @RequestParam LocalDate from,
-                                      @RequestParam LocalDate until,
+    public void scheduleOAIPMHHarvest(@RequestParam String sourceName,
+                                      @RequestParam RelativeDateDTO from,
+                                      @RequestParam RelativeDateDTO until,
                                       @RequestParam LocalDateTime timestamp,
                                       @RequestParam RecurrenceType recurrence,
                                       @RequestHeader("Authorization") String bearerToken) {
@@ -53,9 +54,10 @@ public class OAIPMHHarvestController {
             "OAIPMH_Harvest-" + sourceName +
                 "-" + from + "_" + until +
                 "-" + UUID.randomUUID(), timestamp,
-            () -> oaipmhHarvester.harvest(sourceName, from, until, userId), userId, recurrence);
+            () -> oaipmhHarvester.harvest(sourceName,
+                from.computeDate(), until.computeDate(), userId),
+            userId, recurrence);
 
-        // TODO: Add task restoration
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, timestamp,
                 ScheduledTaskType.OAI_PMH_HARVEST, new HashMap<>() {{
