@@ -19,9 +19,9 @@ public class CommonExportController {
 
     private final CommonExportService commonExportService;
 
-    @GetMapping(value = "/OAIHandlerOpenAIRECRIS", produces = "application/xml")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @GetMapping("/prepare-for-export")
     @PreAuthorize("hasAuthority('PREPARE_EXPORT_DATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void handleOAIOpenAIRECRIS(@RequestParam String set) {
         switch (set) {
             case "org_units":

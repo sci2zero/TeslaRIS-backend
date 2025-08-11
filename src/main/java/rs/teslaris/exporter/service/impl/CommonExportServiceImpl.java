@@ -221,7 +221,7 @@ public class CommonExportServiceImpl implements CommonExportService {
         Function<T, Integer> idGetter
     ) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

@@ -12,6 +12,6 @@ public interface JournalPublicationRepository extends JpaRepository<JournalPubli
 
     @Query(value = "SELECT * FROM journal_publications jp WHERE " +
         "jp.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "jp.approveStatus = 1", nativeQuery = true)
+        "jp.approve_status = 1", nativeQuery = true)
     Page<JournalPublication> findAllModifiedInLast24Hours(Pageable pageable);
 }

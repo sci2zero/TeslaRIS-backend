@@ -84,7 +84,7 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query(value = "SELECT * FROM persons p WHERE " +
         "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "p.approveStatus = 1", nativeQuery = true)
+        "p.approve_status = 1", nativeQuery = true)
     Page<Person> findAllModifiedInLast24Hours(Pageable pageable);
 
     @Query("SELECT i.organisationUnit.id FROM Involvement i WHERE " +
