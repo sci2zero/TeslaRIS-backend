@@ -7,7 +7,6 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -16,8 +15,8 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.model.oaipmh.person.PersonName;
-import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 
@@ -29,13 +28,18 @@ public class ExportPersonConverter extends ExportConverterBase {
 
     private static PersonIndexRepository personIndexRepository;
 
+    private static InvolvementRepository involvementRepository;
+
+
     @Autowired
     public ExportPersonConverter(
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        PersonIndexRepository personIndexRepository) {
+        PersonIndexRepository personIndexRepository,
+        InvolvementRepository involvementRepository) {
         ExportPersonConverter.documentPublicationIndexRepository =
             documentPublicationIndexRepository;
         ExportPersonConverter.personIndexRepository = personIndexRepository;
+        ExportPersonConverter.involvementRepository = involvementRepository;
     }
 
     public static ExportPerson toCommonExportModel(Person person, boolean computeRelations) {
@@ -61,15 +65,9 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
         commonExportPerson.getOldIds().addAll(person.getOldIds());
 
-        person.getInvolvements().forEach(involvement -> {
-            if ((involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.nonNull(involvement.getOrganisationUnit())) {
-                commonExportPerson.getEmploymentInstitutions().add(
-                    ExportOrganisationUnitConverter.toCommonExportModel(
-                        involvement.getOrganisationUnit(), false));
-            }
-        });
+        involvementRepository.findActiveEmploymentInstitutions(person.getId()).forEach(
+            institution -> commonExportPerson.getEmploymentInstitutions()
+                .add(ExportOrganisationUnitConverter.toCommonExportModel(institution, false)));
 
         if (computeRelations) {
             commonExportPerson.getRelatedInstitutionIds()

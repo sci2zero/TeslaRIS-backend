@@ -30,19 +30,23 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
+@Entity
+@Table(
+    name = "persons",
+    indexes = {
+        @Index(name = "idx_person_apvnt", columnList = "apvnt"),
+        @Index(name = "idx_person_e_cris_id", columnList = "e_cris_id"),
+        @Index(name = "idx_person_e_nauka_id", columnList = "e_nauka_id"),
+        @Index(name = "idx_person_orcid", columnList = "orcid"),
+        @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id"),
+        @Index(name = "idx_person_approve_status", columnList = "approve_status")
+    }
+)
+@SQLRestriction("deleted=false")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "persons", indexes = {
-    @Index(name = "idx_person_apvnt", columnList = "apvnt"),
-    @Index(name = "idx_person_e_cris_id", columnList = "e_cris_id"),
-    @Index(name = "idx_person_e_nauka_id", columnList = "e_nauka_id"),
-    @Index(name = "idx_person_orcid", columnList = "orcid"),
-    @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id")
-})
-@SQLRestriction("deleted=false")
 public class Person extends BaseEntity implements Mergeable {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -121,7 +125,6 @@ public class Person extends BaseEntity implements Mergeable {
 
     @Column(name = "date_of_last_indicator_harvest")
     private LocalDate dateOfLastIndicatorHarvest;
-
 
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {

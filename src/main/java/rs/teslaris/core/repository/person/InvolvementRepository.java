@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 
@@ -22,6 +23,12 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
         "WHERE e.personInvolved.id = :personId " +
         "AND e.dateTo IS null")
     List<Integer> findActiveEmploymentInstitutionIds(Integer personId);
+
+    @Query("SELECT e.organisationUnit FROM Employment e " +
+        "WHERE e.personInvolved.id = :personId " +
+        "AND e.dateTo IS NULL " +
+        "AND e.organisationUnit IS NOT NULL")
+    List<OrganisationUnit> findActiveEmploymentInstitutions(Integer personId);
 
     @Query("SELECT e FROM Employment e LEFT JOIN FETCH e.organisationUnit " +
         "WHERE e.personInvolved.id = :personId " +

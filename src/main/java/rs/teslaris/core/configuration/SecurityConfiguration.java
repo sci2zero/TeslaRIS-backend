@@ -1,5 +1,8 @@
 package rs.teslaris.core.configuration;
 
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,7 +15,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import rs.teslaris.core.util.exceptionhandling.RestAuthenticationEntryPoint;
@@ -21,15 +27,27 @@ import rs.teslaris.core.util.jwt.JwtFilter;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
+@Slf4j
 public class SecurityConfiguration {
 
     private final JwtFilter jwtTokenFilter;
+
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
+    private final OrcidOAuth2LoginSuccessHandler orcidOAuth2LoginSuccessHandler;
+
+    private final OrcidOAuth2UserInfoHandler orcidOAuth2UserInfoHandler;
+
+
+    @Autowired
     public SecurityConfiguration(JwtFilter jwtTokenFilter,
-                                 RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
+                                 RestAuthenticationEntryPoint restAuthenticationEntryPoint,
+                                 OrcidOAuth2LoginSuccessHandler orcidOAuth2LoginSuccessHandler,
+                                 OrcidOAuth2UserInfoHandler orcidOAuth2UserInfoHandler) {
         this.jwtTokenFilter = jwtTokenFilter;
         this.restAuthenticationEntryPoint = restAuthenticationEntryPoint;
+        this.orcidOAuth2LoginSuccessHandler = orcidOAuth2LoginSuccessHandler;
+        this.orcidOAuth2UserInfoHandler = orcidOAuth2UserInfoHandler;
     }
 
     @Bean
@@ -296,6 +314,10 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/share/document/{documentType}/{id}")
                 .permitAll()
 
+                // OAUTH2
+                .requestMatchers(HttpMethod.GET, "/api/oauth2/finish-workflow")
+                .permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );
@@ -308,6 +330,37 @@ public class SecurityConfiguration {
             ));
 
         http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        http.oauth2Login(oauth -> oauth
+            .userInfoEndpoint(userInfo -> userInfo
+                .userService(clientRequest -> {
+                    if (OAuth2Providers.ORCID.equals(
+                        clientRequest.getClientRegistration().getRegistrationId())) {
+                        return orcidOAuth2UserInfoHandler.loadUser(clientRequest);
+                    }
+
+                    return new DefaultOAuth2UserService().loadUser(clientRequest);
+                })
+            )
+            .successHandler((request, response, authentication) -> {
+                var token = (OAuth2AuthenticationToken) authentication;
+                if (OAuth2Providers.ORCID.equals(token.getAuthorizedClientRegistrationId())) {
+                    orcidOAuth2LoginSuccessHandler.onAuthenticationSuccess(request, response,
+                        authentication);
+                } else {
+                    new SavedRequestAwareAuthenticationSuccessHandler()
+                        .onAuthenticationSuccess(request, response, authentication);
+                }
+            })
+            .failureHandler((request, response, exception) -> {
+                log.error("SERIOUS: OAuth2 Authentication failed. Reason: {}",
+                    exception.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter()
+                    .write("Authentication failed. Please try again or contact support.");
+                response.getWriter().flush();
+            })
+        );
 
         return http.build();
     }

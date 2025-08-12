@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -42,6 +43,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
@@ -63,6 +65,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.EmailUpdateRequest;
+import rs.teslaris.core.model.user.OAuthCode;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -72,6 +75,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
+import rs.teslaris.core.repository.user.OAuthCodeRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
@@ -84,6 +88,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
+import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
@@ -147,6 +152,9 @@ public class UserServiceTest {
 
     @Mock
     private EmailUpdateRequestRepository emailUpdateRequestRepository;
+
+    @Mock
+    private OAuthCodeRepository oAuthCodeRepository;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -1226,5 +1234,55 @@ public class UserServiceTest {
         assertFalse(result);
         verify(userRepository, never()).save(any());
         verify(emailUpdateRequestRepository, never()).delete(any());
+    }
+
+    @Test
+    void shouldFinishOAuthWorkflowWhenCodeIsValid() {
+        // given
+        SecurityContextHolder.clearContext();
+        var code = "test-code";
+        var identifier = "test-identifier";
+        var fingerprint = "fp";
+        var userId = 123;
+
+        var oauthCodeEntity = new OAuthCode(code, identifier, userId);
+        var user = new User();
+        user.setId(userId);
+        user.setAuthority(new Authority() {{
+            setName("ROLE_USER");
+        }});
+
+        when(oAuthCodeRepository.getCodeForCodeAndIdentifier(code, identifier))
+            .thenReturn(Optional.of(oauthCodeEntity));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(tokenUtil.generateToken(any(Authentication.class), eq(fingerprint)))
+            .thenReturn("jwt-token");
+
+        // when
+        var result = userService.finishOAuthWorkflow(code, identifier, fingerprint);
+
+        // then
+        assertEquals("jwt-token", result.getToken());
+        assertNotNull(result.getRefreshToken());
+        verify(oAuthCodeRepository).deleteByIdentifier(identifier);
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCodeIsInvalid() {
+        // given
+        SecurityContextHolder.clearContext();
+        var code = "invalid-code";
+        var identifier = "test-identifier";
+
+        when(oAuthCodeRepository.getCodeForCodeAndIdentifier(code, identifier))
+            .thenReturn(Optional.empty());
+
+        // when / then
+        assertThrows(InvalidOAuth2CodeException.class,
+            () -> userService.finishOAuthWorkflow(code, identifier, "fp"));
+
+        verify(oAuthCodeRepository).deleteByIdentifier(identifier);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 }

@@ -58,6 +58,13 @@ public class UserController {
 
     private final UserService userService;
 
+    public static HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {
+        var headers = new HttpHeaders();
+        headers.add("Set-Cookie",
+            "jwt-security-fingerprint=" + fingerprint + "; SameSite=Strict; HttpOnly; Path=/api");
+
+        return headers;
+    }
 
     @GetMapping
     public UserResponseDTO getUser(@RequestHeader("Authorization") String bearerToken) {
@@ -265,13 +272,5 @@ public class UserController {
     @PatchMapping("/confirm-email-change")
     public boolean confirmEmailChange(@RequestBody ConfirmEmailUpdateRequestDTO request) {
         return userService.confirmEmailChange(request.getConfirmationToken());
-    }
-
-    private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {
-        var headers = new HttpHeaders();
-        headers.add("Set-Cookie",
-            "jwt-security-fingerprint=" + fingerprint + "; SameSite=Strict; HttpOnly; Path=/api");
-
-        return headers;
     }
 }

@@ -12,6 +12,6 @@ public interface DatasetRepository extends JpaRepository<Dataset, Integer> {
 
     @Query(value = "SELECT * FROM datasets d WHERE " +
         "d.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "d.approveStatus = 1", nativeQuery = true)
+        "d.approve_status = 1", nativeQuery = true)
     Page<Dataset> findAllModifiedInLast24Hours(Pageable pageable);
 }

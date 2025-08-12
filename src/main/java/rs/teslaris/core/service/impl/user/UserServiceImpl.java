@@ -69,6 +69,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
+import rs.teslaris.core.repository.user.OAuthCodeRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
@@ -83,6 +84,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.PasswordUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
+import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
@@ -133,6 +135,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final CommissionRepository commissionRepository;
 
     private final EmailUpdateRequestRepository emailUpdateRequestRepository;
+
+    private final OAuthCodeRepository oAuthCodeRepository;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -214,6 +218,31 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var refreshTokenValue =
             createAndSaveRefreshTokenForUser((User) authentication.getPrincipal());
+
+        return new AuthenticationResponseDTO(tokenUtil.generateToken(authentication, fingerprint),
+            refreshTokenValue);
+    }
+
+    @Override
+    @Transactional
+    public AuthenticationResponseDTO finishOAuthWorkflow(String code, String identifier,
+                                                         String fingerprint) {
+        var oAuthCode = oAuthCodeRepository.getCodeForCodeAndIdentifier(code, identifier);
+
+        if (oAuthCode.isEmpty()) {
+            oAuthCodeRepository.deleteByIdentifier(identifier);
+            throw new InvalidOAuth2CodeException("Invalid OAuth2 code");
+        }
+
+        var user = findOne(oAuthCode.get().getUserId());
+
+        var authentication =
+            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        var refreshTokenValue = createAndSaveRefreshTokenForUser(user);
+
+        oAuthCodeRepository.deleteByIdentifier(identifier);
 
         return new AuthenticationResponseDTO(tokenUtil.generateToken(authentication, fingerprint),
             refreshTokenValue);

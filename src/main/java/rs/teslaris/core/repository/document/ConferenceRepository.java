@@ -12,8 +12,7 @@ import rs.teslaris.core.model.document.Conference;
 public interface ConferenceRepository extends JpaRepository<Conference, Integer> {
 
     @Query(value = "SELECT * FROM conferences c WHERE " +
-        "c.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "c.approveStatus = 1", nativeQuery = true)
+        "c.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Conference> findAllModifiedInLast24Hours(Pageable pageable);
 
     @Query("SELECT c FROM Conference c WHERE c.confId = :confId")

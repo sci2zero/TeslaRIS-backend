@@ -46,6 +46,9 @@ public interface UserService extends UserDetailsService, JPAService<User> {
                                                AuthenticationRequestDTO authenticationRequest,
                                                String fingerprint);
 
+    AuthenticationResponseDTO finishOAuthWorkflow(String code, String identifier,
+                                                  String fingerprint);
+
     AuthenticationResponseDTO refreshToken(String refreshTokenValue, String fingerprint);
 
     AuthenticationResponseDTO takeRoleOfUser(TakeRoleOfUserRequestDTO takeRoleOfUserRequest,

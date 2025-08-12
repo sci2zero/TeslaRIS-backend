@@ -27,7 +27,7 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
 
     @Query(value = "SELECT * FROM journals j WHERE " +
         "j.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "j.approveStatus = 1", nativeQuery = true)
+        "j.approve_status = 1", nativeQuery = true)
     Page<Journal> findAllModifiedInLast24Hours(Pageable pageable);
 
     @Query("SELECT DISTINCT inst.id " +
