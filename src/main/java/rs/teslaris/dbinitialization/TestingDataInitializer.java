@@ -209,7 +209,7 @@ public class TestingDataInitializer {
             new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);
-        person1.setOrcid("0000-0002-1825-0097");
+        person1.setOrcid("0009-0008-0599-0599");
         person1.setOpenAlexId("A5070362523");
         person1.setScopusAuthorId("35795419600");
         person1.setWebOfScienceId("J-4074-2012");
@@ -319,7 +319,7 @@ public class TestingDataInitializer {
         person2.setName(
             new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null));
         person2.setScopusAuthorId("14619562900");
-        person2.setOrcid("0009-0008-0599-0599");
+        person2.setOrcid("0000-0002-8096-5149");
         person2.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 2, 1));
         personRepository.save(person2);
 
