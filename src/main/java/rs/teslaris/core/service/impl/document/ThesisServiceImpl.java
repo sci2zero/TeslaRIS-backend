@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import jakarta.xml.bind.JAXBException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -22,6 +23,7 @@ import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
@@ -156,7 +158,21 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         if (Objects.nonNull(thesisDTO.getContributions()) &&
             !thesisDTO.getContributions().isEmpty()) {
-            thesisDTO.setContributions(thesisDTO.getContributions().subList(0, 1));
+            var contributions = thesisDTO.getContributions();
+
+            var firstAuthor = contributions.stream()
+                .filter(c -> DocumentContributionType.AUTHOR.equals(c.getContributionType()))
+                .findFirst();
+
+            var others = contributions.stream()
+                .filter(c -> !DocumentContributionType.AUTHOR.equals(c.getContributionType()))
+                .toList();
+
+            var result = new ArrayList<PersonDocumentContributionDTO>();
+            firstAuthor.ifPresent(result::add);
+            result.addAll(others);
+
+            thesisDTO.setContributions(result);
         }
 
         setCommonFields(newThesis, thesisDTO);
