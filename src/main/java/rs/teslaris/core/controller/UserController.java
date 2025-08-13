@@ -147,6 +147,11 @@ public class UserController {
             newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
     }
 
+    @GetMapping("/register-researcher-creation-allowed")
+    public boolean isNewResearcherCreationAllowed() {
+        return userService.isNewResearcherCreationAllowed();
+    }
+
     @PostMapping("/register-employee/{role}")
     @PreAuthorize("hasAuthority('REGISTER_EMPLOYEE')")
     @ResponseStatus(HttpStatus.CREATED)

@@ -87,9 +87,9 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     boolean existsByWebOfScienceId(String webOfScienceId, Integer id);
 
     @Query(value = "SELECT * FROM persons p WHERE " +
-        "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
+        "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
         "p.approve_status = 1", nativeQuery = true)
-    Page<Person> findAllModifiedInLast24Hours(Pageable pageable);
+    Page<Person> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
 
     @Query("SELECT i.organisationUnit.id FROM Involvement i WHERE " +
         "i.personInvolved.id = :personId AND " +

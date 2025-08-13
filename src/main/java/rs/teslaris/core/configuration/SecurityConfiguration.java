@@ -81,6 +81,8 @@ public class SecurityConfiguration {
 
                 // USER
                 .requestMatchers(HttpMethod.GET, "/api/user/person/{personId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/user/register-researcher-creation-allowed")
+                .permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
@@ -211,12 +213,12 @@ public class SecurityConfiguration {
 
                 // SEARCH TABLE EXPORT
                 .requestMatchers(HttpMethod.GET, "/api/csv-export/records-per-page").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/dissertation-report")
+                .permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/thesis-library/csv-export").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/thesis-library/dissertation-report")
-                .permitAll()
 
                 // ASSESSMENT
                 .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")
@@ -282,18 +284,18 @@ public class SecurityConfiguration {
 
                 // THESIS LIBRARY
                 .requestMatchers(HttpMethod.GET, "/api/thesis-library/search/fields").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/simple").permitAll()
-                .requestMatchers(HttpMethod.POST,
-                    "/api/thesis-library/search/wordcloud/{queryType}").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
-                .requestMatchers(HttpMethod.PATCH,
-                    "/api/registry-book/cancel-attendance").permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/public-review-page-content/for-institution-and-type/{organisationUnitId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/simple").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/thesis-library/search/wordcloud/{queryType}").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
+                .requestMatchers(HttpMethod.PATCH,
+                    "/api/registry-book/cancel-attendance").permitAll()
 
                 // COOKIES
                 .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()

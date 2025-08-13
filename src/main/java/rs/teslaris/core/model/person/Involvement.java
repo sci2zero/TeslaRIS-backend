@@ -37,7 +37,6 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
         @Index(name = "idx_involvement_person_id", columnList = "person_id"),
         @Index(name = "idx_involvement_org_unit_id", columnList = "organisation_unit_id"),
         @Index(name = "idx_involvement_type", columnList = "involvement_type"),
-        // Composite index for the exact filter you use in your loop:
         @Index(
             name = "idx_involvement_type_orgunit",
             columnList = "involvement_type, organisation_unit_id"

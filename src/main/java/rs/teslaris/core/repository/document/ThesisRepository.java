@@ -24,8 +24,9 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
 
     @Query(value = "SELECT * FROM theses t WHERE " +
         "t.is_archived = TRUE AND " +
-        "t.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
-    Page<Thesis> findAllModifiedInLast24Hours(Pageable pageable);
+        "(:allTime = TRUE OR t.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
+        "t.approve_status = 1", nativeQuery = true)
+    Page<Thesis> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
 
     @Query("SELECT t FROM Thesis t WHERE t.isOnPublicReview = true")
     List<Thesis> findAllOnPublicReview();

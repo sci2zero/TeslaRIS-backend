@@ -141,6 +141,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Value("${frontend.application.address}")
     private String clientAppAddress;
 
+    @Value("${registration.allow-creation-of-researchers}")
+    private boolean allowNewResearcherCreation;
+
 
     @Override
     protected JpaRepository<User, Integer> getEntityRepository() {
@@ -326,6 +329,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    public boolean isNewResearcherCreationAllowed() {
+        return allowNewResearcherCreation;
+    }
+
+    @Override
     @Transactional
     public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
         validateEmailUniqueness(registrationRequest.getEmail());
@@ -334,15 +342,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
-        Person person;
-        if (registrationRequest.getPersonId() != null) {
+        Person person = null;
+        if (Objects.nonNull(registrationRequest.getPersonId())) {
             if (userRepository.personAlreadyBinded(registrationRequest.getPersonId())) {
                 throw new PersonReferenceConstraintViolationException(
                     "Person you have selected is already assigned to a user.");
             }
 
             person = personService.findOne(registrationRequest.getPersonId());
-        } else {
+        } else if (allowNewResearcherCreation) {
             BasicPersonDTO basicPersonDTO = new BasicPersonDTO();
             PersonNameDTO personNameDTO = new PersonNameDTO();
             personNameDTO.setFirstname(registrationRequest.getFirstName());
@@ -353,6 +361,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
             person = personService.createPersonWithBasicInfo(basicPersonDTO, true);
         }
+
+        if (Objects.isNull(person)) {
+            throw new PersonReferenceConstraintViolationException(
+                "Creation of new researchers upon user registration is disallowed.");
+        }
+
         var involvement = personService.getLatestResearcherInvolvement(person);
 
         var newUser =

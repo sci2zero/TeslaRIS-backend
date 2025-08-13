@@ -11,7 +11,7 @@ import rs.teslaris.core.model.document.Dataset;
 public interface DatasetRepository extends JpaRepository<Dataset, Integer> {
 
     @Query(value = "SELECT * FROM datasets d WHERE " +
-        "d.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
+        "(:allTime = TRUE OR d.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
         "d.approve_status = 1", nativeQuery = true)
-    Page<Dataset> findAllModifiedInLast24Hours(Pageable pageable);
+    Page<Dataset> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
 }
