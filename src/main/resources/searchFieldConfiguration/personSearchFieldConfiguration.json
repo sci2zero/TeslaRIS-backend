@@ -4,6 +4,7 @@
       "fieldName": "name",
       "displayName": {
         "sr": "Ime i prezime",
+        "sr-cyr": "Име и презиме",
         "en": "Name and surname"
       },
       "type": "text",
@@ -13,6 +14,7 @@
       "fieldName": "biography_sr",
       "displayName": {
         "sr": "Biografija na srpskom",
+        "sr-cyr": "Биографија на српском",
         "en": "Serbian biography"
       },
       "type": "text",
@@ -22,6 +24,7 @@
       "fieldName": "biography_other",
       "displayName": {
         "sr": "Biografija na stranom jeziku",
+        "sr-cyr": "Биографија на страном језику",
         "en": "Foreign language boigraphy"
       },
       "type": "text",
@@ -31,6 +34,7 @@
       "fieldName": "employments_sr",
       "displayName": {
         "sr": "Institucije zaposlenja na srpskom",
+        "sr-cyr": "Институције запослења на српском",
         "en": "Serbian employment institutions"
       },
       "type": "text",
@@ -40,6 +44,7 @@
       "fieldName": "employments_other",
       "displayName": {
         "sr": "Institucije zaposlenja na stranom jeziku",
+        "sr-cyr": "Институције запослења на страном језику",
         "en": "Employment institutions on foreign language"
       },
       "type": "text",
@@ -49,6 +54,7 @@
       "fieldName": "orcid",
       "displayName": {
         "sr": "ORCID ID",
+        "sr-cyr": "ORCID ID",
         "en": "ORCID ID"
       },
       "type": "text",
@@ -58,6 +64,7 @@
       "fieldName": "scopus_author_id",
       "displayName": {
         "sr": "Scopus Author ID",
+        "sr-cyr": "Scopus Author ID",
         "en": "Scopus Author ID"
       },
       "type": "text",
@@ -67,6 +74,7 @@
       "fieldName": "keywords",
       "displayName": {
         "sr": "Ključne reči",
+        "sr-cyr": "Кључне речи",
         "en": "Keywords"
       },
       "type": "text",

@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 
@@ -25,7 +26,7 @@ import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Patent implements PatentConvertable {
+public class Patent implements PatentConvertable, HasOldId {
 
     @XmlElement(name = "Keyword")
     List<String> keywords;
@@ -41,6 +42,9 @@ public class Patent implements PatentConvertable {
 
     @XmlElement(name = "ApprovalDate")
     private Date approvalDate;
+
+    @XmlElement(name = "PublicationDate")
+    private Date publicationDate;
 
     @XmlElement(name = "PatentNumber")
     private String patentNumber;

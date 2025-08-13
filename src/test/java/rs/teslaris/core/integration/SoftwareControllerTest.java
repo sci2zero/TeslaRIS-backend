@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
@@ -97,6 +98,7 @@ public class SoftwareControllerTest extends BaseTest {
     @Test
     @Order(Integer.MAX_VALUE)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    @Transactional
     public void testDeleteSoftware() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 

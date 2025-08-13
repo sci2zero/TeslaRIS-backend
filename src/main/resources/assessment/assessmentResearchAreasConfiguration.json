@@ -3,6 +3,7 @@
     {
       "name": {
         "sr": "Prirodno-matematičke i medicinske nauke",
+        "sr-cyr": "Природно-метематичке и медицинске науке",
         "en": "Natural, Mathematical and Medical Sciences"
       },
       "code": "NATURAL"
@@ -10,6 +11,7 @@
     {
       "name": {
         "sr": "Tehničko-tehnološke i biotehničke nauke",
+        "sr-cyr": "Техничко-технолошке и биотехничке науке",
         "en": "Technical, Technological and Biotechnical Sciences"
       },
       "code": "TECHNICAL"
@@ -17,6 +19,7 @@
     {
       "name": {
         "sr": "Društvene nauke",
+        "sr-cyr": "Друштвене науке",
         "en": "Social Sciences"
       },
       "code": "SOCIAL"
@@ -24,6 +27,7 @@
     {
       "name": {
         "sr": "Humanističke nauke",
+        "sr-cyr": "Хуманистичке науке",
         "en": "Humanities"
       },
       "code": "HUMANITIES"

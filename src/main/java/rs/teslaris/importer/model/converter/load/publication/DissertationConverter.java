@@ -42,11 +42,16 @@ public class DissertationConverter extends DocumentConverter
 
         dto.setThesisType(ThesisType.PHD);
 
-        if (record.getLanguage().equals("sr-Cyrl")) {
+        if (Objects.nonNull(record.getLanguage()) && record.getLanguage().equals("sr-Cyrl")) {
             record.setLanguage("SR-CYR");
         }
         dto.setWritingLanguageTagId(
             languageTagService.findLanguageTagByValue(record.getLanguage()).getId());
+
+        if (Objects.isNull(record.getPublishers()) || record.getPublishers().isEmpty()) {
+            log.error("Thesis with ID {} has no specified publishers. Skipping.", dto.getOldId());
+            return dto;
+        }
 
         var publisher = record.getPublishers().getFirst();
         if (Objects.nonNull(publisher)) {

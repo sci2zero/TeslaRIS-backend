@@ -182,6 +182,11 @@ public class DbInitializer implements ApplicationRunner {
         var harvestIdfMetadata = new Privilege("HARVEST_IDF_METADATA");
         var addSubUnit = new Privilege("ADD_SUB_UNIT");
         var deleteOrganisationUnit = new Privilege("DELETE_ORGANISATION_UNITS");
+        var saveOUPageConfiguration = new Privilege("SAVE_OU_PAGE_CONFIGURATION");
+        var migrateAllEntities = new Privilege("MIGRATE_ALL_ENTITIES");
+        var migrateInstitutionEntities = new Privilege("MIGRATE_INSTITUTION_ENTITIES");
+        var performOaiMigration = new Privilege("PERFORM_OAI_MIGRATION");
+        var setDefaultContent = new Privilege("SET_DEFAULT_CONTENT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -212,7 +217,8 @@ public class DbInitializer implements ApplicationRunner {
                 generateThesisLibraryBackup, generateOutputBackup, performHealthCheck, addSubUnit,
                 generateNewEmployeePassword, createConference, createPublisher, harvestIdfMetadata,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
-                deleteOrganisationUnit));
+                deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
+                migrateInstitutionEntities, performOaiMigration, setDefaultContent));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -242,7 +248,8 @@ public class DbInitializer implements ApplicationRunner {
                 performMigration, createJournal, generateThesisLibraryBackup, generateOutputBackup,
                 performHealthCheck, deleteUserAccount, createConference, createPublisher,
                 saveLoadingConfiguration, performLoading, editExternalIndicatorConfiguration,
-                harvestIdfMetadata, addSubUnit, deleteOrganisationUnit
+                harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
+                migrateAllEntities, performOaiMigration, setDefaultContent
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -261,8 +268,8 @@ public class DbInitializer implements ApplicationRunner {
                     createConference, saveLoadingConfiguration, performLoading,
                     editExternalIndicatorConfiguration, harvestIdfMetadata, addSubUnit,
                     mergePersonPublications, mergePersonMetadata, mergeOUMetadata,
-                    mergeOUEmployments, mergeDocumentsMetadata, deletePerson,
-                    deleteOrganisationUnit)));
+                    mergeOUEmployments, mergeDocumentsMetadata, deletePerson, setDefaultContent,
+                    deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -280,7 +287,7 @@ public class DbInitializer implements ApplicationRunner {
         var institutionalLibrarianAuthority =
             new Authority(UserRole.INSTITUTIONAL_LIBRARIAN.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
-                putThesisOnPublicReview, editDocumentFiles, archiveThesis,
+                putThesisOnPublicReview, editDocumentFiles, archiveThesis, setDefaultContent,
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata
             )));
 
@@ -370,7 +377,7 @@ public class DbInitializer implements ApplicationRunner {
         // ADMIN USER
         var adminUser =
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
-                "Markovic", false, false, serbianLanguage, englishLanguage, adminAuthority, null,
+                "Markovic", false, false, serbianTag, englishTag, adminAuthority, null,
                 null, null,
                 UserNotificationPeriod.DAILY);
         userRepository.save(adminUser);
@@ -417,8 +424,7 @@ public class DbInitializer implements ApplicationRunner {
         if (Arrays.stream(environment.getActiveProfiles())
             .anyMatch(profile -> profile.equalsIgnoreCase("test"))) {
             testingDataInitializer.initializeIntegrationTestingData(serbianTag, serbianLanguage,
-                englishTag,
-                germanLanguage, researchArea3, researcherAuthority, commissionAuthority,
+                englishTag, germanTag, researchArea3, researcherAuthority, commissionAuthority,
                 viceDeanForScienceAuthority, institutionalEditorAuthority,
                 institutionalLibrarianAuthority, headOfLibraryAuthority,
                 promotionRegistryAdministratorAuthority, commissions.a, commissions.b);

@@ -161,6 +161,33 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Date, name = "public_review_start_dates", store = true)
     private List<LocalDate> publicReviewStartDates = new ArrayList<>();
 
+    @Field(type = FieldType.Keyword, name = "scientific_field_sr", store = true)
+    private String scientificFieldSr;
+
+    @Field(type = FieldType.Keyword, name = "scientific_field_other", store = true)
+    private String scientificFieldOther;
+
+    @Field(type = FieldType.Date, name = "latest_public_review_start_date", store = true)
+    private LocalDate latestPublicReviewStartDate;
+
+    @Field(type = FieldType.Boolean, name = "is_on_public_review", store = true)
+    private Boolean isOnPublicReview;
+
+    @Field(type = FieldType.Boolean, name = "is_public_review_completed", store = true)
+    private Boolean isPublicReviewCompleted;
+
+    @Field(type = FieldType.Integer, name = "thesis_institution_id", store = true)
+    private Integer thesisInstitutionId;
+
+    @Field(type = FieldType.Text, name = "thesis_institution_name_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
+    private String thesisInstitutionNameSr;
+
+    @Field(type = FieldType.Text, name = "thesis_institution_name_other", store = true, analyzer = "english", searchAnalyzer = "english")
+    private String thesisInstitutionNameOther;
+
+    @Field(type = FieldType.Text, name = "thesis_author_name", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String thesisAuthorName;
+
     @Field(type = FieldType.Boolean, name = "is_open_access", store = true)
     private Boolean isOpenAccess;
 

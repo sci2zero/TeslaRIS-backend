@@ -39,6 +39,8 @@ public interface JournalService {
 
     Journal findJournalById(Integer journalId);
 
+    Journal findRaw(Integer journalId);
+
     Optional<Journal> tryToFindById(Integer journalId);
 
     Journal findJournalByOldId(Integer journalId);
@@ -62,4 +64,8 @@ public interface JournalService {
     void reindexJournalVolatileInformation(Integer journalId);
 
     boolean isIdentifierInUse(String identifier, Integer publicationSeriesId);
+
+    void addOldId(Integer id, Integer oldId);
+
+    void save(Journal journal);
 }

@@ -74,7 +74,7 @@ import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
@@ -112,7 +112,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final UserAccountActivationRepository userAccountActivationRepository;
 
-    private final LanguageService languageService;
+    private final LanguageTagService languageTagService;
 
     private final PersonService personService;
 
@@ -330,8 +330,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new User(registrationRequest.getEmail(),
                 passwordEncoder.encode(registrationRequest.getPassword()), "",
                 person.getName().getFirstname(), person.getName().getLastname(), true, false,
-                languageService.findOne(registrationRequest.getPreferredLanguageId()),
-                languageService.findOne(registrationRequest.getPreferredLanguageId()), authority,
+                languageTagService.findOne(registrationRequest.getPreferredLanguageId()),
+                languageTagService.findOne(registrationRequest.getPreferredLanguageId()), authority,
                 person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
                 null, UserNotificationPeriod.NEVER);
         var savedUser = userRepository.save(newUser);
@@ -341,7 +341,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        var language = savedUser.getPreferredUILanguage().getLanguageCode().toLowerCase();
+        var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
         var activationLink =
             clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
                 "/activate-account/" + activationToken.getActivationToken();
@@ -420,8 +420,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             surname.trim(),
             true,
             false,
-            languageService.findOne(preferredLanguageId),
-            languageService.findOne(preferredLanguageId),
+            languageTagService.findOne(preferredLanguageId),
+            languageTagService.findOne(preferredLanguageId),
             authority,
             null,
             organisationUnit,
@@ -436,7 +436,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 
-        var language = savedUser.getPreferredUILanguage().getLanguageCode().toLowerCase();
+        var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
         String activationLink =
             generateActivationLink(language, activationToken.getActivationToken());
 
@@ -527,8 +527,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     private void updatePreferredLanguages(User user, UserUpdateRequestDTO dto) {
-        var uiLang = languageService.findOne(dto.getPreferredUILanguageId());
-        var refLang = languageService.findOne(dto.getPreferredReferenceCataloguingLanguageId());
+        var uiLang = languageTagService.findOne(dto.getPreferredUILanguageTagId());
+        var refLang =
+            languageTagService.findOne(dto.getPreferredReferenceCataloguingLanguageTagId());
         user.setPreferredUILanguage(uiLang);
         user.setPreferredReferenceCataloguingLanguage(refLang);
     }
@@ -544,7 +545,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         emailUpdateRequest.setUser(user);
         emailUpdateRequestRepository.save(emailUpdateRequest);
 
-        var languageCode = user.getPreferredUILanguage().getLanguageCode().toLowerCase();
+        var languageCode = user.getPreferredUILanguage().getLanguageTag().toLowerCase();
         var confirmationLink = clientAppAddress +
             (clientAppAddress.endsWith("/") ? languageCode : "/" + languageCode) +
             "/update-email/" + emailUpdateRequest.getEmailUpdateToken();
@@ -615,7 +616,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             var user = (User) loadUserByUsername(userEmail);
             tokenUtil.revokeToken(user.getId());
             var resetToken = UUID.randomUUID().toString();
-            var language = user.getPreferredUILanguage().getLanguageCode().toLowerCase();
+            var language = user.getPreferredUILanguage().getLanguageTag().toLowerCase();
 
             String resetLink =
                 clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
@@ -624,13 +625,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "resetPassword.mailSubject",
                 new Object[] {},
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
             String emailBody = messageSource.getMessage(
                 "resetPassword.mailBody",
                 new Object[] {resetLink},
                 Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageCode().toLowerCase())
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
 
             emailUtil.sendSimpleEmail(user.getEmail(), emailSubject, emailBody);
@@ -786,7 +787,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
 
-        var language = savedUser.getPreferredUILanguage().getLanguageCode().toLowerCase();
+        var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
 
         var subject = messageSource.getMessage(
             "adminPasswordReset.mailSubject",
@@ -843,9 +844,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         StringUtil.removeTrailingDelimiters(orgUnitNameSr, orgUnitNameOther);
         index.setOrganisationUnitNameSr(
-            orgUnitNameSr.length() > 0 ? orgUnitNameSr.toString() : orgUnitNameOther.toString());
+            !orgUnitNameSr.isEmpty() ? orgUnitNameSr.toString() : orgUnitNameOther.toString());
         index.setOrganisationUnitNameOther(
-            orgUnitNameOther.length() > 0 ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
+            !orgUnitNameOther.isEmpty() ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
     }
 
     private void indexUser(User user, UserAccountIndex index) {

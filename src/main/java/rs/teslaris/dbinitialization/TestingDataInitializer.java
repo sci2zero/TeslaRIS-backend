@@ -99,8 +99,12 @@ import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.thesislibrary.model.PageContentType;
+import rs.teslaris.thesislibrary.model.PageType;
 import rs.teslaris.thesislibrary.model.Promotion;
+import rs.teslaris.thesislibrary.model.PublicReviewPageContent;
 import rs.teslaris.thesislibrary.repository.PromotionRepository;
+import rs.teslaris.thesislibrary.repository.PublicReviewPageContentRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -166,9 +170,11 @@ public class TestingDataInitializer {
 
     private final PromotionRepository promotionRepository;
 
+    private final PublicReviewPageContentRepository publicReviewPageContentRepository;
+
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
-                                                 LanguageTag englishTag, Language germanLanguage,
+                                                 LanguageTag englishTag, LanguageTag germanTag,
                                                  ResearchArea researchArea3,
                                                  Authority researcherAuthority,
                                                  Authority commissionAuthority,
@@ -187,7 +193,7 @@ public class TestingDataInitializer {
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666"), new HashSet<>(), new HashSet<>());
         var person1 = new Person();
-        person1.setOldId(3);
+        person1.getOldIds().add(3);
         person1.setName(
             new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         person1.setApproveStatus(ApproveStatus.APPROVED);
@@ -200,14 +206,14 @@ public class TestingDataInitializer {
 
         var researcherUser =
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
-                "Dragan", "Ivanovic", false, false, serbianLanguage, serbianLanguage,
+                "Dragan", "Ivanovic", false, false, serbianTag, serbianTag,
                 researcherAuthority, person1,
                 null, null, UserNotificationPeriod.DAILY);
         userRepository.save(researcherUser);
 
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
-        dummyOU.setOldId(2);
+        dummyOU.getOldIds().add(2);
         dummyOU.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
@@ -467,7 +473,7 @@ public class TestingDataInitializer {
 
         var researcherUser2 =
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
-                "Schöpfel", "Joachim", false, false, germanLanguage, germanLanguage,
+                "Schöpfel", "Joachim", false, false, germanTag, germanTag,
                 researcherAuthority, person2,
                 null, null, UserNotificationPeriod.WEEKLY);
         userRepository.save(researcherUser2);
@@ -758,7 +764,7 @@ public class TestingDataInitializer {
         var commissionUser =
             new User("commission@commission.com", passwordEncoder.encode("commission"),
                 "note note note",
-                "FTN", "", false, false, serbianLanguage, serbianLanguage, commissionAuthority,
+                "FTN", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
                 dummyOU, commission5, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser);
@@ -766,7 +772,7 @@ public class TestingDataInitializer {
         var commissionUser2 =
             new User("commission2@commission.com", passwordEncoder.encode("commission2"),
                 "note note note",
-                "PMF", "", false, false, serbianLanguage, serbianLanguage, commissionAuthority,
+                "PMF", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
                 dummyOU2, commission6, UserNotificationPeriod.WEEKLY);
         userRepository.save(commissionUser2);
@@ -779,14 +785,14 @@ public class TestingDataInitializer {
         var viceDeanUser =
             new User("vicedean@vicedean.com", passwordEncoder.encode("vicedean"),
                 "note note note",
-                "Nikola", "Nikolic", false, false, serbianLanguage, serbianLanguage,
+                "Nikola", "Nikolic", false, false, serbianTag, serbianTag,
                 viceDeanForScienceAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
 
         var institutionalEditorUser =
             new User("editor@editor.com", passwordEncoder.encode("editor"), "note note note",
-                "Nikola", "Markovic", false, false, serbianLanguage, serbianLanguage,
+                "Nikola", "Markovic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
@@ -794,7 +800,7 @@ public class TestingDataInitializer {
         var institutionalLibrarianUser =
             new User("librarian@librarian.com", passwordEncoder.encode("librarian"),
                 "note note note",
-                "Mirka", "Maric", false, false, serbianLanguage, serbianLanguage,
+                "Mirka", "Maric", false, false, serbianTag, serbianTag,
                 institutionalLibrarianAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
@@ -802,7 +808,7 @@ public class TestingDataInitializer {
         var headOfLibraryUser =
             new User("head_of_library@library.com", passwordEncoder.encode("head_of_library"),
                 "note note note",
-                "Djordje", "Perovic", false, false, serbianLanguage, serbianLanguage,
+                "Djordje", "Perovic", false, false, serbianTag, serbianTag,
                 headOfLibraryAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.WEEKLY);
@@ -810,14 +816,14 @@ public class TestingDataInitializer {
         var promotionRegistryAdminUser =
             new User("promotion@registry.com", passwordEncoder.encode("promotion_registry"),
                 "note note note",
-                "Davor", "Kontić", false, false, serbianLanguage, serbianLanguage,
+                "Davor", "Kontić", false, false, serbianTag, serbianTag,
                 promotionRegistryAdminAuthority,
                 null,
                 dummyOU, null, UserNotificationPeriod.DAILY);
 
         var institutionalEditorUser2 =
             new User("editor2@editor.com", passwordEncoder.encode("editor2"), "note note note",
-                "Marko", "Nikolic", false, false, serbianLanguage, serbianLanguage,
+                "Marko", "Nikolic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
                 dummyOU2, null, UserNotificationPeriod.WEEKLY);
@@ -933,5 +939,97 @@ public class TestingDataInitializer {
 
         yetAnotherJournal.addContribution(publicationSeriesContribution2);
         journalRepository.save(yetAnotherJournal);
+
+        var thesis5 = new Thesis();
+        thesis5.setApproveStatus(ApproveStatus.APPROVED);
+        thesis5.setThesisType(ThesisType.PHD);
+        thesis5.setDocumentDate("2024");
+        thesis5.setOrganisationUnit(dummyOU);
+        thesis5.setTitle(
+            Set.of(new MultiLingualContent(serbianTag,
+                "Doktorska disertacija, zavrsen uvid, neodbranjena", 1)));
+        thesis5.setLanguage(serbianLanguage);
+        thesis5.getPublicReviewStartDates().add(LocalDate.of(2024, 3, 16));
+        thesis5.setPublicReviewCompleted(true);
+
+        var thesisContribution3 = new PersonDocumentContribution();
+        thesisContribution3.setPerson(person2);
+        thesisContribution3.setContributionType(DocumentContributionType.AUTHOR);
+        thesisContribution3.setIsMainContributor(true);
+        thesisContribution3.setIsCorrespondingContributor(true);
+        thesisContribution3.setOrderNumber(1);
+        thesisContribution3.setDocument(thesis5);
+        thesisContribution3.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution3.setInstitutions(Set.of(dummyOU));
+        thesisContribution3.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(),
+                new PersonName(person2.getName().getFirstname(), "",
+                    person2.getName().getLastname(), null, null),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        thesis5.getContributors().add(thesisContribution3);
+        thesisRepository.save(thesis5);
+
+        var thesis6 = new Thesis();
+        thesis6.setApproveStatus(ApproveStatus.APPROVED);
+        thesis6.setThesisType(ThesisType.PHD);
+        thesis6.setDocumentDate("2024");
+        thesis6.setOrganisationUnit(dummyOU);
+        thesis6.setTitle(
+            Set.of(new MultiLingualContent(serbianTag,
+                "Doktorska disertacija, zavrsen uvid, odbranjena", 1)));
+        thesis6.setLanguage(serbianLanguage);
+        thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
+        thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
+        thesis6.setPublicReviewCompleted(true);
+        thesis6.getOldIds().add(998);
+
+        var thesisContribution4 = new PersonDocumentContribution();
+        thesisContribution4.setPerson(person3);
+        thesisContribution4.setContributionType(DocumentContributionType.AUTHOR);
+        thesisContribution4.setIsMainContributor(true);
+        thesisContribution4.setIsCorrespondingContributor(true);
+        thesisContribution4.setOrderNumber(1);
+        thesisContribution4.setDocument(thesis6);
+        thesisContribution4.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution4.setInstitutions(Set.of(dummyOU));
+        thesisContribution4.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(),
+                new PersonName(person3.getName().getFirstname(), "",
+                    person3.getName().getLastname(), null, null),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        thesis6.getContributors().add(thesisContribution4);
+        thesisRepository.save(thesis6);
+
+        var pageContent1 = new PublicReviewPageContent();
+        pageContent1.setContentType(PageContentType.IMPORTANT_NOTE);
+        pageContent1.setPageType(PageType.CURRENT);
+        pageContent1.setThesisTypes(Set.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT));
+        pageContent1.setInstitution(dummyOU);
+        pageContent1.setContent(new HashSet<>(List.of(new MultiLingualContent(serbianTag,
+            "Primedbe na doktorsku disertaciju dostaviti u štampanom obliku na adresu Univerzitet u Novom Sadu, Dr Zorana Đinđića 1. Anonimne primedbe se neće uzimati u razmatranje.",
+            1))));
+
+        var pageContent2 = new PublicReviewPageContent();
+        pageContent2.setContentType(PageContentType.NOTE);
+        pageContent2.setPageType(PageType.ARCHIVE);
+        pageContent2.setThesisTypes(Set.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT));
+        pageContent2.setInstitution(dummyOU);
+        pageContent2.setContent(new HashSet<>(List.of(new MultiLingualContent(serbianTag,
+            "Za elektronske verzije doktorskih disertacija obratiti se dr Mirjani Brković, Centralna biblioteka UNS-a, telefon 485-2040.",
+            1))));
+
+        var pageContent3 = new PublicReviewPageContent();
+        pageContent3.setContentType(PageContentType.TEXT);
+        pageContent3.setPageType(PageType.ALL);
+        pageContent3.setThesisTypes(Set.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT));
+        pageContent3.setInstitution(dummyOU);
+        pageContent3.setContent(new HashSet<>(List.of(new MultiLingualContent(serbianTag,
+            "Štampana verzija doktorske disertacije dostupna je u našoj biblioteci.",
+            1))));
+
+        publicReviewPageContentRepository.saveAll(
+            List.of(pageContent1, pageContent2, pageContent3));
     }
 }

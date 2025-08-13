@@ -3,140 +3,173 @@
     "pointRules": {
       "generalPointRule": {
         "sr": "Za rad kategorije {0} u naučnoj oblasti ''{1}'' dodeljuje se sledeći broj bodova: {2}",
+        "sr-cyr": "За рад категорије {0} у научној области ''{1}'' додељује се следећи број бодова: {2}",
         "en": "For a paper of category {0} in the scientific field ''{1}'', the following number of points is awarded: {2}"
       }
     },
     "scalingRules": {
       "theoreticalResults": {
         "sr": "Sa punim brojem poena priznaće se teorijski rezultati sa do tri autora, a u slučaju većeg broja autora, broj poena određuje se po formuli M/(1+0,2(n-3)), n>3 ('n' je broj autora, a M označava vrednost rezultata).",
+        "sr-cyr": "Са пуним бројем поена признаће се теоријски резултати са до три аутора, а у случају већег броја аутора, број поена одређује се по формули M/(1+0,2(n-3)), n>3 ('n' је број аутора, а M означава вредност резултата).",
         "en": "Full points will be awarded for theoretical results with up to three authors. If there are more than three authors, points are calculated using the formula M/(1+0.2(n-3)), n>3 ('n' represents the number of authors, and M denotes the result value)."
       },
       "simulationResults": {
         "sr": "Sa punim brojem poena priznaće se rad sa do pet koautora kada je reč o numeričkim simulacijama, kao i prikupljanju i analizi primarnih podataka. Ukoliko je broj autora veći od pet, broj poena za naučno ostvarenje određuje se po formuli M/(1+0,2(n-5)), n>5.",
+        "sr-cyr": "Са пуним бројем поена признаће се рад са до пет коаутора када је реч о нумеричким симулацијама, као и прикупљању и анализи примарних података. Уколико је број аутора већи од пет, број поена за научно остварење одређује се по формули M/(1+0,2(n-5)), n>5.",
         "en": "Full points will be awarded for papers with up to five co-authors in the case of numerical simulations, as well as data collection and primary data analysis. If there are more than five authors, points are calculated using the formula M/(1+0.2(n-5)), n>5."
       },
       "experimentalOrM80Results": {
         "sr": "Kada su u pitanju eksperimentalni radovi ili oni kategorije M80, sa punim brojem poena priznaće se radovi do sedam koautora. Ukoliko je broj autora veći od sedam, broj poena za naučno ostvarenje određuje se po formuli M/(1+0,2(n-7)), n>7.",
+        "sr-cyr": "Када су у питању експериментални радови или они категорије M80, са пуним бројем поена признаће се радови до седам коаутора. Уколико је број аутора већи од седам, број поена за научно остварење одређује се по формули M/(1+0,2(n-7)), n>7.",
         "en": "For experimental papers or those of category M80, full points will be awarded for papers with up to seven co-authors. If there are more than seven authors, points are calculated using the formula M/(1+0.2(n-7)), n>7."
       },
       "m21APlusOrM90Results": {
         "sr": "Kada su u pitanju radovi kategorije M21a+ ili M90, sa punim brojem poena priznaće se radovi do deset koautora. Ukoliko je broj autora veći od deset, broj poena za naučno ostvarenje određuje se po formuli M/(1+0,2(n-10)), n>10.",
+        "sr-cyr": "Када су у питању радови категорије M21a+ или M90, са пуним бројем поена признаће се радови до десет коаутора. Уколико је број аутора већи од десет, број поена за научно остварење одређује се по формули M/(1+0,2(n-10)), n>10.",
         "en": "For papers of category M21a+ or M90, full points will be awarded for papers with up to ten co-authors. If there are more than ten authors, points are calculated using the formula M/(1+0.2(n-10)), n>10."
       },
       "m10OrM40Results": {
         "sr": "Publikacije kategorija M10 i M40 ne podležu skaliranju poena.",
+        "sr-cyr": "Публикације категорија M10 и M40 не подлежу скалирању поена.",
         "en": "Publications of categories M10 and M40 are not subject to point scaling."
       }
     },
     "journalClassificationRules": {
       "generalAssessmentRulePrefix": {
         "sr": "Rad publikovan u časopisu dobija najpovoljniju kategoriju za godinu publikovanja iz perioda od tri godine (dve godine pre publikovanja i godine publikovanja) ako u tom periodu ima bar u jednoj godini dvogodišnji (IF2) ili petogodišnji (IF5) Impakt Faktor.",
+        "sr-cyr": "Рад публикован у часопису добија најповољнију категорију за годину публиковања из периода од три године (две године пре публиковања и године публиковања) ако у том периоду има бар у једној години двогодишњи (IF2) или петогодишњи (IF5) Импакт Фактор.",
         "en": "A paper published in a journal receives the most favorable category for the year of publication from a three-year period (two years before publication and the year of publication) if, during that period, it has at least one year with either a two-year (IF2) or five-year (IF5) Impact Factor."
       },
       "M21APlusIF2": {
         "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF2 рангиран у својој области наука међу првих 5% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M21APlusIF5": {
         "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF5 рангиран у својој области наука међу првих 5% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCR IF5 ({0}) in {1} for category {2}."
       },
       "M21APlusJCI": {
         "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCI рангиран у својој области наука међу првих 5% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked in the top 5% of journals in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "M21AIF2": {
         "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF2 рангиран у својој области наука од 5% до 15% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 5% and 15% in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M21AIF5": {
         "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF5 рангиран у својој области наука од 5% до 15% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 5% and 15% in its scientific field according to JCR IF5 ({0}) in {1} for category {2}."
       },
       "M21AJCI": {
         "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 5% do 15% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCI рангиран у својој области наука од 5% до 15% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 5% and 15% in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "M21IF2": {
         "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF2 рангиран у својој области наука од 15% до 35% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 15% and 35% in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M21IF5": {
         "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF5 рангиран у својој области наука од 15% до 35% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 15% and 35% in its scientific field according to IF5 ({0}) in {1} for category {2}."
       },
       "M21JCI": {
         "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 15% do 35% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCI рангиран у својој области наука од 15% до 35% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 15% and 35% in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "M22IF2": {
         "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF2 рангиран у својој области наука од 35% до 75% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 35% and 75% in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M22IF5": {
         "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF5 рангиран у својој области наука од 35% до 75% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 35% and 75% in its scientific field according to JCR IF5 ({0}) in {1} for category {2}."
       },
       "M22JCI": {
         "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 35% do 75% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCI рангиран у својој области наука од 35% до 75% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 35% and 75% in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "M22SJR": {
         "sr": "Časopis je u oblasti društvenih i humanističkih nauka referisan na SJR-u u Q1 u {0}. godini za oblast {1}.",
+        "sr-cyr": "Часопис је у области друштвених и хуманистичких наука реферисан на SJR-у у Q1 у {0}. години за област {1}.",
         "en": "The journal is referenced in SJR Q1 in the field of social and humanities sciences in {0} for category {1}."
       },
       "M23IF2": {
         "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF2 рангиран у својој области наука од 75% до 100% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 75% and 100% in its scientific field according to JCR IF2 ({0}) in {1} for category {2}."
       },
       "M23IF5": {
         "sr": "Časopis je prema JCR IF5 rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCR IF5 рангиран у својој области наука од 75% до 100% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 75% and 100% in its scientific field according to JCR IF5 ({0}) in {1} for category {2}."
       },
       "M23JCI": {
         "sr": "Časopis je prema JCI rangiran u svojoj oblasti nauka od 75% do 100% časopisa ({0}) u {1}. godini za oblast {2}.",
+        "sr-cyr": "Часопис је према JCI рангиран у својој области наука од 75% до 100% часописа ({0}) у {1}. години за област {2}.",
         "en": "The journal is ranked between 75% and 100% in its scientific field according to JCI ({0}) in {1} for category {2}."
       },
       "m23SJR": {
         "sr": "Časopis je u oblasti društvenih i humanističkih nauka referisan na SJR-u u Q2 u {0}. godini za oblast {1}.",
+        "sr-cyr": "Часопис је у области друштвених и хуманистичких наука реферисан на SJR-у у Q2 у {0}. години за област {1}.",
         "en": "The journal is referenced in SJR Q2 in the field of social and humanities sciences in {0} for category {1}."
       },
       "m23MKS": {
         "sr": "Časopis je u oblasti humanističkih nauka, sa liste MKS – I kategorija u {0}. godini za oblast {1}.",
+        "sr-cyr": "Часопис је у области хуманистичких наука, са листе MKS – I категорија у Q2 у {0}. години за област {1}.",
         "en": "The journal is in the field of humanities and is listed in MKS – Category I in {0} for category {1}."
       },
       "m23e": {
         "sr": "Časopis je iz oblasti društvenih i humanističkih nauka i nalazi se na listi ERIH Plus, na predlog matičnog naučnog odbora u {0}. godini za oblast {1}.",
+        "sr-cyr": "Часопис је из области друштвених и хуманистичких наука и налази се на листи ERIH Plus, на предлог матичног научног одбора у {0}. години за област {1}.",
         "en": "The journal is in the field of social and humanities sciences and is listed in ERIH Plus, as proposed by the relevant scientific committee in {0} for category {1}."
       },
       "M24PlusSJR": {
         "sr": "Međunarodni časopis je referisan na SJR-u u {0} u {1}. godini za oblast {2}.",
+        "sr-cyr": "Међународни часопис је реферисан на SJR-у у {0} у {1}. години за област {2}.",
         "en": "The international journal is referenced in SJR in {0} in {1} for category {2}."
       },
       "M24PlusJCI": {
         "sr": "Časopis se nalazi na JCR-u ali bez IF2, IF5 i JCI u {0}. godini za oblast {1}.",
+        "sr-cyr": "Часопис се налази на JCR-у али без IF2, IF5 и JCI у {0}. години за област {1}.",
         "en": "The journal is listed in JCR but without IF2, IF5, and JCI in {0} for category {1}."
       },
       "M24MNO": {
         "sr": "Časopis domaćeg izdavača se prema pokazateljima godišnjeg postupka analize naučnih časopisa domaćih izdavača u okviru odgovarajuće liste nalazi u prvih 10% (15% u oblasti društvenih i humanističkih nauka) časopisa koji nisu već rangirani u višim kategorijama ili je na JCR-u bez IF2, IF5 i JCI u {0}. godini za oblast {1}.",
+        "sr-cyr": "Часопис домаћег издавача се према показатељима годишњег поступка анализе научних часописа домаћих издавача у оквиру одговарајуће листе налази у првих 10% (15% у области друштвених и хуманистичких наука) часописа који нису већ рангирани у вишим категоријама или је на JCR-у без IF2, IF5 и JCI у {0}. години за област {1}.",
         "en": "A journal of a domestic publisher, according to the indicators of the annual analysis of domestic publishers' scientific journals, is among the top 10% (15% in the field of social and humanities sciences) of journals that are not already ranked in higher categories or is listed on JCR without IF2, IF5 and JCI in {0} for category {1}."
       },
       "M24SJR": {
         "sr": "Časopis je referisan na SJR-u u Q4 u {0}. godini za oblast {1}.",
+        "sr-cyr": "Часопис је реферисан на SJR-у у Q4 у {0}. години за област {1}.",
         "en": "The journal is referenced in SJR Q4 in {0} for category {1}."
       },
       "MNO": {
         "sr": "Odluka matičnog naučnog odbora (MNO) u {0}. godini za oblast {1}.",
+        "sr-cyr": "Одлука матичног научног одбора (МНО) у {0}. години за област {1}.",
         "en": "Decision of the relevant scientific committee (MNO) in {0} for category {1}."
       },
       "manual": {
         "sr": "Eksplicitno postavljeno od strane komisije na osnovu priloženih indikatora.",
+        "sr-cyr": "Експлицитно постављено од стране комисије на основу приложених индикатора",
         "en": "Explicitly assigned by the committee based on the submitted indicators."
       }
     },
     "eventClassificationRules": {
       "manual": {
         "sr": "Klasifikacija ''{0}'' je eksplicitno postavljena od strane komisije na osnovu priloženih indikatora.",
+        "sr-cyr": "Класификација ''{0}'' је експлицитно постављена од стране комисије на основу приложених индикатора.",
         "en": "Classification ''{0}'' is explicitly assigned by the committee based on the submitted indicators."
       }
     }

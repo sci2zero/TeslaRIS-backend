@@ -51,6 +51,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
 public class JournalServiceTest {
@@ -331,7 +332,7 @@ public class JournalServiceTest {
         // Given
         var journalId = 123;
         var expectedJournal = new Journal();
-        when(journalRepository.findJournalByOldId(journalId)).thenReturn(
+        when(journalRepository.findByOldIdsContains(journalId)).thenReturn(
             Optional.of(expectedJournal));
 
         // When
@@ -345,7 +346,7 @@ public class JournalServiceTest {
     public void shouldReturnNullWhenJournalDoesNotExist() {
         // Given
         var journalId = 123;
-        when(journalRepository.findJournalByOldId(journalId)).thenReturn(Optional.empty());
+        when(journalRepository.findByOldIdsContains(journalId)).thenReturn(Optional.empty());
 
         // When
         var actualJournal = journalService.findJournalByOldId(journalId);
@@ -642,5 +643,35 @@ public class JournalServiceTest {
         verify(journalIndex).setRelatedInstitutionIds(institutionIds.stream().toList());
         verify(journalIndexRepository).save(journalIndex);
         verify(commissionRepository).findCommissionsThatClassifiedJournal(anyInt());
+    }
+
+    @Test
+    void shouldReturnRawJournal() {
+        // Given
+        var entityId = 123;
+        var expected = new Journal();
+        expected.setId(entityId);
+        when(journalRepository.findRaw(entityId)).thenReturn(Optional.of(expected));
+
+        // When
+        var actual = journalService.findRaw(entityId);
+
+        // Then
+        assertEquals(expected, actual);
+        verify(journalRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldThrowsNotFoundExceptionWhenJournalDoesNotExist() {
+        // Given
+        var entityId = 123;
+        when(journalRepository.findRaw(entityId)).thenReturn(Optional.empty());
+
+        // When & Then
+        var exception = assertThrows(NotFoundException.class,
+            () -> journalService.findRaw(entityId));
+
+        assertEquals("Journal with given ID does not exist.", exception.getMessage());
+        verify(journalRepository).findRaw(entityId);
     }
 }

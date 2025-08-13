@@ -1,0 +1,1516 @@
+databaseChangeLog:
+- changeSet:
+    id: 1752968427039-106
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons_prizes
+        constraintName: fk1o40smv08o2rnnjjwo4l2vkg3
+- changeSet:
+    id: 1752968427039-107
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: users
+        constraintName: fkg4yj6sg5ifpf7o24u73qgk7dd
+- changeSet:
+    id: 1752968427039-108
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons_expertises_and_skills
+        constraintName: fkkj01bqt34t46mqoulmkmpxj0x
+- changeSet:
+    id: 1752968427039-109
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: users
+        constraintName: fkkmi90gh4ydj6y7iyxujfrew30
+- changeSet:
+    id: 1752968427039-110
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons_prizes
+        constraintName: fknhfc6lv657bonhu5phk0gxwh5
+- changeSet:
+    id: 1752968427039-111
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons_expertises_and_skills
+        constraintName: fks883lobqt1b1ayw11j438enel
+- changeSet:
+    id: 1752968427039-112
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: theses
+        constraintName: fkteqss5cx71svl8i53x6igatga
+- changeSet:
+    id: 1752968427039-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: external_indicator_configuration_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: institution_id
+            type: INTEGER
+        - column:
+            name: show_altmetric
+            type: BOOLEAN
+        - column:
+            name: show_dimensions
+            type: BOOLEAN
+        - column:
+            name: show_open_citations
+            type: BOOLEAN
+        - column:
+            name: show_plum_x
+            type: BOOLEAN
+        - column:
+            name: show_unpaywall
+            type: BOOLEAN
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(255)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        tableName: external_indicator_configuration
+- changeSet:
+    id: 1752968427039-4
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            name: content_type
+            type: SMALLINT
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: public_review_page_configuration_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: institution_id
+            type: INTEGER
+        - column:
+            name: page_type
+            type: SMALLINT
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(255)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        tableName: public_review_page_configuration
+- changeSet:
+    id: 1752968427039-5
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: user_email_update_requests_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: user_id
+            type: INTEGER
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(255)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: email_update_token
+            type: VARCHAR(255)
+        - column:
+            name: new_email_address
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        tableName: user_email_update_requests
+- changeSet:
+    id: 1752968427039-6
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: public_review_page_content_id
+            type: INTEGER
+        - column:
+            name: thesis_types
+            type: SMALLINT
+        tableName: public_review_page_content_thesis_types
+- changeSet:
+    id: 1752968427039-7
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: public_review_page_configuration_content_pkey
+            name: content_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: public_review_page_configuration_content_pkey
+            name: public_review_page_content_id
+            type: INTEGER
+        tableName: public_review_page_configuration_content
+- changeSet:
+    id: 1752968427039-8
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: theses_alternate_title_pkey
+            name: alternate_title_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: theses_alternate_title_pkey
+            name: thesis_id
+            type: INTEGER
+        tableName: theses_alternate_title
+- changeSet:
+    id: 1752968427039-9
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: theses_extended_abstract_pkey
+            name: extended_abstract_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: theses_extended_abstract_pkey
+            name: thesis_id
+            type: INTEGER
+        tableName: theses_extended_abstract
+- changeSet:
+    id: 1752968427039-10
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: theses_remark_pkey
+            name: remark_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: theses_remark_pkey
+            name: thesis_id
+            type: INTEGER
+        tableName: theses_remark
+- changeSet:
+    id: 1752968427039-11
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: email_update_token
+        indexName: idx_email_update_token
+        tableName: user_email_update_requests
+- changeSet:
+    id: 1752968427039-12
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: password_reset_token
+        indexName: idx_password_reset_token
+        tableName: user_password_reset_requests
+- changeSet:
+    id: 1752968427039-13
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: content_id
+        constraintName: public_review_page_configuration_content_content_id_key
+        tableName: public_review_page_configuration_content
+- changeSet:
+    id: 1752968427039-14
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: alternate_title_id
+        constraintName: theses_alternate_title_alternate_title_id_key
+        tableName: theses_alternate_title
+- changeSet:
+    id: 1752968427039-15
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: extended_abstract_id
+        constraintName: theses_extended_abstract_extended_abstract_id_key
+        tableName: theses_extended_abstract
+- changeSet:
+    id: 1752968427039-16
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: remark_id
+        constraintName: theses_remark_remark_id_key
+        tableName: theses_remark
+- changeSet:
+    id: 1752968427039-17
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: external_indicator_configuration_seq
+        startValue: 1
+- changeSet:
+    id: 1752968427039-18
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: public_review_page_configuration_seq
+        startValue: 1
+- changeSet:
+    id: 1752968427039-19
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: user_email_update_requests_seq
+        startValue: 1
+- changeSet:
+    id: 1752968427039-20
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_of_last_indicator_harvest
+            type: date
+        tableName: persons
+- changeSet:
+    id: 1752968427039-21
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: is_default
+            type: BOOLEAN
+        tableName: commissions
+- changeSet:
+    id: 1752968427039-22
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: priority_loading
+            type: BOOLEAN
+        tableName: loading_configurations
+- changeSet:
+    id: 1752968427039-23
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: processed_name
+            type: VARCHAR(2048)
+        tableName: countries
+- changeSet:
+    id: 1752968427039-24
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: processed_name
+            type: VARCHAR(2048)
+        tableName: research_area
+- changeSet:
+    id: 1752968427039-25
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: book_series
+- changeSet:
+    id: 1752968427039-26
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: journals
+- changeSet:
+    id: 1752968427039-27
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: publishers
+- changeSet:
+    id: 1752968427039-28
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: number_of_appendices
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1752968427039-29
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: reference_language_tag_id
+            type: INTEGER
+        tableName: users
+- changeSet:
+    id: 1752968427039-30
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: number_of_chapters
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1752968427039-31
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: publishers
+- changeSet:
+    id: 1752968427039-32
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ui_language_tag_id
+            type: INTEGER
+        tableName: users
+- changeSet:
+    id: 1752968427039-33
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: book_series
+- changeSet:
+    id: 1752968427039-34
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: journals
+- changeSet:
+    id: 1752968427039-35
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: number_of_graphs
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1752968427039-36
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1752968427039-37
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: informative_attachments
+- changeSet:
+    id: 1752968427039-38
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: number_of_illustrations
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1752968427039-39
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: book_series
+- changeSet:
+    id: 1752968427039-40
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: journals
+- changeSet:
+    id: 1752968427039-41
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: datasets
+- changeSet:
+    id: 1752968427039-42
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: patents
+- changeSet:
+    id: 1752968427039-43
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: software
+- changeSet:
+    id: 1752968427039-44
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1752968427039-45
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: informative_attachments
+- changeSet:
+    id: 1752968427039-46
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: number_of_references
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1752968427039-47
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: conferences
+- changeSet:
+    id: 1752968427039-48
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: number_of_tables
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1752968427039-49
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1752968427039-50
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: informative_attachments
+- changeSet:
+    id: 1752968427039-51
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: proceedings
+- changeSet:
+    id: 1752968427039-52
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: conferences
+- changeSet:
+    id: 1752968427039-53
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: datasets
+- changeSet:
+    id: 1752968427039-54
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: patents
+- changeSet:
+    id: 1752968427039-55
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: software
+- changeSet:
+    id: 1752968427039-56
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: monograph_publications
+- changeSet:
+    id: 1752968427039-57
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: proceedings_publications
+- changeSet:
+    id: 1752968427039-58
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: conferences
+- changeSet:
+    id: 1752968427039-59
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: datasets
+- changeSet:
+    id: 1752968427039-60
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: patents
+- changeSet:
+    id: 1752968427039-61
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: software
+- changeSet:
+    id: 1752968427039-62
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: journal_publications
+- changeSet:
+    id: 1752968427039-63
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: monographs
+- changeSet:
+    id: 1752968427039-64
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: public_review_completed
+            type: BOOLEAN
+        tableName: theses
+- changeSet:
+    id: 1752968427039-65
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1752968427039-66
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: monograph_publications
+- changeSet:
+    id: 1752968427039-67
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: proceedings_publications
+- changeSet:
+    id: 1752968427039-68
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: proceedings
+- changeSet:
+    id: 1752968427039-69
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: monograph_publications
+- changeSet:
+    id: 1752968427039-70
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: proceedings_publications
+- changeSet:
+    id: 1752968427039-71
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ror
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1752968427039-72
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: journal_publications
+- changeSet:
+    id: 1752968427039-73
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: monographs
+- changeSet:
+    id: 1752968427039-74
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: proceedings
+- changeSet:
+    id: 1752968427039-75
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1752968427039-76
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: journal_publications
+- changeSet:
+    id: 1752968427039-77
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: monographs
+- changeSet:
+    id: 1752968427039-78
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: organisation_units
+- changeSet:
+    id: 1752968427039-79
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: organisation_units
+- changeSet:
+    id: 1752968427039-80
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: e_isbn
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1752968427039-81
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: persons
+- changeSet:
+    id: 1752968427039-82
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: persons
+- changeSet:
+    id: 1752968427039-83
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1752968427039-84
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: place_of_keeping
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1752968427039-85
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: print_isbn
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1752968427039-86
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: scientific_area
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1752968427039-87
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: scientific_sub_area
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1752968427039-88
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: type_of_title
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1752968427039-89
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: udc
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1752968427039-90
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: theses
+- changeSet:
+    id: 1752968427039-91
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: theses
+- changeSet:
+    id: 1752968427039-92
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: thesis_id
+        baseTableName: theses_alternate_title
+        constraintName: fk77nftn9b7vyl72tdc525tgh1
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: theses
+        validate: true
+- changeSet:
+    id: 1752968427039-93
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: alternate_title_id
+        baseTableName: theses_alternate_title
+        constraintName: fkaav62et99pouflh8o7fyn166m
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1752968427039-94
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: thesis_id
+        baseTableName: theses_extended_abstract
+        constraintName: fkbcl5fq3c9bunq94b42syies0
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: theses
+        validate: true
+- changeSet:
+    id: 1752968427039-95
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: user_id
+        baseTableName: user_email_update_requests
+        constraintName: fkcn1e8eh4hrcw962q8n8xqu7ev
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: users
+        validate: true
+- changeSet:
+    id: 1752968427039-96
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: public_review_page_content_id
+        baseTableName: public_review_page_content_thesis_types
+        constraintName: fke57l1bqw125k0313pbf6npqkt
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: public_review_page_configuration
+        validate: true
+- changeSet:
+    id: 1752968427039-97
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: institution_id
+        baseTableName: public_review_page_configuration
+        constraintName: fkeixv7p9ftjmod0braqe6g16d3
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_units
+        validate: true
+- changeSet:
+    id: 1752968427039-98
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: content_id
+        baseTableName: public_review_page_configuration_content
+        constraintName: fkex8dj3q9iykc33ehqjh59fbjg
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1752968427039-99
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: reference_language_tag_id
+        baseTableName: users
+        constraintName: fkf9ye50sd9mknptwh2a4ph4wlv
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: language_tag
+        validate: true
+- changeSet:
+    id: 1752968427039-100
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: extended_abstract_id
+        baseTableName: theses_extended_abstract
+        constraintName: fkgakynb367wps9m71om0lsbe9b
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1752968427039-101
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: remark_id
+        baseTableName: theses_remark
+        constraintName: fkis7b1be4tn75sf2qj30se8qb4
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1752968427039-102
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: institution_id
+        baseTableName: external_indicator_configuration
+        constraintName: fkkrbp5mpwltp1lpvy9xr0dxb2d
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_units
+        validate: true
+- changeSet:
+    id: 1752968427039-103
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: public_review_page_content_id
+        baseTableName: public_review_page_configuration_content
+        constraintName: fklwg1penu2s9v1if4dr4jofoke
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: public_review_page_configuration
+        validate: true
+- changeSet:
+    id: 1752968427039-104
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: ui_language_tag_id
+        baseTableName: users
+        constraintName: fkqva6pia1isiv6ww89898mhde6
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: language_tag
+        validate: true
+- changeSet:
+    id: 1752968427039-105
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: thesis_id
+        baseTableName: theses_remark
+        constraintName: fkqyyub3xv94tnp90dffauyx79n
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: theses
+        validate: true
+- changeSet:
+    id: 1752968427039-113
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: persons_expertises_and_skills_expertises_and_skills_id_key
+        tableName: persons_expertises_and_skills
+- changeSet:
+    id: 1752968427039-114
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: persons_prizes_prizes_id_key
+        tableName: persons_prizes
+- changeSet:
+    id: 1752968427039-115
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: loading-configurations
+- changeSet:
+    id: 1752968427039-116
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: persons_expertises_and_skills
+- changeSet:
+    id: 1752968427039-117
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: persons_prizes
+- changeSet:
+    id: 1752968427039-118
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: book_series
+- changeSet:
+    id: 1752968427039-119
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: conferences
+- changeSet:
+    id: 1752968427039-120
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: datasets
+- changeSet:
+    id: 1752968427039-121
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1752968427039-122
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: informative_attachments
+- changeSet:
+    id: 1752968427039-123
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: journal_publications
+- changeSet:
+    id: 1752968427039-124
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: journals
+- changeSet:
+    id: 1752968427039-125
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: monograph_publications
+- changeSet:
+    id: 1752968427039-126
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: monographs
+
+- changeSet:
+    id: 1752968427039-137
+    author: milospopovic (generated)
+    changes:
+    - dropIndex:
+        indexName: idx_org_unit_old_id
+        tableName: organisation_units
+- changeSet:
+    id: 1752968427039-138
+    author: milospopovic (generated)
+    changes:
+    - dropIndex:
+        indexName: idx_person_old_id
+        tableName: persons
+        
+- changeSet:
+    id: 1752968427039-127
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: organisation_units
+- changeSet:
+    id: 1752968427039-128
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: patents
+- changeSet:
+    id: 1752968427039-129
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: persons
+- changeSet:
+    id: 1752968427039-130
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: proceedings
+- changeSet:
+    id: 1752968427039-131
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: proceedings_publications
+- changeSet:
+    id: 1752968427039-132
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: software
+- changeSet:
+    id: 1752968427039-133
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: cris_uns_id
+        tableName: theses
+- changeSet:
+    id: 1752968427039-134
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: reference_language_id
+        tableName: users
+- changeSet:
+    id: 1752968427039-135
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: research_area_id
+        tableName: theses
+- changeSet:
+    id: 1752968427039-136
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: ui_language_id
+        tableName: users
+- changeSet:
+    id: 1752968427039-139
+    author: milospopovic (generated)
+    changes:
+    - dropSequence:
+        sequenceName: loading-configurations_seq
+- changeSet:
+    id: 1752968427039-1
+    author: milospopovic (generated)
+    changes:
+    - modifyDataType:
+        columnName: content
+        newDataType: varchar(50000)
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1752968427039-2
+    author: milospopovic (generated)
+    changes:
+    - addNotNullConstraint:
+        columnDataType: int
+        columnName: person_id
+        tableName: expertise_or_skills
+        validate: true
+

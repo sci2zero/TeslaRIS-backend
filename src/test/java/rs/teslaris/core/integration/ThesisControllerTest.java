@@ -69,6 +69,14 @@ public class ThesisControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadThesisByOldId() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get("http://localhost:8081/api/thesis/old-id/{oldId}", 998)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testCreateThesis() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 

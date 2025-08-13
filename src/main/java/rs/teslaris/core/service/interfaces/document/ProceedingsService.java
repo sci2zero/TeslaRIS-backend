@@ -16,6 +16,8 @@ public interface ProceedingsService {
 
     Proceedings findProceedingsById(Integer proceedingsId);
 
+    Proceedings findRaw(Integer proceedingsId);
+
     Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index);
 
     void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO);
@@ -31,4 +33,8 @@ public interface ProceedingsService {
     void reindexProceedings();
 
     boolean isIdentifierInUse(String identifier, Integer proceedingsId);
+
+    Proceedings findProceedingsByIsbn(String eIsbn, String printIsbn);
+
+    void addOldId(Integer id, Integer oldId);
 }

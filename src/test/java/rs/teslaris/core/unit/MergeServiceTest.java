@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,6 +48,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
@@ -62,6 +64,7 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Publisher;
+import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
@@ -1262,5 +1265,167 @@ public class MergeServiceTest {
         verify(publisherService, atLeastOnce()).editPublisher(leftId, leftData);
         verify(publisherService).editPublisher(rightId, rightData);
         verify(publisherService, times(2)).editPublisher(leftId, leftData);
+    }
+
+    @Test
+    void testIdentifierMigrationForBookSeries() {
+        BookSeries deletion = new BookSeries();
+        deletion.getMergedIds().add(100);
+        deletion.getOldIds().add(200);
+        BookSeries merged = new BookSeries();
+
+        when(bookSeriesService.findRaw(1)).thenReturn(deletion);
+        when(bookSeriesService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.BOOK_SERIES);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(100, 1);
+        assertThat(merged.getOldIds()).containsExactly(200);
+        verify(bookSeriesService, atLeastOnce()).save(deletion);
+        verify(bookSeriesService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForMonograph() {
+        Monograph deletion = new Monograph();
+        deletion.getMergedIds().add(101);
+        deletion.getOldIds().add(201);
+        Monograph merged = new Monograph();
+
+        when(monographService.findRaw(1)).thenReturn(deletion);
+        when(monographService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.MONOGRAPH);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(101, 1);
+        assertThat(merged.getOldIds()).containsExactly(201);
+        verify(documentPublicationService, atLeastOnce()).save(deletion);
+        verify(documentPublicationService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForProceedings() {
+        Proceedings deletion = new Proceedings();
+        deletion.getMergedIds().add(102);
+        deletion.getOldIds().add(202);
+        Proceedings merged = new Proceedings();
+
+        when(proceedingsService.findRaw(1)).thenReturn(deletion);
+        when(proceedingsService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PROCEEDINGS);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(102, 1);
+        assertThat(merged.getOldIds()).containsExactly(202);
+        verify(documentPublicationService, atLeastOnce()).save(deletion);
+        verify(documentPublicationService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForPublication() {
+        var deletion = new Software();
+        deletion.getMergedIds().add(103);
+        deletion.getOldIds().add(203);
+        var merged = new Software();
+
+        when(documentPublicationService.findOne(1)).thenReturn(deletion);
+        when(documentPublicationService.findOne(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PUBLICATION);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(103, 1);
+        assertThat(merged.getOldIds()).containsExactly(203);
+        verify(documentPublicationService, atLeastOnce()).save(deletion);
+        verify(documentPublicationService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForEvent() {
+        Conference deletion = new Conference();
+        deletion.getMergedIds().add(104);
+        deletion.getOldIds().add(204);
+        Conference merged = new Conference();
+
+        when(conferenceService.findRaw(1)).thenReturn(deletion);
+        when(conferenceService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.EVENT);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(104, 1);
+        assertThat(merged.getOldIds()).containsExactly(204);
+        verify(conferenceService, atLeastOnce()).save(deletion);
+        verify(conferenceService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForJournal() {
+        Journal deletion = new Journal();
+        deletion.getMergedIds().add(105);
+        deletion.getOldIds().add(205);
+        Journal merged = new Journal();
+
+        when(journalService.findRaw(1)).thenReturn(deletion);
+        when(journalService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.JOURNAL);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(105, 1);
+        assertThat(merged.getOldIds()).containsExactly(205);
+        verify(journalService, atLeastOnce()).save(deletion);
+        verify(journalService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForOrganisationUnit() {
+        OrganisationUnit deletion = new OrganisationUnit();
+        deletion.getMergedIds().add(106);
+        deletion.getOldIds().add(206);
+        OrganisationUnit merged = new OrganisationUnit();
+
+        when(organisationUnitService.findRaw(1)).thenReturn(deletion);
+        when(organisationUnitService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.ORGANISATION_UNIT);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(106, 1);
+        assertThat(merged.getOldIds()).containsExactly(206);
+        verify(organisationUnitService, atLeastOnce()).save(deletion);
+        verify(organisationUnitService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForPerson() {
+        Person deletion = new Person();
+        deletion.getMergedIds().add(107);
+        deletion.getOldIds().add(207);
+        Person merged = new Person();
+
+        when(personService.findRaw(1)).thenReturn(deletion);
+        when(personService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PERSON);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(107, 1);
+        assertThat(merged.getOldIds()).containsExactly(207);
+        verify(personService, atLeastOnce()).save(deletion);
+        verify(personService, atLeastOnce()).save(merged);
+    }
+
+    @Test
+    void testIdentifierMigrationForPublisher() {
+        Publisher deletion = new Publisher();
+        deletion.getMergedIds().add(108);
+        deletion.getOldIds().add(208);
+        Publisher merged = new Publisher();
+
+        when(publisherService.findRaw(1)).thenReturn(deletion);
+        when(publisherService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PUBLISHER);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(108, 1);
+        assertThat(merged.getOldIds()).containsExactly(208);
+        verify(publisherService, atLeastOnce()).save(deletion);
+        verify(publisherService, atLeastOnce()).save(merged);
     }
 }

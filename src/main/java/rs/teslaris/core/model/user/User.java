@@ -17,7 +17,7 @@ import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import rs.teslaris.core.model.commontypes.BaseEntity;
-import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
@@ -53,12 +53,12 @@ public class User extends BaseEntity implements UserDetails {
     private Boolean canTakeRole;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "ui_language_id")
-    private Language preferredUILanguage;
+    @JoinColumn(name = "ui_language_tag_id")
+    private LanguageTag preferredUILanguage;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "reference_language_id")
-    private Language preferredReferenceCataloguingLanguage;
+    @JoinColumn(name = "reference_language_tag_id")
+    private LanguageTag preferredReferenceCataloguingLanguage;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinColumn(name = "authority_id")

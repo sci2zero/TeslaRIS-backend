@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -157,8 +156,7 @@ public class JournalPublicationServiceTest {
         var publicationToUpdate = new JournalPublication();
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
 
-        when(documentRepository.findById(publicationId)).thenReturn(
-            Optional.of(publicationToUpdate));
+        when(journalPublicationJPAService.findOne(publicationId)).thenReturn(publicationToUpdate);
         when(eventService.findOne(1)).thenReturn(new Conference());
         when(journalPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
 
@@ -172,7 +170,7 @@ public class JournalPublicationServiceTest {
         journalPublicationService.editJournalPublication(publicationId, publicationDTO);
 
         // Then
-        verify(documentRepository).findById(eq(publicationId));
+        verify(journalPublicationJPAService).findOne(eq(publicationId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             eq(publicationToUpdate), eq(publicationDTO));
     }
@@ -185,8 +183,7 @@ public class JournalPublicationServiceTest {
         var publication = new JournalPublication();
         publication.setApproveStatus(status);
 
-        when(documentRepository.findById(publicationId)).thenReturn(
-            Optional.of(publication));
+        when(journalPublicationJPAService.findOne(publicationId)).thenReturn(publication);
 
         // When
         assertThrows(NotFoundException.class,
@@ -220,14 +217,13 @@ public class JournalPublicationServiceTest {
         var journal = new Journal();
         publication.setJournal(journal);
 
-        when(documentRepository.findById(publicationId)).thenReturn(
-            Optional.of(publication));
+        when(journalPublicationJPAService.findOne(publicationId)).thenReturn(publication);
 
         // When
         var result = journalPublicationService.readJournalPublicationById(publicationId);
 
         // Then
-        verify(documentRepository).findById(eq(publicationId));
+        verify(journalPublicationJPAService).findOne(eq(publicationId));
         assertNotNull(result);
         assertEquals(1, result.getContributions().size());
     }

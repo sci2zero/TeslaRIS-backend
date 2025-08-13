@@ -21,7 +21,9 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
     @Query("UPDATE JournalPublication jp SET jp.deleted = true WHERE jp.journal.id = :journalId")
     void deleteAllPublicationsInJournal(Integer journalId);
 
-    Optional<Journal> findJournalByOldId(Integer oldId);
+    @Query(value = "SELECT *, 0 AS clazz_ FROM journals WHERE " +
+        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+    Optional<Journal> findByOldIdsContains(Integer oldId);
 
     @Query(value = "SELECT * FROM journals j WHERE " +
         "j.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
@@ -35,4 +37,7 @@ public interface JournalRepository extends JpaRepository<Journal, Integer> {
         "WHERE j.id = :journalId " +
         "AND pc.contributionType = 0")
     Set<Integer> findInstitutionIdsByJournalIdAndAuthorContribution(Integer journalId);
+
+    @Query(value = "SELECT * FROM journals j WHERE j.id = :journalId", nativeQuery = true)
+    Optional<Journal> findRaw(Integer journalId);
 }

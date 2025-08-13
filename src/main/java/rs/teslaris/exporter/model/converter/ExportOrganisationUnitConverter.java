@@ -45,7 +45,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             ExportMultilingualContentConverter.toCommonExportModel(organisationUnit.getName()));
         commonExportOU.setNameAbbreviation(organisationUnit.getNameAbbreviation());
         commonExportOU.setScopusAfid(organisationUnit.getScopusAfid());
-        commonExportOU.setOldId(organisationUnit.getOldId());
+        commonExportOU.getOldIds().addAll(organisationUnit.getOldIds());
 
         var superOu = organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
         superOu.ifPresent(organisationUnitsRelation -> commonExportOU.setSuperOU(

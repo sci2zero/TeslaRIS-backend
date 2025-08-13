@@ -197,6 +197,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/thesis-library/csv-export").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/dissertation-report")
+                .permitAll()
 
                 // ASSESSMENT
                 .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")
@@ -271,6 +273,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,
                     "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/public-review-page-content/for-institution-and-type/{organisationUnitId}")
+                .permitAll()
 
                 // COOKIES
                 .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()
@@ -286,6 +291,10 @@ public class SecurityConfiguration {
 
                 // FEEDBACK
                 .requestMatchers(HttpMethod.POST, "/api/feedback").permitAll()
+
+                // SHARE
+                .requestMatchers(HttpMethod.GET, "/api/share/document/{documentType}/{id}")
+                .permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

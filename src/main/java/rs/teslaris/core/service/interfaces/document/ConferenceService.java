@@ -27,6 +27,8 @@ public interface ConferenceService {
 
     Conference findConferenceById(Integer conferenceId);
 
+    Conference findRaw(Integer conferenceId);
+
     Conference findConferenceByConfId(String confId);
 
     Conference createConference(ConferenceDTO conferenceDTO, Boolean index);

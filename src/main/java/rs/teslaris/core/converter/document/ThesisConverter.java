@@ -61,7 +61,6 @@ public class ThesisConverter extends DocumentPublicationConverter {
         }
 
         thesisDTO.setThesisType(thesis.getThesisType());
-        thesisDTO.setNumberOfPages(thesis.getNumberOfPages());
         thesisDTO.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());
         thesisDTO.setThesisDefenceDate(thesis.getThesisDefenceDate());
         thesisDTO.setIsOnPublicReview(thesis.getIsOnPublicReview());
@@ -69,6 +68,24 @@ public class ThesisConverter extends DocumentPublicationConverter {
         thesisDTO.setPublicReviewDates(
             thesis.getPublicReviewStartDates().stream().sorted().toList());
         thesisDTO.setIsArchived(thesis.getIsArchived());
+
+        thesisDTO.setAlternateTitle(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getAlternateTitle()));
+        thesisDTO.setExtendedAbstract(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getExtendedAbstract()));
+        thesisDTO.setRemark(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getRemark()));
+
+        if (Objects.nonNull(thesis.getPhysicalDescription())) {
+            var physicalDescription = thesis.getPhysicalDescription();
+            thesisDTO.setNumberOfPages(physicalDescription.getNumberOfPages());
+            thesisDTO.setNumberOfReferences(physicalDescription.getNumberOfReferences());
+            thesisDTO.setNumberOfChapters(physicalDescription.getNumberOfChapters());
+            thesisDTO.setNumberOfGraphs(physicalDescription.getNumberOfGraphs());
+            thesisDTO.setNumberOfTables(physicalDescription.getNumberOfTables());
+            thesisDTO.setNumberOfIllustrations(physicalDescription.getNumberOfIllustrations());
+            thesisDTO.setNumberOfAppendices(physicalDescription.getNumberOfAppendices());
+        }
 
         if (thesisDTO.getIsOnPublicReview()) {
             thesisDTO.setPublicReviewEnd(
@@ -84,9 +101,18 @@ public class ThesisConverter extends DocumentPublicationConverter {
             thesisDTO.setWritingLanguageTagId(thesis.getWritingLanguage().getId());
         }
 
-        if (Objects.nonNull(thesis.getResearchArea())) {
-            thesisDTO.setResearchAreaId(thesis.getResearchArea().getId());
-        }
+        thesisDTO.setScientificArea(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getScientificArea()));
+        thesisDTO.setScientificSubArea(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getScientificSubArea()));
+        thesisDTO.setEisbn(thesis.getEISBN());
+        thesisDTO.setPrintISBN(thesis.getPrintISBN());
+        thesisDTO.setPlaceOfKeep(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getPlaceOfKeeping()));
+        thesisDTO.setUdc(thesis.getUdc());
+        thesisDTO.setTypeOfTitle(
+            MultilingualContentConverter.getMultilingualContentDTO(thesis.getTypeOfTitle()));
+        thesisDTO.setPublicReviewCompleted(thesis.getPublicReviewCompleted());
 
         if (Objects.nonNull(thesis.getPublisher())) {
             thesisDTO.setPublisherId(thesis.getPublisher().getId());

@@ -35,6 +35,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.BookSeriesPublishable;
 import rs.teslaris.core.model.document.Document;
@@ -75,6 +76,7 @@ import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.deduplication.Mergeable;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
@@ -631,6 +633,32 @@ public class MergeServiceImpl implements MergeService {
             });
     }
 
+    @Override
+    public void migratePersistentIdentifiers(Integer deletionEntityId, Integer mergedEntityId,
+                                             EntityType entityType) {
+        switch (entityType) {
+            case BOOK_SERIES -> migrateIdentifierHistory(bookSeriesService::findRaw,
+                bookSeriesService::save, deletionEntityId, mergedEntityId);
+            case MONOGRAPH -> migrateIdentifierHistory(monographService::findRaw,
+                documentPublicationService::save, deletionEntityId, mergedEntityId);
+            case PROCEEDINGS -> migrateIdentifierHistory(proceedingsService::findRaw,
+                documentPublicationService::save, deletionEntityId, mergedEntityId);
+            case PUBLICATION -> migrateIdentifierHistory(documentPublicationService::findOne,
+                documentPublicationService::save, deletionEntityId, mergedEntityId);
+            case EVENT -> migrateIdentifierHistory(conferenceService::findRaw,
+                conferenceService::save, deletionEntityId, mergedEntityId);
+            case JOURNAL -> migrateIdentifierHistory(journalService::findRaw, journalService::save,
+                deletionEntityId, mergedEntityId);
+            case ORGANISATION_UNIT -> migrateIdentifierHistory(organisationUnitService::findRaw,
+                organisationUnitService::save, deletionEntityId, mergedEntityId);
+            case PERSON -> migrateIdentifierHistory(personService::findRaw, personService::save,
+                deletionEntityId, mergedEntityId);
+            case PUBLISHER ->
+                migrateIdentifierHistory(publisherService::findRaw, publisherService::save,
+                    deletionEntityId, mergedEntityId);
+        }
+    }
+
     private void performMonographPublicationSwitch(Integer targetMonographId,
                                                    Integer monographPublicationId) {
         var targetMonograph = monographService.findMonographById(targetMonographId);
@@ -860,13 +888,14 @@ public class MergeServiceImpl implements MergeService {
         });
     }
 
-    private <T, R> void updateAndRestoreMetadata(BiConsumer<Integer, T> updateMethod,
-                                                 Consumer<R> reindexMethod,
-                                                 Function<Integer, R> fetchFunction,
-                                                 Integer leftId, Integer rightId,
-                                                 T leftData, T rightData,
-                                                 Function<T, String[]> originalValuesExtractor,
-                                                 BiConsumer<T, String[]> restoreValues) {
+    private <T, R extends Mergeable> void updateAndRestoreMetadata(
+        BiConsumer<Integer, T> updateMethod,
+        Consumer<R> reindexMethod,
+        Function<Integer, R> fetchFunction,
+        Integer leftId, Integer rightId,
+        T leftData, T rightData,
+        Function<T, String[]> originalValuesExtractor,
+        BiConsumer<T, String[]> restoreValues) {
         String[] originalValues = originalValuesExtractor.apply(leftData);
 
         String[] emptyValues = new String[originalValues.length];
@@ -879,8 +908,26 @@ public class MergeServiceImpl implements MergeService {
         restoreValues.accept(leftData, originalValues);
         updateMethod.accept(leftId, leftData);
 
-        reindexMethod.accept(fetchFunction.apply(leftId));
-        reindexMethod.accept(fetchFunction.apply(rightId));
+        var leftEntity = fetchFunction.apply(leftId);
+        var rightEntity = fetchFunction.apply(rightId);
+
+        reindexMethod.accept(leftEntity);
+        reindexMethod.accept(rightEntity);
+    }
+
+    private <T extends Mergeable> void migrateIdentifierHistory(Function<Integer, T> fetchFunction,
+                                                                Consumer<T> saveMethod,
+                                                                Integer deletionEntityId,
+                                                                Integer mergedEntityId) {
+
+        var deletionEntity = fetchFunction.apply(deletionEntityId);
+        var mergedEntity = fetchFunction.apply(mergedEntityId);
+
+        mergedEntity.getMergedIds().addAll(deletionEntity.getMergedIds());
+        mergedEntity.getMergedIds().add(deletionEntityId);
+        mergedEntity.getOldIds().addAll(deletionEntity.getOldIds());
+
+        saveMethod.accept(mergedEntity);
     }
 
     private void handleNoAuthorsRemaining(DocumentDTO leftData, DocumentDTO rightData) {

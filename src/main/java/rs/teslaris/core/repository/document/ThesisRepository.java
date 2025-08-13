@@ -2,6 +2,7 @@ package rs.teslaris.core.repository.document;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,8 +14,16 @@ import rs.teslaris.core.model.document.ThesisType;
 @Repository
 public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
 
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Thesis t WHERE (t.eISBN = :eISBN OR t.printISBN = :eISBN) AND (:id IS NULL OR t.id <> :id)")
+    boolean existsByeISBN(String eISBN, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Thesis t WHERE (t.printISBN = :printISBN OR t.eISBN = :printISBN) AND (:id IS NULL OR t.id <> :id)")
+    boolean existsByPrintISBN(String printISBN, Integer id);
+
     @Query(value = "SELECT * FROM theses t WHERE " +
-        "t.isArchived = TRUE AND " +
+        "t.is_archived = TRUE AND " +
         "t.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
     Page<Thesis> findAllModifiedInLast24Hours(Pageable pageable);
 
@@ -84,4 +93,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
                                      Boolean putOnReview,
                                      Pageable pageable);
 
+    @Query(value = "SELECT *, 0 AS clazz_ FROM theses WHERE " +
+        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+    Optional<Thesis> findThesisByOldIdsContains(Integer oldId);
 }

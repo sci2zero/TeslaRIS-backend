@@ -40,7 +40,6 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
@@ -68,7 +67,6 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               MultilingualContentService multilingualContentService,
                               LanguageTagService languageTagService,
                               PersonContributionService personContributionService,
-                              EmailUtil emailUtil,
                               IndexBulkUpdateService indexBulkUpdateService,
                               JournalJPAServiceImpl journalJPAService,
                               SearchService<JournalIndex> searchService,
@@ -77,7 +75,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               DocumentPublicationIndexRepository documentPublicationIndexRepository,
                               CommissionRepository commissionRepository) {
         super(publicationSeriesRepository, multilingualContentService, languageTagService,
-            personContributionService, emailUtil, indexBulkUpdateService);
+            personContributionService, indexBulkUpdateService);
         this.journalJPAService = journalJPAService;
         this.searchService = searchService;
         this.journalIndexRepository = journalIndexRepository;
@@ -114,6 +112,19 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     @Override
     public JournalIndex readJournalByIssn(String eIssn, String printIssn) {
+        boolean isEissnBlank = (Objects.isNull(eIssn) || eIssn.isBlank());
+        boolean isPrintIssnBlank = (Objects.isNull(printIssn) || printIssn.isBlank());
+
+        if (isEissnBlank && isPrintIssnBlank) {
+            return null;
+        }
+
+        if (isEissnBlank) {
+            eIssn = printIssn;
+        } else if (isPrintIssnBlank) {
+            printIssn = eIssn;
+        }
+
         return journalIndexRepository.findJournalIndexByeISSNOrPrintISSN(eIssn, printIssn)
             .orElse(null);
     }
@@ -131,13 +142,19 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    public Journal findRaw(Integer journalId) {
+        return journalRepository.findRaw(journalId)
+            .orElseThrow(() -> new NotFoundException("Journal with given ID does not exist."));
+    }
+
+    @Override
     public Optional<Journal> tryToFindById(Integer journalId) {
         return journalRepository.findById(journalId);
     }
 
     @Override
     public Journal findJournalByOldId(Integer journalId) {
-        return journalRepository.findJournalByOldId(journalId).orElse(null);
+        return journalRepository.findByOldIdsContains(journalId).orElse(null);
     }
 
     @Override
@@ -154,10 +171,6 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             indexJournal(journal, new JournalIndex());
         }
 
-        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
-            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
-        });
-
         return savedJournal;
     }
 
@@ -173,10 +186,6 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         indexJournal(journal,
             journalIndexRepository.findJournalIndexByDatabaseId(journal.getId())
                 .orElse(new JournalIndex()));
-
-        savedJournal.getTitle().stream().findFirst().ifPresent(mc -> {
-            emailUtil.notifyInstitutionalEditor(savedJournal.getId(), mc.getContent(), "journal");
-        });
 
         return savedJournal;
     }
@@ -283,6 +292,18 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
             journalIndexRepository.save(journalIndex);
         });
+    }
+
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var journal = findOne(id);
+        journal.getOldIds().add(oldId);
+        save(journal);
+    }
+
+    @Override
+    public void save(Journal journal) {
+        journalRepository.save(journal);
     }
 
     @Override

@@ -135,8 +135,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredUILanguage().getLanguageCode(),
-            newUser.getPreferredReferenceCataloguingLanguage().getLanguageCode(), null, null,
+            newUser.getPreferredUILanguage().getLanguageTag(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
             newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
     }
 
@@ -166,8 +166,8 @@ public class UserController {
                                                       EmployeeRegistrationRequestDTO registrationRequest) {
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredUILanguage().getLanguageCode(),
-            newUser.getPreferredReferenceCataloguingLanguage().getLanguageCode(),
+            newUser.getPreferredUILanguage().getLanguageTag(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(),
             registrationRequest.getOrganisationUnitId(), null, null, null,
             newUser.getUserNotificationPeriod());
     }
@@ -183,8 +183,8 @@ public class UserController {
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredUILanguage().getLanguageCode(),
-            newUser.getPreferredReferenceCataloguingLanguage().getLanguageCode(),
+            newUser.getPreferredUILanguage().getLanguageTag(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(),
             registrationRequest.getOrganisationUnitId(), registrationRequest.getCommissionId(),
             null, null,
             newUser.getUserNotificationPeriod());

@@ -79,7 +79,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
         JournalPublication publication;
         try {
-            publication = (JournalPublication) findOne(publicationId);
+            publication = findJournalPublicationById(publicationId);
         } catch (NotFoundException e) {
             this.clearIndexWhenFailedRead(publicationId);
             throw e;
@@ -131,7 +131,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     @Override
     public void editJournalPublication(Integer publicationId,
                                        JournalPublicationDTO publicationDTO) {
-        var publicationToUpdate = (JournalPublication) findOne(publicationId);
+        var publicationToUpdate = findJournalPublicationById(publicationId);
 
         clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
@@ -153,7 +153,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     @Override
     public void deleteJournalPublication(Integer journalPublicationId) {
-        var publicationToDelete = (JournalPublication) findOne(journalPublicationId);
+        var publicationToDelete = findJournalPublicationById(journalPublicationId);
 
         deleteProofsAndFileItems(publicationToDelete);
 

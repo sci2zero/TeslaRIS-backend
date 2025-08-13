@@ -179,7 +179,8 @@ public class DocumentFileServiceTest {
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
 
         when(documentFileRepository.findById(any())).thenReturn(Optional.of(doc));
-        when(documentFileRepository.getReferenceByServerFilename("UUID")).thenReturn(doc);
+        when(documentFileRepository.getReferenceByServerFilename("UUID")).thenReturn(
+            Optional.of(doc));
         when(fileService.store(any(), eq("UUID"))).thenReturn("UUID.pdf");
 
         // when
@@ -273,7 +274,8 @@ public class DocumentFileServiceTest {
         var documentFile = new DocumentFile();
         documentFile.setAccessRights(accessRights);
 
-        when(documentFileRepository.getReferenceByServerFilename(any())).thenReturn(documentFile);
+        when(documentFileRepository.getReferenceByServerFilename(any())).thenReturn(
+            Optional.of(documentFile));
 
         // when
         var actual = documentFileService.getDocumentByServerFilename("serverFilename");

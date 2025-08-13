@@ -128,8 +128,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     @Nullable
-    public Document findDocumentByOldId(Integer documentId) {
-        return documentRepository.findDocumentByOldId(documentId).orElse(null);
+    public Document findDocumentByOldId(Integer documentOldId) {
+        var documentId = documentRepository.findDocumentByOldIdsContains(documentOldId);
+        return documentId.map(this::findOne).orElse(null);
     }
 
     @Override
@@ -187,7 +188,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Long getPublicationCount() {
-        return documentPublicationIndexRepository.count();
+        return documentPublicationIndexRepository.countPublications();
     }
 
     @Override
@@ -501,7 +502,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
-        document.setOldId(documentDTO.getOldId());
+        if (Objects.nonNull(documentDTO.getOldId())) {
+            document.getOldIds().add(documentDTO.getOldId());
+        }
+
         document.setDocumentDate(documentDTO.getDocumentDate());
 
         IdentifierUtil.setUris(document.getUris(), documentDTO.getUris());

@@ -241,7 +241,7 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
         var localisedContent = contentList.stream()
             .filter(mc -> mc.getLanguageTag().equals(languageCode)).findFirst();
         if (localisedContent.isPresent()) {
-            return languageCode.equalsIgnoreCase("SR") ?
+            return languageCode.toUpperCase().startsWith("SR") ?
                 SerbianTransliteration.toCyrillic(localisedContent.get().getContent()) :
                 localisedContent.get().getContent();
         }

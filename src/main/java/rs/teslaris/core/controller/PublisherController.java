@@ -24,6 +24,7 @@ import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.indexmodel.PublisherIndex;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
@@ -33,6 +34,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class PublisherController {
 
     private final PublisherService publisherService;
+
+    private final EmailUtil emailUtil;
 
 
     @GetMapping("/{publisherId}/can-edit")
@@ -67,6 +70,12 @@ public class PublisherController {
     @Idempotent
     public PublisherDTO createPublisher(@RequestBody @Valid PublisherDTO publisherDTO) {
         var newPublisher = publisherService.createPublisher(publisherDTO, true);
+
+        newPublisher.getName().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(newPublisher.getId(), mc.getContent(),
+                "publisher");
+        });
+
         publisherDTO.setId(newPublisher.getId());
         return publisherDTO;
     }
@@ -78,6 +87,12 @@ public class PublisherController {
     public PublisherBasicAdditionDTO createPublisher(
         @RequestBody @Valid PublisherBasicAdditionDTO publisherDTO) {
         var newPublisher = publisherService.createPublisher(publisherDTO);
+
+        newPublisher.getName().stream().findFirst().ifPresent(mc -> {
+            emailUtil.notifyInstitutionalEditor(newPublisher.getId(), mc.getContent(),
+                "publisher");
+        });
+
         publisherDTO.setId(newPublisher.getId());
         return publisherDTO;
     }
