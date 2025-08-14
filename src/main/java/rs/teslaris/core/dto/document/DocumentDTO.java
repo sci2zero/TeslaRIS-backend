@@ -53,6 +53,8 @@ public class DocumentDTO {
 
     private String openAlexId;
 
+    private String webOfScienceId;
+
     @Positive(message = "Event Id must be a positive number.")
     private Integer eventId;
 
@@ -60,4 +62,10 @@ public class DocumentDTO {
     private List<DocumentFileResponseDTO> fileItems = new ArrayList<>();
 
     private List<DocumentFileResponseDTO> proofs = new ArrayList<>();
+
+    private Boolean isMetadataValid;
+
+    private Boolean areFilesValid;
+
+    private Boolean isArchived;
 }

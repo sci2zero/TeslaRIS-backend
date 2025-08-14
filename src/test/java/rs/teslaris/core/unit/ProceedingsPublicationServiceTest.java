@@ -59,6 +59,7 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -98,6 +99,9 @@ public class ProceedingsPublicationServiceTest {
     @Mock
     private CommissionRepository commissionRepository;
 
+    @Mock
+    private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
+
     @InjectMocks
     private ProceedingsPublicationServiceImpl proceedingsPublicationService;
 
@@ -128,6 +132,9 @@ public class ProceedingsPublicationServiceTest {
         var conference = new Conference();
         conference.setId(1);
         document.setEvent(conference);
+        document.setProceedings(new Proceedings() {{
+            setEvent(conference);
+        }});
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -171,7 +178,9 @@ public class ProceedingsPublicationServiceTest {
         when(proceedingPublicationJPAService.findOne(publicationId)).thenReturn(
             publicationToUpdate);
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
-            new Proceedings());
+            new Proceedings() {{
+                setEvent(conference);
+            }});
         when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(conference);
         when(proceedingPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
 

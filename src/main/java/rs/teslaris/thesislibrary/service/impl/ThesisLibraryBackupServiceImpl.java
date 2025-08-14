@@ -4,6 +4,7 @@ import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -18,6 +19,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileBackup;
@@ -32,7 +36,7 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.BackupZipBuilder;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -81,7 +85,8 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                                            List<FileSection> thesisFileSections,
                                            Boolean defended, Boolean putOnReview,
                                            Integer userId, String language,
-                                           ExportFileType metadataFormat) {
+                                           ExportFileType metadataFormat,
+                                           RecurrenceType recurrence) {
         if (!defended && !putOnReview) {
             throw new BackupException("You must select at least one of: defended or putOnReview.");
         }
@@ -91,13 +96,29 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "Library_Backup-" + institutionId +
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
                 thesisFileSections, defended, putOnReview, language, metadataFormat),
-            userId);
+            userId, recurrence);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, reportGenerationTime,
+                ScheduledTaskType.THESIS_LIBRARY_BACKUP, new HashMap<>() {{
+                put("institutionId", institutionId);
+                put("from", from);
+                put("to", to);
+                put("types", types);
+                put("thesisFileSections", thesisFileSections);
+                put("defended", defended);
+                put("putOnReview", putOnReview);
+                put("userId", userId);
+                put("language", language);
+                put("metadataFormat", metadataFormat);
+            }}, recurrence));
+
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
 

@@ -52,6 +52,10 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         "FROM Document d WHERE d.openAlexId = :openAlexId AND (:id IS NULL OR d.id <> :id)")
     boolean existsByOpenAlexId(String openAlexId, Integer id);
 
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Document d WHERE d.webOfScienceId = :webOfScienceId AND (:id IS NULL OR d.id <> :id)")
+    boolean existsByWebOfScienceId(String webOfScienceId, Integer id);
+
     @Query("SELECT d FROM Document d " +
         "JOIN PersonDocumentContribution dc ON d.id = dc.document.id " +
         "LEFT JOIN FETCH d.contributors " +
@@ -83,7 +87,9 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @Query("SELECT d FROM Document d WHERE " +
         "d.openAlexId = :openAlexId OR " +
         "d.doi = :doi OR " +
-        "d.scopusId = :scopusId")
-    Optional<Document> findByOpenAlexIdOrDoiOrScopusId(String openAlexId, String doi,
-                                                       String scopusId);
+        "d.scopusId = :scopusId OR " +
+        "d.webOfScienceId = :webOfScienceId")
+    Optional<Document> findByOpenAlexIdOrDoiOrScopusIdOrWOSId(String openAlexId, String doi,
+                                                              String scopusId,
+                                                              String webOfScienceId);
 }

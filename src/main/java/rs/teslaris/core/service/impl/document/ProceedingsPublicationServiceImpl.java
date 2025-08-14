@@ -30,11 +30,13 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Transactional
@@ -63,6 +65,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              EventService eventService,
                                              CommissionRepository commissionRepository,
                                              SearchFieldsLoader searchFieldsLoader,
+                                             OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository,
@@ -70,7 +73,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
@@ -92,7 +96,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             throw e;
         }
 
-        if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -122,6 +127,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Override
     public Page<DocumentPublicationIndex> findPublicationsInProceedings(Integer proceedingsId,
                                                                         Pageable pageable) {
+        if (!SessionTrackingUtil.isUserLoggedIn()) {
+            return documentPublicationIndexRepository.findByTypeAndProceedingsIdAndIsApprovedTrue(
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), proceedingsId, pageable);
+        }
+
         return documentPublicationIndexRepository.findByTypeAndProceedingsId(
             DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), proceedingsId, pageable);
     }
@@ -134,12 +144,9 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         setCommonFields(publication, proceedingsPublicationDTO);
         setProceedingsPublicationRelatedFields(publication, proceedingsPublicationDTO);
 
-        publication.setApproveStatus(
-            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
         var savedPublication = proceedingPublicationJPAService.save(publication);
 
-        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+        if (index) {
             indexProceedingsPublication(savedPublication, new DocumentPublicationIndex());
         }
 
@@ -164,10 +171,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         setCommonFields(publicationToUpdate, publicationDTO);
         setProceedingsPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
-        if (publicationToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
-            indexProceedingsPublication(publicationToUpdate, indexToUpdate);
-        }
+        var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
+        indexProceedingsPublication(publicationToUpdate, indexToUpdate);
 
         proceedingPublicationJPAService.save(publicationToUpdate);
 

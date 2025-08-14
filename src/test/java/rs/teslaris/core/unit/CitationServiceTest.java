@@ -80,6 +80,7 @@ class CitationServiceTest {
         var documentId = 1;
         var languageCode = "EN";
         var index = mockDocumentIndex();
+        index.setIsApproved(true);
         var publication = new JournalPublication();
         var journal = new Journal();
         var languageTag = new LanguageTag();

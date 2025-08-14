@@ -2,7 +2,9 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import io.minio.GetObjectResponse;
 import jakarta.annotation.Nullable;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,7 +12,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
@@ -20,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -37,8 +42,8 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.ResourceType;
-import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -46,7 +51,9 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.InMemoryMultipartFile;
 import rs.teslaris.core.util.ResourceMultipartFile;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -54,11 +61,13 @@ import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 @Traceable
+@Slf4j
 public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     implements DocumentFileService {
 
@@ -154,11 +163,16 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     @Override
     public DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
-                                                   Document document) {
+                                                   Document document, boolean trusted) {
         var newDocumentFile = new DocumentFile();
 
         setCommonFields(newDocumentFile, documentFile);
-        newDocumentFile.setIsVerifiedData(document instanceof Thesis);
+        if (documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
+            newDocumentFile.setIsVerifiedData(trusted);
+        } else {
+            newDocumentFile.setIsVerifiedData(true);
+        }
+
         newDocumentFile.setDocument(document);
 
         if (!index) {
@@ -208,7 +222,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             documentFileApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
         var savedDocumentFile = save(newDocumentFile);
 
-        if (index && newDocumentFile.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (index && (documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) ||
+            documentFile.getResourceType().equals(ResourceType.PREPRINT)) &&
+            newDocumentFile.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             parseAndIndexPdfDocument(newDocumentFile, documentFile.getFile(), serverFilename,
                 new DocumentFileIndex());
         }
@@ -230,12 +246,57 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 });
         }
 
+        if (SessionTrackingUtil.isUserLoggedIn()) {
+            var loggedInUser = SessionTrackingUtil.getLoggedInUser();
+            if (Objects.nonNull(loggedInUser) &&
+                (loggedInUser.getAuthority().getName().equals(UserRole.ADMIN.name()) ||
+                    loggedInUser.getAuthority().getName()
+                        .equals(UserRole.INSTITUTIONAL_EDITOR.name()) ||
+                    loggedInUser.getAuthority().getName()
+                        .equals(UserRole.INSTITUTIONAL_LIBRARIAN.name()))) {
+                var file = findDocumentFileById(documentFile.getId());
+                file.setIsVerifiedData(true);
+                save(file);
+                refreshParentDocumentValidationStatus(file);
+            } else if (Objects.nonNull(loggedInUser) &&
+                documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS) &&
+                loggedInUser.getAuthority().getName().equals(UserRole.RESEARCHER.name())) {
+                var file = findDocumentFileById(documentFile.getId());
+                file.setIsVerifiedData(false);
+                save(file);
+                refreshParentDocumentValidationStatus(file);
+            }
+        }
+
         return documentFileResponse;
+    }
+
+    private void refreshParentDocumentValidationStatus(DocumentFile file) {
+        if (Objects.nonNull(file.getDocument())) {
+            documentRepository.findById(file.getDocument().getId()).ifPresent(document -> {
+                document.setAreFilesValid(document.getFileItems().stream()
+                    .allMatch(DocumentFile::getIsVerifiedData));
+                documentRepository.save(document);
+
+                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                    document.getId()).ifPresent(docIndex -> {
+                    docIndex.setAreFilesValid(document.getAreFilesValid());
+                    documentPublicationIndexRepository.save(docIndex);
+                });
+            });
+        }
     }
 
     @Override
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index) {
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
+
+        if (Objects.nonNull(documentFileToEdit.getDocument()) &&
+            documentFileToEdit.getDocument().getIsArchived()) {
+            throw new CantEditException("Document is archived. Can't edit.");
+        }
+
+        var oldResourceType = documentFileToEdit.getResourceType();
 
         if (!documentFileToEdit.getCanEdit()) {
             throw new StorageException(
@@ -254,29 +315,99 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 fileService.store(documentFile.getFile(), documentFileToEdit.getServerFilename());
             documentFileToEdit.setServerFilename(serverFilename);
 
-            if (index && documentFileToEdit.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+            if (index &&
+                (documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) ||
+                    documentFile.getResourceType().equals(ResourceType.PREPRINT)) &&
+                documentFileToEdit.getApproveStatus().equals(ApproveStatus.APPROVED)) {
                 try {
                     var documentIndexToUpdate =
-                        findDocumentFileIndexByDatabaseId(documentFileToEdit.getId());
+                        documentFileIndexRepository.findDocumentFileIndexByDatabaseId(
+                            documentFileToEdit.getId()).orElse(new DocumentFileIndex());
+
                     parseAndIndexPdfDocument(documentFileToEdit, documentFile.getFile(),
                         documentFileToEdit.getServerFilename(), documentIndexToUpdate);
-
-
                 } catch (NotFoundException e) {
                     return DocumentFileConverter.toDTO(
                         documentFileRepository.save(documentFileToEdit));
                 }
             }
+            documentFileIndexRepository.findDocumentFileIndexByDatabaseId(
+                documentFileToEdit.getId()).ifPresent(documentFileIndexRepository::delete);
         }
-        return DocumentFileConverter.toDTO(documentFileRepository.save(documentFileToEdit));
+
+        var savedDocumentFile = documentFileRepository.save(documentFileToEdit);
+
+        if (!documentFile.getResourceType().equals(oldResourceType)) {
+            handlePossibleReindexing(documentFile, documentFileToEdit, oldResourceType);
+        }
+
+        return DocumentFileConverter.toDTO(savedDocumentFile);
+    }
+
+    public void handlePossibleReindexing(DocumentFileDTO documentFile,
+                                         DocumentFile documentFileToEdit,
+                                         ResourceType oldResourceType) {
+        var indexableResourceTypes =
+            List.of(ResourceType.OFFICIAL_PUBLICATION, ResourceType.PREPRINT);
+
+        if (!indexableResourceTypes.contains(documentFile.getResourceType())) {
+            documentFileIndexRepository.findDocumentFileIndexByDatabaseId(
+                documentFileToEdit.getId()).ifPresent(documentFileIndexRepository::delete);
+        } else {
+            try {
+                parseAndIndexPdfDocument(documentFileToEdit, getMultipartFileFromObjectResponse(
+                        fileService.loadAsResource(documentFileToEdit.getServerFilename()),
+                        documentFileToEdit), documentFileToEdit.getServerFilename(),
+                    new DocumentFileIndex());
+            } catch (Exception e) {
+                log.error("SERIOUS: Could not find file ('{}','{}'). Possible data loss.",
+                    documentFileToEdit.getServerFilename(), documentFileToEdit.getFilename());
+            }
+        }
+
+        if (indexableResourceTypes.contains(oldResourceType) &&
+            indexableResourceTypes.contains(documentFileToEdit.getResourceType())) {
+            return; // reindex is not needed
+        }
+
+        if (Objects.nonNull(documentFileToEdit.getDocument())) {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                documentFileToEdit.getDocument().getId()).ifPresent(documentIndex -> {
+                documentIndex.setFullTextSr("");
+                documentIndex.setFullTextOther("");
+
+                documentFileToEdit.getDocument().getFileItems().forEach(fileToReindex -> {
+                    if (!fileToReindex.getResourceType().equals(ResourceType.PREPRINT) &&
+                        !fileToReindex.getResourceType()
+                            .equals(ResourceType.OFFICIAL_PUBLICATION)) {
+                        return;
+                    }
+
+                    var file =
+                        documentFileIndexRepository.findDocumentFileIndexByDatabaseId(
+                            fileToReindex.getId());
+                    if (file.isEmpty()) {
+                        return;
+                    }
+
+                    documentIndex.setFullTextSr(
+                        documentIndex.getFullTextSr() + file.get().getPdfTextSr());
+                    documentIndex.setFullTextOther(
+                        documentIndex.getFullTextOther() + " " +
+                            file.get().getPdfTextOther());
+                });
+
+                documentPublicationIndexRepository.save(documentIndex);
+            });
+        }
     }
 
     @Override
     public void deleteDocumentFile(String serverFilename) {
         documentFileRepository.getReferenceByServerFilename(serverFilename)
-            .ifPresent(documentToDelete -> {
+            .ifPresent(documentFileToDelete -> {
                 fileService.delete(serverFilename);
-                delete(documentToDelete.getId());
+                delete(documentFileToDelete.getId());
             });
     }
 
@@ -337,7 +468,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         }
 
         var documentContent = extractDocumentContent(multipartPdfFile);
-        var documentTitle = extractDocumentTitle(multipartPdfFile);
+        var documentTitle = Objects.nonNull(documentFile.getId()) ? documentFile.getFilename() :
+            extractDocumentTitle(multipartPdfFile);
 
         var contentLanguageDetected = detectLanguage(documentContent);
         var titleLanguageDetected = detectLanguage(documentTitle);
@@ -365,6 +497,38 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Override
     public void deleteIndexes() {
         documentFileIndexRepository.deleteAll();
+    }
+
+    @Override
+    public CompletableFuture<Void> reindexDocumentFiles() {
+        int pageNumber = 0;
+        int chunkSize = 10;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            List<DocumentFile> chunk =
+                documentFileRepository.findAllIndexable(PageRequest.of(pageNumber, chunkSize))
+                    .getContent();
+
+            chunk.forEach(
+                (documentFile) -> {
+                    try {
+                        var resource = fileService.loadAsResource(documentFile.getServerFilename());
+                        parseAndIndexPdfDocument(documentFile,
+                            getMultipartFileFromObjectResponse(resource, documentFile),
+                            documentFile.getServerFilename(), new DocumentFileIndex());
+                    } catch (Exception e) {
+                        log.error(
+                            "File ('{}','{}') does not exist in the bucket. Skipping reindexing.",
+                            documentFile.getServerFilename(), documentFile.getFilename());
+                    }
+                });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+
+        return null;
     }
 
     @Override
@@ -469,5 +633,16 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         documentIndex.setDatabaseId(documentFile.getId());
 
         documentFileIndexRepository.save(documentIndex);
+    }
+
+    public MultipartFile getMultipartFileFromObjectResponse(GetObjectResponse file,
+                                                            DocumentFile documentFile)
+        throws IOException {
+        return new InMemoryMultipartFile(
+            documentFile.getFilename(),                   // original filename
+            documentFile.getServerFilename(),             // name
+            documentFile.getMimeType(),                   // content type
+            new ByteArrayInputStream(file.readAllBytes()) // content
+        );
     }
 }

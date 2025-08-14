@@ -23,7 +23,7 @@ import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 
 @SpringBootTest
 public class ReportingServiceTest {

@@ -40,7 +40,10 @@ import rs.teslaris.core.util.deduplication.Mergeable;
     @Index(name = "idx_person_e_cris_id", columnList = "e_cris_id"),
     @Index(name = "idx_person_e_nauka_id", columnList = "e_nauka_id"),
     @Index(name = "idx_person_orcid", columnList = "orcid"),
-    @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id")
+    @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id"),
+    @Index(name = "idx_wos_researcher_id", columnList = "web_of_science_researcher_id"),
+    @Index(name = "idx_open_alex_id", columnList = "open_alex_id"),
+    @Index(name = "idx_person_approve_status", columnList = "approve_status")
 })
 @SQLRestriction("deleted=false")
 public class Person extends BaseEntity implements Mergeable {
@@ -92,6 +95,9 @@ public class Person extends BaseEntity implements Mergeable {
 
     @Column(name = "open_alex_id")
     private String openAlexId;
+
+    @Column(name = "web_of_science_researcher_id")
+    private String webOfScienceResearcherId;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")

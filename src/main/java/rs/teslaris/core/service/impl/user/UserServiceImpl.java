@@ -77,7 +77,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.PasswordUtil;
@@ -724,6 +724,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     public List<User> findAllSystemAdminUsers() {
         return userRepository.findAllSystemAdminUsers();
+    }
+
+    @Override
+    public List<User> findAllInstitutionalLibrarianUsers() {
+        return userRepository.findAllInstitutionalLibrarianUsers();
+    }
+
+    @Override
+    public List<User> findInstitutionalEditorUsersForInstitutionId(Integer institutionId) {
+        return userRepository.findInstitutionalEditorUsersForInstitutionId(institutionId);
     }
 
     @Override

@@ -43,7 +43,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.RestTemplateProvider;
@@ -283,7 +283,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         allCitationCounts.add(citationCount.citationCount);
 
                         documentPublicationService.findDocumentByCommonIdentifier(citationCount.doi,
-                                citationCount.id, null)
+                                citationCount.id, null, null)
                             .ifPresent(document -> {
                                 if (Objects.isNull(totalCitationsIndicator)) {
                                     return;
@@ -435,8 +435,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         allCitationCounts.add(citationCount.citationCount);
 
                         documentPublicationService.findDocumentByCommonIdentifier(citationCount.doi,
-                                null,
-                                citationCount.id)
+                                null, citationCount.id, null)
                             .ifPresent(document -> {
                                 if (Objects.isNull(totalCitationsIndicator) ||
                                     citationCount.citationCount == 0) {

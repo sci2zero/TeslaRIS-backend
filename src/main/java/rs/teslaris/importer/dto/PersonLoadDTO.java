@@ -29,5 +29,7 @@ public class PersonLoadDTO {
 
     private String openAlexId;
 
+    private String webOfScienceResearcherId;
+
     private String importId;
 }

@@ -1,4 +1,4 @@
-package rs.teslaris.core.service.interfaces.person;
+package rs.teslaris.core.service.interfaces.institution;
 
 import java.io.IOException;
 import java.util.List;
@@ -107,8 +107,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
         throws IOException;
 
     void removeOrganisationUnitLogo(Integer organisationUnitId);
-
-    boolean canOUEmployeeScanDataSources(Integer organisationUnitId);
 
     void indexOrganisationUnit(OrganisationUnit organisationUnit, Integer organisationUnitId);
 

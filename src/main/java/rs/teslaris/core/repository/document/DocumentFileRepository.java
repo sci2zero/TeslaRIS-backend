@@ -1,6 +1,8 @@
 package rs.teslaris.core.repository.document;
 
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -21,4 +23,9 @@ public interface DocumentFileRepository extends JpaRepository<DocumentFile, Inte
     Integer getDocumentIdByFilename(String filename);
 
     Optional<DocumentFile> findDocumentFileByLegacyFilename(String legacyFilename);
+
+    @Query("SELECT df FROM DocumentFile df WHERE " +
+        "df.resourceType = 0 OR " +
+        "df.resourceType = 1")
+    Page<DocumentFile> findAllIndexable(Pageable pageable);
 }

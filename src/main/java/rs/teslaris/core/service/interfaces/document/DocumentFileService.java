@@ -2,6 +2,7 @@ package rs.teslaris.core.service.interfaces.document;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
     DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index);
 
     DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
-                                            Document document);
+                                            Document document, boolean trusted);
 
     DocumentFile saveNewPersonalDocument(DocumentFileDTO documentFile, Boolean index,
                                          Person person);
@@ -50,6 +51,8 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
                                                 SearchRequestType type);
 
     void deleteIndexes();
+
+    CompletableFuture<Void> reindexDocumentFiles();
 
     Integer findDocumentIdForFilename(String filename);
 }

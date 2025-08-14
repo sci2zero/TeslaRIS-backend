@@ -149,11 +149,13 @@ public class DocumentFileServiceTest {
         // given
         var doc = new DocumentFile();
         doc.setFilename("filename.txt");
+        doc.setResourceType(ResourceType.SUPPLEMENT);
         var dto = new DocumentFileDTO();
         dto.setId(1);
         dto.setAccessRights(AccessRights.ALL_RIGHTS_RESERVED);
         dto.setFile(
             new MockMultipartFile("name", "name.bin", "application/octet-stream", (byte[]) null));
+        dto.setResourceType(ResourceType.PREPRINT);
         var docIndex = new DocumentFileIndex();
 
         when(documentFileRepository.findById(dto.getId())).thenReturn(Optional.of(doc));

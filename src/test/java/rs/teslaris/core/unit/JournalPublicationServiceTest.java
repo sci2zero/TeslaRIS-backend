@@ -58,6 +58,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -93,6 +94,9 @@ public class JournalPublicationServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
 
     @InjectMocks
     private JournalPublicationServiceImpl journalPublicationService;
@@ -157,6 +161,9 @@ public class JournalPublicationServiceTest {
         publicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
 
         when(journalPublicationJPAService.findOne(publicationId)).thenReturn(publicationToUpdate);
+        when(journalService.findJournalById(any())).thenReturn(new Journal() {{
+            setId(1);
+        }});
         when(eventService.findOne(1)).thenReturn(new Conference());
         when(journalPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
 
@@ -279,7 +286,7 @@ public class JournalPublicationServiceTest {
         var expectedPublications = new PageImpl<>(Arrays.asList(publication1, publication2));
         var pageable = PageRequest.of(0, 10);
 
-        when(documentPublicationIndexRepository.findByTypeAndJournalId(
+        when(documentPublicationIndexRepository.findByTypeAndJournalIdAndIsApprovedTrue(
             DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable))
             .thenReturn(expectedPublications);
 

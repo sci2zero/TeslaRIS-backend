@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -41,12 +42,17 @@ import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
@@ -56,7 +62,9 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -204,7 +212,7 @@ public class DocumentPublicationServiceTest {
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class), eq(false),
-            eq(document))).thenReturn(
+            eq(document), anyBoolean())).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -225,10 +233,12 @@ public class DocumentPublicationServiceTest {
         document.setApproveStatus(ApproveStatus.REQUESTED);
         var documentFile = new DocumentFile();
         documentFile.setId(1);
+        documentFile.setMimeType("text/xml");
+        documentFile.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class),
-            eq(!isProof), eq(document))).thenReturn(
+            eq(!isProof), eq(document), anyBoolean())).thenReturn(
             documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -322,14 +332,15 @@ public class DocumentPublicationServiceTest {
     public void shouldGetDocumentPublicationCount() {
         // Given
         var expectedCount = 42L;
-        when(documentPublicationIndexRepository.countPublications()).thenReturn(expectedCount);
+        when(documentPublicationIndexRepository.countApprovedPublications()).thenReturn(
+            expectedCount);
 
         // When
         long actualCount = documentPublicationService.getPublicationCount();
 
         // Then
         assertEquals(expectedCount, actualCount);
-        verify(documentPublicationIndexRepository, times(1)).countPublications();
+        verify(documentPublicationIndexRepository, times(1)).countApprovedPublications();
     }
 
     @Test
@@ -426,7 +437,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.findDocumentDuplicates(titles, "DOI", "scopusId",
-                "openAlexId");
+                "openAlexId", "webOfScienceId");
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -840,51 +851,56 @@ public class DocumentPublicationServiceTest {
         var mockDocument = new JournalPublication();
         Optional<Document> expected = Optional.of(mockDocument);
 
-        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("W123456789", "10.1234/test",
-            "1234567"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusIdOrWOSId("W123456789", "10.1234/test",
+            "1234567", "123123123123123"))
             .thenReturn(expected);
 
         // When
         var result =
-            documentPublicationService.findDocumentByCommonIdentifier(doi, openAlexId, "1234567");
+            documentPublicationService.findDocumentByCommonIdentifier(doi, openAlexId, "1234567",
+                "WOS:123123123123123");
 
         // Then
         assertTrue(result.isPresent());
         assertEquals(mockDocument, result.get());
-        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("W123456789", "10.1234/test",
-            "1234567");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusIdOrWOSId("W123456789",
+            "10.1234/test",
+            "1234567", "123123123123123");
     }
 
     @Test
     void testFindDocumentByCommonIdentifier_WithNullValues() {
         // Given
-        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
-            "NOT_PRESENT"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusIdOrWOSId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT", "NOT_PRESENT"))
             .thenReturn(Optional.empty());
 
         // When
-        var result = documentPublicationService.findDocumentByCommonIdentifier(null, null, null);
+        var result =
+            documentPublicationService.findDocumentByCommonIdentifier(null, null, null, null);
 
         // Then
         assertTrue(result.isEmpty());
-        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
-            "NOT_PRESENT");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusIdOrWOSId("NOT_PRESENT",
+            "NOT_PRESENT",
+            "NOT_PRESENT", "NOT_PRESENT");
     }
 
     @Test
     void testFindDocumentByCommonIdentifier_WithBlankValues() {
         // Given
-        when(documentRepository.findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
-            "NOT_PRESENT"))
+        when(documentRepository.findByOpenAlexIdOrDoiOrScopusIdOrWOSId("NOT_PRESENT", "NOT_PRESENT",
+            "NOT_PRESENT", "NOT_PRESENT"))
             .thenReturn(Optional.empty());
 
         // When
-        var result = documentPublicationService.findDocumentByCommonIdentifier(" ", " ", " ");
+        var result = documentPublicationService.findDocumentByCommonIdentifier(" ", " ", " ", " ");
 
         // Then
         assertTrue(result.isEmpty());
-        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusId("NOT_PRESENT", "NOT_PRESENT",
-            "NOT_PRESENT");
+        verify(documentRepository).findByOpenAlexIdOrDoiOrScopusIdOrWOSId("NOT_PRESENT",
+            "NOT_PRESENT",
+            "NOT_PRESENT", "NOT_PRESENT");
     }
 
     @Test
@@ -913,5 +929,74 @@ public class DocumentPublicationServiceTest {
         // Then
         assertFalse(result);
         verify(documentRepository).existsByDoi(doi, null);
+    }
+
+    @Test
+    void shouldArchiveDocument() {
+        // Given
+        var documentId = 1;
+        var document = new Patent();
+        document.setId(documentId);
+        document.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
+        document.setDocumentDate("2023-05-01");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentPublicationService.archiveDocument(documentId);
+
+        // Then
+        assertTrue(document.getIsArchived());
+        verify(documentRepository).save(document);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenArchivingThesis() {
+        // Given
+        var documentId = 2;
+        var thesis = new Thesis();
+        thesis.setId(documentId);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(thesis));
+
+        // When & Then
+        assertThrows(ThesisException.class,
+            () -> documentPublicationService.archiveDocument(documentId));
+        verify(documentRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenArchivingWithMissingData() {
+        // Given
+        var documentId = 3;
+        var document = new Software();
+        document.setId(documentId);
+        document.setTitle(new HashSet<>());
+        document.setDocumentDate("2023-01-01");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When & Then
+        assertThrows(MissingDataException.class,
+            () -> documentPublicationService.archiveDocument(documentId));
+        verify(documentRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldUnarchiveDocument() {
+        // Given
+        var documentId = 4;
+        var document = new Dataset();
+        document.setId(documentId);
+        document.setIsArchived(true);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentPublicationService.unarchiveDocument(documentId);
+
+        // Then
+        assertFalse(document.getIsArchived());
+        verify(documentRepository).save(document);
     }
 }

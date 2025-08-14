@@ -27,11 +27,13 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Transactional
@@ -58,13 +60,15 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          EventService eventService,
                                          CommissionRepository commissionRepository,
                                          SearchFieldsLoader searchFieldsLoader,
+                                         OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
@@ -85,7 +89,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             throw e;
         }
 
-        if (!publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -102,6 +107,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     @Override
     public Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
                                                                     Pageable pageable) {
+        if (!SessionTrackingUtil.isUserLoggedIn()) {
+            return documentPublicationIndexRepository.findByTypeAndJournalIdAndIsApprovedTrue(
+                DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
+        }
+
         return documentPublicationIndexRepository.findByTypeAndJournalId(
             DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
     }
@@ -114,12 +124,9 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         setCommonFields(publication, publicationDTO);
         setJournalPublicationRelatedFields(publication, publicationDTO);
 
-        publication.setApproveStatus(
-            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
         var savedPublication = journalPublicationJPAService.save(publication);
 
-        if (publication.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+        if (index) {
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
         }
 
@@ -139,12 +146,9 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         setCommonFields(publicationToUpdate, publicationDTO);
         setJournalPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
-        if (publicationToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
-            indexJournalPublication(publicationToUpdate, indexToUpdate);
-            journalService.reindexJournalVolatileInformation(
-                publicationToUpdate.getJournal().getId());
-        }
+        var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
+        indexJournalPublication(publicationToUpdate, indexToUpdate);
+        journalService.reindexJournalVolatileInformation(publicationToUpdate.getJournal().getId());
 
         journalPublicationJPAService.save(publicationToUpdate);
 

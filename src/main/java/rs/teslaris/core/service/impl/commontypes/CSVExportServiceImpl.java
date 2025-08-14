@@ -29,7 +29,7 @@ import rs.teslaris.core.service.impl.CSVExportHelper;
 import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;

@@ -22,11 +22,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.thesislibrary.model.RegistryBookReport;
@@ -183,7 +184,7 @@ public class RegistryBookReportServiceTest {
         // When
         String result =
             registryBookReportService.scheduleReportGeneration(from, to, institutionId, lang,
-                userId, "", "");
+                userId, "", "", RecurrenceType.YEARLY);
 
         // Then
         var taskCaptor = ArgumentCaptor.forClass(Runnable.class);
@@ -193,7 +194,8 @@ public class RegistryBookReportServiceTest {
             idCaptor.capture(),
             eq(mockTime),
             taskCaptor.capture(),
-            eq(userId)
+            eq(userId),
+            eq(RecurrenceType.YEARLY)
         );
 
         assertTrue(idCaptor.getValue().startsWith("Registry_Book-" + institutionId));
@@ -203,8 +205,8 @@ public class RegistryBookReportServiceTest {
     @Test
     void shouldDeleteWhenReportExists() {
         // Given
-        String fileName = "report123.pdf";
-        RegistryBookReport mockReport = new RegistryBookReport();
+        var fileName = "report123.pdf";
+        var mockReport = new RegistryBookReport();
         when(registryBookReportRepository.findByReportFileName(fileName))
             .thenReturn(Optional.of(mockReport));
         when(userRepository.findOrganisationUnitIdForUser(1))
@@ -220,7 +222,7 @@ public class RegistryBookReportServiceTest {
     @Test
     void shouldNotDeleteWhenReportNotFound() {
         // Given
-        String fileName = "nonexistent.pdf";
+        var fileName = "nonexistent.pdf";
         when(registryBookReportRepository.findByReportFileName(fileName))
             .thenReturn(Optional.empty());
         when(userRepository.findOrganisationUnitIdForUser(1))

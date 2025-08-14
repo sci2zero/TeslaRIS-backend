@@ -51,7 +51,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
@@ -241,7 +241,7 @@ public class CommonLoaderTest {
 
         if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
             when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
-                any())).thenReturn(
+                any(), any())).thenReturn(
                 new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                     setDatabaseId(1);
                 }})));
@@ -268,7 +268,7 @@ public class CommonLoaderTest {
 
         if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
             verify(documentPublicationService, times(1)).findDocumentDuplicates(any(), any(),
-                any(), any());
+                any(), any(), any());
             if (deleteOldPublication) {
                 verify(documentPublicationService, times(1)).deleteDocumentPublication(1);
             } else {
@@ -337,7 +337,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(nextRecord);
 
         // When
-        commonLoader.skipRecord(userId, null);
+        commonLoader.skipRecord(userId, null, false);
 
         // Then
         assertEquals(nextRecordId, progressReport.getLastLoadedIdentifier());
@@ -366,7 +366,7 @@ public class CommonLoaderTest {
         when(mongoTemplate.findOne(nextRecordQuery, DocumentImport.class)).thenReturn(null);
 
         // When
-        commonLoader.skipRecord(userId, null);
+        commonLoader.skipRecord(userId, null, false);
 
         // Then
         assertEquals(ProgressReportUtility.DEFAULT_HEX_ID,
@@ -1017,7 +1017,7 @@ public class CommonLoaderTest {
         mockDoc.setScopusId("some-scopus");
         mockDoc.setOpenAlexId("some-openalex");
         when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
-            any())).thenReturn(
+            any(), any())).thenReturn(
             new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                 setDatabaseId(1);
             }})));

@@ -18,15 +18,15 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
-import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.harvest.ScopusConverter;
+import rs.teslaris.importer.service.interfaces.OrganisationUnitImportSourceConfigurationService;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
 import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
@@ -50,6 +50,9 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
     private final MongoTemplate mongoTemplate;
 
+    private final OrganisationUnitImportSourceConfigurationService
+        organisationUnitImportSourceConfigurationService;
+
 
     @Override
     public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId, LocalDate startDate,
@@ -63,8 +66,9 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
             throw new UserIsNotResearcherException("You are not a researcher.");
         }
 
-        if (!personService.canPersonScanDataSources(personId)) {
-            throw new ScopusIdMissingException("You have not set your Scopus ID.");
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForPerson(personId)
+            .importScopus()) {
+            return newEntriesCount;
         }
 
         var person = personService.readPersonWithBasicInfo(personId);
@@ -104,6 +108,12 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         var endYear = endDate.getYear();
         var organisationUnitId = Objects.nonNull(institutionId) ? institutionId :
             userService.getUserOrganisationUnitId(userId);
+
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
+            organisationUnitId).importScopus()) {
+            return newEntriesCount;
+        }
+
         var institution = organisationUnitService.findOne(organisationUnitId);
         var allInstitutionsThatCanImport =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
@@ -142,6 +152,11 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
             return newEntriesCount;
         }
 
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
+            organisationUnitId).importScopus()) {
+            return newEntriesCount;
+        }
+
         var allInstitutionsThatCanImport =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
         var adminUserIds = CommonImportUtility.getAdminUserIds();
@@ -152,13 +167,15 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 personService.findPeopleForOrganisationUnit(organisationUnitId, List.of("*"),
                         Pageable.unpaged(), false)
                     .map(PersonIndex::getScopusAuthorId)
-                    .filter(openAlexId -> Objects.nonNull(openAlexId) && !openAlexId.isBlank())
+                    .filter(scopusAuthorId -> Objects.nonNull(scopusAuthorId) &&
+                        !scopusAuthorId.isBlank())
                     .toList();
         } else {
             importAuthorIds =
                 authorIds.stream()
                     .map(id -> personService.findOne(id).getScopusAuthorId())
-                    .filter(openAlexId -> Objects.nonNull(openAlexId) && !openAlexId.isBlank())
+                    .filter(scopusAuthorId -> Objects.nonNull(scopusAuthorId) &&
+                        !scopusAuthorId.isBlank())
                     .toList();
         }
 

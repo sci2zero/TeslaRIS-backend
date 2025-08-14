@@ -75,7 +75,7 @@ import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
-import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
+import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -782,8 +782,8 @@ public class PersonServiceTest {
         var person = new PersonIndex();
         person.setScopusAuthorId("12345");
 
-        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexId("12345")).thenReturn(
-            Optional.of(person));
+        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(
+            "12345")).thenReturn(Optional.of(person));
 
         // When
         var foundPerson = personService.findPersonByImportIdentifier("12345");
@@ -795,8 +795,8 @@ public class PersonServiceTest {
     @Test
     public void testFindPersonByScopusAuthorId_PersonDoesNotExist() {
         // Given
-        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexId("12345")).thenReturn(
-            Optional.empty());
+        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(
+            "12345")).thenReturn(Optional.empty());
 
         // When
         var foundPerson = personService.findPersonByImportIdentifier("12345");
@@ -881,30 +881,6 @@ public class PersonServiceTest {
             times(1)).makePersonPublicationsSeriesContributionsPointToExternalContributor(personId);
         verify(personIndexRepository, times(1)).findByDatabaseId(personId);
         verifyNoInteractions(documentPublicationIndexRepository);
-    }
-
-    @Test
-    void shouldScanDataSourcesWhenScopusAuthorIdIsNonEmpty() {
-        var personId = 1;
-        var person = new Person();
-        person.setScopusAuthorId("1234");
-
-        when(personRepository.findById(personId)).thenReturn(Optional.of(person));
-
-        var response = personService.canPersonScanDataSources(personId);
-
-        assertTrue(response);
-    }
-
-    @Test
-    void shouldReturnFalseWhenScopusAuthorIdIsEmpty() {
-        var personId = 1;
-
-        when(personRepository.findById(personId)).thenReturn(Optional.of(new Person()));
-
-        var response = personService.canPersonScanDataSources(personId);
-
-        assertFalse(response);
     }
 
     @Test

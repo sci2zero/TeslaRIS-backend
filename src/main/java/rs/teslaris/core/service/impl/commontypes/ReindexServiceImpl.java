@@ -26,7 +26,7 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
@@ -105,6 +105,10 @@ public class ReindexServiceImpl implements ReindexService {
             futures.add(conferenceService.reindexConferences());
         }
 
+        if (indexesToRepopulate.contains(EntityType.DOCUMENT_FILE)) {
+            futures.add(reindexDocumentFiles());
+        }
+
         if (indexesToRepopulate.contains(EntityType.PUBLICATION)) {
             futures.add(reindexPublications());
         }
@@ -118,7 +122,6 @@ public class ReindexServiceImpl implements ReindexService {
 
     @Async("reindexExecutor")
     public CompletableFuture<Void> reindexPublications() {
-        documentFileService.deleteIndexes();
         documentPublicationService.deleteIndexes();
 
         journalPublicationService.reindexJournalPublications();
@@ -130,6 +133,14 @@ public class ReindexServiceImpl implements ReindexService {
         monographPublicationService.reindexMonographPublications();
         proceedingsService.reindexProceedings();
         thesisService.reindexTheses();
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("reindexExecutor")
+    public CompletableFuture<Void> reindexDocumentFiles() {
+        documentFileService.deleteIndexes();
+        documentFileService.reindexDocumentFiles();
 
         return CompletableFuture.completedFuture(null);
     }

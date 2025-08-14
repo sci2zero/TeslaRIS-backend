@@ -30,7 +30,8 @@ public class BibTexConverter {
 
         boolean isArticle = "article".equalsIgnoreCase(entryType);
         boolean isProceedings =
-            "inproceedings".equalsIgnoreCase(entryType) || "conference".equalsIgnoreCase(entryType);
+            "inproceedings".equalsIgnoreCase(entryType) ||
+                "conference".equalsIgnoreCase(entryType);
         if (!isArticle && !isProceedings) {
             return Optional.empty();
         }

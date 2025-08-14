@@ -331,6 +331,21 @@ public class ExportDocumentConverter extends ExportConverterBase {
             });
 
         commonExportDocument.setUris(document.getUris().stream().toList());
+        document.getFileItems().forEach(fileItem -> {
+            if (fileItem.getIsVerifiedData() &&
+                fileItem.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
+                commonExportDocument.getUris()
+                    .add(baseFrontendUrl + "api/file/" + fileItem.getServerFilename());
+            }
+        });
+        document.getProofs().forEach(fileItem -> {
+            if (fileItem.getIsVerifiedData() &&
+                fileItem.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
+                commonExportDocument.getUris()
+                    .add(baseFrontendUrl + "api/file/" + fileItem.getServerFilename());
+            }
+        });
+
         commonExportDocument.setDocumentDate(document.getDocumentDate());
         commonExportDocument.setDoi(document.getDoi());
         commonExportDocument.setScopus(document.getScopusId());

@@ -4,6 +4,7 @@ import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,11 +23,14 @@ import rs.teslaris.assessment.service.interfaces.classification.PersonAssessment
 import rs.teslaris.assessment.util.AssessmentReportGenerator;
 import rs.teslaris.assessment.util.ReportTemplateEngine;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -55,7 +59,7 @@ public class ReportingServiceImpl implements ReportingService {
     public void scheduleReportGeneration(LocalDateTime timeToRun, ReportType reportType,
                                          Integer assessmentYear, List<Integer> commissionIds,
                                          String locale, Integer topLevelInstitutionId,
-                                         Integer userId) {
+                                         Integer userId, RecurrenceType recurrence) {
         checkCommissionAccessRights(commissionIds, userId);
         var commissionName =
             commissionService.findOne(commissionIds.getFirst()).getDescription().stream()
@@ -63,14 +67,25 @@ public class ReportingServiceImpl implements ReportingService {
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Locale " + locale + " does not exist."))
                 .getContent().replace(" ", "_");
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "ReportGeneration-" + userRepository.findOUIdForCommission(commissionIds.getFirst()) +
                 "-" + commissionName +
                 "-" + reportType + "-" + assessmentYear +
                 "-" + UUID.randomUUID(), timeToRun,
             () -> generateReport(reportType, assessmentYear, commissionIds, locale,
                 topLevelInstitutionId),
-            userId);
+            userId, recurrence);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.REPORT_GENERATION, new HashMap<>() {{
+                put("reportType", reportType);
+                put("assessmentYear", assessmentYear);
+                put("commissionIds", commissionIds);
+                put("locale", locale);
+                put("topLevelInstitutionId", topLevelInstitutionId);
+                put("userId", userId);
+            }}, recurrence));
     }
 
     @Override

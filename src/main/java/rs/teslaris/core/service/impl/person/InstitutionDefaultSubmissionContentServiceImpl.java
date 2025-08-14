@@ -15,8 +15,8 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.InstitutionDefaultSubmissionContentRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InstitutionDefaultSubmissionContentService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service

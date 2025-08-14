@@ -76,7 +76,7 @@ import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
+import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.user.UserServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;

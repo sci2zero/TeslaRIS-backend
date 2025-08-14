@@ -50,6 +50,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -91,6 +92,9 @@ public class ProceedingsServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
 
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;

@@ -10,5 +10,6 @@ public enum EntityType {
     PUBLISHER,
     USER_ACCOUNT,
     MONOGRAPH,
-    PROCEEDINGS
+    PROCEEDINGS,
+    DOCUMENT_FILE
 }

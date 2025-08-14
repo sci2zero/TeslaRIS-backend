@@ -39,8 +39,44 @@ public class TaskManagerController {
             tokenUtil.extractUserRoleFromToken(bearerToken));
     }
 
+    @GetMapping("/harvest")
+    @PreAuthorize("hasAuthority('SCHEDULE_DOCUMENT_HARVEST')")
+    public List<ScheduledTaskResponseDTO> listScheduledHarvestTasks(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return taskManagerService.listScheduledHarvestTasks(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            tokenUtil.extractUserRoleFromToken(bearerToken));
+    }
+
+    @GetMapping("/document-backup")
+    @PreAuthorize("hasAuthority('GENERATE_OUTPUT_BACKUP')")
+    public List<ScheduledTaskResponseDTO> listScheduledDocumentBackupTasks(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return taskManagerService.listScheduledDocumentBackupGenerationTasks(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            tokenUtil.extractUserRoleFromToken(bearerToken));
+    }
+
+    @GetMapping("/thesis-library-backup")
+    @PreAuthorize("hasAuthority('GENERATE_THESIS_LIBRARY_BACKUP')")
+    public List<ScheduledTaskResponseDTO> listScheduledThesisLibraryBackupTasks(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return taskManagerService.listScheduledThesisLibraryBackupGenerationTasks(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            tokenUtil.extractUserRoleFromToken(bearerToken));
+    }
+
+    @GetMapping("/registry-book-report-generation")
+    @PreAuthorize("hasAuthority('GENERATE_THESIS_LIBRARY_BACKUP')")
+    public List<ScheduledTaskResponseDTO> listScheduledRegistryBookTasks(
+        @RequestHeader(value = "Authorization") String bearerToken) {
+        return taskManagerService.listScheduledRegistryBookGenerationTasks(
+            tokenUtil.extractUserIdFromToken(bearerToken),
+            tokenUtil.extractUserRoleFromToken(bearerToken));
+    }
+
     @DeleteMapping("/{taskId}")
-    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION')")
+    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK', 'SCHEDULE_REPORT_GENERATION', 'SCHEDULE_DOCUMENT_HARVEST')")
     public void cancelTask(@PathVariable String taskId) {
         taskManagerService.cancelTask(taskId);
     }

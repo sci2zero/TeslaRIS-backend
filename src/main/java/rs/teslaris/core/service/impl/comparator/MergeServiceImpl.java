@@ -69,10 +69,10 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -384,13 +384,14 @@ public class MergeServiceImpl implements MergeService {
             rightId, leftData,
             rightData,
             dto -> new String[] {dto.getEISBN(), dto.getPrintISBN(), dto.getDoi(),
-                dto.getScopusId(), dto.getOpenAlexId()},
+                dto.getScopusId(), dto.getOpenAlexId(), dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setEISBN(values[0]);
                 dto.setPrintISBN(values[1]);
                 dto.setDoi(values[2]);
                 dto.setScopusId(values[3]);
                 dto.setOpenAlexId(values[4]);
+                dto.setWebOfScienceId(values[5]);
             });
     }
 
@@ -401,7 +402,8 @@ public class MergeServiceImpl implements MergeService {
             personService::findOne, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getApvnt(), dto.getECrisId(), dto.getENaukaId(),
-                dto.getScopusAuthorId(), dto.getOrcid(), dto.getOpenAlexId()},
+                dto.getScopusAuthorId(), dto.getOrcid(), dto.getOpenAlexId(),
+                dto.getWebOfScienceResearcherId()},
             (dto, values) -> {
                 dto.setApvnt(values[0]);
                 dto.setECrisId(values[1]);
@@ -409,6 +411,7 @@ public class MergeServiceImpl implements MergeService {
                 dto.setScopusAuthorId(values[3]);
                 dto.setOrcid(values[4]);
                 dto.setOpenAlexId(values[5]);
+                dto.setWebOfScienceResearcherId(values[6]);
             });
     }
 

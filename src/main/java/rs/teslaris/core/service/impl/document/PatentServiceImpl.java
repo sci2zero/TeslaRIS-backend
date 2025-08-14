@@ -23,11 +23,13 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Transactional
@@ -50,12 +52,14 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
                              SearchFieldsLoader searchFieldsLoader,
+                             OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                              PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
     }
@@ -75,7 +79,8 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             throw e;
         }
 
-        if (!patent.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !patent.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -94,12 +99,9 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             newPatent.setPublisher(publisherService.findOne(patentDTO.getPublisherId()));
         }
 
-        newPatent.setApproveStatus(
-            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
         var savedPatent = patentJPAService.save(newPatent);
 
-        if (newPatent.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+        if (index) {
             indexPatent(savedPatent, new DocumentPublicationIndex());
         }
 
@@ -124,12 +126,9 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         var updatedPatent = patentJPAService.save(patentToUpdate);
 
-        if (patentToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexPatent(patentToUpdate,
-                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-                        patentId)
-                    .orElse(new DocumentPublicationIndex()));
-        }
+        indexPatent(patentToUpdate,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(patentId)
+                .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(updatedPatent);
     }

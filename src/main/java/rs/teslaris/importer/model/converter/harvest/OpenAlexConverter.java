@@ -1,6 +1,7 @@
 package rs.teslaris.importer.model.converter.harvest;
 
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
@@ -67,7 +68,11 @@ public class OpenAlexConverter {
             document.setDoi(record.doi().replace("https://doi.org/", ""));
         }
 
-        document.setDocumentDate(record.publicationDate().split("-")[0]);
+        var publicationYear = Integer.parseInt(record.publicationDate().split("-")[0]);
+        document.setDocumentDate(String.valueOf(publicationYear));
+        document.getEvent().setDateFrom(LocalDate.of(publicationYear, 1, 1));
+        document.getEvent().setDateTo(LocalDate.of(publicationYear, 12, 31));
+
         document.getTitle().add(new MultilingualContent("EN", record.title(), 1));
 
         FunctionalUtil.forEachWithCounter(record.authorships(), (i, authorship) -> {

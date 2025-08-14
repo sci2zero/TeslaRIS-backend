@@ -49,6 +49,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -90,6 +91,9 @@ public class MonographServiceTest {
 
     @Mock
     private CommissionRepository commissionRepository;
+
+    @Mock
+    private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
 
     @InjectMocks
     private MonographServiceImpl monographService;
@@ -282,7 +286,7 @@ public class MonographServiceTest {
         // Then
         verify(monographJPAService, times(1)).findOne(monographId);
         verify(monographJPAService, times(1)).delete(monographId);
-        verify(documentPublicationIndexRepository, times(0)).delete(
+        verify(documentPublicationIndexRepository, times(1)).delete(
             any(DocumentPublicationIndex.class));
     }
 

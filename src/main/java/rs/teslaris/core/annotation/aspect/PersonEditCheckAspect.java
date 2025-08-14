@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;

@@ -18,7 +18,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.InstitutionDefaultSubmissionContentRepository;
 import rs.teslaris.core.service.impl.person.InstitutionDefaultSubmissionContentServiceImpl;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @SpringBootTest

@@ -72,7 +72,7 @@ import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
-import rs.teslaris.core.service.impl.person.OrganisationUnitServiceImpl;
+import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -1071,48 +1071,6 @@ public class OrganisationUnitServiceTest {
         assertNull(logo.getHeight());
         assertNull(logo.getWidth());
         assertNull(logo.getBackgroundHex());
-    }
-
-    @Test
-    void shouldReturnFalseWhenOrganisationUnitIdIsNull() {
-        var result = organisationUnitService.canOUEmployeeScanDataSources(null);
-        assertFalse(result);
-    }
-
-    @Test
-    void shouldReturnFalseWhenOrganisationUnitHasNullScopusAfid() {
-        var ou = new OrganisationUnit();
-        ou.setScopusAfid(null);
-
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(1)).thenReturn(
-            Optional.of(ou));
-
-        var result = organisationUnitService.canOUEmployeeScanDataSources(1);
-        assertFalse(result);
-    }
-
-    @Test
-    void shouldReturnFalseWhenOrganisationUnitHasEmptyScopusAfid() {
-        var ou = new OrganisationUnit();
-        ou.setScopusAfid("");
-
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(2)).thenReturn(
-            Optional.of(ou));
-
-        boolean result = organisationUnitService.canOUEmployeeScanDataSources(2);
-        assertFalse(result);
-    }
-
-    @Test
-    void shouldReturnTrueWhenOrganisationUnitHasValidScopusAfid() {
-        var ou = new OrganisationUnit();
-        ou.setScopusAfid("123456");
-
-        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(3)).thenReturn(
-            Optional.of(ou));
-
-        var result = organisationUnitService.canOUEmployeeScanDataSources(3);
-        assertTrue(result);
     }
 
     @Test

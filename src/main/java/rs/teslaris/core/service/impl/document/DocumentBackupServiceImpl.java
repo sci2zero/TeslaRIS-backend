@@ -6,6 +6,7 @@ import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -28,6 +29,9 @@ import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -42,7 +46,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.BackupZipBuilder;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -88,19 +92,33 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                            List<DocumentPublicationType> types,
                                            List<DocumentFileSection> documentFileSections,
                                            Integer userId, String language,
-                                           ExportFileType metadataFormat) {
+                                           ExportFileType metadataFormat,
+                                           RecurrenceType recurrence) {
         if (from > to) {
             throw new BackupException("dateRangeIssueMessage");
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "Document_Backup-" + institutionId +
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
-                documentFileSections, language, metadataFormat),
-            userId);
+                documentFileSections, language, metadataFormat), userId, recurrence);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, reportGenerationTime,
+                ScheduledTaskType.DOCUMENT_BACKUP, new HashMap<>() {{
+                put("institutionId", institutionId);
+                put("from", from);
+                put("to", to);
+                put("types", types);
+                put("documentFileSections", documentFileSections);
+                put("userId", userId);
+                put("language", language);
+                put("metadataFormat", metadataFormat);
+            }}, recurrence));
+
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
 

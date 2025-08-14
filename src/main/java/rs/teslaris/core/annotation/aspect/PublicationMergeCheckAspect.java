@@ -15,7 +15,7 @@ import rs.teslaris.core.annotation.PublicationMergeCheck;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;

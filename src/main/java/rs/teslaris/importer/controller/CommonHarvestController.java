@@ -4,14 +4,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,10 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
-import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -34,10 +39,12 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.importer.dto.AuthorCentricInstitutionHarvestRequestDTO;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
+import rs.teslaris.importer.service.interfaces.CommonHarvestService;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
+import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
 
 @RestController
 @RequestMapping("/api/import-common")
@@ -52,6 +59,8 @@ public class CommonHarvestController {
 
     private final OpenAlexHarvester openAlexHarvester;
 
+    private final WebOfScienceHarvester webOfScienceHarvester;
+
     private final BibTexHarvester bibTexHarvester;
 
     private final RefManHarvester refManHarvester;
@@ -64,9 +73,9 @@ public class CommonHarvestController {
 
     private final UserService userService;
 
-    private final PersonService personService;
+    private final CommonHarvestService commonHarvestService;
 
-    private final OrganisationUnitService organisationUnitService;
+    private final TaskManagerService taskManagerService;
 
 
     @GetMapping("/can-perform")
@@ -75,10 +84,9 @@ public class CommonHarvestController {
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
         if (userRole.equals(UserRole.RESEARCHER.name())) {
-            return personService.canPersonScanDataSources(
-                personService.getPersonIdForUserId(userId));
+            return commonHarvestService.canPersonScanDataSources(userId);
         } else if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
-            return organisationUnitService.canOUEmployeeScanDataSources(
+            return commonHarvestService.canOUEmployeeScanDataSources(
                 userService.getUserOrganisationUnitId(userId));
         }
 
@@ -92,6 +100,42 @@ public class CommonHarvestController {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
+        return performHarvest(userId, userRole, dateFrom, dateTo, institutionId);
+    }
+
+    @PostMapping("/schedule/documents-by-author-or-institution")
+    @PreAuthorize("hasAuthority('SCHEDULE_DOCUMENT_HARVEST')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void scheduleHarvestPublicationsForAuthor(
+        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
+        @RequestParam LocalDate dateTo, @RequestParam(required = false) Integer institutionId,
+        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("recurrence") RecurrenceType recurrenceType) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
+
+        var taskId = taskManagerService.scheduleTask(
+            "Harvest-" +
+                ((Objects.nonNull(institutionId) && institutionId > 0) ? institutionId :
+                    userService.getUserOrganisationUnitId(userId)) +
+                "-" + dateFrom + "_" + dateTo +
+                "-" + UUID.randomUUID(), timestamp,
+            () -> performHarvest(userId, userRole, dateFrom, dateTo, institutionId),
+            userId, recurrenceType);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timestamp,
+                ScheduledTaskType.PUBLICATION_HARVEST, new HashMap<>() {{
+                put("userRole", userRole);
+                put("dateFrom", dateFrom.toString());
+                put("dateTo", dateTo.toString());
+                put("userId", userId);
+                put("institutionId", institutionId);
+            }}, recurrenceType));
+    }
+
+    public Integer performHarvest(Integer userId, String userRole, LocalDate dateFrom,
+                                  LocalDate dateTo, Integer institutionId) {
         Map<Integer, Integer> newDocumentImportCountByUser = new HashMap<>();
 
         if (userRole.equals(UserRole.RESEARCHER.name())) {
@@ -103,6 +147,11 @@ public class CommonHarvestController {
                 .forEach((key, value) ->
                     newDocumentImportCountByUser.merge(key, value, Integer::sum)
                 );
+            webOfScienceHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo,
+                    new HashMap<>())
+                .forEach((key, value) ->
+                    newDocumentImportCountByUser.merge(key, value, Integer::sum)
+                );
         } else if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
             scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
                 dateTo,
@@ -110,6 +159,11 @@ public class CommonHarvestController {
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
             openAlexHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
+                dateTo,
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+            webOfScienceHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
                 dateTo,
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
@@ -125,6 +179,11 @@ public class CommonHarvestController {
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
+            webOfScienceHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
+                dateFrom, dateTo,
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
         } else {
             return 0;
         }
@@ -134,33 +193,84 @@ public class CommonHarvestController {
     }
 
     @PostMapping("/author-centric-for-institution")
-    public Integer performAuthorCentricImportForInstitution(
+    public Integer performAuthorCentricHarvestForInstitution(
         @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
         @RequestParam LocalDate dateTo,
         @RequestBody AuthorCentricInstitutionHarvestRequestDTO request) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
+        return performAuthorCentricLoading(userId, userRole, dateFrom, dateTo, request.authorIds(),
+            request.allAuthors(), request.institutionId());
+    }
+
+    @PostMapping("/schedule/author-centric-for-institution")
+    @PreAuthorize("hasAuthority('SCHEDULE_DOCUMENT_HARVEST')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void scheduleAuthorCentricHarvestForInstitution(
+        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
+        @RequestParam LocalDate dateTo, @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("recurrence") RecurrenceType recurrenceType,
+        @RequestBody AuthorCentricInstitutionHarvestRequestDTO request) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
+
+        var taskId = taskManagerService.scheduleTask(
+            "Harvest-" +
+                ((Objects.nonNull(request.institutionId()) && request.institutionId() > 0) ?
+                    request.institutionId() : userService.getUserOrganisationUnitId(userId)) +
+                "-" + dateFrom + "_" + dateTo +
+                "-" + UUID.randomUUID(), timestamp,
+            () -> performAuthorCentricLoading(userId, userRole, dateFrom, dateTo,
+                request.authorIds(), request.allAuthors(), request.institutionId()),
+            userId, recurrenceType);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timestamp,
+                ScheduledTaskType.AUTHOR_CENTRIC_PUBLICATION_HARVEST, new HashMap<>() {{
+                put("userRole", userRole);
+                put("dateFrom", dateFrom.toString());
+                put("dateTo", dateTo.toString());
+                put("authorIds", request.authorIds());
+                put("allAuthors", request.allAuthors());
+                put("userId", userId);
+                put("institutionId", request.institutionId());
+            }}, recurrenceType));
+    }
+
+    public Integer performAuthorCentricLoading(Integer userId, String userRole, LocalDate dateFrom,
+                                               LocalDate dateTo, List<Integer> authorIds,
+                                               Boolean allAuthors, Integer institutionId) {
         Map<Integer, Integer> newDocumentImportCountByUser = new HashMap<>();
         if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
             scopusHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
-                dateTo, request.authorIds(), request.allAuthors(),
+                dateTo, authorIds, allAuthors,
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
             openAlexHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
-                dateTo, request.authorIds(), request.allAuthors(),
+                dateTo, authorIds, allAuthors,
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+            webOfScienceHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
+                dateTo, authorIds, allAuthors,
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
         } else if (userRole.equals(UserRole.ADMIN.name())) {
-            scopusHarvester.harvestDocumentsForInstitution(userId, request.institutionId(),
-                dateFrom, dateTo, request.authorIds(), request.allAuthors(),
+            scopusHarvester.harvestDocumentsForInstitution(userId, institutionId,
+                dateFrom, dateTo, authorIds, allAuthors,
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
-            openAlexHarvester.harvestDocumentsForInstitution(userId, request.institutionId(),
-                dateFrom, dateTo, request.authorIds(), request.allAuthors(),
+            openAlexHarvester.harvestDocumentsForInstitution(userId, institutionId,
+                dateFrom, dateTo, authorIds, allAuthors,
+                new HashMap<>()).forEach((key, value) ->
+                newDocumentImportCountByUser.merge(key, value, Integer::sum)
+            );
+            webOfScienceHarvester.harvestDocumentsForInstitution(userId, institutionId,
+                dateFrom, dateTo, authorIds, allAuthors,
                 new HashMap<>()).forEach((key, value) ->
                 newDocumentImportCountByUser.merge(key, value, Integer::sum)
             );
@@ -191,6 +301,12 @@ public class CommonHarvestController {
     @GetMapping("/csv-file-format")
     public Pair<String, String> getCSVFormatDescription(@RequestParam String language) {
         return csvHarvester.getFormatDescription(language);
+    }
+
+    @GetMapping("/testWebOfScience")
+    public void testWebOfScience() {
+        webOfScienceHarvester.harvestDocumentsForAuthor(1, LocalDate.of(2000, 1, 2),
+            LocalDate.now(), null);
     }
 
     @PostMapping("/documents-from-file")

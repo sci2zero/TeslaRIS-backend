@@ -10,13 +10,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.importer.model.converter.harvest.OpenAlexConverter;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
+import rs.teslaris.importer.service.interfaces.OrganisationUnitImportSourceConfigurationService;
 import rs.teslaris.importer.utility.CommonHarvestUtility;
 import rs.teslaris.importer.utility.CommonImportUtility;
 import rs.teslaris.importer.utility.DeepObjectMerger;
@@ -38,14 +39,22 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
 
     private final InvolvementService involvementService;
 
+    private final OrganisationUnitImportSourceConfigurationService
+        organisationUnitImportSourceConfigurationService;
+
 
     @Override
     public HashMap<Integer, Integer> harvestDocumentsForAuthor(Integer userId, LocalDate startDate,
                                                                LocalDate endDate,
                                                                HashMap<Integer, Integer> newEntriesCount) {
         var personId = personService.getPersonIdForUserId(userId);
-        var person = personService.findOne(personId);
 
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForPerson(personId)
+            .importOpenAlex()) {
+            return newEntriesCount;
+        }
+
+        var person = personService.findOne(personId);
         if (Objects.isNull(person.getOpenAlexId()) || person.getOpenAlexId().isBlank()) {
             return newEntriesCount;
         }
@@ -73,6 +82,12 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                                                                               HashMap<Integer, Integer> newEntriesCount) {
         var organisationUnitId = Objects.nonNull(institutionId) ? institutionId :
             userService.getUserOrganisationUnitId(userId);
+
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
+            organisationUnitId).importOpenAlex()) {
+            return newEntriesCount;
+        }
+
         var institution = organisationUnitService.findOne(organisationUnitId);
         var openAlexId = institution.getOpenAlexId();
 
@@ -107,6 +122,11 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
             userService.getUserOrganisationUnitId(userId);
 
         if (!performImportForAllAuthors && authorIds.isEmpty()) {
+            return newEntriesCount;
+        }
+
+        if (!organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
+            organisationUnitId).importOpenAlex()) {
             return newEntriesCount;
         }
 

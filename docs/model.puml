@@ -159,7 +159,9 @@ package person {
     -String orcid
     -String scopusAuthorId
     -String openAlexId
-    -Integer oldId
+    -String webOfScienceResearcherId
+    -Set<Integer> oldIds
+    -Set<Integer> mergedIds
     -Set<ResearchArea> researchAreas
     -ApproveStatus approveStatus
   }
@@ -306,7 +308,8 @@ package institution {
       -Set<ResearchArea> researchAreas
       -GeoLocation location
       -ApproveStatus approveStatus
-      -Integer oldId
+      -Set<Integer> oldIds
+      -Set<Integer> mergedIds
       -String scopusAfid
       -String openAlexId
       -String ror
@@ -335,6 +338,11 @@ package institution {
     Set<DocumentFile> proofs
   }
 
+  class OrganisationUnitTrustConfiguration {
+    -Boolean trustNewPublications
+    -Boolean trustNewPublications
+  }
+  OrganisationUnitTrustConfiguration --> OrganisationUnit
 
   enum OrganisationUnitsRelationType {
     BELONGS_TO
@@ -358,6 +366,9 @@ package document {
   class Publisher {
     -Set<MultiLingualContent> name
     -Set<MultiLingualContent> place
+    -Set<MultiLingualContent> state
+    -Set<Integer> oldIds
+    -Set<Integer> mergedIds
     -Country country
   }
 
@@ -454,7 +465,9 @@ package document {
       -String doi
       -String scopusId
       -String openAlexId
-      -Integer oldId
+      -String webOfScienceId
+      -Set<Integer> oldIds
+      -Set<Integer> mergedIds
     }
   !endsub
 
@@ -505,6 +518,10 @@ package document {
       -Country country
       -Set<MultiLingualContent> place
       -Set<PersonEventContribution> contributors
+      -Set<Integer> oldIds
+      -Set<Integer> mergedIds
+      -String openAlexId
+      -String confId
       -Integer oldId
       -Set<String> uris
     }
@@ -584,7 +601,8 @@ package document {
     -Set<LanguageTag> languages
     -Set<MultiLingualContent> title
     -Set<MultiLingualContent> nameAbbreviation
-    -Integer oldId
+    -Set<Integer> oldIds
+    -Set<Integer> mergedIds,
     -String openAlexId
     -Set<String> uris
   }

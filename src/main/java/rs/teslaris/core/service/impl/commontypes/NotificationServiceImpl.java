@@ -146,6 +146,12 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         return notificationRepository.save(notification);
     }
 
+    @Override
+    public void cleanPastNotificationsOfType(Integer userId, NotificationType notificationType) {
+        notificationRepository.getNotificationsForUserAndType(userId,
+            NotificationType.NEW_DOCUMENTS_FOR_VALIDATION).forEach(notificationRepository::delete);
+    }
+
     @Scheduled(cron = "${notifications.schedule.daily}")
     protected void sendDailyNotifications() {
         sendNotifications(UserNotificationPeriod.DAILY);

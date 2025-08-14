@@ -22,11 +22,13 @@ import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Traceable
@@ -49,12 +51,14 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               EventService eventService,
                               CommissionRepository commissionRepository,
                               SearchFieldsLoader searchFieldsLoader,
+                              OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }
@@ -74,7 +78,8 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             throw e;
         }
 
-        if (!dataset.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !dataset.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
 
@@ -94,12 +99,9 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                 publisherService.findOne(datasetDTO.getPublisherId()));
         }
 
-        newDataset.setApproveStatus(
-            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
-
         var savedDataset = datasetJPAService.save(newDataset);
 
-        if (newDataset.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+        if (index) {
             indexDataset(savedDataset, new DocumentPublicationIndex());
         }
 
@@ -124,12 +126,9 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
         datasetJPAService.save(datasetToUpdate);
 
-        if (datasetToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexDataset(datasetToUpdate,
-                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-                        datasetId)
-                    .orElse(new DocumentPublicationIndex()));
-        }
+        indexDataset(datasetToUpdate,
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(datasetId)
+                .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(datasetToUpdate);
     }

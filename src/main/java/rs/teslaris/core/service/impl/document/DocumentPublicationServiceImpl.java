@@ -13,10 +13,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -45,10 +47,13 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -57,11 +62,13 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
@@ -71,6 +78,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Primary
@@ -101,6 +109,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final CommissionRepository commissionRepository;
 
     private final SearchFieldsLoader searchFieldsLoader;
+
+    private final OrganisationUnitTrustConfigurationService
+        organisationUnitTrustConfigurationService;
 
     private final Pattern doiPattern =
         Pattern.compile("\"^10\\\\.\\\\d{4,9}\\\\/[-,._;()/:A-Z0-9]+$\"", Pattern.CASE_INSENSITIVE);
@@ -188,7 +199,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Long getPublicationCount() {
-        return documentPublicationIndexRepository.countPublications();
+        if (SessionTrackingUtil.isUserLoggedIn()) {
+            return documentPublicationIndexRepository.countPublications();
+        }
+
+        return documentPublicationIndexRepository.countApprovedPublications();
     }
 
     @Override
@@ -208,15 +223,26 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
                                                    Boolean isProof) {
         var document = findOne(documentId);
-        var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof, document);
+
+        if (document.getIsArchived()) {
+            throw new CantEditException("Document is archived. Can't edit.");
+        }
+
+        var documentFile = documentFileService.saveNewPublicationDocument(file, !isProof, document,
+            !shouldFileItemsBeValidated(document));
         if (isProof) {
             document.getProofs().add(documentFile);
         } else {
             document.getFileItems().add(documentFile);
         }
+
+        if (!documentFile.getIsVerifiedData()) {
+            document.setAreFilesValid(false);
+        }
+
         documentRepository.save(document);
 
-        if (!isProof && document.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+        if (!isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
@@ -228,6 +254,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Transactional
     public void deleteDocumentFile(Integer documentId, Integer documentFileId) {
         var document = findOne(documentId);
+
+        if (document.getIsArchived()) {
+            throw new CantEditException("Document is archived. Can't edit.");
+        }
+
         var documentFile = documentFileService.findOne(documentFileId);
 
         documentFileService.deleteDocumentFile(documentFile.getServerFilename());
@@ -235,7 +266,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var isProof =
             document.getProofs().stream().anyMatch((proof) -> proof.getId().equals(documentFileId));
 
-        if (document.getApproveStatus().equals(ApproveStatus.APPROVED) && !isProof) {
+        document.getFileItems().remove(documentFile);
+        document.getProofs().remove(documentFile);
+
+        document.setAreFilesValid(document.getFileItems().stream()
+            .noneMatch(file -> file.getIsVerifiedData().equals(false)) &&
+            document.getProofs().stream()
+                .noneMatch(file -> file.getIsVerifiedData().equals(false)));
+
+        if (!isProof) {
             indexDocumentFilesContent(document,
                 findDocumentPublicationIndexByDatabaseId(documentId));
         }
@@ -271,6 +310,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         setBasicMetadata(document, index);
         setContributors(document, index);
         setAdditionalMetadata(document, index);
+
+        index.setIsApproved(Objects.nonNull(document.getApproveStatus()) &&
+            document.getApproveStatus().equals(ApproveStatus.APPROVED));
+        index.setAreFilesValid(document.getAreFilesValid());
     }
 
     private void setBasicMetadata(Document document, DocumentPublicationIndex index) {
@@ -285,6 +328,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setDoi(document.getDoi());
         index.setScopusId(document.getScopusId());
         index.setOpenAlexId(document.getOpenAlexId());
+        index.setWebOfScienceId(document.getWebOfScienceId());
         index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
         indexDescription(document, index);
         indexKeywords(document, index);
@@ -303,19 +347,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private void setContributors(Document document, DocumentPublicationIndex index) {
-        var organisationUnitIds = new ArrayList<Integer>();
+        var organisationUnitIds = new HashSet<Integer>();
 
         document.getContributors().stream()
             .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
             .forEach(contribution -> processContribution(contribution, index, organisationUnitIds));
 
-        index.setOrganisationUnitIds(organisationUnitIds);
+        index.setOrganisationUnitIds(new ArrayList<>(organisationUnitIds.stream().toList()));
         index.setAuthorNamesSortable(index.getAuthorNames());
     }
 
     private void processContribution(PersonDocumentContribution contribution,
                                      DocumentPublicationIndex index,
-                                     List<Integer> organisationUnitIds) {
+                                     Set<Integer> organisationUnitIds) {
         var personExists = Objects.nonNull(contribution.getPerson());
         var contributorName =
             contribution.getAffiliationStatement().getDisplayPersonName().toString();
@@ -397,15 +441,46 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             documentId).orElse(fallbackDocument);
     }
 
+    @Override
+    public void archiveDocument(Integer documentId) {
+        var document = findOne(documentId);
+
+        if (document instanceof Thesis) {
+            throw new ThesisException("Use specific thesis library endpoint to archive theses.");
+        }
+
+        if (document.getTitle().isEmpty() || Objects.isNull(document.getDocumentDate()) ||
+            document.getDocumentDate().isBlank()) {
+            throw new MissingDataException("missingDataToArchiveMessage");
+        }
+
+        document.setIsArchived(true);
+        save(document);
+    }
+
+    @Override
+    public void unarchiveDocument(Integer documentId) {
+        var document = findOne(documentId);
+        document.setIsArchived(false);
+
+        save(document);
+    }
+
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
         index.setFullTextSr("");
         index.setFullTextOther("");
         index.setIsOpenAccess(false);
+        index.setAreFilesValid(document.getAreFilesValid());
 
         document.getFileItems().forEach(documentFile -> {
+            if (!documentFile.getResourceType().equals(ResourceType.PREPRINT) &&
+                !documentFile.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION)) {
+                return;
+            }
+
             index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
 
-            if (!documentFile.getMimeType().contains("pdf")) {
+            if (!documentFile.getMimeType().endsWith("pdf")) {
                 return;
             }
 
@@ -491,6 +566,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     protected void setCommonFields(Document document, DocumentDTO documentDTO) {
+        if (document.getIsArchived()) {
+            throw new CantEditException("Document is archived. Can't edit.");
+        }
+
         document.setTitle(
             multilingualContentService.getMultilingualContent(documentDTO.getTitle()));
         document.setSubTitle(
@@ -521,6 +600,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             document.setEvent(event);
         }
+
+        if (!documentApprovedByDefault) {
+            document.setIsMetadataValid(false);
+        } else {
+            document.setIsMetadataValid(!shouldMetadataBeValidated(document));
+        }
+
+        document.setApproveStatus(
+            document.getIsMetadataValid() ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
     }
 
     private void setCommonIdentifiers(Document document, DocumentDTO documentDTO) {
@@ -553,13 +641,24 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "openAlexIdFormatError",
             "openAlexIdExistsError"
         );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getWebOfScienceId(),
+            document.getId(),
+            "\\d{15}$",
+            documentRepository::existsByWebOfScienceId,
+            document::setWebOfScienceId,
+            "webOfScienceIdFormatError",
+            "webOfScienceIdExistsError"
+        );
     }
 
     @Override
     public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
             documentRepository.existsByScopusId(identifier, documentPublicationId) ||
-            documentRepository.existsByOpenAlexId(identifier, documentPublicationId);
+            documentRepository.existsByOpenAlexId(identifier, documentPublicationId) ||
+            documentRepository.existsByWebOfScienceId(identifier, documentPublicationId);
     }
 
     @Override
@@ -611,7 +710,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
-                                                             String scopusId) {
+                                                             String scopusId,
+                                                             String webOfScienceId) {
         if (Objects.isNull(doi) || doi.isBlank()) {
             doi = "NOT_PRESENT";
         } else {
@@ -630,7 +730,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             scopusId = scopusId.replace("SCOPUS:", "");
         }
 
-        return documentRepository.findByOpenAlexIdOrDoiOrScopusId(openAlexId, doi, scopusId);
+        if (Objects.isNull(webOfScienceId) || webOfScienceId.isBlank()) {
+            webOfScienceId = "NOT_PRESENT";
+        } else {
+            webOfScienceId = webOfScienceId.replace("WOS:", "");
+        }
+
+        return documentRepository.findByOpenAlexIdOrDoiOrScopusIdOrWOSId(openAlexId, doi, scopusId,
+            webOfScienceId);
     }
 
     protected void clearCommonFields(Document publication) {
@@ -686,8 +793,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles,
                                                                  String doi,
                                                                  String scopusId,
-                                                                 String openAlexId) {
-        var query = buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId);
+                                                                 String openAlexId,
+                                                                 String webOfScienceId) {
+        var query =
+            buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId, webOfScienceId);
         return searchService.runQuery(query,
             Pageable.ofSize(5),
             DocumentPublicationIndex.class, "document_publication");
@@ -790,7 +899,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId,
-                                                String openAlexId) {
+                                                String openAlexId, String webOfScienceId) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
                 bq.bool(eq -> {
@@ -816,6 +925,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                             m -> m.field("open_alex_id").query(openAlexId)));
                     }
 
+                    if (Objects.nonNull(webOfScienceId) && !webOfScienceId.isBlank()) {
+                        eq.should(sb -> sb.match(
+                            m -> m.field("web_of_science_id").query(webOfScienceId)));
+                    }
+
                     return eq;
                 });
                 return bq;
@@ -828,16 +942,20 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                            Integer commissionId,
                                            List<DocumentPublicationType> allowedTypes) {
         return BoolQuery.of(b -> {
-            if (institutionId != null && institutionId > 0) {
+            if (Objects.nonNull(institutionId) && institutionId > 0) {
                 b.must(q -> q.term(t -> t.field("organisation_unit_ids").value(institutionId)));
             }
 
-            if (commissionId != null && commissionId > 0) {
+            if (Objects.nonNull(commissionId) && commissionId > 0) {
                 b.mustNot(q -> q.term(t -> t.field("assessed_by").value(commissionId)));
             }
 
-            if (allowedTypes != null && !allowedTypes.isEmpty()) {
+            if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
                 b.must(createTypeTermsQuery(allowedTypes));
+            }
+
+            if (!SessionTrackingUtil.isUserLoggedIn()) {
+                b.must(q -> q.term(t -> t.field("is_approved").value(true)));
             }
 
             return b;
@@ -898,14 +1016,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     .should(sb -> sb.match(m -> m.field("description_sr").query(token).boost(0.7f)))
                     .should(
                         sb -> sb.match(m -> m.field("description_other").query(token).boost(0.7f)))
-                    .should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
-                    .should(
-                        sb -> sb.match(m -> m.field("full_text_other").query(token).boost(0.7f)))
                     .should(sb -> sb.match(m -> m.field("editor_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("reviewer_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("advisor_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("type").query(token)))
                     .should(sb -> sb.match(m -> m.field("doi").query(token)));
+
+                // TODO: Should we be this restrictive?
+                if (SessionTrackingUtil.isUserLoggedIn()) {
+                    eq.should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
+                        .should(sb -> sb.match(
+                            m -> m.field("full_text_other").query(token).boost(0.7f)));
+                }
             });
 
             return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
@@ -994,5 +1116,56 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             documentDTO.getDocumentDate().isBlank()) {
             throw new MissingDataException("This document requires a specified document date.");
         }
+    }
+
+    protected Boolean shouldMetadataBeValidated(Document document) {
+        return shouldValidate(document, true);
+    }
+
+    protected Boolean shouldFileItemsBeValidated(Document document) {
+        return shouldValidate(document, false);
+    }
+
+    private Boolean shouldValidate(Document document, boolean isMetadata) {
+        var loggedInUser = SessionTrackingUtil.getLoggedInUser();
+
+        if (Objects.isNull(loggedInUser)) {
+            return true; // only for tests, impossible to reach during runtime
+        }
+
+        var roleName = loggedInUser.getAuthority().getName();
+        var roleAuthority = loggedInUser.getAuthority().getAuthority();
+
+        if (roleName.equals(UserRole.RESEARCHER.name())) {
+            if (!documentApprovedByDefault) {
+                return true;
+            }
+            return shouldSectionBeValidated(document, isMetadata);
+        } else {
+            return !roleAuthority.equals(UserRole.ADMIN.name()) &&
+                !roleAuthority.equals(UserRole.INSTITUTIONAL_EDITOR.name()) &&
+                !roleAuthority.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name());
+        }
+    }
+
+    private Boolean shouldSectionBeValidated(Document document, boolean metadata) {
+        var allDocumentInstitutions = new HashSet<Integer>();
+
+        if (document instanceof Thesis &&
+            Objects.nonNull(((Thesis) document).getOrganisationUnit())) {
+            allDocumentInstitutions.add(((Thesis) document).getOrganisationUnit().getId());
+        } else {
+            document.getContributors().stream().filter(
+                c -> c.getContributionType().equals(DocumentContributionType.AUTHOR) &&
+                    Objects.nonNull(c.getPerson()) && !c.getInstitutions().isEmpty()).forEach(c ->
+                allDocumentInstitutions.addAll(
+                    c.getInstitutions().stream().map(BaseEntity::getId).toList())
+            );
+        }
+
+        return allDocumentInstitutions.stream().map(
+                organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
+            .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
+                !configuration.trustNewDocumentFiles());
     }
 }

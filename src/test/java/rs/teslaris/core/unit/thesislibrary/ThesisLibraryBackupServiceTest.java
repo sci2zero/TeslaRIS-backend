@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileBackup;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
@@ -32,7 +33,7 @@ import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.thesislibrary.service.impl.ThesisLibraryBackupServiceImpl;
 
@@ -83,7 +84,8 @@ public class ThesisLibraryBackupServiceTest {
         // When
         var result =
             thesisLibraryBackupService.scheduleBackupGeneration(institutionId, from, to, types,
-                fileSections, defended, putOnReview, userId, "sr", metadataFormat);
+                fileSections, defended, putOnReview, userId, "sr", metadataFormat,
+                RecurrenceType.DAILY);
 
         // Then
         assertEquals(result, "13:45h");
@@ -91,7 +93,8 @@ public class ThesisLibraryBackupServiceTest {
             argThat(name -> name.contains("Library_Backup-" + institutionId)),
             eq(now),
             any(Runnable.class),
-            eq(userId)
+            eq(userId),
+            eq(RecurrenceType.DAILY)
         );
     }
 

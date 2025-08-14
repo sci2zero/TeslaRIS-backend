@@ -21,7 +21,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.ThesisRepository;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 import rs.teslaris.thesislibrary.service.impl.ThesisLibraryReportingServiceImpl;
 

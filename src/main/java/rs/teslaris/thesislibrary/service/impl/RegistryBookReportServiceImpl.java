@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,10 +37,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
@@ -75,18 +79,31 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
     @Override
     public String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
                                            String lang, Integer userId, String authorName,
-                                           String authorTitle) {
+                                           String authorTitle, RecurrenceType recurrence) {
         if (from.isAfter(to)) {
             throw new RegistryBookException("dateRangeIssueMessage");
         }
 
         var reportGenerationTime = taskManagerService.findNextFreeExecutionTime();
-        taskManagerService.scheduleTask(
+        var taskId = taskManagerService.scheduleTask(
             "Registry_Book-" + institutionId +
                 "-" + from + "_" + to + "_" + lang +
                 "-" + UUID.randomUUID(), reportGenerationTime,
             () -> generateReport(from, to, authorName, authorTitle, institutionId, lang),
-            userId);
+            userId, recurrence);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, reportGenerationTime,
+                ScheduledTaskType.REGISTRY_BOOK_REPORT_GENERATION, new HashMap<>() {{
+                put("institutionId", institutionId);
+                put("from", from);
+                put("to", to);
+                put("authorTitle", authorTitle);
+                put("userId", userId);
+                put("lang", lang);
+                put("authorName", authorName);
+            }}, recurrence));
+
         return reportGenerationTime.getHour() + ":" + reportGenerationTime.getMinute() + "h";
     }
 

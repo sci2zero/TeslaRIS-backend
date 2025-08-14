@@ -18,7 +18,7 @@ import rs.teslaris.core.model.oaipmh.person.Person;
 import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Sex;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
 import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;

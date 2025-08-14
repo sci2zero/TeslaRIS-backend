@@ -1,5 +1,6 @@
 package rs.teslaris.core.util.email;
 
+import jakarta.mail.MessagingException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.MessageFormat;
@@ -14,6 +15,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
@@ -76,6 +78,31 @@ public class EmailUtil {
         message.setFrom(from);
 
         return finishSendingEmail(message, to, subject, text);
+    }
+
+    @Async("taskExecutor")
+    @Retryable(
+        retryFor = {MailException.class},
+        maxAttempts = 2,
+        backoff = @Backoff(delay = 5000)
+    )
+    public CompletableFuture<Boolean> sendHTMLSupportedEmail(String to, String subject,
+                                                             String htmlBody) {
+        try {
+            var message = mailSender.createMimeMessage();
+            var helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(emailAddress);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);
+
+            mailSender.send(message);
+            return CompletableFuture.completedFuture(true);
+        } catch (MessagingException | MailException e) {
+            log.error("HTML email to user {} cannot be sent, reason: {}", to, e.getMessage());
+            return CompletableFuture.completedFuture(false);
+        }
     }
 
     private CompletableFuture<Boolean> finishSendingEmail(SimpleMailMessage message, String to,

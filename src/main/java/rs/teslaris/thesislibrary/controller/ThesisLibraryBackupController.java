@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
 import rs.teslaris.core.model.document.ThesisType;
@@ -52,6 +53,8 @@ public class ThesisLibraryBackupController {
                                            @RequestParam boolean putOnReview,
                                            @RequestParam String lang,
                                            @RequestParam ExportFileType metadataFormat,
+                                           @RequestParam(defaultValue = "ONCE")
+                                           RecurrenceType recurrence,
                                            @RequestHeader(value = "Authorization")
                                            String bearerToken) {
         var parsedSections = sections.stream()
@@ -60,7 +63,7 @@ public class ThesisLibraryBackupController {
 
         return thesisLibraryBackupService.scheduleBackupGeneration(institutionId, from, to, types,
             parsedSections, defended, putOnReview, tokenUtil.extractUserIdFromToken(bearerToken),
-            lang, metadataFormat);
+            lang, metadataFormat, recurrence);
     }
 
     @GetMapping("/list-backups")

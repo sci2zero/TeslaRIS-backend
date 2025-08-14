@@ -28,7 +28,7 @@ import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -145,6 +145,15 @@ public class ThesisController {
                                        @PathVariable Integer documentId,
                                        @PathVariable Integer documentFileId) {
         thesisService.deleteThesisAttachment(documentId, documentFileId, attachmentType);
+    }
+
+    @PatchMapping("/make-official/{documentId}/{documentFileId}")
+    @PreAuthorize("hasAuthority('PROMOTE_PRELIMINARY_ATTACHMENTS')")
+    @PublicationEditCheck("THESIS")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void movePreprintAttachmentToOfficialPublication(@PathVariable Integer documentId,
+                                                            @PathVariable Integer documentFileId) {
+        thesisService.transferPreprintToOfficialPublication(documentId, documentFileId);
     }
 
     @GetMapping("/library-formats/{documentId}")

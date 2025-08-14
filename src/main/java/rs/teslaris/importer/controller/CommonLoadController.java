@@ -40,9 +40,10 @@ public class CommonLoadController {
     @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
     public void skipRecord(
         @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestParam(required = false, defaultValue = "false") Boolean removeFromRecord,
         @RequestHeader("Authorization") String bearerToken) {
         loader.skipRecord(tokenUtil.extractUserIdFromToken(bearerToken),
-            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
+            getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId), removeFromRecord);
     }
 
     @PatchMapping("/mark-as-loaded")

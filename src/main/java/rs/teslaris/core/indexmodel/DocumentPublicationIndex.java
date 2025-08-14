@@ -134,6 +134,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "open_alex_id", store = true)
     private String openAlexId;
 
+    @Field(type = FieldType.Keyword, name = "web_of_science_id", store = true)
+    private String webOfScienceId;
+
     @Field(type = FieldType.Integer, name = "organisation_unit_ids", store = true)
     private List<Integer> organisationUnitIds = new ArrayList<>();
 
@@ -196,4 +199,10 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Keyword, name = "wordcloud_tokens_other", normalizer = "english_normalizer")
     private List<String> wordcloudTokensOther = new ArrayList<>();
+
+    @Field(type = FieldType.Boolean, name = "is_approved", store = true)
+    private Boolean isApproved;
+
+    @Field(type = FieldType.Boolean, name = "are_files_valid", store = true)
+    private Boolean areFilesValid;
 }

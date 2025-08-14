@@ -24,6 +24,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
@@ -156,6 +157,10 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
 
             if (showOnlyOpenAccessTheses) {
                 b.must(m -> m.term(tq -> tq.field("is_open_access").value(true)));
+            }
+
+            if (!SessionTrackingUtil.isUserLoggedIn()) {
+                b.must(q -> q.term(t -> t.field("is_approved").value(true)));
             }
 
             b.must(m -> m.exists(e -> e.field("thesis_defence_date")));

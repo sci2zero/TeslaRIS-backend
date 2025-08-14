@@ -8,6 +8,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -73,7 +75,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.IdentifierUtil;
@@ -125,6 +127,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Value("${person.approved_by_default}")
     private Boolean approvedByDefault;
+
+    @Value("${default.region-code}")
+    private String defaultRegionCode;
 
 
     @Override
@@ -453,8 +458,28 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             personalInfoToUpdate.getContact()
                 .setContactEmail(personalInfo.getContact().getContactEmail());
-            personalInfoToUpdate.getContact()
-                .setPhoneNumber(personalInfo.getContact().getPhoneNumber());
+
+            var rawNumber = personalInfo.getContact().getPhoneNumber();
+            if (Objects.nonNull(rawNumber)) {
+                String phoneNumber;
+                var phoneUtil = PhoneNumberUtil.getInstance();
+
+                try {
+                    if (rawNumber.startsWith("+")) {
+                        phoneNumber = phoneUtil.format(
+                            phoneUtil.parse(rawNumber, null),
+                            PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL); // Country code is in number
+                    } else {
+                        phoneNumber =
+                            phoneUtil.format(phoneUtil.parse(rawNumber, defaultRegionCode),
+                                PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+                    }
+                } catch (NumberParseException ignored) {
+                    phoneNumber = rawNumber;
+                }
+
+                personalInfoToUpdate.getContact().setPhoneNumber(phoneNumber);
+            }
         }
 
         save(personToUpdate);
@@ -776,18 +801,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personRepository.isBoundToUser(personId);
     }
 
-    @Override
-    public boolean canPersonScanDataSources(Integer personId) {
-        if (Objects.isNull(personId)) {
-            return false;
-        }
-
-        var person = findOne(personId);
-        return (!Objects.isNull(person.getScopusAuthorId()) &&
-            !person.getScopusAuthorId().isEmpty()) ||
-            (!Objects.isNull(person.getOpenAlexId()) && !person.getOpenAlexId().isEmpty());
-    }
-
     private PersonIndex getPersonIndexForId(Integer personDatabaseId) {
         return personIndexRepository.findByDatabaseId(personDatabaseId).orElse(new PersonIndex());
     }
@@ -824,6 +837,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setOpenAlexId(
             (Objects.nonNull(savedPerson.getOpenAlexId()) &&
                 !savedPerson.getOpenAlexId().isBlank()) ? savedPerson.getOpenAlexId() : null);
+        personIndex.setWebOfScienceResearcherId(
+            (Objects.nonNull(savedPerson.getWebOfScienceResearcherId()) &&
+                !savedPerson.getWebOfScienceResearcherId().isBlank()) ?
+                savedPerson.getWebOfScienceResearcherId() :
+                null);
     }
 
     private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
@@ -1018,7 +1036,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         if (Objects.isNull(identifier) || identifier.isBlank()) {
             return null;
         }
-        return personIndexRepository.findByScopusAuthorIdOrOpenAlexId(identifier).orElse(null);
+        return personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(identifier)
+            .orElse(null);
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
@@ -1157,6 +1176,16 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             person::setOpenAlexId,
             "openAlexIdFormatError",
             "openAlexIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getWebOfScienceResearcherId(),
+            person.getId(),
+            "^[A-Z]{1,3}-\\d{4}-\\d{4}$",
+            personRepository::existsByWebOfScienceId,
+            person::setWebOfScienceResearcherId,
+            "webOfScienceIdFormatError",
+            "webOfScienceIdExistsError"
         );
     }
 

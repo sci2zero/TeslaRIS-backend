@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileSection;
 
 @Service
@@ -15,7 +16,8 @@ public interface DocumentBackupService {
                                     Integer from, Integer to,
                                     List<DocumentPublicationType> types,
                                     List<DocumentFileSection> documentFileSections,
-                                    Integer userId, String language, ExportFileType metadataFormat);
+                                    Integer userId, String language, ExportFileType metadataFormat,
+                                    RecurrenceType recurrence);
 
     List<String> listAvailableBackups(Integer userId);
 

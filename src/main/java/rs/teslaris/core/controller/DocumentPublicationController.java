@@ -125,8 +125,10 @@ public class DocumentPublicationController {
     @GetMapping("/deduplication-search")
     public Page<DocumentPublicationIndex> deduplicationSearch(
         @RequestParam("titles") List<String> titles, @RequestParam("doi") String doi,
-        @RequestParam("scopusId") String scopusId, @RequestParam("openAlexId") String openAlexId) {
-        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId, openAlexId);
+        @RequestParam("scopusId") String scopusId, @RequestParam("openAlexId") String openAlexId,
+        @RequestParam("webOfScienceId") String webOfScienceId) {
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopusId, openAlexId,
+            webOfScienceId);
     }
 
     @GetMapping("/for-researcher/{personId}")
@@ -267,5 +269,21 @@ public class DocumentPublicationController {
                                                                   boolean foreignLanguage) {
         return documentPublicationService.getWordCloudForSingleDocument(documentId,
             foreignLanguage);
+    }
+
+    @PatchMapping("/archive/{documentId}")
+    @PreAuthorize("hasAuthority('ARCHIVE_DOCUMENT')")
+    @PublicationEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void archiveDocument(@PathVariable Integer documentId) {
+        documentPublicationService.archiveDocument(documentId);
+    }
+
+    @PatchMapping("/unarchive/{documentId}")
+    @PreAuthorize("hasAuthority('ARCHIVE_DOCUMENT')")
+    @PublicationEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unarchiveDocument(@PathVariable Integer documentId) {
+        documentPublicationService.unarchiveDocument(documentId);
     }
 }

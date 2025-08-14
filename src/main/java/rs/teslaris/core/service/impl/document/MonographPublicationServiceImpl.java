@@ -26,11 +26,13 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
-import rs.teslaris.core.service.interfaces.person.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @Transactional
@@ -55,12 +57,14 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            EventService eventService,
                                            CommissionRepository commissionRepository,
                                            SearchFieldsLoader searchFieldsLoader,
+                                           OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader);
+            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
+            organisationUnitTrustConfigurationService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
     }
@@ -80,7 +84,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             throw e;
         }
 
-        if (monographPublication.getApproveStatus().equals(ApproveStatus.DECLINED)) {
+        if (!SessionTrackingUtil.isUserLoggedIn() &&
+            !monographPublication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException(
                 "Monograph with ID " + monographPublicationId + " does not exist.");
         }
@@ -96,13 +101,14 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         setCommonFields(newMonographPublication, monographPublicationDTO);
         setMonographPublicationRelatedFields(newMonographPublication, monographPublicationDTO);
 
-        newMonographPublication.setApproveStatus(
-            documentApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
+        newMonographPublication.setApproveStatus((newMonographPublication.getIsMetadataValid() &&
+            newMonographPublication.getAreFilesValid()) ? ApproveStatus.APPROVED :
+            ApproveStatus.REQUESTED);
 
         var savedMonographPublication =
             monographPublicationJPAService.save(newMonographPublication);
 
-        if (newMonographPublication.getApproveStatus().equals(ApproveStatus.APPROVED) && index) {
+        if (index) {
             indexMonographPublication(savedMonographPublication, new DocumentPublicationIndex());
         }
 
@@ -121,6 +127,11 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     @Override
     public Page<DocumentPublicationIndex> findAllPublicationsForMonograph(Integer monographId,
                                                                           Pageable pageable) {
+        if (!SessionTrackingUtil.isUserLoggedIn()) {
+            return documentPublicationIndexRepository.findByTypeAndMonographIdAndIsApprovedTrue(
+                DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
+        }
+
         return documentPublicationIndexRepository.findByTypeAndMonographId(
             DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
     }
@@ -134,11 +145,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         setCommonFields(monographPublicationToUpdate, monographPublicationDTO);
         setMonographPublicationRelatedFields(monographPublicationToUpdate, monographPublicationDTO);
 
-        if (monographPublicationToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            var monographPublicationIndex =
-                findDocumentPublicationIndexByDatabaseId(monographPublicationId);
-            indexMonographPublication(monographPublicationToUpdate, monographPublicationIndex);
-        }
+        var monographPublicationIndex =
+            findDocumentPublicationIndexByDatabaseId(monographPublicationId);
+        indexMonographPublication(monographPublicationToUpdate, monographPublicationIndex);
 
         monographPublicationJPAService.save(monographPublicationToUpdate);
 
@@ -151,10 +160,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
         monographPublicationJPAService.delete(monographPublicationId);
 
-        if (publicationToDelete.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            documentPublicationIndexRepository.delete(
-                findDocumentPublicationIndexByDatabaseId(monographPublicationId));
-        }
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(monographPublicationId));
     }
 
     @Override

@@ -11,6 +11,7 @@ import rs.teslaris.core.model.document.Patent;
 public interface PatentRepository extends JpaRepository<Patent, Integer> {
 
     @Query(value = "SELECT * FROM patents p WHERE " +
-        "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
+        "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
+        "p.approveStatus = 1", nativeQuery = true)
     Page<Patent> findAllModifiedInLast24Hours(Pageable pageable);
 }

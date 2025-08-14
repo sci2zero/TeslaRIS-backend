@@ -80,6 +80,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(name = "open_alex_id")
     private String openAlexId;
 
+    @Column(name = "web_of_science_id")
+    private String webOfScienceId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", referencedColumnName = "id")
     private Event event;
@@ -91,6 +94,15 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "merged_ids")
     private Set<Integer> mergedIds = new HashSet<>();
+
+    @Column(name = "is_metadata_valid")
+    private Boolean isMetadataValid = true;
+
+    @Column(name = "are_files_valid")
+    private Boolean areFilesValid = true;
+
+    @Column(name = "is_archived")
+    private Boolean isArchived = false;
 
 
     public void addDocumentContribution(PersonDocumentContribution contribution) {
