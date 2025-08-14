@@ -72,8 +72,8 @@ public class PersonIndex {
     @Field(type = FieldType.Keyword, store = true, name = "open_alex_id")
     private String openAlexId;
 
-    @Field(type = FieldType.Keyword, store = true, name = "web_of_science_id")
-    private String webOfScienceId;
+    @Field(type = FieldType.Keyword, store = true, name = "web_of_science_researcher_id")
+    private String webOfScienceResearcherId;
 
     @Field(type = FieldType.Text, store = true, name = "keywords")
     private String keywords;

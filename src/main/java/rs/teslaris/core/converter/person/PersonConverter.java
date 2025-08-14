@@ -61,7 +61,7 @@ public class PersonConverter {
                 person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getOpenAlexId(),
-                person.getWebOfScienceId(),
+                person.getWebOfScienceResearcherId(),
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,
@@ -229,7 +229,7 @@ public class PersonConverter {
                 person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getOpenAlexId(),
-                person.getWebOfScienceId(),
+                person.getWebOfScienceResearcherId(),
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,

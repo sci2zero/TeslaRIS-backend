@@ -117,7 +117,7 @@ package person {
     -String orcid
     -String scopusAuthorId
     -String openAlexId
-    -String webOfScienceId
+    -String webOfScienceResearcherId
     -Set<Integer> oldIds
     -Set<Integer> mergedIds
     -Set<ResearchArea> researchAreas

@@ -593,9 +593,10 @@ public class CommonLoaderImpl implements CommonLoader {
             to.setScopusAuthorId(from.getScopusAuthorId());
         }
 
-        if (Objects.nonNull(from.getWebOfScienceId()) &&
-            (Objects.isNull(to.getWebOfScienceId()) || to.getWebOfScienceId().isBlank())) {
-            to.setWebOfScienceId(from.getWebOfScienceId());
+        if (Objects.nonNull(from.getWebOfScienceResearcherId()) &&
+            (Objects.isNull(to.getWebOfScienceResearcherId()) ||
+                to.getWebOfScienceResearcherId().isBlank())) {
+            to.setWebOfScienceResearcherId(from.getWebOfScienceResearcherId());
         }
     }
 

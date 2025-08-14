@@ -85,6 +85,10 @@ public class WebOfScienceConverter {
             var person = new Person();
             person.setImportId(authorship.researcherId());
             person.setOpenAlexId(person.getImportId());
+            person.setWebOfScienceResearcherId(person.getImportId());
+
+            var nameParts = authorship.displayName().split(", ");
+            person.setName(new PersonName(nameParts[1], "", nameParts[0]));
 
             var personNameParts = authorship.displayName().split(", ");
             person.setName(new PersonName(personNameParts[1], "", personNameParts[0]));

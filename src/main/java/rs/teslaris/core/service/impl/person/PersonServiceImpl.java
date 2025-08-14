@@ -837,9 +837,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setOpenAlexId(
             (Objects.nonNull(savedPerson.getOpenAlexId()) &&
                 !savedPerson.getOpenAlexId().isBlank()) ? savedPerson.getOpenAlexId() : null);
-        personIndex.setWebOfScienceId(
-            (Objects.nonNull(savedPerson.getWebOfScienceId()) &&
-                !savedPerson.getWebOfScienceId().isBlank()) ? savedPerson.getWebOfScienceId() :
+        personIndex.setWebOfScienceResearcherId(
+            (Objects.nonNull(savedPerson.getWebOfScienceResearcherId()) &&
+                !savedPerson.getWebOfScienceResearcherId().isBlank()) ?
+                savedPerson.getWebOfScienceResearcherId() :
                 null);
     }
 
@@ -1178,11 +1179,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         );
 
         IdentifierUtil.validateAndSetIdentifier(
-            personDTO.getWebOfScienceId(),
+            personDTO.getWebOfScienceResearcherId(),
             person.getId(),
             "^[A-Z]{1,3}-\\d{4}-\\d{4}$",
             personRepository::existsByWebOfScienceId,
-            person::setWebOfScienceId,
+            person::setWebOfScienceResearcherId,
             "webOfScienceIdFormatError",
             "webOfScienceIdExistsError"
         );
