@@ -6,7 +6,8 @@ public record ThesisPublicReviewResponseDTO(
     String titleOther,
     String organisationUnitNameSr,
     String organisationUnitNameOther,
-    String scientificArea,
+    String scientificAreaSr,
+    String scientificAreaOther,
     String publicReviewStartDate,
     String publicReviewEndDate,
     Integer databaseId

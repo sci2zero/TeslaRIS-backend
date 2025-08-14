@@ -31,6 +31,7 @@ import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
@@ -72,6 +73,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
@@ -195,7 +197,21 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         if (Objects.nonNull(thesisDTO.getContributions()) &&
             !thesisDTO.getContributions().isEmpty()) {
-            thesisDTO.setContributions(thesisDTO.getContributions().subList(0, 1));
+            var contributions = thesisDTO.getContributions();
+
+            var firstAuthor = contributions.stream()
+                .filter(c -> DocumentContributionType.AUTHOR.equals(c.getContributionType()))
+                .findFirst();
+
+            var others = contributions.stream()
+                .filter(c -> !DocumentContributionType.AUTHOR.equals(c.getContributionType()))
+                .toList();
+
+            var result = new ArrayList<PersonDocumentContributionDTO>();
+            firstAuthor.ifPresent(result::add);
+            result.addAll(others);
+
+            thesisDTO.setContributions(result);
         }
 
         setCommonFields(newThesis, thesisDTO);
@@ -506,10 +522,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesis.setPublisher(publisherService.findOne(thesisDTO.getPublisherId()));
         }
 
-        thesis.setScientificArea(thesisDTO.getScientificArea());
-        thesis.setScientificSubArea(thesisDTO.getScientificSubArea());
-        thesis.setPlaceOfKeeping(thesisDTO.getPlaceOfKeep());
-        thesis.setTypeOfTitle(thesisDTO.getTypeOfTitle());
+        thesis.setScientificArea(
+            multilingualContentService.getMultilingualContent(thesisDTO.getScientificArea()));
+        thesis.setScientificSubArea(
+            multilingualContentService.getMultilingualContent(thesisDTO.getScientificSubArea()));
+        thesis.setPlaceOfKeeping(
+            multilingualContentService.getMultilingualContent(thesisDTO.getPlaceOfKeep()));
+        thesis.setTypeOfTitle(
+            multilingualContentService.getMultilingualContent(thesisDTO.getTypeOfTitle()));
 
         if (Objects.nonNull(thesisDTO.getUdc()) &&
             udcPattern.matcher(thesisDTO.getUdc()).matches()) {
@@ -599,7 +619,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 index.setThesisInstitutionNameOther(institutionIndex.getNameOther());
             });
         }
-        index.setScientificField(thesis.getScientificArea());
+
+        indexScientificArea(thesis, index);
 
         thesis.getContributors().stream().filter(contribution -> contribution.getContributionType()
             .equals(DocumentContributionType.AUTHOR)).findFirst().ifPresent(authorship -> {
@@ -619,6 +640,20 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         if (thesis.getIsArchived()) {
             throw new ThesisException("Thesis is archived, can't edit.");
         }
+    }
+
+    private void indexScientificArea(Thesis thesis, DocumentPublicationIndex index) {
+        var contentSr = new StringBuilder();
+        var contentOther = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(contentSr, contentOther,
+            thesis.getScientificArea(), true);
+
+        StringUtil.removeTrailingDelimiters(contentSr, contentOther);
+        index.setScientificFieldSr(
+            !contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
+        index.setScientificFieldOther(
+            !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
     @Scheduled(cron = "${thesis.check-public-review-end.period}")

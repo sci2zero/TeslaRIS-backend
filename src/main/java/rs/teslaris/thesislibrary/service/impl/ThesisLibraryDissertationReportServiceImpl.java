@@ -91,7 +91,8 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 index.getTitleOther(),
                 index.getThesisInstitutionNameSr(),
                 index.getThesisInstitutionNameOther(),
-                index.getScientificField(),
+                index.getScientificFieldSr(),
+                index.getScientificFieldOther(),
                 index.getLatestPublicReviewStartDate().toString(),
                 index.getLatestPublicReviewStartDate().plusDays(daysOnPublicReview).toString(),
                 index.getDatabaseId()

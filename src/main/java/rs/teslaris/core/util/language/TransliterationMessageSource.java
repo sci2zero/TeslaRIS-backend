@@ -44,7 +44,6 @@ public class TransliterationMessageSource implements MessageSource {
     @Override
     public String getMessage(@NotNull String code, Object[] args, @NotNull Locale locale)
         throws NoSuchMessageException {
-
         if (isCyrillicLocale(locale)) {
             try {
                 return delegate.getMessage(code + ".cyrl", args, resolveLocale(SR_LOCALE));
@@ -60,7 +59,6 @@ public class TransliterationMessageSource implements MessageSource {
     @Override
     public String getMessage(@NotNull MessageSourceResolvable resolvable, @NotNull Locale locale)
         throws NoSuchMessageException {
-
         if (isCyrillicLocale(locale)) {
             for (var code : Objects.requireNonNull(resolvable.getCodes())) {
                 try {
