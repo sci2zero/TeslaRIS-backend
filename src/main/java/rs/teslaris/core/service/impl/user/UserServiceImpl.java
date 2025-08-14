@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -23,6 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
@@ -41,6 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
@@ -56,9 +59,14 @@ import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.EmailUpdateRequest;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
@@ -144,6 +152,24 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Value("${registration.allow-creation-of-researchers}")
     private boolean allowNewResearcherCreation;
 
+
+    @NotNull
+    private static BasicPersonDTO createBasicPersonDTO(
+        ResearcherRegistrationRequestDTO registrationRequest, OAuth2Provider oAuth2Provider,
+        String identifier) {
+        var basicPersonDTO = new BasicPersonDTO();
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname(registrationRequest.getFirstName());
+        personNameDTO.setLastname(registrationRequest.getLastName());
+        personNameDTO.setOtherName("");
+        basicPersonDTO.setPersonName(personNameDTO);
+        basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
+
+        if (oAuth2Provider == OAuth2Provider.ORCID) {
+            basicPersonDTO.setOrcid(identifier);
+        }
+        return basicPersonDTO;
+    }
 
     @Override
     protected JpaRepository<User, Integer> getEntityRepository() {
@@ -339,46 +365,115 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         validateEmailUniqueness(registrationRequest.getEmail());
         validatePasswordStrength(registrationRequest.getPassword());
 
-        var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
-            .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
+        var authority = getResearcherAuthority();
+        var person = resolveOrCreatePerson(registrationRequest, null, null);
+        var involvement = personService.getLatestResearcherInvolvement(person);
 
-        Person person = null;
+        var newUser = buildUser(
+            registrationRequest.getEmail(),
+            passwordEncoder.encode(registrationRequest.getPassword()),
+            person, involvement, authority,
+            registrationRequest.getPreferredLanguageId()
+        );
+
+        return saveAndNotifyUser(newUser);
+    }
+
+    @Override
+    @Transactional
+    public User registerResearcherOAuth(
+        ResearcherRegistrationRequestDTO registrationRequest,
+        OAuth2Provider oAuth2Provider, String identifier) {
+
+        validateEmailUniqueness(registrationRequest.getEmail());
+
+        var authority = getResearcherAuthority();
+        var person = resolveOrCreatePerson(registrationRequest, oAuth2Provider, identifier);
+        var involvement = personService.getLatestResearcherInvolvement(person);
+
+        char[] generatedPassword = PasswordUtil.generatePassword(30);
+        var newUser = buildUser(
+            registrationRequest.getEmail(),
+            passwordEncoder.encode(new String(generatedPassword)),
+            person, involvement, authority,
+            registrationRequest.getPreferredLanguageId()
+        );
+
+        Arrays.fill(generatedPassword, '\0');
+        return saveAndNotifyUser(newUser);
+    }
+
+    private Authority getResearcherAuthority() {
+        return authorityRepository.findByName(UserRole.RESEARCHER.toString())
+            .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
+    }
+
+    private Person resolveOrCreatePerson(
+        ResearcherRegistrationRequestDTO registrationRequest,
+        OAuth2Provider oAuth2Provider, String identifier) {
+
         if (Objects.nonNull(registrationRequest.getPersonId())) {
             if (userRepository.personAlreadyBinded(registrationRequest.getPersonId())) {
                 throw new PersonReferenceConstraintViolationException(
                     "Person you have selected is already assigned to a user.");
             }
-
-            person = personService.findOne(registrationRequest.getPersonId());
+            var person = personService.findOne(registrationRequest.getPersonId());
+            if (oAuth2Provider == OAuth2Provider.ORCID) {
+                if (!allowNewResearcherCreation && !person.getOrcid().equals(identifier)) {
+                    throw new PersonReferenceConstraintViolationException(
+                        "Rewriting researcher ORCID upon user registration is disallowed.");
+                } else {
+                    person.setOrcid(identifier);
+                }
+            }
+            addOrganisationIfMissing(person, registrationRequest.getOrganisationUnitId());
+            return person;
         } else if (allowNewResearcherCreation) {
-            BasicPersonDTO basicPersonDTO = new BasicPersonDTO();
-            PersonNameDTO personNameDTO = new PersonNameDTO();
-            personNameDTO.setFirstname(registrationRequest.getFirstName());
-            personNameDTO.setLastname(registrationRequest.getLastName());
-            personNameDTO.setOtherName("");
-            basicPersonDTO.setPersonName(personNameDTO);
-            basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
+            var basicPersonDTO =
+                createBasicPersonDTO(registrationRequest, oAuth2Provider, identifier);
 
-            person = personService.createPersonWithBasicInfo(basicPersonDTO, true);
+            var person = personService.createPersonWithBasicInfo(basicPersonDTO, true);
+            addOrganisationIfMissing(person, registrationRequest.getOrganisationUnitId());
+            return person;
         }
+        throw new PersonReferenceConstraintViolationException(
+            "Creation of new researchers upon user registration is disallowed.");
+    }
 
-        if (Objects.isNull(person)) {
-            throw new PersonReferenceConstraintViolationException(
-                "Creation of new researchers upon user registration is disallowed.");
+    private void addOrganisationIfMissing(Person person, Integer organisationUnitId) {
+        if (Objects.nonNull(organisationUnitId) &&
+            person.getInvolvements().stream().noneMatch(
+                i -> Objects.nonNull(i.getOrganisationUnit()) &&
+                    i.getOrganisationUnit().getId().equals(organisationUnitId))) {
+
+            var institution = organisationUnitService.findOrganisationUnitById(organisationUnitId);
+            var employment = new Employment(
+                null, null, ApproveStatus.APPROVED, new HashSet<>(),
+                InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                institution, null, new HashSet<>()
+            );
+            person.addInvolvement(employment);
         }
+    }
 
-        var involvement = personService.getLatestResearcherInvolvement(person);
+    private User buildUser(
+        String email, String encodedPassword,
+        Person person, Involvement involvement, Authority authority,
+        Integer preferredLanguageId) {
 
-        var newUser =
-            new User(registrationRequest.getEmail(),
-                passwordEncoder.encode(registrationRequest.getPassword()), "",
-                person.getName().getFirstname(), person.getName().getLastname(), true, false,
-                languageTagService.findOne(registrationRequest.getPreferredLanguageId()),
-                languageTagService.findOne(registrationRequest.getPreferredLanguageId()), authority,
-                person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
-                null, UserNotificationPeriod.NEVER);
+        var language = languageTagService.findOne(preferredLanguageId);
+
+        return new User(
+            email, encodedPassword, "",
+            person.getName().getFirstname(), person.getName().getLastname(), true, false,
+            language, language, authority, person,
+            Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
+            null, UserNotificationPeriod.NEVER
+        );
+    }
+
+    private User saveAndNotifyUser(User newUser) {
         var savedUser = userRepository.save(newUser);
-
         indexUser(savedUser, new UserAccountIndex());
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);

@@ -31,6 +31,9 @@ public class OrcidOAuth2LoginSuccessHandler implements AuthenticationSuccessHand
     @Value("${default.locale}")
     private String defaultLocale;
 
+    @Value("${registration.allow-creation-of-researchers}")
+    private boolean allowNewResearcherCreation;
+
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -44,10 +47,35 @@ public class OrcidOAuth2LoginSuccessHandler implements AuthenticationSuccessHand
         String name = oauthUser.getAttribute("name");
 
         var user = personRepository.findUserForOrcid(orcidId);
+        var person = personRepository.findPersonForOrcid(orcidId);
+
+        var frontendBasePath = frontendUrl + defaultLocale.toLowerCase();
+
         if (user.isEmpty() || Objects.isNull(name)) {
             request.getSession().invalidate();
+
+            if (person.isEmpty() && !allowNewResearcherCreation) {
+                response.sendRedirect(frontendBasePath + "/login?error=orcidNotLinked");
+                return;
+            }
+
+            if ((Objects.isNull(name) || name.isBlank())) {
+                // should never happen, but is still covered just in case
+                name = person.map(
+                        value -> value.getName().getFirstname() + " " + value.getName().getLastname())
+                    .orElse("");
+            }
+
             response.sendRedirect(
-                frontendUrl + defaultLocale.toLowerCase() + "/login?error=orcidNotLinked");
+                frontendUrl + defaultLocale.toLowerCase() + "/register?identifier=" + orcidId +
+                    "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8) +
+                    "&oauth=true&provider=orcid");
+            return;
+        }
+
+        if (!user.get().isAccountNonLocked()) {
+            request.getSession().invalidate();
+            response.sendRedirect(frontendBasePath + "/login?error=accountNotActivated");
             return;
         }
 

@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
@@ -139,6 +140,22 @@ public class UserController {
     public UserResponseDTO registerResearcher(
         @RequestBody @Valid ResearcherRegistrationRequestDTO registrationRequest) {
         var newUser = userService.registerResearcher(registrationRequest);
+
+        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
+            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
+            newUser.getPreferredUILanguage().getLanguageTag(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
+            newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
+    }
+
+    @PostMapping("/register-researcher-oauth")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public UserResponseDTO registerResearcherOauth(
+        @RequestBody @Valid ResearcherRegistrationRequestDTO registrationRequest,
+        @RequestParam OAuth2Provider provider, @RequestParam String identifier) {
+        var newUser =
+            userService.registerResearcherOAuth(registrationRequest, provider, identifier);
 
         return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),

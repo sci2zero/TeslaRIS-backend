@@ -87,6 +87,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/register-researcher").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/register-researcher-oauth").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/confirm-email-change").permitAll()
@@ -96,6 +97,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/person/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/old-id/{personOldId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/import-identifier/{identifier}")
+                .permitAll()
 
                 // COUNTRY
                 .requestMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
@@ -336,7 +339,7 @@ public class SecurityConfiguration {
         http.oauth2Login(oauth -> oauth
             .userInfoEndpoint(userInfo -> userInfo
                 .userService(clientRequest -> {
-                    if (OAuth2Providers.ORCID.equals(
+                    if (OAuth2Provider.ORCID.getValue().equals(
                         clientRequest.getClientRegistration().getRegistrationId())) {
                         return orcidOAuth2UserInfoHandler.loadUser(clientRequest);
                     }
@@ -346,7 +349,8 @@ public class SecurityConfiguration {
             )
             .successHandler((request, response, authentication) -> {
                 var token = (OAuth2AuthenticationToken) authentication;
-                if (OAuth2Providers.ORCID.equals(token.getAuthorizedClientRegistrationId())) {
+                if (OAuth2Provider.ORCID.getValue()
+                    .equals(token.getAuthorizedClientRegistrationId())) {
                     orcidOAuth2LoginSuccessHandler.onAuthenticationSuccess(request, response,
                         authentication);
                 } else {

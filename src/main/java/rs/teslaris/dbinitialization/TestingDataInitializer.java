@@ -534,6 +534,7 @@ public class TestingDataInitializer {
         person4.setName(
             new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null));
         person4.setScopusAuthorId("14419566900");
+//        person4.setOrcid("0009-0008-0599-0599");
         personRepository.save(person4);
 
         var conferenceEvent3 = new Conference();

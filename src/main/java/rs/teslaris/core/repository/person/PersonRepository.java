@@ -47,6 +47,10 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     Optional<User> findUserForOrcid(String orcid);
 
     @Query("SELECT p FROM Person p WHERE " +
+        "p.orcid = :orcid")
+    Optional<Person> findPersonForOrcid(String orcid);
+
+    @Query("SELECT p FROM Person p WHERE " +
         "(p.scopusAuthorId = :identifier OR " +
         "p.apvnt = :identifier OR " +
         "p.eCrisId = :identifier OR " +
