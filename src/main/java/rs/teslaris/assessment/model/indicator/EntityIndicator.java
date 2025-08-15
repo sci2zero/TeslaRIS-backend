@@ -6,6 +6,7 @@ import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
@@ -29,7 +30,15 @@ import rs.teslaris.core.model.user.User;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "entity_indicators")
+@Table(
+    name = "entity_indicators",
+    indexes = {
+        @Index(name = "idx_entity_type_pubseries_source_fromdate", columnList = "entity_type, publication_series_id, source, from_date"),
+        @Index(name = "idx_entity_type_pubseries_source_from_to", columnList = "entity_type, publication_series_id, source, from_date, to_date"),
+        @Index(name = "idx_entity_type_category_source_fromdate", columnList = "entity_type, category_identifier, source, from_date"),
+        @Index(name = "idx_entity_type_pubseries_source_date_category", columnList = "entity_type, publication_series_id, source, from_date, category_identifier")
+    }
+)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "entity_type", discriminatorType = DiscriminatorType.STRING)
 public abstract class EntityIndicator extends BaseEntity {
