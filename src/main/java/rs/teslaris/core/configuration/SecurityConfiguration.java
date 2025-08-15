@@ -316,7 +316,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/feedback").permitAll()
 
                 // SHARE
-                .requestMatchers(HttpMethod.GET, "/api/share/document/{documentType}/{id}")
+                .requestMatchers(HttpMethod.GET, "/api/share/document/{documentType}/{id}/{lang}")
                 .permitAll()
 
                 // OAUTH2

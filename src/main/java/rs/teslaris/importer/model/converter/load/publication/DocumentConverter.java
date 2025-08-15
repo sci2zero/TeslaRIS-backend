@@ -42,7 +42,8 @@ public abstract class DocumentConverter {
         person.setOrcid(importContribution.getPerson().getOrcid());
         person.setScopusAuthorId(importContribution.getPerson().getScopusAuthorId());
         person.setOpenAlexId(importContribution.getPerson().getOpenAlexId());
-        person.setWebOfScienceId(importContribution.getPerson().getWebOfScienceId());
+        person.setWebOfScienceResearcherId(
+            importContribution.getPerson().getWebOfScienceResearcherId());
         person.setImportId(importContribution.getPerson().getImportId());
         return person;
     }

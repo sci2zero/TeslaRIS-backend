@@ -36,6 +36,6 @@ public class Person {
     @Field("open_alex_id")
     private String openAlexId;
 
-    @Field("web_of_science_id")
-    private String webOfScienceId;
+    @Field("web_of_science_researcher_id")
+    private String webOfScienceResearcherId;
 }

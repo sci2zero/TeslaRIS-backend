@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -64,7 +63,7 @@ class CitationServiceTest {
         when(journalPublicationRepository.findById(1)).thenReturn(Optional.of(publication));
 
         // When
-        CitationResponseDTO result = citationService.craftCitations(index, languageCode);
+        var result = citationService.craftCitations(index, languageCode);
 
         // Then
         assertNotNull(result);
@@ -95,7 +94,7 @@ class CitationServiceTest {
         when(journalPublicationRepository.findById(1)).thenReturn(Optional.of(publication));
 
         // When
-        CitationResponseDTO result = citationService.craftCitations(documentId, languageCode);
+        var result = citationService.craftCitations(documentId, languageCode);
 
         // Then
         assertNotNull(result);

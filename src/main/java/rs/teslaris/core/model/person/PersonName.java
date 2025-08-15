@@ -7,7 +7,6 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,7 +18,6 @@ import rs.teslaris.core.util.search.StringUtil;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "person_names")
 @SQLRestriction("deleted=false")

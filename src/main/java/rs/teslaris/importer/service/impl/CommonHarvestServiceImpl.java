@@ -37,8 +37,9 @@ public class CommonHarvestServiceImpl implements CommonHarvestService {
             !person.getScopusAuthorId().isEmpty()) ||
             (configuration.importOpenAlex() && Objects.nonNull(person.getOpenAlexId()) &&
                 !person.getOpenAlexId().isEmpty()) ||
-            (configuration.importWebOfScience() && Objects.nonNull(person.getWebOfScienceId()) &&
-                !person.getWebOfScienceId().isEmpty());
+            (configuration.importWebOfScience() &&
+                Objects.nonNull(person.getWebOfScienceResearcherId()) &&
+                !person.getWebOfScienceResearcherId().isEmpty());
     }
 
     @Override

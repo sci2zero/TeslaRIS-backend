@@ -16,5 +16,5 @@ public interface PersonIdentifierable {
 
     String getOpenAlexId();
 
-    String getWebOfScienceId();
+    String getWebOfScienceResearcherId();
 }

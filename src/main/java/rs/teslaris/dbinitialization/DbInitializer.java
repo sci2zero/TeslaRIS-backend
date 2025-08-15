@@ -194,6 +194,7 @@ public class DbInitializer implements ApplicationRunner {
         var scheduleDocumentHarvest = new Privilege("SCHEDULE_DOCUMENT_HARVEST");
         var configureHarvestSources = new Privilege("CONFIGURE_HARVEST_SOURCES");
         var performOAIPMHHarvest = new Privilege("PERFORM_OAIPMH_HARVEST");
+        var setDefaultContent = new Privilege("SET_DEFAULT_CONTENT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -227,7 +228,8 @@ public class DbInitializer implements ApplicationRunner {
                 deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
                 migrateInstitutionEntities, performOaiMigration, saveOUTrustConfiguration,
                 validateMetadata, validateUploadedFiles, archiveDocument, configureHarvestSources,
-                promotePreliminaryAttachments, scheduleDocumentHarvest, performOAIPMHHarvest));
+                promotePreliminaryAttachments, scheduleDocumentHarvest, performOAIPMHHarvest,
+                setDefaultContent));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -260,7 +262,8 @@ public class DbInitializer implements ApplicationRunner {
                 harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
                 migrateAllEntities, performOaiMigration, saveOUTrustConfiguration, validateMetadata,
                 validateUploadedFiles, archiveDocument, promotePreliminaryAttachments,
-                scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest
+                scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
+                setDefaultContent
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -282,7 +285,7 @@ public class DbInitializer implements ApplicationRunner {
                     mergeOUEmployments, mergeDocumentsMetadata, deletePerson, validateMetadata,
                     deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities,
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
-                    scheduleDocumentHarvest, configureHarvestSources)));
+                    scheduleDocumentHarvest, configureHarvestSources, setDefaultContent)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -302,7 +305,8 @@ public class DbInitializer implements ApplicationRunner {
                 updateProfile, allowAccountTakeover, manageThesisAttachments,
                 putThesisOnPublicReview, editDocumentFiles, archiveThesis,
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
-                validateMetadata, validateUploadedFiles, promotePreliminaryAttachments
+                validateMetadata, validateUploadedFiles, promotePreliminaryAttachments,
+                setDefaultContent
             )));
 
         var headOfLibraryAuthority =

@@ -56,5 +56,5 @@ public class BasicPersonDTO implements PersonIdentifierable {
 
     private String openAlexId;
 
-    private String webOfScienceId;
+    private String webOfScienceResearcherId;
 }

@@ -38,8 +38,8 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     @Query("SELECT u FROM User u WHERE " +
         "u.person.scopusAuthorId = :identifier OR " +
         "u.person.openAlexId = :identifier OR " +
-        "u.person.webOfScienceId = :identifier OR " +
-        "u.person.orcid = :identifier")
+        "u.person.orcid = :identifier OR " +
+        "u.person.webOfScienceResearcherId = :identifier")
     Optional<User> findUserForPersonIdentifier(String identifier);
 
     @Query("SELECT u FROM User u WHERE " +
@@ -56,7 +56,8 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "p.eCrisId = :identifier OR " +
         "p.eNaukaId = :identifier OR " +
         "p.openAlexId = :identifier OR " +
-        "p.orcid = :identifier)")
+        "p.orcid = :identifier OR " +
+        "p.webOfScienceResearcherId = :identifier)")
     Optional<Person> findPersonForIdentifier(String identifier);
 
     @Query("SELECT u.person.id FROM User u WHERE u.id = :userId")
@@ -87,8 +88,9 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     boolean existsByOpenAlexId(String openAlexId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Person p WHERE p.webOfScienceId = :webOfScienceId AND (:id IS NULL OR p.id <> :id)")
-    boolean existsByWebOfScienceId(String webOfScienceId, Integer id);
+        "FROM Person p WHERE p.webOfScienceResearcherId = :webOfScienceResearcherId AND " +
+        "(:id IS NULL OR p.id <> :id)")
+    boolean existsByWebOfScienceId(String webOfScienceResearcherId, Integer id);
 
     @Query(value = "SELECT * FROM persons p WHERE " +
         "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +

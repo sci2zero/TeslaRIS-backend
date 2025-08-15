@@ -61,11 +61,11 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @JoinColumn(name = "language_id")
     private Language language;
 
-    @JoinColumn(name = "scientific_area")
-    private String scientificArea;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> scientificArea = new HashSet<>();
 
-    @JoinColumn(name = "scientific_sub_field")
-    private String scientificSubArea;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> scientificSubArea = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
@@ -93,8 +93,11 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<DocumentFile> commissionReports = new HashSet<>();
 
-    @Column(name = "place_of_keeping")
-    private String placeOfKeeping;
+    @Column(name = "is_archived")
+    private Boolean isArchived = false;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> placeOfKeeping = new HashSet<>();
 
     @Column(name = "e_isbn")
     private String eISBN;
@@ -105,8 +108,8 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @Column(name = "udc")
     private String udc;
 
-    @Column(name = "type_of_title")
-    private String typeOfTitle;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> typeOfTitle = new HashSet<>();
 
     @Column(name = "public_review_completed")
     private Boolean publicReviewCompleted = false;

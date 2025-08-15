@@ -57,7 +57,7 @@ class ThesisLibraryDissertationReportServiceTest {
         mockIndex.setTitleOther("Title");
         mockIndex.setThesisInstitutionNameSr("Fakultet");
         mockIndex.setThesisInstitutionNameOther("Faculty");
-        mockIndex.setScientificField("CS");
+        mockIndex.setScientificFieldSr("CS");
         mockIndex.setLatestPublicReviewStartDate(LocalDate.of(2023, 6, 1));
         mockIndex.setDatabaseId(123);
 
@@ -95,7 +95,7 @@ class ThesisLibraryDissertationReportServiceTest {
         mockIndex.setTitleOther("Topic");
         mockIndex.setThesisInstitutionNameSr("Institut");
         mockIndex.setThesisInstitutionNameOther("Institute");
-        mockIndex.setScientificField("Math");
+        mockIndex.setScientificFieldSr("Math");
         mockIndex.setLatestPublicReviewStartDate(LocalDate.now().minusDays(10));
         mockIndex.setDatabaseId(456);
 

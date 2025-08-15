@@ -8,9 +8,39 @@ package commonTypes {
     DECLINED
   }
 
+  enum ApiKeyType {
+      M_SERVICE
+  }
+
   class Language {
     -String languageCode ' ISO 639-1 - https://www.loc.gov/standards/iso639-2/php/English_list.php
     -Set<MultiLingualContent> name
+  }
+
+  class ApiKey {
+    -Set<MultiLingualContent> name
+    -ApiKeyType usageType
+    -String value
+    -String lookupHash
+    -LocalDate validUntil
+    -String clientEmail
+    -String preferredLanguage
+    -Integer dailyRequests
+    -Integer timesUsedToday
+  }
+
+  class BrandingInformation {
+    -Set<MultiLingualContent> title
+    -Set<MultiLingualContent> description
+  }
+
+  class ProfilePhotoOrLogo {
+    -String imageServerName
+    -Integer topOffset
+    -Integer leftOffset
+    -Integer height
+    -Integer width
+    -String backgroundHex
   }
 
   !startsub Language_Tag
@@ -61,6 +91,12 @@ package user {
     PROMOTION_REGISTRY_ADMINISTRATOR
   }
 
+  enum UserNotificationPeriod {
+      DAILY
+      WEEKLY
+      NEVER
+  }
+
   class Privilege {
     -String name
   }
@@ -70,7 +106,6 @@ package user {
     -Set<Privilege> privileges
   }
 
-
   class User {
     -String email
     -String password
@@ -79,18 +114,25 @@ package user {
     -Stirng lastname
     -boolean locked
     -boolean canTakeRole
-    -Language preferedUILanguage
-    -Language preferredReferenceCataloguingLanguage
+    -LanguageTag preferedUILanguage
+    -LanguageTag preferredReferenceCataloguingLanguage
     -Authority authority
     -Person person
     -OrganisationUnit OrganisationUnit
     -Commission commission
+    -UserNotificationPeriod userNotificationPeriod
   }
 
   class UserAccountActivation {
     -String activationToken
   }
   UserActivation -> User
+
+  class EmailUpdateRequest {
+    -String emailUpdateToken
+    -String newEmailAddress
+  }
+  EmailUpdateRequest -> User
 
   class RefreshToken {
     -String refreshTokenValue
@@ -117,7 +159,7 @@ package person {
     -String orcid
     -String scopusAuthorId
     -String openAlexId
-    -String webOfScienceId
+    -String webOfScienceResearcherId
     -Set<Integer> oldIds
     -Set<Integer> mergedIds
     -Set<ResearchArea> researchAreas
@@ -278,6 +320,13 @@ package institution {
 
   OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : sourceOrganisationUnit
   OrganisationUnitsRelation "*" --> "0..1" OrganisationUnit : targetOrganisationUnit
+
+  class InstitutionDefaultSubmissionContent {
+    -Set<MultiLingualContent> placeOfKeep
+    -Set<MultiLingualContent> typeOfTitle
+  }
+
+  InstitutionDefaultSubmissionContent "0..1" --> "1" OrganisationUnit : institution
 
   class OrganisationUnitsRelation {
     Set<MultiLingualContent> sourceAffiliationStatement
@@ -650,6 +699,12 @@ package document {
     -Set<DocumentFile> preliminarySupplements
     -Set<DocumentFile> commissionReports
     -boolean isArchived
+    -Set<MultiLingualContent> placeOfKeep
+    -String eISBN
+    -String printISBN
+    -String udc
+    -Set<MultiLingualContent> typeOfTitle
+    -Boolean publicReviewCompleted
   }
 
   class Dataset extends Document {
@@ -670,7 +725,6 @@ package document {
     UNDERGRADUATE_THESIS
   }
 
-
   PublicationSeries "1" --> "1..*" PersonPublicationSeriesContribution
   Event "1" --> "1..*" PersonEventContribution
   Thesis "0..*" --> "1" Publisher
@@ -680,14 +734,12 @@ package document {
   Dataset "0..*" --> "1" Publisher
   Software "0..*" --> "1" Publisher
 
-
   DocumentsRelation "*" --> "0..1" Document : source
   DocumentsRelation "*" --> "0..1" Document : target
 
   class DocumentsRelation {
     DocumentsRelationType relationType
   }
-
 
   enum DocumentsRelationType {
     PART_OF
@@ -862,6 +914,12 @@ package project {
 
   CommissionRelation "0..*" --> "0..* targetCommission" Commission
 
+  class CommissionReport {
+    -String reportFileName
+  }
+
+  CommissionReport "0..*" --> "1" Commission
+
   class EntityAssessmentClassification {
     -LocalDateTime timestamp
     -Boolean manual
@@ -910,6 +968,16 @@ package project {
     -Set<ApplicableEntityType> applicableTypes
     -IndicatorContentType contentType
   }
+
+  class ExternalIndicatorConfiguration {
+    -Boolean showAltmetric
+    -Boolean showDimensions
+    -Boolean showOpenCitations
+    -Boolean showPlumX
+    -Boolean showUnpaywall
+  }
+
+  ExternalIndicatorConfiguration "0..1" --> "1" OrganisationUnit
 
   enum AccessLevel {
     OPEN

@@ -56,7 +56,8 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
         }
 
         var person = personService.findOne(personId);
-        if (Objects.isNull(person.getWebOfScienceId()) || person.getWebOfScienceId().isBlank()) {
+        if (Objects.isNull(person.getWebOfScienceResearcherId()) ||
+            person.getWebOfScienceResearcherId().isBlank()) {
             return newEntriesCount;
         }
 
@@ -65,7 +66,8 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
         var adminUserIds = CommonImportUtility.getAdminUserIds();
 
         var harvestedRecords =
-            webOfScienceImportUtility.getPublicationsForAuthors(List.of(person.getWebOfScienceId()),
+            webOfScienceImportUtility.getPublicationsForAuthors(
+                List.of(person.getWebOfScienceResearcherId()),
                 startDate.toString(), endDate.toString());
 
         processHarvestedRecords(harvestedRecords, userId, adminUserIds, employmentInstitutionIds,
@@ -143,13 +145,13 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
             importAuthorIds =
                 personService.findPeopleForOrganisationUnit(organisationUnitId, List.of("*"),
                         Pageable.unpaged(), false)
-                    .map(PersonIndex::getWebOfScienceId)
+                    .map(PersonIndex::getWebOfScienceResearcherId)
                     .filter(wosId -> Objects.nonNull(wosId) && !wosId.isBlank())
                     .toList();
         } else {
             importAuthorIds =
                 authorIds.stream()
-                    .map(id -> personService.findOne(id).getWebOfScienceId())
+                    .map(id -> personService.findOne(id).getWebOfScienceResearcherId())
                     .filter(wosId -> Objects.nonNull(wosId) && !wosId.isBlank())
                     .toList();
         }
@@ -210,7 +212,8 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
 
                     CommonHarvestUtility.updateContributorEntryCount(documentImport,
                         documentImport.getContributions().stream()
-                            .map(c -> c.getPerson().getWebOfScienceId()).toList(), newEntriesCount,
+                            .map(c -> c.getPerson().getWebOfScienceResearcherId()).toList(),
+                        newEntriesCount,
                         personService);
 
                     mongoTemplate.save(documentImport, "documentImports");
