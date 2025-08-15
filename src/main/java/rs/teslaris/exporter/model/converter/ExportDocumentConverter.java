@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
@@ -52,6 +53,9 @@ import rs.teslaris.exporter.model.common.ExportPublisher;
 public class ExportDocumentConverter extends ExportConverterBase {
 
     private static DocumentRepository documentRepository;
+
+    private static DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
 
     @Autowired
     public ExportDocumentConverter(DocumentRepository documentRepository) {
@@ -392,10 +396,9 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     private static Set<Integer> getRelatedInstitutions(Document document) {
         var relations = new HashSet<Integer>();
-        document.getContributors().forEach(contribution -> {
-            contribution.getInstitutions().forEach(institution -> {
-                relations.add(institution.getId());
-            });
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            document.getId()).ifPresent(documentIndex -> {
+            relations.addAll(documentIndex.getOrganisationUnitIds());
         });
 
         if (document instanceof Proceedings) {

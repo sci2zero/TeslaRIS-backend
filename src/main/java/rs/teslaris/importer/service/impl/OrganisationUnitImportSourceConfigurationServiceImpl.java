@@ -2,6 +2,7 @@ package rs.teslaris.importer.service.impl;
 
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,12 @@ public class OrganisationUnitImportSourceConfigurationServiceImpl
 
     private final PersonService personService;
 
+    @Value("${scopus.api.key}")
+    private String scopusApiKey;
+
+    @Value("${wos.api.key}")
+    private String wosApiKey;
+
 
     @Override
     protected JpaRepository<OrganisationUnitImportSourceConfiguration, Integer> getEntityRepository() {
@@ -42,19 +49,28 @@ public class OrganisationUnitImportSourceConfigurationServiceImpl
             organisationUnitImportSourceConfigurationRepository.findConfigurationForInstitution(
                 institutionId);
 
+        var scopusConfigured = isScopusConfigured();
+        var wosConfigured = isWebOfScienceConfigured();
+
         return configuration.map(
                 organisationUnitImportSourceConfiguration -> new OrganisationUnitImportSourceConfigurationDTO(
                     organisationUnitImportSourceConfiguration
                         .getImportScopus(),
                     organisationUnitImportSourceConfiguration.getImportOpenAlex(),
-                    organisationUnitImportSourceConfiguration.getImportWebOfScience()))
-            .orElseGet(() -> new OrganisationUnitImportSourceConfigurationDTO(true, true, true));
+                    organisationUnitImportSourceConfiguration.getImportWebOfScience(),
+                    scopusConfigured, wosConfigured))
+            .orElseGet(() -> new OrganisationUnitImportSourceConfigurationDTO(
+                true, true, true,
+                scopusConfigured, wosConfigured));
     }
 
     @Override
     public OrganisationUnitImportSourceConfigurationDTO readConfigurationForPerson(
         Integer personId) {
         var person = personService.findOne(personId);
+
+        var scopusConfigured = isScopusConfigured();
+        var wosConfigured = isWebOfScienceConfigured();
 
         var institutionIds = person.getInvolvements().stream().filter(
                 involvement -> involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
@@ -66,16 +82,19 @@ public class OrganisationUnitImportSourceConfigurationServiceImpl
                 institutionId).orElse(null)).filter(Objects::nonNull).toList();
 
         if (institutionLevelConfigs.isEmpty()) {
-            return new OrganisationUnitImportSourceConfigurationDTO(true, true, true);
+            return new OrganisationUnitImportSourceConfigurationDTO(
+                scopusConfigured, true, wosConfigured,
+                scopusConfigured, wosConfigured);
         }
 
         return new OrganisationUnitImportSourceConfigurationDTO(
             institutionLevelConfigs.stream().anyMatch(
-                OrganisationUnitImportSourceConfiguration::getImportScopus),
+                OrganisationUnitImportSourceConfiguration::getImportScopus) && scopusConfigured,
             institutionLevelConfigs.stream().anyMatch(
                 OrganisationUnitImportSourceConfiguration::getImportOpenAlex),
             institutionLevelConfigs.stream().anyMatch(
-                OrganisationUnitImportSourceConfiguration::getImportWebOfScience));
+                OrganisationUnitImportSourceConfiguration::getImportWebOfScience) && wosConfigured,
+            scopusConfigured, wosConfigured);
     }
 
     @Override
@@ -96,5 +115,13 @@ public class OrganisationUnitImportSourceConfigurationServiceImpl
             newConfiguration.setOrganisationUnit(institution);
             save(newConfiguration);
         });
+    }
+
+    private boolean isScopusConfigured() {
+        return Objects.nonNull(scopusApiKey) && !scopusApiKey.isBlank();
+    }
+
+    private boolean isWebOfScienceConfigured() {
+        return Objects.nonNull(wosApiKey) && !wosApiKey.isBlank();
     }
 }

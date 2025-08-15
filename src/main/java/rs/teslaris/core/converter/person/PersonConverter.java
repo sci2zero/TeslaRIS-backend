@@ -220,6 +220,7 @@ public class PersonConverter {
         }
 
         return new PersonUserResponseDTO(
+            person.getId(),
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),

@@ -36,7 +36,7 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
         dto.setUris(new HashSet<>());
 
         dto.setDocumentDate(String.valueOf(
-            record.getPublicationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+            record.getApprovalDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                 .getYear()));
 
         var dateFormatter = new SimpleDateFormat("dd.MM.yyyy");

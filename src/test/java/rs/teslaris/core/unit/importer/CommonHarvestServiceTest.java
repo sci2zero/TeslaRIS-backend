@@ -38,7 +38,8 @@ public class CommonHarvestServiceTest {
         var result = commonHarvestService.canOUEmployeeScanDataSources(null);
 
         when(organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
-            1)).thenReturn(new OrganisationUnitImportSourceConfigurationDTO(true, true, true));
+            1)).thenReturn(
+            new OrganisationUnitImportSourceConfigurationDTO(true, true, true, true, true));
 
         assertFalse(result);
     }
@@ -50,7 +51,8 @@ public class CommonHarvestServiceTest {
 
         when(organisationUnitService.findOne(1)).thenReturn(ou);
         when(organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
-            1)).thenReturn(new OrganisationUnitImportSourceConfigurationDTO(true, false, false));
+            1)).thenReturn(
+            new OrganisationUnitImportSourceConfigurationDTO(true, false, false, true, true));
 
         var result = commonHarvestService.canOUEmployeeScanDataSources(1);
         assertFalse(result);
@@ -63,7 +65,8 @@ public class CommonHarvestServiceTest {
 
         when(organisationUnitService.findOne(2)).thenReturn(ou);
         when(organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
-            2)).thenReturn(new OrganisationUnitImportSourceConfigurationDTO(true, false, false));
+            2)).thenReturn(
+            new OrganisationUnitImportSourceConfigurationDTO(true, false, false, true, true));
 
         boolean result = commonHarvestService.canOUEmployeeScanDataSources(2);
         assertFalse(result);
@@ -76,7 +79,8 @@ public class CommonHarvestServiceTest {
 
         when(organisationUnitService.findOne(3)).thenReturn(ou);
         when(organisationUnitImportSourceConfigurationService.readConfigurationForInstitution(
-            3)).thenReturn(new OrganisationUnitImportSourceConfigurationDTO(true, false, false));
+            3)).thenReturn(
+            new OrganisationUnitImportSourceConfigurationDTO(true, false, false, true, true));
 
         var result = commonHarvestService.canOUEmployeeScanDataSources(3);
         assertTrue(result);
@@ -92,7 +96,8 @@ public class CommonHarvestServiceTest {
         when(personService.getPersonIdForUserId(userId)).thenReturn(1);
         when(personService.findOne(1)).thenReturn(person);
         when(organisationUnitImportSourceConfigurationService.readConfigurationForPerson(
-            1)).thenReturn(new OrganisationUnitImportSourceConfigurationDTO(true, false, false));
+            1)).thenReturn(
+            new OrganisationUnitImportSourceConfigurationDTO(true, false, false, true, true));
 
         var response = commonHarvestService.canPersonScanDataSources(userId);
 
@@ -108,7 +113,8 @@ public class CommonHarvestServiceTest {
             setId(1);
         }});
         when(organisationUnitImportSourceConfigurationService.readConfigurationForPerson(
-            1)).thenReturn(new OrganisationUnitImportSourceConfigurationDTO(false, true, true));
+            1)).thenReturn(
+            new OrganisationUnitImportSourceConfigurationDTO(false, true, true, true, true));
 
         var response = commonHarvestService.canPersonScanDataSources(userId);
 

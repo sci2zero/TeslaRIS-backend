@@ -56,7 +56,7 @@ public class CSVExportController {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=export" +
-                (exportFileType.equals(ExportFileType.CSV) ? ".csv" : ".xls"))
+                (exportFileType.equals(ExportFileType.CSV) ? ".csv" : ".xlsx"))
             .body(exportDocument);
     }
 }

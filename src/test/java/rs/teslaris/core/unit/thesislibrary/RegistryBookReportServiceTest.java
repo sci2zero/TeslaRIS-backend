@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 
 import io.minio.GetObjectResponse;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -171,8 +171,8 @@ public class RegistryBookReportServiceTest {
     @Test
     void shouldSetCorrectTimeAndSchedulesTask() {
         // Given
-        var from = LocalDate.of(2024, 1, 1);
-        var to = LocalDate.of(2024, 12, 31);
+        var from = RelativeDateDTO.of(2024, 1, 1);
+        var to = RelativeDateDTO.of(2024, 12, 31);
         var institutionId = 123;
         var lang = "en";
         var userId = 456;

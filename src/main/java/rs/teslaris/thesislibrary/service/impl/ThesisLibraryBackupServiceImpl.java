@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
@@ -80,7 +81,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
     @Override
     public String scheduleBackupGeneration(Integer institutionId,
-                                           LocalDate from, LocalDate to,
+                                           RelativeDateDTO from, RelativeDateDTO to,
                                            List<ThesisType> types,
                                            List<FileSection> thesisFileSections,
                                            Boolean defended, Boolean putOnReview,
@@ -91,7 +92,10 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             throw new BackupException("You must select at least one of: defended or putOnReview.");
         }
 
-        if (from.isAfter(to)) {
+        var fromDate = from.computeDate();
+        var toDate = to.computeDate();
+
+        if (fromDate.isAfter(toDate)) {
             throw new BackupException("dateRangeIssueMessage");
         }
 
@@ -100,7 +104,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             "Library_Backup-" + institutionId +
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
-            () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
+            () -> generateBackupForPeriodAndInstitution(institutionId, fromDate, toDate, types,
                 thesisFileSections, defended, putOnReview, language, metadataFormat),
             userId, recurrence);
 
@@ -108,8 +112,8 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             new ScheduledTaskMetadata(taskId, reportGenerationTime,
                 ScheduledTaskType.THESIS_LIBRARY_BACKUP, new HashMap<>() {{
                 put("institutionId", institutionId);
-                put("from", from);
-                put("to", to);
+                put("from", from.toString());
+                put("to", to.toString());
                 put("types", types);
                 put("thesisFileSections", thesisFileSections);
                 put("defended", defended);

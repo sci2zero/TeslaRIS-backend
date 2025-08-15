@@ -1,7 +1,6 @@
 package rs.teslaris.thesislibrary.controller;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
@@ -44,8 +44,8 @@ public class ThesisLibraryBackupController {
     @PostMapping("/schedule-generation")
     @PreAuthorize("hasAuthority('GENERATE_THESIS_LIBRARY_BACKUP')")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public String scheduleBackupGeneration(@RequestParam LocalDate from,
-                                           @RequestParam LocalDate to,
+    public String scheduleBackupGeneration(@RequestParam RelativeDateDTO from,
+                                           @RequestParam RelativeDateDTO to,
                                            @RequestParam Integer institutionId,
                                            @RequestParam List<ThesisType> types,
                                            @RequestParam List<String> sections,

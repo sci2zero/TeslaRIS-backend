@@ -38,7 +38,8 @@ public class OrganisationUnitImportSourceConfigurationControllerTest extends Bas
     public void testSaveLoadingConfiguration() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var configurationDTO = new OrganisationUnitImportSourceConfigurationDTO(true, false, true);
+        var configurationDTO =
+            new OrganisationUnitImportSourceConfigurationDTO(true, false, true, true, true);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(

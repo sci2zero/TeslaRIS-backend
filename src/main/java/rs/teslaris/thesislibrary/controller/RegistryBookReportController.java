@@ -1,7 +1,6 @@
 package rs.teslaris.thesislibrary.controller;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookReportService;
@@ -39,8 +39,8 @@ public class RegistryBookReportController {
     @PostMapping("/schedule-generation")
     @PreAuthorize("hasAuthority('GENERATE_REG_BOOK_REPORT')")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public String generateReport(@RequestParam(required = false) LocalDate from,
-                                 @RequestParam(required = false) LocalDate to,
+    public String generateReport(@RequestParam(required = false) RelativeDateDTO from,
+                                 @RequestParam(required = false) RelativeDateDTO to,
                                  @RequestParam(required = false, defaultValue = "")
                                  String authorName,
                                  @RequestParam(required = false, defaultValue = "")
@@ -51,8 +51,8 @@ public class RegistryBookReportController {
                                  @RequestHeader(value = "Authorization")
                                  String bearerToken) {
         return registryBookReportService.scheduleReportGeneration(
-            Objects.nonNull(from) ? from : LocalDate.of(1000, 1, 1),
-            Objects.nonNull(to) ? to : LocalDate.now(), institutionId, lang,
+            Objects.nonNull(from) ? from : RelativeDateDTO.of(1000, 1, 1),
+            Objects.nonNull(to) ? to : RelativeDateDTO.now(), institutionId, lang,
             tokenUtil.extractUserIdFromToken(bearerToken), authorName, authorTitle, recurrence);
     }
 

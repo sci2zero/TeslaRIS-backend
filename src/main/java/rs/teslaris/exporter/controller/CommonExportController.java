@@ -19,22 +19,22 @@ public class CommonExportController {
 
     private final CommonExportService commonExportService;
 
-    @GetMapping(value = "/OAIHandlerOpenAIRECRIS", produces = "application/xml")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @GetMapping("/prepare-for-export")
     @PreAuthorize("hasAuthority('PREPARE_EXPORT_DATA')")
-    public void handleOAIOpenAIRECRIS(@RequestParam String set) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void handleOAIOpenAIRECRIS(@RequestParam String set, @RequestParam boolean allTime) {
         switch (set) {
             case "org_units":
-                commonExportService.exportOrganisationUnitsToCommonModel();
+                commonExportService.exportOrganisationUnitsToCommonModel(allTime);
                 break;
             case "persons":
-                commonExportService.exportPersonsToCommonModel();
+                commonExportService.exportPersonsToCommonModel(allTime);
                 break;
             case "events":
-                commonExportService.exportConferencesToCommonModel();
+                commonExportService.exportConferencesToCommonModel(allTime);
                 break;
             case "documents":
-                commonExportService.exportDocumentsToCommonModel();
+                commonExportService.exportDocumentsToCommonModel(allTime);
                 break;
         }
     }

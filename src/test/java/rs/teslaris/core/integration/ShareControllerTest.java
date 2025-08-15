@@ -14,7 +14,7 @@ public class ShareControllerTest extends BaseTest {
     public void testReadSoftware() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/share/document/SOFTWARE/{id}?lang=en", 7)
+                    "http://localhost:8081/api/share/document/SOFTWARE/{id}/en", 7)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 }

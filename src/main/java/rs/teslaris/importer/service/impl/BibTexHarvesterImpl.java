@@ -54,7 +54,7 @@ public class BibTexHarvesterImpl implements BibTexHarvester {
                 }
 
                 if (Objects.nonNull(embedding)) {
-                    documentImport.setEmbedding(embedding.toFloatVector());
+                    documentImport.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
                 }
 
                 documentImport.getImportUsersId().add(userId);

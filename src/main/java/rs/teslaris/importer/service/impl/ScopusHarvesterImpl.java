@@ -261,7 +261,7 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                                       List<Integer> institutionIds) {
         doc.setIdentifier(identifier);
         if (Objects.nonNull(embedding)) {
-            doc.setEmbedding(embedding.toFloatVector());
+            doc.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
         }
         doc.getImportUsersId().add(userId);
         doc.getImportUsersId().addAll(adminUserIds);

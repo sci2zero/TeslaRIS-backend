@@ -1,11 +1,13 @@
 package rs.teslaris.importer.service.interfaces;
 
+import java.time.LocalDate;
+import java.util.List;
 import org.springframework.stereotype.Service;
-import rs.teslaris.importer.utility.DataSet;
-import rs.teslaris.importer.utility.oaipmh.OAIPMHSource;
 
 @Service
 public interface OAIPMHHarvester {
 
-    void harvest(DataSet requestDataSet, OAIPMHSource source, Integer userId);
+    void harvest(String sourceName, LocalDate startDate, LocalDate endDate, Integer userId);
+
+    List<String> getSources();
 }

@@ -38,8 +38,17 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     @Query("SELECT u FROM User u WHERE " +
         "u.person.scopusAuthorId = :identifier OR " +
         "u.person.openAlexId = :identifier OR " +
+        "u.person.orcid = :identifier OR " +
         "u.person.webOfScienceResearcherId = :identifier")
     Optional<User> findUserForPersonIdentifier(String identifier);
+
+    @Query("SELECT u FROM User u WHERE " +
+        "u.person.orcid = :orcid")
+    Optional<User> findUserForOrcid(String orcid);
+
+    @Query("SELECT p FROM Person p WHERE " +
+        "p.orcid = :orcid")
+    Optional<Person> findPersonForOrcid(String orcid);
 
     @Query("SELECT p FROM Person p WHERE " +
         "(p.scopusAuthorId = :identifier OR " +
@@ -84,9 +93,9 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     boolean existsByWebOfScienceId(String webOfScienceResearcherId, Integer id);
 
     @Query(value = "SELECT * FROM persons p WHERE " +
-        "p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "p.approveStatus = 1", nativeQuery = true)
-    Page<Person> findAllModifiedInLast24Hours(Pageable pageable);
+        "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
+        "p.approve_status = 1", nativeQuery = true)
+    Page<Person> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
 
     @Query("SELECT i.organisationUnit.id FROM Involvement i WHERE " +
         "i.personInvolved.id = :personId AND " +

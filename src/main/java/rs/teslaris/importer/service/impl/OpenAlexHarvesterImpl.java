@@ -69,7 +69,7 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                 endDate.toString(), false);
 
         processHarvestedRecords(harvestedRecords, userId, adminUserIds, employmentInstitutionIds,
-            newEntriesCount);
+            newEntriesCount, false);
 
         return newEntriesCount;
     }
@@ -104,8 +104,7 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                 endDate.toString(), true);
 
         processHarvestedRecords(harvestedRecords, userId, adminUserIds,
-            allInstitutionsThatCanImport,
-            newEntriesCount);
+            allInstitutionsThatCanImport, newEntriesCount, true);
 
         return newEntriesCount;
     }
@@ -159,7 +158,7 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                     startDate.toString(), endDate.toString(), false);
 
             processHarvestedRecords(harvestedRecords, userId, adminUserIds,
-                allInstitutionsThatCanImport, newEntriesCount);
+                allInstitutionsThatCanImport, newEntriesCount, true);
         }
 
         return newEntriesCount;
@@ -168,12 +167,13 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
     private void processHarvestedRecords(
         List<OpenAlexImportUtility.OpenAlexPublication> harvestedRecords, Integer userId,
         Set<Integer> adminUserIds, List<Integer> institutionIds,
-        HashMap<Integer, Integer> newEntriesCount) {
+        HashMap<Integer, Integer> newEntriesCount, Boolean employeeUser) {
         harvestedRecords.forEach(
             publication -> OpenAlexConverter.toCommonImportModel(publication)
                 .ifPresent(documentImport -> {
                     var existingImport =
                         CommonImportUtility.findExistingImport(documentImport.getIdentifier());
+
                     if (Objects.isNull(existingImport) &&
                         Objects.nonNull(documentImport.getDoi())) {
                         if (Objects.nonNull(
@@ -193,13 +193,16 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                     }
 
                     if (Objects.nonNull(embedding)) {
-                        documentImport.setEmbedding(embedding.toFloatVector());
+                        documentImport.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
                     }
 
                     documentImport.getImportUsersId().add(userId);
                     documentImport.getImportUsersId().addAll(adminUserIds);
                     documentImport.getImportInstitutionsId().addAll(institutionIds);
-                    newEntriesCount.merge(userId, 1, Integer::sum);
+
+                    if (employeeUser) {
+                        newEntriesCount.merge(userId, 1, Integer::sum);
+                    }
 
                     CommonHarvestUtility.updateContributorEntryCount(documentImport,
                         documentImport.getContributions().stream()

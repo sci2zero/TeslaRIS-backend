@@ -48,6 +48,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.BackupZipBuilder;
+import rs.teslaris.core.util.DateUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
@@ -128,6 +129,9 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                                                        List<DocumentFileSection> documentFileSections,
                                                        String language,
                                                        ExportFileType metadataFormat) {
+        from = DateUtil.calculateYearFromProvidedValue(from);
+        to = DateUtil.calculateYearFromProvidedValue(to);
+
         int chunkSize = 10;
         var institutionIds = new HashSet<>(
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId)

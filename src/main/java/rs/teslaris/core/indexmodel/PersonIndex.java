@@ -52,7 +52,7 @@ public class PersonIndex {
     private List<Integer> employmentInstitutionsId = new ArrayList<>();
 
     @Field(type = FieldType.Integer, name = "past_employment_institution_ids", store = true)
-    private List<Integer> pastEmploymentInstitutionIds;
+    private List<Integer> pastEmploymentInstitutionIds = new ArrayList<>();
 
     @Field(type = FieldType.Text, store = true, name = "birthdate")
     private String birthdate;

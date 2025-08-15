@@ -1,5 +1,8 @@
 package rs.teslaris.core.configuration;
 
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,7 +15,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import rs.teslaris.core.util.exceptionhandling.RestAuthenticationEntryPoint;
@@ -21,15 +27,27 @@ import rs.teslaris.core.util.jwt.JwtFilter;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
+@Slf4j
 public class SecurityConfiguration {
 
     private final JwtFilter jwtTokenFilter;
+
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
+    private final OrcidOAuth2LoginSuccessHandler orcidOAuth2LoginSuccessHandler;
+
+    private final OrcidOAuth2UserInfoHandler orcidOAuth2UserInfoHandler;
+
+
+    @Autowired
     public SecurityConfiguration(JwtFilter jwtTokenFilter,
-                                 RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
+                                 RestAuthenticationEntryPoint restAuthenticationEntryPoint,
+                                 OrcidOAuth2LoginSuccessHandler orcidOAuth2LoginSuccessHandler,
+                                 OrcidOAuth2UserInfoHandler orcidOAuth2UserInfoHandler) {
         this.jwtTokenFilter = jwtTokenFilter;
         this.restAuthenticationEntryPoint = restAuthenticationEntryPoint;
+        this.orcidOAuth2LoginSuccessHandler = orcidOAuth2LoginSuccessHandler;
+        this.orcidOAuth2UserInfoHandler = orcidOAuth2UserInfoHandler;
     }
 
     @Bean
@@ -63,10 +81,13 @@ public class SecurityConfiguration {
 
                 // USER
                 .requestMatchers(HttpMethod.GET, "/api/user/person/{personId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/user/register-researcher-creation-allowed")
+                .permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/authenticate").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/refresh-token").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/forgot-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/register-researcher").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/register-researcher-oauth").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/reset-password").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/activate-account").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/user/confirm-email-change").permitAll()
@@ -76,6 +97,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/person/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/{personId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/old-id/{personOldId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/import-identifier/{identifier}")
+                .permitAll()
 
                 // COUNTRY
                 .requestMatchers(HttpMethod.GET, "/api/country/{countryId}").permitAll()
@@ -193,12 +216,12 @@ public class SecurityConfiguration {
 
                 // SEARCH TABLE EXPORT
                 .requestMatchers(HttpMethod.GET, "/api/csv-export/records-per-page").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/dissertation-report")
+                .permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/thesis-library/csv-export").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/thesis-library/dissertation-report")
-                .permitAll()
 
                 // ASSESSMENT
                 .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")
@@ -264,18 +287,18 @@ public class SecurityConfiguration {
 
                 // THESIS LIBRARY
                 .requestMatchers(HttpMethod.GET, "/api/thesis-library/search/fields").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/simple").permitAll()
-                .requestMatchers(HttpMethod.POST,
-                    "/api/thesis-library/search/wordcloud/{queryType}").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
-                .requestMatchers(HttpMethod.PATCH,
-                    "/api/registry-book/cancel-attendance").permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/registry-book/is-attendance-cancellable/{registryBookEntryId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/public-review-page-content/for-institution-and-type/{organisationUnitId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/simple").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/thesis-library/search/wordcloud/{queryType}").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/search/advanced").permitAll()
+                .requestMatchers(HttpMethod.PATCH,
+                    "/api/registry-book/cancel-attendance").permitAll()
 
                 // COOKIES
                 .requestMatchers(HttpMethod.PATCH, "/api/cookie").permitAll()
@@ -293,7 +316,11 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/feedback").permitAll()
 
                 // SHARE
-                .requestMatchers(HttpMethod.GET, "/api/share/document/{documentType}/{id}")
+                .requestMatchers(HttpMethod.GET, "/api/share/document/{documentType}/{id}/{lang}")
+                .permitAll()
+
+                // OAUTH2
+                .requestMatchers(HttpMethod.GET, "/api/oauth2/finish-workflow")
                 .permitAll()
 
                 // EVERYTHING ELSE
@@ -308,6 +335,38 @@ public class SecurityConfiguration {
             ));
 
         http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        http.oauth2Login(oauth -> oauth
+            .userInfoEndpoint(userInfo -> userInfo
+                .userService(clientRequest -> {
+                    if (OAuth2Provider.ORCID.getValue().equals(
+                        clientRequest.getClientRegistration().getRegistrationId())) {
+                        return orcidOAuth2UserInfoHandler.loadUser(clientRequest);
+                    }
+
+                    return new DefaultOAuth2UserService().loadUser(clientRequest);
+                })
+            )
+            .successHandler((request, response, authentication) -> {
+                var token = (OAuth2AuthenticationToken) authentication;
+                if (OAuth2Provider.ORCID.getValue()
+                    .equals(token.getAuthorizedClientRegistrationId())) {
+                    orcidOAuth2LoginSuccessHandler.onAuthenticationSuccess(request, response,
+                        authentication);
+                } else {
+                    new SavedRequestAwareAuthenticationSuccessHandler()
+                        .onAuthenticationSuccess(request, response, authentication);
+                }
+            })
+            .failureHandler((request, response, exception) -> {
+                log.error("SERIOUS: OAuth2 Authentication failed. Reason: {}",
+                    exception.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter()
+                    .write("Authentication failed. Please try again or contact support.");
+                response.getWriter().flush();
+            })
+        );
 
         return http.build();
     }

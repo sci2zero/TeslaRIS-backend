@@ -1,5 +1,7 @@
 package rs.teslaris.importer.model.common;
 
+import java.text.MessageFormat;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,4 +22,14 @@ public class PersonName {
 
     @Field("last_name")
     private String lastName;
+
+
+    @Override
+    public String toString() {
+        if (Objects.isNull(middleName) || middleName.isEmpty()) {
+            return MessageFormat.format("{0} {1}", firstName, lastName);
+        }
+
+        return MessageFormat.format("{0} {1} {2}", firstName, middleName, lastName);
+    }
 }

@@ -125,7 +125,6 @@ public class Person extends BaseEntity implements Mergeable {
     @Column(name = "date_of_last_indicator_harvest")
     private LocalDate dateOfLastIndicatorHarvest;
 
-
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {
             involvements = new HashSet<>();

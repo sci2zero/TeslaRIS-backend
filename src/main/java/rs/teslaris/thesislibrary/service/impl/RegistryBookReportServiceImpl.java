@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
@@ -77,10 +78,14 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
 
 
     @Override
-    public String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
+    public String scheduleReportGeneration(RelativeDateDTO from, RelativeDateDTO to,
+                                           Integer institutionId,
                                            String lang, Integer userId, String authorName,
                                            String authorTitle, RecurrenceType recurrence) {
-        if (from.isAfter(to)) {
+        var dateFrom = from.computeDate();
+        var dateTo = to.computeDate();
+
+        if (dateFrom.isAfter(dateTo)) {
             throw new RegistryBookException("dateRangeIssueMessage");
         }
 
@@ -89,7 +94,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
             "Registry_Book-" + institutionId +
                 "-" + from + "_" + to + "_" + lang +
                 "-" + UUID.randomUUID(), reportGenerationTime,
-            () -> generateReport(from, to, authorName, authorTitle, institutionId, lang),
+            () -> generateReport(dateFrom, dateTo, authorName, authorTitle, institutionId, lang),
             userId, recurrence);
 
         taskManagerService.saveTaskMetadata(

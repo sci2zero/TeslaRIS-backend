@@ -56,6 +56,9 @@ public class Person implements PersonConvertable, HasOldId {
 
     // Additional Migration fields - not part of the OAI-PMH specification
 
+    @XmlElement(name = "APVNT")
+    private String apvnt;
+
     @XmlElement(name = "DateOfBirth")
     private Date birthDate;
 

@@ -782,7 +782,7 @@ public class PersonServiceTest {
         var person = new PersonIndex();
         person.setScopusAuthorId("12345");
 
-        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(
+        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceIdOrOrcid(
             "12345")).thenReturn(Optional.of(person));
 
         // When
@@ -795,7 +795,7 @@ public class PersonServiceTest {
     @Test
     public void testFindPersonByScopusAuthorId_PersonDoesNotExist() {
         // Given
-        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceId(
+        when(personIndexRepository.findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceIdOrOrcid(
             "12345")).thenReturn(Optional.empty());
 
         // When

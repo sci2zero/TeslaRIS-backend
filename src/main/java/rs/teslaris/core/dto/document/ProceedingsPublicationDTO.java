@@ -17,10 +17,8 @@ public class ProceedingsPublicationDTO extends DocumentDTO {
     @NotNull(message = "You have to provide a valid publication type.")
     private ProceedingsPublicationType proceedingsPublicationType;
 
-    @NotNull(message = "You have to provide a start page.")
     private String startPage;
 
-    @NotNull(message = "You have to provide an end page.")
     private String endPage;
 
     private Integer numberOfPages;

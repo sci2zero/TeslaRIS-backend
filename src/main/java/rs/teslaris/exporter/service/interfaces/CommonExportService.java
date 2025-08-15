@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service;
 @Service
 public interface CommonExportService {
 
-    void exportOrganisationUnitsToCommonModel();
+    void exportOrganisationUnitsToCommonModel(boolean allTime);
 
-    void exportPersonsToCommonModel();
+    void exportPersonsToCommonModel(boolean allTime);
 
-    void exportConferencesToCommonModel();
+    void exportConferencesToCommonModel(boolean allTime);
 
-    void exportDocumentsToCommonModel();
+    void exportDocumentsToCommonModel(boolean allTime);
 }

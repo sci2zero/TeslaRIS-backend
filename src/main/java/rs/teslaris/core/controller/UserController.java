@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.dto.user.ActivateAccountRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
@@ -58,6 +59,13 @@ public class UserController {
 
     private final UserService userService;
 
+    public static HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {
+        var headers = new HttpHeaders();
+        headers.add("Set-Cookie",
+            "jwt-security-fingerprint=" + fingerprint + "; SameSite=Strict; HttpOnly; Path=/api");
+
+        return headers;
+    }
 
     @GetMapping
     public UserResponseDTO getUser(@RequestHeader("Authorization") String bearerToken) {
@@ -138,6 +146,27 @@ public class UserController {
             newUser.getPreferredUILanguage().getLanguageTag(),
             newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
             newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
+    }
+
+    @PostMapping("/register-researcher-oauth")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public UserResponseDTO registerResearcherOauth(
+        @RequestBody @Valid ResearcherRegistrationRequestDTO registrationRequest,
+        @RequestParam OAuth2Provider provider, @RequestParam String identifier) {
+        var newUser =
+            userService.registerResearcherOAuth(registrationRequest, provider, identifier);
+
+        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
+            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
+            newUser.getPreferredUILanguage().getLanguageTag(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
+            newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
+    }
+
+    @GetMapping("/register-researcher-creation-allowed")
+    public boolean isNewResearcherCreationAllowed() {
+        return userService.isNewResearcherCreationAllowed();
     }
 
     @PostMapping("/register-employee/{role}")
@@ -265,13 +294,5 @@ public class UserController {
     @PatchMapping("/confirm-email-change")
     public boolean confirmEmailChange(@RequestBody ConfirmEmailUpdateRequestDTO request) {
         return userService.confirmEmailChange(request.getConfirmationToken());
-    }
-
-    private HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {
-        var headers = new HttpHeaders();
-        headers.add("Set-Cookie",
-            "jwt-security-fingerprint=" + fingerprint + "; SameSite=Strict; HttpOnly; Path=/api");
-
-        return headers;
     }
 }

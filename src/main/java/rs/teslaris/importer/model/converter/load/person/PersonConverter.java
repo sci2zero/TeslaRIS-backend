@@ -57,6 +57,7 @@ public class PersonConverter implements RecordConverter<Person, ImportPersonDTO>
 
         dto.setScopusAuthorId(person.getScopusAuthorId());
         dto.setOrcid(person.getOrcid());
+        dto.setApvnt(person.getApvnt());
         dto.setPersonName(personName);
 
         if (Objects.nonNull(person.getBirthDate())) {

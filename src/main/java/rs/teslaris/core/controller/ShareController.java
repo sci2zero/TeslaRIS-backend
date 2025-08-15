@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -26,11 +25,11 @@ public class ShareController {
     private String frontendUrl;
 
 
-    @GetMapping("/document/{documentType}/{id}")
+    @GetMapping("/document/{documentType}/{id}/{lang}")
     public ResponseEntity<String> shareDocumentPage(@PathVariable Integer id,
                                                     @PathVariable
                                                     DocumentPublicationType documentType,
-                                                    @RequestParam String lang) {
+                                                    @PathVariable String lang) {
         var document = documentPublicationService.findOne(id);
 
         var title = StringEscapeUtils.escapeHtml4(getContentForLanguage(document.getTitle(), lang));
@@ -50,15 +49,18 @@ public class ShareController {
                 <meta property="og:description" content="%s" />
                 <meta property="og:url" content="%s" />
                 <meta property="og:type" content="website" />
+                <meta http-equiv="refresh" content="0; url=%s">
                 <title>%s</title>
             </head>
             <body>
-                <script>
-                    window.location.replace("%s");
+                <script defer>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        window.location.href = "%s";
+                    });
                 </script>
             </body>
             </html>
-            """.formatted(title, description, url, title, url);
+            """.formatted(title, description, url, url, title, url);
 
         return ResponseEntity.ok()
             .contentType(MediaType.TEXT_HTML)

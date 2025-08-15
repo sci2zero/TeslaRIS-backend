@@ -32,7 +32,7 @@ class OrganisationUnitImportSourceConfigurationServiceTest {
 
 
     @Test
-    void readConfigurationForInstitution_returnsMappedDTO_whenConfigurationExists() {
+    void shouldReadConfiguration() {
         // Given
         var institutionId = 1;
         var entity = new OrganisationUnitImportSourceConfiguration();
@@ -54,7 +54,7 @@ class OrganisationUnitImportSourceConfigurationServiceTest {
     }
 
     @Test
-    void readConfigurationForInstitution_returnsDefaultDTO_whenNoConfigurationExists() {
+    void shouldReadDefaultConfigurationWhenNotFound() {
         // Given
         var institutionId = 1;
         when(repository.findConfigurationForInstitution(institutionId))
@@ -71,11 +71,11 @@ class OrganisationUnitImportSourceConfigurationServiceTest {
     }
 
     @Test
-    void saveConfigurationForInstitution_updatesExistingConfiguration_ifPresent() {
+    void shouldUpdateConfigurationForInstitution() {
         // Given
         var institutionId = 1;
         var existing = new OrganisationUnitImportSourceConfiguration();
-        var dto = new OrganisationUnitImportSourceConfigurationDTO(false, false, true);
+        var dto = new OrganisationUnitImportSourceConfigurationDTO(false, false, true, true, true);
 
         when(repository.findConfigurationForInstitution(institutionId)).thenReturn(
             Optional.of(existing));
@@ -92,10 +92,10 @@ class OrganisationUnitImportSourceConfigurationServiceTest {
     }
 
     @Test
-    void saveConfigurationForInstitution_createsNewConfiguration_ifNotPresent() {
+    void shouldSaveConfigurationForInstitution() {
         // Given
         var institutionId = 1;
-        var dto = new OrganisationUnitImportSourceConfigurationDTO(true, false, true);
+        var dto = new OrganisationUnitImportSourceConfigurationDTO(true, false, true, true, true);
 
         when(repository.findConfigurationForInstitution(institutionId))
             .thenReturn(Optional.empty());

@@ -55,7 +55,7 @@ public interface PersonContributionRepository extends JpaRepository<PersonContri
 
     @Modifying
     @Query(value =
-        "DELETE FROM person_contributions_institutions " +
+        "DELETE FROM person_contribution_institutions " +
             "WHERE person_contribution_id IN (" +
             "    SELECT id FROM person_contributions WHERE person_id = :personId " +
             ");",
