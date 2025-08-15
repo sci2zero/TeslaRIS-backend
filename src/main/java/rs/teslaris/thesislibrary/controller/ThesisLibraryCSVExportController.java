@@ -31,7 +31,7 @@ public class ThesisLibraryCSVExportController {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=export" +
-                (request.getExportFileType().equals(ExportFileType.CSV) ? ".csv" : ".xls"))
+                (request.getExportFileType().equals(ExportFileType.CSV) ? ".csv" : ".xlsx"))
             .body(exportDocument);
     }
 }

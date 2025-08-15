@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.elasticsearch.annotations.Field;
@@ -63,7 +63,7 @@ public class CSVExportHelper {
                                                        ExportFileType exportFileType) {
         return switch (exportFileType) {
             case CSV -> createCSVInputStream(rowsData);
-            case XLS -> createXLSInputStream(rowsData);
+            case XLSX -> createXLSXInputStream(rowsData);
         };
     }
 
@@ -151,9 +151,10 @@ public class CSVExportHelper {
         }
     }
 
-    private static InputStreamResource createXLSInputStream(List<List<String>> rowsData) {
-        try {
-            var workbook = new HSSFWorkbook();
+    private static InputStreamResource createXLSXInputStream(List<List<String>> rowsData) {
+        try (var workbook = new XSSFWorkbook();
+             var byteArrayOutputStream = new ByteArrayOutputStream()) {
+
             var sheet = workbook.createSheet("Export Data");
 
             for (int rowIndex = 0; rowIndex < rowsData.size(); rowIndex++) {
@@ -166,14 +167,13 @@ public class CSVExportHelper {
                 }
             }
 
-            var byteArrayOutputStream = new ByteArrayOutputStream();
             workbook.write(byteArrayOutputStream);
-            workbook.close();
 
             return new InputStreamResource(
                 new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+
         } catch (IOException e) {
-            throw new RuntimeException("Error generating XLS file", e);
+            throw new RuntimeException("Error generating XLSX file", e);
         }
     }
 
