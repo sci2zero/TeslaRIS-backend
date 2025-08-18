@@ -13,7 +13,7 @@ import org.jbibtex.ParseException;
 import org.jbibtex.Value;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
-import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;

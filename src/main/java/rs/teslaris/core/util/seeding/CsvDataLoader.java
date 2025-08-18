@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
+import rs.teslaris.assessment.util.BatchWriter;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 
 @Component
@@ -45,7 +46,7 @@ public class CsvDataLoader {
     public <T> void loadAssessmentData(String filePath, T mappingConfiguration,
                                        TriConsumer<String[], T, Integer> lineProcessor,
                                        String yearParseRegex, char separator,
-                                       boolean processInParallel) {
+                                       boolean processInParallel, BatchWriter batchWriter) {
         processFile(filePath, separator, reader -> {
             try {
                 String[] line;
@@ -69,25 +70,25 @@ public class CsvDataLoader {
                         lineProcessor.accept(line,
                             mappingConfiguration, year);
                     }
-                    return;
-                }
-
-                List<String[]> rows = new ArrayList<>();
-                while ((line = reader.readNext()) != null) {
-                    rows.add(line);
-                }
-
-                // Process rows in parallel
-                rows.parallelStream().forEach(row -> {
-                    try {
-                        lineProcessor.accept(row, mappingConfiguration, year);
-                    } catch (Exception e) {
-                        throw new LoadingException(
-                            "Error processing row: " + Arrays.toString(row) + ". Reason: " +
-                                e.getMessage());
+                } else {
+                    List<String[]> rows = new ArrayList<>();
+                    while ((line = reader.readNext()) != null) {
+                        rows.add(line);
                     }
-                });
 
+                    // Process rows in parallel
+                    rows.parallelStream().forEach(row -> {
+                        try {
+                            lineProcessor.accept(row, mappingConfiguration, year);
+                        } catch (Exception e) {
+                            throw new LoadingException(
+                                "Error processing row: " + Arrays.toString(row) + ". Reason: " +
+                                    e.getMessage());
+                        }
+                    });
+                }
+
+                batchWriter.flushBatch();
             } catch (Exception e) {
                 throw new LoadingException(e.getMessage());
             }

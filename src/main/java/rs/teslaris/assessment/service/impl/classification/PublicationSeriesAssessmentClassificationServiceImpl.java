@@ -35,6 +35,7 @@ import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.PublicationSeriesAssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
+import rs.teslaris.assessment.util.ClassificationBatchWriter;
 import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
@@ -83,6 +84,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
 
     private final CsvDataLoader csvDataLoader;
 
+    private final ClassificationBatchWriter classificationBatchWriter;
+
     @Value("${assessment.classifications.publication-series.mno}")
     private String MNO_DIRECTORY;
 
@@ -99,7 +102,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         PublicationSeriesService publicationSeriesService, JournalService journalService,
         PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository,
         JournalRepository journalRepository, JournalIndexRepository journalIndexRepository,
-        TaskManagerService taskManagerService, CsvDataLoader csvDataLoader) {
+        TaskManagerService taskManagerService, CsvDataLoader csvDataLoader,
+        ClassificationBatchWriter classificationBatchWriter) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, entityAssessmentClassificationRepository);
         this.publicationSeriesAssessmentClassificationJPAService =
@@ -113,6 +117,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         this.journalIndexRepository = journalIndexRepository;
         this.taskManagerService = taskManagerService;
         this.csvDataLoader = csvDataLoader;
+        this.classificationBatchWriter = classificationBatchWriter;
     }
 
     @Override
@@ -295,7 +300,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                                 ((line, mappingConf, year) -> processClassificationsLine(line,
                                     mappingConf, year, commission)), mapping.yearParseRegex(),
                                 separator,
-                                mapping.parallelize());
+                                mapping.parallelize(), classificationBatchWriter);
                             log.info("Loaded {} of {}", counter.getAndIncrement(), csvFileCount);
                         });
                 }
@@ -396,12 +401,11 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
                 classification.getCode().equals("journalM24") ? "M24MNO" : "MNO", year, category));
 
-        var existingClassification =
-            publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
-                publicationSeries.getId(), category, year, commission.getId());
-        existingClassification.ifPresent(
-            publicationSeriesAssessmentClassificationRepository::delete
-        );
+
+        publicationSeriesAssessmentClassificationRepository.deleteClassificationReasonsForPublicationSeriesAndCategoryAndYearAndCommission(
+            publicationSeries.getId(), category, year, commission.getId());
+        publicationSeriesAssessmentClassificationRepository.deleteClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
+            publicationSeries.getId(), category, year, commission.getId());
 
         publicationSeriesAssessmentClassificationRepository.save(journalClassification);
     }

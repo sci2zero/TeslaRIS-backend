@@ -38,6 +38,7 @@ import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRep
 import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.indicator.PublicationSeriesIndicatorService;
 import rs.teslaris.assessment.util.EntityIndicatorType;
+import rs.teslaris.assessment.util.IndicatorBatchWriter;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.JournalIndex;
@@ -72,6 +73,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private final JournalIndexRepository journalIndexRepository;
 
+    private final IndicatorBatchWriter indicatorBatchWriter;
+
     @Value("${assessment.indicators.publication-series.wos}")
     private String WOS_DIRECTORY;
 
@@ -93,13 +96,15 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                                  CsvDataLoader csvDataLoader,
                                                  JournalService journalService,
                                                  TaskManagerService taskManagerService,
-                                                 JournalIndexRepository journalIndexRepository) {
+                                                 JournalIndexRepository journalIndexRepository,
+                                                 IndicatorBatchWriter indicatorBatchWriter) {
         super(indicatorService, entityIndicatorRepository, documentFileService);
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.csvDataLoader = csvDataLoader;
         this.journalService = journalService;
         this.taskManagerService = taskManagerService;
         this.journalIndexRepository = journalIndexRepository;
+        this.indicatorBatchWriter = indicatorBatchWriter;
     }
 
     @Override
@@ -206,7 +211,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 "fiveYearJIFRank");
         existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
 
-        publicationSeriesIndicatorRepository.save(if5Rank);
+        indicatorBatchWriter.bufferIndicator(if5Rank);
     }
 
     @Override
@@ -384,7 +389,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                 csvFile.normalize().toAbsolutePath().toString(),
                                 mapping, this::processIndicatorsLine, mapping.yearParseRegex(),
                                 separator,
-                                mapping.parallelize());
+                                mapping.parallelize(), indicatorBatchWriter);
                             log.info("Loaded {} of {}", counter.getAndIncrement(), csvFileCount);
                         });
                 }
@@ -569,11 +574,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             return;
         }
 
-        var existingIndicatorValue =
-            publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
-                publicationSeries.getId(), source, startDate, categoryIdentifier,
-                indicator.getCode());
-        existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
+        publicationSeriesIndicatorRepository.deleteByPublicationSeriesIdAndSourceAndYearAndCategory(
+            publicationSeries.getId(), source, startDate, categoryIdentifier, indicator.getCode());
 
         var newJournalIndicator = new PublicationSeriesIndicator();
         newJournalIndicator.setIndicator(indicator);
@@ -621,6 +623,6 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 newJournalIndicator.setTextualValue(indicatorValue.trim());
         }
 
-        publicationSeriesIndicatorRepository.save(newJournalIndicator);
+        indicatorBatchWriter.bufferIndicator(newJournalIndicator);
     }
 }
