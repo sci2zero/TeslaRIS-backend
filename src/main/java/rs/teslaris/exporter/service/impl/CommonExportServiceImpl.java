@@ -108,7 +108,7 @@ public class CommonExportServiceImpl implements CommonExportService {
 
         try {
             exportEntities(
-                organisationUnitRepository::findAllModifiedInLast24Hours,
+                organisationUnitRepository::findAllModified,
                 ExportOrganisationUnitConverter::toCommonExportModel,
                 ExportOrganisationUnit.class,
                 OrganisationUnit::getId,
@@ -128,7 +128,7 @@ public class CommonExportServiceImpl implements CommonExportService {
 
         try {
             exportEntities(
-                personRepository::findAllModifiedInLast24Hours,
+                personRepository::findAllModified,
                 ExportPersonConverter::toCommonExportModel,
                 ExportPerson.class,
                 Person::getId,
@@ -148,7 +148,7 @@ public class CommonExportServiceImpl implements CommonExportService {
 
         try {
             exportEntities(
-                conferenceRepository::findAllModifiedInLast24Hours,
+                conferenceRepository::findAllModified,
                 ExportEventConverter::toCommonExportModel,
                 ExportEvent.class,
                 Conference::getId,
@@ -168,7 +168,7 @@ public class CommonExportServiceImpl implements CommonExportService {
 
         try {
             var datasetFuture = exportEntitiesAsync(
-                datasetRepository::findAllModifiedInLast24Hours,
+                datasetRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Dataset::getId,
@@ -176,7 +176,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var softwareFuture = exportEntitiesAsync(
-                softwareRepository::findAllModifiedInLast24Hours,
+                softwareRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Software::getId,
@@ -184,7 +184,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var patentFuture = exportEntitiesAsync(
-                patentRepository::findAllModifiedInLast24Hours,
+                patentRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Patent::getId,
@@ -192,7 +192,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var journalFuture = exportEntitiesAsync(
-                journalRepository::findAllModifiedInLast24Hours,
+                journalRepository::findAllModified,
                 ExportPublicationSeriesConverter::toCommonExportModel,
                 ExportDocument.class,
                 Journal::getId,
@@ -200,7 +200,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var journalPublicationFuture = exportEntitiesAsync(
-                journalPublicationRepository::findAllModifiedInLast24Hours,
+                journalPublicationRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 JournalPublication::getId,
@@ -208,7 +208,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var proceedingsFuture = exportEntitiesAsync(
-                proceedingsRepository::findAllModifiedInLast24Hours,
+                proceedingsRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Proceedings::getId,
@@ -216,7 +216,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var proceedingsPublicationFuture = exportEntitiesAsync(
-                proceedingsPublicationRepository::findAllModifiedInLast24Hours,
+                proceedingsPublicationRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 ProceedingsPublication::getId,
@@ -224,7 +224,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var monographFuture = exportEntitiesAsync(
-                monographRepository::findAllModifiedInLast24Hours,
+                monographRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Monograph::getId,
@@ -232,7 +232,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var monographPublicationFuture = exportEntitiesAsync(
-                monographPublicationRepository::findAllModifiedInLast24Hours,
+                monographPublicationRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 MonographPublication::getId,
@@ -240,7 +240,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             );
 
             var thesisFuture = exportEntitiesAsync(
-                thesisRepository::findAllModifiedInLast24Hours,
+                thesisRepository::findAllModified,
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Thesis::getId,

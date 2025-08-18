@@ -28,8 +28,7 @@ public class DeepObjectMerger {
             for (Field field : clazz.getDeclaredFields()) {
                 if (IMMUTABLE_TYPES.contains(field.getType()) ||
                     field.getType().toString().equals("int") ||
-                    field.getType().toString().equals("boolean") ||
-                    field.getType().toString().equals("class [F")) {
+                    field.getType().toString().equals("boolean")) {
                     continue; // don't reflect into immutable types
                 }
 

@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.document;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ public interface MonographRepository extends JpaRepository<Monograph, Integer> {
     @Query(value = "SELECT * FROM monographs m WHERE " +
         "(:allTime = TRUE OR m.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
         "m.approve_status = 1", nativeQuery = true)
-    Page<Monograph> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
+    Page<Monograph> findAllModified(Pageable pageable, boolean allTime);
 
     @Query("SELECT COUNT(p) > 0 FROM MonographPublication p " +
         "JOIN p.monograph m " +
@@ -37,4 +38,11 @@ public interface MonographRepository extends JpaRepository<Monograph, Integer> {
 
     @Query(value = "SELECT * FROM monographs m WHERE m.id = :monographId", nativeQuery = true)
     Optional<Monograph> findRaw(Integer monographId);
+
+    @Query("SELECT m FROM Monograph m WHERE " +
+        "m.printISBN = :printISBN OR " +
+        "m.printISBN = :eISBN OR " +
+        "m.eISBN = :eISBN OR " +
+        "m.eISBN = :printISBN")
+    List<Monograph> findByISBN(String eISBN, String printISBN);
 }

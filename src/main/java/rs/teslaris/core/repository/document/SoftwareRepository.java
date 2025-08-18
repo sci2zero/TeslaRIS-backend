@@ -13,5 +13,5 @@ public interface SoftwareRepository extends JpaRepository<Software, Integer> {
     @Query(value = "SELECT * FROM software s WHERE " +
         "(:allTime = TRUE OR s.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
         "s.approve_status = 1", nativeQuery = true)
-    Page<Software> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
+    Page<Software> findAllModified(Pageable pageable, boolean allTime);
 }

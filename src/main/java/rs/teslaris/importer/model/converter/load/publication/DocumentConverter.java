@@ -6,12 +6,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.importer.dto.DocumentLoadDTO;
 import rs.teslaris.importer.dto.OrganisationUnitLoadDTO;
 import rs.teslaris.importer.dto.PersonDocumentContributionLoadDTO;
@@ -23,6 +29,7 @@ import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public abstract class DocumentConverter {
 
     protected final MultilingualContentConverter multilingualContentConverter;
@@ -64,6 +71,24 @@ public abstract class DocumentConverter {
         });
     }
 
+    protected static String deduceLanguageTagValue(Publication record) {
+        var languageTagValue = record.getLanguage().trim().toUpperCase();
+        if (languageTagValue.isEmpty()) {
+            languageTagValue = LanguageAbbreviations.ENGLISH;
+        }
+
+        // Common language tag mistakes
+        if (languageTagValue.equals("GE")) {
+            languageTagValue = LanguageAbbreviations.GERMAN;
+        } else if (languageTagValue.equals("SP")) {
+            languageTagValue = LanguageAbbreviations.SPANISH;
+        } else if (languageTagValue.equals("RS")) {
+            languageTagValue = LanguageAbbreviations.SERBIAN;
+        }
+
+        return languageTagValue;
+    }
+
     protected void setCommonFields(Publication record, DocumentDTO dto) {
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
         dto.setSubTitle(multilingualContentConverter.toDTO(record.getSubtitle()));
@@ -94,6 +119,42 @@ public abstract class DocumentConverter {
         }
 
         setContributionInformation(record, dto);
+    }
+
+    protected void setCommonThesisFields(Publication record, ThesisDTO dto,
+                                         LanguageTagService languageTagService,
+                                         OrganisationUnitService organisationUnitService) {
+        if (Objects.nonNull(record.getLanguage()) && record.getLanguage().equals("sr-Cyrl")) {
+            record.setLanguage("SR-CYR");
+        }
+        dto.setWritingLanguageTagId(
+            languageTagService.findLanguageTagByValue(record.getLanguage()).getId());
+
+        if (Objects.isNull(record.getPublishers()) || record.getPublishers().isEmpty()) {
+            log.error("Thesis with ID {} has no specified publishers. Skipping.", dto.getOldId());
+            throw new NotFoundException("Thesis OU not specified.");
+        }
+
+        var publisher = record.getPublishers().getFirst();
+        if (Objects.nonNull(publisher)) {
+            if (Objects.nonNull(publisher.getOrgUnit()) &&
+                Objects.nonNull(publisher.getOrgUnit().getOldId())) {
+                var organisationUnit = organisationUnitService.findOrganisationUnitByOldId(
+                    OAIPMHParseUtility.parseBISISID(publisher.getOrgUnit().getOldId()));
+
+                if (Objects.isNull(organisationUnit)) {
+                    log.error(
+                        "Unable to migrate thesis with ID {}. Because OU with ID {} does not exist.",
+                        record.getOldId(), publisher.getOrgUnit().getOldId());
+                    throw new NotFoundException("Thesis OU not found.");
+                }
+
+                dto.setOrganisationUnitId(organisationUnit.getId());
+            } else {
+                dto.setExternalOrganisationUnitName(
+                    multilingualContentConverter.toDTO(publisher.getDisplayName()));
+            }
+        }
     }
 
     protected void setCommonFields(DocumentImport document, DocumentLoadDTO dto) {

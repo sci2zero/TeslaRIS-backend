@@ -14,5 +14,5 @@ public interface MonographPublicationRepository
     @Query(value = "SELECT * FROM monograph_publications m WHERE " +
         "(:allTime = TRUE OR m.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
         "m.approve_status = 1", nativeQuery = true)
-    Page<MonographPublication> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
+    Page<MonographPublication> findAllModified(Pageable pageable, boolean allTime);
 }

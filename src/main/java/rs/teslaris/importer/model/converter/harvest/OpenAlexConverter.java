@@ -153,7 +153,7 @@ public class OpenAlexConverter {
     private static Person constructPerson(
         OpenAlexImportUtility.OpenAlexPublication.Authorship authorship) {
         var person = new Person();
-        person.setImportId(authorship.author().id().replace("https://openalex.org/", ""));
+        person.setImportId(cleanOpenAlexId(authorship.author().id()));
         person.setOpenAlexId(person.getImportId());
 
         if (Objects.nonNull(authorship.author().orcid())) {

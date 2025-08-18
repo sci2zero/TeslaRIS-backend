@@ -13,7 +13,7 @@ public interface ConferenceRepository extends JpaRepository<Conference, Integer>
 
     @Query(value = "SELECT * FROM conferences c WHERE " +
         "(:allTime = TRUE OR c.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY')", nativeQuery = true)
-    Page<Conference> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
+    Page<Conference> findAllModified(Pageable pageable, boolean allTime);
 
     @Query("SELECT c FROM Conference c WHERE c.confId = :confId")
     Optional<Conference> findConferenceByConfId(String confId);

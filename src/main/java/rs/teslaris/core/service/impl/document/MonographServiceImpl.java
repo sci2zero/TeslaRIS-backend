@@ -133,6 +133,29 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    public Monograph findMonographByIsbn(String eIsbn, String printIsbn) {
+        boolean isEisbnBlank = (Objects.isNull(eIsbn) || eIsbn.isBlank());
+        boolean isPrintIsbnBlank = (Objects.isNull(printIsbn) || printIsbn.isBlank());
+
+        if (isEisbnBlank && isPrintIsbnBlank) {
+            return null;
+        }
+
+        if (isEisbnBlank) {
+            eIsbn = printIsbn;
+        } else if (isPrintIsbnBlank) {
+            printIsbn = eIsbn;
+        }
+
+        var results = monographRepository.findByISBN(eIsbn, printIsbn);
+        if (results.isEmpty()) {
+            return null;
+        }
+
+        return results.getFirst();
+    }
+
+    @Override
     public Monograph createMonograph(MonographDTO monographDTO, Boolean index) {
         var newMonograph = new Monograph();
 
@@ -304,6 +327,13 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         return monographRepository.existsByeISBN(identifier, monographId) ||
             monographRepository.existsByPrintISBN(identifier, monographId) ||
             super.isIdentifierInUse(identifier, monographId);
+    }
+
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var monograph = findOne(id);
+        monograph.getOldIds().add(oldId);
+        save(monograph);
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, boolean onlyBooks) {

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -15,6 +16,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
@@ -35,6 +37,10 @@ import rs.teslaris.core.model.oaipmh.etdms.Degree;
 import rs.teslaris.core.model.oaipmh.etdms.ETDMSThesis;
 import rs.teslaris.core.model.oaipmh.etdms.LevelType;
 import rs.teslaris.core.model.oaipmh.etdms.ThesisType;
+import rs.teslaris.core.model.oaipmh.marc21.ControlField;
+import rs.teslaris.core.model.oaipmh.marc21.DataField;
+import rs.teslaris.core.model.oaipmh.marc21.Marc21;
+import rs.teslaris.core.model.oaipmh.marc21.SubField;
 import rs.teslaris.core.model.oaipmh.publication.PartOf;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.model.oaipmh.publication.PublishedIn;
@@ -570,6 +576,111 @@ public class ExportDocumentConverter extends ExportConverterBase {
         var thesis = new ETDMSThesis();
         thesis.setThesisType(thesisType);
         return thesis;
+    }
+
+    public static Marc21 toMARC21Model(ExportDocument exportDocument) {
+        Marc21 marc21 = new Marc21();
+        marc21.setLeader("ca a2 n");
+
+        marc21.getControlFields().add(new ControlField("001", exportDocument.getId()));
+
+        if (Objects.nonNull(exportDocument.getDoi())) {
+            marc21.getDataFields()
+                .add(createDataField("024", "7", " ", "a", exportDocument.getDoi()));
+        }
+
+        clientLanguages.forEach(lang ->
+            marc21.getDataFields().add(createDataField("856", "4", "1", "u",
+                baseFrontendUrl + lang + "/scientific-results/thesis/" + exportDocument.getId()))
+        );
+
+        addContentToMarc21(marc21, "245", "1", "0", exportDocument.getTitle(),
+            ExportMultilingualContent::getContent, "a");
+
+        addContributorsToMarc21(marc21, exportDocument, DocumentContributionType.AUTHOR, "100", "1",
+            " ");
+
+        addContributorsToMarc21(marc21, exportDocument, DocumentContributionType.EDITOR, "700", "1",
+            " ");
+        addContributorsToMarc21(marc21, exportDocument, DocumentContributionType.ADVISOR, "700",
+            "1", " ");
+        addContributorsToMarc21(marc21, exportDocument, DocumentContributionType.BOARD_MEMBER,
+            "700", "1", " ");
+
+        addContentToMarc21(marc21, "520", " ", " ", exportDocument.getDescription(),
+            ExportMultilingualContent::getContent, "a");
+
+        addContentToMarc21(marc21, "650", " ", "7", exportDocument.getKeywords(),
+            ExportMultilingualContent::getContent, "a");
+
+        if (Objects.nonNull(exportDocument.getLanguageTags())) {
+            exportDocument.getLanguageTags().forEach(tag -> {
+                marc21.getDataFields().add(createDataField("041", " ", " ", "a", tag));
+            });
+        }
+
+        if (Objects.nonNull(exportDocument.getPublishers())) {
+            exportDocument.getPublishers().forEach(publisher -> {
+                addContentToMarc21(marc21, "260", " ", " ", publisher.getName(),
+                    ExportMultilingualContent::getContent, "b");
+            });
+        }
+
+        addContentToMarc21(marc21, "856", "4", "1",
+            new ArrayList<>(exportDocument.getFileFormats()), Function.identity(), "q");
+
+        var isOpenAccess = exportDocument.getOpenAccess();
+
+        String accessRights = isOpenAccess ?
+            "info:eu-repo/semantics/openAccess" :
+            "info:eu-repo/semantics/metadataOnlyAccess";
+
+        marc21.getDataFields().add(createDataField("506", " ", " ", "a", accessRights));
+        marc21.getDataFields().add(createDataField("540", " ", " ", "a",
+            "http://creativecommons.org/publicdomain/zero/1.0/"));
+
+        return marc21;
+    }
+
+    private static void addContributorsToMarc21(Marc21 marc21, ExportDocument exportDocument,
+                                                DocumentContributionType type,
+                                                String tag, String ind1, String ind2) {
+        List<ExportContribution> contributions;
+
+        contributions = switch (type) {
+            case AUTHOR -> exportDocument.getAuthors();
+            case EDITOR -> exportDocument.getEditors();
+            case ADVISOR -> exportDocument.getAdvisors();
+            case BOARD_MEMBER -> exportDocument.getBoardMembers();
+            case REVIEWER -> null;
+        };
+
+        if (Objects.isNull(contributions)) {
+            return; // should never happen as we don't call using REVIEWER type, left just in case
+        }
+
+        addContentToMarc21(
+            marc21, tag, ind1, ind2,
+            contributions.stream()
+                .map(ExportContribution::getDisplayName)
+                .collect(Collectors.toList()),
+            Object::toString, "a"
+        );
+    }
+
+    private static <T> void addContentToMarc21(Marc21 marc21, String tag, String ind1, String ind2,
+                                               List<T> content, Function<T, String> extractor,
+                                               String subfieldCode) {
+        content.stream().map(extractor).forEach(value ->
+            marc21.getDataFields().add(createDataField(tag, ind1, ind2, subfieldCode, value))
+        );
+    }
+
+    private static DataField createDataField(String tag, String ind1, String ind2,
+                                             String subfieldCode, String value) {
+        var dataField = new DataField(tag, ind1, ind2, new ArrayList<>());
+        dataField.getSubFields().add(new SubField(subfieldCode, value));
+        return dataField;
     }
 
     public static Dim toDIMModel(ExportDocument exportDocument) {

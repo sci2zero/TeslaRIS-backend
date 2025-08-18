@@ -18,6 +18,8 @@ public interface MonographService {
 
     MonographDTO readMonographById(Integer monographId);
 
+    Monograph findMonographByIsbn(String eIsbn, String printIsbn);
+
     Monograph createMonograph(MonographDTO monographDTO, Boolean index);
 
     void editMonograph(Integer monographId, MonographDTO monographDTO);
@@ -33,4 +35,6 @@ public interface MonographService {
     void indexMonograph(Monograph monograph);
 
     boolean isIdentifierInUse(String identifier, Integer monographId);
+
+    void addOldId(Integer id, Integer oldId);
 }

@@ -1,6 +1,5 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
-import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +15,7 @@ import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 
 @Component
 @Slf4j
-public class DissertationConverter extends DocumentConverter
+public class MagistrateConverter extends DocumentConverter
     implements RecordConverter<Publication, ThesisDTO> {
 
     private final OrganisationUnitService organisationUnitService;
@@ -25,24 +24,24 @@ public class DissertationConverter extends DocumentConverter
 
 
     @Autowired
-    public DissertationConverter(
+    public MagistrateConverter(
         MultilingualContentConverter multilingualContentConverter,
         PersonContributionConverter personContributionConverter,
-        OrganisationUnitService organisationUnitService, LanguageTagService languageTagService) {
+        OrganisationUnitService organisationUnitService,
+        LanguageTagService languageTagService) {
         super(multilingualContentConverter, personContributionConverter);
         this.organisationUnitService = organisationUnitService;
         this.languageTagService = languageTagService;
     }
 
     @Override
-    @Nullable
     public ThesisDTO toDTO(Publication record) {
         var dto = new ThesisDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         setCommonFields(record, dto);
 
-        dto.setThesisType(ThesisType.PHD);
+        dto.setThesisType(ThesisType.MR);
 
         try {
             setCommonThesisFields(record, dto, languageTagService, organisationUnitService);

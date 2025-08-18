@@ -32,7 +32,7 @@ public interface ProceedingsRepository extends JpaRepository<Proceedings, Intege
     @Query(value = "SELECT * FROM proceedings p WHERE " +
         "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
         "p.approve_status = 1", nativeQuery = true)
-    Page<Proceedings> findAllModifiedInLast24Hours(Pageable pageable, boolean allTime);
+    Page<Proceedings> findAllModified(Pageable pageable, boolean allTime);
 
     @Modifying
     @Query("UPDATE ProceedingsPublication pp SET pp.deleted = true " +

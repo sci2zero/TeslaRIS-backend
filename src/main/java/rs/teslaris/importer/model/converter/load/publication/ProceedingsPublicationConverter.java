@@ -58,10 +58,16 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         var proceedings = documentPublicationService.findDocumentByOldId(
             OAIPMHParseUtility.parseBISISID(record.getPartOf().getPublication().getOldId()));
         if (Objects.isNull(proceedings)) {
+            log.warn("No saved proceedings with id: {}",
+                record.getPartOf().getPublication().getOldId());
+            return null;
+        } else if (Objects.isNull(proceedings.getEvent())) {
             log.warn(
-                "No saved proceedings with id: " + record.getPartOf().getPublication().getOldId());
+                "The following proceedings is not associated with an event: {}. Skipping loading publication...",
+                record.getPartOf().getPublication().getOldId());
             return null;
         }
+
         dto.setProceedingsId(proceedings.getId());
         dto.setEventId(proceedings.getEvent().getId());
 

@@ -336,6 +336,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             case DUBLIN_CORE -> "toDCModel";
             case ETD_MS -> "toETDMSModel";
             case DSPACE_INTERNAL_MODEL -> "toDIMModel";
+            case MARC21 -> "toMARC21Model";
         };
 
         try {

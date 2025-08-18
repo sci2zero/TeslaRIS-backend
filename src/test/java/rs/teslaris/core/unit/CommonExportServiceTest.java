@@ -100,7 +100,7 @@ public class CommonExportServiceTest {
         orgUnit.setId(1);
 
         var page = new PageImpl<>(List.of(orgUnit));
-        when(organisationUnitRepository.findAllModifiedInLast24Hours(any(PageRequest.class),
+        when(organisationUnitRepository.findAllModified(any(PageRequest.class),
             anyBoolean()))
             .thenReturn(page);
 
@@ -124,7 +124,7 @@ public class CommonExportServiceTest {
         person.setPersonalInfo(personalInfo);
 
         var page = new PageImpl<>(List.of(person));
-        when(personRepository.findAllModifiedInLast24Hours(any(PageRequest.class), anyBoolean()))
+        when(personRepository.findAllModified(any(PageRequest.class), anyBoolean()))
             .thenReturn(page);
 
         // When
@@ -144,7 +144,7 @@ public class CommonExportServiceTest {
 
         var page = new PageImpl<>(List.of(conference));
         when(
-            conferenceRepository.findAllModifiedInLast24Hours(any(PageRequest.class), anyBoolean()))
+            conferenceRepository.findAllModified(any(PageRequest.class), anyBoolean()))
             .thenReturn(page);
 
         // When
@@ -161,30 +161,30 @@ public class CommonExportServiceTest {
         // Given
         var emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(datasetRepository.findAllModifiedInLast24Hours(any(Pageable.class),
+        when(datasetRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(softwareRepository.findAllModifiedInLast24Hours(any(Pageable.class),
+        when(softwareRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(patentRepository.findAllModifiedInLast24Hours(any(Pageable.class),
+        when(patentRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(journalRepository.findAllModifiedInLast24Hours(
+        when(journalRepository.findAllModified(
             any(Pageable.class), anyBoolean())).thenReturn((Page) emptyPage);
-        when(journalPublicationRepository.findAllModifiedInLast24Hours(
+        when(journalPublicationRepository.findAllModified(
             any(Pageable.class), anyBoolean())).thenReturn((Page) emptyPage);
-        when(proceedingsRepository.findAllModifiedInLast24Hours(any(Pageable.class),
+        when(proceedingsRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(proceedingsPublicationRepository.findAllModifiedInLast24Hours(
+        when(proceedingsPublicationRepository.findAllModified(
             any(Pageable.class), anyBoolean())).thenReturn((Page) emptyPage);
-        when(monographRepository.findAllModifiedInLast24Hours(any(Pageable.class),
+        when(monographRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(monographPublicationRepository.findAllModifiedInLast24Hours(
+        when(monographPublicationRepository.findAllModified(
             any(Pageable.class), anyBoolean())).thenReturn((Page) emptyPage);
-        when(thesisRepository.findAllModifiedInLast24Hours(any(Pageable.class),
+        when(thesisRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
 
@@ -192,23 +192,23 @@ public class CommonExportServiceTest {
         commonExportService.exportDocumentsToCommonModel(allTime);
 
         // Then
-        verify(datasetRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class),
+        verify(datasetRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
-        verify(softwareRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class),
+        verify(softwareRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
-        verify(patentRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class),
+        verify(patentRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
-        verify(journalRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class),
+        verify(journalRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
-        verify(journalPublicationRepository, times(1)).findAllModifiedInLast24Hours(
+        verify(journalPublicationRepository, times(1)).findAllModified(
             any(Pageable.class), anyBoolean());
-        verify(proceedingsRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class),
+        verify(proceedingsRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
-        verify(proceedingsPublicationRepository, times(1)).findAllModifiedInLast24Hours(
+        verify(proceedingsPublicationRepository, times(1)).findAllModified(
             any(Pageable.class), anyBoolean());
-        verify(monographRepository, times(1)).findAllModifiedInLast24Hours(any(Pageable.class),
+        verify(monographRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
-        verify(monographPublicationRepository, times(1)).findAllModifiedInLast24Hours(
+        verify(monographPublicationRepository, times(1)).findAllModified(
             any(Pageable.class), anyBoolean());
     }
 }

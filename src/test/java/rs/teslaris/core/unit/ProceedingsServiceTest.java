@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -17,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -385,5 +387,159 @@ public class ProceedingsServiceTest {
 
         assertEquals("Proceedings with given ID does not exist.", exception.getMessage());
         verify(proceedingsRepository).findRaw(proceedingsId);
+    }
+
+    @Test
+    void shouldReturnTrueIfEIsbnExistsInProceedings() {
+        // Given
+        var identifier = "12345";
+        var proceedingsId = 1;
+        doReturn(true).when(proceedingsRepository).existsByeISBN(identifier, proceedingsId);
+
+        // When
+        var result = proceedingsService.isIdentifierInUse(identifier, proceedingsId);
+
+        // Then
+        assertTrue(result);
+        verify(proceedingsRepository).existsByeISBN(identifier, proceedingsId);
+        verify(proceedingsRepository, never()).existsByPrintISBN(any(), any());
+    }
+
+    @Test
+    void shouldReturnTrueIfPrintIsbnExistsInProceedings() {
+        // Given
+        var identifier = "67890";
+        var proceedingsId = 2;
+        doReturn(false).when(proceedingsRepository).existsByeISBN(identifier, proceedingsId);
+        doReturn(true).when(proceedingsRepository).existsByPrintISBN(identifier, proceedingsId);
+
+        // When
+        var result = proceedingsService.isIdentifierInUse(identifier, proceedingsId);
+
+        // Then
+        assertTrue(result);
+        verify(proceedingsRepository).existsByeISBN(identifier, proceedingsId);
+        verify(proceedingsRepository).existsByPrintISBN(identifier, proceedingsId);
+    }
+
+    @Test
+    void shouldReturnTrueIfSuperMethodReturnsTrueInProceedings() {
+        // Given
+        var identifier = "abcde";
+        var proceedingsId = 3;
+        doReturn(false).when(proceedingsRepository).existsByeISBN(identifier, proceedingsId);
+        doReturn(false).when(proceedingsRepository).existsByPrintISBN(identifier, proceedingsId);
+
+        // mock super method
+        doReturn(false).when(documentRepository).existsByDoi(identifier, proceedingsId);
+        doReturn(false).when(documentRepository).existsByScopusId(identifier, proceedingsId);
+        doReturn(true).when(documentRepository).existsByOpenAlexId(identifier, proceedingsId);
+        doReturn(false).when(documentRepository).existsByWebOfScienceId(identifier, proceedingsId);
+
+        // When
+        var result = proceedingsService.isIdentifierInUse(identifier, proceedingsId);
+
+        // Then
+        assertTrue(result);
+        verify(proceedingsRepository).existsByeISBN(identifier, proceedingsId);
+        verify(proceedingsRepository).existsByPrintISBN(identifier, proceedingsId);
+    }
+
+    @Test
+    void shouldReturnFalseIfNoIdentifierExistsInProceedings() {
+        // Given
+        var identifier = "xyz";
+        var proceedingsId = 4;
+        doReturn(false).when(proceedingsRepository).existsByeISBN(identifier, proceedingsId);
+        doReturn(false).when(proceedingsRepository).existsByPrintISBN(identifier, proceedingsId);
+
+        doReturn(false).when(documentRepository).existsByDoi(identifier, proceedingsId);
+        doReturn(false).when(documentRepository).existsByScopusId(identifier, proceedingsId);
+        doReturn(false).when(documentRepository).existsByOpenAlexId(identifier, proceedingsId);
+        doReturn(false).when(documentRepository).existsByWebOfScienceId(identifier, proceedingsId);
+
+        // When
+        var result = proceedingsService.isIdentifierInUse(identifier, proceedingsId);
+
+        // Then
+        assertFalse(result);
+        verify(proceedingsRepository).existsByeISBN(identifier, proceedingsId);
+        verify(proceedingsRepository).existsByPrintISBN(identifier, proceedingsId);
+    }
+
+    @Test
+    void shouldReturnNullWhenBothIsbnsAreBlank() {
+        // Given
+        var eIsbn = " ";
+        String printIsbn = null;
+
+        // When
+        var result = proceedingsService.findProceedingsByIsbn(eIsbn, printIsbn);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    void shouldUsePrintIsbnWhenEIsbnIsBlank() {
+        // Given
+        var eIsbn = " ";
+        var printIsbn = "12345";
+        var proceedings = new Proceedings();
+        when(proceedingsRepository.findByISBN(printIsbn, printIsbn)).thenReturn(
+            new ArrayList<>(List.of(proceedings)));
+
+        // When
+        var result = proceedingsService.findProceedingsByIsbn(eIsbn, printIsbn);
+
+        // Then
+        assertEquals(proceedings, result);
+    }
+
+    @Test
+    void shouldUseEIsbnWhenPrintIsbnIsBlank() {
+        // Given
+        var eIsbn = "67890";
+        var printIsbn = "";
+        var proceedings = new Proceedings();
+        when(proceedingsRepository.findByISBN(eIsbn, eIsbn)).thenReturn(
+            new ArrayList<>(List.of(proceedings)));
+
+        // When
+        var result = proceedingsService.findProceedingsByIsbn(eIsbn, printIsbn);
+
+        // Then
+        assertEquals(proceedings, result);
+    }
+
+    @Test
+    void shouldReturnNullIfNoProceedingsFound() {
+        // Given
+        var eIsbn = "11111";
+        var printIsbn = "22222";
+        when(proceedingsRepository.findByISBN(eIsbn, printIsbn)).thenReturn(new ArrayList<>());
+
+        // When
+        var result = proceedingsService.findProceedingsByIsbn(eIsbn, printIsbn);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    void shouldAddOldIdToProceedings() {
+        // Given
+        var id = 1;
+        var oldId = 99;
+        var proceedings = new Proceedings();
+        proceedings.setOldIds(new HashSet<>());
+        when(documentRepository.findById(id)).thenReturn(Optional.of(proceedings));
+
+        // When
+        proceedingsService.addOldId(id, oldId);
+
+        // Then
+        assertTrue(proceedings.getOldIds().contains(oldId));
+        verify(documentRepository).save(proceedings);
     }
 }

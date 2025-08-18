@@ -3,20 +3,24 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -475,5 +479,152 @@ public class MonographServiceTest {
 
         assertEquals("Monograph with given ID does not exist.", exception.getMessage());
         verify(monographRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldReturnNullWhenBothIsbnsAreBlank() {
+        // Given
+        var eIsbn = "";
+        String printIsbn = null;
+
+        // When
+        var result = monographService.findMonographByIsbn(eIsbn, printIsbn);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    void shouldCallRepositoryWithPrintIsbnWhenEIsbnIsBlank() {
+        // Given
+        var eIsbn = " ";
+        var printIsbn = "1234567890";
+        var expected = new Monograph();
+        when(monographRepository.findByISBN(printIsbn, printIsbn))
+            .thenReturn(Collections.singletonList(expected));
+
+        // When
+        var result = monographService.findMonographByIsbn(eIsbn, printIsbn);
+
+        // Then
+        assertEquals(expected, result);
+        verify(monographRepository).findByISBN(printIsbn, printIsbn);
+    }
+
+    @Test
+    void shouldCallRepositoryWithEIsbnWhenPrintIsbnIsBlank() {
+        // Given
+        var eIsbn = "0987654321";
+        String printIsbn = null;
+        var expected = new Monograph();
+        when(monographRepository.findByISBN(eIsbn, eIsbn))
+            .thenReturn(Collections.singletonList(expected));
+
+        // When
+        var result = monographService.findMonographByIsbn(eIsbn, printIsbn);
+
+        // Then
+        assertEquals(expected, result);
+        verify(monographRepository).findByISBN(eIsbn, eIsbn);
+    }
+
+    @Test
+    void shouldReturnNullWhenRepositoryReturnsEmpty() {
+        // Given
+        var eIsbn = "1111";
+        var printIsbn = "2222";
+        when(monographRepository.findByISBN(eIsbn, printIsbn))
+            .thenReturn(Collections.emptyList());
+
+        // When
+        var result = monographService.findMonographByIsbn(eIsbn, printIsbn);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    void shouldAddOldIdAndSaveMonograph() {
+        // Given
+        var id = 1;
+        var oldId = 99;
+        var monograph = spy(new Monograph());
+        when(documentRepository.findById(id)).thenReturn(Optional.of(monograph));
+
+        // When
+        monographService.addOldId(id, oldId);
+
+        // Then
+        assertTrue(monograph.getOldIds().contains(oldId));
+        verify(documentRepository).save(monograph);
+    }
+
+    @Test
+    void shouldReturnTrueIfEIsbnExists() {
+        // Given
+        var identifier = "12345";
+        var monographId = 1;
+        doReturn(true).when(monographRepository).existsByeISBN(identifier, monographId);
+
+        // When
+        var result = monographService.isIdentifierInUse(identifier, monographId);
+
+        // Then
+        assertTrue(result);
+        verify(monographRepository).existsByeISBN(identifier, monographId);
+        verify(monographRepository, never()).existsByPrintISBN(any(), any());
+    }
+
+    @Test
+    void shouldReturnTrueIfPrintIsbnExists() {
+        // Given
+        var identifier = "67890";
+        var monographId = 2;
+        doReturn(false).when(monographRepository).existsByeISBN(identifier, monographId);
+        doReturn(true).when(monographRepository).existsByPrintISBN(identifier, monographId);
+
+        // When
+        var result = monographService.isIdentifierInUse(identifier, monographId);
+
+        // Then
+        assertTrue(result);
+        verify(monographRepository).existsByeISBN(identifier, monographId);
+        verify(monographRepository).existsByPrintISBN(identifier, monographId);
+    }
+
+    @Test
+    void shouldReturnTrueIfSuperMethodReturnsTrue() {
+        // Given
+        var identifier = "abcde";
+        var monographId = 3;
+        doReturn(false).when(monographRepository).existsByeISBN(identifier, monographId);
+        doReturn(false).when(monographRepository).existsByPrintISBN(identifier, monographId);
+        doReturn(false).when(documentRepository).existsByDoi(identifier, monographId);
+        doReturn(false).when(documentRepository).existsByScopusId(identifier, monographId);
+        doReturn(true).when(documentRepository).existsByOpenAlexId(identifier, monographId);
+        doReturn(false).when(documentRepository).existsByWebOfScienceId(identifier, monographId);
+
+        // When
+        var result = monographService.isIdentifierInUse(identifier, monographId);
+
+        // Then
+        assertTrue(result);
+        verify(monographRepository).existsByeISBN(identifier, monographId);
+        verify(monographRepository).existsByPrintISBN(identifier, monographId);
+    }
+
+    @Test
+    void shouldReturnFalseIfNoIdentifierExists() {
+        // Given
+        var identifier = "xyz";
+        var monographId = 4;
+        doReturn(false).when(monographRepository).existsByeISBN(identifier, monographId);
+        doReturn(false).when(monographRepository).existsByPrintISBN(identifier, monographId);
+
+        // When
+        var result = monographService.isIdentifierInUse(identifier, monographId);
+
+        // Then
+        assertFalse(result);
     }
 }

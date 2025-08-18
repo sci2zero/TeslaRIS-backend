@@ -33,6 +33,7 @@ public class ExportConverterBase {
     // static D toDCModel(T commonExportEntity);
     // static E toETDMSModel(T commonExportEntity); // where applicable
     // static S toDIMSModel(T commonExportEntity); // where applicable
+    // static M toMARC21Model(T commonExportEntity); // where applicable
 
     protected static String repositoryName;
     protected static String baseFrontendUrl;

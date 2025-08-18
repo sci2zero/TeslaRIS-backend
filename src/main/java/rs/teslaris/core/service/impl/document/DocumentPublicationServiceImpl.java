@@ -335,7 +335,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         indexKeywords(document, index);
         indexDocumentFilesContent(document, index);
 
-        index.getInternalIdentifiers().addAll(document.getInternalIdentifiers());
+        if (Objects.nonNull(document.getInternalIdentifiers())) {
+            index.getInternalIdentifiers().addAll(document.getInternalIdentifiers());
+        }
 
         if (Objects.nonNull(document.getEvent())) {
             index.setEventId(document.getEvent().getId());
