@@ -45,9 +45,9 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.RestTemplateProvider;
 import rs.teslaris.core.util.ScopusAuthenticationHelper;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 
 @Service
 @RequiredArgsConstructor

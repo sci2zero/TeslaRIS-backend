@@ -64,9 +64,9 @@ import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
-import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.deduplication.Mergeable;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service

@@ -7,7 +7,7 @@ import org.apache.logging.log4j.util.Strings;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
-import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.Person;

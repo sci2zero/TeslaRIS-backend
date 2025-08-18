@@ -5,8 +5,10 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.classification.EntityAssessmentClassification;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
 
@@ -34,6 +36,40 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
         "psac.commission.id = :commissionId")
     Optional<PublicationSeriesAssessmentClassification> findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
         Integer publicationSeriesId, String category, Integer classificationYear,
+        Integer commissionId);
+
+    @Transactional
+    @Modifying
+    @Query(value = """
+            DELETE FROM entity_assessment_classifications_classification_reason
+            WHERE entity_assessment_classification_id IN (
+                SELECT id FROM entity_assessment_classifications
+                WHERE publication_series_id = :publicationSeriesId
+                  AND category_identifier = :category
+                  AND classification_year = :classificationYear
+                  AND commission_id = :commissionId
+            )
+        """, nativeQuery = true)
+    void deleteClassificationReasonsForPublicationSeriesAndCategoryAndYearAndCommission(
+        Integer publicationSeriesId,
+        String category,
+        Integer classificationYear,
+        Integer commissionId);
+
+
+    @Transactional
+    @Modifying
+    @Query(value = """
+        DELETE FROM entity_assessment_classifications 
+        WHERE publication_series_id = :publicationSeriesId
+          AND category_identifier = :category
+          AND classification_year = :classificationYear
+          AND commission_id = :commissionId
+        """, nativeQuery = true)
+    void deleteClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
+        Integer publicationSeriesId,
+        String category,
+        Integer classificationYear,
         Integer commissionId);
 
     @Query("SELECT psac FROM PublicationSeriesAssessmentClassification psac " +
