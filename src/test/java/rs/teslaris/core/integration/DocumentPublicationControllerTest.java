@@ -44,7 +44,7 @@ public class DocumentPublicationControllerTest extends BaseTest {
     @Test
     public void testGetAllPublicationsForUser() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(
-                "http://localhost:8081/api/document/for-researcher/{personId}", 22)
+                "http://localhost:8081/api/document/for-researcher/{personId}?tokens=*", 22)
             .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 

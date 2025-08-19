@@ -31,4 +31,6 @@ public class DocumentFileResponseDTO {
     private License license;
 
     private Long sizeInMb;
+
+    private String mimeType;
 }

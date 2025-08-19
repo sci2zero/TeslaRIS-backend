@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import jakarta.annotation.Nullable;
@@ -148,9 +149,46 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
                                                                      List<Integer> ignore,
+                                                                     List<String> tokens,
+                                                                     List<DocumentPublicationType> allowedTypes,
                                                                      Pageable pageable) {
-        return documentPublicationIndexRepository.findByAuthorIdsAndDatabaseIdNotIn(
-            authorId, ignore, pageable);
+        if (Objects.isNull(tokens)) {
+            tokens = List.of("*");
+        }
+
+        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, allowedTypes);
+
+        var authorFilter = TermQuery.of(t -> t
+            .field("author_ids")
+            .value(authorId)
+        )._toQuery();
+
+        Query combinedQuery;
+
+        if (Objects.nonNull(ignore) && !ignore.isEmpty()) {
+            var ignoreFilter = TermsQuery.of(t -> t
+                .field("databaseId")
+                .terms(v -> v.value(
+                    ignore.stream()
+                        .map(String::valueOf)
+                        .map(FieldValue::of)
+                        .toList()))
+            )._toQuery();
+
+            combinedQuery = BoolQuery.of(bq -> bq
+                .must(simpleSearchQuery)
+                .must(authorFilter)
+                .mustNot(ignoreFilter)
+            )._toQuery();
+        } else {
+            combinedQuery = BoolQuery.of(bq -> bq
+                .must(simpleSearchQuery)
+                .must(authorFilter)
+            )._toQuery();
+        }
+
+        return searchService.runQuery(combinedQuery, pageable, DocumentPublicationIndex.class,
+            "document_publication");
     }
 
     @Override

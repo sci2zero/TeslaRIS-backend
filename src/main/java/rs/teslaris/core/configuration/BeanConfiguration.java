@@ -81,7 +81,8 @@ public class BeanConfiguration {
                     .allowCredentials(true)
                     .allowedOriginPatterns("sameOrigin")
                     .allowedOrigins(frontendUrl)
-                    .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH");
+                    .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH")
+                    .exposedHeaders("Link");
             }
         };
     }

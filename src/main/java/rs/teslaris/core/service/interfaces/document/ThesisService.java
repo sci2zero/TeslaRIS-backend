@@ -6,6 +6,7 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 
@@ -43,6 +44,8 @@ public interface ThesisService {
     void unarchiveThesis(Integer thesisId);
 
     ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(Integer thesisId);
+
+    String getSingleLibraryReferenceFormat(Integer thesisId, LibraryFormat libraryFormat);
 
     void transferPreprintToOfficialPublication(Integer thesisId, Integer documentFileId);
 }

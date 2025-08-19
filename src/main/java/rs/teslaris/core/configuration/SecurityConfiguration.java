@@ -137,6 +137,10 @@ public class SecurityConfiguration {
                     "/api/document/for-organisation-unit/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/book-series/publications/{bookSeriesId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/thesis/library-formats/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/thesis/library-format/{documentId}/{libraryFormat}").permitAll()
 
                 // PROCEEDINGS
                 .requestMatchers(HttpMethod.GET, "/api/proceedings/for-event/{eventId}").permitAll()

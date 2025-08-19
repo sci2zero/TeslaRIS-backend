@@ -3,6 +3,7 @@ package rs.teslaris.core.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
+import rs.teslaris.core.util.signposting.FairSignposting;
 
 @RestController
 @RequestMapping("api/dataset")
@@ -27,9 +29,13 @@ public class DatasetController {
     private final DatasetService datasetService;
 
     @GetMapping("/{documentId}")
-    public DatasetDTO readDataset(
+    public ResponseEntity<DatasetDTO> readDataset(
         @PathVariable Integer documentId) {
-        return datasetService.readDatasetById(documentId);
+        var dto = datasetService.readDatasetById(documentId);
+
+        return ResponseEntity.ok()
+            .headers(FairSignposting.constructHeaders(dto, "/api/dataset"))
+            .body(dto);
     }
 
     @PostMapping

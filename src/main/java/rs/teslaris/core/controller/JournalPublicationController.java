@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.signposting.FairSignposting;
 
 @RestController
 @RequestMapping("api/journal-publication")
@@ -41,9 +43,13 @@ public class JournalPublicationController {
 
 
     @GetMapping("/{documentId}")
-    public JournalPublicationResponseDTO readJournalPublication(
+    public ResponseEntity<JournalPublicationResponseDTO> readJournalPublication(
         @PathVariable Integer documentId) {
-        return journalPublicationService.readJournalPublicationById(documentId);
+        var dto = journalPublicationService.readJournalPublicationById(documentId);
+
+        return ResponseEntity.ok()
+            .headers(FairSignposting.constructHeaders(dto, "/api/journal-publication"))
+            .body(dto);
     }
 
     @GetMapping("/journal/{journalId}/my-publications")

@@ -235,7 +235,8 @@ public class MergeServiceImpl implements MergeService {
             (srcId, personPublicationIndex) -> performPersonPublicationSwitch(srcId, targetPersonId,
                 personPublicationIndex.getDatabaseId(), true),
             pageRequest -> documentPublicationService.findResearcherPublications(sourcePersonId,
-                Collections.emptyList(),
+                Collections.emptyList(), List.of("*"),
+                Arrays.asList(DocumentPublicationType.values()),
                 pageRequest).getContent()
         );
     }

@@ -43,6 +43,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
@@ -487,6 +488,21 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             log.error("Unable to create library references. Reason: {}", e.getMessage());
             throw new ThesisException(
                 "Unable to create library references."); // Should never happen
+        }
+    }
+
+    @Override
+    public String getSingleLibraryReferenceFormat(Integer thesisId, LibraryFormat libraryFormat) {
+        var thesis = thesisJPAService.findOne(thesisId);
+        try {
+            return switch (libraryFormat) {
+                case ETD_MS -> XMLUtil.convertToXml(ThesisConverter.toETDMSModel(thesis));
+                case MARC21 -> XMLUtil.convertToXml(ThesisConverter.toDCModel(thesis));
+                case DUBLIN_CORE -> XMLUtil.convertToXml(ThesisConverter.convertToMarc21(thesis));
+            };
+        } catch (JAXBException e) {
+            log.error("Unable to create library reference. Reason: {}", e.getMessage());
+            return ""; // should never happen
         }
     }
 

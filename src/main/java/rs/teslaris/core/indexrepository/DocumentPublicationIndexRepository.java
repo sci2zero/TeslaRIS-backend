@@ -41,22 +41,6 @@ public interface DocumentPublicationIndexRepository extends
                                                                         Integer monographId,
                                                                         Integer authorId);
 
-    @Query("""
-        {
-          "bool": {
-            "must": [
-              { "terms": { "author_ids": [?0] } }
-            ],
-            "must_not": [
-              { "terms": { "databaseId": ?1 } }
-            ]
-          }
-        }
-        """)
-    Page<DocumentPublicationIndex> findByAuthorIdsAndDatabaseIdNotIn(Integer authorId,
-                                                                     List<Integer> databaseIds,
-                                                                     Pageable pageable);
-
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
     Page<DocumentPublicationIndex> findByAuthorIdsAndYearBetween(Integer authorId,

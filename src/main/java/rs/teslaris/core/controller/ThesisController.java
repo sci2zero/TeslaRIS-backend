@@ -3,7 +3,9 @@ package rs.teslaris.core.controller;
 import jakarta.validation.Valid;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,12 +28,14 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.signposting.FairSignposting;
 
 @RestController
 @RequestMapping("/api/thesis")
@@ -49,9 +53,13 @@ public class ThesisController {
 
 
     @GetMapping("/{documentId}")
-    public ThesisResponseDTO readThesis(
+    public ResponseEntity<ThesisResponseDTO> readThesis(
         @PathVariable Integer documentId) {
-        return thesisService.readThesisById(documentId);
+        var dto = thesisService.readThesisById(documentId);
+
+        return ResponseEntity.ok()
+            .headers(FairSignposting.constructHeaders(dto, "/api/thesis"))
+            .body(dto);
     }
 
     @GetMapping("/old-id/{oldId}")
@@ -157,9 +165,23 @@ public class ThesisController {
     }
 
     @GetMapping("/library-formats/{documentId}")
-    public ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(
+    public ThesisLibraryFormatsResponseDTO getAllLibraryReferenceFormats(
         @PathVariable Integer documentId) {
         return thesisService.getLibraryReferenceFormat(documentId);
+    }
+
+    @GetMapping("/library-format/{documentId}/{libraryFormat}")
+    public ResponseEntity<String> getSingleLibraryReferenceFormat(@PathVariable Integer documentId,
+                                                                  @PathVariable
+                                                                  LibraryFormat libraryFormat) {
+        var content = thesisService.getSingleLibraryReferenceFormat(documentId, libraryFormat);
+
+        var headers = new HttpHeaders();
+        FairSignposting.addHeadersForMetadataFormats(headers, documentId);
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(content);
     }
 
     private void performReferenceAdditionChecks(ThesisDTO thesis, String bearerToken) {

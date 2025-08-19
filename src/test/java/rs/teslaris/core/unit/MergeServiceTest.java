@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -372,10 +373,14 @@ public class MergeServiceTest {
             List.of(publicationIndex1, publicationIndex2));
         var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
 
-        when(documentPublicationService.findResearcherPublications(sourceId, List.of(),
-            PageRequest.of(0, 10))).thenReturn(page1);
-        when(documentPublicationService.findResearcherPublications(sourceId, List.of(),
-            PageRequest.of(1, 10))).thenReturn(page2);
+        when(
+            documentPublicationService.findResearcherPublications(sourceId, List.of(), List.of("*"),
+                Arrays.asList(DocumentPublicationType.values()), PageRequest.of(0, 10))).thenReturn(
+            page1);
+        when(
+            documentPublicationService.findResearcherPublications(sourceId, List.of(), List.of("*"),
+                Arrays.asList(DocumentPublicationType.values()), PageRequest.of(1, 10))).thenReturn(
+            page2);
 
         var contribution = new PersonDocumentContribution();
         var affiliationStatement = new AffiliationStatement();

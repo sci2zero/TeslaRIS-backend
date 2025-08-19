@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
@@ -18,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -397,17 +397,16 @@ public class DocumentPublicationServiceTest {
         var authorId = 123;
         var pageable = PageRequest.of(0, 10);
         var expectedPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
-        when(documentPublicationIndexRepository.findByAuthorIdsAndDatabaseIdNotIn(anyInt(), any(),
-            any(Pageable.class))).thenReturn(expectedPage);
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(expectedPage);
 
         // when
         var resultPage =
-            documentPublicationService.findResearcherPublications(authorId, List.of(), pageable);
+            documentPublicationService.findResearcherPublications(authorId, Collections.emptyList(),
+                Collections.emptyList(), Collections.emptyList(), pageable);
 
         // then
         assertEquals(expectedPage, resultPage);
-        verify(documentPublicationIndexRepository).findByAuthorIdsAndDatabaseIdNotIn(authorId,
-            List.of(), pageable);
+        verify(searchService).runQuery(any(), any(), any(), any());
     }
 
     @Test

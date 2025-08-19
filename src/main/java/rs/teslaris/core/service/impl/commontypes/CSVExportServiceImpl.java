@@ -213,7 +213,9 @@ public class CSVExportServiceImpl implements CSVExportService {
                     SearchRequestType.SIMPLE, null,
                     Integer.parseInt(endpointTokenParameters.getLast()), null, null);
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
-                Integer.parseInt(endpointTokenParameters.getFirst()), null, pageable);
+                Integer.parseInt(endpointTokenParameters.getFirst()), null,
+                Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
+                    .filter(t -> !t.isBlank()).toList(), documentSpecificFilters.a, pageable);
             case ORGANISATION_UNIT_OUTPUTS ->
                 (Page<T>) documentPublicationService.findPublicationsForOrganisationUnit(
                     Integer.parseInt(endpointTokenParameters.getFirst()),

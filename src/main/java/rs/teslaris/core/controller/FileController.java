@@ -46,6 +46,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.signposting.FairSignposting;
 
 @RestController
 @RequestMapping("/api/file")
@@ -176,8 +177,11 @@ public class FileController {
         recordDownloadIfApplicable(filename, documentFile.getResourceType());
 
         byte[] fileBytes = file.readAllBytes();
+        var headers = getFileHeaders(file, inline, fileBytes);
+        FairSignposting.addHeadersForDocumentFileItems(headers, documentFile);
+
         return ResponseEntity.ok()
-            .headers(getFileHeaders(file, inline, fileBytes))
+            .headers(headers)
             .body(fileBytes);
     }
 

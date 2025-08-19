@@ -28,6 +28,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
                                                               List<Integer> ignore,
+                                                              List<String> tokens,
+                                                              List<DocumentPublicationType> allowedTypes,
                                                               Pageable pageable);
 
     List<Integer> getResearchOutputIdsForDocument(Integer documentId);
