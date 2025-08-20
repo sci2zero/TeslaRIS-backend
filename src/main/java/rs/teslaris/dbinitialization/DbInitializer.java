@@ -195,6 +195,7 @@ public class DbInitializer implements ApplicationRunner {
         var configureHarvestSources = new Privilege("CONFIGURE_HARVEST_SOURCES");
         var performOAIPMHHarvest = new Privilege("PERFORM_OAIPMH_HARVEST");
         var setDefaultContent = new Privilege("SET_DEFAULT_CONTENT");
+        var saveOUOutputConfiguration = new Privilege("SAVE_OU_OUTPUT_CONFIGURATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -229,7 +230,7 @@ public class DbInitializer implements ApplicationRunner {
                 migrateInstitutionEntities, performOaiMigration, saveOUTrustConfiguration,
                 validateMetadata, validateUploadedFiles, archiveDocument, configureHarvestSources,
                 promotePreliminaryAttachments, scheduleDocumentHarvest, performOAIPMHHarvest,
-                setDefaultContent));
+                setDefaultContent, saveOUOutputConfiguration));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -263,7 +264,7 @@ public class DbInitializer implements ApplicationRunner {
                 migrateAllEntities, performOaiMigration, saveOUTrustConfiguration, validateMetadata,
                 validateUploadedFiles, archiveDocument, promotePreliminaryAttachments,
                 scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
-                setDefaultContent
+                setDefaultContent, saveOUOutputConfiguration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -285,7 +286,8 @@ public class DbInitializer implements ApplicationRunner {
                     mergeOUEmployments, mergeDocumentsMetadata, deletePerson, validateMetadata,
                     deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities,
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
-                    scheduleDocumentHarvest, configureHarvestSources, setDefaultContent)));
+                    scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
+                    saveOUOutputConfiguration)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

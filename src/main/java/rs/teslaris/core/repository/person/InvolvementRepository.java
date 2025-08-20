@@ -19,9 +19,15 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
     Optional<Employment> findActiveEmploymentForPersonAndInstitution(Integer institutionId,
                                                                      Integer personId);
 
+    @Query("SELECT e FROM Employment e " +
+        "JOIN FETCH e.organisationUnit WHERE " +
+        "e.organisationUnit IS NOT NULL AND " +
+        "e.personInvolved.id = :personId")
+    List<Employment> findEmploymentsForPerson(Integer personId);
+
     @Query("SELECT DISTINCT e.organisationUnit.id FROM Employment e " +
         "WHERE e.personInvolved.id = :personId " +
-        "AND e.dateTo IS null")
+        "AND e.dateTo IS NULL")
     List<Integer> findActiveEmploymentInstitutionIds(Integer personId);
 
     @Query("SELECT e.organisationUnit FROM Employment e " +

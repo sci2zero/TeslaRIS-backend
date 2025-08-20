@@ -87,6 +87,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -617,7 +618,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     public void deletePersonPublications(Integer personId, boolean switchToUnmanaged) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -977,7 +978,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     public Page<PersonIndex> findAllIndex(Pageable pageable) {
-        return personIndexRepository.findAll(pageable);
+        var page = personIndexRepository.findAll(pageable);
+
+        filterSensitiveInformation(page);
+
+        return page;
     }
 
     @Override
@@ -989,10 +994,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable pageable,
                                                            boolean strict, Integer institutionId,
                                                            boolean onlyHarvestable) {
-        return searchService.runQuery(
+        var page = searchService.runQuery(
             buildNameAndEmploymentQuery(tokens, strict, institutionId, onlyHarvestable),
             pageable,
             PersonIndex.class, "person");
+
+        filterSensitiveInformation(page);
+
+        return page;
     }
 
     @Override
@@ -1024,14 +1033,22 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             .must(institutionFilter)
         )._toQuery();
 
-        return searchService.runQuery(combinedQuery, pageable, PersonIndex.class, "person");
+        var page = searchService.runQuery(combinedQuery, pageable, PersonIndex.class, "person");
+
+        filterSensitiveInformation(page);
+
+        return page;
     }
 
     @Override
     public Page<PersonIndex> advancedSearch(List<String> tokens,
                                             Pageable pageable) {
         var query = expressionTransformer.parseAdvancedQuery(tokens);
-        return searchService.runQuery(query, pageable, PersonIndex.class, "person");
+        var page = searchService.runQuery(query, pageable, PersonIndex.class, "person");
+
+        filterSensitiveInformation(page);
+
+        return page;
     }
 
     @Override
@@ -1243,5 +1260,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         return personRepository.findPersonForIdentifier(identifier);
+    }
+
+    private void filterSensitiveInformation(Page<PersonIndex> page) {
+        if (!SessionTrackingUtil.isUserLoggedIn()) {
+            page.forEach(personIndex -> {
+                personIndex.setBirthdate("");
+                personIndex.setBirthdateSortable("");
+            });
+        }
     }
 }

@@ -7,7 +7,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,6 +43,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignposting;
 
 @Validated
 @RestController
@@ -74,8 +77,16 @@ public class PersonController {
     }
 
     @GetMapping("/{personId}")
-    public PersonResponseDTO readPersonWithBasicInfo(@PathVariable Integer personId) {
-        return personService.readPersonWithBasicInfo(personId);
+    public ResponseEntity<PersonResponseDTO> readPersonWithBasicInfo(
+        @PathVariable Integer personId) {
+        var dto = personService.readPersonWithBasicInfo(personId);
+
+        var headers = new HttpHeaders();
+        FairSignposting.addHeadersForPerson(headers, dto);
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(dto);
     }
 
     @GetMapping("/old-id/{personOldId}")

@@ -6,7 +6,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +35,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignposting;
 
 @RestController
 @RequestMapping("/api/journal")
@@ -96,8 +99,15 @@ public class JournalController {
     }
 
     @GetMapping("/{journalId}")
-    public JournalResponseDTO readJournal(@PathVariable Integer journalId) {
-        return journalService.readJournal(journalId);
+    public ResponseEntity<JournalResponseDTO> readJournal(@PathVariable Integer journalId) {
+        var dto = journalService.readJournal(journalId);
+
+        var headers = new HttpHeaders();
+        FairSignposting.addHeadersForPublicationSeries(headers, dto);
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(dto);
     }
 
     @GetMapping("/identifier")

@@ -242,7 +242,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     public CompletableFuture<Void> reindexJournals() {
         journalIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

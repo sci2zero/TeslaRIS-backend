@@ -9,13 +9,17 @@ import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
+import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
+import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
@@ -31,6 +35,7 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
 @Component
 public class FairSignposting {
@@ -46,8 +51,90 @@ public class FairSignposting {
         // utility class
     }
 
+    public static void addHeadersForPerson(HttpHeaders headers, PersonResponseDTO person) {
+        headers.add(HttpHeaders.LINK,
+            "<https://schema.org/Person>; rel=\"type\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + frontendUrl + defaultLocale + "/persons/" + person.getId() +
+                "> ; rel=\"collection\" ; type=\"text/html\"");
+
+        if (valuePresent(person.getPersonalInfo().getOrcid())) {
+            headers.add(HttpHeaders.LINK,
+                "<https://orcid.org/" + person.getPersonalInfo().getOrcid() +
+                    ">; rel=\"identifier\"; type=\"text/html\"");
+        }
+
+        if (valuePresent(person.getPersonalInfo().getScopusAuthorId())) {
+            headers.add(HttpHeaders.LINK, "<https://www.scopus.com/authid/detail.uri?authorId=" +
+                person.getPersonalInfo().getScopusAuthorId() +
+                ">; rel=\"identifier\"; type=\"text/html\"");
+        }
+
+        if (valuePresent(person.getPersonalInfo().getOpenAlexId())) {
+            headers.add(HttpHeaders.LINK,
+                "<https://openalex.org/" + person.getPersonalInfo().getOpenAlexId() +
+                    ">; rel=\"identifier\"; type=\"text/html\"");
+        }
+
+        if (valuePresent(person.getPersonalInfo().getWebOfScienceResearcherId())) {
+            headers.add(HttpHeaders.LINK, "http://www.researcherid.com/rid/" +
+                person.getPersonalInfo().getWebOfScienceResearcherId() +
+                ">; rel=\"identifier\"; type=\"text/html\"");
+        }
+
+        if (valuePresent(person.getPersonalInfo().getECrisId())) {
+            headers.add(HttpHeaders.LINK,
+                "<https://bib.cobiss.net/biblioweb/biblio/sr/scr/cris/" +
+                    person.getPersonalInfo().getECrisId() + ">; rel=\"identifier\"");
+        }
+    }
+
+
+    public static void addHeadersForOrganisationUnit(HttpHeaders headers,
+                                                     OrganisationUnitDTO organisationUnits,
+                                                     OrganisationUnitsRelation superRelation) {
+        headers.add(HttpHeaders.LINK,
+            "<https://schema.org/Organization>; rel=\"type\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + frontendUrl + defaultLocale + "/organisation-units/" + organisationUnits.getId() +
+                "> ; rel=\"collection\" ; type=\"text/html\"");
+
+        if (Objects.nonNull(superRelation)) {
+            headers.add(HttpHeaders.LINK, "<" + frontendUrl + defaultLocale + "/persons/" +
+                superRelation.getTargetOrganisationUnit().getId() +
+                "> ; rel=\"collection\" ; type=\"https://schema.org/parentOrganization\"");
+        }
+    }
+
+    public static void addHeadersForPublicationSeries(HttpHeaders headers,
+                                                      PublicationSeriesDTO publicationSeries) {
+        headers.add(HttpHeaders.LINK,
+            "<https://schema.org/Periodical>; rel=\"type\"");
+
+        if (publicationSeries instanceof JournalResponseDTO) {
+            headers.add(HttpHeaders.LINK,
+                "<" + frontendUrl + defaultLocale + "/journals/" + publicationSeries.getId() +
+                    "> ; rel=\"collection\" ; type=\"text/html\"");
+        } else {
+            headers.add(HttpHeaders.LINK,
+                "<" + frontendUrl + defaultLocale + "/book-series/" + publicationSeries.getId() +
+                    "> ; rel=\"collection\" ; type=\"text/html\"");
+        }
+
+        if (valuePresent(publicationSeries.getEissn())) {
+            headers.add(HttpHeaders.LINK,
+                "<urn:issn:" + publicationSeries.getEissn() + ">; rel=\"cite-as\"");
+        }
+
+        if (valuePresent(publicationSeries.getPrintISSN())) {
+            headers.add(HttpHeaders.LINK,
+                "<urn:issn:" + publicationSeries.getPrintISSN() + ">; rel=\"cite-as\"");
+        }
+    }
+
     public static void addHeadersForDocumentFileItems(HttpHeaders headers,
                                                       DocumentFile documentFile) {
+        headers.add(HttpHeaders.LINK, "<https://schema.org/item>; rel=\"type\"");
         if (Objects.nonNull(documentFile.getDocument())) {
             headers.add(HttpHeaders.LINK,
                 "<" + frontendUrl + defaultLocale + "/scientific-results/" +

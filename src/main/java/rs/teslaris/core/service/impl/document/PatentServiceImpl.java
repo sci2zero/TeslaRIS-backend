@@ -16,6 +16,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -23,6 +24,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -53,13 +55,16 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              CommissionRepository commissionRepository,
                              SearchFieldsLoader searchFieldsLoader,
                              OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                             InvolvementRepository involvementRepository,
+                             OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                              PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService);
+            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
     }
@@ -149,7 +154,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         // Super service does the initial deletion
 
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

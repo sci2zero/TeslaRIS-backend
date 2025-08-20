@@ -215,7 +215,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public CompletableFuture<Void> reindexConferences() {
         eventIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

@@ -215,7 +215,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                                                                         Integer institutionId,
                                                                         String lang) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
         var groupedRows = new TreeMap<String, List<List<String>>>();
 

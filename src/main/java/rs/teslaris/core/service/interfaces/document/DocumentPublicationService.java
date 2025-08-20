@@ -109,4 +109,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     void archiveDocument(Integer documentId);
 
     void unarchiveDocument(Integer documentId);
+
+    void reindexEmploymentInformationForAllPersonPublications(Integer personId);
 }

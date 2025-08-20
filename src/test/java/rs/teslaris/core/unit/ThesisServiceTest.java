@@ -9,11 +9,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.xml.bind.JAXBException;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +33,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +41,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -49,12 +53,16 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.etdms.ETDMSThesis;
+import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -685,6 +693,105 @@ public class ThesisServiceTest {
         // When / Then
         assertThrows(ThesisException.class,
             () -> thesisService.transferPreprintToOfficialPublication(1, 123));
+    }
+
+    @Test
+    void shouldReturnAllLibraryFormatsWhenConversionSucceeds() throws Exception {
+        //given
+        var thesis = new Thesis();
+        thesis.setId(1);
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        try (MockedStatic<ThesisConverter> converterMock = mockStatic(ThesisConverter.class);
+             MockedStatic<XMLUtil> xmlUtilMock = mockStatic(XMLUtil.class)) {
+
+            var etdmsModel = new ETDMSThesis();
+            var dcModel = new DC();
+            var marc21Model = new Marc21();
+
+            converterMock.when(() -> ThesisConverter.toETDMSModel(thesis)).thenReturn(etdmsModel);
+            converterMock.when(() -> ThesisConverter.toDCModel(thesis)).thenReturn(dcModel);
+            converterMock.when(() -> ThesisConverter.convertToMarc21(thesis))
+                .thenReturn(marc21Model);
+
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(etdmsModel)).thenReturn("<etdms/>");
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(dcModel)).thenReturn("<dc/>");
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(marc21Model)).thenReturn("<marc21/>");
+
+            //when
+            var result = thesisService.getLibraryReferenceFormat(1);
+
+            //then
+            assertEquals("<etdms/>", result.etdMs());
+            assertEquals("<dc/>", result.dublinCore());
+            assertEquals("<marc21/>", result.marc21());
+        }
+    }
+
+    @Test
+    void shouldThrowExceptionWhenConversionFails() throws Exception {
+        //given
+        var thesis = new Thesis();
+        thesis.setId(1);
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        try (MockedStatic<ThesisConverter> converterMock = mockStatic(ThesisConverter.class);
+             MockedStatic<XMLUtil> xmlUtilMock = mockStatic(XMLUtil.class)) {
+
+            var etdmsModel = new ETDMSThesis();
+            converterMock.when(() -> ThesisConverter.toETDMSModel(thesis)).thenReturn(etdmsModel);
+
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(etdmsModel))
+                .thenThrow(new JAXBException("failure"));
+
+            //when + then
+            assertThrows(ThesisException.class, () -> thesisService.getLibraryReferenceFormat(1));
+        }
+    }
+
+    @Test
+    void shouldReturnSingleFormatWhenETDMSRequested() throws Exception {
+        //given
+        var thesis = new Thesis();
+        thesis.setId(1);
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        try (MockedStatic<ThesisConverter> converterMock = mockStatic(ThesisConverter.class);
+             MockedStatic<XMLUtil> xmlUtilMock = mockStatic(XMLUtil.class)) {
+
+            var etdmsModel = new ETDMSThesis();
+            converterMock.when(() -> ThesisConverter.toETDMSModel(thesis)).thenReturn(etdmsModel);
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(etdmsModel)).thenReturn("<etdms/>");
+
+            //when
+            var result = thesisService.getSingleLibraryReferenceFormat(1, LibraryFormat.ETD_MS);
+
+            //then
+            assertEquals("<etdms/>", result);
+        }
+    }
+
+    @Test
+    void shouldReturnEmptyStringWhenSingleFormatFails() throws Exception {
+        //given
+        var thesis = new Thesis();
+        thesis.setId(1);
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        try (MockedStatic<ThesisConverter> converterMock = mockStatic(ThesisConverter.class);
+             MockedStatic<XMLUtil> xmlUtilMock = mockStatic(XMLUtil.class)) {
+
+            var etdmsModel = new ETDMSThesis();
+            converterMock.when(() -> ThesisConverter.toETDMSModel(thesis)).thenReturn(etdmsModel);
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(etdmsModel))
+                .thenThrow(new JAXBException("fail"));
+
+            //when
+            var result = thesisService.getSingleLibraryReferenceFormat(1, LibraryFormat.ETD_MS);
+
+            //then
+            assertTrue(result.isEmpty());
+        }
     }
 
     private Set<DocumentFile> createMockDocuments(int count) {

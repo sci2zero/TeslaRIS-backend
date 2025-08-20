@@ -7,7 +7,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +39,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignposting;
 
 @RestController
 @RequestMapping("/api/organisation-unit")
@@ -67,8 +70,17 @@ public class OrganisationUnitController {
     }
 
     @GetMapping("/{organisationUnitId}")
-    public OrganisationUnitDTO getOrganisationUnit(@PathVariable Integer organisationUnitId) {
-        return organisationUnitService.readOrganisationUnitById(organisationUnitId);
+    public ResponseEntity<OrganisationUnitDTO> getOrganisationUnit(
+        @PathVariable Integer organisationUnitId) {
+        var dto = organisationUnitService.readOrganisationUnitById(organisationUnitId);
+
+        var headers = new HttpHeaders();
+        FairSignposting.addHeadersForOrganisationUnit(headers, dto,
+            organisationUnitService.getSuperOrganisationUnitRelation(organisationUnitId));
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(dto);
     }
 
     @GetMapping("/sub-units/{organisationUnitId}")

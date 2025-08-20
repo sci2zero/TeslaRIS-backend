@@ -53,6 +53,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
@@ -63,6 +64,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -131,6 +133,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              CommissionRepository commissionRepository,
                              SearchFieldsLoader searchFieldsLoader,
                              OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                             InvolvementRepository involvementRepository,
+                             OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                              ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              LanguageService languageService, LanguageTagService languageTagService,
@@ -144,7 +148,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
             expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService);
+            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;
@@ -277,7 +282,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         // Super service does the initial deletion
 
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

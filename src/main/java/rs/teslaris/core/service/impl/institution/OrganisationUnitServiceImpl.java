@@ -331,6 +331,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Nullable
+    public OrganisationUnitsRelation getSuperOrganisationUnitRelation(Integer organisationUnitId) {
+        return organisationUnitsRelationRepository.getSuperOU(organisationUnitId).orElse(null);
+    }
+
+    @Override
     public RelationGraphDataDTO getOrganisationUnitsRelationsChain(
         Integer leafId) {
         var nodes = new ArrayList<OrganisationUnitDTO>();
@@ -761,7 +767,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
     public void migrateThesesToUnmanagedOU(Integer organisationUnitId) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -962,7 +968,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public CompletableFuture<Void> reindexOrganisationUnits() {
         organisationUnitIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

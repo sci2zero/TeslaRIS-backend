@@ -36,6 +36,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -62,6 +63,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     private final DocumentFileService documentFileService;
 
     private final EmploymentRepository employmentRepository;
+
+    private final DocumentPublicationService documentPublicationService;
+
 
     @Override
     protected JpaRepository<Involvement, Integer> getEntityRepository() {
@@ -185,7 +189,11 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
         personService.indexPerson(personInvolved);
 
-        return involvementRepository.save(newEmployment);
+        var savedEmployment = involvementRepository.save(newEmployment);
+
+        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(personId);
+
+        return savedEmployment;
     }
 
     @Override
@@ -208,6 +216,13 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         personService.save(person);
         userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
+
+        // TODO: This is an administrative task that we run once a year, maybe a better solution
+        //  for this is to run reindexing task after migration, to avoid so many index updates
+        //  with each new insert.
+        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
+            person.getId());
+
         return InvolvementConverter.toDTO(employment);
     }
 
@@ -379,6 +394,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(
             employmentToUpdate.getPersonInvolved().getId());
         personService.indexPerson(employmentToUpdate.getPersonInvolved());
+
+        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
+            employmentToUpdate.getPersonInvolved().getId());
     }
 
     @Override
@@ -391,6 +409,11 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         delete(involvementId);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+
+        if (involvementToDelete instanceof Employment) {
+            documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
+                involvementToDelete.getPersonInvolved().getId());
+        }
     }
 
     @Override
@@ -406,6 +429,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         employment.get().setDateTo(LocalDate.now());
         employmentRepository.save(employment.get());
         personService.indexPerson(employment.get().getPersonInvolved());
+
+        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
+            employment.get().getPersonInvolved().getId());
     }
 
     @Override

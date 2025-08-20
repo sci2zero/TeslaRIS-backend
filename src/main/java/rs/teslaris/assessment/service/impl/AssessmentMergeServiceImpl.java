@@ -249,7 +249,7 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                                    BiConsumer<Integer, T> switchOperation,
                                    Function<PageRequest, List<T>> fetchChunk) {
         var pageNumber = 0;
-        var chunkSize = 10;
+        var chunkSize = 100;
         var hasNextPage = true;
 
         while (hasNextPage) {

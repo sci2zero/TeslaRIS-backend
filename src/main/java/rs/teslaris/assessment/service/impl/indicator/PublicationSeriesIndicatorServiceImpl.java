@@ -120,7 +120,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     @Override
     public void computeFiveYearIFRank(List<Integer> classificationYears) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

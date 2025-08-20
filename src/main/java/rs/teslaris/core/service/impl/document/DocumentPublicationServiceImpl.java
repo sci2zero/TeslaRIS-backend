@@ -29,8 +29,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -58,12 +60,14 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -114,6 +118,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private final OrganisationUnitTrustConfigurationService
         organisationUnitTrustConfigurationService;
+
+    private final InvolvementRepository involvementRepository;
+
+    private final OrganisationUnitOutputConfigurationService
+        organisationUnitOutputConfigurationService;
 
     private final Pattern doiPattern =
         Pattern.compile("\"^10\\\\.\\\\d{4,9}\\\\/[-,._;()/:A-Z0-9]+$\"", Pattern.CASE_INSENSITIVE);
@@ -218,16 +227,58 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, allowedTypes);
 
-        var institutionFilter = TermsQuery.of(t -> t
-            .field("organisation_unit_ids")
-            .terms(v -> v.value(
-                allOUIdsFromSubHierarchy.stream()
-                    .map(String::valueOf)
-                    .map(FieldValue::of)
-                    .toList()))
+        var outputConfiguration =
+            organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
+                organisationUnitId);
+
+        if (!outputConfiguration.showOutputs() ||
+            (!outputConfiguration.showBySpecifiedAffiliation() &&
+                !outputConfiguration.showByPublicationYearEmployments() &&
+                !outputConfiguration.showByCurrentEmployments())) {
+            return Page.empty();
+        }
+
+        List<Query> orgUnitFilters = new ArrayList<>();
+
+        if (outputConfiguration.showBySpecifiedAffiliation()) {
+            orgUnitFilters.add(TermsQuery.of(t -> t
+                .field("organisation_unit_ids_specified")
+                .terms(v -> v.value(
+                    allOUIdsFromSubHierarchy.stream()
+                        .map(String::valueOf)
+                        .map(FieldValue::of)
+                        .toList()))
+            )._toQuery());
+        }
+
+        if (outputConfiguration.showByPublicationYearEmployments()) {
+            orgUnitFilters.add(TermsQuery.of(t -> t
+                .field("organisation_unit_ids_year_of_publication")
+                .terms(v -> v.value(
+                    allOUIdsFromSubHierarchy.stream()
+                        .map(String::valueOf)
+                        .map(FieldValue::of)
+                        .toList()))
+            )._toQuery());
+        }
+
+        if (outputConfiguration.showByCurrentEmployments()) {
+            orgUnitFilters.add(TermsQuery.of(t -> t
+                .field("organisation_unit_ids_active")
+                .terms(v -> v.value(
+                    allOUIdsFromSubHierarchy.stream()
+                        .map(String::valueOf)
+                        .map(FieldValue::of)
+                        .toList()))
+            )._toQuery());
+        }
+
+        Query institutionFilter = BoolQuery.of(bq -> bq
+            .should(orgUnitFilters)
+            .minimumShouldMatch("1")
         )._toQuery();
 
-        var combinedQuery = BoolQuery.of(bq -> bq
+        Query combinedQuery = BoolQuery.of(bq -> bq
             .must(simpleSearchQuery)
             .must(institutionFilter)
         )._toQuery();
@@ -391,13 +442,69 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private void setContributors(Document document, DocumentPublicationIndex index) {
         var organisationUnitIds = new HashSet<Integer>();
+        var contributions = document.getContributors().stream()
+            .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber)).toList();
 
-        document.getContributors().stream()
-            .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber))
-            .forEach(contribution -> processContribution(contribution, index, organisationUnitIds));
+        contributions.forEach(
+            contribution -> processContribution(contribution, index, organisationUnitIds));
 
-        index.setOrganisationUnitIds(new ArrayList<>(organisationUnitIds.stream().toList()));
         index.setAuthorNamesSortable(index.getAuthorNames());
+
+        setEmploymentIndexInformation(index, contributions, organisationUnitIds,
+            document instanceof Thesis);
+    }
+
+    private void setEmploymentIndexInformation(DocumentPublicationIndex index,
+                                               List<PersonDocumentContribution> contributions,
+                                               Set<Integer> specifiedContributionInstitutions,
+                                               boolean isThesis) {
+        var activeEmploymentInstitutions = new HashSet<Integer>();
+        var yearOfPublicationEmploymentInstitutions = new HashSet<Integer>();
+
+        contributions.forEach(contribution -> {
+            if (Objects.nonNull(contribution.getPerson())) {
+                involvementRepository.findEmploymentsForPerson(contribution.getPerson().getId())
+                    .forEach(employment -> {
+                        var orgId = employment.getOrganisationUnit().getId();
+
+                        if (Objects.isNull(employment.getDateTo())) {
+                            // Ongoing employment (dateFrom may be null or set)
+                            activeEmploymentInstitutions.add(orgId);
+                            var superIds =
+                                organisationUnitService.getSuperOUsHierarchyRecursive(orgId);
+                            activeEmploymentInstitutions.addAll(superIds);
+
+                            if (Objects.isNull(employment.getDateFrom()) ||
+                                index.getYear() >= employment.getDateFrom().getYear()) {
+                                yearOfPublicationEmploymentInstitutions.add(orgId);
+                                yearOfPublicationEmploymentInstitutions.addAll(superIds);
+                            }
+                        } else {
+                            // Ended employment
+                            if (Objects.nonNull(employment.getDateFrom()) &&
+                                index.getYear() >= employment.getDateFrom().getYear()
+                                && index.getYear() <= employment.getDateTo().getYear()) {
+                                var superIds =
+                                    organisationUnitService.getSuperOUsHierarchyRecursive(orgId);
+                                yearOfPublicationEmploymentInstitutions.add(orgId);
+                                yearOfPublicationEmploymentInstitutions.addAll(superIds);
+                            }
+                        }
+                    });
+            }
+        });
+
+        index.setOrganisationUnitIdsSpecified(new ArrayList<>(specifiedContributionInstitutions));
+        index.setOrganisationUnitIdsActive(new ArrayList<>(activeEmploymentInstitutions));
+        index.setOrganisationUnitIdsYearOfPublication(
+            new ArrayList<>(yearOfPublicationEmploymentInstitutions));
+
+        if (!isThesis) {
+            specifiedContributionInstitutions.addAll(activeEmploymentInstitutions);
+            specifiedContributionInstitutions.addAll(yearOfPublicationEmploymentInstitutions);
+        }
+
+        index.setOrganisationUnitIds(new ArrayList<>(specifiedContributionInstitutions));
     }
 
     private void processContribution(PersonDocumentContribution contribution,
@@ -507,6 +614,44 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setIsArchived(false);
 
         save(document);
+    }
+
+    @Override
+    @Async
+    public synchronized void reindexEmploymentInformationForAllPersonPublications(
+        Integer personId) {
+        int pageNumber = 0;
+        int chunkSize = 200;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            var indexChunk = documentPublicationIndexRepository.findByAuthorIds(personId,
+                PageRequest.of(pageNumber, chunkSize)).getContent();
+
+            var entityChunk = documentRepository.findBulkDocuments(
+                indexChunk.stream().map(DocumentPublicationIndex::getDatabaseId).toList());
+
+            var indexMap = indexChunk.stream()
+                .collect(Collectors.toMap(DocumentPublicationIndex::getDatabaseId, i -> i));
+
+            entityChunk.forEach(document -> {
+                var index = indexMap.get(document.getId());
+                if (index != null) {
+                    setEmploymentIndexInformation(
+                        index,
+                        new ArrayList<>(document.getContributors()),
+                        new HashSet<>(index.getOrganisationUnitIdsSpecified()),
+                        document instanceof Thesis
+                    );
+                    documentPublicationIndexRepository.save(index);
+                }
+            });
+
+            documentPublicationIndexRepository.saveAll(indexChunk);
+
+            pageNumber++;
+            hasNextPage = indexChunk.size() == chunkSize;
+        }
     }
 
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {

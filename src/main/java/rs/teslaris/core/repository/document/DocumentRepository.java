@@ -12,6 +12,9 @@ import rs.teslaris.core.model.document.Document;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
+    @Query("SELECT d FROM Document d JOIN FETCH d.contributors WHERE d.id IN :ids")
+    List<Document> findBulkDocuments(List<Integer> ids);
+
     @Query(value = """
         SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
         UNION ALL

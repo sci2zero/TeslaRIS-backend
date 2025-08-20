@@ -170,7 +170,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     public CompletableFuture<Void> reindexPublishers() {
         publisherIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

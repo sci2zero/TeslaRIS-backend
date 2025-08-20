@@ -132,7 +132,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
         from = DateUtil.calculateYearFromProvidedValue(from);
         to = DateUtil.calculateYearFromProvidedValue(to);
 
-        int chunkSize = 10;
+        int chunkSize = 100;
         var institutionIds = new HashSet<>(
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId)
         );

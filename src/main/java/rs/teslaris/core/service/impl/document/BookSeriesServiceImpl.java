@@ -180,7 +180,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     public CompletableFuture<Void> reindexBookSeries() {
         bookSeriesIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

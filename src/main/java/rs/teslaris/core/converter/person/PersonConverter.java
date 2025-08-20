@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -23,6 +22,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 public class PersonConverter {
 
@@ -238,11 +238,7 @@ public class PersonConverter {
     }
 
     private static void filterSensitiveData(PersonResponseDTO personResponse) {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (Objects.isNull(authentication) || !authentication.isAuthenticated() ||
-            (authentication.getPrincipal() instanceof String &&
-                authentication.getPrincipal().equals("anonymousUser"))) {
+        if (!SessionTrackingUtil.isUserLoggedIn()) {
             personResponse.getPersonalInfo().getContact().setPhoneNumber("");
             personResponse.getPersonalInfo().getContact().setContactEmail("");
             personResponse.getPersonalInfo().setPlaceOfBirth(null);

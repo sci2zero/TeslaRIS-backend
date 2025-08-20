@@ -134,7 +134,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                                                        String language,
                                                        ExportFileType metadataFormat) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         BackupZipBuilder zipBuilder = null;

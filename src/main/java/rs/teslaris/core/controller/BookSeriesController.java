@@ -6,7 +6,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +30,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignposting;
 
 @RestController
 @RequestMapping("/api/book-series")
@@ -61,8 +64,16 @@ public class BookSeriesController {
     }
 
     @GetMapping("/{bookSeriesId}")
-    public BookSeriesResponseDTO readBookSeries(@PathVariable Integer bookSeriesId) {
-        return bookSeriesService.readBookSeries(bookSeriesId);
+    public ResponseEntity<BookSeriesResponseDTO> readBookSeries(
+        @PathVariable Integer bookSeriesId) {
+        var dto = bookSeriesService.readBookSeries(bookSeriesId);
+
+        var headers = new HttpHeaders();
+        FairSignposting.addHeadersForPublicationSeries(headers, dto);
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(dto);
     }
 
     @PostMapping
