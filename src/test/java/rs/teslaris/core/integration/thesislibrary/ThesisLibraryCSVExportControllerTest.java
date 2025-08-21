@@ -11,8 +11,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.dto.commontypes.CSVExportRequest;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.TableExportRequest;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.commontypes.ExportableEndpointType;
 import rs.teslaris.thesislibrary.dto.ThesisCSVExportRequestDTO;
@@ -24,7 +24,7 @@ public class ThesisLibraryCSVExportControllerTest extends BaseTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private CSVExportRequest getTestPayload() {
+    private TableExportRequest getTestPayload() {
         var request = new ThesisCSVExportRequestDTO();
         request.setColumns(List.of("title_sr", "author_names"));
         request.setExportLanguage("en");

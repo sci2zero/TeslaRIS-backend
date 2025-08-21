@@ -1,6 +1,7 @@
 package rs.teslaris.thesislibrary.controller;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -26,7 +27,14 @@ public class ThesisLibraryCSVExportController {
     @PostMapping
     public ResponseEntity<InputStreamResource> downloadThesisLibraryCSVExport(
         @RequestBody @Valid ThesisCSVExportRequestDTO request) {
-        var exportDocument = thesisLibraryCSVExportService.exportThesesToCSV(request);
+
+        InputStreamResource exportDocument;
+        if (List.of(ExportFileType.CSV, ExportFileType.XLSX)
+            .contains(request.getExportFileType())) {
+            exportDocument = thesisLibraryCSVExportService.exportThesesToCSV(request);
+        } else {
+            exportDocument = thesisLibraryCSVExportService.exportThesesToBibliographicFile(request);
+        }
 
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)

@@ -82,7 +82,7 @@ public class PersonController {
         var dto = personService.readPersonWithBasicInfo(personId);
 
         var headers = new HttpHeaders();
-        FairSignposting.addHeadersForPerson(headers, dto);
+        FairSignposting.addHeadersForPerson(headers, dto, "/api/person");
 
         return ResponseEntity.ok()
             .headers(headers)

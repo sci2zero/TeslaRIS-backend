@@ -1,5 +1,9 @@
 package rs.teslaris.core.converter.document;
 
+import java.util.Objects;
+import org.jbibtex.BibTeXEntry;
+import org.jbibtex.Key;
+import org.jbibtex.StringValue;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -28,5 +32,116 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
         publicationDTO.setJournalName(
             MultilingualContentConverter.getMultilingualContentDTO(
                 publication.getJournal().getTitle()));
+    }
+
+    public static BibTeXEntry toBibTexEntry(JournalPublication journalPublication) {
+        var entry = new BibTeXEntry(BibTeXEntry.TYPE_ARTICLE,
+            new Key("(TESLARIS)" + journalPublication.getId().toString()));
+
+        setCommonFields(journalPublication, entry);
+
+        if (valueExists(journalPublication.getStartPage()) &&
+            valueExists((journalPublication.getEndPage()))) {
+            entry.addField(BibTeXEntry.KEY_PAGES,
+                new StringValue(journalPublication.getStartPage() + "-" +
+                    journalPublication.getEndPage(), StringValue.Style.BRACED));
+        }
+
+        if (valueExists(journalPublication.getArticleNumber())) {
+            entry.addField(BibTeXEntry.KEY_NUMBER,
+                new StringValue(journalPublication.getArticleNumber(),
+                    StringValue.Style.BRACED));
+        }
+
+        if (valueExists(journalPublication.getVolume())) {
+            entry.addField(BibTeXEntry.KEY_VOLUME,
+                new StringValue(journalPublication.getVolume(), StringValue.Style.BRACED));
+        }
+
+        if (valueExists(journalPublication.getIssue())) {
+            entry.addField(BibTeXEntry.KEY_NUMBER,
+                new StringValue(journalPublication.getIssue(), StringValue.Style.BRACED));
+        }
+
+        if (Objects.nonNull(journalPublication.getNumberOfPages())) {
+            entry.addField(new Key("pageNumber"),
+                new StringValue(String.valueOf(journalPublication.getNumberOfPages()),
+                    StringValue.Style.BRACED));
+        }
+
+        if (Objects.nonNull(journalPublication.getJournal())) {
+            setMCBibTexField(journalPublication.getJournal().getTitle(), entry,
+                BibTeXEntry.KEY_PUBLISHER);
+
+            if (valueExists(journalPublication.getJournal().getEISSN())) {
+                entry.addField(new Key("eIssn"),
+                    new StringValue(journalPublication.getJournal().getEISSN(),
+                        StringValue.Style.BRACED));
+            }
+
+            if (valueExists(journalPublication.getJournal().getPrintISSN())) {
+                entry.addField(new Key("printIssn"),
+                    new StringValue(journalPublication.getJournal().getPrintISSN(),
+                        StringValue.Style.BRACED));
+            }
+        }
+
+        return entry;
+    }
+
+    public static String toTaggedFormat(JournalPublication journalPublication,
+                                        boolean refMan) {
+        var sb = new StringBuilder();
+        sb.append(refMan ? "TY  - " : "%0 ").append("JOUR").append("\n");
+
+        setCommonTaggedFields(journalPublication, sb, refMan);
+
+        if (valueExists(journalPublication.getStartPage()) &&
+            valueExists((journalPublication.getEndPage()))) {
+            sb.append(refMan ? "SE  - " : "%P ").append(journalPublication.getStartPage())
+                .append("-")
+                .append(journalPublication.getEndPage())
+                .append("\n");
+        }
+
+        if (Objects.nonNull(journalPublication.getNumberOfPages())) {
+            sb.append(refMan ? "SP  - " : "%0P ").append(journalPublication.getNumberOfPages())
+                .append("\n");
+        }
+
+        if (valueExists(journalPublication.getArticleNumber())) {
+            sb.append(refMan ? "RI  - " : "%N ").append("articleNumber:")
+                .append(journalPublication.getArticleNumber()).append("\n");
+        }
+
+        if (valueExists(journalPublication.getVolume())) {
+            sb.append(refMan ? "C6  - " : "%V ").append(journalPublication.getVolume())
+                .append("\n");
+        }
+
+        if (valueExists(journalPublication.getIssue())) {
+            sb.append(refMan ? "C2  - " : "%N ").append(journalPublication.getIssue()).append("\n");
+        }
+
+        if (Objects.nonNull(journalPublication.getJournal())) {
+            setMCTaggedField(journalPublication.getJournal().getTitle(), sb, "JA");
+
+            if (valueExists(journalPublication.getJournal().getEISSN())) {
+                sb.append(refMan ? "SN  - " : "%0S").append("e:")
+                    .append(journalPublication.getJournal().getEISSN()).append("\n");
+            }
+
+            if (valueExists(journalPublication.getJournal().getPrintISSN())) {
+                sb.append(refMan ? "SN  - " : "%0S").append("print:")
+                    .append(journalPublication.getJournal().getPrintISSN())
+                    .append("\n");
+            }
+        }
+
+        if (refMan) {
+            sb.append("ER  -\n");
+        }
+
+        return sb.toString();
     }
 }

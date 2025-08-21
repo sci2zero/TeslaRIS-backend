@@ -34,6 +34,7 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
@@ -74,6 +75,12 @@ public class DocumentPublicationController {
     @GetMapping("/{documentId}")
     public DocumentDTO readDocumentPublication(@PathVariable Integer documentId) {
         return documentPublicationService.readDocumentPublication(documentId);
+    }
+
+    @GetMapping("/metadata/{documentId}/{format}")
+    public String readBibliographicMetadata(@PathVariable Integer documentId,
+                                            @PathVariable BibliographicFormat format) {
+        return documentPublicationService.readBibliographicMetadataById(documentId, format);
     }
 
     @GetMapping("/{documentId}/cite")

@@ -50,6 +50,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.PersonContribution;
@@ -139,6 +140,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     public DocumentDTO readDocumentPublication(Integer documentId) {
         return DocumentPublicationConverter.toDTO(findOne(documentId));
+    }
+
+    @Override
+    public String readBibliographicMetadataById(Integer documentId, BibliographicFormat format) {
+        var document = findOne(documentId);
+
+        return switch (format) {
+            case BIBTEX -> StringUtil.bibTexEntryToString(
+                DocumentPublicationConverter.toBibTeXEntry(document));
+            case REFMAN -> DocumentPublicationConverter.toTaggedFormat(document, true);
+            case ENDNOTE -> DocumentPublicationConverter.toTaggedFormat(document, false);
+        };
     }
 
     @Override

@@ -1,5 +1,10 @@
 package rs.teslaris.core.service.impl.commontypes;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,13 +23,16 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchRepository
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.dto.commontypes.CSVExportRequest;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
+import rs.teslaris.core.converter.document.DocumentPublicationConverter;
+import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
+import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.TableExportRequest;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ExportableEndpointType;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.service.impl.CSVExportHelper;
 import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -33,6 +41,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Slf4j
@@ -77,21 +86,27 @@ public class CSVExportServiceImpl implements CSVExportService {
     }
 
     @Override
-    public InputStreamResource exportDocumentsToCSV(DocumentCSVExportRequestDTO request) {
+    public InputStreamResource exportDocumentsToFile(DocumentExportRequestDTO request) {
         String documentFieldsConfigurationFile = "documentSearchFieldConfiguration.json";
-        return exportData(
-            request,
-            documentPublicationIndexRepository,
-            documentFieldsConfigurationFile,
-            DocumentPublicationIndexRepository::findDocumentPublicationIndexByDatabaseId,
-            (rowData, entity, req) -> CSVExportHelper.addCitationData(rowData, entity,
-                (DocumentCSVExportRequestDTO) req, citationService),
-            documentFieldsConfigurationFile
-        );
+
+        if (List.of(ExportFileType.CSV, ExportFileType.XLSX)
+            .contains(request.getExportFileType())) {
+            return exportData(
+                request,
+                documentPublicationIndexRepository,
+                documentFieldsConfigurationFile,
+                DocumentPublicationIndexRepository::findDocumentPublicationIndexByDatabaseId,
+                (rowData, entity, req) -> CSVExportHelper.addCitationData(rowData, entity,
+                    (DocumentExportRequestDTO) req, citationService),
+                documentFieldsConfigurationFile
+            );
+        } else {
+            return exportData(request);
+        }
     }
 
     @Override
-    public InputStreamResource exportPersonsToCSV(CSVExportRequest request) {
+    public InputStreamResource exportPersonsToCSV(TableExportRequest request) {
         String personFieldsConfigurationFile = "personSearchFieldConfiguration.json";
         return exportData(
             request,
@@ -105,7 +120,7 @@ public class CSVExportServiceImpl implements CSVExportService {
     }
 
     @Override
-    public InputStreamResource exportOrganisationUnitsToCSV(CSVExportRequest request) {
+    public InputStreamResource exportOrganisationUnitsToCSV(TableExportRequest request) {
         String ouFieldsConfigurationFile = "organisationUnitSearchFieldConfiguration.json";
         return exportData(
             request,
@@ -123,12 +138,56 @@ public class CSVExportServiceImpl implements CSVExportService {
         return maximumExportAmount;
     }
 
+    private InputStreamResource exportData(TableExportRequest request) {
+        var documentSpecificFilters =
+            handleDocumentSpecificFieldsAndFilters(request, new ArrayList<>(), new ArrayList<>());
+
+        var exportedEntities = new ArrayList<String>();
+
+        if (request.getExportMaxPossibleAmount()) {
+            returnBulkDataFromDefinedEndpoint(request.getEndpointType(),
+                request.getEndpointTokenParameters(),
+                PageRequest.of(request.getBulkExportOffset(), maximumExportAmount),
+                documentPublicationIndexRepository,
+                documentSpecificFilters)
+                .forEach(entity -> exportedEntities.add(getBibliographicExportEntity(request,
+                    documentPublicationService.findOne(entity.getDatabaseId()))));
+        } else {
+            request.getExportEntityIds().forEach(entityId -> exportedEntities.add(
+                getBibliographicExportEntity(request,
+                    documentPublicationService.findOne(entityId))));
+        }
+
+        var outputStream = new ByteArrayOutputStream();
+        try (var writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+            for (String record : exportedEntities) {
+                writer.write(record);
+                writer.write("\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e); // should never happen
+        }
+
+        return new InputStreamResource(new ByteArrayInputStream(outputStream.toByteArray()));
+    }
+
+    private String getBibliographicExportEntity(TableExportRequest request, Document document) {
+        return switch (request.getExportFileType()) {
+            case BIB -> StringUtil.bibTexEntryToString(
+                DocumentPublicationConverter.toBibTeXEntry(document));
+            case RIS -> DocumentPublicationConverter.toTaggedFormat(document, true);
+            case ENW -> DocumentPublicationConverter.toTaggedFormat(document, false);
+            default -> throw new IllegalStateException("Unexpected value: " +
+                request.getExportFileType()); // should never happen
+        };
+    }
+
     private <T, R extends ElasticsearchRepository<T, ?>> InputStreamResource exportData(
-        CSVExportRequest request,
+        TableExportRequest request,
         R repository,
         String fieldsConfig,
         BiFunction<R, Integer, Optional<T>> findByDatabaseId,
-        TriConsumer<List<String>, T, CSVExportRequest> additionalProcessing,
+        TriConsumer<List<String>, T, TableExportRequest> additionalProcessing,
         String configurationFile) {
 
         var rowsData = new ArrayList<List<String>>();
@@ -166,15 +225,15 @@ public class CSVExportServiceImpl implements CSVExportService {
     }
 
     private Triple<ArrayList<DocumentPublicationType>, Integer, Integer> handleDocumentSpecificFieldsAndFilters(
-        CSVExportRequest request, List<String> tableHeaders, ArrayList<List<String>> rowsData) {
+        TableExportRequest request, List<String> tableHeaders, ArrayList<List<String>> rowsData) {
         var allowedDocumentTypes = new ArrayList<DocumentPublicationType>();
         Integer institutionId = null, commissionId = null;
 
-        if (request instanceof DocumentCSVExportRequestDTO) {
-            CSVExportHelper.addCitationColumns(tableHeaders, (DocumentCSVExportRequestDTO) request);
-            allowedDocumentTypes.addAll(((DocumentCSVExportRequestDTO) request).getAllowedTypes());
-            institutionId = ((DocumentCSVExportRequestDTO) request).getInstitutionId();
-            commissionId = ((DocumentCSVExportRequestDTO) request).getCommissionId();
+        if (request instanceof DocumentExportRequestDTO) {
+            CSVExportHelper.addCitationColumns(tableHeaders, (DocumentExportRequestDTO) request);
+            allowedDocumentTypes.addAll(((DocumentExportRequestDTO) request).getAllowedTypes());
+            institutionId = ((DocumentExportRequestDTO) request).getInstitutionId();
+            commissionId = ((DocumentExportRequestDTO) request).getCommissionId();
         }
         rowsData.add(tableHeaders);
 

@@ -2,17 +2,17 @@ package rs.teslaris.core.service.interfaces.commontypes;
 
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.CSVExportRequest;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
+import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
+import rs.teslaris.core.dto.commontypes.TableExportRequest;
 
 @Service
 public interface CSVExportService {
 
-    InputStreamResource exportDocumentsToCSV(DocumentCSVExportRequestDTO request);
+    InputStreamResource exportDocumentsToFile(DocumentExportRequestDTO request);
 
-    InputStreamResource exportPersonsToCSV(CSVExportRequest request);
+    InputStreamResource exportPersonsToCSV(TableExportRequest request);
 
-    InputStreamResource exportOrganisationUnitsToCSV(CSVExportRequest request);
+    InputStreamResource exportOrganisationUnitsToCSV(TableExportRequest request);
 
     Integer getMaxRecordsPerPage();
 }

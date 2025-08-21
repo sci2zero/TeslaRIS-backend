@@ -69,7 +69,7 @@ public class BookSeriesController {
         var dto = bookSeriesService.readBookSeries(bookSeriesId);
 
         var headers = new HttpHeaders();
-        FairSignposting.addHeadersForPublicationSeries(headers, dto);
+        FairSignposting.addHeadersForPublicationSeries(headers, dto, "/api/book-series");
 
         return ResponseEntity.ok()
             .headers(headers)

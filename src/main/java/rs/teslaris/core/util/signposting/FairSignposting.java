@@ -21,6 +21,7 @@ import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.model.document.AccessRights;
+import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -51,12 +52,16 @@ public class FairSignposting {
         // utility class
     }
 
-    public static void addHeadersForPerson(HttpHeaders headers, PersonResponseDTO person) {
+    public static void addHeadersForPerson(HttpHeaders headers, PersonResponseDTO person,
+                                           String selfUrl) {
         headers.add(HttpHeaders.LINK,
             "<https://schema.org/Person>; rel=\"type\"");
         headers.add(HttpHeaders.LINK,
             "<" + frontendUrl + defaultLocale + "/persons/" + person.getId() +
                 "> ; rel=\"collection\" ; type=\"text/html\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + baseUrl + selfUrl + "/" + person.getId() +
+                ">; rel=\"describedby\"; type=\"application/json\"");
 
         if (valuePresent(person.getPersonalInfo().getOrcid())) {
             headers.add(HttpHeaders.LINK,
@@ -91,13 +96,17 @@ public class FairSignposting {
 
 
     public static void addHeadersForOrganisationUnit(HttpHeaders headers,
-                                                     OrganisationUnitDTO organisationUnits,
-                                                     OrganisationUnitsRelation superRelation) {
+                                                     OrganisationUnitDTO organisationUnit,
+                                                     OrganisationUnitsRelation superRelation,
+                                                     String selfUrl) {
         headers.add(HttpHeaders.LINK,
             "<https://schema.org/Organization>; rel=\"type\"");
         headers.add(HttpHeaders.LINK,
-            "<" + frontendUrl + defaultLocale + "/organisation-units/" + organisationUnits.getId() +
+            "<" + frontendUrl + defaultLocale + "/organisation-units/" + organisationUnit.getId() +
                 "> ; rel=\"collection\" ; type=\"text/html\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + baseUrl + selfUrl + "/" + organisationUnit.getId() +
+                ">; rel=\"describedby\"; type=\"application/json\"");
 
         if (Objects.nonNull(superRelation)) {
             headers.add(HttpHeaders.LINK, "<" + frontendUrl + defaultLocale + "/persons/" +
@@ -107,9 +116,13 @@ public class FairSignposting {
     }
 
     public static void addHeadersForPublicationSeries(HttpHeaders headers,
-                                                      PublicationSeriesDTO publicationSeries) {
+                                                      PublicationSeriesDTO publicationSeries,
+                                                      String selfUrl) {
         headers.add(HttpHeaders.LINK,
             "<https://schema.org/Periodical>; rel=\"type\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + baseUrl + selfUrl + "/" + publicationSeries.getId() +
+                ">; rel=\"describedby\"; type=\"application/json\"");
 
         if (publicationSeries instanceof JournalResponseDTO) {
             headers.add(HttpHeaders.LINK,
@@ -305,6 +318,15 @@ public class FairSignposting {
         headers.add(HttpHeaders.LINK,
             "<" + baseUrl + selfUrl + "/" + dto.getId() +
                 ">; rel=\"describedby\"; type=\"application/json\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + baseUrl + "/documents/BIBTEX" + dto.getId() +
+                ">; rel=\"describedby\"; type=\"" + BibliographicFormat.BIBTEX.getValue() + "\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + baseUrl + "/documents/REFMAN" + dto.getId() +
+                ">; rel=\"describedby\"; type=\"" + BibliographicFormat.REFMAN.getValue() + "\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + baseUrl + "/documents/ENDNOTE" + dto.getId() +
+                ">; rel=\"describedby\"; type=\"" + BibliographicFormat.ENDNOTE.getValue() + "\"");
 
         if (dto instanceof ThesisResponseDTO) {
             for (var libraryFormat : LibraryFormat.values()) {

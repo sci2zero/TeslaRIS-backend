@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -19,12 +20,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
+import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.service.impl.commontypes.CSVExportServiceImpl;
 import rs.teslaris.core.service.interfaces.document.CitationService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
 @SpringBootTest
 class CSVExportServiceTest {
@@ -33,19 +36,22 @@ class CSVExportServiceTest {
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @Mock
+    private DocumentPublicationService documentPublicationService;
+
+    @Mock
     private CitationService citationService;
 
     @InjectMocks
     private CSVExportServiceImpl csvExportService;
 
 
-    private DocumentCSVExportRequestDTO request;
+    private DocumentExportRequestDTO request;
     private DocumentPublicationIndex mockDocument;
 
 
     @BeforeEach
     void setUp() {
-        request = new DocumentCSVExportRequestDTO();
+        request = new DocumentExportRequestDTO();
         request.setColumns(List.of("title", "author"));
         request.setExportLanguage("en");
         request.setExportMaxPossibleAmount(false);
@@ -67,16 +73,19 @@ class CSVExportServiceTest {
             .thenReturn(Optional.of(mockDocument));
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(2))
             .thenReturn(Optional.empty());
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new Dataset() {{
+            setId(1);
+        }});
 
         // When
-        var result = csvExportService.exportDocumentsToCSV(request);
+        var result = csvExportService.exportDocumentsToFile(request);
 
         // Then
         assertNotNull(result);
-        verify(documentPublicationIndexRepository, times(1))
-            .findDocumentPublicationIndexByDatabaseId(1);
-        verify(documentPublicationIndexRepository, times(1))
-            .findDocumentPublicationIndexByDatabaseId(2);
+        verify(documentPublicationIndexRepository,
+            atMostOnce()).findDocumentPublicationIndexByDatabaseId(1);
+        verify(documentPublicationIndexRepository,
+            atMostOnce()).findDocumentPublicationIndexByDatabaseId(2);
     }
 
     @ParameterizedTest
@@ -90,9 +99,12 @@ class CSVExportServiceTest {
 
         when(documentPublicationIndexRepository.findAll(PageRequest.of(0, 500)))
             .thenReturn(page);
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new Dataset() {{
+            setId(1);
+        }});
 
         // When
-        var result = csvExportService.exportDocumentsToCSV(request);
+        var result = csvExportService.exportDocumentsToFile(request);
 
         // Then
         assertNotNull(result);
@@ -108,7 +120,7 @@ class CSVExportServiceTest {
         request.setExportEntityIds(new ArrayList<>());
 
         // When
-        var result = csvExportService.exportDocumentsToCSV(request);
+        var result = csvExportService.exportDocumentsToFile(request);
 
         // Then
         assertNotNull(result);

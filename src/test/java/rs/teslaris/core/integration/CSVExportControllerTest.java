@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.dto.commontypes.CSVExportRequest;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.TableExportRequest;
 
 @SpringBootTest
 public class CSVExportControllerTest extends BaseTest {
@@ -21,7 +21,7 @@ public class CSVExportControllerTest extends BaseTest {
 
     @Test
     public void testExportCSVDocuments() throws Exception {
-        var request = new CSVExportRequest(List.of("title_sr", "year"), List.of(), true, 0, "sr",
+        var request = new TableExportRequest(List.of("title_sr", "year"), List.of(), true, 0, "sr",
             ExportFileType.CSV, null, List.of());
 
         String requestBody = objectMapper.writeValueAsString(request);
@@ -33,7 +33,7 @@ public class CSVExportControllerTest extends BaseTest {
 
     @Test
     public void testExportCSVPersons() throws Exception {
-        var request = new CSVExportRequest(List.of("name", "orcid"), List.of(), true, 0, "sr",
+        var request = new TableExportRequest(List.of("name", "orcid"), List.of(), true, 0, "sr",
             ExportFileType.CSV, null, List.of());
 
         String requestBody = objectMapper.writeValueAsString(request);
@@ -45,7 +45,7 @@ public class CSVExportControllerTest extends BaseTest {
 
     @Test
     public void testExportCSVOrganisationUnits() throws Exception {
-        var request = new CSVExportRequest(List.of("name_sr"), List.of(), true, 0, "sr",
+        var request = new TableExportRequest(List.of("name_sr"), List.of(), true, 0, "sr",
             ExportFileType.CSV, null, List.of());
 
         String requestBody = objectMapper.writeValueAsString(request);

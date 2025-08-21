@@ -103,7 +103,7 @@ public class JournalController {
         var dto = journalService.readJournal(journalId);
 
         var headers = new HttpHeaders();
-        FairSignposting.addHeadersForPublicationSeries(headers, dto);
+        FairSignposting.addHeadersForPublicationSeries(headers, dto, "/api/journal");
 
         return ResponseEntity.ok()
             .headers(headers)

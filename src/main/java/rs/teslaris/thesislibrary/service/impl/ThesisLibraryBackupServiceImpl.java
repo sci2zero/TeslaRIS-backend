@@ -196,7 +196,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         exportRequest.setHarvard(true);
         exportRequest.setVancouver(true);
 
-        var metadataFile = csvExportService.exportDocumentsToCSV(exportRequest);
+        var metadataFile = csvExportService.exportDocumentsToFile(exportRequest);
         try {
             zipBuilder.copyFileToRoot(metadataFile.getInputStream(), "metadata.csv");
         } catch (IOException e) {

@@ -11,6 +11,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.core.util.Pair;
@@ -21,6 +22,8 @@ import rs.teslaris.core.util.search.SearchRequestType;
 public interface DocumentPublicationService extends JPAService<Document> {
 
     DocumentDTO readDocumentPublication(Integer documentId);
+
+    String readBibliographicMetadataById(Integer datasetId, BibliographicFormat format);
 
     Document findDocumentById(Integer documentId);
 

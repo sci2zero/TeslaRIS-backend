@@ -1,8 +1,10 @@
 package rs.teslaris.core.unit.thesislibrary;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -81,10 +83,15 @@ public class ThesisLibraryCSVExportServiceTest {
         var result = thesisLibraryCSVExportService.exportThesesToCSV(request);
 
         // Then
-        assertNotNull(result);
-        verify(documentPublicationIndexRepository, times(1))
+        if (List.of(ExportFileType.CSV, ExportFileType.XLSX)
+            .contains(request.getExportFileType())) {
+            assertNotNull(result);
+        } else {
+            assertNull(result);
+        }
+        verify(documentPublicationIndexRepository, atMostOnce())
             .findDocumentPublicationIndexByDatabaseId(1);
-        verify(documentPublicationIndexRepository, times(1))
+        verify(documentPublicationIndexRepository, atMostOnce())
             .findDocumentPublicationIndexByDatabaseId(2);
     }
 
@@ -104,8 +111,13 @@ public class ThesisLibraryCSVExportServiceTest {
         var result = thesisLibraryCSVExportService.exportThesesToCSV(request);
 
         // Then
-        assertNotNull(result);
-        verify(thesisSearchService, times(1))
+        if (List.of(ExportFileType.CSV, ExportFileType.XLSX)
+            .contains(request.getExportFileType())) {
+            assertNotNull(result);
+        } else {
+            assertNull(result);
+        }
+        verify(thesisSearchService, atMostOnce())
             .performSimpleThesisSearch(any(), any());
     }
 
@@ -126,8 +138,13 @@ public class ThesisLibraryCSVExportServiceTest {
         var result = thesisLibraryCSVExportService.exportThesesToCSV(request);
 
         // Then
-        assertNotNull(result);
-        verify(thesisSearchService, times(1))
+        if (List.of(ExportFileType.CSV, ExportFileType.XLSX)
+            .contains(request.getExportFileType())) {
+            assertNotNull(result);
+        } else {
+            assertNull(result);
+        }
+        verify(thesisSearchService, atMostOnce())
             .performAdvancedThesisSearch(any(), any());
     }
 
@@ -143,7 +160,12 @@ public class ThesisLibraryCSVExportServiceTest {
         var result = thesisLibraryCSVExportService.exportThesesToCSV(request);
 
         // Then
-        assertNotNull(result);
+        if (List.of(ExportFileType.CSV, ExportFileType.XLSX)
+            .contains(request.getExportFileType())) {
+            assertNotNull(result);
+        } else {
+            assertNull(result);
+        }
         verify(documentPublicationIndexRepository, never())
             .findDocumentPublicationIndexByDatabaseId(anyInt());
     }

@@ -6,4 +6,6 @@ import rs.teslaris.thesislibrary.dto.ThesisCSVExportRequestDTO;
 public interface ThesisLibraryCSVExportService {
 
     InputStreamResource exportThesesToCSV(ThesisCSVExportRequestDTO request);
+
+    InputStreamResource exportThesesToBibliographicFile(ThesisCSVExportRequestDTO request);
 }

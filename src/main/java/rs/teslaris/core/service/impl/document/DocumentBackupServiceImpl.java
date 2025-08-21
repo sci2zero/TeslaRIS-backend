@@ -25,7 +25,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
+import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -187,7 +187,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
     private void createMetadataCSV(List<Integer> exportEntityIds, String language,
                                    List<DocumentPublicationType> types,
                                    BackupZipBuilder zipBuilder, ExportFileType metadataFormat) {
-        var exportRequest = new DocumentCSVExportRequestDTO();
+        var exportRequest = new DocumentExportRequestDTO();
         exportRequest.setExportMaxPossibleAmount(false);
         exportRequest.setExportEntityIds(exportEntityIds);
         exportRequest.setExportLanguage(language);
@@ -205,7 +205,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
         exportRequest.setVancouver(true);
         exportRequest.setAllowedTypes(types);
 
-        var metadataFile = csvExportService.exportDocumentsToCSV(exportRequest);
+        var metadataFile = csvExportService.exportDocumentsToFile(exportRequest);
         try {
             zipBuilder.copyFileToRoot(metadataFile.getInputStream(), "metadata.csv");
         } catch (IOException e) {

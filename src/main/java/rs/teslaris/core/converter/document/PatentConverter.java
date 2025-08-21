@@ -1,6 +1,9 @@
 package rs.teslaris.core.converter.document;
 
 import java.util.Objects;
+import org.jbibtex.BibTeXEntry;
+import org.jbibtex.Key;
+import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.model.document.Patent;
 
@@ -17,5 +20,44 @@ public class PatentConverter extends DocumentPublicationConverter {
         }
 
         return patentDTO;
+    }
+
+    public static BibTeXEntry toBibTexEntry(Patent patent) {
+        var entry = new BibTeXEntry(new Key("patent"),
+            new Key("(TESLARIS)" + patent.getId().toString()));
+
+        setCommonFields(patent, entry);
+
+        if (valueExists(patent.getNumber())) {
+            entry.addField(BibTeXEntry.KEY_NUMBER,
+                new StringValue(patent.getNumber(), StringValue.Style.BRACED));
+        }
+
+        if (Objects.nonNull(patent.getPublisher())) {
+            setMCBibTexField(patent.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER);
+        }
+
+        return entry;
+    }
+
+    public static String toTaggedFormat(Patent patent, boolean refMan) {
+        var sb = new StringBuilder();
+        sb.append("TY  - ").append("PAT").append("\n");
+
+        setCommonTaggedFields(patent, sb, refMan);
+
+        if (valueExists(patent.getNumber())) {
+            sb.append(refMan ? "C6  - " : "%N ").append(patent.getNumber()).append("\n");
+        }
+
+        if (Objects.nonNull(patent.getPublisher())) {
+            setMCTaggedField(patent.getPublisher().getName(), sb, refMan ? "PB" : "%I");
+        }
+
+        if (refMan) {
+            sb.append("ER  -\n");
+        }
+
+        return sb.toString();
     }
 }

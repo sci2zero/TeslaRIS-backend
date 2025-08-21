@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.dto.commontypes.CSVExportRequest;
-import rs.teslaris.core.dto.commontypes.DocumentCSVExportRequestDTO;
+import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.TableExportRequest;
 import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
 
 @RestController
@@ -32,21 +32,21 @@ public class CSVExportController {
 
     @PostMapping("/documents")
     public ResponseEntity<InputStreamResource> downloadDocumentCSVExport(@RequestBody @Valid
-                                                                         DocumentCSVExportRequestDTO request) {
-        var exportDocument = csvExportService.exportDocumentsToCSV(request);
+                                                                         DocumentExportRequestDTO request) {
+        var exportDocument = csvExportService.exportDocumentsToFile(request);
         return serveResponseFile(exportDocument, request.getExportFileType());
     }
 
     @PostMapping("/persons")
     public ResponseEntity<InputStreamResource> downloadPersonCSVExport(
-        @RequestBody @Valid CSVExportRequest request) {
+        @RequestBody @Valid TableExportRequest request) {
         var exportDocument = csvExportService.exportPersonsToCSV(request);
         return serveResponseFile(exportDocument, request.getExportFileType());
     }
 
     @PostMapping("/organisation-units")
     public ResponseEntity<InputStreamResource> downloadOrganisationUnitCSVExport(
-        @RequestBody @Valid CSVExportRequest request) {
+        @RequestBody @Valid TableExportRequest request) {
         var exportDocument = csvExportService.exportOrganisationUnitsToCSV(request);
         return serveResponseFile(exportDocument, request.getExportFileType());
     }

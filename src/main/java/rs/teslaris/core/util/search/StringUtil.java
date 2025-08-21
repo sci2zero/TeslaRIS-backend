@@ -5,6 +5,7 @@ import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -22,6 +23,9 @@ import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
+import org.jbibtex.BibTeXDatabase;
+import org.jbibtex.BibTeXEntry;
+import org.jbibtex.BibTeXFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -249,5 +253,20 @@ public class StringUtil {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public static String bibTexEntryToString(BibTeXEntry entry) {
+        var writer = new StringWriter();
+        var formatter = new BibTeXFormatter();
+        var database = new BibTeXDatabase();
+        database.addObject(entry);
+        try {
+            formatter.format(database, writer);
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                "Error while creating BibTex representation"); // should never happen
+        }
+
+        return writer.toString();
     }
 }

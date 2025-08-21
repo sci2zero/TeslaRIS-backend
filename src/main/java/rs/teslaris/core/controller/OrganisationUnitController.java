@@ -76,7 +76,8 @@ public class OrganisationUnitController {
 
         var headers = new HttpHeaders();
         FairSignposting.addHeadersForOrganisationUnit(headers, dto,
-            organisationUnitService.getSuperOrganisationUnitRelation(organisationUnitId));
+            organisationUnitService.getSuperOrganisationUnitRelation(organisationUnitId),
+            "/api/organisation-unit");
 
         return ResponseEntity.ok()
             .headers(headers)
