@@ -24,7 +24,7 @@ import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("/api/proceedings")
@@ -43,7 +43,7 @@ public class ProceedingsController {
         var dto = proceedingsService.readProceedingsById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/proceedings"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/proceedings"))
             .body(dto);
     }
 

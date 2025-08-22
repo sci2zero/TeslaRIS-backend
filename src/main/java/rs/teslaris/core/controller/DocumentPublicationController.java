@@ -8,7 +8,9 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,6 +48,8 @@ import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/document")
@@ -75,6 +79,18 @@ public class DocumentPublicationController {
     @GetMapping("/{documentId}")
     public DocumentDTO readDocumentPublication(@PathVariable Integer documentId) {
         return documentPublicationService.readDocumentPublication(documentId);
+    }
+
+    @GetMapping("/linkset/{documentId}/{linksetFormat}")
+    public ResponseEntity<String> getDocumentLinkset(@PathVariable Integer documentId,
+                                                     @PathVariable LinksetFormat linksetFormat) {
+        var dto = documentPublicationService.readDocumentPublication(documentId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksetForDocument(dto, linksetFormat));
     }
 
     @GetMapping("/metadata/{documentId}/{format}")

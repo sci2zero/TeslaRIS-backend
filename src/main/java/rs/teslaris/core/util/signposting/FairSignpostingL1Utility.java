@@ -39,7 +39,7 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
 @Component
-public class FairSignposting {
+public class FairSignpostingL1Utility {
 
     private static String baseUrl;
 
@@ -48,7 +48,7 @@ public class FairSignposting {
     private static String defaultLocale;
 
 
-    private FairSignposting() {
+    private FairSignpostingL1Utility() {
         // utility class
     }
 
@@ -109,9 +109,10 @@ public class FairSignposting {
                 ">; rel=\"describedby\"; type=\"application/json\"");
 
         if (Objects.nonNull(superRelation)) {
-            headers.add(HttpHeaders.LINK, "<" + frontendUrl + defaultLocale + "/persons/" +
-                superRelation.getTargetOrganisationUnit().getId() +
-                "> ; rel=\"collection\" ; type=\"https://schema.org/parentOrganization\"");
+            headers.add(HttpHeaders.LINK,
+                "<" + frontendUrl + defaultLocale + "/organisation-unit/" +
+                    superRelation.getTargetOrganisationUnit().getId() +
+                    "> ; rel=\"collection\" ; type=\"https://schema.org/parentOrganization\"");
         }
     }
 
@@ -283,7 +284,7 @@ public class FairSignposting {
         }
     }
 
-    private static boolean valuePresent(String value) {
+    static boolean valuePresent(String value) {
         return Objects.nonNull(value) && !value.isBlank();
     }
 
@@ -338,19 +339,20 @@ public class FairSignposting {
         }
     }
 
+
     @Value("${export.base.url}")
     public void setBaseUrl(String baseUrl) {
-        FairSignposting.baseUrl = baseUrl;
+        FairSignpostingL1Utility.baseUrl = baseUrl;
     }
 
     @Value("${frontend.application.address}")
     public void setFrontendUrl(String frontendUrl) {
-        FairSignposting.frontendUrl = frontendUrl;
+        FairSignpostingL1Utility.frontendUrl = frontendUrl;
     }
 
     @Value("${default.locale}")
     public void setDefaultLocale(String defaultLocale) {
-        FairSignposting.defaultLocale = defaultLocale;
+        FairSignpostingL1Utility.defaultLocale = defaultLocale;
     }
 }
 

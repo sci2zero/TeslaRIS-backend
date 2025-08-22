@@ -54,7 +54,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
         return thesisDTO;
     }
 
-    public static BibTeXEntry toBibTexEntry(Thesis thesis) {
+    public static BibTeXEntry toBibTexEntry(Thesis thesis, String defaultLanguageTag) {
         var type = new Key("thesis");
         if (thesis.getThesisType().equals(rs.teslaris.core.model.document.ThesisType.PHD) ||
             thesis.getThesisType()
@@ -67,22 +67,24 @@ public class ThesisConverter extends DocumentPublicationConverter {
 
         var entry = new BibTeXEntry(type, new Key("(TESLARIS)" + thesis.getId().toString()));
 
-        setCommonFields(thesis, entry);
+        setCommonFields(thesis, entry, defaultLanguageTag);
 
         if (Objects.nonNull(thesis.getAlternateTitle())) {
-            setMCBibTexField(thesis.getAlternateTitle(), entry, new Key("alternateTitle"));
+            setMCBibTexField(thesis.getAlternateTitle(), entry, new Key("alternateTitle"),
+                defaultLanguageTag);
         }
 
         if (Objects.nonNull(thesis.getPublisher())) {
-            setMCBibTexField(thesis.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER);
+            setMCBibTexField(thesis.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
+                defaultLanguageTag);
         }
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             setMCBibTexField(thesis.getOrganisationUnit().getName(), entry,
-                BibTeXEntry.KEY_INSTITUTION);
+                BibTeXEntry.KEY_INSTITUTION, defaultLanguageTag);
         } else if (Objects.nonNull(thesis.getExternalOrganisationUnitName())) {
             setMCBibTexField(thesis.getExternalOrganisationUnitName(), entry,
-                BibTeXEntry.KEY_INSTITUTION);
+                BibTeXEntry.KEY_INSTITUTION, defaultLanguageTag);
         }
 
         if (valueExists(thesis.getEISBN())) {
@@ -98,24 +100,28 @@ public class ThesisConverter extends DocumentPublicationConverter {
         return entry;
     }
 
-    public static String toTaggedFormat(Thesis thesis, boolean refMan) {
+    public static String toTaggedFormat(Thesis thesis, String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
-        sb.append("TY  - ").append("THES").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append("THES").append("\n");
 
-        setCommonTaggedFields(thesis, sb, refMan);
+        setCommonTaggedFields(thesis, sb, defaultLanguageTag, refMan);
 
         if (Objects.nonNull(thesis.getAlternateTitle())) {
-            setMCTaggedField(thesis.getAlternateTitle(), sb, refMan ? "T2" : "%0T");
+            setMCTaggedField(thesis.getAlternateTitle(), sb, refMan ? "T2" : "%0T",
+                defaultLanguageTag);
         }
 
         if (Objects.nonNull(thesis.getPublisher())) {
-            setMCTaggedField(thesis.getPublisher().getName(), sb, refMan ? "PB" : "%I");
+            setMCTaggedField(thesis.getPublisher().getName(), sb, refMan ? "PB" : "%I",
+                defaultLanguageTag);
         }
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
-            setMCTaggedField(thesis.getOrganisationUnit().getName(), sb, refMan ? "A2" : "%C");
+            setMCTaggedField(thesis.getOrganisationUnit().getName(), sb, refMan ? "A2" : "%C",
+                defaultLanguageTag);
         } else if (Objects.nonNull(thesis.getExternalOrganisationUnitName())) {
-            setMCTaggedField(thesis.getExternalOrganisationUnitName(), sb, refMan ? "A2" : "%C");
+            setMCTaggedField(thesis.getExternalOrganisationUnitName(), sb, refMan ? "A2" : "%C",
+                defaultLanguageTag);
         }
 
         if (valueExists(thesis.getEISBN())) {

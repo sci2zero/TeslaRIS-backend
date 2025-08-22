@@ -39,7 +39,9 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/organisation-unit")
@@ -75,13 +77,29 @@ public class OrganisationUnitController {
         var dto = organisationUnitService.readOrganisationUnitById(organisationUnitId);
 
         var headers = new HttpHeaders();
-        FairSignposting.addHeadersForOrganisationUnit(headers, dto,
+        FairSignpostingL1Utility.addHeadersForOrganisationUnit(headers, dto,
             organisationUnitService.getSuperOrganisationUnitRelation(organisationUnitId),
             "/api/organisation-unit");
 
         return ResponseEntity.ok()
             .headers(headers)
             .body(dto);
+    }
+
+    @GetMapping("/linkset/{organisationUnitId}/{linksetFormat}")
+    public ResponseEntity<String> getOrganisationUnitLinkset(
+        @PathVariable Integer organisationUnitId,
+        @PathVariable LinksetFormat linksetFormat) {
+        var dto = organisationUnitService.readOrganisationUnitById(organisationUnitId);
+        var superRelation =
+            organisationUnitService.getSuperOrganisationUnitRelation(organisationUnitId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksetForOrganisationUnit(dto, superRelation,
+                linksetFormat));
     }
 
     @GetMapping("/sub-units/{organisationUnitId}")

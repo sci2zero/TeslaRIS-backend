@@ -30,7 +30,9 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/book-series")
@@ -69,11 +71,23 @@ public class BookSeriesController {
         var dto = bookSeriesService.readBookSeries(bookSeriesId);
 
         var headers = new HttpHeaders();
-        FairSignposting.addHeadersForPublicationSeries(headers, dto, "/api/book-series");
+        FairSignpostingL1Utility.addHeadersForPublicationSeries(headers, dto, "/api/book-series");
 
         return ResponseEntity.ok()
             .headers(headers)
             .body(dto);
+    }
+
+    @GetMapping("/linkset/{bookSeriesId}/{linksetFormat}")
+    public ResponseEntity<String> getBookSeriesLinkset(@PathVariable Integer bookSeriesId,
+                                                       @PathVariable LinksetFormat linksetFormat) {
+        var dto = bookSeriesService.readBookSeries(bookSeriesId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksForPublicationSeries(dto, linksetFormat));
     }
 
     @PostMapping

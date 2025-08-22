@@ -25,12 +25,12 @@ import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.Dataset;
-import rs.teslaris.core.service.impl.commontypes.CSVExportServiceImpl;
+import rs.teslaris.core.service.impl.commontypes.TableExportServiceImpl;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
 @SpringBootTest
-class CSVExportServiceTest {
+class TableExportServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
@@ -42,7 +42,7 @@ class CSVExportServiceTest {
     private CitationService citationService;
 
     @InjectMocks
-    private CSVExportServiceImpl csvExportService;
+    private TableExportServiceImpl csvExportService;
 
 
     private DocumentExportRequestDTO request;

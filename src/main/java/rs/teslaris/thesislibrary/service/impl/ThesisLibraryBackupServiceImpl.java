@@ -34,7 +34,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.DocumentFileBackupRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
+import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -42,7 +42,7 @@ import rs.teslaris.core.util.BackupZipBuilder;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
-import rs.teslaris.thesislibrary.dto.ThesisCSVExportRequestDTO;
+import rs.teslaris.thesislibrary.dto.ThesisTableExportRequestDTO;
 import rs.teslaris.thesislibrary.model.ThesisFileSection;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
@@ -67,7 +67,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
     private final MessageSource messageSource;
 
-    private final CSVExportService csvExportService;
+    private final TableExportService tableExportService;
 
 
     private final Map<FileSection, Function<Thesis, Set<DocumentFile>>> sectionAccessors = Map.of(
@@ -179,7 +179,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
     private void createMetadataCSV(List<Integer> exportEntityIds, String language,
                                    BackupZipBuilder zipBuilder, ExportFileType metadataFormat) {
-        var exportRequest = new ThesisCSVExportRequestDTO();
+        var exportRequest = new ThesisTableExportRequestDTO();
         exportRequest.setExportMaxPossibleAmount(false);
         exportRequest.setExportEntityIds(exportEntityIds);
         exportRequest.setExportLanguage(language);
@@ -196,7 +196,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         exportRequest.setHarvard(true);
         exportRequest.setVancouver(true);
 
-        var metadataFile = csvExportService.exportDocumentsToFile(exportRequest);
+        var metadataFile = tableExportService.exportDocumentsToFile(exportRequest);
         try {
             zipBuilder.copyFileToRoot(metadataFile.getInputStream(), "metadata.csv");
         } catch (IOException e) {

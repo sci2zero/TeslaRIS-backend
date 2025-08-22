@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +21,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.ReindexRequestDTO;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.document.BibliographicFormat;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -177,5 +180,25 @@ public class DocumentPublicationControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @ParameterizedTest
+    @EnumSource(BibliographicFormat.class)
+    public void testGetMetadataFormatForDocument(BibliographicFormat format) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/document/metadata/{documentId}/{format}", 13, format)
+                    .contentType(format.getValue()))
+            .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(LinksetFormat.class)
+    public void testGetLinkset(LinksetFormat format) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/document/linkset/{documentId}/{format}", 13, format)
+                    .contentType(format.getValue()))
+            .andExpect(status().isOk());
     }
 }

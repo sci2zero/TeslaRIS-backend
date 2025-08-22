@@ -22,11 +22,11 @@ public class PatentConverter extends DocumentPublicationConverter {
         return patentDTO;
     }
 
-    public static BibTeXEntry toBibTexEntry(Patent patent) {
+    public static BibTeXEntry toBibTexEntry(Patent patent, String defaultLanguageTag) {
         var entry = new BibTeXEntry(new Key("patent"),
             new Key("(TESLARIS)" + patent.getId().toString()));
 
-        setCommonFields(patent, entry);
+        setCommonFields(patent, entry, defaultLanguageTag);
 
         if (valueExists(patent.getNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
@@ -34,24 +34,26 @@ public class PatentConverter extends DocumentPublicationConverter {
         }
 
         if (Objects.nonNull(patent.getPublisher())) {
-            setMCBibTexField(patent.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER);
+            setMCBibTexField(patent.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
+                defaultLanguageTag);
         }
 
         return entry;
     }
 
-    public static String toTaggedFormat(Patent patent, boolean refMan) {
+    public static String toTaggedFormat(Patent patent, String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
-        sb.append("TY  - ").append("PAT").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append("PAT").append("\n");
 
-        setCommonTaggedFields(patent, sb, refMan);
+        setCommonTaggedFields(patent, sb, defaultLanguageTag, refMan);
 
         if (valueExists(patent.getNumber())) {
             sb.append(refMan ? "C6  - " : "%N ").append(patent.getNumber()).append("\n");
         }
 
         if (Objects.nonNull(patent.getPublisher())) {
-            setMCTaggedField(patent.getPublisher().getName(), sb, refMan ? "PB" : "%I");
+            setMCTaggedField(patent.getPublisher().getName(), sb, refMan ? "PB" : "%I",
+                defaultLanguageTag);
         }
 
         if (refMan) {

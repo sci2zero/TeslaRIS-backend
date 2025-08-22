@@ -34,11 +34,12 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
                 publication.getJournal().getTitle()));
     }
 
-    public static BibTeXEntry toBibTexEntry(JournalPublication journalPublication) {
+    public static BibTeXEntry toBibTexEntry(JournalPublication journalPublication,
+                                            String defaultLanguageTag) {
         var entry = new BibTeXEntry(BibTeXEntry.TYPE_ARTICLE,
             new Key("(TESLARIS)" + journalPublication.getId().toString()));
 
-        setCommonFields(journalPublication, entry);
+        setCommonFields(journalPublication, entry, defaultLanguageTag);
 
         if (valueExists(journalPublication.getStartPage()) &&
             valueExists((journalPublication.getEndPage()))) {
@@ -71,7 +72,7 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(journalPublication.getJournal())) {
             setMCBibTexField(journalPublication.getJournal().getTitle(), entry,
-                BibTeXEntry.KEY_PUBLISHER);
+                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
 
             if (valueExists(journalPublication.getJournal().getEISSN())) {
                 entry.addField(new Key("eIssn"),
@@ -90,11 +91,11 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
     }
 
     public static String toTaggedFormat(JournalPublication journalPublication,
-                                        boolean refMan) {
+                                        String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
         sb.append(refMan ? "TY  - " : "%0 ").append("JOUR").append("\n");
 
-        setCommonTaggedFields(journalPublication, sb, refMan);
+        setCommonTaggedFields(journalPublication, sb, defaultLanguageTag, refMan);
 
         if (valueExists(journalPublication.getStartPage()) &&
             valueExists((journalPublication.getEndPage()))) {
@@ -124,7 +125,8 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
         }
 
         if (Objects.nonNull(journalPublication.getJournal())) {
-            setMCTaggedField(journalPublication.getJournal().getTitle(), sb, "JA");
+            setMCTaggedField(journalPublication.getJournal().getTitle(), sb, "JA",
+                defaultLanguageTag);
 
             if (valueExists(journalPublication.getJournal().getEISSN())) {
                 sb.append(refMan ? "SN  - " : "%0S").append("e:")

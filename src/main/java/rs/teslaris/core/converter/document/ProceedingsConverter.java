@@ -69,11 +69,11 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
             MultilingualContentConverter.getMultilingualContentDTO(publisher.getName()));
     }
 
-    public static BibTeXEntry toBibTexEntry(Proceedings proceedings) {
+    public static BibTeXEntry toBibTexEntry(Proceedings proceedings, String defaultLanguageTag) {
         var entry = new BibTeXEntry(new Key("collection"),
             new Key("(TESLARIS)" + proceedings.getId().toString()));
 
-        setCommonFields(proceedings, entry);
+        setCommonFields(proceedings, entry, defaultLanguageTag);
 
         if (valueExists(proceedings.getPublicationSeriesIssue())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
@@ -94,7 +94,7 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             setMCBibTexField(proceedings.getPublicationSeries().getTitle(), entry,
-                new Key("publicationSeries"));
+                new Key("publicationSeries"), defaultLanguageTag);
 
             if (valueExists(proceedings.getPublicationSeries().getEISSN())) {
                 entry.addField(new Key("eIssn"),
@@ -111,7 +111,7 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(proceedings.getPublisher())) {
             setMCBibTexField(proceedings.getPublisher().getName(), entry,
-                BibTeXEntry.KEY_PUBLISHER);
+                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
         }
 
         if (valueExists(proceedings.getEISBN())) {
@@ -127,11 +127,12 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         return entry;
     }
 
-    public static String toTaggedFormat(Proceedings proceedings, boolean refMan) {
+    public static String toTaggedFormat(Proceedings proceedings, String defaultLanguageTag,
+                                        boolean refMan) {
         var sb = new StringBuilder();
-        sb.append("TY  - ").append("CONF").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append("CONF").append("\n");
 
-        setCommonTaggedFields(proceedings, sb, refMan);
+        setCommonTaggedFields(proceedings, sb, defaultLanguageTag, refMan);
 
         if (Objects.nonNull(proceedings.getNumberOfPages())) {
             sb.append(refMan ? "SP  - " : "%0P ").append(proceedings.getNumberOfPages())
@@ -139,7 +140,8 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         }
 
         if (Objects.nonNull(proceedings.getPublisher())) {
-            setMCTaggedField(proceedings.getPublisher().getName(), sb, refMan ? "PB" : "%I");
+            setMCTaggedField(proceedings.getPublisher().getName(), sb, refMan ? "PB" : "%I",
+                defaultLanguageTag);
         }
 
         if (valueExists(proceedings.getPublicationSeriesIssue())) {
@@ -154,7 +156,7 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             setMCTaggedField(proceedings.getPublicationSeries().getTitle(), sb,
-                refMan ? "JA" : "%J");
+                refMan ? "JA" : "%J", defaultLanguageTag);
 
             if (valueExists(proceedings.getPublicationSeries().getEISSN())) {
                 sb.append(refMan ? "SN  - " : "%0S ").append("e:")

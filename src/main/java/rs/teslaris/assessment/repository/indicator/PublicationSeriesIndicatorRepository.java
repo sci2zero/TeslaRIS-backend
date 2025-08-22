@@ -1,11 +1,13 @@
 package rs.teslaris.assessment.repository.indicator;
 
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -102,9 +104,10 @@ public interface PublicationSeriesIndicatorRepository extends
         String category,
         String indicatorCode);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
         "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
         "psi.indicator.code = :code")
-    Optional<PublicationSeriesIndicator> findIndicatorForCodeAndPublicationSeries(String code,
-                                                                                  Integer publicationSeriesId);
+    Optional<PublicationSeriesIndicator> findIndicatorForCodeAndPublicationSeriesId(String code,
+                                                                                    Integer publicationSeriesId);
 }

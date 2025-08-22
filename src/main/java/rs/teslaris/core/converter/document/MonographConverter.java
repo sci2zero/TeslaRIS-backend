@@ -56,11 +56,11 @@ public class MonographConverter extends DocumentPublicationConverter {
         monographResponseDTO.setPublicationSeriesId(publicationSeries.getId());
     }
 
-    public static BibTeXEntry toBibTexEntry(Monograph monograph) {
+    public static BibTeXEntry toBibTexEntry(Monograph monograph, String defaultLanguageTag) {
         var entry = new BibTeXEntry(new Key("collection"),
             new Key("(TESLARIS)" + monograph.getId().toString()));
 
-        setCommonFields(monograph, entry);
+        setCommonFields(monograph, entry, defaultLanguageTag);
 
         if (valueExists(monograph.getNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
@@ -80,7 +80,7 @@ public class MonographConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {
             setMCBibTexField(monograph.getPublicationSeries().getTitle(), entry,
-                BibTeXEntry.KEY_PUBLISHER);
+                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
         }
 
         if (valueExists(monograph.getEISBN())) {
@@ -96,11 +96,12 @@ public class MonographConverter extends DocumentPublicationConverter {
         return entry;
     }
 
-    public static String toTaggedFormat(Monograph monograph, boolean refMan) {
+    public static String toTaggedFormat(Monograph monograph, String defaultLanguageTag,
+                                        boolean refMan) {
         var sb = new StringBuilder();
         sb.append(refMan ? "TY  - " : "%0 ").append("SER").append("\n");
 
-        setCommonTaggedFields(monograph, sb, refMan);
+        setCommonTaggedFields(monograph, sb, defaultLanguageTag, refMan);
 
         if (Objects.nonNull(monograph.getNumberOfPages())) {
             sb.append(refMan ? "SP  - " : "%0P ").append(monograph.getNumberOfPages()).append("\n");
@@ -115,7 +116,8 @@ public class MonographConverter extends DocumentPublicationConverter {
         }
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {
-            setMCTaggedField(monograph.getPublicationSeries().getTitle(), sb, "T2");
+            setMCTaggedField(monograph.getPublicationSeries().getTitle(), sb, "T2",
+                defaultLanguageTag);
 
             if (valueExists(monograph.getPublicationSeries().getEISSN())) {
                 sb.append(refMan ? "SN  - " : "%0S ").append("e:")

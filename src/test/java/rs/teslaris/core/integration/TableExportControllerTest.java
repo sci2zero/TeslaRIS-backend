@@ -10,10 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
-import rs.teslaris.core.dto.commontypes.TableExportRequest;
+import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
 
 @SpringBootTest
-public class CSVExportControllerTest extends BaseTest {
+public class TableExportControllerTest extends BaseTest {
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -21,36 +21,37 @@ public class CSVExportControllerTest extends BaseTest {
 
     @Test
     public void testExportCSVDocuments() throws Exception {
-        var request = new TableExportRequest(List.of("title_sr", "year"), List.of(), true, 0, "sr",
-            ExportFileType.CSV, null, List.of());
+        var request =
+            new TableExportRequestDTO(List.of("title_sr", "year"), List.of(), true, 0, "sr",
+                ExportFileType.CSV, null, List.of());
 
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/csv-export/documents")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/table-export/documents")
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
     @Test
     public void testExportCSVPersons() throws Exception {
-        var request = new TableExportRequest(List.of("name", "orcid"), List.of(), true, 0, "sr",
+        var request = new TableExportRequestDTO(List.of("name", "orcid"), List.of(), true, 0, "sr",
             ExportFileType.CSV, null, List.of());
 
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/csv-export/persons")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/table-export/persons")
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
     @Test
     public void testExportCSVOrganisationUnits() throws Exception {
-        var request = new TableExportRequest(List.of("name_sr"), List.of(), true, 0, "sr",
+        var request = new TableExportRequestDTO(List.of("name_sr"), List.of(), true, 0, "sr",
             ExportFileType.CSV, null, List.of());
 
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/csv-export/organisation-units")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/table-export/organisation-units")
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }

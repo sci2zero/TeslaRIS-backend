@@ -18,7 +18,7 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("api/software")
@@ -34,7 +34,7 @@ public class SoftwareController {
         var dto = softwareService.readSoftwareById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/software"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/software"))
             .body(dto);
     }
 

@@ -9,6 +9,7 @@ import org.jbibtex.StringValue;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
+import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Dataset;
@@ -22,6 +23,7 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Transactional
 public class DocumentPublicationConverter {
@@ -70,11 +72,13 @@ public class DocumentPublicationConverter {
         });
     }
 
-    public static void setCommonFields(Document publication, BibTeXEntry entry) {
-        setMCBibTexField(publication.getTitle(), entry, BibTeXEntry.KEY_TITLE);
-        setMCBibTexField(publication.getSubTitle(), entry, new Key("subtitle"));
-        setMCBibTexField(publication.getDescription(), entry, new Key("abstract"));
-        setMCBibTexField(publication.getKeywords(), entry, new Key("keywords"));
+    public static void setCommonFields(Document publication, BibTeXEntry entry,
+                                       String defaultLanguageTag) {
+        setMCBibTexField(publication.getTitle(), entry, BibTeXEntry.KEY_TITLE, defaultLanguageTag);
+        setMCBibTexField(publication.getSubTitle(), entry, new Key("subtitle"), defaultLanguageTag);
+        setMCBibTexField(publication.getDescription(), entry, new Key("abstract"),
+            defaultLanguageTag);
+        setMCBibTexField(publication.getKeywords(), entry, new Key("keywords"), defaultLanguageTag);
 
         if (Objects.nonNull(publication.getContributors()) &&
             !publication.getContributors().isEmpty()) {
@@ -109,7 +113,8 @@ public class DocumentPublicationConverter {
         }
 
         if (Objects.nonNull(publication.getEvent())) {
-            setMCBibTexField(publication.getEvent().getName(), entry, new Key("event"));
+            setMCBibTexField(publication.getEvent().getName(), entry, new Key("event"),
+                defaultLanguageTag);
         }
 
         if (Objects.nonNull(publication.getUris()) && !publication.getUris().isEmpty()) {
@@ -120,11 +125,12 @@ public class DocumentPublicationConverter {
     }
 
     public static void setCommonTaggedFields(Document publication, StringBuilder sb,
-                                             boolean refMan) {
-        setMCTaggedField(publication.getTitle(), sb, refMan ? "TI" : "%T");
-        setMCTaggedField(publication.getSubTitle(), sb, refMan ? "ST" : "%Z");
-        setMCTaggedField(publication.getDescription(), sb, refMan ? "AB" : "%X");
-        setMCTaggedField(publication.getKeywords(), sb, refMan ? "KW" : "%K");
+                                             String defaultLanguageTag, boolean refMan) {
+        setMCTaggedField(publication.getTitle(), sb, refMan ? "TI" : "%T", defaultLanguageTag);
+        setMCTaggedField(publication.getSubTitle(), sb, refMan ? "ST" : "%Z", defaultLanguageTag);
+        setMCTaggedField(publication.getDescription(), sb, refMan ? "AB" : "%X",
+            defaultLanguageTag);
+        setMCTaggedField(publication.getKeywords(), sb, refMan ? "KW" : "%K", defaultLanguageTag);
 
         if (Objects.nonNull(publication.getContributors())) {
             PersonContributionConverter.toTaggedAuthors(publication.getContributors(), sb, refMan);
@@ -147,14 +153,18 @@ public class DocumentPublicationConverter {
     }
 
     protected static void setMCBibTexField(Set<MultiLingualContent> content, BibTeXEntry entry,
-                                           Key fieldKey) {
+                                           Key fieldKey, String defaultLanguageTag) {
         if (Objects.isNull(content) || content.isEmpty()) {
             return;
         }
 
-        var defaultLanguage = LanguageAbbreviations.ENGLISH;
-        var defaultContent =
-            MultilingualContentConverter.getLocalizedContent(content, defaultLanguage);
+        var defaultLanguage = !defaultLanguageTag.isBlank() ? defaultLanguageTag.toUpperCase() :
+            LanguageAbbreviations.ENGLISH;
+        var localizedContent =
+            MultilingualContentConverter.getLocalizedContentWithLocale(content, defaultLanguage);
+        var defaultContent = localizedContent.a;
+        defaultLanguage = localizedContent.b;
+
         if (defaultContent.isEmpty()) {
             var firstEntry = content.stream().findFirst();
             if (firstEntry.isEmpty()) {
@@ -180,14 +190,17 @@ public class DocumentPublicationConverter {
 
 
     protected static void setMCTaggedField(Set<MultiLingualContent> content, StringBuilder sb,
-                                           String fieldTag) {
+                                           String fieldTag, String defaultLanguageTag) {
         if (Objects.isNull(content) || content.isEmpty()) {
             return;
         }
 
-        var defaultLanguage = LanguageAbbreviations.ENGLISH;
-        var defaultContent =
-            MultilingualContentConverter.getLocalizedContent(content, defaultLanguage);
+        var defaultLanguage = !defaultLanguageTag.isBlank() ? defaultLanguageTag.toUpperCase() :
+            LanguageAbbreviations.ENGLISH;
+        var localizedContent =
+            MultilingualContentConverter.getLocalizedContentWithLocale(content, defaultLanguage);
+        var defaultContent = localizedContent.a;
+        defaultLanguage = localizedContent.b;
 
         if (defaultContent.isEmpty()) {
             var firstEntry = content.stream().findFirst();
@@ -195,6 +208,7 @@ public class DocumentPublicationConverter {
                 return; // should never happen
             }
             defaultContent = firstEntry.get().getContent();
+            defaultLanguage = firstEntry.get().getLanguage().getLanguageTag();
         }
 
         sb.append(fieldTag).append(fieldTag.startsWith("%") ? " " : "  - ").append(defaultContent)
@@ -204,9 +218,10 @@ public class DocumentPublicationConverter {
             return;
         }
 
+        var finalDefaultLanguage = defaultLanguage;
         content.forEach(mc -> {
             if (Objects.nonNull(mc.getLanguage()) && Objects.nonNull(mc.getContent()) &&
-                !mc.getLanguage().getLanguageTag().equalsIgnoreCase(defaultLanguage)) {
+                !mc.getLanguage().getLanguageTag().equalsIgnoreCase(finalDefaultLanguage)) {
                 sb.append("TT  - ").append(mc.getContent()).append("\n");
             }
         });
@@ -216,42 +231,71 @@ public class DocumentPublicationConverter {
         return Objects.nonNull(value) && !value.isBlank();
     }
 
-    public static BibTeXEntry toBibTeXEntry(Document document) {
+    public static BibTeXEntry toBibTeXEntry(Document document, String defaultLanguageTag) {
         return switch (document) {
-            case Thesis thesis -> ThesisConverter.toBibTexEntry(thesis);
-            case Dataset dataset -> DatasetConverter.toBibTexEntry(dataset);
-            case Software software -> SoftwareConverter.toBibTexEntry(software);
-            case Patent patent -> PatentConverter.toBibTexEntry(patent);
+            case Thesis thesis -> ThesisConverter.toBibTexEntry(thesis, defaultLanguageTag);
+            case Dataset dataset -> DatasetConverter.toBibTexEntry(dataset, defaultLanguageTag);
+            case Software software -> SoftwareConverter.toBibTexEntry(software, defaultLanguageTag);
+            case Patent patent -> PatentConverter.toBibTexEntry(patent, defaultLanguageTag);
             case JournalPublication journalPublication ->
-                JournalPublicationConverter.toBibTexEntry(journalPublication);
-            case Monograph monograph -> MonographConverter.toBibTexEntry(monograph);
+                JournalPublicationConverter.toBibTexEntry(journalPublication, defaultLanguageTag);
+            case Monograph monograph ->
+                MonographConverter.toBibTexEntry(monograph, defaultLanguageTag);
             case MonographPublication monographPublication ->
-                MonographPublicationConverter.toBibTexEntry(monographPublication);
-            case Proceedings proceedings -> ProceedingsConverter.toBibTexEntry(proceedings);
+                MonographPublicationConverter.toBibTexEntry(monographPublication,
+                    defaultLanguageTag);
+            case Proceedings proceedings ->
+                ProceedingsConverter.toBibTexEntry(proceedings, defaultLanguageTag);
             case ProceedingsPublication proceedingsPublication ->
-                ProceedingsPublicationConverter.toBibTexEntry(proceedingsPublication);
+                ProceedingsPublicationConverter.toBibTexEntry(proceedingsPublication,
+                    defaultLanguageTag);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };
     }
 
-    public static String toTaggedFormat(Document document, boolean refMan) {
+    public static String toTaggedFormat(Document document, String defaultLanguageTag,
+                                        boolean refMan) {
         return switch (document) {
-            case Thesis thesis -> ThesisConverter.toTaggedFormat(thesis, refMan);
-            case Dataset dataset -> DatasetConverter.toTaggedFormat(dataset, refMan);
-            case Software software -> SoftwareConverter.toTaggedFormat(software, refMan);
-            case Patent patent -> PatentConverter.toTaggedFormat(patent, refMan);
+            case Thesis thesis ->
+                ThesisConverter.toTaggedFormat(thesis, defaultLanguageTag, refMan);
+            case Dataset dataset ->
+                DatasetConverter.toTaggedFormat(dataset, defaultLanguageTag, refMan);
+            case Software software ->
+                SoftwareConverter.toTaggedFormat(software, defaultLanguageTag, refMan);
+            case Patent patent ->
+                PatentConverter.toTaggedFormat(patent, defaultLanguageTag, refMan);
             case JournalPublication journalPublication ->
-                JournalPublicationConverter.toTaggedFormat(journalPublication, refMan);
-            case Monograph monograph -> MonographConverter.toTaggedFormat(monograph, refMan);
+                JournalPublicationConverter.toTaggedFormat(journalPublication, defaultLanguageTag,
+                    refMan);
+            case Monograph monograph ->
+                MonographConverter.toTaggedFormat(monograph, defaultLanguageTag, refMan);
             case MonographPublication monographPublication ->
-                MonographPublicationConverter.toTaggedFormat(monographPublication, refMan);
+                MonographPublicationConverter.toTaggedFormat(monographPublication,
+                    defaultLanguageTag, refMan);
             case Proceedings proceedings ->
-                ProceedingsConverter.toTaggedFormat(proceedings, refMan);
+                ProceedingsConverter.toTaggedFormat(proceedings, defaultLanguageTag, refMan);
             case ProceedingsPublication proceedingsPublication ->
-                ProceedingsPublicationConverter.toTaggedFormat(proceedingsPublication, refMan);
+                ProceedingsPublicationConverter.toTaggedFormat(proceedingsPublication,
+                    defaultLanguageTag, refMan);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
+        };
+    }
+
+    public static String getBibliographicExportEntity(TableExportRequestDTO request,
+                                                      Document document) {
+        return switch (request.getExportFileType()) {
+            case BIB -> StringUtil.bibTexEntryToString(
+                DocumentPublicationConverter.toBibTeXEntry(document, request.getExportLanguage()));
+            case RIS ->
+                DocumentPublicationConverter.toTaggedFormat(document, request.getExportLanguage(),
+                    true);
+            case ENW ->
+                DocumentPublicationConverter.toTaggedFormat(document, request.getExportLanguage(),
+                    false);
+            default -> throw new IllegalStateException("Unexpected value: " +
+                request.getExportFileType()); // should never happen
         };
     }
 }

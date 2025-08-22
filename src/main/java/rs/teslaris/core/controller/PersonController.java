@@ -43,7 +43,9 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @Validated
 @RestController
@@ -82,11 +84,23 @@ public class PersonController {
         var dto = personService.readPersonWithBasicInfo(personId);
 
         var headers = new HttpHeaders();
-        FairSignposting.addHeadersForPerson(headers, dto, "/api/person");
+        FairSignpostingL1Utility.addHeadersForPerson(headers, dto, "/api/person");
 
         return ResponseEntity.ok()
             .headers(headers)
             .body(dto);
+    }
+
+    @GetMapping("/linkset/{personId}/{linksetFormat}")
+    public ResponseEntity<String> getPersonLinkset(@PathVariable Integer personId,
+                                                   @PathVariable LinksetFormat linksetFormat) {
+        var dto = personService.readPersonWithBasicInfo(personId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksetForPerson(dto, linksetFormat));
     }
 
     @GetMapping("/old-id/{personOldId}")

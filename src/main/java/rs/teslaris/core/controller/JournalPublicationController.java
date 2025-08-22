@@ -27,7 +27,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("api/journal-publication")
@@ -48,7 +48,7 @@ public class JournalPublicationController {
         var dto = journalPublicationService.readJournalPublicationById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/journal-publication"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/journal-publication"))
             .body(dto);
     }
 

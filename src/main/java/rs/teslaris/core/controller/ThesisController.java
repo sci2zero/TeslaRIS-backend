@@ -35,7 +35,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.jwt.JwtUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("/api/thesis")
@@ -58,7 +58,7 @@ public class ThesisController {
         var dto = thesisService.readThesisById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/thesis"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/thesis"))
             .body(dto);
     }
 
@@ -177,7 +177,7 @@ public class ThesisController {
         var content = thesisService.getSingleLibraryReferenceFormat(documentId, libraryFormat);
 
         var headers = new HttpHeaders();
-        FairSignposting.addHeadersForMetadataFormats(headers, documentId);
+        FairSignpostingL1Utility.addHeadersForMetadataFormats(headers, documentId);
 
         return ResponseEntity.ok()
             .headers(headers)

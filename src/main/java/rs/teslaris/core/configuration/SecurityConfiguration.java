@@ -221,13 +221,13 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/export/{handlerName}").permitAll()
 
                 // SEARCH TABLE EXPORT
-                .requestMatchers(HttpMethod.GET, "/api/csv-export/records-per-page").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/table-export/records-per-page").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/thesis-library/dissertation-report")
                 .permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/thesis-library/csv-export").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/table-export/documents").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/table-export/persons").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/table-export/organisation-units").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/thesis-library/table-export").permitAll()
 
                 // ASSESSMENT
                 .requestMatchers(HttpMethod.GET, "/api/assessment/document-indicator/{documentId}")
@@ -287,9 +287,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/document/fields").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/person/fields").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/fields").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/csv-export/documents").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/csv-export/persons").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/csv-export/organisation-units").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/table-export/documents").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/table-export/persons").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/table-export/organisation-units").permitAll()
 
                 // THESIS LIBRARY
                 .requestMatchers(HttpMethod.GET, "/api/thesis-library/search/fields").permitAll()
@@ -328,6 +328,13 @@ public class SecurityConfiguration {
                 // OAUTH2
                 .requestMatchers(HttpMethod.GET, "/api/oauth2/finish-workflow")
                 .permitAll()
+
+                // SIGNPOSTING
+                .requestMatchers(HttpMethod.GET, "/api/document/linkset/{documentId}/{linksetFormat}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person/linkset/{personId}/{linksetFormat}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/linkset/{organisationUnitId}/{linksetFormat}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/journal/linkset/{journalId}/{linksetFormat}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/book-series/linkset/{bookSeriesId}/{linksetFormat}").permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

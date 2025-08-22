@@ -14,40 +14,40 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
-import rs.teslaris.core.dto.commontypes.TableExportRequest;
-import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
+import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
+import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
 
 @RestController
-@RequestMapping("/api/csv-export")
+@RequestMapping("/api/table-export")
 @RequiredArgsConstructor
 @Traceable
-public class CSVExportController {
+public class TableExportController {
 
-    private final CSVExportService csvExportService;
+    private final TableExportService tableExportService;
 
     @GetMapping("/records-per-page")
     public Integer getMaxRecordsPerPage() {
-        return csvExportService.getMaxRecordsPerPage();
+        return tableExportService.getMaxRecordsPerPage();
     }
 
     @PostMapping("/documents")
     public ResponseEntity<InputStreamResource> downloadDocumentCSVExport(@RequestBody @Valid
                                                                          DocumentExportRequestDTO request) {
-        var exportDocument = csvExportService.exportDocumentsToFile(request);
+        var exportDocument = tableExportService.exportDocumentsToFile(request);
         return serveResponseFile(exportDocument, request.getExportFileType());
     }
 
     @PostMapping("/persons")
     public ResponseEntity<InputStreamResource> downloadPersonCSVExport(
-        @RequestBody @Valid TableExportRequest request) {
-        var exportDocument = csvExportService.exportPersonsToCSV(request);
+        @RequestBody @Valid TableExportRequestDTO request) {
+        var exportDocument = tableExportService.exportPersonsToCSV(request);
         return serveResponseFile(exportDocument, request.getExportFileType());
     }
 
     @PostMapping("/organisation-units")
     public ResponseEntity<InputStreamResource> downloadOrganisationUnitCSVExport(
-        @RequestBody @Valid TableExportRequest request) {
-        var exportDocument = csvExportService.exportOrganisationUnitsToCSV(request);
+        @RequestBody @Valid TableExportRequestDTO request) {
+        var exportDocument = tableExportService.exportOrganisationUnitsToCSV(request);
         return serveResponseFile(exportDocument, request.getExportFileType());
     }
 
@@ -55,8 +55,8 @@ public class CSVExportController {
         InputStreamResource exportDocument, ExportFileType exportFileType) {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=export" +
-                (exportFileType.equals(ExportFileType.CSV) ? ".csv" : ".xlsx"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=export" + exportFileType.getValue())
             .body(exportDocument);
     }
 }

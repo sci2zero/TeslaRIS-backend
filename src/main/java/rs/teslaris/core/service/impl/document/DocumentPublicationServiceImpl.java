@@ -80,6 +80,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -148,9 +149,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         return switch (format) {
             case BIBTEX -> StringUtil.bibTexEntryToString(
-                DocumentPublicationConverter.toBibTeXEntry(document));
-            case REFMAN -> DocumentPublicationConverter.toTaggedFormat(document, true);
-            case ENDNOTE -> DocumentPublicationConverter.toTaggedFormat(document, false);
+                DocumentPublicationConverter.toBibTeXEntry(document,
+                    LanguageAbbreviations.ENGLISH));
+            case REFMAN ->
+                DocumentPublicationConverter.toTaggedFormat(document, LanguageAbbreviations.ENGLISH,
+                    true);
+            case ENDNOTE ->
+                DocumentPublicationConverter.toTaggedFormat(document, LanguageAbbreviations.ENGLISH,
+                    false);
         };
     }
 

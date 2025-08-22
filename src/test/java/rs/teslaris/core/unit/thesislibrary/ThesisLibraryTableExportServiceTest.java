@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -18,21 +20,25 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ExportableEndpointType;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.service.interfaces.document.CitationService;
-import rs.teslaris.thesislibrary.dto.ThesisCSVExportRequestDTO;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
-import rs.teslaris.thesislibrary.service.impl.ThesisLibraryCSVExportServiceImpl;
+import rs.teslaris.thesislibrary.dto.ThesisTableExportRequestDTO;
+import rs.teslaris.thesislibrary.service.impl.ThesisLibraryTableExportServiceImpl;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
 @SpringBootTest
-public class ThesisLibraryCSVExportServiceTest {
+public class ThesisLibraryTableExportServiceTest {
 
     @Mock
     private ThesisSearchService thesisSearchService;
@@ -43,16 +49,19 @@ public class ThesisLibraryCSVExportServiceTest {
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
-    @InjectMocks
-    private ThesisLibraryCSVExportServiceImpl thesisLibraryCSVExportService;
+    @Mock
+    private ThesisService thesisService;
 
-    private ThesisCSVExportRequestDTO request;
+    @InjectMocks
+    private ThesisLibraryTableExportServiceImpl thesisLibraryCSVExportService;
+
+    private ThesisTableExportRequestDTO request;
     private DocumentPublicationIndex mockDocument;
 
 
     @BeforeEach
     void setUp() {
-        request = new ThesisCSVExportRequestDTO();
+        request = new ThesisTableExportRequestDTO();
         request.setColumns(List.of("title", "author"));
         request.setExportLanguage("en");
         request.setExportEntityIds(List.of(1, 2));
@@ -168,5 +177,87 @@ public class ThesisLibraryCSVExportServiceTest {
         }
         verify(documentPublicationIndexRepository, never())
             .findDocumentPublicationIndexByDatabaseId(anyInt());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExportFileType.class, names = {"BIB", "RIS", "ENW"})
+    void shouldExportBibliographicFileForSelectedTheses(ExportFileType exportFileType) {
+        // Given
+        request.setExportFileType(exportFileType);
+        request.setExportMaxPossibleAmount(false);
+
+        Thesis thesis1 = new Thesis();
+        Thesis thesis2 = new Thesis();
+
+        when(thesisService.getThesisById(1)).thenReturn(thesis1);
+        when(thesisService.getThesisById(2)).thenReturn(thesis2);
+
+        // mock conversion
+        try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
+            DocumentPublicationConverter.class)) {
+            mockedConverter.when(() -> DocumentPublicationConverter
+                    .getBibliographicExportEntity(eq(request), eq(thesis1)))
+                .thenReturn("thesis1-bib");
+            mockedConverter.when(() -> DocumentPublicationConverter
+                    .getBibliographicExportEntity(eq(request), eq(thesis2)))
+                .thenReturn("thesis2-bib");
+
+            // When
+            var result = thesisLibraryCSVExportService.exportThesesToBibliographicFile(request);
+
+            // Then
+            assertNotNull(result);
+            verify(thesisService).getThesisById(1);
+            verify(thesisService).getThesisById(2);
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExportFileType.class, mode = EnumSource.Mode.EXCLUDE, names = {"BIB", "RIS",
+        "ENW"})
+    void shouldReturnNullForNonBibliographicFormats(ExportFileType exportFileType) {
+        // Given
+        request.setExportFileType(exportFileType);
+
+        // When
+        var result = thesisLibraryCSVExportService.exportThesesToBibliographicFile(request);
+
+        // Then
+        assertNull(result);
+        verifyNoInteractions(thesisService);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExportFileType.class, names = {"BIB", "RIS", "ENW"})
+    void shouldExportBibliographicFileWhenExportMaxPossibleAmountTrue(
+        ExportFileType exportFileType) {
+        // Given
+        request.setExportFileType(exportFileType);
+        request.setExportMaxPossibleAmount(true);
+        request.setBulkExportOffset(600);
+        request.setEndpointType(ExportableEndpointType.THESIS_ADVANCED_SEARCH);
+
+        var thesis1 = new Thesis();
+        var entityIndex = new DocumentPublicationIndex();
+        entityIndex.setDatabaseId(1);
+
+        try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
+            DocumentPublicationConverter.class)) {
+            when(thesisSearchService.performAdvancedThesisSearch(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(entityIndex)));
+
+            when(thesisService.getThesisById(1)).thenReturn(thesis1);
+
+            mockedConverter.when(() -> DocumentPublicationConverter
+                    .getBibliographicExportEntity(eq(request), eq(thesis1)))
+                .thenReturn("thesis1-bib");
+
+            // When
+            var result = thesisLibraryCSVExportService.exportThesesToBibliographicFile(request);
+
+            // Then
+            assertNotNull(result);
+            verify(thesisService).getThesisById(1);
+        }
     }
 }

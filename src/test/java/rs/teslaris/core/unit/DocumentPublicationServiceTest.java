@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,20 +23,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.jbibtex.BibTeXEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
@@ -43,6 +48,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -65,9 +71,11 @@ import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @SpringBootTest
 public class DocumentPublicationServiceTest {
@@ -997,5 +1005,85 @@ public class DocumentPublicationServiceTest {
         // Then
         assertFalse(document.getIsArchived());
         verify(documentRepository).save(document);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = BibliographicFormat.class, names = {"BIBTEX"})
+    void shouldReadBibTeXMetadata(BibliographicFormat format) {
+        // Given
+        var documentId = 1;
+        var documentPublication = mock(Document.class);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+
+        try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
+            DocumentPublicationConverter.class);
+             MockedStatic<StringUtil> mockedStringUtil = mockStatic(StringUtil.class)) {
+
+            var fakeEntry = mock(BibTeXEntry.class);
+            mockedConverter.when(
+                    () -> DocumentPublicationConverter.toBibTeXEntry(documentPublication,
+                        LanguageAbbreviations.ENGLISH))
+                .thenReturn(fakeEntry);
+            mockedStringUtil.when(() -> StringUtil.bibTexEntryToString(fakeEntry))
+                .thenReturn("bibtex-string");
+
+            // When
+            var result =
+                documentPublicationService.readBibliographicMetadataById(documentId, format);
+
+            // Then
+            assertEquals("bibtex-string", result);
+            verify(documentRepository).findById(documentId);
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = BibliographicFormat.class, names = {"REFMAN"})
+    void shouldReadRefmanMetadata(BibliographicFormat format) {
+        // Given
+        var documentId = 2;
+        var documentPublication = mock(Document.class);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+
+        try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
+            DocumentPublicationConverter.class)) {
+            mockedConverter.when(
+                    () -> DocumentPublicationConverter.toTaggedFormat(documentPublication,
+                        LanguageAbbreviations.ENGLISH, true))
+                .thenReturn("refman-string");
+
+            // When
+            var result =
+                documentPublicationService.readBibliographicMetadataById(documentId, format);
+
+            // Then
+            assertEquals("refman-string", result);
+            verify(documentRepository).findById(documentId);
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = BibliographicFormat.class, names = {"ENDNOTE"})
+    void shouldReadEndnoteMetadata(BibliographicFormat format) {
+        // Given
+        var documentId = 3;
+        var documentPublication = mock(Document.class);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+
+        try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
+            DocumentPublicationConverter.class)) {
+            mockedConverter.when(
+                    () -> DocumentPublicationConverter.toTaggedFormat(documentPublication,
+                        LanguageAbbreviations.ENGLISH, false))
+                .thenReturn("endnote-string");
+
+            // When
+            var result =
+                documentPublicationService.readBibliographicMetadataById(documentId, format);
+
+            // Then
+            assertEquals("endnote-string", result);
+            verify(documentRepository).findById(documentId);
+        }
     }
 }

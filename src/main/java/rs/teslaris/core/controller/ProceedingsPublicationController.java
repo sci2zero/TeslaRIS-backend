@@ -26,7 +26,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("api/proceedings-publication")
@@ -47,7 +47,7 @@ public class ProceedingsPublicationController {
         var dto = proceedingsPublicationService.readProceedingsPublicationById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/proceedings-publication"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/proceedings-publication"))
             .body(dto);
     }
 

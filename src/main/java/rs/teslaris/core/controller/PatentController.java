@@ -18,7 +18,7 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.service.interfaces.document.PatentService;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("api/patent")
@@ -34,7 +34,7 @@ public class PatentController {
         var dto = patentService.readPatentById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/patent"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/patent"))
             .body(dto);
     }
 

@@ -18,7 +18,7 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("api/dataset")
@@ -34,7 +34,7 @@ public class DatasetController {
         var dto = datasetService.readDatasetById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/dataset"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/dataset"))
             .body(dto);
     }
 

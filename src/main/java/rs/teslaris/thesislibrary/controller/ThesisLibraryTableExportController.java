@@ -13,33 +13,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
-import rs.teslaris.thesislibrary.dto.ThesisCSVExportRequestDTO;
-import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryCSVExportService;
+import rs.teslaris.thesislibrary.dto.ThesisTableExportRequestDTO;
+import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryTableExportService;
 
 @RestController
-@RequestMapping("/api/thesis-library/csv-export")
+@RequestMapping("/api/thesis-library/table-export")
 @RequiredArgsConstructor
 @Traceable
-public class ThesisLibraryCSVExportController {
+public class ThesisLibraryTableExportController {
 
-    private final ThesisLibraryCSVExportService thesisLibraryCSVExportService;
+    private final ThesisLibraryTableExportService thesisLibraryTableExportService;
 
     @PostMapping
     public ResponseEntity<InputStreamResource> downloadThesisLibraryCSVExport(
-        @RequestBody @Valid ThesisCSVExportRequestDTO request) {
+        @RequestBody @Valid ThesisTableExportRequestDTO request) {
 
         InputStreamResource exportDocument;
         if (List.of(ExportFileType.CSV, ExportFileType.XLSX)
             .contains(request.getExportFileType())) {
-            exportDocument = thesisLibraryCSVExportService.exportThesesToCSV(request);
+            exportDocument = thesisLibraryTableExportService.exportThesesToCSV(request);
         } else {
-            exportDocument = thesisLibraryCSVExportService.exportThesesToBibliographicFile(request);
+            exportDocument =
+                thesisLibraryTableExportService.exportThesesToBibliographicFile(request);
         }
 
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=export" +
-                (request.getExportFileType().equals(ExportFileType.CSV) ? ".csv" : ".xlsx"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=export" + request.getExportFileType().getValue())
             .body(exportDocument);
     }
 }

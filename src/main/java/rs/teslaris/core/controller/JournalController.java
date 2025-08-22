@@ -35,7 +35,9 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/journal")
@@ -103,11 +105,23 @@ public class JournalController {
         var dto = journalService.readJournal(journalId);
 
         var headers = new HttpHeaders();
-        FairSignposting.addHeadersForPublicationSeries(headers, dto, "/api/journal");
+        FairSignpostingL1Utility.addHeadersForPublicationSeries(headers, dto, "/api/journal");
 
         return ResponseEntity.ok()
             .headers(headers)
             .body(dto);
+    }
+
+    @GetMapping("/linkset/{journalId}/{linksetFormat}")
+    public ResponseEntity<String> getJournalLinkset(@PathVariable Integer journalId,
+                                                    @PathVariable LinksetFormat linksetFormat) {
+        var dto = journalService.readJournal(journalId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksForPublicationSeries(dto, linksetFormat));
     }
 
     @GetMapping("/identifier")

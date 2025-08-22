@@ -25,7 +25,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("/api/monograph-publication")
@@ -46,7 +46,7 @@ public class MonographPublicationController {
         var dto = monographPublicationService.readMonographPublicationById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/monograph-publication"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/monograph-publication"))
             .body(dto);
     }
 

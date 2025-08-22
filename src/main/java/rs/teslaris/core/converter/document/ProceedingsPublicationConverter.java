@@ -29,11 +29,12 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
         publicationDTO.setEventId(publication.getEvent().getId());
     }
 
-    public static BibTeXEntry toBibTexEntry(ProceedingsPublication proceedingsPublication) {
+    public static BibTeXEntry toBibTexEntry(ProceedingsPublication proceedingsPublication,
+                                            String defaultLanguageTag) {
         var entry = new BibTeXEntry(BibTeXEntry.TYPE_INPROCEEDINGS,
             new Key("(TESLARIS)" + proceedingsPublication.getId().toString()));
 
-        setCommonFields(proceedingsPublication, entry);
+        setCommonFields(proceedingsPublication, entry, defaultLanguageTag);
 
         if (valueExists(proceedingsPublication.getStartPage()) &&
             valueExists((proceedingsPublication.getEndPage()))) {
@@ -56,7 +57,7 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
 
         if (Objects.nonNull(proceedingsPublication.getProceedings())) {
             setMCBibTexField(proceedingsPublication.getProceedings().getTitle(), entry,
-                BibTeXEntry.KEY_PUBLISHER);
+                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
 
             if (valueExists(proceedingsPublication.getProceedings().getEISBN())) {
                 entry.addField(new Key("eIsbn"),
@@ -75,11 +76,11 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
     }
 
     public static String toTaggedFormat(ProceedingsPublication proceedingsPublication,
-                                        boolean refMan) {
+                                        String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
         sb.append(refMan ? "TY  - " : "%0").append("CPAPER").append("\n");
 
-        setCommonTaggedFields(proceedingsPublication, sb, refMan);
+        setCommonTaggedFields(proceedingsPublication, sb, defaultLanguageTag, refMan);
 
         if (valueExists(proceedingsPublication.getStartPage()) &&
             valueExists((proceedingsPublication.getEndPage()))) {
@@ -101,7 +102,7 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
 
         if (Objects.nonNull(proceedingsPublication.getProceedings())) {
             setMCTaggedField(proceedingsPublication.getProceedings().getTitle(), sb,
-                refMan ? "C3" : "%0J");
+                refMan ? "C3" : "%0J", defaultLanguageTag);
 
             if (valueExists(proceedingsPublication.getProceedings().getEISBN())) {
                 sb.append(refMan ? "SN  - " : "%0S").append("e:")

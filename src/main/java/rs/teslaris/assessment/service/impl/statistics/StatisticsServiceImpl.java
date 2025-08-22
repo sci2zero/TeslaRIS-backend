@@ -272,7 +272,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
             updateIndicator(index.getPublicationSeriesId(),
                 indicator.getCode(),
                 publicationSeriesRepository::findById,
-                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeriesId,
                 (id) -> new PublicationSeriesIndicator(),
                 entityIndicator -> {
                     entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
@@ -283,7 +283,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
             updateIndicator(index.getEventId(),
                 indicator.getCode(),
                 eventRepository::findById,
-                eventIndicatorRepository::findIndicatorsForCodeAndEvent,
+                eventIndicatorRepository::findIndicatorsForCodeAndEventId,
                 (id) -> new EventIndicator(),
                 entityIndicator -> {
                     entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
@@ -449,7 +449,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                     return totalCount.get();
                 },
                 JournalIndex::getDatabaseId,
-                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeriesId,
                 id -> new PublicationSeriesIndicator(),
                 PublicationSeriesIndicator::setPublicationSeries,
                 publicationSeriesIndicatorRepository,
@@ -473,7 +473,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                     return totalCount.get();
                 },
                 BookSeriesIndex::getDatabaseId,
-                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeriesId,
                 id -> new PublicationSeriesIndicator(),
                 PublicationSeriesIndicator::setPublicationSeries,
                 publicationSeriesIndicatorRepository,
@@ -497,7 +497,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                     return totalCount.get();
                 },
                 EventIndex::getDatabaseId,
-                eventIndicatorRepository::findIndicatorsForCodeAndEvent,
+                eventIndicatorRepository::findIndicatorsForCodeAndEventId,
                 id -> new EventIndicator(),
                 EventIndicator::setEvent,
                 eventIndicatorRepository,

@@ -42,7 +42,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.DocumentFileBackupRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
+import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -77,7 +77,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
 
     private final MessageSource messageSource;
 
-    private final CSVExportService csvExportService;
+    private final TableExportService tableExportService;
 
 
     private final Map<DocumentFileSection, Function<Document, Set<DocumentFile>>> sectionAccessors =
@@ -205,7 +205,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
         exportRequest.setVancouver(true);
         exportRequest.setAllowedTypes(types);
 
-        var metadataFile = csvExportService.exportDocumentsToFile(exportRequest);
+        var metadataFile = tableExportService.exportDocumentsToFile(exportRequest);
         try {
             zipBuilder.copyFileToRoot(metadataFile.getInputStream(), "metadata.csv");
         } catch (IOException e) {

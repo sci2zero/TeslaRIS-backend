@@ -22,11 +22,11 @@ public class SoftwareConverter extends DocumentPublicationConverter {
         return softwareDTO;
     }
 
-    public static BibTeXEntry toBibTexEntry(Software software) {
+    public static BibTeXEntry toBibTexEntry(Software software, String defaultLanguageTag) {
         var entry = new BibTeXEntry(new Key("software"),
             new Key("(TESLARIS)" + software.getId().toString()));
 
-        setCommonFields(software, entry);
+        setCommonFields(software, entry, defaultLanguageTag);
 
         if (valueExists(software.getInternalNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
@@ -34,24 +34,27 @@ public class SoftwareConverter extends DocumentPublicationConverter {
         }
 
         if (Objects.nonNull(software.getPublisher())) {
-            setMCBibTexField(software.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER);
+            setMCBibTexField(software.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
+                defaultLanguageTag);
         }
 
         return entry;
     }
 
-    public static String toTaggedFormat(Software software, boolean refMan) {
+    public static String toTaggedFormat(Software software, String defaultLanguageTag,
+                                        boolean refMan) {
         var sb = new StringBuilder();
-        sb.append("TY  - ").append("GEN").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append("GEN").append("\n");
 
-        setCommonTaggedFields(software, sb, refMan);
+        setCommonTaggedFields(software, sb, defaultLanguageTag, refMan);
 
         if (valueExists(software.getInternalNumber())) {
             sb.append(refMan ? "C6  - " : "%N ").append(software.getInternalNumber()).append("\n");
         }
 
         if (Objects.nonNull(software.getPublisher())) {
-            setMCTaggedField(software.getPublisher().getName(), sb, refMan ? "PB" : "%I");
+            setMCTaggedField(software.getPublisher().getName(), sb, refMan ? "PB" : "%I",
+                defaultLanguageTag);
         }
 
         if (refMan) {

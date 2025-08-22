@@ -11,7 +11,7 @@ import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ThesisCSVExportRequestDTO extends DocumentExportRequestDTO {
+public class ThesisTableExportRequestDTO extends DocumentExportRequestDTO {
 
     @Valid
     private ThesisSearchRequestDTO thesisSearchRequest;

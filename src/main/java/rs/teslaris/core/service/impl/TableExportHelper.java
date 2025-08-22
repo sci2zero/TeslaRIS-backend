@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
-import rs.teslaris.core.dto.commontypes.TableExportRequest;
+import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
 import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -35,7 +36,7 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 @Component
 @Transactional
 @Slf4j
-public class CSVExportHelper {
+public class TableExportHelper {
 
     private static final Map<Function<CitationResponseDTO, String>, String> CITATION_FORMATS =
         Map.of(
@@ -51,12 +52,12 @@ public class CSVExportHelper {
 
 
     @Autowired
-    public CSVExportHelper(SearchFieldsLoader searchFieldsLoader,
-                           PublicationSeriesService publicationSeriesService,
-                           EventService eventService) {
-        CSVExportHelper.searchFieldsLoader = searchFieldsLoader;
-        CSVExportHelper.publicationSeriesService = publicationSeriesService;
-        CSVExportHelper.eventService = eventService;
+    public TableExportHelper(SearchFieldsLoader searchFieldsLoader,
+                             PublicationSeriesService publicationSeriesService,
+                             EventService eventService) {
+        TableExportHelper.searchFieldsLoader = searchFieldsLoader;
+        TableExportHelper.publicationSeriesService = publicationSeriesService;
+        TableExportHelper.eventService = eventService;
     }
 
     public static InputStreamResource createExportFile(List<List<String>> rowsData,
@@ -67,6 +68,25 @@ public class CSVExportHelper {
             default -> throw new IllegalStateException(
                 "Unexpected value: " + exportFileType); // should never happen
         };
+    }
+
+    public static InputStreamResource createExportFile(ArrayList<String> exportedEntities,
+                                                       ExportFileType exportFileType) {
+        if (List.of(ExportFileType.CSV, ExportFileType.XLSX).contains(exportFileType)) {
+            throw new IllegalStateException("Unexpected value: " + exportFileType);
+        }
+
+        var outputStream = new ByteArrayOutputStream();
+        try (var writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+            for (var record : exportedEntities) {
+                writer.write(record);
+                writer.write("\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e); // should never happen
+        }
+
+        return new InputStreamResource(new ByteArrayInputStream(outputStream.toByteArray()));
     }
 
     @Nullable
@@ -179,7 +199,7 @@ public class CSVExportHelper {
         }
     }
 
-    public static List<String> getTableHeaders(TableExportRequest request,
+    public static List<String> getTableHeaders(TableExportRequestDTO request,
                                                String configurationFile) {
         return request.getColumns().stream()
             .map(searchFieldName -> searchFieldsLoader.getSearchFieldLocalizedName(

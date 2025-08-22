@@ -267,6 +267,6 @@ public class StringUtil {
                 "Error while creating BibTex representation"); // should never happen
         }
 
-        return writer.toString();
+        return writer + "\n";
     }
 }

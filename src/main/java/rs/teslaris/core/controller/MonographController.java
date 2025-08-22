@@ -27,7 +27,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.signposting.FairSignposting;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("/api/monograph")
@@ -45,7 +45,7 @@ public class MonographController {
         var dto = monographService.readMonographById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignposting.constructHeaders(dto, "/api/monograph"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/monograph"))
             .body(dto);
     }
 

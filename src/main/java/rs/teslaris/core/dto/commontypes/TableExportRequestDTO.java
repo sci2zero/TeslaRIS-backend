@@ -11,7 +11,7 @@ import rs.teslaris.core.model.commontypes.ExportableEndpointType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TableExportRequest {
+public class TableExportRequestDTO {
 
     private List<String> columns;
 

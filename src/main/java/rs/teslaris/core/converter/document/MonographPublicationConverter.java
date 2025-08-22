@@ -30,11 +30,12 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
         monographPublicationDTO.setMonographId(monographPublication.getMonograph().getId());
     }
 
-    public static BibTeXEntry toBibTexEntry(MonographPublication monographPublication) {
+    public static BibTeXEntry toBibTexEntry(MonographPublication monographPublication,
+                                            String defaultLanguageTag) {
         var entry = new BibTeXEntry(BibTeXEntry.TYPE_INCOLLECTION,
             new Key("(TESLARIS)" + monographPublication.getId().toString()));
 
-        setCommonFields(monographPublication, entry);
+        setCommonFields(monographPublication, entry, defaultLanguageTag);
 
         if (valueExists(monographPublication.getStartPage()) &&
             valueExists((monographPublication.getEndPage()))) {
@@ -57,7 +58,7 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
 
         if (Objects.nonNull(monographPublication.getMonograph())) {
             setMCBibTexField(monographPublication.getMonograph().getTitle(), entry,
-                BibTeXEntry.KEY_PUBLISHER);
+                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
 
             if (valueExists(monographPublication.getMonograph().getEISBN())) {
                 entry.addField(new Key("eIsbn"),
@@ -76,11 +77,11 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
     }
 
     public static String toTaggedFormat(MonographPublication monographPublication,
-                                        boolean refMan) {
+                                        String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
         sb.append(refMan ? "TY  - " : "%0 ").append("CHAP").append("\n");
 
-        setCommonTaggedFields(monographPublication, sb, refMan);
+        setCommonTaggedFields(monographPublication, sb, defaultLanguageTag, refMan);
 
         if (valueExists(monographPublication.getStartPage()) &&
             valueExists((monographPublication.getEndPage()))) {
@@ -101,7 +102,8 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
         }
 
         if (Objects.nonNull(monographPublication.getMonograph())) {
-            setMCTaggedField(monographPublication.getMonograph().getTitle(), sb, "T2");
+            setMCTaggedField(monographPublication.getMonograph().getTitle(), sb, "T2",
+                defaultLanguageTag);
 
             if (valueExists(monographPublication.getMonograph().getEISBN())) {
                 sb.append(refMan ? "SN  - " : "%0S ").append("e:")
