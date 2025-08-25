@@ -92,6 +92,9 @@ public class FairSignpostingL1Utility {
                 "<https://bib.cobiss.net/biblioweb/biblio/sr/scr/cris/" +
                     person.getPersonalInfo().getECrisId() + ">; rel=\"identifier\"");
         }
+
+
+        addLinksetReferences(headers, selfUrl, String.valueOf(person.getId()));
     }
 
 
@@ -114,6 +117,8 @@ public class FairSignpostingL1Utility {
                     superRelation.getTargetOrganisationUnit().getId() +
                     "> ; rel=\"collection\" ; type=\"https://schema.org/parentOrganization\"");
         }
+
+        addLinksetReferences(headers, selfUrl, String.valueOf(organisationUnit.getId()));
     }
 
     public static void addHeadersForPublicationSeries(HttpHeaders headers,
@@ -144,6 +149,8 @@ public class FairSignpostingL1Utility {
             headers.add(HttpHeaders.LINK,
                 "<urn:issn:" + publicationSeries.getPrintISSN() + ">; rel=\"cite-as\"");
         }
+
+        addLinksetReferences(headers, selfUrl, String.valueOf(publicationSeries.getId()));
     }
 
     public static void addHeadersForDocumentFileItems(HttpHeaders headers,
@@ -156,6 +163,8 @@ public class FairSignpostingL1Utility {
                     documentFile.getDocument().getId() +
                     "> ; rel=\"collection\" ; type=\"text/html\"");
         }
+
+        addLinksetReferences(headers, "/api/file", documentFile.getServerFilename());
     }
 
     public static void addHeadersForMetadataFormats(HttpHeaders headers, Integer thesisId) {
@@ -223,6 +232,8 @@ public class FairSignpostingL1Utility {
                     }
                 });
         }
+
+        addLinksetReferences(headers, "/api/document", String.valueOf(dto.getId()));
     }
 
     private static void deduceResourceType(HttpHeaders headers, DocumentDTO dto) {
@@ -320,13 +331,13 @@ public class FairSignpostingL1Utility {
             "<" + baseUrl + selfUrl + "/" + dto.getId() +
                 ">; rel=\"describedby\"; type=\"application/json\"");
         headers.add(HttpHeaders.LINK,
-            "<" + baseUrl + "/documents/BIBTEX" + dto.getId() +
+            "<" + baseUrl + "/api/document/metadata/" + dto.getId() + "/BIBTEX" +
                 ">; rel=\"describedby\"; type=\"" + BibliographicFormat.BIBTEX.getValue() + "\"");
         headers.add(HttpHeaders.LINK,
-            "<" + baseUrl + "/documents/REFMAN" + dto.getId() +
+            "<" + baseUrl + "/api/document/metadata/" + dto.getId() + "/REFMAN" +
                 ">; rel=\"describedby\"; type=\"" + BibliographicFormat.REFMAN.getValue() + "\"");
         headers.add(HttpHeaders.LINK,
-            "<" + baseUrl + "/documents/ENDNOTE" + dto.getId() +
+            "<" + baseUrl + "/api/document/metadata/" + dto.getId() + "/ENDNOTE" +
                 ">; rel=\"describedby\"; type=\"" + BibliographicFormat.ENDNOTE.getValue() + "\"");
 
         if (dto instanceof ThesisResponseDTO) {
@@ -337,6 +348,15 @@ public class FairSignpostingL1Utility {
                         libraryFormat.getValue() + "\"");
             }
         }
+    }
+
+    private static void addLinksetReferences(HttpHeaders headers, String selfUrl, String entityId) {
+        headers.add(HttpHeaders.LINK,
+            "<" + baseUrl + selfUrl + "/linkset/" + entityId + "/JSON" +
+                ">; rel=\"describedby\"; type=\"" + LinksetFormat.JSON.getValue() + "\"");
+        headers.add(HttpHeaders.LINK,
+            "<" + baseUrl + selfUrl + "/linkset/" + entityId + "/LINKSET" +
+                ">; rel=\"describedby\"; type=\"" + LinksetFormat.LINKSET.getValue() + "\"");
     }
 
 

@@ -47,6 +47,8 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/file")
@@ -350,5 +352,28 @@ public class FileController {
 
         headers.set(HttpHeaders.CONTENT_DISPOSITION, contentDisposition);
         return headers;
+    }
+
+    @GetMapping("/linkset/{filename}/{linksetFormat}")
+    @ResponseBody
+    public ResponseEntity<Object> serveFile(HttpServletRequest request,
+                                            @PathVariable String filename,
+                                            @PathVariable LinksetFormat linksetFormat) {
+        var documentFile = documentFileService.getDocumentByServerFilename(filename);
+        var accessRights = documentFile.getAccessRights();
+        var isVerifiedDocument = documentFile.getIsVerifiedData();
+        var isOpenAccess = isOpenAccess(accessRights);
+
+        if (isOpenAccess && isVerifiedDocument) {
+            var headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(FairSignpostingL2Utility.addLinksForDocumentFileItems(documentFile,
+                    linksetFormat));
+        }
+
+        return ErrorResponseUtil.buildUnavailableResponse(request,
+            "loginToViewDocumentMessage");
     }
 }

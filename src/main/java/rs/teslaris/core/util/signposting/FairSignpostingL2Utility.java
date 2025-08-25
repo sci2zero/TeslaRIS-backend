@@ -328,7 +328,7 @@ public class FairSignpostingL2Utility {
     private static void addMetadataLinks(
         ArrayList<FairSignpostingLinksetUtility.LinkEntry> linkEntries, DocumentDTO dto,
         String selfUrl, String anchor) {
-        var dataciteUri = baseUrl + "/documents/BIBTEX" + dto.getId();
+        var dataciteUri = baseUrl + "/api/document/metadata/" + dto.getId() + "/BIBTEX";
         linkEntries.add(
             new FairSignpostingLinksetUtility.LinkEntry(
                 dataciteUri, "describedby",
@@ -339,7 +339,7 @@ public class FairSignpostingL2Utility {
                 dataciteUri)
         );
 
-        dataciteUri = baseUrl + "/documents/REFMAN" + dto.getId();
+        dataciteUri = baseUrl + "/api/document/" + dto.getId() + "/REFMAN";
         linkEntries.add(
             new FairSignpostingLinksetUtility.LinkEntry(
                 dataciteUri, "describedby",
@@ -350,7 +350,7 @@ public class FairSignpostingL2Utility {
                 dataciteUri)
         );
 
-        dataciteUri = baseUrl + "/documents/ENDNOTE" + dto.getId();
+        dataciteUri = baseUrl + "/api/document/metadata/" + dto.getId() + "/ENDNOTE";
         linkEntries.add(
             new FairSignpostingLinksetUtility.LinkEntry(
                 dataciteUri, "describedby",
