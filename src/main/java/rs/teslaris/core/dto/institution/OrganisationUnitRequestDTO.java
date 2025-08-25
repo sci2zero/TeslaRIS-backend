@@ -11,6 +11,7 @@ import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.model.document.ThesisType;
 
 @Getter
 @Setter
@@ -43,4 +44,6 @@ public class OrganisationUnitRequestDTO {
     private Integer oldId;
 
     private Set<String> uris;
+
+    private Set<ThesisType> allowedThesisTypes;
 }

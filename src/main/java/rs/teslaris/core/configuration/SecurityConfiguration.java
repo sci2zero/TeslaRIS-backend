@@ -117,6 +117,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/simple-search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit-relation/{leafId}")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/organisation-unit/output-configuration/{organisationUnitId}").permitAll()
 
                 // LANGUAGE
                 .requestMatchers(HttpMethod.GET, "/api/language").permitAll()

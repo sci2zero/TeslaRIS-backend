@@ -73,6 +73,7 @@ import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -537,6 +538,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         if (Objects.nonNull(thesisDTO.getThesisDefenceDate())) {
             thesis.setDocumentDate(String.valueOf(thesisDTO.getThesisDefenceDate().getYear()));
+        } else if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
+            !thesis.getPublicReviewStartDates().isEmpty()) {
+            thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
+                .ifPresent(latestPublicReviewDate -> {
+                    thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
+                });
         }
 
         if (Objects.nonNull(thesisDTO.getPublisherId())) {
@@ -567,9 +574,15 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         if (Objects.nonNull(thesisDTO.getOrganisationUnitId())) {
-            thesis.setOrganisationUnit(
-                organisationUnitService.findOrganisationUnitById(
-                    thesisDTO.getOrganisationUnitId()));
+            var institution = organisationUnitService.findOne(thesisDTO.getOrganisationUnitId());
+
+            if (Objects.nonNull(thesisDTO.getThesisType()) &&
+                !institution.getAllowedThesisTypes().contains(thesisDTO.getThesisType().name())) {
+                throw new OrganisationUnitReferenceConstraintViolationException(
+                    "thesisTypeNotAllowedMessage");
+            }
+
+            thesis.setOrganisationUnit(institution);
         } else {
             if (Objects.isNull(thesisDTO.getExternalOrganisationUnitName())) {
                 throw new NotFoundException(

@@ -85,4 +85,8 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
 
     @Embedded
     private ProfilePhotoOrLogo logo;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "allowed_thesis_types")
+    private Set<String> allowedThesisTypes = new HashSet<>();
 }

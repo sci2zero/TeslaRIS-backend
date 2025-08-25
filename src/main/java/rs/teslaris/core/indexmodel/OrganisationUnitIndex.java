@@ -1,6 +1,8 @@
 package rs.teslaris.core.indexmodel;
 
 import jakarta.persistence.Id;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -77,4 +79,7 @@ public class OrganisationUnitIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "ror")
     private String ror;
+
+    @Field(type = FieldType.Keyword, store = true, name = "allowed_thesis_types")
+    private Set<String> allowedThesisTypes = new HashSet<>();
 }

@@ -132,12 +132,11 @@ public class TableExportHelper {
             case "INLINE" -> value.replace("\n", "; ");
             case "JOURNAL" -> {
                 var journal = publicationSeriesService.findOne(Integer.parseInt(value));
-                yield
-                    MultilingualContentConverter.getLocalizedContent(journal.getTitle(), language) +
-                        journal.getIssnString();
+                yield MultilingualContentConverter.getLocalizedContent(journal.getTitle(), language,
+                    null) + journal.getIssnString();
             }
             case "EVENT" -> MultilingualContentConverter.getLocalizedContent(
-                eventService.findOne(Integer.parseInt(value)).getName(), language);
+                eventService.findOne(Integer.parseInt(value)).getName(), language, null);
             default -> value.replace("\n", "");
         };
     }

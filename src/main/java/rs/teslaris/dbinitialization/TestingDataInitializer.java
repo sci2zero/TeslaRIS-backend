@@ -235,6 +235,10 @@ public class TestingDataInitializer {
         dummyOU.setOpenAlexId("I4401727005");
         dummyOU.setLocation(new GeoLocation(19.850885, 45.245688, "NOWHERE"));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
+        dummyOU.getAllowedThesisTypes().addAll(
+            List.of(ThesisType.PHD.name(), ThesisType.PHD_ART_PROJECT.name(),
+                ThesisType.MASTER.name(), ThesisType.BACHELOR.name(),
+                ThesisType.BACHELOR_WITH_HONORS.name()));
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
         userRepository.save(researcherUser);

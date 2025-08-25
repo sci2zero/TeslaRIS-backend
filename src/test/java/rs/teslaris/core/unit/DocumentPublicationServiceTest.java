@@ -803,7 +803,8 @@ public class DocumentPublicationServiceTest {
         when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
 
         // when
-        var result = documentPublicationService.getWordCloudForSingleDocument(documentId, false);
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            LanguageAbbreviations.SERBIAN);
 
         // then
         assertEquals(3, result.size());
@@ -812,6 +813,32 @@ public class DocumentPublicationServiceTest {
         assertEquals("abc", result.get(1).a);
         assertEquals(2L, result.get(1).b);
         assertEquals("def", result.get(2).a);
+        assertEquals(1L, result.get(2).b);
+    }
+
+    @Test
+    public void shouldReturnSortedWordFrequenciesForDocumentInSerbianCyrillic() {
+        // given
+        Integer documentId = 123;
+        DocumentPublicationIndex mockDoc = mock(DocumentPublicationIndex.class);
+        List<String> terms = List.of("abc", "def", "abc", "xyz", "xyz", "xyz");
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(mockDoc));
+        when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
+
+        // when
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            LanguageAbbreviations.SERBIAN_CYRILLIC);
+
+        // then
+        assertEquals(3, result.size());
+        assertEquals("xyз", result.get(0).a);
+        assertEquals(3L, result.get(0).b);
+        assertEquals("абц", result.get(1).a);
+        assertEquals(2L, result.get(1).b);
+        assertEquals("деф", result.get(2).a);
         assertEquals(1L, result.get(2).b);
     }
 
@@ -825,7 +852,8 @@ public class DocumentPublicationServiceTest {
 
         // when & then
         assertThrows(NotFoundException.class, () -> {
-            documentPublicationService.getWordCloudForSingleDocument(documentId, false);
+            documentPublicationService.getWordCloudForSingleDocument(documentId,
+                LanguageAbbreviations.SERBIAN);
         });
     }
 
@@ -842,7 +870,8 @@ public class DocumentPublicationServiceTest {
         when(mockDoc.getWordcloudTokensOther()).thenReturn(foreignTerms);
 
         // when
-        var result = documentPublicationService.getWordCloudForSingleDocument(documentId, true);
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            LanguageAbbreviations.ENGLISH);
 
         // then
         assertEquals(3, result.size());

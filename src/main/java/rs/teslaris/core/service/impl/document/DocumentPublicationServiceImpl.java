@@ -38,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -81,6 +82,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -454,9 +456,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setWordcloudTokensSr(
             StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
                 index.getKeywordsSr()));
-        index.setWordcloudTokensOther(
-            StringUtil.extractKeywords(index.getTitleOther(), index.getDescriptionOther(),
-                index.getKeywordsOther()));
+        index.setWordcloudTokensOther(StringUtil.extractKeywords(
+            MultilingualContentConverter.getLocalizedContent(document.getTitle(),
+                LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN),
+            MultilingualContentConverter.getLocalizedContent(document.getDescription(),
+                LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN),
+            MultilingualContentConverter.getLocalizedContent(document.getKeywords(),
+                LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN)));
     }
 
     private void setContributors(Document document, DocumentPublicationIndex index) {
@@ -896,11 +902,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
-                                                                  boolean foreignLanguage) {
+                                                                  String language) {
         var document =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
                 .orElseThrow(() -> new NotFoundException(
                     "Document with ID " + documentId + " does not exist."));
+
+        var foreignLanguage = !language.startsWith("SR");
         var terms =
             foreignLanguage ? document.getWordcloudTokensOther() : document.getWordcloudTokensSr();
 
@@ -911,7 +919,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return result.entrySet().stream()
             .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
             .limit(30)
-            .map(entry -> new Pair<>(entry.getKey(), entry.getValue()))
+            .map(entry -> new Pair<>(
+                language.endsWith("-CYR") ? SerbianTransliteration.toCyrillic(entry.getKey()) :
+                    entry.getKey(), entry.getValue()))
             .collect(Collectors.toList());
     }
 

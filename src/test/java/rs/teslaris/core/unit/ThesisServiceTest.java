@@ -204,7 +204,10 @@ public class ThesisServiceTest {
         thesisToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         thesisToUpdate.setDocumentDate("2023");
 
-        when(organisationUnitService.findOne(1)).thenReturn(new OrganisationUnit());
+        when(organisationUnitService.findOne(1)).thenReturn(
+            new OrganisationUnit() {{
+                getAllowedThesisTypes().add(ThesisType.PHD.name());
+            }});
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesisToUpdate);
         when(thesisJPAService.save(any())).thenReturn(thesisToUpdate);
 

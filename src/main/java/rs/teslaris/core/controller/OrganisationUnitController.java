@@ -34,6 +34,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.Triple;
@@ -128,11 +129,12 @@ public class OrganisationUnitController {
         Integer topLevelInstitutionId,
         @RequestParam(required = false) Boolean onlyReturnOnesWhichCanHarvest,
         @RequestParam(required = false) Boolean onlyIndependent,
+        @RequestParam(required = false) ThesisType allowedThesisType,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
             SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-            onlyReturnOnesWhichCanHarvest, onlyIndependent);
+            onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType);
     }
 
     @GetMapping("/advanced-search")
@@ -141,7 +143,7 @@ public class OrganisationUnitController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.ADVANCED, null, null, null, null);
+            SearchRequestType.ADVANCED, null, null, null, null, null);
     }
 
     @PostMapping

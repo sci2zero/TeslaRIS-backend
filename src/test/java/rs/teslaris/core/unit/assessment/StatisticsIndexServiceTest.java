@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.assessment.service.impl.statistics.StatisticsServiceImpl;
 import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
+import rs.teslaris.assessment.util.GeoliteIPUtil;
 import rs.teslaris.core.indexmodel.statistics.StatisticsIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.indexrepository.statistics.StatisticsIndexRepository;
@@ -25,6 +26,9 @@ public class StatisticsIndexServiceTest {
 
     @Mock
     private StatisticsIndexRepository statisticsIndexRepository;
+
+    @Mock
+    private GeoliteIPUtil geoliteIPUtil;
 
     @InjectMocks
     private StatisticsServiceImpl statisticsIndexService;

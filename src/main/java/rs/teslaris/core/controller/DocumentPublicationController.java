@@ -297,9 +297,9 @@ public class DocumentPublicationController {
     @GetMapping("/wordcloud/{documentId}")
     public List<Pair<String, Long>> getWordCloudForSingleDocument(@PathVariable Integer documentId,
                                                                   @RequestParam
-                                                                  boolean foreignLanguage) {
+                                                                  String language) {
         return documentPublicationService.getWordCloudForSingleDocument(documentId,
-            foreignLanguage);
+            language.toUpperCase());
     }
 
     @PatchMapping("/archive/{documentId}")

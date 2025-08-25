@@ -122,13 +122,12 @@ public class DocumentPublicationControllerTest extends BaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    public void testGetWordCloudForSingleDocument(Boolean foreignLanguage) throws Exception {
+    @ValueSource(strings = {"SR", "SR-CYR", "EN"})
+    public void testGetWordCloudForSingleDocument(String language) throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/document/wordcloud/{documentId}?foreignLanguage={foreignLanguage}",
-                        1,
-                        foreignLanguage)
+                        "http://localhost:8081/api/document/wordcloud/{documentId}?language={foreignLanguage}",
+                        1, language)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }

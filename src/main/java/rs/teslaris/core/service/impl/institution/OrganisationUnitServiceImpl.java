@@ -51,6 +51,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
@@ -196,11 +197,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                                Integer personId,
                                                                Integer topLevelInstitutionId,
                                                                Boolean onlyReturnOnesWhichCanHarvest,
-                                                               Boolean onlyIndependent) {
+                                                               Boolean onlyIndependent,
+                                                               ThesisType allowedThesisType) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId,
-                    onlyReturnOnesWhichCanHarvest, onlyIndependent),
+                    onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -213,7 +215,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
                                          Integer topLevelInstitutionId,
                                          Boolean onlyReturnOnesWhichCanHarvest,
-                                         Boolean onlyIndependent) {
+                                         Boolean onlyIndependent, ThesisType allowedThesisType) {
         StringUtil.removeNotableStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -225,6 +227,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     .should(sh -> sh.exists(e -> e.field("scopus_afid")))
                     .should(sh -> sh.exists(e -> e.field("open_alex_id")))
                 ));
+            }
+
+            if (Objects.nonNull(allowedThesisType)) {
+                b.must(sb -> sb.term(
+                    m -> m.field("allowed_thesis_types").value(allowedThesisType.name())));
             }
 
             tokens.forEach(token -> {
@@ -518,6 +525,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         if (Objects.nonNull(organisationUnitDTO.getUris())) {
             IdentifierUtil.setUris(organisationUnit.getUris(), organisationUnitDTO.getUris());
         }
+
+        if (Objects.nonNull(organisationUnitDTO.getAllowedThesisTypes())) {
+            organisationUnit.setAllowedThesisTypes(
+                organisationUnitDTO.getAllowedThesisTypes().stream().map(Enum::name)
+                    .collect(Collectors.toSet()));
+        }
     }
 
     @Override
@@ -662,6 +675,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 researchAreaSrContent.toString());
 
         indexBelongsToSuperOURelation(organisationUnit, index);
+
+        index.getAllowedThesisTypes().clear();
+        index.getAllowedThesisTypes().addAll(organisationUnit.getAllowedThesisTypes());
     }
 
     private void indexBelongsToSuperOURelation(OrganisationUnit organisationUnit,

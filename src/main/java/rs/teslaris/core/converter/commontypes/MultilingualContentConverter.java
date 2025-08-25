@@ -1,6 +1,7 @@
 package rs.teslaris.core.converter.commontypes;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,8 +23,8 @@ public class MultilingualContentConverter {
     }
 
     public static String getLocalizedContent(Set<MultiLingualContent> multilingualContent,
-                                             String locale) {
-        var content = getContentWithAnyFallback(multilingualContent, locale);
+                                             String locale, String avoidLocale) {
+        var content = getContentWithAnyFallback(multilingualContent, locale, avoidLocale);
 
         if (content.isPresent()) {
             return content.get().getContent();
@@ -34,7 +35,7 @@ public class MultilingualContentConverter {
 
     public static Pair<String, String> getLocalizedContentWithLocale(
         Set<MultiLingualContent> multilingualContent, String locale) {
-        var content = getContentWithAnyFallback(multilingualContent, locale);
+        var content = getContentWithAnyFallback(multilingualContent, locale, null);
 
         return content.map(multiLingualContent -> new Pair<>(multiLingualContent.getContent(),
                 multiLingualContent.getLanguage().getLanguageTag()))
@@ -42,9 +43,10 @@ public class MultilingualContentConverter {
     }
 
     private static Optional<MultiLingualContent> getContentWithAnyFallback(
-        Set<MultiLingualContent> multilingualContent, String locale) {
+        Set<MultiLingualContent> multilingualContent, String locale, String avoidLocale) {
         return multilingualContent.stream()
-            .filter(mc -> mc.getLanguage().getLanguageTag().equalsIgnoreCase(locale))
+            .filter(mc -> Objects.nonNull(mc.getLanguage()) &&
+                mc.getLanguage().getLanguageTag().equalsIgnoreCase(locale))
             .findFirst()
             .or(() -> {
                 if (locale.contains("-")) {
@@ -55,6 +57,9 @@ public class MultilingualContentConverter {
                 }
                 return Optional.empty();
             })
+            .or(() -> multilingualContent.stream().filter(mc -> Objects.isNull(avoidLocale) ||
+                Objects.isNull(mc.getLanguage()) ||
+                !mc.getLanguage().getLanguageTag().startsWith(avoidLocale)).findAny())
             .or(() -> multilingualContent.stream().findAny());
     }
 }

@@ -8,6 +8,7 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
 public class OrganisationUnitConverter {
@@ -34,6 +35,8 @@ public class OrganisationUnitConverter {
         dto.setOpenAlexId(organisationUnit.getOpenAlexId());
         dto.setRor(organisationUnit.getRor());
         dto.setUris(organisationUnit.getUris());
+        dto.setAllowedThesisTypes(
+            organisationUnit.getAllowedThesisTypes().stream().map(ThesisType::valueOf).toList());
 
         if (Objects.nonNull(organisationUnit.getLogo())) {
             dto.setLogoServerFilename(organisationUnit.getLogo().getImageServerName());

@@ -23,16 +23,14 @@ public class OrganisationUnitOutputConfigurationController {
     private final OrganisationUnitOutputConfigurationService
         organisationUnitOutputConfigurationService;
 
-    @GetMapping("{organisationUnitId}")
-    @PreAuthorize("hasAuthority('SAVE_OU_OUTPUT_CONFIGURATION')")
-    @OrgUnitEditCheck
+    @GetMapping("/{organisationUnitId}")
     public OrganisationUnitOutputConfigurationDTO readConfigurationForInstitution(
         @PathVariable Integer organisationUnitId) {
         return organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId);
     }
 
-    @PatchMapping("{organisationUnitId}")
+    @PatchMapping("/{organisationUnitId}")
     @PreAuthorize("hasAuthority('SAVE_OU_OUTPUT_CONFIGURATION')")
     @OrgUnitEditCheck
     @ResponseStatus(HttpStatus.ACCEPTED)

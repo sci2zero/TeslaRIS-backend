@@ -101,8 +101,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
     List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields);
 
-    List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
-                                                           boolean foreignLanguage);
+    List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId, String language);
 
     Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
                                                       String scopusId, String webOfScienceId);
