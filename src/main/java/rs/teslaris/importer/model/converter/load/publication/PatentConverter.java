@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.PatentDTO;
@@ -20,6 +21,8 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
     private final MultilingualContentConverter multilingualContentConverter;
 
     private final PersonContributionConverter personContributionConverter;
+
+    private final PublisherConverter publisherConverter;
 
 
     @Override
@@ -45,6 +48,19 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getInventor(),
             DocumentContributionType.AUTHOR, dto.getContributions());
+
+        dto.setDoi(record.getDoi());
+
+        if (Objects.nonNull(record.getUrl())) {
+            dto.setUris(new HashSet<>());
+            record.getUrl().forEach(url -> {
+                dto.getUris().add(url);
+            });
+        }
+
+        if (Objects.nonNull(record.getPublisher())) {
+            publisherConverter.setPublisherInformation(record.getPublisher(), dto);
+        }
 
         return dto;
     }

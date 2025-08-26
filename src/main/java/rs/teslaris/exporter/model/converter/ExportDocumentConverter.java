@@ -41,10 +41,10 @@ import rs.teslaris.core.model.oaipmh.marc21.ControlField;
 import rs.teslaris.core.model.oaipmh.marc21.DataField;
 import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.oaipmh.marc21.SubField;
+import rs.teslaris.core.model.oaipmh.publication.Institution;
 import rs.teslaris.core.model.oaipmh.publication.PartOf;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.model.oaipmh.publication.PublishedIn;
-import rs.teslaris.core.model.oaipmh.publication.Publisher;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
@@ -533,15 +533,15 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 openairePublication.getEditors().add(personAttributes);
             });
 
-        openairePublication.setPublishers(new ArrayList<>());
+        openairePublication.setInstitutions(new ArrayList<>());
         exportDocument.getPublishers().forEach(publisher -> {
-            var openairePublisher = new Publisher();
+            var openairePublisher = new Institution();
             ExportMultilingualContentConverter.setFieldFromPriorityContent(
                 publisher.getName().stream(),
                 Function.identity(),
                 openairePublisher::setDisplayName
             );
-            openairePublication.getPublishers().add(openairePublisher);
+            openairePublication.getInstitutions().add(openairePublisher);
         });
 
         return openairePublication;

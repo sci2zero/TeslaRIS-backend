@@ -42,4 +42,6 @@ public interface BookSeriesService {
     void indexBookSeries(BookSeries bookSeries);
 
     void save(BookSeries bookSeries);
+
+    BookSeriesIndex readBookSeriesByIssn(String eIssn, String printIssn);
 }

@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -205,6 +206,26 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Override
     public void save(BookSeries bookSeries) {
         bookSeriesJPAService.save(bookSeries);
+    }
+
+    @Override
+    @Nullable
+    public BookSeriesIndex readBookSeriesByIssn(String eIssn, String printIssn) {
+        boolean isEissnBlank = (Objects.isNull(eIssn) || eIssn.isBlank());
+        boolean isPrintIssnBlank = (Objects.isNull(printIssn) || printIssn.isBlank());
+
+        if (isEissnBlank && isPrintIssnBlank) {
+            return null;
+        }
+
+        if (isEissnBlank) {
+            eIssn = printIssn;
+        } else if (isPrintIssnBlank) {
+            printIssn = eIssn;
+        }
+
+        return bookSeriesIndexRepository.findBookSeriesIndexByeISSNOrPrintISSN(eIssn, printIssn)
+            .orElse(null);
     }
 
     private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {

@@ -27,6 +27,8 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         proceedingsResponseDTO.setNumberOfPages(proceedings.getNumberOfPages());
         proceedingsResponseDTO.setPublicationSeriesIssue(proceedings.getPublicationSeriesIssue());
         proceedingsResponseDTO.setPublicationSeriesVolume(proceedings.getPublicationSeriesVolume());
+        proceedingsResponseDTO.setAcronym(MultilingualContentConverter.getMultilingualContentDTO(
+            proceedings.getNameAbbreviation()));
 
         proceedingsResponseDTO.setLanguageTagIds(new ArrayList<>());
         setLanguageInfo(proceedings, proceedingsResponseDTO);

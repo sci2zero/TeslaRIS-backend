@@ -257,6 +257,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         proceedings.setPublicationSeriesVolume(proceedingsDTO.getPublicationSeriesVolume());
         proceedings.setPublicationSeriesIssue(proceedingsDTO.getPublicationSeriesIssue());
 
+        proceedings.setNameAbbreviation(
+            multilingualContentService.getMultilingualContent(proceedingsDTO.getAcronym()));
+
         proceedingsDTO.getLanguageTagIds().forEach(id -> {
             proceedings.getLanguages().add(languageTagService.findLanguageTagById(id));
         });

@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PatentDTO extends DocumentDTO {
+public class PatentDTO extends DocumentDTO implements PublishableDTO {
 
     private String number;
 

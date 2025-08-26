@@ -17,6 +17,7 @@ import lombok.ToString;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
+import rs.teslaris.core.model.oaipmh.publication.Publisher;
 
 @XmlType(name = "TProduct", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -66,4 +67,13 @@ public class Product implements ProductConvertable, HasOldId {
 
     @XmlElement(name = "PublicationDate")
     private Date publicationDate;
+
+    @XmlElement(name = "DOI")
+    private String doi;
+
+    @XmlElement(name = "InternalNumber")
+    private String internalNumber;
+
+    @XmlElement(name = "Publisher")
+    private Publisher publisher;
 }

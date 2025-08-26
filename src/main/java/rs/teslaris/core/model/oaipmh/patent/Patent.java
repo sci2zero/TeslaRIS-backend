@@ -17,6 +17,7 @@ import lombok.ToString;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
+import rs.teslaris.core.model.oaipmh.publication.Publisher;
 
 @XmlType(name = "TPatent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -59,4 +60,15 @@ public class Patent implements PatentConvertable, HasOldId {
     private List<Integer> importUserId;
 
     private Boolean loaded;
+
+    // Additional Migration fields - not part of the OAI-PMH specification
+
+    @XmlElement(name = "DOI")
+    private String doi;
+
+    @XmlElement(name = "URL")
+    private List<String> url;
+
+    @XmlElement(name = "Publisher")
+    private Publisher publisher;
 }

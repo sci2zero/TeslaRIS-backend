@@ -822,6 +822,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setApproveStatus(
             document.getIsMetadataValid() ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
+
+        if (SessionTrackingUtil.isUserLoggedIn() &&
+            Objects.requireNonNull(SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+                .equals(UserRole.ADMIN.name())) {
+            document.setAdminNote(documentDTO.getNote());
+        }
     }
 
     private void setCommonIdentifiers(Document document, DocumentDTO documentDTO) {

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
@@ -21,11 +22,13 @@ public class MonographPublicationConverter extends DocumentConverter implements
 
 
     @Autowired
-    public MonographPublicationConverter(
-        MultilingualContentConverter multilingualContentConverter,
-        PersonContributionConverter personContributionConverter,
-        DocumentPublicationService documentPublicationService) {
-        super(multilingualContentConverter, personContributionConverter);
+    public MonographPublicationConverter(MultilingualContentConverter multilingualContentConverter,
+                                         PublisherConverter publisherConverter,
+                                         BookSeriesService bookSeriesService,
+                                         PersonContributionConverter personContributionConverter,
+                                         DocumentPublicationService documentPublicationService) {
+        super(multilingualContentConverter, publisherConverter, bookSeriesService,
+            personContributionConverter);
         this.documentPublicationService = documentPublicationService;
     }
 

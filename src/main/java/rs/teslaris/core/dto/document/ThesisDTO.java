@@ -16,7 +16,7 @@ import rs.teslaris.core.model.document.ThesisType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ThesisDTO extends DocumentDTO {
+public class ThesisDTO extends DocumentDTO implements PublishableDTO {
 
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer organisationUnitId;
@@ -79,4 +79,7 @@ public class ThesisDTO extends DocumentDTO {
     private List<MultilingualContentDTO> remark = new ArrayList<>();
 
     private List<MultilingualContentDTO> typeOfTitle = new ArrayList<>();
+
+    // Only for migration
+    private LocalDate publicReviewStartDate;
 }

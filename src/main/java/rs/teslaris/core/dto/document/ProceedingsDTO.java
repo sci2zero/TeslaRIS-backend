@@ -2,17 +2,19 @@ package rs.teslaris.core.dto.document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProceedingsDTO extends DocumentDTO {
+public class ProceedingsDTO extends DocumentDTO implements PublishableDTO, InSeriesDTO {
 
     @JsonProperty("eISBN")
     private String eISBN;
@@ -31,4 +33,6 @@ public class ProceedingsDTO extends DocumentDTO {
     private String publicationSeriesVolume;
 
     private String publicationSeriesIssue;
+
+    private List<MultilingualContentDTO> acronym = new ArrayList<>();
 }

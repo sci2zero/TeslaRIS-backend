@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.importer.dto.JournalPublicationLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
@@ -26,9 +27,12 @@ public class JournalPublicationConverter extends DocumentConverter
 
     @Autowired
     public JournalPublicationConverter(MultilingualContentConverter multilingualContentConverter,
+                                       PublisherConverter publisherConverter,
+                                       BookSeriesService bookSeriesService,
                                        PersonContributionConverter personContributionConverter,
                                        JournalService journalService) {
-        super(multilingualContentConverter, personContributionConverter);
+        super(multilingualContentConverter, publisherConverter, bookSeriesService,
+            personContributionConverter);
         this.journalService = journalService;
     }
 

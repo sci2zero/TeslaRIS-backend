@@ -68,4 +68,7 @@ public class DocumentDTO {
     private Boolean areFilesValid;
 
     private Boolean isArchived;
+
+    // Used only for migration
+    private String note;
 }

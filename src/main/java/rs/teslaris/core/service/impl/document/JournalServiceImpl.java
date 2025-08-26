@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -111,6 +112,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Nullable
     public JournalIndex readJournalByIssn(String eIssn, String printIssn) {
         boolean isEissnBlank = (Objects.isNull(eIssn) || eIssn.isBlank());
         boolean isPrintIssnBlank = (Objects.isNull(printIssn) || printIssn.isBlank());

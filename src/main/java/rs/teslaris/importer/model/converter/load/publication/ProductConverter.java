@@ -2,6 +2,8 @@ package rs.teslaris.importer.model.converter.load.publication;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,8 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
     private final MultilingualContentConverter multilingualContentConverter;
 
     private final PersonContributionConverter personContributionConverter;
+
+    private final PublisherConverter publisherConverter;
 
 
     @Override
@@ -41,6 +45,20 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getCreators(),
             DocumentContributionType.AUTHOR, dto.getContributions());
+
+        dto.setDoi(record.getDoi());
+        dto.setInternalNumber(record.getInternalNumber());
+
+        if (Objects.nonNull(record.getUrl())) {
+            dto.setUris(new HashSet<>());
+            record.getUrl().forEach(url -> {
+                dto.getUris().add(url);
+            });
+        }
+
+        if (Objects.nonNull(record.getPublisher())) {
+            publisherConverter.setPublisherInformation(record.getPublisher(), dto);
+        }
 
         return dto;
     }

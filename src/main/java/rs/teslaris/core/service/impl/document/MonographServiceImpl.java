@@ -33,6 +33,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
@@ -62,6 +63,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private final MonographRepository monographRepository;
 
+    private final PublisherService publisherService;
+
     private final Pattern doiPattern =
         Pattern.compile("^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
@@ -86,7 +89,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 JournalService journalService,
                                 BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
-                                MonographRepository monographRepository) {
+                                MonographRepository monographRepository,
+                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService,
             personContributionService,
@@ -99,6 +103,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         this.bookSeriesService = bookSeriesService;
         this.researchAreaService = researchAreaService;
         this.monographRepository = monographRepository;
+        this.publisherService = publisherService;
     }
 
     @Override
@@ -276,6 +281,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             monograph.setResearchArea(
                 researchAreaService.findOne(monographDTO.getResearchAreaId()));
         }
+
+        if (Objects.nonNull(monographDTO.getPublisherId())) {
+            monograph.setPublisher(publisherService.findOne(monographDTO.getPublisherId()));
+        }
     }
 
     @Override
@@ -287,6 +296,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             if (monograph.getPublicationSeries() instanceof Journal journal) {
                 index.setJournalId(journal.getId());
             }
+        }
+
+        if (Objects.nonNull(monograph.getPublisher())) {
+            index.setPublisherId(monograph.getPublisher().getId());
         }
 
         index.setType(DocumentPublicationType.MONOGRAPH.name());

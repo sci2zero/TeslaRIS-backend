@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
@@ -26,9 +27,12 @@ public class ProceedingsConverter extends DocumentConverter
 
     @Autowired
     public ProceedingsConverter(MultilingualContentConverter multilingualContentConverter,
+                                PublisherConverter publisherConverter,
+                                BookSeriesService bookSeriesService,
                                 PersonContributionConverter personContributionConverter,
                                 EventService eventService, LanguageTagService languageTagService) {
-        super(multilingualContentConverter, personContributionConverter);
+        super(multilingualContentConverter, publisherConverter, bookSeriesService,
+            personContributionConverter);
         this.eventService = eventService;
         this.languageTagService = languageTagService;
     }
@@ -41,6 +45,9 @@ public class ProceedingsConverter extends DocumentConverter
         setCommonFields(record, dto);
 
         dto.setEISBN(record.getIsbn());
+        dto.setPublicationSeriesVolume(record.getVolume());
+
+        dto.setAcronym(multilingualContentConverter.toDTO(record.getAcronym()));
 
         if (Objects.nonNull(record.getLanguage())) {
             var languageTagValue = deduceLanguageTagValue(record);
@@ -76,6 +83,14 @@ public class ProceedingsConverter extends DocumentConverter
         } else {
             log.warn("Could not load, no event specified: {}", record.getOldId());
             return null;
+        }
+
+        if (Objects.nonNull(record.getPublisher())) {
+            publisherConverter.setPublisherInformation(record.getPublisher(), dto);
+        }
+
+        if (Objects.nonNull(record.getBookSeries())) {
+            setBookSeriesInformation(record.getBookSeries(), dto);
         }
 
         return dto;

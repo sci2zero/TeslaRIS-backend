@@ -49,6 +49,7 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.model.document.ThesisPhysicalDescription;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
@@ -595,6 +596,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         setCommonIdentifiers(thesis, thesisDTO);
+
+        if (SessionTrackingUtil.isUserLoggedIn() && Objects.requireNonNull(
+                SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+            .equals(UserRole.ADMIN.name()) &&
+            Objects.nonNull(thesisDTO.getPublicReviewStartDate())) {
+            thesis.getPublicReviewStartDates().add(thesisDTO.getPublicReviewStartDate());
+            thesis.setPublicReviewCompleted(true);
+        }
     }
 
     private void setCommonIdentifiers(Thesis thesis, ThesisDTO thesisDTO) {

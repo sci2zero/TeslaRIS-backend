@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SoftwareDTO extends DocumentDTO {
+public class SoftwareDTO extends DocumentDTO implements PublishableDTO {
 
     private String internalNumber;
 

@@ -71,6 +71,8 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         publicationSeries.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(
                 publicationSeriesDTO.getNameAbbreviation()));
+        publicationSeries.setSubtitle(
+            multilingualContentService.getMultilingualContent(publicationSeriesDTO.getSubtitle()));
 
         if (Objects.nonNull(publicationSeriesDTO.getOldId())) {
             publicationSeries.getOldIds().add(publicationSeriesDTO.getOldId());
