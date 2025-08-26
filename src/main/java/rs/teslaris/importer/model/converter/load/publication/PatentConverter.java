@@ -52,8 +52,12 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
         dto.setDoi(record.getDoi());
 
         if (Objects.nonNull(record.getUrl())) {
-            dto.setUris(new HashSet<>());
             record.getUrl().forEach(url -> {
+                if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId") ||
+                    url.startsWith("https://www.cris.uns.ac.rs/DownloadFileServlet")) {
+                    return;
+                }
+
                 dto.getUris().add(url);
             });
         }
