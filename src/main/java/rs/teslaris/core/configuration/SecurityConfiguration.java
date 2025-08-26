@@ -337,6 +337,9 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/journal/linkset/{journalId}/{linksetFormat}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/book-series/linkset/{bookSeriesId}/{linksetFormat}").permitAll()
 
+                // VISUALIZATION DATA
+                .requestMatchers(HttpMethod.GET, "/api/visualization-data/**").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

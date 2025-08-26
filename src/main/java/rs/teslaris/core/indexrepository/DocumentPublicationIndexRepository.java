@@ -291,6 +291,4 @@ public interface DocumentPublicationIndexRepository extends
         }
         """)
     long countApprovedPublications();
-
-
 }
