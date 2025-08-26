@@ -343,10 +343,9 @@ public class BookSeriesServiceTest {
     void givenBothIssnsBlank_whenReadBookSeriesByIssn_thenReturnNull() {
         // Given
         var eIssn = " ";
-        String printIssn = null;
 
         // When
-        BookSeriesIndex result = bookSeriesService.readBookSeriesByIssn(eIssn, printIssn);
+        BookSeriesIndex result = bookSeriesService.readBookSeriesByIssn(eIssn, null);
 
         // Then
         assertNull(result);
@@ -408,8 +407,8 @@ public class BookSeriesServiceTest {
     @Test
     void givenBothIssnsPresentAndRepositoryReturnsEmpty_whenReadBookSeriesByIssn_thenReturnNull() {
         // Given
-        String eIssn = "8765-4321";
-        String printIssn = "1234-5678";
+        var eIssn = "8765-4321";
+        var printIssn = "1234-5678";
         when(bookSeriesIndexRepository.findBookSeriesIndexByeISSNOrPrintISSN(eIssn, printIssn))
             .thenReturn(Optional.empty());
 
