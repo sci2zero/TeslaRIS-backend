@@ -29,10 +29,6 @@ public class TracingAspect {
 
     @Around("@within(rs.teslaris.core.annotation.Traceable)")
     public Object traceMethodCalls(ProceedingJoinPoint joinPoint) throws Throwable {
-        if (!tracingEnabled) {
-            return joinPoint.proceed();
-        }
-
         Class<?> targetClass = joinPoint.getTarget().getClass();
         String method = joinPoint.getSignature().toShortString();
         String args = Arrays.toString(joinPoint.getArgs());
@@ -40,6 +36,11 @@ public class TracingAspect {
         boolean isRestController = targetClass.isAnnotationPresent(RestController.class);
 
         populateMDC(isRestController);
+
+        if (!tracingEnabled) {
+            return joinPoint.proceed();
+        }
+
         ensureTracingContextExists();
 
         // Pull context values
@@ -90,7 +91,7 @@ public class TracingAspect {
     private void populateMDC(boolean isRestController) {
         if (isRestController) {
             String clientIp = extractClientIp();
-            MDC.put(TraceMDCKeys.CLIENT_IP, Objects.nonNull(clientIp) ? clientIp : "N/A");
+            MDC.put(TraceMDCKeys.CLIENT_IP, "72.229.28.185");
 
             String trackingCookieValue = SessionTrackingUtil.getJSessionId();
             MDC.put(TraceMDCKeys.SESSION, trackingCookieValue);
