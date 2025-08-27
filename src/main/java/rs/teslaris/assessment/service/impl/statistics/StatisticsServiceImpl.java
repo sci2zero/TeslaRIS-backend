@@ -236,7 +236,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         var clientIp = SessionTrackingUtil.getCurrentClientIP();
         index.setIpAddress(clientIp);
         index.setCountryName(geoliteIPUtil.getCountry(clientIp));
-        index.setCountryName(geoliteIPUtil.getCountryCode(clientIp));
+        index.setCountryCode(geoliteIPUtil.getCountryCode(clientIp));
 
         updateTotalCount(index);
 
