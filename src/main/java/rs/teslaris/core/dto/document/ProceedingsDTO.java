@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ public class ProceedingsDTO extends DocumentDTO implements PublishableDTO, InSer
     @NotNull(message = "You have to provide languages.")
     private List<Integer> languageTagIds;
 
+    @Positive(message = "Publisher ID cannot be negative or zero.")
     private Integer publisherId;
 
     private Integer publicationSeriesId;
