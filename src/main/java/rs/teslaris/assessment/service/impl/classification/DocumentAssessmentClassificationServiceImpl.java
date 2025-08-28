@@ -76,6 +76,7 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
@@ -192,11 +193,11 @@ public class DocumentAssessmentClassificationServiceImpl
             Integer.parseInt(document.getDocumentDate().split("-")[0]));
         newDocumentClassification.setDocument(document);
 
-        var savedDocument =
+        var savedDocumentClassification =
             documentAssessmentClassificationRepository.save(newDocumentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(document.getId());
 
-        return EntityAssessmentClassificationConverter.toDTO(savedDocument);
+        return EntityAssessmentClassificationConverter.toDTO(savedDocumentClassification);
     }
 
     private void checkIfDocumentIsAThesis(Document document) {
@@ -373,9 +374,14 @@ public class DocumentAssessmentClassificationServiceImpl
                             new Pair<>(manualClassification.get().getAssessmentClassification(),
                                 manualClassification.get().getClassificationReason()));
                     } else if (!classificationList.isEmpty()) {
-                        classifications.add(
-                            new Pair<>(classificationList.getFirst().getAssessmentClassification(),
-                                classificationList.getFirst().getClassificationReason()));
+                        ClassificationPriorityMapping.getBestJournalClassification(
+                            classificationList.stream()
+                                .map(EntityAssessmentClassification::getAssessmentClassification)
+                                .toList()).ifPresent(bestClassification ->
+                            classifications.add(
+                                new Pair<>(bestClassification,
+                                    classificationList.getFirst().getClassificationReason()))
+                        );
                     } else {
                         handleRelationAssessments(commission,
                             (targetCommissionId) -> {
@@ -473,9 +479,14 @@ public class DocumentAssessmentClassificationServiceImpl
                         new Pair<>(manualClassification.get().getAssessmentClassification(),
                             manualClassification.get().getClassificationReason()));
                 } else if (!classificationList.isEmpty()) {
-                    classifications.add(
-                        new Pair<>(classificationList.getFirst().getAssessmentClassification(),
-                            classificationList.getFirst().getClassificationReason()));
+                    ClassificationPriorityMapping.getBestJournalClassification(
+                        classificationList.stream()
+                            .map(EntityAssessmentClassification::getAssessmentClassification)
+                            .toList()).ifPresent(bestClassification ->
+                        classifications.add(
+                            new Pair<>(bestClassification,
+                                classificationList.getFirst().getClassificationReason()))
+                    );
                 } else {
                     handleRelationAssessments(commission,
                         (targetCommissionId) -> {
@@ -797,6 +808,13 @@ public class DocumentAssessmentClassificationServiceImpl
             .ifPresent(documentIndex -> {
                 if (!documentIndex.getAssessedBy().contains(commission.getId())) {
                     documentIndex.getAssessedBy().add(commission.getId());
+                }
+
+                var assessmentTriple = new Triple<>(commission.getId(),
+                    documentClassification.getAssessmentClassification().getCode().substring(0, 2) +
+                        "0", false);
+                if (!documentIndex.getCommissionAssessments().contains(assessmentTriple)) {
+                    documentIndex.getCommissionAssessments().add(assessmentTriple);
                 }
                 documentPublicationIndexRepository.save(documentIndex);
             });

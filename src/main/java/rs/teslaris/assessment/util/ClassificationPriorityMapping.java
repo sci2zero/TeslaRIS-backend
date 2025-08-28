@@ -80,6 +80,13 @@ public class ClassificationPriorityMapping {
         };
     }
 
+    public static Optional<AssessmentClassification> getBestJournalClassification(
+        List<AssessmentClassification> classificationCodes) {
+        return classificationCodes.stream().min(Comparator.comparingInt(
+            assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
+                assessmentClassification.getCode(), Integer.MAX_VALUE)));
+    }
+
     public static Optional<String> getDocClassificationCodeBasedOnCode(
         String classificationCode, Integer documentId) {
 

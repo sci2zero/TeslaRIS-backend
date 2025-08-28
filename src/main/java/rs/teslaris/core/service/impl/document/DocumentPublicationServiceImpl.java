@@ -420,7 +420,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         setBasicMetadata(document, index);
         setContributors(document, index);
-        setAdditionalMetadata(document, index);
+        setAdditionalMetadata(document.getId(), index);
 
         index.setIsApproved(Objects.nonNull(document.getApproveStatus()) &&
             document.getApproveStatus().equals(ApproveStatus.APPROVED));
@@ -593,17 +593,25 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             index.getBoardMemberNames() + "; " + contributorName));
     }
 
-    private void setAdditionalMetadata(Document document, DocumentPublicationIndex index) {
+    private void setAdditionalMetadata(Integer documentId, DocumentPublicationIndex index) {
         index.setAssessedBy(
-            commissionRepository.findCommissionsThatAssessedDocument(document.getId()));
+            commissionRepository.findCommissionsThatAssessedDocument(documentId));
+
+        index.getCommissionAssessments().clear();
+        commissionRepository.findAssessmentClassificationBasicInfoForDocumentAndCommissions(
+            documentId, index.getAssessedBy()).forEach(assessment -> {
+            index.getCommissionAssessments().add(
+                new Triple<>(assessment.commissionId(),
+                    assessment.assessmentCode().substring(0, 2) + "0",
+                    assessment.manual()));
+        });
     }
 
     @Override
     public void reindexDocumentVolatileInformation(Integer documentId) {
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
             .ifPresent(documentIndex -> {
-                documentIndex.setAssessedBy(
-                    commissionRepository.findCommissionsThatAssessedDocument(documentId));
+                setAdditionalMetadata(documentId, documentIndex);
                 documentPublicationIndexRepository.save(documentIndex);
             });
     }

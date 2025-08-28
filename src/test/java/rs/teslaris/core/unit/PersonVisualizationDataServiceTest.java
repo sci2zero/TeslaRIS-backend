@@ -1,7 +1,9 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -11,11 +13,14 @@ import static org.mockito.Mockito.when;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.DateHistogramBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.util.ObjectBuilder;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,8 +32,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
-import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.document.PersonVisualizationDataServiceImpl;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 
@@ -40,6 +47,12 @@ public class PersonVisualizationDataServiceTest {
 
     @Mock
     private PersonService personService;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private InvolvementRepository involvementRepository;
 
     @InjectMocks
     private PersonVisualizationDataServiceImpl service;
@@ -123,7 +136,6 @@ public class PersonVisualizationDataServiceTest {
     void shouldReturnCountryBucketsWhenGettingStatisticsByCountryForPerson() throws IOException {
         // Given
         var personId = 123;
-        var statisticsType = StatisticsType.VIEW;
 
         var person = mock(Person.class);
         when(person.getMergedIds()).thenReturn(Set.of(456, 789));
@@ -169,7 +181,7 @@ public class PersonVisualizationDataServiceTest {
         )).thenReturn(mockResponse);
 
         // When
-        var result = service.getByCountryStatisticsForPerson(personId, statisticsType);
+        var result = service.getByCountryStatisticsForPerson(personId);
 
         // Then
         assertEquals(2, result.size());
@@ -181,5 +193,111 @@ public class PersonVisualizationDataServiceTest {
         var second = result.get(1);
         assertEquals("DE", second.countryCode());
         assertEquals(7L, second.value());
+    }
+
+    @Test
+    void shouldReturnCommissionYearlyCountsForPerson() throws IOException {
+        // Given
+        var personId = 123;
+        var startYear = 2020;
+        var endYear = 2021;
+
+        when(involvementRepository.findActiveEmploymentInstitutionIds(personId)).thenReturn(
+            List.of(1));
+        when(userRepository.findUserCommissionForOrganisationUnit(1)).thenReturn(
+            List.of(new Commission()));
+
+        // Mock ES aggregation buckets
+        var mockBucket1 = mock(StringTermsBucket.class);
+        when(mockBucket1.key()).thenReturn(FieldValue.of("M50"));
+        when(mockBucket1.docCount()).thenReturn(5L);
+
+        var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket1));
+
+        var mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(Map.of("by_m_category", mockAgg));
+
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse);
+
+        // When
+        var result = service.getMCategoryCountsForPerson(personId, startYear, endYear);
+
+        // Then
+        assertEquals(1, result.size());
+        var commissionCounts = result.getFirst();
+        assertTrue(commissionCounts.yearlyCounts().stream()
+            .allMatch(yc -> yc.countsByCategory().containsKey("M50")));
+    }
+
+    @Test
+    void shouldReturnMonthlyStatisticsCountsForPerson() throws IOException {
+        // Given
+        var personId = 123;
+        var from = LocalDate.of(2025, 1, 1);
+        var to = LocalDate.of(2025, 3, 1);
+
+        var mockBucket1 = mock(DateHistogramBucket.class);
+        when(mockBucket1.keyAsString()).thenReturn("2025-01");
+        when(mockBucket1.docCount()).thenReturn(10L);
+
+        var mockBucket2 = mock(DateHistogramBucket.class);
+        when(mockBucket2.keyAsString()).thenReturn("2025-02");
+        when(mockBucket2.docCount()).thenReturn(7L);
+
+        var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAgg.dateHistogram().buckets().array()).thenReturn(
+            List.of(mockBucket1, mockBucket2));
+
+        var mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(Map.of("per_month", mockAgg));
+
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse);
+
+        // When
+        var result = service.getMonthlyStatisticsCounts(personId, from, to);
+
+        // Then
+        assertEquals(2, result.size());
+        assertEquals(10L, result.get(YearMonth.of(2025, 1)));
+        assertEquals(7L, result.get(YearMonth.of(2025, 2)));
+    }
+
+    @Test
+    void shouldReturnMCategoriesForPersonPublications() throws IOException {
+        // Given
+        var personId = 123;
+        var startYear = 2020;
+        var endYear = 2020;
+
+        when(involvementRepository.findActiveEmploymentInstitutionIds(personId)).thenReturn(
+            List.of(1));
+        when(userRepository.findUserCommissionForOrganisationUnit(1)).thenReturn(
+            List.of(new Commission()));
+
+        // Mock ES aggregation buckets
+        var mockBucket1 = mock(StringTermsBucket.class);
+        when(mockBucket1.key()).thenReturn(FieldValue.of("M50"));
+        when(mockBucket1.docCount()).thenReturn(5L);
+
+        var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket1));
+
+        var mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(Map.of("by_m_category", mockAgg));
+
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse);
+
+        // When
+        var result = service.getPersonPublicationsByMCategories(personId, startYear, endYear);
+
+        // Then
+        assertEquals(1, result.size());
+        var mCounts = result.getFirst();
+        assertEquals(1, mCounts.countsByCategory().size());
+        assertEquals(5L, mCounts.countsByCategory().get("M50"));
     }
 }

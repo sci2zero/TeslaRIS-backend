@@ -16,6 +16,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.core.util.Triple;
 
 @Getter
 @Setter
@@ -162,6 +163,9 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Integer, name = "assessed_by", store = true)
     private List<Integer> assessedBy = new ArrayList<>();
+
+    @Field(type = FieldType.Object, name = "commission_assessments", store = true)
+    private List<Triple<Integer, String, Boolean>> commissionAssessments = new ArrayList<>();
 
     @Field(type = FieldType.Integer, name = "research_outputs", store = true)
     private List<Integer> researchOutputIds = new ArrayList<>();
