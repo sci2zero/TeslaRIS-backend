@@ -61,7 +61,7 @@ public class MonographConverter extends DocumentPublicationConverter {
     }
 
     public static BibTeXEntry toBibTexEntry(Monograph monograph, String defaultLanguageTag) {
-        var entry = new BibTeXEntry(new Key("collection"),
+        var entry = new BibTeXEntry(BibTeXEntry.TYPE_BOOK,
             new Key("(TESLARIS)" + monograph.getId().toString()));
 
         setCommonFields(monograph, entry, defaultLanguageTag);
