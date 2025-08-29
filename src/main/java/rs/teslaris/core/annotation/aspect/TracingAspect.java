@@ -91,7 +91,7 @@ public class TracingAspect {
     private void populateMDC(boolean isRestController) {
         if (isRestController) {
             String clientIp = extractClientIp();
-            MDC.put(TraceMDCKeys.CLIENT_IP, "72.229.28.185");
+            MDC.put(TraceMDCKeys.CLIENT_IP, Objects.nonNull(clientIp) ? clientIp : "N/A");
 
             String trackingCookieValue = SessionTrackingUtil.getJSessionId();
             MDC.put(TraceMDCKeys.SESSION, trackingCookieValue);

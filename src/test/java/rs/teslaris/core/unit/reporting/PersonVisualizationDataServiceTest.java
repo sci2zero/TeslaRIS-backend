@@ -1,4 +1,4 @@
-package rs.teslaris.core.unit;
+package rs.teslaris.core.unit.reporting;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,6 +24,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,8 +37,9 @@ import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.impl.document.PersonVisualizationDataServiceImpl;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.reporting.dto.YearlyCounts;
+import rs.teslaris.reporting.service.impl.PersonVisualizationDataServiceImpl;
 
 @SpringBootTest
 public class PersonVisualizationDataServiceTest {
@@ -104,13 +106,11 @@ public class PersonVisualizationDataServiceTest {
         var startYear = 2020;
         var endYear = 2021;
 
-        var mockCounts2020 = new ArrayList<PersonVisualizationDataServiceImpl.YearlyCounts>();
-        mockCounts2020.add(
-            new PersonVisualizationDataServiceImpl.YearlyCounts(2020, Map.of("JOURNAL", 3L)));
+        var mockCounts2020 = new ArrayList<YearlyCounts>();
+        mockCounts2020.add(new YearlyCounts(2020, Map.of("JOURNAL", 3L)));
 
-        var mockCounts2021 = new ArrayList<PersonVisualizationDataServiceImpl.YearlyCounts>();
-        mockCounts2021.add(
-            new PersonVisualizationDataServiceImpl.YearlyCounts(2021, Map.of("MONOGRAPH", 1L)));
+        var mockCounts2021 = new ArrayList<YearlyCounts>();
+        mockCounts2021.add(new YearlyCounts(2021, Map.of("MONOGRAPH", 1L)));
 
         var serviceSpy = spy(service);
         mockCounts2020.addAll(mockCounts2021);
@@ -181,7 +181,9 @@ public class PersonVisualizationDataServiceTest {
         )).thenReturn(mockResponse);
 
         // When
-        var result = service.getByCountryStatisticsForPerson(personId);
+        var result =
+            service.getByCountryStatisticsForPerson(personId, LocalDate.now().minusMonths(12),
+                LocalDate.now());
 
         // Then
         assertEquals(2, result.size());
@@ -237,6 +239,10 @@ public class PersonVisualizationDataServiceTest {
         var personId = 123;
         var from = LocalDate.of(2025, 1, 1);
         var to = LocalDate.of(2025, 3, 1);
+
+        when(personService.findOne(personId)).thenReturn(new Person() {{
+            setMergedIds(new HashSet<>(List.of(2, 3)));
+        }});
 
         var mockBucket1 = mock(DateHistogramBucket.class);
         when(mockBucket1.keyAsString()).thenReturn("2025-01");

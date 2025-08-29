@@ -1,4 +1,4 @@
-package rs.teslaris.core.service.impl.document;
+package rs.teslaris.reporting.service.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
@@ -25,13 +25,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.interfaces.document.PersonVisualizationDataService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.Pair;
+import rs.teslaris.reporting.dto.CommissionYearlyCounts;
+import rs.teslaris.reporting.dto.MCategoryCounts;
+import rs.teslaris.reporting.dto.StatisticsByCountry;
+import rs.teslaris.reporting.dto.YearlyCounts;
+import rs.teslaris.reporting.service.interfaces.PersonVisualizationDataService;
 
 @Slf4j
 @Service
@@ -50,18 +53,13 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     @Override
     public List<YearlyCounts> getPublicationCountsForPerson(Integer personId, Integer startYear,
                                                             Integer endYear) {
-        if (Objects.isNull(startYear) || Objects.isNull(endYear)) {
-            var yearRange = findPublicationYearRange(personId);
-            if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
-                return Collections.emptyList();
-            }
-
-            startYear = yearRange.a;
-            endYear = yearRange.b;
+        var yearRange = constructYearRange(startYear, endYear, personId);
+        if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
+            return Collections.emptyList();
         }
 
         var yearlyCounts = new ArrayList<YearlyCounts>();
-        for (int i = startYear; i <= endYear; i++) {
+        for (int i = yearRange.a; i <= yearRange.b; i++) {
             try {
                 yearlyCounts.add(
                     new YearlyCounts(i, getPublicationCountsByTypeForAuthorAndYear(personId, i)));
@@ -71,161 +69,6 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
         }
 
         return yearlyCounts;
-    }
-
-    @Override
-    public List<CommissionYearlyCounts> getMCategoryCountsForPerson(Integer personId,
-                                                                    Integer startYear,
-                                                                    Integer endYear) {
-        if (Objects.isNull(startYear) || Objects.isNull(endYear)) {
-            var yearRange = findPublicationYearRange(personId);
-            if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
-                return Collections.emptyList();
-            }
-
-            startYear = yearRange.a;
-            endYear = yearRange.b;
-        }
-
-        var commissions = new HashSet<Pair<Integer, Set<MultiLingualContent>>>();
-        involvementRepository.findActiveEmploymentInstitutionIds(personId)
-            .forEach(institutionId ->
-                commissions.addAll(
-                    userRepository.findUserCommissionForOrganisationUnit(institutionId).stream()
-                        .map(c -> new Pair<>(c.getId(), c.getDescription())).toList()));
-
-        var commissionYearlyCounts = new ArrayList<CommissionYearlyCounts>();
-        for (var commission : commissions) {
-            var yearlyCounts = new ArrayList<YearlyCounts>();
-
-            for (int i = startYear; i <= endYear; i++) {
-                try {
-                    yearlyCounts.add(new YearlyCounts(i,
-                        getPublicationMCategoryCountsByTypeForAuthorAndCommissionAndYear(personId,
-                            commission.a, i)));
-
-                } catch (IOException e) {
-                    log.warn("Unable to fetch person M category for {}. Adding all zeros.", i);
-                }
-            }
-
-            commissionYearlyCounts.add(new CommissionYearlyCounts(
-                MultilingualContentConverter.getMultilingualContentDTO(commission.b),
-                yearlyCounts));
-        }
-
-        return commissionYearlyCounts;
-    }
-
-    @Override
-    public List<StatisticsByCountry> getByCountryStatisticsForPerson(Integer personId) {
-        var person = personService.findOne(personId);
-        var allMergedPersonIds = new ArrayList<>(person.getMergedIds());
-        allMergedPersonIds.add(personId);
-
-        SearchResponse<Void> response;
-        try {
-            response = elasticsearchClient.search(s -> s
-                    .index("statistics")
-                    .size(0)
-                    .query(q -> q
-                        .bool(b -> b
-                            .must(m -> m.terms(t -> t.field("person_id").terms(
-                                v -> v.value(allMergedPersonIds.stream()
-                                    .map(FieldValue::of)
-                                    .toList())
-                            )))
-                            .must(m -> m.term(t -> t.field("type").value("VIEW")))
-                        )
-                    )
-                    .aggregations("by_country", a -> a
-                        .terms(t -> t.field("country_code")
-                            .size(
-                                195)) // 195 countries exist at the moment, we can lower this if need be
-                        .aggregations("country_name", sub -> sub
-                            .terms(t -> t.field("country_name").size(1))
-                        )
-                    ),
-                Void.class
-            );
-        } catch (IOException e) {
-            log.warn("Unable to fetch person statistics for ID {}.", personId);
-            return Collections.emptyList();
-        }
-
-        List<StatisticsByCountry> result = new ArrayList<>();
-
-        response.aggregations()
-            .get("by_country").sterms().buckets().array()
-            .forEach(bucket -> {
-                String countryCode = bucket.key().stringValue();
-                long views = bucket.docCount();
-
-                String countryName = bucket.aggregations()
-                    .get("country_name").sterms().buckets().array()
-                    .stream()
-                    .findFirst()
-                    .map(StringTermsBucket::key)
-                    .map(FieldValue::stringValue)
-                    .orElse(countryCode); // fallback, should never happen
-
-                result.add(new StatisticsByCountry(countryCode, countryName, views));
-            });
-
-        return result;
-    }
-
-    @Override
-    public Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer personId, LocalDate from,
-                                                           LocalDate to) {
-        try {
-            SearchResponse<Void> response = elasticsearchClient.search(s -> s
-                    .index("statistics")
-                    .size(0)
-                    .query(q -> q
-                        .bool(b -> b
-                            .must(m -> m.term(t -> t.field("person_id").value(personId)))
-                            .must(m -> m.term(t -> t.field("type").value("VIEW")))
-                            .must(m -> m.range(r -> r
-                                .field("timestamp")
-                                .gte(JsonData.of(from))
-                                .lte(JsonData.of(to))
-                            ))
-                        )
-                    )
-                    .aggregations("per_month", a -> a
-                        .dateHistogram(h -> h
-                            .field("timestamp")
-                            .calendarInterval(CalendarInterval.Month)
-                            .minDocCount(0)
-                            .extendedBounds(b -> b
-                                .min(FieldDateMath.of(
-                                    fdm -> fdm.expr(from.toString().substring(0, 7)))) // e.g. "2025-01"
-                                .max(FieldDateMath.of(fdm -> fdm.expr(to.toString().substring(0, 7))))
-                            )
-                            .format("yyyy-MM")
-                        )
-                    ),
-                Void.class
-            );
-
-            Map<YearMonth, Long> results = new LinkedHashMap<>();
-            response.aggregations()
-                .get("per_month")
-                .dateHistogram()
-                .buckets()
-                .array()
-                .forEach(bucket -> {
-                    String keyAsString = bucket.keyAsString();
-                    var ym = YearMonth.parse(keyAsString);
-                    results.put(ym, bucket.docCount());
-                });
-
-            return results;
-        } catch (IOException e) {
-            log.error("Error fetching monthly statistics for person {} and type VIEW", personId);
-            return Collections.emptyMap();
-        }
     }
 
     @Override
@@ -295,6 +138,171 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
         });
 
         return result;
+    }
+
+    @Override
+    public List<CommissionYearlyCounts> getMCategoryCountsForPerson(Integer personId,
+                                                                    Integer startYear,
+                                                                    Integer endYear) {
+        var yearRange = constructYearRange(startYear, endYear, personId);
+        if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
+            return Collections.emptyList();
+        }
+
+        var commissions = new HashSet<Pair<Integer, Set<MultiLingualContent>>>();
+        involvementRepository.findActiveEmploymentInstitutionIds(personId)
+            .forEach(institutionId ->
+                commissions.addAll(
+                    userRepository.findUserCommissionForOrganisationUnit(institutionId).stream()
+                        .map(c -> new Pair<>(c.getId(), c.getDescription())).toList()));
+
+        var commissionYearlyCounts = new ArrayList<CommissionYearlyCounts>();
+        for (var commission : commissions) {
+            var yearlyCounts = new ArrayList<YearlyCounts>();
+
+            for (int i = yearRange.a; i <= yearRange.b; i++) {
+                try {
+                    yearlyCounts.add(new YearlyCounts(i,
+                        getPublicationMCategoryCountsByTypeForAuthorAndCommissionAndYear(personId,
+                            commission.a, i)));
+
+                } catch (IOException e) {
+                    log.warn("Unable to fetch person M category counts for {}. Adding all zeros.",
+                        i);
+                }
+            }
+
+            commissionYearlyCounts.add(new CommissionYearlyCounts(
+                MultilingualContentConverter.getMultilingualContentDTO(commission.b),
+                yearlyCounts));
+        }
+
+        return commissionYearlyCounts;
+    }
+
+    @Override
+    public List<StatisticsByCountry> getByCountryStatisticsForPerson(Integer personId,
+                                                                     LocalDate from, LocalDate to) {
+        var allMergedPersonIds = getAllMergedPersonIds(personId);
+
+        SearchResponse<Void> response;
+        try {
+            response = elasticsearchClient.search(s -> s
+                    .index("statistics")
+                    .size(0)
+                    .query(q -> q
+                        .bool(b -> b
+                            .must(m -> m.terms(t -> t.field("person_id").terms(
+                                v -> v.value(allMergedPersonIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList())
+                            )))
+                            .must(m -> m.term(t -> t.field("type").value("VIEW")))
+                            .must(m -> m.range(r -> r
+                                .field("timestamp")
+                                .gte(JsonData.of(from))
+                                .lte(JsonData.of(to))
+                            ))
+                        )
+                    )
+                    .aggregations("by_country", a -> a
+                        .terms(t -> t.field("country_code")
+                            .size(
+                                195)) // 195 countries exist at the moment, we can lower this if need be
+                        .aggregations("country_name", sub -> sub
+                            .terms(t -> t.field("country_name").size(1))
+                        )
+                    ),
+                Void.class
+            );
+        } catch (IOException e) {
+            log.warn("Unable to fetch person statistics for ID {}.", personId);
+            return Collections.emptyList();
+        }
+
+        List<StatisticsByCountry> result = new ArrayList<>();
+
+        response.aggregations()
+            .get("by_country").sterms().buckets().array()
+            .forEach(bucket -> {
+                String countryCode = bucket.key().stringValue();
+                long views = bucket.docCount();
+
+                String countryName = bucket.aggregations()
+                    .get("country_name").sterms().buckets().array()
+                    .stream()
+                    .findFirst()
+                    .map(StringTermsBucket::key)
+                    .map(FieldValue::stringValue)
+                    .orElse(countryCode); // fallback, should never happen
+
+                result.add(new StatisticsByCountry(countryCode, countryName, views));
+            });
+
+        return result;
+    }
+
+    @Override
+    public Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer personId, LocalDate from,
+                                                           LocalDate to) {
+        var allMergedPersonIds = getAllMergedPersonIds(personId);
+
+        try {
+            SearchResponse<Void> response = elasticsearchClient.search(s -> s
+                    .index("statistics")
+                    .size(0)
+                    .query(q -> q
+                        .bool(b -> b
+                            .must(m -> m.terms(t -> t.field("person_id").terms(
+                                v -> v.value(allMergedPersonIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList())
+                            )))
+                            .must(m -> m.term(t -> t.field("type").value("VIEW")))
+                            .must(m -> m.range(r -> r
+                                .field("timestamp")
+                                .gte(JsonData.of(from))
+                                .lte(JsonData.of(to))
+                            ))
+                        )
+                    )
+                    .aggregations("per_month", a -> a
+                        .dateHistogram(h -> h
+                            .field("timestamp")
+                            .calendarInterval(CalendarInterval.Month)
+                            .minDocCount(0)
+                            .extendedBounds(b -> b
+                                .min(FieldDateMath.of(
+                                    fdm -> fdm.expr(from.toString().substring(0, 7)))) // e.g. "2025-01"
+                                .max(FieldDateMath.of(fdm -> fdm.expr(to.toString().substring(0, 7))))
+                            )
+                            .format("yyyy-MM")
+                        )
+                    ),
+                Void.class
+            );
+
+            Map<YearMonth, Long> results = new LinkedHashMap<>();
+            response.aggregations()
+                .get("per_month")
+                .dateHistogram()
+                .buckets()
+                .array()
+                .forEach(bucket -> {
+                    String keyAsString = bucket.keyAsString();
+                    if (Objects.isNull(keyAsString)) {
+                        return;
+                    }
+
+                    var ym = YearMonth.parse(keyAsString);
+                    results.put(ym, bucket.docCount());
+                });
+
+            return results;
+        } catch (IOException e) {
+            log.error("Error fetching monthly statistics for person {} and type VIEW", personId);
+            return Collections.emptyMap();
+        }
     }
 
     private Map<String, Long> getPublicationCountsByTypeForAuthorAndYear(Integer authorId,
@@ -394,28 +402,21 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
         return new Pair<>((int) min, (int) max);
     }
 
-    public record YearlyCounts(
-        Integer year,
-        Map<String, Long> countsByCategory
-    ) {
+    private List<Integer> getAllMergedPersonIds(Integer personId) {
+        var person = personService.findOne(personId);
+        var allMergedPersonIds = new ArrayList<>(person.getMergedIds());
+        allMergedPersonIds.add(personId);
+
+        return allMergedPersonIds;
     }
 
-    public record StatisticsByCountry(
-        String countryCode,
-        String countryName,
-        long value
-    ) {
-    }
+    private Pair<Integer, Integer> constructYearRange(Integer startYear, Integer endYear,
+                                                      Integer personId) {
+        if (Objects.isNull(startYear) || Objects.isNull(endYear)) {
+            var yearRange = findPublicationYearRange(personId);
+            return new Pair<>(yearRange.a, yearRange.b);
+        }
 
-    public record MCategoryCounts(
-        List<MultilingualContentDTO> commissionName,
-        Map<String, Long> countsByCategory
-    ) {
-    }
-
-    public record CommissionYearlyCounts(
-        List<MultilingualContentDTO> commissionName,
-        List<YearlyCounts> yearlyCounts
-    ) {
+        return new Pair<>(startYear, endYear);
     }
 }
