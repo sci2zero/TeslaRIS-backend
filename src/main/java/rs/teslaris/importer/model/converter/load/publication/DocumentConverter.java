@@ -23,6 +23,7 @@ import rs.teslaris.core.model.oaipmh.publication.BookSeries;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -46,6 +47,8 @@ public class DocumentConverter {
     protected final PublisherConverter publisherConverter;
 
     private final BookSeriesService bookSeriesService;
+
+    private final JournalService journalService;
 
     private final PersonContributionConverter personContributionConverter;
 
@@ -191,13 +194,23 @@ public class DocumentConverter {
         dto.setTypeOfTitle(multilingualContentConverter.toDTO(record.getLevelOfEducation()));
         dto.setPlaceOfKeep(multilingualContentConverter.toDTO(record.getHoldingData()));
 
-        dto.setTopicAcceptanceDate(
-            LocalDate.ofInstant(record.getAcceptedOnDate().toInstant(), ZoneId.systemDefault()));
-        dto.setThesisDefenceDate(
-            LocalDate.ofInstant(record.getDefendedOnDate().toInstant(), ZoneId.systemDefault()));
-        dto.setPublicReviewStartDate(
-            LocalDate.ofInstant(record.getPublicReviewStartDate().toInstant(),
-                ZoneId.systemDefault()));
+        if (Objects.nonNull(record.getAcceptedOnDate())) {
+            dto.setTopicAcceptanceDate(
+                LocalDate.ofInstant(record.getAcceptedOnDate().toInstant(),
+                    ZoneId.systemDefault()));
+        }
+
+        if (Objects.nonNull(record.getDefendedOnDate())) {
+            dto.setThesisDefenceDate(
+                LocalDate.ofInstant(record.getDefendedOnDate().toInstant(),
+                    ZoneId.systemDefault()));
+        }
+
+        if (Objects.nonNull(record.getPublicReviewStartDate())) {
+            dto.setPublicReviewStartDate(
+                LocalDate.ofInstant(record.getPublicReviewStartDate().toInstant(),
+                    ZoneId.systemDefault()));
+        }
 
         if (Objects.nonNull(record.getPublisher())) {
             publisherConverter.setPublisherInformation(record.getPublisher(), dto);
@@ -279,6 +292,14 @@ public class DocumentConverter {
                 bookSeries.getIssn());
             if (Objects.nonNull(potentialMatch)) {
                 dto.setPublicationSeriesId(potentialMatch.getDatabaseId());
+                return;
+            } else {
+                var potentialJournalMatch =
+                    journalService.readJournalByIssn(bookSeries.getIssn(), bookSeries.getIssn());
+                if (Objects.nonNull(potentialJournalMatch)) {
+                    dto.setPublicationSeriesId(potentialJournalMatch.getDatabaseId());
+                    return;
+                }
             }
         }
 
@@ -291,6 +312,7 @@ public class DocumentConverter {
                 var match = potentialMatches.getContent().getFirst();
                 if (match.getTitleSr().equals(name) || match.getTitleOther().equals(name)) {
                     dto.setPublicationSeriesId(match.getDatabaseId());
+                    return;
                 }
             }
         }

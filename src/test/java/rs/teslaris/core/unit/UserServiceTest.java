@@ -49,6 +49,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.configuration.OAuth2Provider;
+import rs.teslaris.core.dto.commontypes.BrandingInformationDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
@@ -86,6 +87,7 @@ import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.user.UserServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -160,6 +162,9 @@ public class UserServiceTest {
 
     @Mock
     private OAuthCodeRepository oAuthCodeRepository;
+
+    @Mock
+    private BrandingInformationService brandingInformationService;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -249,6 +254,9 @@ public class UserServiceTest {
         language.setLanguageTag(LanguageAbbreviations.SERBIAN);
         when(languageTagService.findOne(1)).thenReturn(language);
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
         var authority = new Authority();
         authority.setName(UserRole.RESEARCHER.toString());
         when(authorityRepository.findByName(UserRole.RESEARCHER.toString())).thenReturn(
@@ -325,6 +333,8 @@ public class UserServiceTest {
         when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
             activationToken);
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -377,6 +387,8 @@ public class UserServiceTest {
         when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
             activationToken);
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -435,6 +447,9 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
         // When
         var savedUser = userService.registerInstitutionEmployee(registrationRequest,
             UserRole.PROMOTION_REGISTRY_ADMINISTRATOR);
@@ -489,6 +504,9 @@ public class UserServiceTest {
 
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         // When
         var savedUser = userService.registerCommissionUser(registrationRequest);
@@ -1334,6 +1352,8 @@ public class UserServiceTest {
             person, organisationUnit, null, UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
         when(userAccountActivationRepository.save(any(UserAccountActivation.class)))
             .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
 
@@ -1372,6 +1392,8 @@ public class UserServiceTest {
             person, null, null, UserNotificationPeriod.NEVER);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
         when(userAccountActivationRepository.save(any(UserAccountActivation.class)))
             .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
 

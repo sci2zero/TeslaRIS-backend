@@ -45,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.converter.person.UserConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
@@ -83,6 +84,7 @@ import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -145,6 +147,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final EmailUpdateRequestRepository emailUpdateRequestRepository;
 
     private final OAuthCodeRepository oAuthCodeRepository;
+
+    private final BrandingInformationService brandingInformationService;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -490,9 +494,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "accountActivation.mailBodyResearcher",
-            new Object[] {activationLink},
+            new Object[] {systemName, activationLink},
             Locale.forLanguageTag(language)
         );
         emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
@@ -584,9 +590,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "accountActivation.mailBodyEmployee",
-            new Object[] {activationLink, new String(generatedPassword)},
+            new Object[] {systemName, activationLink, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
 
@@ -1082,6 +1090,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             index.setActive(!user.getLocked());
             userAccountIndexRepository.save(index);
         });
+    }
+
+    private String getSystemName(String language) {
+        var brandingTitle = brandingInformationService.readBrandingInformation().title();
+        return brandingTitle.stream()
+            .filter(t -> t.getLanguageTag().equalsIgnoreCase(language))
+            .findFirst()
+            .or(() -> brandingTitle.stream().findFirst())
+            .map(MultilingualContentDTO::getContent)
+            .orElse("TeslaRIS");
     }
 
     @Scheduled(cron = "0 */10 * ? * *") // every ten minutes

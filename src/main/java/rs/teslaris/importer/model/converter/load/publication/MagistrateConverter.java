@@ -8,6 +8,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -28,10 +29,11 @@ public class MagistrateConverter extends DocumentConverter
     public MagistrateConverter(MultilingualContentConverter multilingualContentConverter,
                                PublisherConverter publisherConverter,
                                BookSeriesService bookSeriesService,
+                               JournalService journalService,
                                PersonContributionConverter personContributionConverter,
                                OrganisationUnitService organisationUnitService,
                                LanguageTagService languageTagService) {
-        super(multilingualContentConverter, publisherConverter, bookSeriesService,
+        super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
             personContributionConverter);
         this.organisationUnitService = organisationUnitService;
         this.languageTagService = languageTagService;

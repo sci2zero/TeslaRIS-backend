@@ -29,11 +29,12 @@ public class JournalPublicationConverter extends DocumentConverter
     public JournalPublicationConverter(MultilingualContentConverter multilingualContentConverter,
                                        PublisherConverter publisherConverter,
                                        BookSeriesService bookSeriesService,
+                                       JournalService journalService,
                                        PersonContributionConverter personContributionConverter,
-                                       JournalService journalService) {
-        super(multilingualContentConverter, publisherConverter, bookSeriesService,
+                                       JournalService journalService1) {
+        super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
             personContributionConverter);
-        this.journalService = journalService;
+        this.journalService = journalService1;
     }
 
     @Override

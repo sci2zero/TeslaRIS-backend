@@ -9,6 +9,7 @@ import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.importer.dto.ProceedingsPublicationLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -30,9 +31,10 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         MultilingualContentConverter multilingualContentConverter,
         PublisherConverter publisherConverter,
         BookSeriesService bookSeriesService,
+        JournalService journalService,
         PersonContributionConverter personContributionConverter,
         DocumentPublicationService documentPublicationService) {
-        super(multilingualContentConverter, publisherConverter, bookSeriesService,
+        super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
             personContributionConverter);
         this.documentPublicationService = documentPublicationService;
     }

@@ -141,6 +141,15 @@ public class PersonContributionConverter {
         T contributor, PersonDocumentContributionDTO contribution) {
 
         if (Objects.nonNull(contributor.getDisplayName())) {
+            if (contributor.getDisplayName().contains(", ")) {
+                var nameParts = contributor.getDisplayName().split(", ");
+                if (nameParts.length == 2) {
+                    contribution.setPersonName(
+                        new PersonNameDTO(null, nameParts[1], "", nameParts[0], null, null));
+                    return;
+                }
+            }
+
             contribution.setPersonName(
                 new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null));
         }

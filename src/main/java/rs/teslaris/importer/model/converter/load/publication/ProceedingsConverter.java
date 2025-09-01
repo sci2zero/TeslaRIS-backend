@@ -11,6 +11,7 @@ import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
 import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
@@ -29,9 +30,10 @@ public class ProceedingsConverter extends DocumentConverter
     public ProceedingsConverter(MultilingualContentConverter multilingualContentConverter,
                                 PublisherConverter publisherConverter,
                                 BookSeriesService bookSeriesService,
+                                JournalService journalService,
                                 PersonContributionConverter personContributionConverter,
                                 EventService eventService, LanguageTagService languageTagService) {
-        super(multilingualContentConverter, publisherConverter, bookSeriesService,
+        super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
             personContributionConverter);
         this.eventService = eventService;
         this.languageTagService = languageTagService;

@@ -814,11 +814,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setLastEdited(
             Objects.nonNull(savedPerson.getLastModification()) ? savedPerson.getLastModification() :
                 new Date());
-        personIndex.setName(savedPerson.getName().toString());
+        personIndex.setName(savedPerson.getName().toText());
 
-        savedPerson.getOtherNames().forEach((otherName) -> {
-            personIndex.setName(personIndex.getName() + "; " + otherName.toString());
-        });
+        savedPerson.getOtherNames().forEach(
+            (otherName) ->
+                personIndex.setName(personIndex.getName() + "; " + otherName.toText()));
 
         personIndex.setNameSortable(personIndex.getName());
         indexPersonBiography(personIndex, savedPerson);
@@ -834,7 +834,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         personIndex.setDatabaseId(savedPerson.getId());
-        personIndex.setOrcid(savedPerson.getOrcid());
+
+        personIndex.setOrcid(
+            (Objects.nonNull(savedPerson.getOrcid()) && !savedPerson.getOrcid().isBlank()) ?
+                savedPerson.getOrcid() : null);
         personIndex.setScopusAuthorId(
             (Objects.nonNull(savedPerson.getScopusAuthorId()) &&
                 !savedPerson.getScopusAuthorId().isBlank()) ? savedPerson.getScopusAuthorId() :

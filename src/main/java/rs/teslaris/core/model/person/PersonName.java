@@ -47,6 +47,14 @@ public class PersonName extends BaseEntity {
         return MessageFormat.format("{0} {1} {2}", firstname, otherName, lastname);
     }
 
+    public String toText() {
+        if (Objects.isNull(otherName) || otherName.isEmpty()) {
+            return MessageFormat.format("{0} {1}", firstname, lastname);
+        }
+
+        return MessageFormat.format("{0} ({1}) {2}", firstname, otherName, lastname);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) {

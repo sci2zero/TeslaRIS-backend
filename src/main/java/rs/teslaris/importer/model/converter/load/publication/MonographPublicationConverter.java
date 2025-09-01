@@ -9,6 +9,7 @@ import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
 import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
@@ -25,9 +26,10 @@ public class MonographPublicationConverter extends DocumentConverter implements
     public MonographPublicationConverter(MultilingualContentConverter multilingualContentConverter,
                                          PublisherConverter publisherConverter,
                                          BookSeriesService bookSeriesService,
+                                         JournalService journalService,
                                          PersonContributionConverter personContributionConverter,
                                          DocumentPublicationService documentPublicationService) {
-        super(multilingualContentConverter, publisherConverter, bookSeriesService,
+        super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
             personContributionConverter);
         this.documentPublicationService = documentPublicationService;
     }
