@@ -41,7 +41,7 @@ public class PublisherConverter {
         if (Objects.isNull(dto.getPublisherId())) {
             var publisherDTO = new PublisherDTO();
             publisherDTO.setName(multilingualContentConverter.toDTO(publisher.getName()));
-            publisherDTO.setPlace(multilingualContentConverter.toDTO(publisher.getName()));
+            publisherDTO.setPlace(multilingualContentConverter.toDTO(publisher.getPlace()));
 
             for (var stateName : publisher.getState()) {
                 var match = countryService.findCountryByName(stateName.getValue());
@@ -51,7 +51,9 @@ public class PublisherConverter {
                 }
             }
 
-            dto.setPublisherId(publisherService.createPublisher(publisherDTO, true).getId());
+            if (Objects.nonNull(publisherDTO.getName()) && !publisherDTO.getName().isEmpty()) {
+                dto.setPublisherId(publisherService.createPublisher(publisherDTO, true).getId());
+            }
         }
     }
 }

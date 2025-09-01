@@ -470,13 +470,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contributions = document.getContributors().stream()
             .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber)).toList();
 
+        var isThesis = document instanceof Thesis;
+        if (isThesis && Objects.nonNull(((Thesis) document).getOrganisationUnit())) {
+            organisationUnitIds.add(((Thesis) document).getOrganisationUnit().getId());
+        }
+
         contributions.forEach(
-            contribution -> processContribution(contribution, index, organisationUnitIds));
+            contribution ->
+                processContribution(contribution, index, isThesis, organisationUnitIds)
+        );
 
         index.setAuthorNamesSortable(index.getAuthorNames());
 
-        setEmploymentIndexInformation(index, contributions, organisationUnitIds,
-            document instanceof Thesis);
+        setEmploymentIndexInformation(index, contributions, organisationUnitIds, isThesis);
     }
 
     private void setEmploymentIndexInformation(DocumentPublicationIndex index,
@@ -533,15 +539,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private void processContribution(PersonDocumentContribution contribution,
-                                     DocumentPublicationIndex index,
+                                     DocumentPublicationIndex index, Boolean isThesis,
                                      Set<Integer> organisationUnitIds) {
         var personExists = Objects.nonNull(contribution.getPerson());
         var contributorName =
             contribution.getAffiliationStatement().getDisplayPersonName().toString();
 
-        organisationUnitIds.addAll(contribution.getInstitutions().stream()
-            .map(BaseEntity::getId)
-            .toList());
+        if (!isThesis) {
+            organisationUnitIds.addAll(contribution.getInstitutions().stream()
+                .map(BaseEntity::getId)
+                .toList());
+        }
+
 
         switch (contribution.getContributionType()) {
             case AUTHOR ->

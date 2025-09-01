@@ -37,10 +37,10 @@ public record RelativeDateDTO(
     public LocalDate computeDate() {
         LocalDate date = LocalDate.now();
 
-        if (this.day > 0) {
-            date = date.withDayOfMonth(this.day);
-        } else if (this.day < 0) {
-            date = date.plusDays(this.day);
+        if (this.year > 0) {
+            date = date.withYear(this.year);
+        } else if (this.year < 0) {
+            date = date.plusYears(this.year);
         }
 
         if (this.month > 0) {
@@ -49,10 +49,12 @@ public record RelativeDateDTO(
             date = date.plusMonths(this.month);
         }
 
-        if (this.year > 0) {
-            date = date.withYear(this.year);
-        } else if (this.year < 0) {
-            date = date.plusYears(this.year);
+        if (this.day > 0) {
+            int maxDay = date.lengthOfMonth();
+            int safeDay = Math.min(this.day, maxDay);
+            date = date.withDayOfMonth(safeDay);
+        } else if (this.day < 0) {
+            date = date.plusDays(this.day);
         }
 
         return date;

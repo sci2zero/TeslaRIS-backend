@@ -22,7 +22,6 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchRepository
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
 import rs.teslaris.assessment.model.indicator.EntityIndicator;
 import rs.teslaris.assessment.model.indicator.EventIndicator;
@@ -74,7 +73,6 @@ import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 @Primary
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class StatisticsServiceImpl implements StatisticsService, DocumentDownloadTracker {
 
     private final StatisticsIndexRepository statisticsIndexRepository;
