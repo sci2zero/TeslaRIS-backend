@@ -28,8 +28,8 @@ public class EmployeeRegistrationRequestDTO {
     @NotNull(message = "Admin note cannot be null.")
     private String note;
 
-    @NotNull(message = "You must provide a preferred language ID.")
-    @Positive(message = "Preferred language ID must be a positive number.")
+    @NotNull(message = "You must provide a preferred language tag ID.")
+    @Positive(message = "Preferred language tag ID must be a positive number.")
     private Integer preferredLanguageId;
 
     @NotNull(message = "Organisation unit ID cannot be null.")

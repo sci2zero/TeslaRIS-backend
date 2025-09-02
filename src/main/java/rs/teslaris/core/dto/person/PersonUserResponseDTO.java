@@ -30,4 +30,8 @@ public class PersonUserResponseDTO {
     ApproveStatus approveStatus;
 
     UserResponseDTO user;
+
+    List<MultilingualContentDTO> employmentInstitutionName;
+
+    Integer employmentInstitutionId;
 }

@@ -106,7 +106,8 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                                   List<ThesisType> allowedTypes, LocalDate startDate,
                                   LocalDate endDate, SearchRequestType searchRequestType,
                                   Boolean showOnlyOpenAccessTheses) {
-        int minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        var minShouldMatch = "2<-80% 5<-70% 10<-60%";
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildMetadataQuery(facultyIds, authorIds, advisorIds, boardMemberIds,
                 boardPresidentIds, allowedTypes, startDate, endDate, showOnlyOpenAccessTheses));
@@ -168,7 +169,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
         })._toQuery();
     }
 
-    private Query buildTokenQuery(List<String> tokens, int minShouldMatch) {
+    private Query buildTokenQuery(List<String> tokens, String minShouldMatch) {
         return BoolQuery.of(eq -> {
             tokens.forEach(token -> {
                 if (token.startsWith("\"") && token.endsWith("\"")) {
@@ -201,7 +202,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                     .should(sb -> sb.match(m -> m.field("board_member_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("doi").query(token)));
             });
-            return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+            return eq.minimumShouldMatch(minShouldMatch);
         })._toQuery();
     }
 

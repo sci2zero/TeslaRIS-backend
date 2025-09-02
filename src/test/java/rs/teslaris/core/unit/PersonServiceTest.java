@@ -1329,4 +1329,184 @@ public class PersonServiceTest {
         assertThat(result).isEmpty();
         verify(personRepository).findPersonForIdentifier(identifier);
     }
+
+    @Test
+    void shouldAddPersonOtherNameWhenPersonExists() {
+        // Given
+        var personId = 123;
+        var personNameDTO = new PersonNameDTO(null, "John", "Middle", "Doe",
+            LocalDate.of(2020, 1, 1), LocalDate.of(2023, 12, 31));
+
+        var existingPerson = new Person();
+        existingPerson.setId(personId);
+        existingPerson.setName(new PersonName());
+        existingPerson.setPersonalInfo(new PersonalInfo());
+        existingPerson.setOtherNames(new HashSet<>());
+        existingPerson.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.save(any(Person.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        personService.addPersonOtherNames(personNameDTO, personId);
+
+        // Then
+        verify(personRepository).findById(personId);
+        verify(personRepository, atLeastOnce()).save(existingPerson);
+
+        assertEquals(1, existingPerson.getOtherNames().size());
+        var addedName = existingPerson.getOtherNames().iterator().next();
+        assertEquals("John", addedName.getFirstname());
+        assertEquals("Middle", addedName.getOtherName());
+        assertEquals("Doe", addedName.getLastname());
+        assertEquals(LocalDate.of(2020, 1, 1), addedName.getDateFrom());
+        assertEquals(LocalDate.of(2023, 12, 31), addedName.getDateTo());
+    }
+
+    @Test
+    void shouldAddPersonOtherNameWhenPersonNotApproved() {
+        // Given
+        var personId = 123;
+        var personNameDTO = new PersonNameDTO(null, "Jane", null, "Smith", null, null);
+
+        var existingPerson = new Person();
+        existingPerson.setId(personId);
+        existingPerson.setOtherNames(new HashSet<>());
+        existingPerson.setApproveStatus(ApproveStatus.REQUESTED); // Not approved
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.save(any(Person.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        personService.addPersonOtherNames(personNameDTO, personId);
+
+        // Then
+        verify(personRepository, atLeastOnce()).findById(personId);
+        verify(personRepository, atLeastOnce()).save(any());
+
+        assertEquals(1, existingPerson.getOtherNames().size());
+        var addedName = existingPerson.getOtherNames().iterator().next();
+        assertEquals("Jane", addedName.getFirstname());
+        assertNull(addedName.getOtherName());
+        assertEquals("Smith", addedName.getLastname());
+        assertNull(addedName.getDateFrom());
+        assertNull(addedName.getDateTo());
+    }
+
+    @Test
+    void shouldAddMultipleOtherNamesToExistingSet() {
+        // Given
+        var personId = 123;
+        var personNameDTO = new PersonNameDTO(null, "New", "Name", "User", null, null);
+
+        // Existing person with some other names already
+        var existingPerson = new Person();
+        existingPerson.setId(personId);
+        existingPerson.setName(new PersonName());
+        existingPerson.setPersonalInfo(new PersonalInfo());
+        var existingOtherNames = new HashSet<PersonName>();
+        existingOtherNames.add(new PersonName("Existing", "Old", "Name", null, null));
+        existingPerson.setOtherNames(existingOtherNames);
+        existingPerson.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.save(any(Person.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        personService.addPersonOtherNames(personNameDTO, personId);
+
+        // Then
+        verify(personRepository).findById(personId);
+        verify(personRepository, atLeastOnce()).save(existingPerson);
+
+        assertEquals(2, existingPerson.getOtherNames().size());
+        assertTrue(existingPerson.getOtherNames().stream()
+            .anyMatch(
+                name -> "New".equals(name.getFirstname()) && "User".equals(name.getLastname())));
+        assertTrue(existingPerson.getOtherNames().stream()
+            .anyMatch(name -> "Existing".equals(name.getFirstname()) &&
+                "Name".equals(name.getLastname())));
+    }
+
+    @Test
+    void shouldHandleNullOtherNamesSet() {
+        // Given
+        var personId = 123;
+        var personNameDTO = new PersonNameDTO(null, "Test", null, "User", null, null);
+
+        var existingPerson = new Person();
+        existingPerson.setId(personId);
+        existingPerson.setName(new PersonName());
+        existingPerson.setPersonalInfo(new PersonalInfo());
+        existingPerson.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.save(any(Person.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        personService.addPersonOtherNames(personNameDTO, personId);
+
+        // Then
+        verify(personRepository).findById(personId);
+        verify(personRepository, atLeastOnce()).save(existingPerson);
+
+        assertNotNull(existingPerson.getOtherNames());
+        assertEquals(1, existingPerson.getOtherNames().size());
+        var addedName = existingPerson.getOtherNames().iterator().next();
+        assertEquals("Test", addedName.getFirstname());
+        assertEquals("User", addedName.getLastname());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPersonNotFound() {
+        // Given
+        var personId = 999;
+        var personNameDTO = new PersonNameDTO(null, "John", null, "Doe", null, null);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(NotFoundException.class, () -> {
+            personService.addPersonOtherNames(personNameDTO, personId);
+        });
+
+        verify(personRepository).findById(personId);
+        verify(personRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldHandleNullDatesInPersonNameDTO() {
+        // Given
+        var personId = 123;
+        var personNameDTO = new PersonNameDTO(null, "First", null, "Last", null, null);
+
+        var existingPerson = new Person();
+        existingPerson.setId(personId);
+        existingPerson.setName(new PersonName());
+        existingPerson.setPersonalInfo(new PersonalInfo());
+        existingPerson.setOtherNames(new HashSet<>());
+        existingPerson.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.save(any(Person.class))).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        personService.addPersonOtherNames(personNameDTO, personId);
+
+        // Then
+        verify(personRepository).findById(personId);
+        verify(personRepository, atLeastOnce()).save(existingPerson);
+
+        assertEquals(1, existingPerson.getOtherNames().size());
+        var addedName = existingPerson.getOtherNames().iterator().next();
+        assertEquals("First", addedName.getFirstname());
+        assertEquals("Last", addedName.getLastname());
+        assertNull(addedName.getDateFrom());
+        assertNull(addedName.getDateTo());
+    }
 }

@@ -26,7 +26,7 @@ public class IdentifierUtil {
             var compiledPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
             if (compiledPattern.matcher(identifier).matches()) {
                 if (existenceCheck.test(identifier, entityId)) {
-                    throw new IdentifierException(identifier + "|" + existsError);
+                    throw new IdentifierException(existsError);
                 }
                 setter.accept(identifier);
             } else {

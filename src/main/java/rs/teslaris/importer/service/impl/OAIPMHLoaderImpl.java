@@ -320,6 +320,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     );
                     var batch = mongoTemplate.find(query.addCriteria(criteria), Publication.class);
                     batch.forEach(record -> {
+                        System.out.println(record.getOldId());
                         if (record.getType()
                             .endsWith("c_f744")) { // COAR type: conference proceedings
                             var creationDTO = proceedingsConverter.toDTO(record);

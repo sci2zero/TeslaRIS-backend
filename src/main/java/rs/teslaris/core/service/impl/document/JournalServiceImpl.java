@@ -412,7 +412,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
                                          Integer commissionId) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        var minShouldMatch = "2<-100% 5<-80% 10<-70%";
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             if (Objects.nonNull(institutionId) && institutionId > 0) {
@@ -493,7 +493,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                 });
             }
 
-            return b.minimumShouldMatch(Integer.toString(minShouldMatch));
+            return b.minimumShouldMatch(minShouldMatch);
         })))._toQuery();
     }
 }

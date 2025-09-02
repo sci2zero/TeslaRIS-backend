@@ -16,6 +16,7 @@ import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.document.PersonalTitle;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -63,6 +64,21 @@ public class PersonContributionConverter {
 
         setInstitutionInfo(contributor, person, contribution);
         setPersonNameIfPresent(contributor, contribution);
+
+        if (Objects.nonNull(contribution.getPersonName()) && Objects.nonNull(person) &&
+            !isNameEqual(contribution.getPersonName(), person.getName()) &&
+            person.getOtherNames().stream()
+                .noneMatch(name -> isNameEqual(contribution.getPersonName(), name))) {
+            try {
+                personService.addPersonOtherNames(contribution.getPersonName(), person.getId());
+
+                log.info("Added new other name for Person {} -> {}", person.getId(),
+                    contribution.getPersonName().toString());
+            } catch (Exception e) {
+                log.error("Unable to add other name for Person {}. Reason: {}", person.getId(),
+                    e.getMessage());
+            }
+        }
 
         contribution.setOrderNumber(orderNumber + 1);
 
@@ -215,5 +231,20 @@ public class PersonContributionConverter {
 
         log.info("Unable to deduce employment title while performing migration: '{}'", name);
         return null; // should never happen
+    }
+
+    private boolean isNameEqual(PersonNameDTO nameDTO, PersonName name) {
+        return Objects.equals(
+            name.getFirstname() != null ? name.getFirstname() : "",
+            nameDTO.getFirstname() != null ? nameDTO.getFirstname() : ""
+        ) &&
+            Objects.equals(
+                name.getLastname() != null ? name.getLastname() : "",
+                nameDTO.getLastname() != null ? nameDTO.getLastname() : ""
+            ) &&
+            Objects.equals(
+                name.getOtherName() != null ? name.getOtherName() : "",
+                nameDTO.getOtherName() != null ? nameDTO.getOtherName() : ""
+            );
     }
 }

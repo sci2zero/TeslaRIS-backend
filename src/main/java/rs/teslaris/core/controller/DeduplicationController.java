@@ -48,6 +48,8 @@ public class DeduplicationController {
                 deduplicationService.getDeduplicationSuggestions(pageable, EntityType.EVENT);
             case PERSON ->
                 deduplicationService.getDeduplicationSuggestions(pageable, EntityType.PERSON);
+            case PUBLISHER ->
+                deduplicationService.getDeduplicationSuggestions(pageable, EntityType.PUBLISHER);
             case ORGANISATION_UNIT -> deduplicationService.getDeduplicationSuggestions(pageable,
                 EntityType.ORGANISATION_UNIT);
             default -> Page.empty();

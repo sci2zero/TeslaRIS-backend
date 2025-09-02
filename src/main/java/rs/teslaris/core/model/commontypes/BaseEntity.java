@@ -17,6 +17,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -51,10 +52,10 @@ public abstract class BaseEntity {
     @LastModifiedBy
     private String updatedBy;
 
+    @Length(max = 2000)
     @Column(name = "admin_note")
     private String adminNote;
 
     @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
     private Boolean deleted = false;
-
 }

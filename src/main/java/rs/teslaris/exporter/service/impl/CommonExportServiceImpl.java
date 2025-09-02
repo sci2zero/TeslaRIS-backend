@@ -7,6 +7,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -97,6 +98,9 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final ReentrantLock eventExportLock = new ReentrantLock();
 
     private final ReentrantLock documentExportLock = new ReentrantLock();
+
+    @Value("${export-to-common.allowed}")
+    private Boolean exportAllowed;
 
 
     @Override
@@ -304,21 +308,37 @@ public class CommonExportServiceImpl implements CommonExportService {
 
     @Scheduled(cron = "${export-to-common.schedule.documents}")
     protected void performScheduledDocumentExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
         exportDocumentsToCommonModel(false);
     }
 
     @Scheduled(cron = "${export-to-common.schedule.event}")
     protected void performScheduledEventExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
         exportConferencesToCommonModel(false);
     }
 
     @Scheduled(cron = "${export-to-common.schedule.person}")
     protected void performScheduledPersonExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
         exportPersonsToCommonModel(false);
     }
 
     @Scheduled(cron = "${export-to-common.schedule.ou}")
     protected void performScheduledOrganisationUnitExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
         exportOrganisationUnitsToCommonModel(false);
     }
 }
