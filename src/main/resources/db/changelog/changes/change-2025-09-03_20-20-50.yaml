@@ -17,10 +17,30 @@ databaseChangeLog:
         columns:
         - column:
             constraints:
-              nullable: false
+              nullable: true
             name: is_client_institution
             type: BOOLEAN
         tableName: organisation_units
+
+- changeSet:
+    id: 1756930892320-84
+    author: milospopovic
+    changes:
+    - update:
+        tableName: organisation_units
+        columns:
+        - column:
+            name: is_client_institution
+            valueBoolean: false
+
+- changeSet:
+    id: 1756930892320-85
+    author: milospopovic
+    changes:
+    - addNotNullConstraint:
+        tableName: organisation_units
+        columnName: is_client_institution
+        columnDataType: BOOLEAN
 - changeSet:
     id: 1756930892320-84
     author: milospopovic (generated)
