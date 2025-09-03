@@ -603,7 +603,7 @@ public class OrganisationUnitServiceTest {
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
                 SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-                onlyReturnOnesWhichCanHarvest, null, null);
+                onlyReturnOnesWhichCanHarvest, null, null, null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

@@ -249,6 +249,7 @@ public class UserServiceTest {
         registrationRequest.setPassword("Password123");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
+        registrationRequest.setOrganisationUnitId(1);
 
         var language = new LanguageTag();
         language.setLanguageTag(LanguageAbbreviations.SERBIAN);
@@ -284,6 +285,10 @@ public class UserServiceTest {
 
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitution(true);
+            setValidateEmailDomain(false);
+        }});
 
         // when
         var savedUser = userService.registerResearcher(registrationRequest);

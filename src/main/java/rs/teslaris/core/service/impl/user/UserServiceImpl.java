@@ -92,6 +92,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.PasswordUtil;
+import rs.teslaris.core.util.email.EmailDomainChecker;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
@@ -100,6 +101,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.exceptionhandling.exception.RegistrationException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -373,6 +375,18 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var person = resolveOrCreatePerson(registrationRequest, null, null);
         var involvement = personService.getLatestResearcherInvolvement(person);
 
+        var specifiedOU =
+            organisationUnitService.findOne(registrationRequest.getOrganisationUnitId());
+        if (!specifiedOU.getIsClientInstitution()) {
+            throw new RegistrationException(
+                "Institution is not a client. Unable to register researchers.");
+        }
+
+        if (specifiedOU.getValidateEmailDomain()) {
+            validateEmailDomain(registrationRequest.getEmail(),
+                specifiedOU.getInstitutionEmailDomain(), specifiedOU.getAllowSubdomains());
+        }
+
         var newUser = buildUser(
             registrationRequest.getEmail(),
             passwordEncoder.encode(registrationRequest.getPassword()),
@@ -380,6 +394,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             registrationRequest.getPreferredLanguageId()
         );
 
+        personService.indexPerson(person);
         return saveAndNotifyUser(newUser);
     }
 
@@ -472,7 +487,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             person.getName().getFirstname(), person.getName().getLastname(), true, false,
             language, language, authority, person,
             Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
-            null, UserNotificationPeriod.NEVER
+            null, UserNotificationPeriod.WEEKLY
         );
     }
 
@@ -612,6 +627,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private void validateEmailUniqueness(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new UserAlreadyExistsException("emailInUseMessage");
+        }
+    }
+
+    private void validateEmailDomain(String email, String domain, boolean allowSubdomains) {
+        if (!EmailDomainChecker.isEmailFromInstitution(email, domain, allowSubdomains)) {
+            throw new RegistrationException("emailDomainErrorMessage");
         }
     }
 

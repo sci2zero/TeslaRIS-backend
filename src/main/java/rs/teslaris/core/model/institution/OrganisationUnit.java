@@ -89,4 +89,16 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "allowed_thesis_types")
     private Set<String> allowedThesisTypes = new HashSet<>();
+
+    @Column(name = "is_client_institution", nullable = false)
+    private Boolean isClientInstitution = false;
+
+    @Column(name = "validate_email_domain", nullable = false)
+    private Boolean validateEmailDomain = false;
+
+    @Column(name = "allow_subdomains")
+    private Boolean allowSubdomains = false;
+
+    @Column(name = "institution_email_domain")
+    private String institutionEmailDomain;
 }

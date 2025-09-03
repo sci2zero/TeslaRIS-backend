@@ -174,11 +174,10 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
                     var existingImport =
                         CommonImportUtility.findExistingImport(documentImport.getIdentifier());
 
-                    if (Objects.isNull(existingImport) &&
-                        Objects.nonNull(documentImport.getDoi())) {
+                    if (Objects.isNull(existingImport)) {
                         if (Objects.nonNull(
                             (existingImport =
-                                CommonImportUtility.findImportByDOI(documentImport.getDoi())))) {
+                                CommonImportUtility.findImportByDOIOrMetadata(documentImport)))) {
                             // Probably imported before from scopus, which has higher priority (for now)
                             // perform enrichment, if possible
                             DeepObjectMerger.deepMerge(existingImport, documentImport);

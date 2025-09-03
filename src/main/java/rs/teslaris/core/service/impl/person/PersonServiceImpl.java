@@ -909,12 +909,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 Objects.isNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
             .map(inv -> inv.getOrganisationUnit().getId()).toList();
 
-        personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
-            .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.nonNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
-            .map(involvement -> involvement.getOrganisationUnit().getId()).toList());
-
         personIndex.setEmploymentInstitutionsId(
             currentEmployments.stream()
                 .map(employment -> Objects.nonNull(employment.getOrganisationUnit()) ?
@@ -927,6 +921,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personIndex.getEmploymentInstitutionsIdHierarchy()
                 .addAll(organisationUnitService.getSuperOUsHierarchyRecursive(institutionId));
         });
+
+        personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
+            .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
+                i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
+                Objects.nonNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
+            .map(involvement -> involvement.getOrganisationUnit().getId())
+            .filter(institutionId -> !personIndex.getEmploymentInstitutionsIdHierarchy()
+                .contains(institutionId)).toList());
 
         savedPerson.getEmploymentInstitutionsIdHierarchy().addAll(
             personIndex.getEmploymentInstitutionsIdHierarchy());

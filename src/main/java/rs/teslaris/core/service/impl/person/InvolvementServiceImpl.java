@@ -402,18 +402,22 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Override
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findOne(involvementId);
-        var personId = involvementToDelete.getPersonInvolved().getId();
+        var person = involvementToDelete.getPersonInvolved();
 
         involvementToDelete.getProofs()
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
 
         delete(involvementId);
-        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
 
         if (involvementToDelete instanceof Employment) {
             documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
                 involvementToDelete.getPersonInvolved().getId());
         }
+
+        person.removeInvolvement(involvementToDelete);
+        personService.save(person);
+        personService.indexPerson(person);
     }
 
     @Override

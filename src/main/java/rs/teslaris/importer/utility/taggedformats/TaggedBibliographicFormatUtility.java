@@ -25,6 +25,7 @@ import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
 import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeepObjectMerger;
 
 @Component
 @Slf4j
@@ -99,6 +100,14 @@ public class TaggedBibliographicFormatUtility {
                     doc.getDocumentDate(), StandardCharsets.UTF_8)
             .toString());
         var existingImport = CommonImportUtility.findExistingImport(doc.getIdentifier());
+
+        existingImport = CommonImportUtility.findImportByDOIOrMetadata(doc);
+        if (Objects.nonNull(existingImport)) {
+            DeepObjectMerger.deepMerge(existingImport, doc);
+            mongoTemplate.save(existingImport, "documentImports");
+            return;
+        }
+
         var embedding = CommonImportUtility.generateEmbedding(doc);
         if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
             return;

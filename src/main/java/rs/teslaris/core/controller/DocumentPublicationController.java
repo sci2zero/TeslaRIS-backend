@@ -157,15 +157,15 @@ public class DocumentPublicationController {
     }
 
     @GetMapping("/for-researcher/{personId}")
-    public Page<DocumentPublicationIndex> findResearcherPublications(@RequestParam("tokens")
-                                                                     @NotNull(message = "You have to provide a valid search input.")
-                                                                     List<String> tokens,
-                                                                     @RequestParam(value = "allowedTypes", required = false)
-                                                                     List<DocumentPublicationType> allowedTypes,
-                                                                     @PathVariable Integer personId,
-                                                                     @RequestParam(value = "ignore", required = false)
-                                                                     List<Integer> ignore,
-                                                                     Pageable pageable) {
+    public Page<DocumentPublicationIndex> findResearcherPublications(
+        @RequestParam(value = "tokens", required = false)
+        List<String> tokens,
+        @RequestParam(value = "allowedTypes", required = false)
+        List<DocumentPublicationType> allowedTypes,
+        @PathVariable Integer personId,
+        @RequestParam(value = "ignore", required = false)
+        List<Integer> ignore,
+        Pageable pageable) {
         return documentPublicationService.findResearcherPublications(personId,
             Objects.requireNonNullElse(ignore, Collections.emptyList()), tokens, allowedTypes,
             pageable);
