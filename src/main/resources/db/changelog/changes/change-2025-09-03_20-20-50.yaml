@@ -23,7 +23,7 @@ databaseChangeLog:
         tableName: organisation_units
 
 - changeSet:
-    id: 1756930892320-84
+    id: 1756930892320-184
     author: milospopovic
     changes:
     - update:
@@ -34,7 +34,7 @@ databaseChangeLog:
             valueBoolean: false
 
 - changeSet:
-    id: 1756930892320-85
+    id: 1756930892320-185
     author: milospopovic
     changes:
     - addNotNullConstraint:
@@ -49,10 +49,28 @@ databaseChangeLog:
         columns:
         - column:
             constraints:
-              nullable: false
+              nullable: true
             name: validate_email_domain
             type: BOOLEAN
         tableName: organisation_units
+- changeSet:
+    id: 1756930892320-186
+    author: milospopovic
+    changes:
+    - update:
+        tableName: organisation_units
+        columns:
+        - column:
+            name: validate_email_domain
+            valueBoolean: false
+- changeSet:
+    id: 1756930892320-187
+    author: milospopovic
+    changes:
+    - addNotNullConstraint:
+        tableName: organisation_units
+        columnName: validate_email_domain
+        columnDataType: BOOLEAN
 - changeSet:
     id: 1756930892320-85
     author: milospopovic (generated)
