@@ -1,6 +1,7 @@
 package rs.teslaris.reporting.service.interfaces;
 
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
@@ -26,4 +27,6 @@ public interface PersonVisualizationDataService {
         Integer personId, LocalDate from, LocalDate to);
 
     Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer personId, LocalDate from, LocalDate to);
+
+    Map<Year, Long> getYearlyStatisticsCounts(Integer personId, Integer startYear, Integer endYear);
 }

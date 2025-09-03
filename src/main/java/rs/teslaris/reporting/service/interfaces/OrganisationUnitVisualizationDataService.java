@@ -1,6 +1,7 @@
 package rs.teslaris.reporting.service.interfaces;
 
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
@@ -29,4 +30,7 @@ public interface OrganisationUnitVisualizationDataService {
 
     Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer organisationUnitId, LocalDate from,
                                                     LocalDate to);
+
+    Map<Year, Long> getYearlyStatisticsCounts(Integer organisationUnitId, Integer startYear,
+                                              Integer endYear);
 }

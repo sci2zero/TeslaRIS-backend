@@ -20,6 +20,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.util.ObjectBuilder;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -305,5 +306,45 @@ public class PersonVisualizationDataServiceTest {
         var mCounts = result.getFirst();
         assertEquals(1, mCounts.countsByCategory().size());
         assertEquals(5L, mCounts.countsByCategory().get("M50"));
+    }
+
+    @Test
+    void shouldReturnYearlyStatisticsCountsForPerson() throws IOException {
+        // Given
+        var personId = 123;
+        var startYear = 2024;
+        var endYear = 2025;
+
+        when(personService.findOne(personId)).thenReturn(new Person() {{
+            setMergedIds(new HashSet<>(List.of(2, 3)));
+        }});
+
+        var mockBucket1 = mock(DateHistogramBucket.class);
+        when(mockBucket1.keyAsString()).thenReturn("2024");
+        when(mockBucket1.docCount()).thenReturn(15L);
+
+        var mockBucket2 = mock(DateHistogramBucket.class);
+        when(mockBucket2.keyAsString()).thenReturn("2025");
+        when(mockBucket2.docCount()).thenReturn(20L);
+
+        var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAgg.dateHistogram().buckets().array()).thenReturn(
+            List.of(mockBucket1, mockBucket2)
+        );
+
+        var mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(Map.of("per_year", mockAgg));
+
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse
+        );
+
+        // When
+        var result = service.getYearlyStatisticsCounts(personId, startYear, endYear);
+
+        // Then
+        assertEquals(2, result.size());
+        assertEquals(15L, result.get(Year.of(2024)));
+        assertEquals(20L, result.get(Year.of(2025)));
     }
 }

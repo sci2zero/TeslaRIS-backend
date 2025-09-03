@@ -21,6 +21,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.util.ObjectBuilder;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
@@ -466,6 +467,81 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         // When
         var result = service.getMonthlyStatisticsCounts(organisationUnitId, from, to);
+
+        // Then
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldReturnYearlyStatisticsCounts() throws IOException {
+        // Given
+        var organisationUnitId = 123;
+        var startYear = 2022;
+        var endYear = 2023;
+
+        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
+            organisationUnitId))
+            .thenReturn(mockOutputConfiguration(true, true, true));
+
+        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+            new OrganisationUnit() {{
+                setId(organisationUnitId);
+            }}
+        );
+
+        // Mock ES response
+        var mockBucket1 = mock(DateHistogramBucket.class);
+        when(mockBucket1.keyAsString()).thenReturn("2022");
+        when(mockBucket1.docCount()).thenReturn(30L);
+
+        var mockBucket2 = mock(DateHistogramBucket.class);
+        when(mockBucket2.keyAsString()).thenReturn("2023");
+        when(mockBucket2.docCount()).thenReturn(45L);
+
+        var mockHistogramAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockHistogramAgg.dateHistogram().buckets().array()).thenReturn(
+            List.of(mockBucket1, mockBucket2));
+
+        var mockAggregations = mock(HashMap.class);
+        when(mockAggregations.get("per_year")).thenReturn(mockHistogramAgg);
+
+        var mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse);
+
+        // When
+        var result = service.getYearlyStatisticsCounts(organisationUnitId, startYear, endYear);
+
+        // Then
+        assertEquals(2, result.size());
+        assertEquals(30L, result.get(Year.of(2022)));
+        assertEquals(45L, result.get(Year.of(2023)));
+    }
+
+    @Test
+    void shouldReturnEmptyMapWhenIOExceptionInYearlyStatistics() throws IOException {
+        // Given
+        var organisationUnitId = 123;
+        var startYear = 2022;
+        var endYear = 2023;
+
+        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
+            organisationUnitId))
+            .thenReturn(mockOutputConfiguration(true, true, true));
+
+        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+            new OrganisationUnit() {{
+                setId(organisationUnitId);
+            }}
+        );
+
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenThrow(
+            new IOException());
+
+        // When
+        var result = service.getYearlyStatisticsCounts(organisationUnitId, startYear, endYear);
 
         // Then
         assertTrue(result.isEmpty());

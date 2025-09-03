@@ -11,6 +11,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -296,6 +297,70 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
             return results;
         } catch (IOException e) {
             log.error("Error fetching monthly statistics for OU {} and type VIEW",
+                organisationUnitId);
+            return Collections.emptyMap();
+        }
+    }
+
+    @Override
+    public Map<Year, Long> getYearlyStatisticsCounts(Integer organisationUnitId, Integer startYear,
+                                                     Integer endYear) {
+        var searchFields = getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var allMergedOrganisationUnitIds = getAllMergedOrganisationUnitIds(organisationUnitId);
+
+        try {
+            LocalDate from = LocalDate.of(startYear, 1, 1);
+            LocalDate to = LocalDate.of(endYear, 12, 31);
+
+            SearchResponse<Void> response = elasticsearchClient.search(s -> s
+                    .index("statistics")
+                    .size(0)
+                    .query(q -> q
+                        .bool(b -> b
+                            .must(
+                                organisationUnitMatchQuery(allMergedOrganisationUnitIds, searchFields))
+                            .must(m -> m.term(t -> t.field("type").value("VIEW")))
+                            .must(m -> m.range(r -> r
+                                .field("timestamp")
+                                .gte(JsonData.of(from))
+                                .lte(JsonData.of(to))
+                            ))
+                        )
+                    )
+                    .aggregations("per_year", a -> a
+                        .dateHistogram(h -> h
+                            .field("timestamp")
+                            .calendarInterval(CalendarInterval.Year)
+                            .minDocCount(0)
+                            .extendedBounds(b -> b
+                                .min(FieldDateMath.of(fdm -> fdm.expr(startYear.toString())))
+                                .max(FieldDateMath.of(fdm -> fdm.expr(endYear.toString())))
+                            )
+                            .format("yyyy")
+                        )
+                    ),
+                Void.class
+            );
+
+            Map<Year, Long> results = new LinkedHashMap<>();
+            response.aggregations()
+                .get("per_year")
+                .dateHistogram()
+                .buckets()
+                .array()
+                .forEach(bucket -> {
+                    String keyAsString = bucket.keyAsString();
+                    if (Objects.isNull(keyAsString)) {
+                        return;
+                    }
+
+                    var y = Year.parse(keyAsString);
+                    results.put(y, bucket.docCount());
+                });
+
+            return results;
+        } catch (IOException e) {
+            log.error("Error fetching yearly statistics for OU {} and type VIEW",
                 organisationUnitId);
             return Collections.emptyMap();
         }
