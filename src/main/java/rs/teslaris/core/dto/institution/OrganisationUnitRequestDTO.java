@@ -46,4 +46,12 @@ public class OrganisationUnitRequestDTO {
     private Set<String> uris;
 
     private Set<ThesisType> allowedThesisTypes;
+
+    private boolean clientInstitution;
+
+    private String institutionEmailDomain;
+
+    private boolean validatingEmailDomain;
+
+    private boolean allowingSubdomains;
 }

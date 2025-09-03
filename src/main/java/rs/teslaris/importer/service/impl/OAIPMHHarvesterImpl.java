@@ -198,10 +198,9 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
 
                     var existingImport =
                         CommonImportUtility.findExistingImport(documentImport.getIdentifier());
-                    if (Objects.isNull(existingImport) &&
-                        Objects.nonNull(documentImport.getDoi())) {
+                    if (Objects.isNull(existingImport)) {
                         existingImport =
-                            CommonImportUtility.findImportByDOI(documentImport.getDoi());
+                            CommonImportUtility.findImportByDOIOrMetadata(documentImport);
                         if (Objects.nonNull(existingImport)) {
                             // Probably imported before from other sources, which have higher priorities
                             // perform metadata enrichment, if possible

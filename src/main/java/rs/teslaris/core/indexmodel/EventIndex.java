@@ -27,13 +27,13 @@ public class EventIndex {
     @Field(type = FieldType.Text, name = "name_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String nameSr;
 
-    @Field(type = FieldType.Keyword, name = "name_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "name_sr_sortable", normalizer = "serbian_normalizer")
     private String nameSrSortable;
 
     @Field(type = FieldType.Text, name = "name_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String nameOther;
 
-    @Field(type = FieldType.Keyword, name = "name_other_sortable")
+    @Field(type = FieldType.Keyword, name = "name_other_sortable", normalizer = "english_normalizer")
     private String nameOtherSortable;
 
     @Field(type = FieldType.Text, name = "description_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
@@ -51,13 +51,13 @@ public class EventIndex {
     @Field(type = FieldType.Text, name = "state_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String stateSr;
 
-    @Field(type = FieldType.Keyword, name = "state_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "state_sr_sortable", normalizer = "serbian_normalizer")
     private String stateSrSortable;
 
     @Field(type = FieldType.Text, name = "state_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String stateOther;
 
-    @Field(type = FieldType.Keyword, name = "state_other_sortable")
+    @Field(type = FieldType.Keyword, name = "state_other_sortable", normalizer = "english_normalizer")
     private String stateOtherSortable;
 
     @Field(type = FieldType.Text, name = "place_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")

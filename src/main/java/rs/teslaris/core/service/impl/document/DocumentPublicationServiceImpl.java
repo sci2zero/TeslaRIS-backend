@@ -470,13 +470,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contributions = document.getContributors().stream()
             .sorted(Comparator.comparingInt(PersonContribution::getOrderNumber)).toList();
 
+        var isThesis = document instanceof Thesis;
+        if (isThesis && Objects.nonNull(((Thesis) document).getOrganisationUnit())) {
+            organisationUnitIds.add(((Thesis) document).getOrganisationUnit().getId());
+        }
+
         contributions.forEach(
-            contribution -> processContribution(contribution, index, organisationUnitIds));
+            contribution ->
+                processContribution(contribution, index, isThesis, organisationUnitIds)
+        );
 
         index.setAuthorNamesSortable(index.getAuthorNames());
 
-        setEmploymentIndexInformation(index, contributions, organisationUnitIds,
-            document instanceof Thesis);
+        setEmploymentIndexInformation(index, contributions, organisationUnitIds, isThesis);
     }
 
     private void setEmploymentIndexInformation(DocumentPublicationIndex index,
@@ -533,15 +539,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private void processContribution(PersonDocumentContribution contribution,
-                                     DocumentPublicationIndex index,
+                                     DocumentPublicationIndex index, Boolean isThesis,
                                      Set<Integer> organisationUnitIds) {
         var personExists = Objects.nonNull(contribution.getPerson());
         var contributorName =
             contribution.getAffiliationStatement().getDisplayPersonName().toString();
 
-        organisationUnitIds.addAll(contribution.getInstitutions().stream()
-            .map(BaseEntity::getId)
-            .toList());
+        if (!isThesis) {
+            organisationUnitIds.addAll(contribution.getInstitutions().stream()
+                .map(BaseEntity::getId)
+                .toList());
+        }
+
 
         switch (contribution.getContributionType()) {
             case AUTHOR ->
@@ -1207,7 +1216,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         })._toQuery();
     }
 
-    private Query buildSimpleTokenQuery(List<String> tokens, int minShouldMatch) {
+    private Query buildSimpleTokenQuery(List<String> tokens, String minShouldMatch) {
         return BoolQuery.of(eq -> {
             tokens.forEach(token -> {
                 if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
@@ -1275,7 +1284,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 }
             });
 
-            return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+            return eq.minimumShouldMatch(minShouldMatch);
         })._toQuery();
     }
 
@@ -1283,11 +1292,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                          Integer institutionId,
                                          Integer commissionId,
                                          List<DocumentPublicationType> allowedTypes) {
-        int minShouldMatch;
+        String minShouldMatch;
         if (tokens.size() <= 2) {
-            minShouldMatch = 1; // Allow partial match for very short queries
+            minShouldMatch = "1"; // Allow partial match for very short queries
         } else {
-            minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+            minShouldMatch = "2<-80% 5<-75% 10<-60%";
         }
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {

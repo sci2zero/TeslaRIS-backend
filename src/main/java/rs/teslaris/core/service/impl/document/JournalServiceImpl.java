@@ -412,7 +412,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
     private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
                                          Integer commissionId) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        var minShouldMatch = "2<-100% 5<-80% 10<-70%";
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             if (Objects.nonNull(institutionId) && institutionId > 0) {
@@ -444,6 +444,16 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("print_issn").value(normalizedToken)))
                     ));
+                } else if (token.contains("\\-") &&
+                    partialIssnPattern.matcher(token.replace("\\-", "-")).matches()) {
+                    String normalizedToken = token.replace("\\-", "-");
+
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.prefix(
+                            p -> p.field("e_issn").value(normalizedToken)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("print_issn").value(normalizedToken)))
+                    ));
                 } else if (token.endsWith("\\*") || token.endsWith(".")) {
                     var wildcard = token.replace("\\*", "").replace(".", "");
                     b.should(mp -> mp.bool(m -> m
@@ -468,6 +478,10 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                             mq -> mq.field("title_sr").query(token)))
                         .should(sb -> sb.match(
                             mq -> mq.field("title_other").query(token)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("e_issn").value(token)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("print_issn").value(token)))
                     ));
                 }
             });
@@ -479,7 +493,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                 });
             }
 
-            return b.minimumShouldMatch(Integer.toString(minShouldMatch));
+            return b.minimumShouldMatch(minShouldMatch);
         })))._toQuery();
     }
 }

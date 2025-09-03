@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -82,6 +83,9 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     private Map<String, Integer> harvestPeriodOffsets;
 
     private Map<String, Integer> rateLimits;
+
+    @Value("${harvest-external-indicators.allowed}")
+    private Boolean harvestAllowed;
 
 
     @Override
@@ -604,6 +608,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     @Scheduled(cron = "${harvest-external-indicators.schedule}")
     protected void performIndicatorHarvest() {
+        if (!harvestAllowed) {
+            return;
+        }
+
         performPersonIndicatorHarvest();
         performOUIndicatorDeduction();
     }

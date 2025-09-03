@@ -417,8 +417,6 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             EventIndex::setDescriptionOther, true);
         indexMultilingualContent(index, event, Event::getKeywords, EventIndex::setKeywordsSr,
             EventIndex::setKeywordsOther, false);
-        index.setStateSrSortable(index.getStateSr());
-        index.setStateOtherSortable(index.getStateOther());
         indexMultilingualContent(index, event, Event::getPlace, EventIndex::setPlaceSr,
             EventIndex::setPlaceOther, false);
 
@@ -426,6 +424,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             indexMultilingualContent(index, event, t -> event.getCountry().getName(),
                 EventIndex::setStateSr,
                 EventIndex::setStateOther, false);
+            index.setStateSrSortable(index.getStateSr());
+            index.setStateOtherSortable(index.getStateOther());
         }
 
         if (Objects.nonNull(event.getDateFrom()) && Objects.nonNull(event.getDateTo())) {

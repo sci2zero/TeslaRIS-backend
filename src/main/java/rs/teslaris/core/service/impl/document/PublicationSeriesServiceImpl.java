@@ -43,6 +43,9 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
     protected final Pattern issnPattern =
         Pattern.compile("^(\\d{4}-\\d{4}|\\d{4}-\\d{3}[\\dX]?)$", Pattern.CASE_INSENSITIVE);
 
+    protected final Pattern partialIssnPattern =
+        Pattern.compile("^\\d{4}-\\d{0,2}$", Pattern.CASE_INSENSITIVE);
+
 
     @Override
     protected JpaRepository<PublicationSeries, Integer> getEntityRepository() {

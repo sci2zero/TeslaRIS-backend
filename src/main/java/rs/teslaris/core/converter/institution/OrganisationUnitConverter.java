@@ -38,6 +38,11 @@ public class OrganisationUnitConverter {
         dto.setAllowedThesisTypes(
             organisationUnit.getAllowedThesisTypes().stream().map(ThesisType::valueOf).toList());
 
+        dto.setClientInstitution(organisationUnit.getIsClientInstitution());
+        dto.setValidatingEmailDomain(organisationUnit.getValidateEmailDomain());
+        dto.setAllowingSubdomains(organisationUnit.getAllowSubdomains());
+        dto.setInstitutionEmailDomain(organisationUnit.getInstitutionEmailDomain());
+
         if (Objects.nonNull(organisationUnit.getLogo())) {
             dto.setLogoServerFilename(organisationUnit.getLogo().getImageServerName());
             dto.setLogoBackgroundHex(organisationUnit.getLogo().getBackgroundHex());

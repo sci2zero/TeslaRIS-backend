@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.indicator.EntityIndicatorSource;
 import rs.teslaris.assessment.model.indicator.PersonIndicator;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -19,6 +20,7 @@ public interface PersonIndicatorRepository extends JpaRepository<PersonIndicator
     List<PersonIndicator> findIndicatorsForPersonAndIndicatorAccessLevel(Integer personId,
                                                                          AccessLevel accessLevel);
 
+    @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT pi FROM PersonIndicator pi " +
         "WHERE pi.indicator.code = :code AND pi.person.id = :personId")

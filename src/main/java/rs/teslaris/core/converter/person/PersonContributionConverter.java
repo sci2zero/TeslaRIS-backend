@@ -123,13 +123,17 @@ public class PersonContributionConverter {
         contributions.stream()
             .filter(c -> c.getContributionType().equals(DocumentContributionType.AUTHOR))
             .sorted(Comparator.comparingInt(PersonDocumentContribution::getOrderNumber))
-            .forEach(contribution ->
-                sb.append(refMan ? "AU  - " : "%A ")
-                    .append(contribution.getAffiliationStatement().getDisplayPersonName()
-                        .getLastname())
-                    .append(", ")
-                    .append(contribution.getAffiliationStatement().getDisplayPersonName()
-                        .getFirstname())
-                    .append("\n"));
+            .forEach(contribution -> {
+                    var lastname =
+                        contribution.getAffiliationStatement().getDisplayPersonName().getLastname();
+
+                    sb.append(refMan ? "AU  - " : "%A ")
+                        .append(lastname)
+                        .append((Objects.nonNull(lastname) && !lastname.isBlank()) ? ", " : "")
+                        .append(contribution.getAffiliationStatement().getDisplayPersonName()
+                            .getFirstname())
+                        .append("\n");
+                }
+            );
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.indicator.EntityIndicatorSource;
 import rs.teslaris.assessment.model.indicator.OrganisationUnitIndicator;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -22,6 +23,7 @@ public interface OrganisationUnitIndicatorRepository
         Integer organisationUnitId,
         AccessLevel accessLevel);
 
+    @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT oui FROM OrganisationUnitIndicator oui " +
         "WHERE oui.indicator.code = :code AND oui.organisationUnit.id = :organisationUnitId")

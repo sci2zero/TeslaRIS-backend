@@ -2,7 +2,6 @@ package rs.teslaris.importer.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,8 +81,8 @@ public class ScheduledImportTasksRestorer {
 
         var userId = (Integer) data.get("userId");
         var userRole = (String) data.get("userRole");
-        var dateFrom = LocalDate.parse((String) data.get("dateFrom"));
-        var dateTo = LocalDate.parse((String) data.get("dateTo"));
+        var dateFrom = RelativeDateDTO.parse((String) data.get("dateFrom"));
+        var dateTo = RelativeDateDTO.parse((String) data.get("dateTo"));
         var institutionId = (Integer) data.get("institutionId");
 
         var timeToRun = metadata.getTimeToRun();
@@ -97,8 +96,8 @@ public class ScheduledImportTasksRestorer {
                 userService.getUserOrganisationUnitId(userId)) +
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timeToRun,
-            () -> commonHarvestController.performHarvest(userId, userRole, dateFrom, dateTo,
-                institutionId),
+            () -> commonHarvestController.performHarvest(userId, userRole, dateFrom.computeDate(),
+                dateTo.computeDate(), institutionId),
             userId, metadata.getRecurrenceType());
 
         taskManagerService.saveTaskMetadata(
@@ -117,8 +116,8 @@ public class ScheduledImportTasksRestorer {
 
         var userId = (Integer) data.get("userId");
         var userRole = (String) data.get("userRole");
-        var dateFrom = LocalDate.parse((String) data.get("dateFrom"));
-        var dateTo = LocalDate.parse((String) data.get("dateTo"));
+        var dateFrom = RelativeDateDTO.parse((String) data.get("dateFrom"));
+        var dateTo = RelativeDateDTO.parse((String) data.get("dateTo"));
         var institutionId = (Integer) data.get("institutionId");
         var allAuthors = (Boolean) data.get("allAuthors");
 
@@ -139,7 +138,7 @@ public class ScheduledImportTasksRestorer {
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timeToRun,
             () -> commonHarvestController.performAuthorCentricLoading(userId, userRole,
-                dateFrom, dateTo, authorIds, allAuthors, institutionId),
+                dateFrom.computeDate(), dateTo.computeDate(), authorIds, allAuthors, institutionId),
             userId, metadata.getRecurrenceType());
 
         taskManagerService.saveTaskMetadata(

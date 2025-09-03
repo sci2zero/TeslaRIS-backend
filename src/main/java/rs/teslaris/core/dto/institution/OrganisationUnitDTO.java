@@ -48,4 +48,12 @@ public class OrganisationUnitDTO {
     private String logoBackgroundHex;
 
     private List<ThesisType> allowedThesisTypes;
+
+    private boolean isClientInstitution;
+
+    private String institutionEmailDomain;
+
+    private boolean validatingEmailDomain;
+
+    private boolean allowingSubdomains;
 }

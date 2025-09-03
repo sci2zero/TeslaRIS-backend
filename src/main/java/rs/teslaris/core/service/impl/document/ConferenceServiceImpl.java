@@ -232,7 +232,10 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
-        conference.setNumber(conferenceDTO.getNumber());
+        if (!conference.getSerialEvent()) {
+            conference.setNumber(conferenceDTO.getNumber());
+        }
+
         conference.setFee(conferenceDTO.getFee());
 
         IdentifierUtil.validateAndSetIdentifier(

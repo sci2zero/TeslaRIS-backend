@@ -55,6 +55,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -77,6 +78,7 @@ import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -198,11 +200,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                                Integer topLevelInstitutionId,
                                                                Boolean onlyReturnOnesWhichCanHarvest,
                                                                Boolean onlyIndependent,
-                                                               ThesisType allowedThesisType) {
+                                                               ThesisType allowedThesisType,
+                                                               Boolean onlyClientInstitutions) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId,
-                    onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType),
+                    onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType,
+                    onlyClientInstitutions),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -215,7 +219,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private Query buildSimpleSearchQuery(List<String> tokens, Integer personId,
                                          Integer topLevelInstitutionId,
                                          Boolean onlyReturnOnesWhichCanHarvest,
-                                         Boolean onlyIndependent, ThesisType allowedThesisType) {
+                                         Boolean onlyIndependent, ThesisType allowedThesisType,
+                                         Boolean onlyClientInstitutions) {
         StringUtil.removeNotableStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -232,6 +237,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             if (Objects.nonNull(allowedThesisType)) {
                 b.must(sb -> sb.term(
                     m -> m.field("allowed_thesis_types").value(allowedThesisType.name())));
+            }
+
+            if (Objects.nonNull(onlyClientInstitutions) && onlyClientInstitutions) {
+                b.must(sb -> sb.term(
+                    m -> m.field("is_client_institution").value(true)));
             }
 
             tokens.forEach(token -> {
@@ -531,6 +541,24 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 organisationUnitDTO.getAllowedThesisTypes().stream().map(Enum::name)
                     .collect(Collectors.toSet()));
         }
+
+        if (SessionTrackingUtil.isUserLoggedIn() && Objects.requireNonNull(
+                SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+            .equals(UserRole.ADMIN.name())) {
+            organisationUnit.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+        }
+
+        organisationUnit.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
+        organisationUnit.setAllowSubdomains(organisationUnitDTO.isAllowingSubdomains());
+
+        if (organisationUnit.getValidateEmailDomain() &&
+            (Objects.isNull(organisationUnitDTO.getInstitutionEmailDomain()) ||
+                organisationUnitDTO.getInstitutionEmailDomain().isBlank())) {
+            throw new IllegalArgumentException(
+                "You have to specify the domain when domain validation is specified.");
+        }
+
+        organisationUnit.setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomain());
     }
 
     @Override
@@ -678,6 +706,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         index.getAllowedThesisTypes().clear();
         index.getAllowedThesisTypes().addAll(organisationUnit.getAllowedThesisTypes());
+
+        index.setIsClientInstitution(organisationUnit.getIsClientInstitution());
     }
 
     private void indexBelongsToSuperOURelation(OrganisationUnit organisationUnit,

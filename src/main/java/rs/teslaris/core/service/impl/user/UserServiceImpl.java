@@ -45,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.converter.person.UserConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
@@ -83,6 +84,7 @@ import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -90,6 +92,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.PasswordUtil;
+import rs.teslaris.core.util.email.EmailDomainChecker;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
@@ -98,6 +101,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.exceptionhandling.exception.RegistrationException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -145,6 +149,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final EmailUpdateRequestRepository emailUpdateRequestRepository;
 
     private final OAuthCodeRepository oAuthCodeRepository;
+
+    private final BrandingInformationService brandingInformationService;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -369,6 +375,18 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var person = resolveOrCreatePerson(registrationRequest, null, null);
         var involvement = personService.getLatestResearcherInvolvement(person);
 
+        var specifiedOU =
+            organisationUnitService.findOne(registrationRequest.getOrganisationUnitId());
+        if (!specifiedOU.getIsClientInstitution()) {
+            throw new RegistrationException(
+                "Institution is not a client. Unable to register researchers.");
+        }
+
+        if (specifiedOU.getValidateEmailDomain()) {
+            validateEmailDomain(registrationRequest.getEmail(),
+                specifiedOU.getInstitutionEmailDomain(), specifiedOU.getAllowSubdomains());
+        }
+
         var newUser = buildUser(
             registrationRequest.getEmail(),
             passwordEncoder.encode(registrationRequest.getPassword()),
@@ -376,6 +394,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             registrationRequest.getPreferredLanguageId()
         );
 
+        personService.indexPerson(person);
         return saveAndNotifyUser(newUser);
     }
 
@@ -468,7 +487,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             person.getName().getFirstname(), person.getName().getLastname(), true, false,
             language, language, authority, person,
             Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
-            null, UserNotificationPeriod.NEVER
+            null, UserNotificationPeriod.WEEKLY
         );
     }
 
@@ -490,9 +509,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "accountActivation.mailBodyResearcher",
-            new Object[] {activationLink},
+            new Object[] {systemName, activationLink},
             Locale.forLanguageTag(language)
         );
         emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
@@ -584,9 +605,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "accountActivation.mailBodyEmployee",
-            new Object[] {activationLink, new String(generatedPassword)},
+            new Object[] {systemName, activationLink, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
 
@@ -604,6 +627,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private void validateEmailUniqueness(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new UserAlreadyExistsException("emailInUseMessage");
+        }
+    }
+
+    private void validateEmailDomain(String email, String domain, boolean allowSubdomains) {
+        if (!EmailDomainChecker.isEmailFromInstitution(email, domain, allowSubdomains)) {
+            throw new RegistrationException("emailDomainErrorMessage");
         }
     }
 
@@ -1082,6 +1111,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             index.setActive(!user.getLocked());
             userAccountIndexRepository.save(index);
         });
+    }
+
+    private String getSystemName(String language) {
+        var brandingTitle = brandingInformationService.readBrandingInformation().title();
+        return brandingTitle.stream()
+            .filter(t -> t.getLanguageTag().equalsIgnoreCase(language))
+            .findFirst()
+            .or(() -> brandingTitle.stream().findFirst())
+            .map(MultilingualContentDTO::getContent)
+            .orElse("TeslaRIS");
     }
 
     @Scheduled(cron = "0 */10 * ? * *") // every ten minutes

@@ -227,6 +227,13 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
                 t -> publisher.getCountry().getName(),
                 PublisherIndex::setStateSr, PublisherIndex::setStateOther);
         }
+
+        publisherIndex.setNameSrSortable(publisherIndex.getNameSr());
+        publisherIndex.setNameOtherSortable(publisherIndex.getNameOther());
+        publisherIndex.setStateSrSortable(publisherIndex.getStateSr());
+        publisherIndex.setStateOtherSortable(publisherIndex.getStateOther());
+        publisherIndex.setPlaceSrSortable(publisherIndex.getPlaceSr());
+        publisherIndex.setPlaceOtherSortable(publisherIndex.getPlaceOther());
     }
 
     private void indexMultilingualContent(PublisherIndex index, Publisher publisher,

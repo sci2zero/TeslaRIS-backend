@@ -355,7 +355,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, boolean onlyBooks) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        var minShouldMatch = "2<-80% 5<-70% 10<-60%";
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
@@ -455,7 +455,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                             ));
                         }
                     });
-                    return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+                    return eq.minimumShouldMatch(minShouldMatch);
                 });
                 return bq;
             });

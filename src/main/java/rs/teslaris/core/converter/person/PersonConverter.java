@@ -3,6 +3,7 @@ package rs.teslaris.core.converter.person;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -19,9 +20,11 @@ import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.dto.person.PrizeResponseDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 
 public class PersonConverter {
@@ -219,6 +222,16 @@ public class PersonConverter {
             contact.setPhoneNumber(person.getPersonalInfo().getContact().getPhoneNumber());
         }
 
+        var instituion = new Pair<Integer, List<MultilingualContentDTO>>(null, null);
+        person.getInvolvements().stream().filter(i -> Objects.nonNull(i.getOrganisationUnit()) &&
+                List.of(InvolvementType.EMPLOYED_AT, InvolvementType.HIRED_BY)
+                    .contains(i.getInvolvementType()) && Objects.isNull(i.getDateTo())).findAny()
+            .ifPresent(currentInvolvement -> {
+                instituion.a = currentInvolvement.getOrganisationUnit().getId();
+                instituion.b = MultilingualContentConverter.getMultilingualContentDTO(
+                    currentInvolvement.getOrganisationUnit().getName());
+            });
+
         return new PersonUserResponseDTO(
             person.getId(),
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
@@ -234,7 +247,7 @@ public class PersonConverter {
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,
-            keyword, person.getApproveStatus(), userDTO);
+            keyword, person.getApproveStatus(), userDTO, instituion.b, instituion.a);
     }
 
     private static void filterSensitiveData(PersonResponseDTO personResponse) {

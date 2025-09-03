@@ -26,6 +26,8 @@ import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
+import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeepObjectMerger;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +49,14 @@ public class BibTexHarvesterImpl implements BibTexHarvester {
             var publication = BibTexConverter.toCommonImportModel(bibEntry);
             publication.ifPresent(documentImport -> {
                 var existingImport = findExistingImport(documentImport.getIdentifier());
+
+                existingImport = CommonImportUtility.findImportByDOIOrMetadata(documentImport);
+                if (Objects.nonNull(existingImport)) {
+                    DeepObjectMerger.deepMerge(existingImport, documentImport);
+                    mongoTemplate.save(existingImport, "documentImports");
+                    return;
+                }
+
                 var embedding = generateEmbedding(bibEntry);
 
                 if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {

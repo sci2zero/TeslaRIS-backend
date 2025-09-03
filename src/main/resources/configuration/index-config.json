@@ -53,11 +53,19 @@
       "serbian_normalizer": {
         "type": "custom",
         "char_filter": ["serbian_char_filter"],
-        "filter": ["lowercase", "icu_folding"]
+        "filter": [
+          "lowercase",
+          "serbian_cyrillic_to_latinic",
+          "icu_folding"
+        ]
       },
       "english_normalizer": {
         "type": "custom",
-        "filter": ["lowercase", "asciifolding"]
+        "filter": [
+          "lowercase",
+          "serbian_cyrillic_to_latinic",
+          "asciifolding"
+        ]
       }
     }
   }

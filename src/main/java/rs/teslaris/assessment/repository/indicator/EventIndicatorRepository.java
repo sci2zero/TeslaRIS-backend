@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.indicator.EntityIndicatorSource;
 import rs.teslaris.assessment.model.indicator.EventIndicator;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -25,6 +26,7 @@ public interface EventIndicatorRepository extends JpaRepository<EventIndicator, 
     @Query("SELECT ei FROM EventIndicator ei WHERE ei.event.id = :eventId")
     Page<EventIndicator> findIndicatorsForEvent(Integer eventId, Pageable pageable);
 
+    @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT ei FROM EventIndicator ei WHERE " +
         "ei.event.id = :eventId AND " +

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,7 +53,6 @@ public class CommonImportUtility {
         }
     }
 
-
     @Nullable
     public static DocumentImport findExistingImport(String identifier) {
         var query = new Query(Criteria.where("identifier").is(identifier));
@@ -60,12 +60,28 @@ public class CommonImportUtility {
     }
 
     @Nullable
-    public static DocumentImport findImportByDOI(String doi) {
+    public static DocumentImport findImportByDOIOrMetadata(DocumentImport documentImport) {
+        var doi = documentImport.getDoi();
         if (Objects.isNull(doi) || doi.isBlank()) {
-            return null;
+            doi = "NOT_MATCHING";
         }
 
-        var query = new Query(Criteria.where("doi").is(doi));
+        var titleCriteria = new ArrayList<Criteria>();
+        documentImport.getTitle().forEach(content -> {
+            titleCriteria.add(new Criteria().andOperator(
+                Criteria.where("title.content").is(content.getContent()),
+                Criteria.where("publication_type").is(documentImport.getPublicationType()),
+                Criteria.where("document_date").is(documentImport.getDocumentDate())
+            ));
+        });
+        var titleCriteriaArray = titleCriteria.toArray(new Criteria[0]);
+
+        var criteria = new Criteria().orOperator(
+            Criteria.where("doi").is(doi),
+            new Criteria().orOperator(titleCriteriaArray)
+        );
+
+        var query = new Query(criteria);
         return mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
     }
 

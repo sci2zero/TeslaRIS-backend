@@ -246,7 +246,7 @@ public class TableExportServiceImpl implements TableExportService {
                     Arrays.stream(endpointTokenParameters.getFirst().split("tokens="))
                         .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
                     SearchRequestType.SIMPLE, null,
-                    Integer.parseInt(endpointTokenParameters.getLast()), null, null, null);
+                    Integer.parseInt(endpointTokenParameters.getLast()), null, null, null, null);
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
                 Integer.parseInt(endpointTokenParameters.getFirst()), null,
                 Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
