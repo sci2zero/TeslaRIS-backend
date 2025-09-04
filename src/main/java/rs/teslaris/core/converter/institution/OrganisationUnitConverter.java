@@ -38,9 +38,9 @@ public class OrganisationUnitConverter {
         dto.setAllowedThesisTypes(
             organisationUnit.getAllowedThesisTypes().stream().map(ThesisType::valueOf).toList());
 
-        dto.setClientInstitution(organisationUnit.getIsClientInstitution());
-        dto.setValidatingEmailDomain(organisationUnit.getValidateEmailDomain());
-        dto.setAllowingSubdomains(organisationUnit.getAllowSubdomains());
+        dto.setClientInstitution(organisationUnit.getIsClientInstitution() != null ? organisationUnit.getIsClientInstitution() : false);
+        dto.setValidatingEmailDomain(organisationUnit.getValidateEmailDomain() != null ? organisationUnit.getValidateEmailDomain() : false);
+        dto.setAllowingSubdomains(organisationUnit.getAllowSubdomains() != null ? organisationUnit.getAllowSubdomains() : false);
         dto.setInstitutionEmailDomain(organisationUnit.getInstitutionEmailDomain());
 
         if (Objects.nonNull(organisationUnit.getLogo())) {
