@@ -92,7 +92,7 @@ public class BookSeriesController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
+    @PreAuthorize("hasAuthority('CREATE_BOOK_SERIES')")
     @Idempotent
     public BookSeriesDTO createBookSeries(@RequestBody @Valid BookSeriesDTO bookSeriesDTO) {
         var createdBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO, true);

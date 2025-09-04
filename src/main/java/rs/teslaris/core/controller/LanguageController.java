@@ -54,11 +54,29 @@ public class LanguageController {
     @GetMapping("/tags")
     public List<LanguageTagResponseDTO> getAllLanguageTags() {
         var allLanguageTags = languageTagService.findAll();
-        return allLanguageTags.stream().map(language -> new LanguageTagResponseDTO(
-            language.getId(),
-            language.getLanguageTag(),
-            language.getDisplay())).collect(
-            Collectors.toList());
+
+        List<String> priorityOrder = List.of("EN", "SR", "SR-CYR");
+
+        return allLanguageTags.stream()
+            .map(language -> new LanguageTagResponseDTO(
+                language.getId(),
+                language.getLanguageTag(),
+                language.getDisplay()))
+            .sorted((a, b) -> {
+                int idxA = priorityOrder.indexOf(a.getLanguageCode());
+                int idxB = priorityOrder.indexOf(b.getLanguageCode());
+
+                if (idxA == -1 && idxB == -1) {
+                    return a.getLanguageCode().compareToIgnoreCase(b.getLanguageCode());
+                } else if (idxA == -1) {
+                    return 1;
+                } else if (idxB == -1) {
+                    return -1;
+                } else {
+                    return Integer.compare(idxA, idxB);
+                }
+            })
+            .collect(Collectors.toList());
     }
 
     @GetMapping("/tags/search")
