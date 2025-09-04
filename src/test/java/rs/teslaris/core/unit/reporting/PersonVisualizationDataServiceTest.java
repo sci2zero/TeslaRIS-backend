@@ -62,6 +62,7 @@ public class PersonVisualizationDataServiceTest {
 
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnBucketsWhenGettingPublicationCountsByTypeForAuthorAndYear()
         throws IOException {
         // Given
@@ -134,6 +135,7 @@ public class PersonVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnCountryBucketsWhenGettingStatisticsByCountryForPerson() throws IOException {
         // Given
         var personId = 123;
@@ -199,6 +201,7 @@ public class PersonVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnCommissionYearlyCountsForPerson() throws IOException {
         // Given
         var personId = 123;
@@ -221,7 +224,9 @@ public class PersonVisualizationDataServiceTest {
         var mockResponse = mock(SearchResponse.class);
         when(mockResponse.aggregations()).thenReturn(Map.of("by_m_category", mockAgg));
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenReturn(
             mockResponse);
 
         // When
@@ -235,6 +240,7 @@ public class PersonVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnMonthlyStatisticsCountsForPerson() throws IOException {
         // Given
         var personId = 123;
@@ -260,7 +266,9 @@ public class PersonVisualizationDataServiceTest {
         var mockResponse = mock(SearchResponse.class);
         when(mockResponse.aggregations()).thenReturn(Map.of("per_month", mockAgg));
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenReturn(
             mockResponse);
 
         // When
@@ -273,6 +281,7 @@ public class PersonVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnMCategoriesForPersonPublications() throws IOException {
         // Given
         var personId = 123;
@@ -295,7 +304,9 @@ public class PersonVisualizationDataServiceTest {
         var mockResponse = mock(SearchResponse.class);
         when(mockResponse.aggregations()).thenReturn(Map.of("by_m_category", mockAgg));
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenReturn(
             mockResponse);
 
         // When
@@ -309,6 +320,7 @@ public class PersonVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnYearlyStatisticsCountsForPerson() throws IOException {
         // Given
         var personId = 123;
@@ -335,7 +347,9 @@ public class PersonVisualizationDataServiceTest {
         var mockResponse = mock(SearchResponse.class);
         when(mockResponse.aggregations()).thenReturn(Map.of("per_year", mockAgg));
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenReturn(
             mockResponse
         );
 

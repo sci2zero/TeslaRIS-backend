@@ -61,6 +61,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnPublicationCountsForOrganisationUnit() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -70,7 +71,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         // Mock year range response
         var mockMinAgg = mock(MinAggregate.class);
@@ -113,12 +114,13 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         // Then
         assertEquals(3, result.size());
-        assertEquals(2020, result.get(0).year());
-        assertEquals(1, result.get(0).countsByCategory().size());
-        assertEquals(5L, result.get(0).countsByCategory().get("ARTICLE"));
+        assertEquals(2020, result.getFirst().year());
+        assertEquals(1, result.getFirst().countsByCategory().size());
+        assertEquals(5L, result.getFirst().countsByCategory().get("ARTICLE"));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnEmptyListWhenNoYearRangeForPublicationCounts() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -127,7 +129,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         // Mock empty year range response
         var mockMinAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
@@ -157,6 +159,7 @@ class OrganisationUnitVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnMCategoriesForOrganisationUnitPublications() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -165,7 +168,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         when(userService.findCommissionForOrganisationUnitId(organisationUnitId)).thenReturn(
             List.of(
@@ -208,6 +211,7 @@ class OrganisationUnitVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnEmptyListWhenIOExceptionInMCategories() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -216,7 +220,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         when(userService.findCommissionForOrganisationUnitId(organisationUnitId)).thenReturn(
             List.of(
@@ -242,6 +246,7 @@ class OrganisationUnitVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnMCategoryCountsForOrganisationUnit() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -251,7 +256,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         // Mock year range
         var mockMinAgg = mock(MinAggregate.class);
@@ -304,12 +309,13 @@ class OrganisationUnitVisualizationDataServiceTest {
         assertEquals(1, result.size());
         var commissionCounts = result.getFirst();
         assertEquals(3, commissionCounts.yearlyCounts().size());
-        assertEquals(2020, commissionCounts.yearlyCounts().get(0).year());
-        assertEquals(1, commissionCounts.yearlyCounts().get(0).countsByCategory().size());
-        assertEquals(2L, commissionCounts.yearlyCounts().get(0).countsByCategory().get("M11"));
+        assertEquals(2020, commissionCounts.yearlyCounts().getFirst().year());
+        assertEquals(1, commissionCounts.yearlyCounts().getFirst().countsByCategory().size());
+        assertEquals(2L, commissionCounts.yearlyCounts().getFirst().countsByCategory().get("M11"));
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnCountryStatisticsForOrganisationUnit() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -318,7 +324,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
             new OrganisationUnit() {{
@@ -350,7 +356,9 @@ class OrganisationUnitVisualizationDataServiceTest {
         var mockResponse = mock(SearchResponse.class);
         when(mockResponse.aggregations()).thenReturn(mockAggregations);
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenReturn(
             mockResponse);
 
         // When
@@ -365,6 +373,7 @@ class OrganisationUnitVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnEmptyListWhenIOExceptionInCountryStatistics() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -373,7 +382,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
             new OrganisationUnit() {{
@@ -381,7 +390,9 @@ class OrganisationUnitVisualizationDataServiceTest {
             }}
         );
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenThrow(
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenThrow(
             new IOException());
 
         // When
@@ -393,6 +404,7 @@ class OrganisationUnitVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnMonthlyStatisticsCounts() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -401,7 +413,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
             new OrganisationUnit() {{
@@ -432,7 +444,9 @@ class OrganisationUnitVisualizationDataServiceTest {
         var mockResponse = mock(SearchResponse.class);
         when(mockResponse.aggregations()).thenReturn(mockAggregations);
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenReturn(
             mockResponse);
 
         // When
@@ -446,6 +460,7 @@ class OrganisationUnitVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnEmptyMapWhenIOExceptionInMonthlyStatistics() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -454,7 +469,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
             new OrganisationUnit() {{
@@ -462,7 +477,9 @@ class OrganisationUnitVisualizationDataServiceTest {
             }}
         );
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenThrow(
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenThrow(
             new IOException());
 
         // When
@@ -473,6 +490,7 @@ class OrganisationUnitVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnYearlyStatisticsCounts() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -481,7 +499,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
             new OrganisationUnit() {{
@@ -508,8 +526,9 @@ class OrganisationUnitVisualizationDataServiceTest {
         var mockResponse = mock(SearchResponse.class);
         when(mockResponse.aggregations()).thenReturn(mockAggregations);
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
-            mockResponse);
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenReturn(mockResponse);
 
         // When
         var result = service.getYearlyStatisticsCounts(organisationUnitId, startYear, endYear);
@@ -521,6 +540,7 @@ class OrganisationUnitVisualizationDataServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnEmptyMapWhenIOExceptionInYearlyStatistics() throws IOException {
         // Given
         var organisationUnitId = 123;
@@ -529,7 +549,7 @@ class OrganisationUnitVisualizationDataServiceTest {
 
         when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
             organisationUnitId))
-            .thenReturn(mockOutputConfiguration(true, true, true));
+            .thenReturn(mockOutputConfiguration());
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
             new OrganisationUnit() {{
@@ -537,8 +557,9 @@ class OrganisationUnitVisualizationDataServiceTest {
             }}
         );
 
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenThrow(
-            new IOException());
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class))).thenThrow(new IOException());
 
         // When
         var result = service.getYearlyStatisticsCounts(organisationUnitId, startYear, endYear);
@@ -547,10 +568,7 @@ class OrganisationUnitVisualizationDataServiceTest {
         assertTrue(result.isEmpty());
     }
 
-    private OrganisationUnitOutputConfigurationDTO mockOutputConfiguration(boolean showSpecified,
-                                                                           boolean showPublicationYear,
-                                                                           boolean showCurrent) {
-        return new OrganisationUnitOutputConfigurationDTO(true, showSpecified,
-            showPublicationYear, showCurrent);
+    private OrganisationUnitOutputConfigurationDTO mockOutputConfiguration() {
+        return new OrganisationUnitOutputConfigurationDTO(true, true, true, true);
     }
 }
