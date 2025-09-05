@@ -184,7 +184,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var totalCitationsIndicator = indicatorService.getIndicatorByCode(
             externalIndicatorMapping.getOrDefault("totalCitationCount", null));
         var yearlyCitationsIndicator = indicatorService.getIndicatorByCode(
-            externalIndicatorMapping.getOrDefault("yearlyCitations", null));
+            externalIndicatorMapping.getOrDefault("yearlyCitationCount", null));
         var totalOutputIndicator = indicatorService.getIndicatorByCode(
             externalIndicatorMapping.getOrDefault("totalPublicationCount", null));
         var hIndexIndicator = indicatorService.getIndicatorByCode(

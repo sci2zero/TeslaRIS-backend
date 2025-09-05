@@ -183,7 +183,6 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     @Override
     public List<StatisticsByCountry> getByCountryStatisticsForOrganisationUnit(
         Integer organisationUnitId, LocalDate from, LocalDate to) {
-        var searchFields = getOrganisationUnitOutputSearchFields(organisationUnitId);
         var allMergedOrganisationUnitIds = getAllMergedOrganisationUnitIds(organisationUnitId);
 
         SearchResponse<Void> response;
@@ -193,8 +192,11 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(
-                                organisationUnitMatchQuery(allMergedOrganisationUnitIds, searchFields))
+                            .must(m -> m.terms(t -> t.field("organisation_unit_id").terms(
+                                v -> v.value(allMergedOrganisationUnitIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList())
+                            )))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
@@ -243,7 +245,6 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     @Override
     public Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer organisationUnitId,
                                                            LocalDate from, LocalDate to) {
-        var searchFields = getOrganisationUnitOutputSearchFields(organisationUnitId);
         var allMergedOrganisationUnitIds = getAllMergedOrganisationUnitIds(organisationUnitId);
 
         try {
@@ -252,8 +253,11 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(
-                                organisationUnitMatchQuery(allMergedOrganisationUnitIds, searchFields))
+                            .must(m -> m.terms(t -> t.field("organisation_unit_id").terms(
+                                v -> v.value(allMergedOrganisationUnitIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList())
+                            )))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
