@@ -1344,15 +1344,16 @@ public class PersonServiceTest {
         existingPerson.setOtherNames(new HashSet<>());
         existingPerson.setApproveStatus(ApproveStatus.APPROVED);
 
-        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.findApprovedByIdWithOtherNames(personId)).thenReturn(
+            Optional.of(existingPerson));
         when(personRepository.save(any(Person.class))).thenAnswer(
             invocation -> invocation.getArgument(0));
 
         // When
-        personService.addPersonOtherNames(personNameDTO, personId);
+        personService.addPersonOtherName(personNameDTO, personId);
 
         // Then
-        verify(personRepository).findById(personId);
+        verify(personRepository).findApprovedByIdWithOtherNames(personId);
         verify(personRepository, atLeastOnce()).save(existingPerson);
 
         assertEquals(1, existingPerson.getOtherNames().size());
@@ -1375,15 +1376,16 @@ public class PersonServiceTest {
         existingPerson.setOtherNames(new HashSet<>());
         existingPerson.setApproveStatus(ApproveStatus.REQUESTED); // Not approved
 
-        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.findApprovedByIdWithOtherNames(personId)).thenReturn(
+            Optional.of(existingPerson));
         when(personRepository.save(any(Person.class))).thenAnswer(
             invocation -> invocation.getArgument(0));
 
         // When
-        personService.addPersonOtherNames(personNameDTO, personId);
+        personService.addPersonOtherName(personNameDTO, personId);
 
         // Then
-        verify(personRepository, atLeastOnce()).findById(personId);
+        verify(personRepository, atLeastOnce()).findApprovedByIdWithOtherNames(personId);
         verify(personRepository, atLeastOnce()).save(any());
 
         assertEquals(1, existingPerson.getOtherNames().size());
@@ -1411,15 +1413,16 @@ public class PersonServiceTest {
         existingPerson.setOtherNames(existingOtherNames);
         existingPerson.setApproveStatus(ApproveStatus.APPROVED);
 
-        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.findApprovedByIdWithOtherNames(personId)).thenReturn(
+            Optional.of(existingPerson));
         when(personRepository.save(any(Person.class))).thenAnswer(
             invocation -> invocation.getArgument(0));
 
         // When
-        personService.addPersonOtherNames(personNameDTO, personId);
+        personService.addPersonOtherName(personNameDTO, personId);
 
         // Then
-        verify(personRepository).findById(personId);
+        verify(personRepository).findApprovedByIdWithOtherNames(personId);
         verify(personRepository, atLeastOnce()).save(existingPerson);
 
         assertEquals(2, existingPerson.getOtherNames().size());
@@ -1443,15 +1446,16 @@ public class PersonServiceTest {
         existingPerson.setPersonalInfo(new PersonalInfo());
         existingPerson.setApproveStatus(ApproveStatus.APPROVED);
 
-        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.findApprovedByIdWithOtherNames(personId)).thenReturn(
+            Optional.of(existingPerson));
         when(personRepository.save(any(Person.class))).thenAnswer(
             invocation -> invocation.getArgument(0));
 
         // When
-        personService.addPersonOtherNames(personNameDTO, personId);
+        personService.addPersonOtherName(personNameDTO, personId);
 
         // Then
-        verify(personRepository).findById(personId);
+        verify(personRepository).findApprovedByIdWithOtherNames(personId);
         verify(personRepository, atLeastOnce()).save(existingPerson);
 
         assertNotNull(existingPerson.getOtherNames());
@@ -1462,19 +1466,18 @@ public class PersonServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenPersonNotFound() {
+    void shouldNotUpdateNamesWhenPersonNotFound() {
         // Given
         var personId = 999;
         var personNameDTO = new PersonNameDTO(null, "John", null, "Doe", null, null);
 
-        when(personRepository.findById(personId)).thenReturn(Optional.empty());
+        when(personRepository.findApprovedByIdWithOtherNames(personId)).thenReturn(
+            Optional.empty());
 
         // When & Then
-        assertThrows(NotFoundException.class, () -> {
-            personService.addPersonOtherNames(personNameDTO, personId);
-        });
+        personService.addPersonOtherName(personNameDTO, personId);
 
-        verify(personRepository).findById(personId);
+        verify(personRepository).findApprovedByIdWithOtherNames(personId);
         verify(personRepository, never()).save(any());
     }
 
@@ -1491,15 +1494,16 @@ public class PersonServiceTest {
         existingPerson.setOtherNames(new HashSet<>());
         existingPerson.setApproveStatus(ApproveStatus.APPROVED);
 
-        when(personRepository.findById(personId)).thenReturn(Optional.of(existingPerson));
+        when(personRepository.findApprovedByIdWithOtherNames(personId)).thenReturn(
+            Optional.of(existingPerson));
         when(personRepository.save(any(Person.class))).thenAnswer(
             invocation -> invocation.getArgument(0));
 
         // When
-        personService.addPersonOtherNames(personNameDTO, personId);
+        personService.addPersonOtherName(personNameDTO, personId);
 
         // Then
-        verify(personRepository).findById(personId);
+        verify(personRepository).findApprovedByIdWithOtherNames(personId);
         verify(personRepository, atLeastOnce()).save(existingPerson);
 
         assertEquals(1, existingPerson.getOtherNames().size());

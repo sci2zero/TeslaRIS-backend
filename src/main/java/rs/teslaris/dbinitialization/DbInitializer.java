@@ -272,8 +272,8 @@ public class DbInitializer implements ApplicationRunner {
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
                 editDocumentFiles, editDocumentIndicators, claimDocument, createConference,
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
-                unbindYourselfFromPublication, editEntityIndicators, createJournal, createBookSeries,
-                createPublisher, performLoading, harvestIdfMetadata)));
+                unbindYourselfFromPublication, editEntityIndicators, createJournal,
+                createBookSeries, createPublisher, performLoading, harvestIdfMetadata)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(

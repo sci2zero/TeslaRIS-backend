@@ -52,7 +52,7 @@ public class Person extends BaseEntity implements Mergeable {
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private PersonName name;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<PersonName> otherNames = new HashSet<>();
 
     @Embedded

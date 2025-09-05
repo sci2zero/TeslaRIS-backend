@@ -45,8 +45,7 @@ public class ScindeksConverter {
                     document.setEIssn(issn.split(":")[1].trim());
                 });
         } else {
-            log.error("UNKNOWN TYPE:");
-            record.getType().forEach(System.out::println);
+            log.error("UNKNOWN TYPE: {}", String.join(", ", record.getType()));
         }
 
         FunctionalUtil.forEachWithCounter(record.getCreator(), (i, authorship) -> {

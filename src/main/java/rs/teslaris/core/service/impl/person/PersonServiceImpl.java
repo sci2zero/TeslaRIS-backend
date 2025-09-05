@@ -433,19 +433,28 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
-    public void addPersonOtherNames(PersonNameDTO personNameDTO, Integer personId) {
-        var personToUpdate = findOne(personId);
+    public void addPersonOtherName(PersonNameDTO personNameDTO, Integer personId) {
+        personRepository.findApprovedByIdWithOtherNames(personId).ifPresent(personToUpdate -> {
+            personToUpdate.getOtherNames().add(
+                new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
+                    personNameDTO.getLastname(), personNameDTO.getDateFrom(),
+                    personNameDTO.getDateTo()));
+            personRepository.save(personToUpdate);
 
-        personToUpdate.getOtherNames().add(
-            new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
-                personNameDTO.getLastname(), personNameDTO.getDateFrom(),
-                personNameDTO.getDateTo()));
-        personRepository.save(personToUpdate);
+            var savedPerson = save(personToUpdate);
 
-        save(personToUpdate);
-        if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-            indexPerson(personToUpdate);
-        }
+            personIndexRepository.findByDatabaseId(personId).ifPresent(personIndex -> {
+                personIndex.setName(savedPerson.getName().toText());
+
+                savedPerson.getOtherNames().forEach(
+                    (otherName) ->
+                        personIndex.setName(personIndex.getName() + "; " + otherName.toText()));
+
+                personIndex.setNameSortable(personIndex.getName());
+
+                personIndexRepository.save(personIndex);
+            });
+        });
     }
 
     @Override
