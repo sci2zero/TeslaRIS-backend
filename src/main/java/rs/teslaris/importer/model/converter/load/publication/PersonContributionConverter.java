@@ -70,7 +70,7 @@ public class PersonContributionConverter {
             person.getOtherNames().stream()
                 .noneMatch(name -> isNameEqual(contribution.getPersonName(), name))) {
             try {
-                personService.addPersonOtherNames(contribution.getPersonName(), person.getId());
+                personService.addPersonOtherName(contribution.getPersonName(), person.getId());
 
                 log.info("Added new other name for Person {} -> {}", person.getId(),
                     contribution.getPersonName().toString());
