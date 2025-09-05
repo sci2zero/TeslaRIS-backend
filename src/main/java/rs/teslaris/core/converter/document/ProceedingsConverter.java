@@ -99,13 +99,13 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
                 new Key("publicationSeries"), defaultLanguageTag);
 
             if (valueExists(proceedings.getPublicationSeries().getEISSN())) {
-                entry.addField(new Key("eIssn"),
+                entry.addField(new Key("e_issn"),
                     new StringValue(proceedings.getPublicationSeries().getEISSN(),
                         StringValue.Style.BRACED));
             }
 
             if (valueExists(proceedings.getPublicationSeries().getPrintISSN())) {
-                entry.addField(new Key("printIssn"),
+                entry.addField(new Key("print_issn"),
                     new StringValue(proceedings.getPublicationSeries().getPrintISSN(),
                         StringValue.Style.BRACED));
             }

@@ -10,6 +10,7 @@ import rs.teslaris.core.dto.document.PublisherDTO;
 import rs.teslaris.core.model.oaipmh.publication.Publisher;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 
 @Component
@@ -26,14 +27,24 @@ public class PublisherConverter {
     public void setPublisherInformation(Publisher publisher, PublishableDTO dto) {
         for (var mcName : publisher.getName()) {
             var name = mcName.getValue();
+            if (Objects.isNull(name) || name.isBlank()) {
+                return;
+            }
+
+            name = name.trim();
+
             var potentialMatches = publisherService.searchPublishers(
                 Arrays.stream(name.split(" ")).filter(n -> !n.isBlank()).toList(),
                 PageRequest.of(0, 1));
             if (potentialMatches.hasContent()) {
                 var match = potentialMatches.getContent().getFirst();
-                if (match.getNameSr().equals(name) || match.getNameOther().equals(name)) {
+                var cyrillicName = SerbianTransliteration.toCyrillic(name);
+                if (match.getNameSr().equalsIgnoreCase(name) ||
+                    match.getNameOther().equalsIgnoreCase(name) ||
+                    match.getNameSr().equalsIgnoreCase(cyrillicName) ||
+                    match.getNameOther().equalsIgnoreCase(cyrillicName)) {
                     dto.setPublisherId(match.getDatabaseId());
-                    break;
+                    return;
                 }
             }
         }
@@ -51,7 +62,9 @@ public class PublisherConverter {
                 }
             }
 
-            if (Objects.nonNull(publisherDTO.getName()) && !publisherDTO.getName().isEmpty()) {
+            if (Objects.nonNull(publisherDTO.getName()) && !publisherDTO.getName().isEmpty() &&
+                publisherDTO.getName().stream().noneMatch(
+                    name -> Objects.isNull(name.getContent()) || name.getContent().isBlank())) {
                 dto.setPublisherId(publisherService.createPublisher(publisherDTO, true).getId());
             }
         }

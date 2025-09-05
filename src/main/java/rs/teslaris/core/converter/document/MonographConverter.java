@@ -84,6 +84,11 @@ public class MonographConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {
             setMCBibTexField(monograph.getPublicationSeries().getTitle(), entry,
+                BibTeXEntry.KEY_SERIES, defaultLanguageTag);
+        }
+
+        if (Objects.nonNull(monograph.getPublisher())) {
+            setMCBibTexField(monograph.getPublisher().getName(), entry,
                 BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
         }
 

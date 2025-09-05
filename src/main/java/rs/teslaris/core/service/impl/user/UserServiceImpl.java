@@ -630,7 +630,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
     }
 
-    private void validateEmailDomain(String email, String domain, boolean allowSubdomains) {
+    private void validateEmailDomain(String email, String domain, Boolean allowSubdomains) {
         if (!EmailDomainChecker.isEmailFromInstitution(email, domain, allowSubdomains)) {
             throw new RegistrationException("emailDomainErrorMessage");
         }
@@ -1124,36 +1124,31 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Scheduled(cron = "0 */10 * ? * *") // every ten minutes
+    @Transactional
     public void cleanupLongLivedRefreshTokens() {
-        var refreshTokens = refreshTokenRepository.findAll();
-
         var now = new Date();
         var twentyMinutesAgo = new Date(now.getTime() - (20 * 60 * 1000));
 
-        refreshTokens.stream().filter(token -> token.getCreateDate().before(twentyMinutesAgo))
-            .forEach(refreshTokenRepository::delete);
+        // Use batch delete with query to avoid loading entities
+        refreshTokenRepository.deleteAllByCreateDateBefore(twentyMinutesAgo);
     }
 
     @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    @Transactional
     public void cleanupLongLivedAccountActivationTokens() {
-        var activationTokens = userAccountActivationRepository.findAll();
-
         var now = new Date();
         var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
-        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
-            .forEach(userAccountActivationRepository::delete);
+        userAccountActivationRepository.deleteAllByCreateDateBefore(sevenDaysAgo);
     }
 
     @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    @Transactional
     public void cleanupLongLivedPasswordResetTokens() {
-        var activationTokens = passwordResetTokenRepository.findAll();
-
         var now = new Date();
         var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
-        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
-            .forEach(passwordResetTokenRepository::delete);
+        passwordResetTokenRepository.deleteAllByCreateDateBefore(sevenDaysAgo);
     }
 
     @Scheduled(cron = "0 * * * * *") // every 15 minutes

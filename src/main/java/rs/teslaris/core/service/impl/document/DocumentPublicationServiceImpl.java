@@ -1288,7 +1288,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         if (tokens.size() <= 2) {
             minShouldMatch = "1"; // Allow partial match for very short queries
         } else {
-            minShouldMatch = "2<-80% 5<-75% 10<-60%";
+            minShouldMatch = String.valueOf((int) Math.ceil(tokens.size() * 0.8));
         }
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {

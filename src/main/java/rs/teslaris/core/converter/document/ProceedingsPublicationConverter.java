@@ -57,7 +57,7 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
 
         if (Objects.nonNull(proceedingsPublication.getProceedings())) {
             setMCBibTexField(proceedingsPublication.getProceedings().getTitle(), entry,
-                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
+                BibTeXEntry.KEY_BOOKTITLE, defaultLanguageTag);
 
             if (valueExists(proceedingsPublication.getProceedings().getEISBN())) {
                 entry.addField(new Key("eIsbn"),

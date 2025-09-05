@@ -24,7 +24,7 @@ public final class EmailDomainChecker {
     }
 
     public static boolean isEmailFromInstitution(String email, String institutionDomain,
-                                                 boolean allowSubdomains) {
+                                                 Boolean allowSubdomains) {
         if (Objects.isNull(email) || Objects.isNull(institutionDomain)) {
             return false;
         }

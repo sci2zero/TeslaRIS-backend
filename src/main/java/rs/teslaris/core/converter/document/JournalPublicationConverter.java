@@ -72,16 +72,16 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(journalPublication.getJournal())) {
             setMCBibTexField(journalPublication.getJournal().getTitle(), entry,
-                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
+                BibTeXEntry.KEY_JOURNAL, defaultLanguageTag);
 
             if (valueExists(journalPublication.getJournal().getEISSN())) {
-                entry.addField(new Key("eIssn"),
+                entry.addField(new Key("e_issn"),
                     new StringValue(journalPublication.getJournal().getEISSN(),
                         StringValue.Style.BRACED));
             }
 
             if (valueExists(journalPublication.getJournal().getPrintISSN())) {
-                entry.addField(new Key("printIssn"),
+                entry.addField(new Key("print_issn"),
                     new StringValue(journalPublication.getJournal().getPrintISSN(),
                         StringValue.Style.BRACED));
             }

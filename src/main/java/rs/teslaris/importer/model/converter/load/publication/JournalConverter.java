@@ -31,7 +31,11 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
         dto.setEissn(record.getIssn());
 
         dto.setContributions(new ArrayList<>());
-        dto.setNameAbbreviation(new ArrayList<>());
+        if (Objects.nonNull(record.getAcronym()) && !record.getAcronym().isEmpty()) {
+            dto.setNameAbbreviation(multilingualContentConverter.toDTO(record.getAcronym()));
+        } else {
+            dto.setNameAbbreviation(new ArrayList<>());
+        }
 
         dto.setSubtitle(multilingualContentConverter.toDTO(record.getSubtitle()));
 

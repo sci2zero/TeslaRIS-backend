@@ -1151,6 +1151,18 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                                     m -> m.field("employments_sr").query(token).boost(0.5f))
                                 ._toQuery());
                         perTokenShould.add(
+                            WildcardQuery.of(
+                                    m -> m.field("employments_other")
+                                        .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
+                                        .boost(0.3f))
+                                ._toQuery());
+                        perTokenShould.add(
+                            WildcardQuery.of(
+                                    m -> m.field("employments_sr")
+                                        .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
+                                        .boost(0.3f))
+                                ._toQuery());
+                        perTokenShould.add(
                             MatchQuery.of(m -> m.field("keywords").query(token).boost(0.7f))
                                 ._toQuery());
                     }
