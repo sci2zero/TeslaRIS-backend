@@ -37,7 +37,7 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
             dto.setNameAbbreviation(new ArrayList<>());
         }
 
-        dto.setSubtitle(multilingualContentConverter.toDTO(record.getSubtitle()));
+        dto.setSubtitle(new ArrayList<>());
 
         var languageTagValue = record.getLanguage().trim().toUpperCase();
         if (languageTagValue.isEmpty()) {
