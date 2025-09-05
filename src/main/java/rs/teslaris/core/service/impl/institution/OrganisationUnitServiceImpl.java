@@ -23,6 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
+import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
@@ -114,6 +117,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final SearchFieldsLoader searchFieldsLoader;
 
     private final FileService fileService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -459,6 +464,16 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
 
+        var oldNames = organisationUnitToUpdate.getName().stream()
+            .map(MultiLingualContent::getContent)
+            .collect(Collectors.toSet());
+
+        var newNames = organisationUnitDTORequest.getName().stream()
+            .map(MultilingualContentDTO::getContent)
+            .collect(Collectors.toSet());
+
+        boolean isNameChanged = !oldNames.equals(newNames);
+
         organisationUnitToUpdate.getName().clear();
         organisationUnitToUpdate.getKeyword().clear();
         organisationUnitToUpdate.getResearchAreas().clear();
@@ -472,6 +487,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
                 organisationUnitId).orElse(new OrganisationUnitIndex());
             indexOrganisationUnit(organisationUnitToUpdate, index);
+        }
+
+        if (isNameChanged) {
+            applicationEventPublisher.publishEvent(
+                new OrganisationUnitSignificantChangeEvent(organisationUnitId));
         }
 
         return organisationUnitToUpdate;
@@ -544,8 +564,18 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         if (SessionTrackingUtil.isUserLoggedIn() && Objects.requireNonNull(
                 SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
-            .equals(UserRole.ADMIN.name())) {
+            .equals(UserRole.ADMIN.name()) && !organisationUnit.getIsClientInstitution()
+            .equals(organisationUnitDTO.isClientInstitution())) {
             organisationUnit.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+
+            getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId()).forEach(
+                organisationUnitId -> {
+                    var subOU = findOne(organisationUnitId);
+                    subOU.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+                    subOU.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
+                    subOU.setAllowSubdomains(organisationUnitDTO.isAllowingSubdomains());
+                    save(subOU);
+                });
         }
 
         organisationUnit.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
@@ -783,6 +813,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             organisationUnitId);
         index.ifPresent(organisationUnitIndexRepository::delete);
+
+        // TODO: Add listeners wherever this could raise a side effect (index-wise)
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitDeletedEvent(organisationUnitId));
     }
 
     @Override
@@ -858,6 +892,22 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             newRelation.setApproveStatus(ApproveStatus.APPROVED);
         } else {
             newRelation.setApproveStatus(ApproveStatus.REQUESTED);
+        }
+
+        if (newRelation.getTargetOrganisationUnit().getIsClientInstitution() &&
+            !newRelation.getSourceOrganisationUnit().getIsClientInstitution()) {
+            getOrganisationUnitIdsFromSubHierarchy(
+                newRelation.getTargetOrganisationUnit().getId()).forEach(
+                organisationUnitId -> {
+                    var subOU = findOne(organisationUnitId);
+                    subOU.setIsClientInstitution(
+                        newRelation.getTargetOrganisationUnit().getIsClientInstitution());
+                    subOU.setValidateEmailDomain(
+                        newRelation.getTargetOrganisationUnit().getValidateEmailDomain());
+                    subOU.setAllowSubdomains(
+                        newRelation.getTargetOrganisationUnit().getAllowSubdomains());
+                    save(subOU);
+                });
         }
 
         var savedRelation = organisationUnitsRelationJPAService.save(newRelation);

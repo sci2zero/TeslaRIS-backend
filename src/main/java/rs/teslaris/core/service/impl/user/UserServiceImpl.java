@@ -375,17 +375,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var person = resolveOrCreatePerson(registrationRequest, null, null);
         var involvement = personService.getLatestResearcherInvolvement(person);
 
-        var specifiedOU =
-            organisationUnitService.findOne(registrationRequest.getOrganisationUnitId());
-        if (!specifiedOU.getIsClientInstitution()) {
-            throw new RegistrationException(
-                "Institution is not a client. Unable to register researchers.");
-        }
-
-        if (specifiedOU.getValidateEmailDomain()) {
-            validateEmailDomain(registrationRequest.getEmail(),
-                specifiedOU.getInstitutionEmailDomain(), specifiedOU.getAllowSubdomains());
-        }
+        validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
+            registrationRequest.getEmail());
 
         var newUser = buildUser(
             registrationRequest.getEmail(),
@@ -409,6 +400,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = getResearcherAuthority();
         var person = resolveOrCreatePerson(registrationRequest, oAuth2Provider, identifier);
         var involvement = personService.getLatestResearcherInvolvement(person);
+
+        validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
+            registrationRequest.getEmail());
 
         char[] generatedPassword = PasswordUtil.generatePassword(30);
         var newUser = buildUser(
@@ -559,6 +553,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         throws NoSuchAlgorithmException {
         validateEmailUniqueness(email);
 
+        validateInstitutionClientStatus(organisationUnitId, email);
+
         var authority = authorityRepository.findByName(authorityName)
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
@@ -617,6 +613,19 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         Arrays.fill(generatedPassword, '\0');
         return savedUser;
+    }
+
+    private void validateInstitutionClientStatus(Integer organisationUnitId, String email) {
+        var specifiedOU = organisationUnitService.findOne(organisationUnitId);
+        if (!specifiedOU.getIsClientInstitution()) {
+            throw new RegistrationException(
+                "Institution is not a client. Unable to register researchers.");
+        }
+
+        if (specifiedOU.getValidateEmailDomain()) {
+            validateEmailDomain(email, specifiedOU.getInstitutionEmailDomain(),
+                specifiedOU.getAllowSubdomains());
+        }
     }
 
     private String generateActivationLink(String language, String activationToken) {

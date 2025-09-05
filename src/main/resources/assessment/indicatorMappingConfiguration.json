@@ -54,6 +54,7 @@
       "defaultLanguage": "EN",
       "parallelize": false,
       "editionColumn": 6,
+      "abbreviationColumn": 1,
       "columnMapping": {
         "0": {
           "mapsTo": "jcr",

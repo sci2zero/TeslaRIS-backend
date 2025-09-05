@@ -326,6 +326,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
+        organisationUnit.setIsClientInstitution(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("johndoe@example.com", "password123", "",
@@ -380,6 +381,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
+        organisationUnit.setIsClientInstitution(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("johndoe@example.com", "password123", "",
@@ -437,6 +439,7 @@ public class UserServiceTest {
             Set.of(
                 new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
                     "University", 1)));
+        organisationUnit.setIsClientInstitution(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("regadmin@example.com", "password123", "",
@@ -493,6 +496,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
+        organisationUnit.setIsClientInstitution(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
@@ -1342,6 +1346,7 @@ public class UserServiceTest {
         registrationRequest.setEmail("oauthuser@example.com");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
+        registrationRequest.setOrganisationUnitId(2);
 
         var person = new Person();
         person.setName(new PersonName("Jane", "", "Doe", LocalDate.of(1990, 5, 12), null));
@@ -1349,8 +1354,8 @@ public class UserServiceTest {
         when(personService.findOne(1)).thenReturn(person);
 
         var organisationUnit = new OrganisationUnit();
-        when(organisationUnitService.findOrganisationUnitById(anyInt())).thenReturn(
-            organisationUnit);
+        organisationUnit.setIsClientInstitution(true);
+        when(organisationUnitService.findOne(anyInt())).thenReturn(organisationUnit);
 
         var newUser = new User("oauthuser@example.com", "EncodedPassword", "",
             "Jane", "Doe", true, false, language, language, authority,
@@ -1385,12 +1390,20 @@ public class UserServiceTest {
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setFirstName("Alice");
         registrationRequest.setLastName("Smith");
+        registrationRequest.setOrganisationUnitId(1);
 
         var person = new Person();
         person.setName(new PersonName("Alice", "", "Smith", null, null));
         person.setOrcid("orcid-id");
         when(personService.createPersonWithBasicInfo(any(BasicPersonDTO.class), eq(true)))
             .thenReturn(person);
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
+        organisationUnit.setIsClientInstitution(true);
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("newperson@example.com", "EncodedPassword", "",
             "Alice", "Smith", true, false, language, language, authority,

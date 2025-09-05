@@ -44,11 +44,13 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -75,6 +77,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
     private final IndicatorBatchWriter indicatorBatchWriter;
 
+    private final LanguageTagService languageTagService;
+
     @Value("${assessment.indicators.publication-series.wos}")
     private String WOS_DIRECTORY;
 
@@ -97,7 +101,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                                  JournalService journalService,
                                                  TaskManagerService taskManagerService,
                                                  JournalIndexRepository journalIndexRepository,
-                                                 IndicatorBatchWriter indicatorBatchWriter) {
+                                                 IndicatorBatchWriter indicatorBatchWriter,
+                                                 LanguageTagService languageTagService) {
         super(indicatorService, entityIndicatorRepository, documentFileService);
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.csvDataLoader = csvDataLoader;
@@ -105,6 +110,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         this.taskManagerService = taskManagerService;
         this.journalIndexRepository = journalIndexRepository;
         this.indicatorBatchWriter = indicatorBatchWriter;
+        this.languageTagService = languageTagService;
     }
 
     @Override
@@ -440,6 +446,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         var publicationSeries =
             journalService.findOrCreatePublicationSeries(line, mapping.defaultLanguage(),
                 line[mapping.nameColumn()].trim(), eIssn, printIssn, issnSpecified);
+        updateJournalAbbreviation(line, mapping, publicationSeries);
 
         LocalDate startDate, endDate;
         if (Objects.nonNull(year)) {
@@ -457,14 +464,19 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                     try {
                         return LocalDate.parse(matcher.group());
                     } catch (Exception exception) {
-                        return LocalDate.of(Integer.parseInt(matcher.group()), 1, 1);
+                        var group = matcher.group();
+                        if (Objects.isNull(group)) {
+                            return null;
+                        }
+
+                        return LocalDate.of(Integer.parseInt(group), 1, 1);
                     }
                 }
                 throw new IllegalArgumentException("Invalid date format in column: " + columnIndex);
             };
 
             startDate = parseDateFromColumn.apply(mapping.startDateColumn());
-            if (startDate == null) {
+            if (Objects.isNull(startDate)) {
                 startDate = LocalDate.now();
             }
 
@@ -624,5 +636,27 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         }
 
         indicatorBatchWriter.bufferIndicator(newJournalIndicator);
+    }
+
+    private void updateJournalAbbreviation(String[] line,
+                                           IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
+                                           PublicationSeries publicationSeries) {
+        if (Objects.nonNull(mapping.abbreviationColumn()) && publicationSeries instanceof Journal) {
+            var abbreviation = line[mapping.abbreviationColumn()];
+            if (Objects.isNull(abbreviation) || abbreviation.isBlank()) {
+                return;
+            }
+
+            if (publicationSeries.getNameAbbreviation().stream()
+                .anyMatch(abbr -> abbr.getContent().equals(abbreviation))) {
+                return;
+            }
+
+            publicationSeries.getNameAbbreviation().clear();
+            publicationSeries.getNameAbbreviation().add(
+                new MultiLingualContent(languageTagService.findLanguageTagByValue("EN"),
+                    abbreviation, 1));
+            journalService.save((Journal) publicationSeries);
+        }
     }
 }

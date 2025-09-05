@@ -30,5 +30,17 @@ public interface PersonIndexRepository extends ElasticsearchRepository<PersonInd
         """)
     Optional<PersonIndex> findByScopusAuthorIdOrOpenAlexIdOrWebOfScienceIdOrOrcid(String importId);
 
+    @Query("""
+        {
+          "bool": {
+            "should": [
+              { "term": { "employment_institutions_id": "?0" }},
+              { "term": { "past_employment_institution_ids": "?0" }}
+            ]
+          }
+        }
+        """)
+    Page<PersonIndex> findByInstitutionId(Integer institutionId, Pageable pageable);
+
     long count();
 }

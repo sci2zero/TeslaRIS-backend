@@ -52,11 +52,13 @@ public class OrganisationUnitConverter
         // TODO: How to set research areas from serbian names?
         dto.setResearchAreasId(new ArrayList<>());
 
-        // TODO: How to set this the smarter way
-        dto.setAllowedThesisTypes(new HashSet<>(
-            List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT, ThesisType.MASTER, ThesisType.MR,
-                ThesisType.BACHELOR, ThesisType.BACHELOR_WITH_HONORS,
-                ThesisType.UNDERGRADUATE_THESIS)));
+        if (Objects.nonNull(organisationUnit.getIsInstitution()) &&
+            organisationUnit.getIsInstitution()) {
+            dto.setAllowedThesisTypes(new HashSet<>(
+                List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT, ThesisType.MASTER,
+                    ThesisType.MR, ThesisType.BACHELOR, ThesisType.BACHELOR_WITH_HONORS,
+                    ThesisType.UNDERGRADUATE_THESIS)));
+        }
 
         dto.setLocation(new GeoLocationDTO());
 
