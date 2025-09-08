@@ -1,11 +1,17 @@
 package rs.teslaris.core.converter.document;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import lombok.NoArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.StringValue;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
@@ -26,7 +32,17 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Transactional
+@Component
+@NoArgsConstructor
 public class DocumentPublicationConverter {
+
+    private static MessageSource messageSource;
+
+    @Autowired
+    private DocumentPublicationConverter(MessageSource messageSource) {
+        DocumentPublicationConverter.messageSource = messageSource;
+    }
+
 
     public static DocumentDTO toDTO(Document document) {
         var dto = new DocumentDTO();
@@ -297,5 +313,23 @@ public class DocumentPublicationConverter {
             default -> throw new IllegalStateException("Unexpected value: " +
                 request.getExportFileType()); // should never happen
         };
+    }
+
+    protected static String getAuthorReprintString(String defaultLanguageTag) {
+        defaultLanguageTag = defaultLanguageTag.toLowerCase();
+
+        try {
+            return messageSource.getMessage(
+                "authorReprint",
+                new Object[] {},
+                Locale.forLanguageTag(defaultLanguageTag)
+            );
+        } catch (NoSuchMessageException e) {
+            return messageSource.getMessage(
+                "authorReprint",
+                new Object[] {},
+                Locale.forLanguageTag(LanguageAbbreviations.ENGLISH.toLowerCase())
+            );
+        }
     }
 }

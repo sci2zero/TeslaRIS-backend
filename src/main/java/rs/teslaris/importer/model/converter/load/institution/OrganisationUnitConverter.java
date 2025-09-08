@@ -54,11 +54,15 @@ public class OrganisationUnitConverter
 
         if (Objects.nonNull(organisationUnit.getIsInstitution()) &&
             organisationUnit.getIsInstitution()) {
+            dto.setLegalEntity(true);
             dto.setAllowedThesisTypes(new HashSet<>(
                 List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT, ThesisType.MASTER,
                     ThesisType.MR, ThesisType.BACHELOR, ThesisType.BACHELOR_WITH_HONORS,
                     ThesisType.UNDERGRADUATE_THESIS)));
         }
+
+        dto.setClientInstitution(
+            false); // explicitly set every single one to false, clients will be updated manually
 
         dto.setLocation(new GeoLocationDTO());
 

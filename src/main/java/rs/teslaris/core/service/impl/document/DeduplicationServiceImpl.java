@@ -433,8 +433,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 .getContent(),
             personSearchService,
             item -> {
-                var tokens = List.of(item.getName().trim().split(" "));
-                var minShouldMatch = (int) Math.ceil(tokens.size() * 0.9);
+                var tokens = List.of(item.getName().trim().split("; "));
 
                 return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
                     b.must(bq -> {
@@ -446,17 +445,17 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                                     }
 
                                     eq.should(
-                                        sb -> sb.match(m -> m.field("name").query(token)));
+                                        sb -> sb.matchPhrase(m -> m.field("name").query(token)));
                                 }
                             );
 
                             if (Objects.nonNull(item.getBirthdate()) &&
                                 !item.getBirthdate().isBlank()) {
-                                eq.should(sb -> sb.match(
+                                eq.must(sb -> sb.match(
                                     m -> m.field("birthdate").query(item.getBirthdate())));
                             }
 
-                            return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+                            return eq.minimumShouldMatch("50%");
                         });
                         return bq;
                     });

@@ -99,7 +99,10 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         setCommonFields(newDataset, datasetDTO);
 
         newDataset.setInternalNumber(datasetDTO.getInternalNumber());
-        if (Objects.nonNull(datasetDTO.getPublisherId())) {
+
+        if (Objects.nonNull(datasetDTO.getAuthorReprint()) && datasetDTO.getAuthorReprint()) {
+            newDataset.setAuthorReprint(true);
+        } else if (Objects.nonNull(datasetDTO.getPublisherId())) {
             newDataset.setPublisher(
                 publisherService.findOne(datasetDTO.getPublisherId()));
         }
@@ -124,7 +127,10 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         setCommonFields(datasetToUpdate, datasetDTO);
 
         datasetToUpdate.setInternalNumber(datasetDTO.getInternalNumber());
-        if (Objects.nonNull(datasetDTO.getPublisherId())) {
+
+        if (Objects.nonNull(datasetDTO.getAuthorReprint()) && datasetDTO.getAuthorReprint()) {
+            datasetToUpdate.setAuthorReprint(true);
+        } else if (Objects.nonNull(datasetDTO.getPublisherId())) {
             datasetToUpdate.setPublisher(
                 publisherService.findOne(datasetDTO.getPublisherId()));
         }

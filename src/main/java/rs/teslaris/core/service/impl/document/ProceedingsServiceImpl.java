@@ -266,7 +266,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         proceedings.setEvent(eventService.findOne(proceedingsDTO.getEventId()));
 
-        if (proceedingsDTO.getPublicationSeriesId() != null) {
+        if (Objects.nonNull(proceedingsDTO.getPublicationSeriesId())) {
             var optionalJournal =
                 journalService.tryToFindById(proceedingsDTO.getPublicationSeriesId());
 
@@ -279,7 +279,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             }
         }
 
-        if (proceedingsDTO.getPublisherId() != null) {
+        if (Objects.nonNull(proceedingsDTO.getAuthorReprint()) &&
+            proceedingsDTO.getAuthorReprint()) {
+            proceedings.setAuthorReprint(true);
+        } else if (Objects.nonNull(proceedingsDTO.getPublisherId())) {
             proceedings.setPublisher(
                 publisherService.findOne(proceedingsDTO.getPublisherId()));
         }

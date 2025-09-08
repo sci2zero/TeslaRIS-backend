@@ -136,6 +136,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                 return;
             }
 
+            if (directAndIndirectEmployments.stream()
+                .anyMatch(e -> e.getOrganisationUnitId()
+                    .equals(employment.getOrganisationUnit().getId()))) {
+                return;
+            }
+
             directAndIndirectEmployments.add(InvolvementConverter.toDTO(employment));
 
             var employmentOU = employment.getOrganisationUnit();

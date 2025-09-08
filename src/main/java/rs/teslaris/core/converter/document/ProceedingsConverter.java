@@ -62,7 +62,8 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
     private static void setPublisherInfo(Proceedings proceedings,
                                          ProceedingsResponseDTO proceedingsResponseDTO) {
         var publisher = proceedings.getPublisher();
-        if (publisher == null) {
+        if (Objects.isNull(publisher)) {
+            proceedingsResponseDTO.setAuthorReprint(proceedings.getAuthorReprint());
             return;
         }
 
@@ -114,6 +115,11 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(proceedings.getPublisher())) {
             setMCBibTexField(proceedings.getPublisher().getName(), entry,
                 BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
+        } else if (Objects.nonNull(proceedings.getAuthorReprint()) &&
+            proceedings.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
         }
 
         if (valueExists(proceedings.getEISBN())) {
@@ -144,6 +150,10 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(proceedings.getPublisher())) {
             setMCTaggedField(proceedings.getPublisher().getName(), sb, refMan ? "PB" : "%I",
                 defaultLanguageTag);
+        } else if (Objects.nonNull(proceedings.getAuthorReprint()) &&
+            proceedings.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
         }
 
         if (valueExists(proceedings.getPublicationSeriesIssue())) {

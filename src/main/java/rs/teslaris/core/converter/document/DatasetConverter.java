@@ -17,6 +17,8 @@ public class DatasetConverter extends DocumentPublicationConverter {
         datasetDTO.setInternalNumber(dataset.getInternalNumber());
         if (Objects.nonNull(dataset.getPublisher())) {
             datasetDTO.setPublisherId(dataset.getPublisher().getId());
+        } else {
+            datasetDTO.setAuthorReprint(dataset.getAuthorReprint());
         }
 
         return datasetDTO;
@@ -36,6 +38,10 @@ public class DatasetConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(dataset.getPublisher())) {
             setMCBibTexField(dataset.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
                 defaultLanguageTag);
+        } else if (Objects.nonNull(dataset.getAuthorReprint()) && dataset.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
         }
 
         return entry;
@@ -55,6 +61,9 @@ public class DatasetConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(dataset.getPublisher())) {
             setMCTaggedField(dataset.getPublisher().getName(), sb, refMan ? "PB" : "%I",
                 defaultLanguageTag);
+        } else if (Objects.nonNull(dataset.getAuthorReprint()) && dataset.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
         }
 
         if (refMan) {

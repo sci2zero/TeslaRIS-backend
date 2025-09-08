@@ -71,6 +71,9 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
+    @Column(name = "author_reprint")
+    private Boolean authorReprint = false;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "writing_language_id")
     private LanguageTag writingLanguage;

@@ -17,6 +17,8 @@ public class PatentConverter extends DocumentPublicationConverter {
         patentDTO.setNumber(patent.getNumber());
         if (Objects.nonNull(patent.getPublisher())) {
             patentDTO.setPublisherId(patent.getPublisher().getId());
+        } else {
+            patentDTO.setAuthorReprint(patent.getAuthorReprint());
         }
 
         return patentDTO;

@@ -30,6 +30,8 @@ public class ProceedingsDTO extends DocumentDTO implements PublishableDTO, InSer
     @Positive(message = "Publisher ID cannot be negative or zero.")
     private Integer publisherId;
 
+    private Boolean authorReprint;
+
     private Integer publicationSeriesId;
 
     private String publicationSeriesVolume;

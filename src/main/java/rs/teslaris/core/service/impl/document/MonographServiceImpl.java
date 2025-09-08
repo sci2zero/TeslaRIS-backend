@@ -282,7 +282,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                 researchAreaService.findOne(monographDTO.getResearchAreaId()));
         }
 
-        if (Objects.nonNull(monographDTO.getPublisherId())) {
+        if (Objects.nonNull(monographDTO.getAuthorReprint()) && monographDTO.getAuthorReprint()) {
+            monograph.setAuthorReprint(true);
+        } else if (Objects.nonNull(monographDTO.getPublisherId())) {
             monograph.setPublisher(publisherService.findOne(monographDTO.getPublisherId()));
         }
     }

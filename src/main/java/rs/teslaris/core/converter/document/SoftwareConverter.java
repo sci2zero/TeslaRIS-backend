@@ -17,6 +17,8 @@ public class SoftwareConverter extends DocumentPublicationConverter {
         softwareDTO.setInternalNumber(software.getInternalNumber());
         if (Objects.nonNull(software.getPublisher())) {
             softwareDTO.setPublisherId(software.getPublisher().getId());
+        } else {
+            softwareDTO.setAuthorReprint(software.getAuthorReprint());
         }
 
         return softwareDTO;

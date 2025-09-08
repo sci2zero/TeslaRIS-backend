@@ -99,7 +99,9 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         setCommonFields(newSoftware, softwareDTO);
 
         newSoftware.setInternalNumber(softwareDTO.getInternalNumber());
-        if (Objects.nonNull(softwareDTO.getPublisherId())) {
+        if (Objects.nonNull(softwareDTO.getAuthorReprint()) && softwareDTO.getAuthorReprint()) {
+            newSoftware.setAuthorReprint(true);
+        } else if (Objects.nonNull(softwareDTO.getPublisherId())) {
             newSoftware.setPublisher(
                 publisherService.findOne(softwareDTO.getPublisherId()));
         }
@@ -124,7 +126,10 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         setCommonFields(softwareToUpdate, softwareDTO);
 
         softwareToUpdate.setInternalNumber(softwareDTO.getInternalNumber());
-        if (Objects.nonNull(softwareDTO.getPublisherId())) {
+
+        if (Objects.nonNull(softwareDTO.getAuthorReprint()) && softwareDTO.getAuthorReprint()) {
+            softwareToUpdate.setAuthorReprint(true);
+        } else if (Objects.nonNull(softwareDTO.getPublisherId())) {
             softwareToUpdate.setPublisher(
                 publisherService.findOne(softwareDTO.getPublisherId()));
         }

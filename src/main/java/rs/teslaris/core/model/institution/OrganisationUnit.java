@@ -101,4 +101,7 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
 
     @Column(name = "institution_email_domain")
     private String institutionEmailDomain;
+
+    @Column(name = "legal_entity", nullable = false)
+    private Boolean legalEntity = false;
 }

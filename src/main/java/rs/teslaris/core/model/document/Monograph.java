@@ -63,4 +63,7 @@ public non-sealed class Monograph extends Document implements BookSeriesPublisha
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
+
+    @Column(name = "author_reprint")
+    private Boolean authorReprint = false;
 }

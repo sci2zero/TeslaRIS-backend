@@ -547,7 +547,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 });
         }
 
-        if (Objects.nonNull(thesisDTO.getPublisherId())) {
+        if (Objects.nonNull(thesisDTO.getAuthorReprint()) && thesisDTO.getAuthorReprint()) {
+            thesis.setAuthorReprint(true);
+        } else if (Objects.nonNull(thesisDTO.getPublisherId())) {
             thesis.setPublisher(publisherService.findOne(thesisDTO.getPublisherId()));
         }
 
@@ -602,7 +604,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             .equals(UserRole.ADMIN.name()) &&
             Objects.nonNull(thesisDTO.getPublicReviewStartDate())) {
             thesis.getPublicReviewStartDates().add(thesisDTO.getPublicReviewStartDate());
-            thesis.setPublicReviewCompleted(true);
+            if (thesisDTO.getPublicReviewStartDate().plusDays(daysOnPublicReview)
+                .isAfter(LocalDate.now())) {
+                thesis.setPublicReviewCompleted(true);
+            } else {
+                thesis.setIsOnPublicReview(true);
+            }
         }
     }
 

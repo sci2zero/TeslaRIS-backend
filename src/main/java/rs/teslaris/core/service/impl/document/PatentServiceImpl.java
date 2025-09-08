@@ -100,7 +100,10 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         setCommonFields(newPatent, patentDTO);
 
         newPatent.setNumber(patentDTO.getNumber());
-        if (Objects.nonNull(patentDTO.getPublisherId())) {
+
+        if (Objects.nonNull(patentDTO.getAuthorReprint()) && patentDTO.getAuthorReprint()) {
+            newPatent.setAuthorReprint(true);
+        } else if (Objects.nonNull(patentDTO.getPublisherId())) {
             newPatent.setPublisher(publisherService.findOne(patentDTO.getPublisherId()));
         }
 
@@ -124,7 +127,10 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         setCommonFields(patentToUpdate, patentDTO);
 
         patentToUpdate.setNumber(patentDTO.getNumber());
-        if (Objects.nonNull(patentDTO.getPublisherId())) {
+
+        if (Objects.nonNull(patentDTO.getAuthorReprint()) && patentDTO.getAuthorReprint()) {
+            patentToUpdate.setAuthorReprint(true);
+        } else if (Objects.nonNull(patentDTO.getPublisherId())) {
             patentToUpdate.setPublisher(
                 publisherService.findOne(patentDTO.getPublisherId()));
         }

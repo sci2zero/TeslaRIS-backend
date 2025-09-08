@@ -564,18 +564,22 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         if (SessionTrackingUtil.isUserLoggedIn() && Objects.requireNonNull(
                 SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
-            .equals(UserRole.ADMIN.name()) && !organisationUnit.getIsClientInstitution()
-            .equals(organisationUnitDTO.isClientInstitution())) {
-            organisationUnit.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+            .equals(UserRole.ADMIN.name())) {
+            organisationUnit.setLegalEntity(organisationUnitDTO.isLegalEntity());
 
-            getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId()).forEach(
-                organisationUnitId -> {
-                    var subOU = findOne(organisationUnitId);
-                    subOU.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
-                    subOU.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
-                    subOU.setAllowSubdomains(organisationUnitDTO.isAllowingSubdomains());
-                    save(subOU);
-                });
+            if (!organisationUnit.getIsClientInstitution()
+                .equals(organisationUnitDTO.isClientInstitution())) {
+                organisationUnit.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+
+                getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId()).forEach(
+                    organisationUnitId -> {
+                        var subOU = findOne(organisationUnitId);
+                        subOU.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+                        subOU.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
+                        subOU.setAllowSubdomains(organisationUnitDTO.isAllowingSubdomains());
+                        save(subOU);
+                    });
+            }
         }
 
         organisationUnit.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
@@ -894,22 +898,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             newRelation.setApproveStatus(ApproveStatus.REQUESTED);
         }
 
-        if (newRelation.getTargetOrganisationUnit().getIsClientInstitution() &&
-            !newRelation.getSourceOrganisationUnit().getIsClientInstitution()) {
-            getOrganisationUnitIdsFromSubHierarchy(
-                newRelation.getTargetOrganisationUnit().getId()).forEach(
-                organisationUnitId -> {
-                    var subOU = findOne(organisationUnitId);
-                    subOU.setIsClientInstitution(
-                        newRelation.getTargetOrganisationUnit().getIsClientInstitution());
-                    subOU.setValidateEmailDomain(
-                        newRelation.getTargetOrganisationUnit().getValidateEmailDomain());
-                    subOU.setAllowSubdomains(
-                        newRelation.getTargetOrganisationUnit().getAllowSubdomains());
-                    save(subOU);
-                });
-        }
-
         var savedRelation = organisationUnitsRelationJPAService.save(newRelation);
         updateIndex(savedRelation);
 
@@ -1010,6 +998,22 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             findOrganisationUnitById(relationDTO.getSourceOrganisationUnitId()));
         relation.setTargetOrganisationUnit(
             findOrganisationUnitById(relationDTO.getTargetOrganisationUnitId()));
+
+        if (relation.getTargetOrganisationUnit().getIsClientInstitution() &&
+            !relation.getSourceOrganisationUnit().getIsClientInstitution()) {
+            getOrganisationUnitIdsFromSubHierarchy(
+                relation.getTargetOrganisationUnit().getId()).forEach(
+                organisationUnitId -> {
+                    var subOU = relation.getSourceOrganisationUnit();
+                    subOU.setIsClientInstitution(
+                        relation.getTargetOrganisationUnit().getIsClientInstitution());
+                    subOU.setValidateEmailDomain(
+                        relation.getTargetOrganisationUnit().getValidateEmailDomain());
+                    subOU.setAllowSubdomains(
+                        relation.getTargetOrganisationUnit().getAllowSubdomains());
+                    save(subOU);
+                });
+        }
     }
 
     @Override

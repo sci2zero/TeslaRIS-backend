@@ -56,4 +56,6 @@ public class OrganisationUnitDTO {
     private boolean validatingEmailDomain;
 
     private boolean allowingSubdomains;
+
+    private boolean isLegalEntity;
 }

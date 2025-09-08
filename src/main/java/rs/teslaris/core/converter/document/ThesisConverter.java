@@ -203,6 +203,8 @@ public class ThesisConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(thesis.getPublisher())) {
             thesisDTO.setPublisherId(thesis.getPublisher().getId());
+        } else {
+            thesisDTO.setAuthorReprint(thesis.getAuthorReprint());
         }
 
         thesis.getPreliminaryFiles().forEach(file -> {

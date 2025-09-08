@@ -36,6 +36,8 @@ public class MonographConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(monograph.getPublisher())) {
             monographResponseDTO.setPublisherId(monograph.getPublisher().getId());
+        } else {
+            monographResponseDTO.setAuthorReprint(monograph.getAuthorReprint());
         }
 
         setLanguageInfo(monograph, monographResponseDTO);
