@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.person;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.DisMaxQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -1146,25 +1147,43 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         }
 
                         perTokenShould.add(
-                            MatchQuery.of(
-                                    m -> m.field("employments_other").query(token).boost(0.5f))
-                                ._toQuery());
+                            DisMaxQuery.of(dmq -> dmq
+                                .queries(List.of(
+                                    MatchQuery.of(m -> m
+                                        .field("employments_other")
+                                        .query(token)
+                                        .boost(1.0f)
+                                    )._toQuery(),
+                                    WildcardQuery.of(m -> m
+                                        .field("employments_other")
+                                        .value(StringUtil.performSimpleLatinPreprocessing(token,
+                                            false) + "*")
+                                        .boost(1.0f)
+                                    )._toQuery()
+                                ))
+                                .tieBreaker(0.0)
+                            )._toQuery()
+                        );
+
                         perTokenShould.add(
-                            MatchQuery.of(
-                                    m -> m.field("employments_sr").query(token).boost(0.5f))
-                                ._toQuery());
-                        perTokenShould.add(
-                            WildcardQuery.of(
-                                    m -> m.field("employments_other")
-                                        .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
-                                        .boost(0.5f))
-                                ._toQuery());
-                        perTokenShould.add(
-                            WildcardQuery.of(
-                                    m -> m.field("employments_sr")
-                                        .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
-                                        .boost(0.5f))
-                                ._toQuery());
+                            DisMaxQuery.of(dmq -> dmq
+                                .queries(List.of(
+                                    MatchQuery.of(m -> m
+                                        .field("employments_sr")
+                                        .query(token)
+                                        .boost(1.0f)
+                                    )._toQuery(),
+                                    WildcardQuery.of(m -> m
+                                        .field("employments_sr")
+                                        .value(StringUtil.performSimpleLatinPreprocessing(token,
+                                            false) + "*")
+                                        .boost(1.0f)
+                                    )._toQuery()
+                                ))
+                                .tieBreaker(0.0)
+                            )._toQuery()
+                        );
+
                         perTokenShould.add(
                             MatchQuery.of(m -> m.field("keywords").query(token).boost(0.7f))
                                 ._toQuery());

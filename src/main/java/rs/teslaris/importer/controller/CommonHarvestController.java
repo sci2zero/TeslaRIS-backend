@@ -196,14 +196,15 @@ public class CommonHarvestController {
 
     @PostMapping("/author-centric-for-institution")
     public Integer performAuthorCentricHarvestForInstitution(
-        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
-        @RequestParam LocalDate dateTo,
+        @RequestHeader("Authorization") String bearerToken, @RequestParam RelativeDateDTO dateFrom,
+        @RequestParam RelativeDateDTO dateTo,
         @RequestBody AuthorCentricInstitutionHarvestRequestDTO request) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
-        return performAuthorCentricLoading(userId, userRole, dateFrom, dateTo, request.authorIds(),
-            request.allAuthors(), request.institutionId());
+        return performAuthorCentricLoading(userId, userRole, dateFrom.computeDate(),
+            dateTo.computeDate(), request.authorIds(), request.allAuthors(),
+            request.institutionId());
     }
 
     @PostMapping("/schedule/author-centric-for-institution")
