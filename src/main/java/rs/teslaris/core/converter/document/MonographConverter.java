@@ -92,6 +92,10 @@ public class MonographConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(monograph.getPublisher())) {
             setMCBibTexField(monograph.getPublisher().getName(), entry,
                 BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
+        } else if (Objects.nonNull(monograph.getAuthorReprint()) && monograph.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
         }
 
         if (valueExists(monograph.getEISBN())) {
@@ -124,6 +128,14 @@ public class MonographConverter extends DocumentPublicationConverter {
 
         if (valueExists(monograph.getNumber())) {
             sb.append(refMan ? "C7  - " : "%N ").append(monograph.getNumber()).append("\n");
+        }
+
+        if (Objects.nonNull(monograph.getPublisher())) {
+            setMCTaggedField(monograph.getPublisher().getName(), sb, refMan ? "PB" : "%I",
+                defaultLanguageTag);
+        } else if (Objects.nonNull(monograph.getAuthorReprint()) && monograph.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
         }
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {

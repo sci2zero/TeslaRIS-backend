@@ -961,8 +961,31 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         var relationToDelete = findOrganisationUnitsRelationById(id);
         organisationUnitsRelationJPAService.delete(id);
 
+        reindexSubUnitRelationsAndTerminateClientStatus(
+            relationToDelete.getSourceOrganisationUnit());
+    }
+
+    @Override
+    public void deleteOrganisationUnitsRelation(Integer sourceOrganisationUnitId,
+                                                Integer targetOrganisationUnitId) {
+        var relations =
+            organisationUnitsRelationRepository.findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+                sourceOrganisationUnitId, targetOrganisationUnitId,
+                OrganisationUnitRelationType.BELONGS_TO);
+        if (relations.isEmpty()) {
+            return;
+        }
+
+        var subOu = relations.getFirst().getSourceOrganisationUnit();
+        reindexSubUnitRelationsAndTerminateClientStatus(subOu);
+
+        organisationUnitsRelationRepository.delete(relations.getFirst());
+    }
+
+    private void reindexSubUnitRelationsAndTerminateClientStatus(
+        OrganisationUnit organisationUnit) {
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-            relationToDelete.getSourceOrganisationUnit().getId());
+            organisationUnit.getId());
         index.ifPresent(organisationUnitIndex -> {
             organisationUnitIndex.setSuperOUId(null);
             organisationUnitIndex.setSuperOUNameSr(null);
@@ -971,6 +994,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnitIndex.setSuperOUNameOtherSortable(null);
             organisationUnitIndexRepository.save(organisationUnitIndex);
         });
+
+        getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId()).forEach(
+            organisationUnitId -> {
+                var subOU = findOne(organisationUnitId);
+                subOU.setIsClientInstitution(false);
+                subOU.setValidateEmailDomain(false);
+                subOU.setAllowSubdomains(false);
+                save(subOU);
+            });
     }
 
     @Override
@@ -1004,7 +1036,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             getOrganisationUnitIdsFromSubHierarchy(
                 relation.getTargetOrganisationUnit().getId()).forEach(
                 organisationUnitId -> {
-                    var subOU = relation.getSourceOrganisationUnit();
+                    var subOU = findOne(organisationUnitId);
                     subOU.setIsClientInstitution(
                         relation.getTargetOrganisationUnit().getIsClientInstitution());
                     subOU.setValidateEmailDomain(

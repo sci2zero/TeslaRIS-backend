@@ -23,6 +23,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,6 +54,7 @@ import rs.teslaris.core.util.signposting.LinksetFormat;
 @RestController
 @RequestMapping("/api/file")
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
 @Traceable
 public class FileController {

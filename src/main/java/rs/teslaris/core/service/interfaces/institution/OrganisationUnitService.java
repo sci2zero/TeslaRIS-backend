@@ -84,6 +84,9 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     void deleteOrganisationUnitsRelation(Integer id);
 
+    void deleteOrganisationUnitsRelation(Integer sourceOrganisationUnitId,
+                                         Integer targetOrganisationUnitId);
+
     void approveRelation(Integer relationId, Boolean approve);
 
     void addRelationProofs(List<DocumentFileDTO> documentFiles, Integer relationId);

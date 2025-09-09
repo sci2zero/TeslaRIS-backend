@@ -38,6 +38,10 @@ public class SoftwareConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(software.getPublisher())) {
             setMCBibTexField(software.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
                 defaultLanguageTag);
+        } else if (Objects.nonNull(software.getAuthorReprint()) && software.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
         }
 
         return entry;
@@ -57,6 +61,9 @@ public class SoftwareConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(software.getPublisher())) {
             setMCTaggedField(software.getPublisher().getName(), sb, refMan ? "PB" : "%I",
                 defaultLanguageTag);
+        } else if (Objects.nonNull(software.getAuthorReprint()) && software.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
         }
 
         if (refMan) {

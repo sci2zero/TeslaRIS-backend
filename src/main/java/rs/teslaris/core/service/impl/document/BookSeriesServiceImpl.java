@@ -291,6 +291,16 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("print_issn").value(normalizedToken)))
                     ));
+                } else if (token.contains("\\-") &&
+                    partialIssnPattern.matcher(token.replace("\\-", "-")).matches()) {
+                    String normalizedToken = token.replace("\\-", "-");
+
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.prefix(
+                            p -> p.field("e_issn").value(normalizedToken)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("print_issn").value(normalizedToken)))
+                    ));
                 } else if (token.endsWith("\\*") || token.endsWith(".")) {
                     var wildcard = token.replace("\\*", "").replace(".", "");
                     b.should(mp -> mp.bool(m -> m
@@ -315,6 +325,10 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                             mq -> mq.field("title_sr").query(token)))
                         .should(sb -> sb.match(
                             mq -> mq.field("title_other").query(token)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("e_issn").value(token)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("print_issn").value(token)))
                     ));
                 }
             });

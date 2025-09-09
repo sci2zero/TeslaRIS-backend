@@ -98,14 +98,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         checkForDocumentDate(patentDTO);
         setCommonFields(newPatent, patentDTO);
-
-        newPatent.setNumber(patentDTO.getNumber());
-
-        if (Objects.nonNull(patentDTO.getAuthorReprint()) && patentDTO.getAuthorReprint()) {
-            newPatent.setAuthorReprint(true);
-        } else if (Objects.nonNull(patentDTO.getPublisherId())) {
-            newPatent.setPublisher(publisherService.findOne(patentDTO.getPublisherId()));
-        }
+        setPatentRelatedFields(newPatent, patentDTO);
 
         var savedPatent = patentJPAService.save(newPatent);
 
@@ -125,15 +118,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         checkForDocumentDate(patentDTO);
         clearCommonFields(patentToUpdate);
         setCommonFields(patentToUpdate, patentDTO);
-
-        patentToUpdate.setNumber(patentDTO.getNumber());
-
-        if (Objects.nonNull(patentDTO.getAuthorReprint()) && patentDTO.getAuthorReprint()) {
-            patentToUpdate.setAuthorReprint(true);
-        } else if (Objects.nonNull(patentDTO.getPublisherId())) {
-            patentToUpdate.setPublisher(
-                publisherService.findOne(patentDTO.getPublisherId()));
-        }
+        setPatentRelatedFields(patentToUpdate, patentDTO);
 
         var updatedPatent = patentJPAService.save(patentToUpdate);
 
@@ -142,6 +127,19 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                 .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(updatedPatent);
+    }
+
+    private void setPatentRelatedFields(Patent patent, PatentDTO patentDTO) {
+        patent.setNumber(patentDTO.getNumber());
+
+        patent.setPublisher(null);
+        patent.setAuthorReprint(false);
+
+        if (Objects.nonNull(patentDTO.getAuthorReprint()) && patentDTO.getAuthorReprint()) {
+            patent.setAuthorReprint(true);
+        } else if (Objects.nonNull(patentDTO.getPublisherId())) {
+            patent.setPublisher(publisherService.findOne(patentDTO.getPublisherId()));
+        }
     }
 
     @Override

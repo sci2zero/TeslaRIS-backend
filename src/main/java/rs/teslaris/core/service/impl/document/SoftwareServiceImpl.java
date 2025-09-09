@@ -97,14 +97,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
         checkForDocumentDate(softwareDTO);
         setCommonFields(newSoftware, softwareDTO);
-
-        newSoftware.setInternalNumber(softwareDTO.getInternalNumber());
-        if (Objects.nonNull(softwareDTO.getAuthorReprint()) && softwareDTO.getAuthorReprint()) {
-            newSoftware.setAuthorReprint(true);
-        } else if (Objects.nonNull(softwareDTO.getPublisherId())) {
-            newSoftware.setPublisher(
-                publisherService.findOne(softwareDTO.getPublisherId()));
-        }
+        setSoftwareRelatedFields(newSoftware, softwareDTO);
 
         var savedSoftware = softwareJPAService.save(newSoftware);
 
@@ -124,15 +117,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         checkForDocumentDate(softwareDTO);
         clearCommonFields(softwareToUpdate);
         setCommonFields(softwareToUpdate, softwareDTO);
-
-        softwareToUpdate.setInternalNumber(softwareDTO.getInternalNumber());
-
-        if (Objects.nonNull(softwareDTO.getAuthorReprint()) && softwareDTO.getAuthorReprint()) {
-            softwareToUpdate.setAuthorReprint(true);
-        } else if (Objects.nonNull(softwareDTO.getPublisherId())) {
-            softwareToUpdate.setPublisher(
-                publisherService.findOne(softwareDTO.getPublisherId()));
-        }
+        setSoftwareRelatedFields(softwareToUpdate, softwareDTO);
 
         softwareJPAService.save(softwareToUpdate);
 
@@ -141,6 +126,20 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                 .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(softwareToUpdate);
+    }
+
+    private void setSoftwareRelatedFields(Software software, SoftwareDTO softwareDTO) {
+        software.setInternalNumber(softwareDTO.getInternalNumber());
+
+        software.setPublisher(null);
+        software.setAuthorReprint(false);
+
+        if (Objects.nonNull(softwareDTO.getAuthorReprint()) && softwareDTO.getAuthorReprint()) {
+            software.setAuthorReprint(true);
+        } else if (Objects.nonNull(softwareDTO.getPublisherId())) {
+            software.setPublisher(
+                publisherService.findOne(softwareDTO.getPublisherId()));
+        }
     }
 
     @Override

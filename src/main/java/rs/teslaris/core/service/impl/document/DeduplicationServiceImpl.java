@@ -455,7 +455,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                                     m -> m.field("birthdate").query(item.getBirthdate())));
                             }
 
-                            return eq.minimumShouldMatch("50%");
+                            return eq.minimumShouldMatch(String.valueOf(Math.ceil(
+                                0.7 * tokens.stream().filter(String::isBlank).toList().size())));
                         });
                         return bq;
                     });
@@ -540,6 +541,12 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 );
 
             if (blacklistEntry.isPresent()) {
+                continue;
+            }
+
+            if (!deduplicationSuggestionRepository.findByTwoEntitiesAndType(
+                    getIdFunction.apply(entity), getIdFunction.apply(similarEntity), indexType.name())
+                .isEmpty()) {
                 continue;
             }
 

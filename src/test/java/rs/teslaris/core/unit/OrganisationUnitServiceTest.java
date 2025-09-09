@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -296,6 +297,8 @@ public class OrganisationUnitServiceTest {
             new OrganisationUnitsRelation() {{
                 setSourceOrganisationUnit(new OrganisationUnit());
             }});
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
+            Optional.of(new OrganisationUnit()));
 
         // when
         organisationUnitService.deleteOrganisationUnitsRelation(relationId);
@@ -1174,6 +1177,103 @@ public class OrganisationUnitServiceTest {
 
         assertEquals("Organisation Unit with given ID does not exist.", exception.getMessage());
         verify(organisationUnitRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldDoNothingWhenNoRelationsFound() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+        when(organisationUnitsRelationRepository
+            .findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+                sourceId, targetId, OrganisationUnitRelationType.BELONGS_TO))
+            .thenReturn(Collections.emptyList());
+
+        // When
+        organisationUnitService.deleteOrganisationUnitsRelation(sourceId, targetId);
+
+        // Then
+        verify(organisationUnitsRelationRepository, never()).delete(any());
+        verifyNoInteractions(organisationUnitIndexRepository);
+    }
+
+    @Test
+    void shouldReindexAndDeleteRelationWhenRelationExists() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+
+        var subOU = new OrganisationUnit();
+        subOU.setId(sourceId);
+
+        var relation = new OrganisationUnitsRelation();
+        relation.setSourceOrganisationUnit(subOU);
+
+        when(organisationUnitsRelationRepository
+            .findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+                sourceId, targetId, OrganisationUnitRelationType.BELONGS_TO))
+            .thenReturn(List.of(relation));
+
+        var index = new OrganisationUnitIndex();
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(sourceId))
+            .thenReturn(Optional.of(index));
+
+        var spyService = Mockito.spy(organisationUnitService);
+        doReturn(List.of(sourceId)).when(spyService)
+            .getOrganisationUnitIdsFromSubHierarchy(sourceId);
+        doReturn(subOU).when(spyService).findOne(sourceId);
+        doReturn(subOU).when(spyService).save(subOU);
+
+        // When
+        spyService.deleteOrganisationUnitsRelation(sourceId, targetId);
+
+        // Then
+        assertNull(index.getSuperOUId());
+        assertNull(index.getSuperOUNameSr());
+        assertNull(index.getSuperOUNameOther());
+        verify(organisationUnitIndexRepository).save(index);
+
+        assertFalse(subOU.getIsClientInstitution());
+        assertFalse(subOU.getValidateEmailDomain());
+        assertFalse(subOU.getAllowSubdomains());
+        verify(spyService).save(subOU);
+
+        verify(organisationUnitsRelationRepository).delete(relation);
+    }
+
+    @Test
+    void shouldSkipIndexUpdateWhenIndexNotFound() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+
+        var subOU = new OrganisationUnit();
+        subOU.setId(sourceId);
+
+        var relation = new OrganisationUnitsRelation();
+        relation.setSourceOrganisationUnit(subOU);
+
+        when(organisationUnitsRelationRepository
+            .findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+                sourceId, targetId, OrganisationUnitRelationType.BELONGS_TO))
+            .thenReturn(List.of(relation));
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(sourceId))
+            .thenReturn(Optional.empty());
+
+        var spyService = Mockito.spy(organisationUnitService);
+        doReturn(List.of(sourceId)).when(spyService)
+            .getOrganisationUnitIdsFromSubHierarchy(sourceId);
+        doReturn(subOU).when(spyService).findOne(sourceId);
+        doReturn(subOU).when(spyService).save(subOU);
+
+        // When
+        spyService.deleteOrganisationUnitsRelation(sourceId, targetId);
+
+        // Then
+        verify(organisationUnitIndexRepository, never()).save(any());
+        verify(spyService).save(subOU);
+        verify(organisationUnitsRelationRepository).delete(relation);
     }
 
     private MultipartFile createMockMultipartFile() {

@@ -279,6 +279,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             }
         }
 
+        proceedings.setAuthorReprint(false);
+        proceedings.setPublisher(null);
+
         if (Objects.nonNull(proceedingsDTO.getAuthorReprint()) &&
             proceedingsDTO.getAuthorReprint()) {
             proceedings.setAuthorReprint(true);

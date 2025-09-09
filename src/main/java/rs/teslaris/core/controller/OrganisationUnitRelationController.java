@@ -92,6 +92,14 @@ public class OrganisationUnitRelationController {
         organisationUnitService.deleteOrganisationUnitsRelation(relationId);
     }
 
+    @DeleteMapping("/delete/{sourceId}/{targetId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('EDIT_OU_RELATIONS')")
+    public void deleteOrganisationUnitsRelation(@PathVariable Integer sourceId,
+                                                @PathVariable Integer targetId) {
+        organisationUnitService.deleteOrganisationUnitsRelation(sourceId, targetId);
+    }
+
     @PatchMapping("/{relationId}/{approve}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAuthority('EDIT_OU_RELATIONS')")

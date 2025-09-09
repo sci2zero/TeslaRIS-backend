@@ -3,6 +3,7 @@ package rs.teslaris.importer.model.converter.load.publication;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.PublishableDTO;
@@ -11,10 +12,12 @@ import rs.teslaris.core.model.oaipmh.publication.Publisher;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.language.SerbianTransliteration;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class PublisherConverter {
 
     private final PublisherService publisherService;
@@ -27,11 +30,17 @@ public class PublisherConverter {
     public void setPublisherInformation(Publisher publisher, PublishableDTO dto) {
         for (var mcName : publisher.getName()) {
             var name = mcName.getValue();
+
             if (Objects.isNull(name) || name.isBlank()) {
                 return;
             }
 
             name = name.trim();
+            if (StringUtil.performSimpleLatinPreprocessing(name).equals("autorski reprint")) {
+                log.info("Setting publisher \"{}\" as author reprint.", name);
+                dto.setAuthorReprint(true);
+                return;
+            }
 
             var potentialMatches = publisherService.searchPublishers(
                 Arrays.stream(name.split(" ")).filter(n -> !n.isBlank()).toList(),

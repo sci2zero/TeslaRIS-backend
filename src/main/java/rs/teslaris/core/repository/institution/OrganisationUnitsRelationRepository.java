@@ -88,4 +88,8 @@ public interface OrganisationUnitsRelationRepository
 
     List<OrganisationUnitsRelation> findBySourceOrganisationUnitIdAndRelationType(
         Integer sourceOrganisationId, OrganisationUnitRelationType relationType);
+
+    List<OrganisationUnitsRelation> findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+        Integer sourceOrganisationId, Integer targetOrganisationId,
+        OrganisationUnitRelationType relationType);
 }

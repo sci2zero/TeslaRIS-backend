@@ -547,6 +547,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 });
         }
 
+        thesis.setPublisher(null);
+        thesis.setAuthorReprint(false);
+
         if (Objects.nonNull(thesisDTO.getAuthorReprint()) && thesisDTO.getAuthorReprint()) {
             thesis.setAuthorReprint(true);
         } else if (Objects.nonNull(thesisDTO.getPublisherId())) {

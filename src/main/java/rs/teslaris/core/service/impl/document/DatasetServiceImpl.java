@@ -97,15 +97,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
         checkForDocumentDate(datasetDTO);
         setCommonFields(newDataset, datasetDTO);
-
-        newDataset.setInternalNumber(datasetDTO.getInternalNumber());
-
-        if (Objects.nonNull(datasetDTO.getAuthorReprint()) && datasetDTO.getAuthorReprint()) {
-            newDataset.setAuthorReprint(true);
-        } else if (Objects.nonNull(datasetDTO.getPublisherId())) {
-            newDataset.setPublisher(
-                publisherService.findOne(datasetDTO.getPublisherId()));
-        }
+        setDatasetRelatedFields(newDataset, datasetDTO);
 
         var savedDataset = datasetJPAService.save(newDataset);
 
@@ -125,15 +117,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         checkForDocumentDate(datasetDTO);
         clearCommonFields(datasetToUpdate);
         setCommonFields(datasetToUpdate, datasetDTO);
-
-        datasetToUpdate.setInternalNumber(datasetDTO.getInternalNumber());
-
-        if (Objects.nonNull(datasetDTO.getAuthorReprint()) && datasetDTO.getAuthorReprint()) {
-            datasetToUpdate.setAuthorReprint(true);
-        } else if (Objects.nonNull(datasetDTO.getPublisherId())) {
-            datasetToUpdate.setPublisher(
-                publisherService.findOne(datasetDTO.getPublisherId()));
-        }
+        setDatasetRelatedFields(datasetToUpdate, datasetDTO);
 
         datasetJPAService.save(datasetToUpdate);
 
@@ -142,6 +126,19 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                 .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(datasetToUpdate);
+    }
+
+    private void setDatasetRelatedFields(Dataset dataset, DatasetDTO datasetDTO) {
+        dataset.setInternalNumber(datasetDTO.getInternalNumber());
+
+        dataset.setPublisher(null);
+        dataset.setAuthorReprint(false);
+
+        if (Objects.nonNull(datasetDTO.getAuthorReprint()) && datasetDTO.getAuthorReprint()) {
+            dataset.setAuthorReprint(true);
+        } else if (Objects.nonNull(datasetDTO.getPublisherId())) {
+            dataset.setPublisher(publisherService.findOne(datasetDTO.getPublisherId()));
+        }
     }
 
     @Override

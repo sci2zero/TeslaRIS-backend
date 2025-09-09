@@ -77,6 +77,10 @@ public class ThesisConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(thesis.getPublisher())) {
             setMCBibTexField(thesis.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
                 defaultLanguageTag);
+        } else if (Objects.nonNull(thesis.getAuthorReprint()) && thesis.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
         }
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
@@ -114,6 +118,9 @@ public class ThesisConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(thesis.getPublisher())) {
             setMCTaggedField(thesis.getPublisher().getName(), sb, refMan ? "PB" : "%I",
                 defaultLanguageTag);
+        } else if (Objects.nonNull(thesis.getAuthorReprint()) && thesis.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
         }
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
