@@ -185,6 +185,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         if (Objects.nonNull(dataset.getPublisher())) {
             index.setPublisherId(dataset.getPublisher().getId());
         }
+        index.setAuthorReprint(dataset.getAuthorReprint());
 
         documentPublicationIndexRepository.save(index);
     }

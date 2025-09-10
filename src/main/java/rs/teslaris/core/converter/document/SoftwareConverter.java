@@ -50,7 +50,8 @@ public class SoftwareConverter extends DocumentPublicationConverter {
     public static String toTaggedFormat(Software software, String defaultLanguageTag,
                                         boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("GEN").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "GEN" : "Computer Program")
+            .append("\n");
 
         setCommonTaggedFields(software, sb, defaultLanguageTag, refMan);
 

@@ -114,7 +114,7 @@ public class MonographConverter extends DocumentPublicationConverter {
     public static String toTaggedFormat(Monograph monograph, String defaultLanguageTag,
                                         boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("SER").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "SER" : "Book").append("\n");
 
         setCommonTaggedFields(monograph, sb, defaultLanguageTag, refMan);
 
@@ -143,25 +143,25 @@ public class MonographConverter extends DocumentPublicationConverter {
                 defaultLanguageTag);
 
             if (valueExists(monograph.getPublicationSeries().getEISSN())) {
-                sb.append(refMan ? "SN  - " : "%0S ").append("e:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(monograph.getPublicationSeries().getEISSN())
                     .append("\n");
             }
 
             if (valueExists(monograph.getPublicationSeries().getPrintISSN())) {
-                sb.append(refMan ? "SN  - " : "%0S ").append("print:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(monograph.getPublicationSeries().getPrintISSN())
                     .append("\n");
             }
         }
 
         if (valueExists(monograph.getEISBN())) {
-            sb.append(refMan ? "SN  - " : "%0S ").append("e:").append(monograph.getPrintISBN())
+            sb.append(refMan ? "SN  - " : "%@ ").append("e:").append(monograph.getEISBN())
                 .append("\n");
         }
 
         if (valueExists(monograph.getPrintISBN())) {
-            sb.append(refMan ? "SN  - " : "%0S ").append("print:").append(monograph.getPrintISBN())
+            sb.append(refMan ? "SN  - " : "%@ ").append("print:").append(monograph.getPrintISBN())
                 .append("\n");
         }
 

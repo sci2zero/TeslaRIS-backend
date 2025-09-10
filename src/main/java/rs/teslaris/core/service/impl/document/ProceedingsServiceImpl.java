@@ -205,9 +205,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
         indexCommonFields(proceedings, index);
 
-        if (proceedings.getPublisher() != null) {
+        if (Objects.nonNull(proceedings.getPublisher())) {
             index.setPublisherId(proceedings.getPublisher().getId());
+        } else {
+            index.setPublisherId(null);
         }
+        index.setAuthorReprint(proceedings.getAuthorReprint());
 
         index.setType(DocumentPublicationType.PROCEEDINGS.name());
 
@@ -216,6 +219,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             if (proceedings.getPublicationSeries() instanceof Journal journal) {
                 index.setJournalId(journal.getId());
             }
+        } else {
+            index.setPublicationSeriesId(null);
         }
 
         documentPublicationIndexRepository.save(index);

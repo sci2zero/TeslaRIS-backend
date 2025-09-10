@@ -186,7 +186,10 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         index.setType(DocumentPublicationType.PATENT.name());
         if (Objects.nonNull(patent.getPublisher())) {
             index.setPublisherId(patent.getPublisher().getId());
+        } else {
+            index.setPublisherId(null);
         }
+        index.setAuthorReprint(patent.getAuthorReprint());
 
         documentPublicationIndexRepository.save(index);
     }

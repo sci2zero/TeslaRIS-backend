@@ -186,6 +186,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         if (Objects.nonNull(software.getPublisher())) {
             index.setPublisherId(software.getPublisher().getId());
         }
+        index.setAuthorReprint(software.getAuthorReprint());
 
         documentPublicationIndexRepository.save(index);
     }

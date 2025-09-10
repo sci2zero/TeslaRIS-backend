@@ -102,16 +102,16 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
 
         if (Objects.nonNull(proceedingsPublication.getProceedings())) {
             setMCTaggedField(proceedingsPublication.getProceedings().getTitle(), sb,
-                refMan ? "C3" : "%0J", defaultLanguageTag);
+                refMan ? "C3" : "%J", defaultLanguageTag);
 
             if (valueExists(proceedingsPublication.getProceedings().getEISBN())) {
-                sb.append(refMan ? "SN  - " : "%0S").append("e:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(proceedingsPublication.getProceedings().getEISBN())
                     .append("\n");
             }
 
             if (valueExists(proceedingsPublication.getProceedings().getPrintISBN())) {
-                sb.append(refMan ? "SN  - " : "%0S").append("print:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(proceedingsPublication.getProceedings().getPrintISBN())
                     .append("\n");
             }

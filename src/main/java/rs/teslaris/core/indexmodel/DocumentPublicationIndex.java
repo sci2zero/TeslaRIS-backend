@@ -219,4 +219,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Keyword, name = "internal_identifiers", store = true)
     private Set<String> internalIdentifiers = new HashSet<>();
+
+    @Field(type = FieldType.Boolean, name = "author_reprint", store = true)
+    private Boolean authorReprint;
 }

@@ -186,7 +186,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             tokens = List.of("*");
         }
 
-        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, allowedTypes);
+        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, null, allowedTypes);
 
         var authorFilter = TermQuery.of(t -> t
             .field("author_ids")
@@ -246,7 +246,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             tokens = List.of("*");
         }
 
-        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, allowedTypes);
+        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, null, allowedTypes);
 
         var outputConfiguration =
             organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
@@ -451,6 +451,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         if (Objects.nonNull(document.getEvent())) {
             index.setEventId(document.getEvent().getId());
+        } else {
+            index.setEventId(null);
         }
 
         index.setWordcloudTokensSr(
@@ -1010,16 +1012,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      SearchRequestType type,
                                                                      Integer institutionId,
                                                                      Integer commissionId,
+                                                                     Boolean authorReprint,
                                                                      List<DocumentPublicationType> allowedTypes) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
-                buildSimpleSearchQuery(tokens, institutionId, commissionId, allowedTypes),
+                buildSimpleSearchQuery(tokens, institutionId, commissionId, authorReprint,
+                    allowedTypes),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
 
         return searchService.runQuery(
-            buildAdvancedSearchQuery(tokens, institutionId, commissionId, allowedTypes), pageable,
+            buildAdvancedSearchQuery(tokens, institutionId, commissionId, authorReprint,
+                allowedTypes), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -1116,6 +1121,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         contribution.setPerson(null);
         contribution.getInstitutions().clear();
+
+        if (Objects.nonNull(contribution.getAffiliationStatement()) &&
+            Objects.nonNull(contribution.getAffiliationStatement().getContact())) {
+            contribution.getAffiliationStatement().getContact().setContactEmail("");
+            contribution.getAffiliationStatement().getContact().setPhoneNumber("");
+        }
+
         personContributionService.save(contribution);
 
         var document = documentRepository.findById(documentId);
@@ -1149,7 +1161,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
                     if (Objects.nonNull(scopusId) && !scopusId.isBlank()) {
                         eq.should(sb -> sb.match(
-                            m -> m.field("scopusId").query(scopusId)));
+                            m -> m.field("scopus_id").query(scopusId)));
                     }
 
                     if (Objects.nonNull(doi) && !doi.isBlank()) {
@@ -1186,6 +1198,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private Query buildSimpleMetadataQuery(Integer institutionId,
                                            Integer commissionId,
+                                           Boolean authorReprint,
                                            List<DocumentPublicationType> allowedTypes) {
         return BoolQuery.of(b -> {
             if (Objects.nonNull(institutionId) && institutionId > 0) {
@@ -1194,6 +1207,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             if (Objects.nonNull(commissionId) && commissionId > 0) {
                 b.mustNot(q -> q.term(t -> t.field("assessed_by").value(commissionId)));
+            }
+
+            if (Objects.nonNull(authorReprint) && authorReprint) {
+                b.must(q -> q.term(t -> t.field("author_reprint").value(true)));
             }
 
             if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
@@ -1283,6 +1300,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private Query buildSimpleSearchQuery(List<String> tokens,
                                          Integer institutionId,
                                          Integer commissionId,
+                                         Boolean authorReprint,
                                          List<DocumentPublicationType> allowedTypes) {
         String minShouldMatch;
         if (tokens.size() <= 2) {
@@ -1292,7 +1310,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(buildSimpleMetadataQuery(institutionId, commissionId, allowedTypes));
+            b.must(
+                buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, allowedTypes));
             b.must(buildSimpleTokenQuery(tokens, minShouldMatch));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
@@ -1303,9 +1322,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public Query buildAdvancedSearchQuery(List<String> tokens,
                                           Integer institutionId,
                                           Integer commissionId,
+                                          Boolean authorReprint,
                                           List<DocumentPublicationType> allowedTypes) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(buildSimpleMetadataQuery(institutionId, commissionId, allowedTypes));
+            b.must(
+                buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, allowedTypes));
             b.must(expressionTransformer.parseAdvancedQuery(tokens));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));

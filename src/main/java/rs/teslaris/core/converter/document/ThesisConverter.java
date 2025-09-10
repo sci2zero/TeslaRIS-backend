@@ -106,7 +106,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
 
     public static String toTaggedFormat(Thesis thesis, String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("THES").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "THES" : "Thesis").append("\n");
 
         setCommonTaggedFields(thesis, sb, defaultLanguageTag, refMan);
 
@@ -132,11 +132,11 @@ public class ThesisConverter extends DocumentPublicationConverter {
         }
 
         if (valueExists(thesis.getEISBN())) {
-            sb.append(refMan ? "SN  - e:" : "%0S ").append(thesis.getEISBN()).append("\n");
+            sb.append(refMan ? "SN  - e:" : "%@ ").append(thesis.getEISBN()).append("\n");
         }
 
         if (valueExists(thesis.getPrintISBN())) {
-            sb.append(refMan ? "SN  - print:" : "%0S ").append(thesis.getPrintISBN()).append("\n");
+            sb.append(refMan ? "SN  - print:" : "%@ ").append(thesis.getPrintISBN()).append("\n");
         }
 
         if (refMan) {

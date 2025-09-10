@@ -300,12 +300,20 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             index.setPublicationSeriesId(monograph.getPublicationSeries().getId());
             if (monograph.getPublicationSeries() instanceof Journal journal) {
                 index.setJournalId(journal.getId());
+            } else {
+                index.setJournalId(null);
             }
+        } else {
+            index.setPublicationSeriesId(null);
+            index.setJournalId(null);
         }
 
         if (Objects.nonNull(monograph.getPublisher())) {
             index.setPublisherId(monograph.getPublisher().getId());
+        } else {
+            index.setPublisherId(null);
         }
+        index.setAuthorReprint(monograph.getAuthorReprint());
 
         index.setType(DocumentPublicationType.MONOGRAPH.name());
 

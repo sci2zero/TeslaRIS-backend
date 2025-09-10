@@ -79,7 +79,7 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
     public static String toTaggedFormat(MonographPublication monographPublication,
                                         String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("CHAP").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "CHAP" : "Book Section").append("\n");
 
         setCommonTaggedFields(monographPublication, sb, defaultLanguageTag, refMan);
 
@@ -106,12 +106,12 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
                 defaultLanguageTag);
 
             if (valueExists(monographPublication.getMonograph().getEISBN())) {
-                sb.append(refMan ? "SN  - " : "%0S ").append("e:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(monographPublication.getMonograph().getEISBN()).append("\n");
             }
 
             if (valueExists(monographPublication.getMonograph().getPrintISBN())) {
-                sb.append(refMan ? "SN  - " : "%0S ").append("print:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(monographPublication.getMonograph().getPrintISBN())
                     .append("\n");
             }

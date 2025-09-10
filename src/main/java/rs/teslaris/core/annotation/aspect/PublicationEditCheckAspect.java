@@ -132,7 +132,7 @@ public class PublicationEditCheckAspect {
                 }
 
                 break;
-            case INSTITUTIONAL_EDITOR:
+            case INSTITUTIONAL_EDITOR, COMMISSION:
                 if (noResearchersFromUserInstitution(contributors, userId) &&
                     isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
                     handleUnauthorisedUser();

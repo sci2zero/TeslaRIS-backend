@@ -646,6 +646,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         if (Objects.nonNull(thesis.getPublisher())) {
             index.setPublisherId(thesis.getPublisher().getId());
         }
+        index.setAuthorReprint(thesis.getAuthorReprint());
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             if (!index.getOrganisationUnitIds().contains(thesis.getOrganisationUnit().getId())) {

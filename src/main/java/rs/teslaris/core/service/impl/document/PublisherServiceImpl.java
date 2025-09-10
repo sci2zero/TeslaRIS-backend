@@ -221,7 +221,8 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         indexMultilingualContent(publisherIndex, publisher, Publisher::getPlace,
             PublisherIndex::setPlaceSr, PublisherIndex::setPlaceOther);
 
-
+        publisherIndex.setStateSr("");
+        publisherIndex.setStateOther("");
         if (Objects.nonNull(publisher.getCountry())) {
             indexMultilingualContent(publisherIndex, publisher,
                 t -> publisher.getCountry().getName(),

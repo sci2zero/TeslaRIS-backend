@@ -49,7 +49,7 @@ public class PatentConverter extends DocumentPublicationConverter {
 
     public static String toTaggedFormat(Patent patent, String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("PAT").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "PAT" : "Patent").append("\n");
 
         setCommonTaggedFields(patent, sb, defaultLanguageTag, refMan);
 

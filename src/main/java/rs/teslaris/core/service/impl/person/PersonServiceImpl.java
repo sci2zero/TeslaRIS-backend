@@ -865,6 +865,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         if (Objects.nonNull(savedPerson.getUser())) {
             personIndex.setUserId(savedPerson.getUser().getId());
+        } else {
+            personIndex.setUserId(null);
         }
 
         personIndex.setDatabaseId(savedPerson.getId());

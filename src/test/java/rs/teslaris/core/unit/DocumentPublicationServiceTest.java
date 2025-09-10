@@ -311,7 +311,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.SIMPLE, institutionId, commissionId, null);
+                pageable, SearchRequestType.SIMPLE, institutionId, commissionId, false, null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -330,7 +330,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.ADVANCED, null, null, new ArrayList<>());
+                pageable, SearchRequestType.ADVANCED, null, null, null, new ArrayList<>());
 
         // then
         assertEquals(result.getTotalElements(), 2L);

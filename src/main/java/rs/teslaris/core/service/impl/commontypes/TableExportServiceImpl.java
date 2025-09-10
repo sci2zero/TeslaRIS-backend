@@ -231,22 +231,35 @@ public class TableExportServiceImpl implements TableExportService {
         return switch (endpointType) {
             case PERSON_SEARCH -> (Page<T>) personService.findPeopleByNameAndEmployment(
                 endpointTokenParameters, pageable, false, null, false);
+            case PERSON_SEARCH_ADVANCED -> (Page<T>) personService.advancedSearch(
+                endpointTokenParameters, pageable);
             case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
-                    documentSpecificFilters.a);
+                    false, documentSpecificFilters.a);
+            case AUTHOR_REPRINT_DOCUMENTS_SEARCH ->
+                (Page<T>) documentPublicationService.searchDocumentPublications(
+                    endpointTokenParameters, pageable,
+                    SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
+                    true, documentSpecificFilters.a);
             case DOCUMENT_ADVANCED_SEARCH, THESIS_ADVANCED_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
                     SearchRequestType.ADVANCED, documentSpecificFilters.b,
-                    documentSpecificFilters.c, documentSpecificFilters.a);
+                    documentSpecificFilters.c, null, documentSpecificFilters.a);
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     Arrays.stream(endpointTokenParameters.getFirst().split("tokens="))
                         .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
                     SearchRequestType.SIMPLE, null,
                     Integer.parseInt(endpointTokenParameters.getLast()), null, null, null, null);
+            case ORGANISATION_UNIT_SEARCH_ADVANCED ->
+                (Page<T>) organisationUnitService.searchOrganisationUnits(
+                    Arrays.stream(endpointTokenParameters.getFirst().replace("&tokens=", "tokens=")
+                            .split("tokens="))
+                        .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
+                    SearchRequestType.ADVANCED, null, null, null, null, null, null);
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
                 Integer.parseInt(endpointTokenParameters.getFirst()), null,
                 Arrays.stream(endpointTokenParameters.getLast().split("tokens="))

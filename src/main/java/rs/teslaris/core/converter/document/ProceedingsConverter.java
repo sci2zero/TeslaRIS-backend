@@ -138,7 +138,8 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
     public static String toTaggedFormat(Proceedings proceedings, String defaultLanguageTag,
                                         boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("CONF").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "CONF" : "Conference Proceedings")
+            .append("\n");
 
         setCommonTaggedFields(proceedings, sb, defaultLanguageTag, refMan);
 
@@ -171,25 +172,25 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
                 refMan ? "JA" : "%J", defaultLanguageTag);
 
             if (valueExists(proceedings.getPublicationSeries().getEISSN())) {
-                sb.append(refMan ? "SN  - " : "%0S ").append("e:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(proceedings.getPublicationSeries().getEISSN())
                     .append("\n");
             }
 
             if (valueExists(proceedings.getPublicationSeries().getPrintISSN())) {
-                sb.append(refMan ? "SN  - " : "%0S ").append("print:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(proceedings.getPublicationSeries().getPrintISSN())
                     .append("\n");
             }
         }
 
         if (valueExists(proceedings.getEISBN())) {
-            sb.append(refMan ? "SN  - " : "%0S ").append("e:").append(proceedings.getEISBN())
+            sb.append(refMan ? "SN  - " : "%@ ").append("e:").append(proceedings.getEISBN())
                 .append("\n");
         }
 
         if (valueExists(proceedings.getPrintISBN())) {
-            sb.append(refMan ? "SN  - " : "%0S ").append("print:")
+            sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                 .append(proceedings.getPrintISBN()).append("\n");
         }
 

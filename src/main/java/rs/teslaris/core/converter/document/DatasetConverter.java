@@ -50,7 +50,7 @@ public class DatasetConverter extends DocumentPublicationConverter {
     public static String toTaggedFormat(Dataset dataset, String defaultLanguageTag,
                                         boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("DATA").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "DATA" : "Dataset").append("\n");
 
         setCommonTaggedFields(dataset, sb, defaultLanguageTag, refMan);
 

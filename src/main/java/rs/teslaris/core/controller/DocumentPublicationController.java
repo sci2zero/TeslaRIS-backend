@@ -111,6 +111,7 @@ public class DocumentPublicationController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(required = false) Integer institutionId,
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
+        @RequestParam(value = "authorReprint", defaultValue = "false") Boolean authorReprint,
         @RequestParam(value = "allowedTypes", required = false)
         List<DocumentPublicationType> allowedTypes,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
@@ -123,7 +124,7 @@ public class DocumentPublicationController {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.SIMPLE, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
-                null, allowedTypes);
+                null, authorReprint, allowedTypes);
     }
 
     @GetMapping("/advanced-search")
@@ -142,7 +143,7 @@ public class DocumentPublicationController {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.ADVANCED, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
-                null, allowedTypes);
+                null, null, allowedTypes);
     }
 
     @GetMapping("/deduplication-search")
