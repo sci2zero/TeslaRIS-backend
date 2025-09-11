@@ -42,7 +42,8 @@ public class ScopusConverter {
         }
 
         if (Objects.nonNull(entry.isbn()) && !entry.isbn().isEmpty()) {
-            document.setIsbn(entry.isbn().getFirst().value());
+            document.setIsbn(
+                entry.isbn().getFirst().value().replace("[", "").replace("]", "").split(",")[0]);
         }
 
         document.setDoi(entry.doi());

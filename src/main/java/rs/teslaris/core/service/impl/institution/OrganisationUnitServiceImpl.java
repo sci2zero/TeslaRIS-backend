@@ -577,6 +577,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                         subOU.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
                         subOU.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
                         subOU.setAllowSubdomains(organisationUnitDTO.isAllowingSubdomains());
+                        subOU.setInstitutionEmailDomain(
+                            organisationUnitDTO.getInstitutionEmailDomain());
                         save(subOU);
                     });
             }
@@ -939,6 +941,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.ifPresent(organisationUnitIndex -> {
             indexBelongsToSuperOURelation(savedRelation.getSourceOrganisationUnit(),
                 organisationUnitIndex);
+            organisationUnitIndex.setIsClientInstitution(
+                savedRelation.getTargetOrganisationUnit().getIsClientInstitution());
             organisationUnitIndexRepository.save(organisationUnitIndex);
         });
     }
@@ -1086,7 +1090,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         }
         return false;
-
     }
 
     @Override

@@ -36,6 +36,7 @@ import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 import rs.teslaris.core.util.seeding.SKOSLoader;
@@ -438,7 +439,8 @@ public class DbInitializer implements ApplicationRunner {
         ///////////////////// ASSESSMENT DATA /////////////////////
         assessmentDataInitializer.initializeIndicators(englishTag, serbianTag);
         assessmentDataInitializer.initializeAssessmentClassifications(englishTag, serbianTag);
-        var commissions = assessmentDataInitializer.initializeCommissions(englishTag, serbianTag);
+        var commissions = assessmentDataInitializer.initializeCommissions(englishTag, serbianTag,
+            serbianCyrillicTag);
         assessmentDataInitializer.initializeRulebooks(englishTag, serbianTag);
 
         ///////////////////// TESTING DATA /////////////////////
@@ -458,25 +460,23 @@ public class DbInitializer implements ApplicationRunner {
 
         var names = new HashSet<MultiLingualContent>();
         var nameList = line[1].split(";");
+
+        int cyrillicCount = 0;
         for (int i = 0; i < nameList.length; i++) {
             var nameParts = nameList[i].split("@");
             if (nameParts.length == 2) {
                 var content = nameParts[0].trim();
                 var languageTagCode = nameParts[1].trim().toUpperCase();
+                var basePriority = i + 1 + cyrillicCount;
 
-                var languageTag = languageTagRepository
-                    .findLanguageTagByLanguageTag(languageTagCode)
-                    .orElseGet(() -> {
-                        var newLanguageTag = new LanguageTag();
-                        newLanguageTag.setLanguageTag(languageTagCode);
-                        newLanguageTag.setDisplay(languageTagCode);
-                        log.info("Created new language tag: {}", languageTagCode);
-                        return languageTagRepository.save(newLanguageTag);
-                    });
+                addMultilingualContent(languageTagCode, content, names, basePriority);
 
-                var multilingualContent =
-                    new MultiLingualContent(languageTag, content, i + 1);
-                names.add(multilingualContent);
+                if (languageTagCode.equals(LanguageAbbreviations.SERBIAN)) {
+                    var cyrillicContent = SerbianTransliteration.toCyrillic(content);
+                    addMultilingualContent(LanguageAbbreviations.SERBIAN_CYRILLIC, cyrillicContent,
+                        names, basePriority + 1);
+                    cyrillicCount++;
+                }
             }
         }
         country.setName(names);
@@ -486,6 +486,23 @@ public class DbInitializer implements ApplicationRunner {
                 StringUtil.performSimpleLatinPreprocessing(name.getContent()));
         });
         countryRepository.save(country);
+    }
+
+    private void addMultilingualContent(String languageTagCode, String content,
+                                        HashSet<MultiLingualContent> mc, int priority) {
+        var languageTag = languageTagRepository
+            .findLanguageTagByLanguageTag(languageTagCode)
+            .orElseGet(() -> {
+                var newLanguageTag = new LanguageTag();
+                newLanguageTag.setLanguageTag(languageTagCode);
+                newLanguageTag.setDisplay(languageTagCode);
+                log.info("Created new language tag: {}", languageTagCode);
+                return languageTagRepository.save(newLanguageTag);
+            });
+
+        var multilingualContent =
+            new MultiLingualContent(languageTag, content, priority);
+        mc.add(multilingualContent);
     }
 
     private void setupDefaultBranding(LanguageTag serbianTag, LanguageTag englishTag) {

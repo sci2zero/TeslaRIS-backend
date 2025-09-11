@@ -212,6 +212,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                                                       Integer organisationUnitId) {
         var person = findOne(personId);
 
+        var allPossibleInstitutions =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
         for (var personInvolvement : person.getInvolvements()) {
             if (Objects.isNull(personInvolvement.getOrganisationUnit())) {
                 continue;
@@ -219,13 +222,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             var personOrganisationUnitId = personInvolvement.getOrganisationUnit().getId();
 
-            if (personInvolvement.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
-                Objects.equals(personOrganisationUnitId, organisationUnitId)) {
-                return true;
-            }
-
-            if (organisationUnitService.recursiveCheckIfOrganisationUnitBelongsTo(
-                organisationUnitId, personOrganisationUnitId)) {
+            if (personInvolvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) &&
+                allPossibleInstitutions.contains(personOrganisationUnitId)) {
                 return true;
             }
         }

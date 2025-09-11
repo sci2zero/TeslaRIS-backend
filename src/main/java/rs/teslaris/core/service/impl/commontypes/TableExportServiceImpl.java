@@ -91,10 +91,10 @@ public class TableExportServiceImpl implements TableExportService {
                 DocumentPublicationIndexRepository::findDocumentPublicationIndexByDatabaseId,
                 (rowData, entity, req) -> TableExportHelper.addCitationData(rowData, entity,
                     (DocumentExportRequestDTO) req, citationService),
-                documentFieldsConfigurationFile
+                documentFieldsConfigurationFile, request.getOnlyUnmanaged()
             );
         } else {
-            return exportData(request);
+            return exportData(request, request.getOnlyUnmanaged());
         }
     }
 
@@ -108,7 +108,8 @@ public class TableExportServiceImpl implements TableExportService {
             PersonIndexRepository::findByDatabaseId,
             (rowData, entity, req) -> {
             },
-            personFieldsConfigurationFile
+            personFieldsConfigurationFile,
+            null
         );
     }
 
@@ -122,7 +123,8 @@ public class TableExportServiceImpl implements TableExportService {
             OrganisationUnitIndexRepository::findOrganisationUnitIndexByDatabaseId,
             (rowData, entity, req) -> {
             },
-            ouFieldsConfigurationFile
+            ouFieldsConfigurationFile,
+            null
         );
     }
 
@@ -131,7 +133,7 @@ public class TableExportServiceImpl implements TableExportService {
         return maximumExportAmount;
     }
 
-    private InputStreamResource exportData(TableExportRequestDTO request) {
+    private InputStreamResource exportData(TableExportRequestDTO request, Boolean onlyUnmanaged) {
         var documentSpecificFilters =
             handleDocumentSpecificFieldsAndFilters(request, new ArrayList<>(), new ArrayList<>());
 
@@ -142,7 +144,7 @@ public class TableExportServiceImpl implements TableExportService {
                 request.getEndpointTokenParameters(),
                 PageRequest.of(request.getBulkExportOffset(), maximumExportAmount),
                 documentPublicationIndexRepository,
-                documentSpecificFilters)
+                documentSpecificFilters, onlyUnmanaged)
                 .forEach(entity -> exportedEntities.add(
                     DocumentPublicationConverter.getBibliographicExportEntity(request,
                         documentPublicationService.findOne(entity.getDatabaseId()))));
@@ -161,7 +163,7 @@ public class TableExportServiceImpl implements TableExportService {
         String fieldsConfig,
         BiFunction<R, Integer, Optional<T>> findByDatabaseId,
         TriConsumer<List<String>, T, TableExportRequestDTO> additionalProcessing,
-        String configurationFile) {
+        String configurationFile, Boolean onlyUnmanaged) {
 
         var rowsData = new ArrayList<List<String>>();
         var tableHeaders = TableExportHelper.getTableHeaders(request, configurationFile);
@@ -173,7 +175,7 @@ public class TableExportServiceImpl implements TableExportService {
             returnBulkDataFromDefinedEndpoint(request.getEndpointType(),
                 request.getEndpointTokenParameters(),
                 PageRequest.of(request.getBulkExportOffset(), maximumExportAmount), repository,
-                documentSpecificFilters)
+                documentSpecificFilters, onlyUnmanaged)
                 .forEach(entity -> {
                     var rowData =
                         TableExportHelper.constructRowData(entity, request.getColumns(),
@@ -222,7 +224,8 @@ public class TableExportServiceImpl implements TableExportService {
         List<String> endpointTokenParameters,
         Pageable pageable,
         R repository,
-        Triple<ArrayList<DocumentPublicationType>, Integer, Integer> documentSpecificFilters
+        Triple<ArrayList<DocumentPublicationType>, Integer, Integer> documentSpecificFilters,
+        Boolean onlyUnmanaged
     ) {
         if (endpointType == null) {
             return repository.findAll(pageable);
@@ -237,17 +240,17 @@ public class TableExportServiceImpl implements TableExportService {
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
-                    false, documentSpecificFilters.a);
+                    false, onlyUnmanaged, documentSpecificFilters.a);
             case AUTHOR_REPRINT_DOCUMENTS_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
-                    true, documentSpecificFilters.a);
+                    true, null, documentSpecificFilters.a);
             case DOCUMENT_ADVANCED_SEARCH, THESIS_ADVANCED_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     endpointTokenParameters, pageable,
                     SearchRequestType.ADVANCED, documentSpecificFilters.b,
-                    documentSpecificFilters.c, null, documentSpecificFilters.a);
+                    documentSpecificFilters.c, null, onlyUnmanaged, documentSpecificFilters.a);
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     Arrays.stream(endpointTokenParameters.getFirst().split("tokens="))

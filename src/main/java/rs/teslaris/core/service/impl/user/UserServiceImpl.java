@@ -581,7 +581,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             null,
             organisationUnit,
             commission,
-            UserNotificationPeriod.NEVER
+            UserNotificationPeriod.WEEKLY
         );
 
         var savedUser = userRepository.save(newUser);
@@ -622,7 +622,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "Institution is not a client. Unable to register researchers.");
         }
 
-        if (specifiedOU.getValidateEmailDomain()) {
+        if (Objects.nonNull(specifiedOU.getValidateEmailDomain()) &&
+            specifiedOU.getValidateEmailDomain()) {
             validateEmailDomain(email, specifiedOU.getInstitutionEmailDomain(),
                 specifiedOU.getAllowSubdomains());
         }

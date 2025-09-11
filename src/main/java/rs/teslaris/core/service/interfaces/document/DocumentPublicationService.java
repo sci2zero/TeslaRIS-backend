@@ -70,6 +70,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               Integer institutionId,
                                                               Integer commissionId,
                                                               Boolean authorReprint,
+                                                              Boolean unmanaged,
                                                               List<DocumentPublicationType> allowedTypes);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,

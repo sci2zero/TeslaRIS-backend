@@ -33,5 +33,9 @@ public class NotificationConfiguration {
             List.of(NotificationAction.NAVIGATE_TO_URL));
         allowedActions.put(NotificationType.NEW_DOCUMENTS_FOR_VALIDATION,
             List.of(NotificationAction.GO_TO_VALIDATION_PAGE));
+        allowedActions.put(NotificationType.NEW_AUTHOR_UNBINDING,
+            List.of(NotificationAction.REMOVE_FROM_PUBLICATION));
+        allowedActions.put(NotificationType.ALL_AUTHORS_UNBINDED,
+            List.of(NotificationAction.GO_TO_UNBINDED_PUBLICATIONS_PAGE));
     }
 }

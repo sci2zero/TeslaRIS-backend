@@ -1131,7 +1131,8 @@ public class AssessmentDataInitializer {
     }
 
     public Pair<Commission, Commission> initializeCommissions(LanguageTag englishTag,
-                                                              LanguageTag serbianTag) {
+                                                              LanguageTag serbianTag,
+                                                              LanguageTag serbianCyrillicTag) {
         var commission1 = new Commission();
         commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Web Of Science", 1),
             new MultiLingualContent(serbianTag, "Web Of Science", 2)));
@@ -1157,7 +1158,8 @@ public class AssessmentDataInitializer {
         var commission5 = new Commission();
         commission5.setDescription(
             Set.of(new MultiLingualContent(englishTag, "MNO ALL", 1),
-                new MultiLingualContent(serbianTag, "MNO SVE", 2)));
+                new MultiLingualContent(serbianTag, "MNO SVE", 2),
+                new MultiLingualContent(serbianCyrillicTag, "МНО СВЕ", 3)));
         commission5.setFormalDescriptionOfRule("load-mno");
         commission5.setRecognisedResearchAreas(
             Set.of("NATURAL", "SOCIAL", "TECHNICAL", "HUMANITIES"));
@@ -1166,67 +1168,78 @@ public class AssessmentDataInitializer {
         var commission6 = new Commission();
         commission6.setDescription(
             Set.of(new MultiLingualContent(englishTag, "MNO Physics & Chemistry", 1),
-                new MultiLingualContent(serbianTag, "MNO Fizika i Hemija", 2)));
+                new MultiLingualContent(serbianTag, "MNO Fizika i Hemija", 2),
+                new MultiLingualContent(serbianCyrillicTag, "МНО Физика и Хемија", 3)));
         commission6.setFormalDescriptionOfRule("load-mnoPhysChem");
 
         var commission7 = new Commission();
         commission7.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DMI-PMF", 1),
-                new MultiLingualContent(serbianTag, "DMI-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DMI-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДМИ-ПМФ", 3)));
         commission7.setFormalDescriptionOfRule("load-mno");
 
         var commission8 = new Commission();
         commission8.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DH-PMF", 1),
-                new MultiLingualContent(serbianTag, "DH-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DH-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДХ-ПМФ", 3)));
         commission8.setFormalDescriptionOfRule("load-mno");
 
         var commission9 = new Commission();
         commission9.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DGTH-NAT-PMF", 1),
-                new MultiLingualContent(serbianTag, "DGTH-NAT-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DGTH-NAT-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДГТХ-НАТ-ПМФ", 3)));
         commission9.setFormalDescriptionOfRule("load-mno");
 
         var commission10 = new Commission();
         commission10.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DF-PMF", 1),
-                new MultiLingualContent(serbianTag, "DF-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DF-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДФ-ПМФ", 3)));
         commission10.setFormalDescriptionOfRule("load-mno");
 
         var commission11 = new Commission();
         commission11.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DBE-PMF", 1),
-                new MultiLingualContent(serbianTag, "DBE-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DBE-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДБЕ-ПМФ", 3)));
         commission11.setFormalDescriptionOfRule("load-mno");
 
         var commission12 = new Commission();
         commission12.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DMI-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DMI-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DMI-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДМИ-СОЦ-ПМФ", 3)));
         commission12.setFormalDescriptionOfRule("load-mno");
 
         var commission13 = new Commission();
         commission13.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DH-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DH-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DH-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДХ-СОЦ-ПМФ", 3)));
         commission13.setFormalDescriptionOfRule("load-mno");
 
         var commission14 = new Commission();
         commission14.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DGTH-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DGTH-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DGTH-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДГТХ-СОЦ-ПМФ", 3)));
         commission14.setFormalDescriptionOfRule("load-mno");
 
         var commission15 = new Commission();
         commission15.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DF-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DF-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DF-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДФ-СОЦ-ПМФ", 3)));
         commission15.setFormalDescriptionOfRule("load-mno");
 
         var commission16 = new Commission();
         commission16.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DBE-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DBE-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DBE-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДБЕ-СОЦ-ПМФ", 3)));
         commission16.setFormalDescriptionOfRule("load-mno");
 
         commissionRepository.saveAll(

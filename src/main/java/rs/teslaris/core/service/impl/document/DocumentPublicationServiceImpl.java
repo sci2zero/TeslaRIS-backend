@@ -51,6 +51,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -186,7 +187,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             tokens = List.of("*");
         }
 
-        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, null, allowedTypes);
+        var simpleSearchQuery =
+            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes);
 
         var authorFilter = TermQuery.of(t -> t
             .field("author_ids")
@@ -246,7 +248,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             tokens = List.of("*");
         }
 
-        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, null, allowedTypes);
+        var simpleSearchQuery =
+            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes);
 
         var outputConfiguration =
             organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
@@ -1013,18 +1016,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      Integer institutionId,
                                                                      Integer commissionId,
                                                                      Boolean authorReprint,
+                                                                     Boolean unmanaged,
                                                                      List<DocumentPublicationType> allowedTypes) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, institutionId, commissionId, authorReprint,
-                    allowedTypes),
+                    unmanaged, allowedTypes),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
 
         return searchService.runQuery(
             buildAdvancedSearchQuery(tokens, institutionId, commissionId, authorReprint,
-                allowedTypes), pageable,
+                unmanaged, allowedTypes), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -1121,6 +1125,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         contribution.setPerson(null);
         contribution.getInstitutions().clear();
+        contribution.setIsCorrespondingContributor(false);
+        contribution.setEmploymentTitle(null);
 
         if (Objects.nonNull(contribution.getAffiliationStatement()) &&
             Objects.nonNull(contribution.getAffiliationStatement().getContact())) {
@@ -1143,6 +1149,36 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             var index = indexOptional.get();
             indexCommonFields(document.get(), index);
             documentPublicationIndexRepository.save(index);
+
+            document.get().getContributors().forEach(otherContribution -> {
+                if (Objects.isNull(otherContribution.getPerson())) {
+                    return;
+                }
+
+                personContributionService.getUserForContributor(
+                        otherContribution.getPerson().getId())
+                    .ifPresent(user -> {
+                        var notificationValues = new HashMap<String, String>();
+                        notificationValues.put("title", document.get().getTitle().stream()
+                            .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get()
+                            .getContent());
+                        notificationValues.put("author",
+                            contribution.getAffiliationStatement().getDisplayPersonName().toText());
+                        notificationValues.put("contributionId",
+                            otherContribution.getId().toString());
+                        notificationValues.put("documentId", document.get().getId().toString());
+                        notificationValues.put("personId",
+                            otherContribution.getPerson().getId().toString());
+                        personContributionService.notifyContributor(
+                            NotificationFactory.constructAuthorUnbindedFromPublicationNotification(
+                                notificationValues, user), NotificationType.NEW_AUTHOR_UNBINDING);
+                    });
+            });
+
+            var notifyAdmin = index.getAuthorIds().stream().noneMatch(id -> id > 0);
+            if (notifyAdmin) {
+                personContributionService.notifyAdminsAboutUnbindedContribution(document.get());
+            }
         }
     }
 
@@ -1199,6 +1235,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private Query buildSimpleMetadataQuery(Integer institutionId,
                                            Integer commissionId,
                                            Boolean authorReprint,
+                                           Boolean unmanaged,
                                            List<DocumentPublicationType> allowedTypes) {
         return BoolQuery.of(b -> {
             if (Objects.nonNull(institutionId) && institutionId > 0) {
@@ -1219,6 +1256,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             if (!SessionTrackingUtil.isUserLoggedIn()) {
                 b.must(q -> q.term(t -> t.field("is_approved").value(true)));
+            }
+
+            if (Objects.nonNull(unmanaged) && unmanaged) {
+                var allAuthorsUnmanagedScriptQuery =
+                    "if (!doc.containsKey('author_ids') || doc['author_ids'].size() == 0) return false; "
+                        + "for (id in doc['author_ids']) { if (id != -1) return false; } "
+                        + "return true;";
+
+                b.must(sb -> sb.script(s -> s
+                    .script(scr -> scr
+                        .inline(i -> i.source(allAuthorsUnmanagedScriptQuery))
+                    )
+                ));
             }
 
             return b;
@@ -1301,6 +1351,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                          Integer institutionId,
                                          Integer commissionId,
                                          Boolean authorReprint,
+                                         Boolean unmanaged,
                                          List<DocumentPublicationType> allowedTypes) {
         String minShouldMatch;
         if (tokens.size() <= 2) {
@@ -1310,8 +1361,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(
-                buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, allowedTypes));
+            b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
+                allowedTypes));
             b.must(buildSimpleTokenQuery(tokens, minShouldMatch));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
@@ -1323,10 +1374,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                           Integer institutionId,
                                           Integer commissionId,
                                           Boolean authorReprint,
+                                          Boolean unmanaged,
                                           List<DocumentPublicationType> allowedTypes) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(
-                buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, allowedTypes));
+            b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
+                allowedTypes));
             b.must(expressionTransformer.parseAdvancedQuery(tokens));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
@@ -1366,9 +1418,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 notificationValues.put("documentId", document.getId().toString());
                 notificationValues.put("personId", contribution.getPerson().getId().toString());
                 personContributionService.notifyContributor(
-                    NotificationFactory.contructAddedToPublicationNotification(
-                        notificationValues,
-                        userOptional.get()));
+                    NotificationFactory.contructAddedToPublicationNotification(notificationValues,
+                        userOptional.get()), NotificationType.ADDED_TO_PUBLICATION);
             }
         });
     }

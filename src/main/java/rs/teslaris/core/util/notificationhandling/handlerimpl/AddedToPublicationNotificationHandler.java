@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.commontypes.Notification;
+import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
@@ -16,6 +17,8 @@ public class AddedToPublicationNotificationHandler implements NotificationHandle
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final NotificationRepository notificationRepository;
+
 
     @Override
     public void handle(Notification notification, NotificationAction action) {
@@ -26,7 +29,5 @@ public class AddedToPublicationNotificationHandler implements NotificationHandle
         var personId = Integer.parseInt(notification.getValues().get("personId"));
         var documentId = Integer.parseInt(notification.getValues().get("documentId"));
         documentPublicationService.unbindResearcherFromContribution(personId, documentId);
-
-        // TODO: notify admin?
     }
 }

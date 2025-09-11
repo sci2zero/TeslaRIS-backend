@@ -94,7 +94,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             case NEW_OTHER_NAME_DETECTED:
                 newOtherNameNotificationHandler.handle(notification, notificationAction);
                 break;
-            case ADDED_TO_PUBLICATION:
+            case ADDED_TO_PUBLICATION, NEW_AUTHOR_UNBINDING:
                 addedToPublicationNotificationHandler.handle(notification, notificationAction);
                 break;
             case DEDUPLICATION_SCAN_FINISHED:

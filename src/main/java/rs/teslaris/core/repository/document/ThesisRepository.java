@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -86,13 +87,13 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
         "(:putOnReview = FALSE AND (d < :startDate OR d > :endDate OR d IS NULL))" +
         ")" +
         ")")
-    Page<Thesis> findThesesForBackup(LocalDate startDate,
-                                     LocalDate endDate,
-                                     List<ThesisType> types,
-                                     Integer institutionId,
-                                     Boolean defended,
-                                     Boolean putOnReview,
-                                     Pageable pageable);
+    Slice<Thesis> findThesesForBackup(LocalDate startDate,
+                                      LocalDate endDate,
+                                      List<ThesisType> types,
+                                      Integer institutionId,
+                                      Boolean defended,
+                                      Boolean putOnReview,
+                                      Pageable pageable);
 
     @Query(value = "SELECT *, 0 AS clazz_ FROM theses WHERE " +
         "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)

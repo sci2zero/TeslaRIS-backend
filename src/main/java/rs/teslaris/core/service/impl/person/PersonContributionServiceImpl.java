@@ -2,9 +2,11 @@ package rs.teslaris.core.service.impl.person;
 
 import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -19,7 +21,9 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.Notification;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -309,8 +313,28 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         return userRepository.findForResearcher(contributorId);
     }
 
-    public void notifyContributor(Notification notification) {
-        createNotification(notification);
+    @Override
+    public void notifyContributor(Notification notification, NotificationType notificationType) {
+        if (notificationType.equals(NotificationType.ADDED_TO_PUBLICATION)) {
+            createNotification(notification);
+        } else if (notificationType.equals(NotificationType.NEW_AUTHOR_UNBINDING)) {
+            notificationRepository.save(notification);
+        }
+    }
+
+    @Override
+    public void notifyAdminsAboutUnbindedContribution(Document document) {
+        userRepository.findAllSystemAdminUsers().forEach(adminUser -> {
+            notificationRepository.save(
+                NotificationFactory.constructAllAuthorsUnbindedNotification(
+                    Map.of("title", document.getTitle().stream()
+                            .max(Comparator.comparingInt(MultiLingualContent::getPriority))
+                            .get()
+                            .getContent(),
+                        "documentId", String.valueOf(document.getId())),
+                    adminUser)
+            );
+        });
     }
 
     @Override
