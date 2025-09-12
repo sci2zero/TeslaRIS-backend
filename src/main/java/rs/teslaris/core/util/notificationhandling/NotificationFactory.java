@@ -63,20 +63,26 @@ public class NotificationFactory {
     }
 
     public static Notification constructAuthorUnbindedFromPublicationNotification(
-        Map<String, String> notificationValues, User user) {
+        Map<String, String> notificationValues, User user, boolean notifyingEditor) {
         String message;
         var args = new Object[] {notificationValues.get("author"), notificationValues.get("title")};
+
+        var messageCode = notifyingEditor ? "notification.researcherUnbindedFromPublication" :
+            "notification.unbindedFromPublication";
         try {
             message = messageSource.getMessage(
-                "notification.unbindedFromPublication",
+                messageCode,
                 args,
                 Locale.forLanguageTag(
                     user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
         } catch (NoSuchMessageException e) {
-            message = fallbackToDefaultLocale(args, "notification.unbindedFromPublication");
+            message = fallbackToDefaultLocale(args, messageCode);
         }
-        return new Notification(message, notificationValues, NotificationType.NEW_AUTHOR_UNBINDING,
+
+        return new Notification(message, notificationValues,
+            notifyingEditor ? NotificationType.NEW_EMPLOYED_RESEARCHER_UNBINDED :
+                NotificationType.NEW_AUTHOR_UNBINDING,
             user);
     }
 

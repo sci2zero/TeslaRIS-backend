@@ -222,4 +222,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "author_reprint", store = true)
     private Boolean authorReprint;
+
+    @Field(type = FieldType.Keyword, name = "apa", index = false)
+    private String apa;
 }

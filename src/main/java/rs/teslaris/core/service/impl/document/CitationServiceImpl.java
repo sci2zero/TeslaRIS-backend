@@ -39,6 +39,25 @@ public class CitationServiceImpl implements CitationService {
 
     @Override
     public CitationResponseDTO craftCitations(DocumentPublicationIndex index, String languageCode) {
+        var itemBuilder = getGenericItemBuilder(index, languageCode);
+
+        return generateCitations(itemBuilder.build());
+    }
+
+    @Override
+    public String craftCitationInGivenStyle(String style, DocumentPublicationIndex index,
+                                            String languageCode) {
+        var itemBuilder = getGenericItemBuilder(index, languageCode);
+
+        try {
+            return extractCitationText(style, itemBuilder.build());
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    private CSLItemDataBuilder getGenericItemBuilder(DocumentPublicationIndex index,
+                                                     String languageCode) {
         var itemBuilder = new CSLItemDataBuilder()
             .id("citationId")
             .type(deduceCSLType(index.getType()))
@@ -52,7 +71,7 @@ public class CitationServiceImpl implements CitationService {
         addAuthors(itemBuilder, index.getAuthorNames());
         populatePublicationDetails(itemBuilder, index, languageCode);
 
-        return generateCitations(itemBuilder.build());
+        return itemBuilder;
     }
 
     private void addAuthors(CSLItemDataBuilder itemBuilder, String authorNames) {

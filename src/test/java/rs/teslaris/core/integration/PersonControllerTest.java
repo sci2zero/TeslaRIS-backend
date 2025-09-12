@@ -86,6 +86,17 @@ public class PersonControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testGetTopCollaborators() throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                "http://localhost:8081/api/person/top-collaborators")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
     public void testUpdatePersonMainName() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
 

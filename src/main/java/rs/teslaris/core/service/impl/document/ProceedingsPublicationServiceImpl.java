@@ -26,6 +26,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -36,6 +37,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.tracing.SessionTrackingUtil;
@@ -62,6 +64,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              OrganisationUnitService organisationUnitService,
                                              DocumentRepository documentRepository,
                                              DocumentFileService documentFileService,
+                                             CitationService citationService,
                                              PersonContributionService personContributionService,
                                              ExpressionTransformer expressionTransformer,
                                              EventService eventService,
@@ -75,10 +78,9 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              ProceedingsPublicationRepository proceedingsPublicationRepository,
                                              ConferenceService conferenceService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitService, documentRepository, documentFileService, citationService,
+            personContributionService, expressionTransformer, eventService, commissionRepository,
+            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
@@ -217,6 +219,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             index.setProceedingsId(publication.getProceedings().getId());
         }
 
+        index.setApa(
+            citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
     }
 

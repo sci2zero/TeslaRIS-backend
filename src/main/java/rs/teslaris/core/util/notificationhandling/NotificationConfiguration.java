@@ -37,5 +37,7 @@ public class NotificationConfiguration {
             List.of(NotificationAction.REMOVE_FROM_PUBLICATION));
         allowedActions.put(NotificationType.ALL_AUTHORS_UNBINDED,
             List.of(NotificationAction.GO_TO_UNBINDED_PUBLICATIONS_PAGE));
+        allowedActions.put(NotificationType.NEW_EMPLOYED_RESEARCHER_UNBINDED,
+            List.of(NotificationAction.REMOVE_EMPLOYEES_FROM_PUBLICATION));
     }
 }

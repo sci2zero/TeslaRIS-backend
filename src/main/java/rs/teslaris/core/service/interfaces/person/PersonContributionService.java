@@ -35,9 +35,11 @@ public interface PersonContributionService extends JPAService<PersonContribution
 
     Optional<User> getUserForContributor(Integer contributorId);
 
+    List<User> getEditorUsersForContributionInstitutionIds(Set<Integer> institutionIds);
+
     void notifyContributor(Notification notification, NotificationType notificationType);
 
-    public void notifyAdminsAboutUnbindedContribution(Document document);
+    void notifyAdminsAboutUnbindedContribution(Document document);
 
     void reorderContributions(Set<PersonContribution> contributions,
                               Integer contributionId,

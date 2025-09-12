@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.DisMaxQuery;
@@ -15,6 +16,7 @@ import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -29,6 +31,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
@@ -84,6 +87,7 @@ import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.ImageUtil;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
@@ -97,6 +101,7 @@ import rs.teslaris.core.util.tracing.SessionTrackingUtil;
 @RequiredArgsConstructor
 @Transactional
 @Traceable
+@Slf4j
 public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonService {
 
     private final PersonRepository personRepository;
@@ -126,6 +131,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final FileService fileService;
 
     private final SearchFieldsLoader searchFieldsLoader;
+
+    private final ElasticsearchClient elasticsearchClient;
 
     private final Pattern orcidRegexPattern =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
@@ -1336,6 +1343,63 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         }
 
         return personRepository.findPersonForIdentifier(identifier);
+    }
+
+    @Override
+    public List<Pair<String, Integer>> getTopCoauthorsForPerson(Integer personId) {
+        if (Objects.isNull(personId)) {
+            return List.of();
+        }
+
+        var response = new ArrayList<Pair<String, Integer>>();
+
+        findTopCoauthors(personId).forEach(
+            coauthorId -> personIndexRepository.findByDatabaseId(coauthorId)
+                .ifPresent(coauthor -> response.add(new Pair<>(coauthor.getName(), coauthorId))));
+
+        return response;
+    }
+
+    public List<Integer> findTopCoauthors(Integer authorId) {
+        try {
+            var response = elasticsearchClient.search(s -> s
+                    .index("document_publication")
+                    .size(0)
+                    .query(q -> q
+                        .term(t -> t
+                            .field("author_ids")
+                            .value(authorId)
+                        )
+                    )
+                    .aggregations("coauthors", a -> a
+                        .terms(t -> t
+                            .field("author_ids")
+                            .size(10)
+                            .minDocCount(1)
+                        )
+                    ),
+                Void.class
+            );
+
+            var termsAgg = response.aggregations()
+                .get("coauthors")
+                .lterms();
+
+            if (Objects.isNull(termsAgg)) {
+                return Collections.emptyList();
+            }
+
+            return termsAgg.buckets().array().stream()
+                .map(b -> (int) b.key())
+                .filter(id -> id > 0)
+                .filter(id -> !id.equals(authorId))
+                .limit(3)
+                .collect(Collectors.toList());
+
+        } catch (IOException e) {
+            log.error("Failed to fetch coauthors for author {}", authorId, e);
+            return Collections.emptyList();
+        }
     }
 
     private void filterSensitiveInformation(Page<PersonIndex> page) {

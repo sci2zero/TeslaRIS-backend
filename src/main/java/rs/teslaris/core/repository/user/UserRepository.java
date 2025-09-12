@@ -2,6 +2,7 @@ package rs.teslaris.core.repository.user;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -64,6 +65,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         "u.authority.name = 'INSTITUTIONAL_EDITOR' AND " +
         "u.organisationUnit.id = :institutionId")
     List<User> findInstitutionalEditorUsersForInstitutionId(Integer institutionId);
+
+    @Query("SELECT DISTINCT u FROM User u WHERE " +
+        "u.authority.name = 'INSTITUTIONAL_EDITOR' AND " +
+        "u.organisationUnit.id IN :institutionIds")
+    List<User> findInstitutionalEditorUsersForInstitutionIds(Set<Integer> institutionIds);
 
     @Query("SELECT u FROM User u WHERE u.authority.name = 'PROMOTION_REGISTRY_ADMINISTRATOR'")
     List<User> findAllRegistryAdmins();

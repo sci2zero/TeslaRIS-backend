@@ -21,6 +21,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
 
 @Service
@@ -117,4 +118,6 @@ public interface PersonService extends JPAService<Person> {
     void addOldId(Integer id, Integer oldId);
 
     Optional<Person> findPersonByIdentifier(String identifier);
+
+    List<Pair<String, Integer>> getTopCoauthorsForPerson(Integer personId);
 }

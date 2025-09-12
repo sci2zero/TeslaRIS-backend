@@ -40,6 +40,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -296,5 +297,14 @@ public class PersonController {
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         @RequestParam("export") Boolean onlyExportFields) {
         return personService.getSearchFields(onlyExportFields);
+    }
+
+    @GetMapping("/top-collaborators")
+    @PreAuthorize("hasAuthority('GET_TOP_COLLABORATORS')")
+    public List<Pair<String, Integer>> getTopCollaborators(
+        @RequestHeader("Authorization") String bearerToken) {
+        var personId =
+            personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken));
+        return personService.getTopCoauthorsForPerson(personId);
     }
 }

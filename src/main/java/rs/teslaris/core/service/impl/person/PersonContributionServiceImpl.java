@@ -317,9 +317,15 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     public void notifyContributor(Notification notification, NotificationType notificationType) {
         if (notificationType.equals(NotificationType.ADDED_TO_PUBLICATION)) {
             createNotification(notification);
-        } else if (notificationType.equals(NotificationType.NEW_AUTHOR_UNBINDING)) {
+        } else if (notificationType.equals(NotificationType.NEW_AUTHOR_UNBINDING) ||
+            notificationType.equals(NotificationType.NEW_EMPLOYED_RESEARCHER_UNBINDED)) {
             notificationRepository.save(notification);
         }
+    }
+
+    @Override
+    public List<User> getEditorUsersForContributionInstitutionIds(Set<Integer> institutionIds) {
+        return userRepository.findInstitutionalEditorUsersForInstitutionIds(institutionIds);
     }
 
     @Override

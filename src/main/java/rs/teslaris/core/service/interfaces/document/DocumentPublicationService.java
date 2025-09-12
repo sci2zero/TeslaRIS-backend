@@ -93,6 +93,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     void unbindResearcherFromContribution(Integer personId, Integer documentId);
 
+    void unbindInstitutionResearchersFromDocument(Integer institutionId, Integer documentId);
+
     boolean isIdentifierInUse(String identifier, Integer documentPublicationId);
 
     Pair<Long, Long> getDocumentCountsBelongingToInstitution(Integer institutionId);
@@ -115,4 +117,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     void unarchiveDocument(Integer documentId);
 
     void reindexEmploymentInformationForAllPersonPublications(Integer personId);
+
+    void deleteNonManagedDocuments();
 }

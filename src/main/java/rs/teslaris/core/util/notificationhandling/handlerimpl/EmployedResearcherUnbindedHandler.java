@@ -12,19 +12,20 @@ import rs.teslaris.core.util.notificationhandling.NotificationHandler;
 @Component
 @RequiredArgsConstructor
 @Transactional
-public class AddedToPublicationNotificationHandler implements NotificationHandler {
+public class EmployedResearcherUnbindedHandler implements NotificationHandler {
 
     private final DocumentPublicationService documentPublicationService;
 
 
     @Override
     public void handle(Notification notification, NotificationAction action) {
-        if (!action.equals(NotificationAction.REMOVE_FROM_PUBLICATION)) {
+        if (!action.equals(NotificationAction.REMOVE_EMPLOYEES_FROM_PUBLICATION)) {
             throw new NotificationException("Invalid action.");
         }
 
-        var personId = Integer.parseInt(notification.getValues().get("personId"));
+        var institutionId = Integer.parseInt(notification.getValues().get("institutionId"));
         var documentId = Integer.parseInt(notification.getValues().get("documentId"));
-        documentPublicationService.unbindResearcherFromContribution(personId, documentId);
+        documentPublicationService.unbindInstitutionResearchersFromDocument(institutionId,
+            documentId);
     }
 }
