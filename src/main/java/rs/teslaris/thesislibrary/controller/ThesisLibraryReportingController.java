@@ -1,9 +1,9 @@
 package rs.teslaris.thesislibrary.controller;
 
 import jakarta.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -15,8 +15,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.util.StreamingUtil;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingService;
@@ -68,14 +70,15 @@ public class ThesisLibraryReportingController {
 
     @PostMapping("/download/{lang}")
     @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
-    public ResponseEntity<InputStreamResource> generateThesisLibraryReportDocument(
-        @PathVariable String lang, @RequestBody @Valid ThesisReportRequestDTO reportRequest) {
+    public ResponseEntity<StreamingResponseBody> generateThesisLibraryReportDocument(
+        @PathVariable String lang, @RequestBody @Valid ThesisReportRequestDTO reportRequest)
+        throws IOException {
         var document = thesisLibraryReportingService.generatePhdLibraryReportDocument(reportRequest,
             lang.toUpperCase());
 
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.docx")
-            .body(document);
+            .body(StreamingUtil.createStreamingBody(document.getInputStream()));
     }
 }

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
@@ -25,6 +25,7 @@ import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.util.StreamingUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidFileSectionException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.thesislibrary.model.ThesisFileSection;
@@ -77,15 +78,16 @@ public class ThesisLibraryBackupController {
     @GetMapping("/download/{backupFileName}")
     @PreAuthorize("hasAuthority('GENERATE_THESIS_LIBRARY_BACKUP')")
     @ResponseBody
-    public ResponseEntity<Object> serveAndDeleteBackupFile(@PathVariable String backupFileName,
-                                                           @RequestHeader(value = "Authorization")
-                                                           String bearerToken) throws IOException {
+    public ResponseEntity<StreamingResponseBody> serveAndDeleteBackupFile(
+        @PathVariable String backupFileName,
+        @RequestHeader(value = "Authorization")
+        String bearerToken) throws IOException {
         var file = thesisLibraryBackupService.serveAndDeleteBackupFile(backupFileName,
             tokenUtil.extractUserIdFromToken(bearerToken));
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
             .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
-            .body(new InputStreamResource(file));
+            .body(StreamingUtil.createStreamingBody(file));
     }
 
     private FileSection parseFileSection(String input) {

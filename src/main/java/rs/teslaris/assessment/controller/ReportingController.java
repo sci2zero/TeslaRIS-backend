@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +17,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import rs.teslaris.assessment.dto.ReportDTO;
 import rs.teslaris.assessment.model.ReportType;
 import rs.teslaris.assessment.service.interfaces.ReportingService;
 import rs.teslaris.core.annotation.ReportGenerationCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.util.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
@@ -77,15 +78,15 @@ public class ReportingController {
 
     @GetMapping("/download/{reportFileName}/{commissionId}")
     @ResponseBody
-    public ResponseEntity<Object> serveFile(@PathVariable String reportFileName,
-                                            @PathVariable Integer commissionId,
-                                            @RequestHeader(value = "Authorization")
-                                            String bearerToken) throws IOException {
+    public ResponseEntity<StreamingResponseBody> serveFile(@PathVariable String reportFileName,
+                                                           @PathVariable Integer commissionId,
+                                                           @RequestHeader(value = "Authorization")
+                                                           String bearerToken) throws IOException {
         var file = reportingService.serveReportFile(reportFileName,
             tokenUtil.extractUserIdFromToken(bearerToken), commissionId);
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
             .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
-            .body(new InputStreamResource(file));
+            .body(StreamingUtil.createStreamingBody(file));
     }
 }
