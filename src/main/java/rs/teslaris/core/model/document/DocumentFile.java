@@ -36,7 +36,7 @@ public class DocumentFile extends BaseEntity {
     @Column(name = "filename", nullable = false)
     private String filename;
 
-    @Column(name = "server_filename", nullable = false, unique = true)
+    @Column(name = "server_filename", nullable = false)
     private String serverFilename;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

@@ -47,6 +47,7 @@ public class ThesisLibraryDissertationReportServiceImpl implements
         Integer institutionId,
         Integer year,
         Boolean notDefendedOnly,
+        Integer userInstitutionId,
         Pageable pageable) {
 
         Set<Integer> institutionIds = getInstitutionIds(institutionId);
@@ -69,6 +70,20 @@ public class ThesisLibraryDissertationReportServiceImpl implements
 
         if (!institutionIds.isEmpty()) {
             mustQueries.add(buildInstitutionQuery(institutionIds));
+        } else if (Objects.nonNull(userInstitutionId) && userInstitutionId > 0) {
+            var userInstitution =
+                organisationUnitService.findOrganisationUnitById(userInstitutionId);
+            if (userInstitution.getLegalEntity()) {
+                mustQueries.add(buildInstitutionQuery(getInstitutionIds(userInstitution.getId())));
+            } else {
+                for (int superOuId : organisationUnitService.getSuperOUsHierarchyRecursive(
+                    userInstitutionId)) {
+                    var institution = organisationUnitService.findOrganisationUnitById(superOuId);
+                    if (institution.getLegalEntity()) {
+                        mustQueries.add(buildInstitutionQuery(Set.of(institution.getId())));
+                    }
+                }
+            }
         }
 
         if (Objects.nonNull(notDefendedOnly) && notDefendedOnly) {

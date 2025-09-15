@@ -546,6 +546,12 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
     @Override
     public Integer hasThesisRegistryBookEntry(Integer thesisId) {
+        var thesis = thesisService.getThesisById(thesisId);
+
+        if (!thesis.getPublicReviewCompleted() || Objects.isNull(thesis.getThesisDefenceDate())) {
+            throw new ThesisException("thesisNotReadyForRegistryBook");
+        }
+
         return registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId);
     }
 

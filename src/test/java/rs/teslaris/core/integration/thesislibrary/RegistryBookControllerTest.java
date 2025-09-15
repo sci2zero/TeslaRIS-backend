@@ -108,7 +108,7 @@ public class RegistryBookControllerTest extends BaseTest {
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/registry-book/can-add/{thesisId}", 10)
+                        "http://localhost:8081/api/registry-book/can-add/{thesisId}", 17)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

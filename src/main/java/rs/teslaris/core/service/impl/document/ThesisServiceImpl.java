@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -116,6 +117,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private final EmailUtil emailUtil;
 
+    private final DocumentFileService documentFileService;
+
     private final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
 
     @Value("${thesis.public-review.duration-days}")
@@ -148,7 +151,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitIndexRepository organisationUnitIndexRepository,
                              UserService userService, MessageSource messageSource,
                              BrandingInformationService brandingInformationService,
-                             EmailUtil emailUtil) {
+                             EmailUtil emailUtil, DocumentFileService documentFileService1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             personContributionService, expressionTransformer, eventService, commissionRepository,
@@ -165,6 +168,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         this.messageSource = messageSource;
         this.brandingInformationService = brandingInformationService;
         this.emailUtil = emailUtil;
+        this.documentFileService = documentFileService1;
     }
 
     @Override
@@ -350,9 +354,26 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         thesis.getPreliminaryFiles().stream().filter(file -> file.getId().equals(documentFileId) &&
             file.getResourceType().equals(ResourceType.PREPRINT)).findFirst().ifPresent(file -> {
-            thesis.getPreliminaryFiles().remove(file);
-            thesis.getFileItems().add(file);
-            file.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+            var officialPublication = new DocumentFile();
+            officialPublication.setDocument(file.getDocument());
+            officialPublication.setFilename(file.getFilename());
+            officialPublication.setServerFilename(file.getServerFilename());
+            officialPublication.setMimeType(file.getMimeType());
+            officialPublication.setFileSize(file.getFileSize());
+            officialPublication.setAccessRights(file.getAccessRights());
+            officialPublication.setLicense(file.getLicense());
+            officialPublication.setApproveStatus(file.getApproveStatus());
+            officialPublication.setLegacyFilename(file.getLegacyFilename());
+            officialPublication.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+
+            var description = new HashSet<>();
+            file.getDescription().forEach(multiLingualContent -> description.add(
+                new MultiLingualContent(multiLingualContent)));
+            officialPublication.setDescription((Set) description);
+
+            documentFileService.save(officialPublication);
+
+            thesis.getFileItems().add(officialPublication);
             thesisJPAService.save(thesis);
         });
     }

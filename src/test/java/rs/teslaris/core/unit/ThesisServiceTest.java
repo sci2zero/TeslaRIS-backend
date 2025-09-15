@@ -677,7 +677,7 @@ public class ThesisServiceTest {
         thesisService.transferPreprintToOfficialPublication(1, 42);
 
         // Then
-        assertTrue(thesis.getPreliminaryFiles().isEmpty());
+        assertFalse(thesis.getPreliminaryFiles().isEmpty());
         assertEquals(1, thesis.getFileItems().size());
         assertEquals(ResourceType.OFFICIAL_PUBLICATION,
             thesis.getFileItems().iterator().next().getResourceType());

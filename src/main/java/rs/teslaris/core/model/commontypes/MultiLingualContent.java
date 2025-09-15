@@ -35,6 +35,13 @@ public class MultiLingualContent extends BaseEntity {
     @Column(name = "priority", nullable = false)
     private int priority;
 
+
+    public MultiLingualContent(MultiLingualContent other) {
+        this.language = other.language;
+        this.content = other.content;
+        this.priority = other.priority;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

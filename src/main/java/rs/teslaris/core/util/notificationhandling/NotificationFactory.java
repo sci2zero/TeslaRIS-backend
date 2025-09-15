@@ -86,6 +86,26 @@ public class NotificationFactory {
             user);
     }
 
+    public static Notification constructAuthorUnbindedByEditorNotification(
+        Map<String, String> notificationValues, User user) {
+        String message;
+        var args = new Object[] {notificationValues.get("title")};
+
+        try {
+            message = messageSource.getMessage(
+                "notification.unbindedByEditor",
+                args,
+                Locale.forLanguageTag(
+                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
+            );
+        } catch (NoSuchMessageException e) {
+            message = fallbackToDefaultLocale(args, "notification.unbindedByEditor");
+        }
+
+        return new Notification(message, notificationValues,
+            NotificationType.AUTHOR_UNBINDED_BY_EDITOR, user);
+    }
+
     public static Notification constructAllAuthorsUnbindedNotification(
         Map<String, String> notificationValues, User user) {
         String message;

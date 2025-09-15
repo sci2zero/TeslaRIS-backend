@@ -29,6 +29,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
 import rs.teslaris.core.util.notificationhandling.NotificationConfiguration;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.AddedToPublicationNotificationHandler;
+import rs.teslaris.core.util.notificationhandling.handlerimpl.AuthorRemovedByEditorNotificationHandler;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.EmployedResearcherUnbindedHandler;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotificationHandler;
 
@@ -48,6 +49,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     private final AddedToPublicationNotificationHandler addedToPublicationNotificationHandler;
 
     private final EmployedResearcherUnbindedHandler employedResearcherUnbindedHandler;
+
+    private final AuthorRemovedByEditorNotificationHandler authorRemovedByEditorNotificationHandler;
 
     private final UserAccountIndexRepository userAccountIndexRepository;
 
@@ -102,6 +105,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 break;
             case NEW_EMPLOYED_RESEARCHER_UNBINDED:
                 employedResearcherUnbindedHandler.handle(notification, notificationAction);
+                break;
+            case AUTHOR_UNBINDED_BY_EDITOR:
+                authorRemovedByEditorNotificationHandler.handle(notification, notificationAction);
                 break;
             case DEDUPLICATION_SCAN_FINISHED:
                 // Redirection to deduplication page done by frontend logic.

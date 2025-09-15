@@ -11,5 +11,6 @@ public interface ThesisLibraryDissertationReportService {
     Page<ThesisPublicReviewResponseDTO> fetchPublicReviewDissertations(Integer institutionId,
                                                                        Integer year,
                                                                        Boolean notDefendedOnly,
+                                                                       Integer userInstitutionId,
                                                                        Pageable pageable);
 }
