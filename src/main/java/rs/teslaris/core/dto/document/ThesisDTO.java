@@ -84,4 +84,8 @@ public class ThesisDTO extends DocumentDTO implements PublishableDTO {
 
     // Only for migration
     private LocalDate publicReviewStartDate;
+
+    private Boolean isArchived;
+
+    private Boolean isOnPublicReview;
 }

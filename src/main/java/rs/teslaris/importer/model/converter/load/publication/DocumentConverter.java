@@ -190,6 +190,9 @@ public class DocumentConverter {
         dto.setEisbn(record.getIsbn());
         dto.setUdc(record.getUdc());
 
+        dto.setIsOnPublicReview(record.getIsOnPublicReview());
+        dto.setIsArchived(record.getIsArchived());
+
         dto.setScientificArea(multilingualContentConverter.toDTO(record.getResearchArea()));
         dto.setTypeOfTitle(multilingualContentConverter.toDTO(record.getLevelOfEducation()));
         dto.setPlaceOfKeep(multilingualContentConverter.toDTO(record.getHoldingData()));

@@ -606,14 +606,29 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         if (SessionUtil.isUserLoggedIn() && Objects.requireNonNull(
                 SessionUtil.getLoggedInUser()).getAuthority().getName()
-            .equals(UserRole.ADMIN.name()) &&
-            Objects.nonNull(thesisDTO.getPublicReviewStartDate())) {
-            thesis.getPublicReviewStartDates().add(thesisDTO.getPublicReviewStartDate());
-            if (thesisDTO.getPublicReviewStartDate().plusDays(daysOnPublicReview)
-                .isAfter(LocalDate.now())) {
-                thesis.setPublicReviewCompleted(true);
-            } else {
-                thesis.setIsOnPublicReview(true);
+            .equals(UserRole.ADMIN.name())) {
+            if (Objects.nonNull(thesisDTO.getPublicReviewStartDate())) {
+                thesis.getPublicReviewStartDates().clear();
+                thesis.getPublicReviewStartDates().add(thesisDTO.getPublicReviewStartDate());
+
+                var startDate = thesisDTO.getPublicReviewStartDate();
+                var isOnReviewFlag = Boolean.TRUE.equals(thesisDTO.getIsOnPublicReview());
+                var cutoffDate = LocalDate.now().minusDays(daysOnPublicReview);
+
+                boolean withinWindow = Objects.nonNull(startDate) &&
+                    (startDate.isAfter(cutoffDate) || startDate.isEqual(cutoffDate));
+
+                if (withinWindow || isOnReviewFlag) {
+                    thesis.setIsOnPublicReview(true);
+                    thesis.setPublicReviewCompleted(false);
+                } else {
+                    thesis.setPublicReviewCompleted(true);
+                    thesis.setIsOnPublicReview(false);
+                }
+            }
+
+            if (Objects.nonNull(thesisDTO.getIsArchived()) && thesisDTO.getIsArchived()) {
+                thesis.setIsArchived(true);
             }
         }
     }
