@@ -38,10 +38,10 @@ import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.BackupZipBuilder;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.files.BackupZipBuilder;
 import rs.teslaris.thesislibrary.dto.ThesisTableExportRequestDTO;
 import rs.teslaris.thesislibrary.model.ThesisFileSection;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
@@ -289,7 +289,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
     }
 
     @Override
-    public GetObjectResponse serveAndDeleteBackupFile(String backupFileName, Integer userId)
+    public GetObjectResponse serveBackupFile(String backupFileName, Integer userId)
         throws IOException {
         var report = documentFileBackupRepository.findByBackupFileName(backupFileName)
             .orElseThrow(() -> new StorageException("No backup with given filename."));
@@ -301,10 +301,16 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             throw new LoadingException("Unauthorised to download backup.");
         }
 
-        var resource = fileService.loadAsResource(backupFileName);
+        return fileService.loadAsResource(backupFileName);
+    }
+
+    @Override
+    public void deleteBackupFile(String backupFileName) {
+        var report = documentFileBackupRepository.findByBackupFileName(backupFileName)
+            .orElseThrow(() -> new StorageException("No backup with given filename."));
+
         fileService.delete(backupFileName);
         documentFileBackupRepository.delete(report);
-        return resource;
     }
 
     private String generateBackupFileName(LocalDate from, LocalDate to,

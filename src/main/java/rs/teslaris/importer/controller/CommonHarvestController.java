@@ -34,7 +34,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.importer.dto.AuthorCentricInstitutionHarvestRequestDTO;

@@ -71,17 +71,17 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @Service
@@ -182,7 +182,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !thesis.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -193,7 +193,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Override
     public ThesisResponseDTO readThesisByOldId(Integer oldId) {
         var thesis = thesisRepository.findThesisByOldIdsContains(oldId);
-        if (thesis.isEmpty() || (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (thesis.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
             !thesis.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -604,8 +604,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         setCommonIdentifiers(thesis, thesisDTO);
 
-        if (SessionTrackingUtil.isUserLoggedIn() && Objects.requireNonNull(
-                SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+        if (SessionUtil.isUserLoggedIn() && Objects.requireNonNull(
+                SessionUtil.getLoggedInUser()).getAuthority().getName()
             .equals(UserRole.ADMIN.name()) &&
             Objects.nonNull(thesisDTO.getPublicReviewStartDate())) {
             thesis.getPublicReviewStartDates().add(thesisDTO.getPublicReviewStartDate());

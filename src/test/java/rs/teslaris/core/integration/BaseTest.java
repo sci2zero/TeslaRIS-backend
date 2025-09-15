@@ -3,6 +3,7 @@ package rs.teslaris.core.integration;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
+import rs.teslaris.core.util.functional.Pair;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -30,6 +32,24 @@ public abstract class BaseTest {
             objectMapper.readValue(authResponse, AuthenticationResponseDTO.class);
 
         return authenticationResponseDTO.getToken();
+    }
+
+    protected Pair<String, Cookie> authenticateAdminAndGetTokenWithFingerprintCookie()
+        throws Exception {
+        var result = mockMvc.perform(
+                MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
+                    .content("{\"email\": \"admin@admin.com\", \"password\": \"admin\"}")
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        var objectMapper = new ObjectMapper();
+        var authenticationResponseDTO =
+            objectMapper.readValue(result.getResponse().getContentAsString(),
+                AuthenticationResponseDTO.class);
+
+        var fingerprintCookie = result.getResponse().getCookie("jwt-security-fingerprint");
+        return new Pair<>(authenticationResponseDTO.getToken(), fingerprintCookie);
     }
 
     protected String authenticateInstitutionalEditorAndGetToken() throws Exception {

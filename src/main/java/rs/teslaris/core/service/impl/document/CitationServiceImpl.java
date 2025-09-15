@@ -22,7 +22,7 @@ import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Component
 @RequiredArgsConstructor
@@ -154,7 +154,7 @@ public class CitationServiceImpl implements CitationService {
                 .orElseThrow(() -> new NotFoundException(
                     "Document with id " + documentId + " does not exist."));
 
-        if (!SessionTrackingUtil.isUserLoggedIn() && !documentIndex.getIsApproved()) {
+        if (!SessionUtil.isUserLoggedIn() && !documentIndex.getIsApproved()) {
             throw new NotFoundException("Document with id " + documentId + " does not exist.");
         }
 

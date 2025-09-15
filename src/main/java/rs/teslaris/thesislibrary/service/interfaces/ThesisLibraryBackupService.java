@@ -23,6 +23,8 @@ public interface ThesisLibraryBackupService {
 
     List<String> listAvailableBackups(Integer userId);
 
-    GetObjectResponse serveAndDeleteBackupFile(String backupFileName, Integer userId)
+    GetObjectResponse serveBackupFile(String backupFileName, Integer userId)
         throws IOException;
+
+    void deleteBackupFile(String backupFileName);
 }

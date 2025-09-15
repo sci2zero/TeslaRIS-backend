@@ -1,4 +1,4 @@
-package rs.teslaris.core.util;
+package rs.teslaris.core.util.session;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;

@@ -10,7 +10,7 @@ import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.service.interfaces.JPAService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 public interface EventService extends JPAService<Event> {

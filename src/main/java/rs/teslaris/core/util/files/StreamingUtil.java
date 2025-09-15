@@ -1,9 +1,10 @@
-package rs.teslaris.core.util;
+package rs.teslaris.core.util.files;
 
 import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 public class StreamingUtil {
@@ -15,7 +16,7 @@ public class StreamingUtil {
     }
 
     public static StreamingResponseBody createStreamingBody(InputStream inputStream,
-                                                            int bufferSize) {
+                                                            int bufferSize, Runnable onComplete) {
         return outputStream -> {
             try (inputStream) {
                 byte[] buffer = new byte[bufferSize];
@@ -24,12 +25,21 @@ public class StreamingUtil {
                     outputStream.write(buffer, 0, bytesRead);
                     outputStream.flush();
                 }
+
+                if (Objects.nonNull(onComplete)) {
+                    onComplete.run();
+                }
             }
         };
     }
 
     public static StreamingResponseBody createStreamingBody(InputStream inputStream) {
-        return createStreamingBody(inputStream, BUFFER_SIZE);
+        return createStreamingBody(inputStream, BUFFER_SIZE, null);
+    }
+
+    public static StreamingResponseBody createStreamingBody(InputStream inputStream,
+                                                            Runnable runnable) {
+        return createStreamingBody(inputStream, BUFFER_SIZE, runnable);
     }
 
     public static StreamingResponseBody createStreamingBodyFromS3Response(GetObjectResponse file,

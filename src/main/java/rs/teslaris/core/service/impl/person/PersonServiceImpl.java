@@ -85,17 +85,17 @@ import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.ImageUtil;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
+import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -1403,7 +1403,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void filterSensitiveInformation(Page<PersonIndex> page) {
-        if (!SessionTrackingUtil.isUserLoggedIn()) {
+        if (!SessionUtil.isUserLoggedIn()) {
             page.forEach(personIndex -> {
                 personIndex.setBirthdate("");
                 personIndex.setBirthdateSortable("");

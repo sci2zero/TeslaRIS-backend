@@ -14,7 +14,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.util.ResourceMultipartFile;
+import rs.teslaris.core.util.files.ResourceMultipartFile;
 
 @Component
 public class ReportTemplateEngine {

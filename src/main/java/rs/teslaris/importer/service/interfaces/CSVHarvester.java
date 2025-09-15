@@ -3,7 +3,7 @@ package rs.teslaris.importer.service.interfaces;
 import java.util.HashMap;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 public interface CSVHarvester {

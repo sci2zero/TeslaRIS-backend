@@ -91,7 +91,6 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.PasswordUtil;
 import rs.teslaris.core.util.email.EmailDomainChecker;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
@@ -106,6 +105,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedE
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.session.PasswordUtil;
 
 @Service
 @RequiredArgsConstructor

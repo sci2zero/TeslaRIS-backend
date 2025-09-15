@@ -25,7 +25,7 @@ import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.repository.institution.CommissionRepository;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Component
 @RequiredArgsConstructor

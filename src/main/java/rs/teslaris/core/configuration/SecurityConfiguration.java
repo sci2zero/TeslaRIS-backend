@@ -337,6 +337,13 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/journal/linkset/{journalId}/{linksetFormat}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/book-series/linkset/{bookSeriesId}/{linksetFormat}").permitAll()
 
+                // FILE DOWNLOAD - authentication is performed outside SpringSecurity due to message streaming optimisations
+                .requestMatchers(HttpMethod.GET, "/api/document/backup/download/{backupFileName}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/backup/download/{backupFileName}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/registry-book/report/download/{reportFileName}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/thesis-library/report/download/{lang}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/assessment/report/download/{reportFileName}/{commissionId}").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

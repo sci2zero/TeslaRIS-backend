@@ -40,7 +40,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Transactional
@@ -103,7 +103,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -134,7 +134,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Override
     public Page<DocumentPublicationIndex> findPublicationsInProceedings(Integer proceedingsId,
                                                                         Pageable pageable) {
-        if (!SessionTrackingUtil.isUserLoggedIn()) {
+        if (!SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.findByTypeAndProceedingsIdAndIsApprovedTrue(
                 DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), proceedingsId, pageable);
         }

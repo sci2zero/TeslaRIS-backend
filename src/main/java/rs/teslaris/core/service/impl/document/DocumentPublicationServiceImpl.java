@@ -77,22 +77,22 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputCon
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Primary
@@ -318,7 +318,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Long getPublicationCount() {
-        if (SessionTrackingUtil.isUserLoggedIn()) {
+        if (SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.countPublications();
         }
 
@@ -869,8 +869,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setApproveStatus(
             document.getIsMetadataValid() ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
 
-        if (SessionTrackingUtil.isUserLoggedIn() &&
-            Objects.requireNonNull(SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+        if (SessionUtil.isUserLoggedIn() &&
+            Objects.requireNonNull(SessionUtil.getLoggedInUser()).getAuthority().getName()
                 .equals(UserRole.ADMIN.name())) {
             document.setAdminNote(documentDTO.getNote());
         }
@@ -1365,7 +1365,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 b.must(createTypeTermsQuery(allowedTypes));
             }
 
-            if (!SessionTrackingUtil.isUserLoggedIn()) {
+            if (!SessionUtil.isUserLoggedIn()) {
                 b.must(q -> q.term(t -> t.field("is_approved").value(true)));
             }
 
@@ -1447,7 +1447,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     .should(sb -> sb.match(m -> m.field("doi").query(token)));
 
                 // TODO: Should we be this restrictive?
-                if (SessionTrackingUtil.isUserLoggedIn()) {
+                if (SessionUtil.isUserLoggedIn()) {
                     eq.should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
                         .should(sb -> sb.match(
                             m -> m.field("full_text_other").query(token).boost(0.7f)));
@@ -1556,7 +1556,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private Boolean shouldValidate(Document document, boolean isMetadata) {
-        var loggedInUser = SessionTrackingUtil.getLoggedInUser();
+        var loggedInUser = SessionUtil.getLoggedInUser();
 
         if (Objects.isNull(loggedInUser)) {
             return true; // only for tests, impossible to reach during runtime

@@ -12,8 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
-import rs.teslaris.core.util.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.files.ConfigurationLoaderUtil;
 
 @Component
 public class IndicatorMappingConfigurationLoader {

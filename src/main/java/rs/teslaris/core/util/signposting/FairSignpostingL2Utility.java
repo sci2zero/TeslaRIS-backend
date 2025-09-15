@@ -30,7 +30,7 @@ import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Component
 public class FairSignpostingL2Utility {

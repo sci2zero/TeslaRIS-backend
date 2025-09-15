@@ -31,10 +31,10 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.DateUtil;
-import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.scheduling.DateUtil;
 
 @Service
 @RequiredArgsConstructor

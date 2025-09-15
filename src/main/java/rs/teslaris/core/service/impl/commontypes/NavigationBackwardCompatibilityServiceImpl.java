@@ -22,7 +22,7 @@ import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NavigationBackwardCompatibilityService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 @RequiredArgsConstructor

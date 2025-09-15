@@ -1,5 +1,6 @@
 package rs.teslaris.assessment.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +25,11 @@ import rs.teslaris.assessment.service.interfaces.ReportingService;
 import rs.teslaris.core.annotation.ReportGenerationCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
-import rs.teslaris.core.util.StreamingUtil;
+import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
+import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @RestController
 @RequestMapping("/api/assessment/report")
@@ -78,12 +82,21 @@ public class ReportingController {
 
     @GetMapping("/download/{reportFileName}/{commissionId}")
     @ResponseBody
-    public ResponseEntity<StreamingResponseBody> serveFile(@PathVariable String reportFileName,
+    public ResponseEntity<StreamingResponseBody> serveFile(HttpServletRequest request,
+                                                           @PathVariable String reportFileName,
                                                            @PathVariable Integer commissionId,
                                                            @RequestHeader(value = "Authorization")
                                                            String bearerToken) throws IOException {
+        if (!SessionUtil.isSessionValid(request, bearerToken) ||
+            !SessionUtil.hasAnyRole(bearerToken,
+                List.of(UserRole.ADMIN, UserRole.VICE_DEAN_FOR_SCIENCE))) {
+            return ErrorResponseUtil.buildUnauthorisedStreamingResponse(request,
+                "unauthorisedToViewDocumentMessage");
+        }
+
         var file = reportingService.serveReportFile(reportFileName,
             tokenUtil.extractUserIdFromToken(bearerToken), commissionId);
+
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
             .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))

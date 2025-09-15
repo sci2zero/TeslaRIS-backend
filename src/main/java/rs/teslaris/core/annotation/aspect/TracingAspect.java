@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
-import rs.teslaris.core.util.tracing.TraceMDCKeys;
+import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.session.TraceMDCKeys;
 
 @Aspect
 @Component
@@ -92,7 +92,7 @@ public class TracingAspect {
             String clientIp = extractClientIp();
             MDC.put(TraceMDCKeys.CLIENT_IP, Objects.nonNull(clientIp) ? clientIp : "N/A");
 
-            String trackingCookieValue = SessionTrackingUtil.getJSessionId();
+            String trackingCookieValue = SessionUtil.getJSessionId();
             MDC.put(TraceMDCKeys.SESSION, trackingCookieValue);
         } else {
             if (Objects.isNull(MDC.get(TraceMDCKeys.SESSION))) {

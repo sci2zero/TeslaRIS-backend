@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryDissertationReportService;
 
@@ -53,7 +53,7 @@ public class ThesisLibraryDissertationReportServiceImpl implements
 
         List<Query> mustQueries = new ArrayList<>();
 
-        if (!SessionTrackingUtil.isUserLoggedIn()) {
+        if (!SessionUtil.isUserLoggedIn()) {
             mustQueries.add(
                 TermQuery.of(t -> t
                     .field("is_approved")

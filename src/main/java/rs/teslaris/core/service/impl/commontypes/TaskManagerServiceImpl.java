@@ -30,7 +30,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -142,7 +142,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         }
 
         var userId = (Integer) taskMetadata.get().getMetadata().get("userId");
-        var currentUser = SessionTrackingUtil.getLoggedInUser();
+        var currentUser = SessionUtil.getLoggedInUser();
 
         if (Objects.isNull(currentUser)) {
             return false; // should never happen

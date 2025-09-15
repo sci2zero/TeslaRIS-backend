@@ -1,4 +1,4 @@
-package rs.teslaris.core.util.tracing;
+package rs.teslaris.core.util.session;
 
 public class TraceMDCKeys {
 

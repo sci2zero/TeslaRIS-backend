@@ -71,17 +71,17 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.ImageUtil;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
+import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -562,8 +562,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     .collect(Collectors.toSet()));
         }
 
-        if (SessionTrackingUtil.isUserLoggedIn() && Objects.requireNonNull(
-                SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+        if (SessionUtil.isUserLoggedIn() && Objects.requireNonNull(
+                SessionUtil.getLoggedInUser()).getAuthority().getName()
             .equals(UserRole.ADMIN.name())) {
             organisationUnit.setLegalEntity(organisationUnitDTO.isLegalEntity());
 

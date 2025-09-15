@@ -68,7 +68,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.util.deduplication.Mergeable;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Primary
@@ -130,11 +130,11 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         saveView(statisticsEntry);
         log.info(
             "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: PUBLICATION_SERIES_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
-            geoliteIPUtil.getCountry(SessionTrackingUtil.getCurrentClientIP()),
-            geoliteIPUtil.getCountryCode(SessionTrackingUtil.getCurrentClientIP()),
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             publicationSeriesId
         );
     }
@@ -146,11 +146,11 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         saveView(statisticsEntry);
         log.info(
             "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: EVENT_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
-            geoliteIPUtil.getCountry(SessionTrackingUtil.getCurrentClientIP()),
-            geoliteIPUtil.getCountryCode(SessionTrackingUtil.getCurrentClientIP()),
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             eventId
         );
     }
@@ -162,11 +162,11 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         saveView(statisticsEntry);
         log.info(
             "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: PERSON_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
-            geoliteIPUtil.getCountry(SessionTrackingUtil.getCurrentClientIP()),
-            geoliteIPUtil.getCountryCode(SessionTrackingUtil.getCurrentClientIP()),
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             personId
         );
     }
@@ -178,11 +178,11 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         saveView(statisticsEntry);
         log.info(
             "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: DOCUMENT_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
-            geoliteIPUtil.getCountry(SessionTrackingUtil.getCurrentClientIP()),
-            geoliteIPUtil.getCountryCode(SessionTrackingUtil.getCurrentClientIP()),
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             documentId
         );
     }
@@ -194,11 +194,11 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         saveView(statisticsEntry);
         log.info(
             "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: ORGANISATION_UNIT_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
-            geoliteIPUtil.getCountry(SessionTrackingUtil.getCurrentClientIP()),
-            geoliteIPUtil.getCountryCode(SessionTrackingUtil.getCurrentClientIP()),
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             organisationUnitId
         );
     }
@@ -210,11 +210,11 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         saveDownload(statisticsEntry);
         log.info(
             "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: DOCUMENT_DOWNLOAD - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
-            geoliteIPUtil.getCountry(SessionTrackingUtil.getCurrentClientIP()),
-            geoliteIPUtil.getCountryCode(SessionTrackingUtil.getCurrentClientIP()),
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             documentId
         );
     }
@@ -231,9 +231,9 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
 
     private void save(StatisticsIndex index) {
         index.setTimestamp(LocalDateTime.now());
-        index.setSessionId(SessionTrackingUtil.getJSessionId());
+        index.setSessionId(SessionUtil.getJSessionId());
 
-        var clientIp = SessionTrackingUtil.getCurrentClientIP();
+        var clientIp = SessionUtil.getCurrentClientIP();
         index.setIpAddress(clientIp);
         index.setCountryName(geoliteIPUtil.getCountry(clientIp));
         index.setCountryCode(geoliteIPUtil.getCountryCode(clientIp));

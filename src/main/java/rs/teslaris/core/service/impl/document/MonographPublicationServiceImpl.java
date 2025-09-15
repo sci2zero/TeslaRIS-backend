@@ -36,7 +36,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Transactional
@@ -91,7 +91,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !monographPublication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException(
                 "Monograph with ID " + monographPublicationId + " does not exist.");
@@ -134,7 +134,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     @Override
     public Page<DocumentPublicationIndex> findAllPublicationsForMonograph(Integer monographId,
                                                                           Pageable pageable) {
-        if (!SessionTrackingUtil.isUserLoggedIn()) {
+        if (!SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.findByTypeAndMonographIdAndIsApprovedTrue(
                 DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
         }
