@@ -1,12 +1,10 @@
 package rs.teslaris.core.service.impl.institution;
 
-import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
@@ -321,7 +319,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 involvementRepository.findActiveEmploymentInstitutionIds(personId);
             b.must(createTermsQuery("databaseId", allowedInstitutions));
         }
-        if (Objects.nonNull(topLevelInstitutionId)) {
+        if (Objects.nonNull(topLevelInstitutionId) && topLevelInstitutionId > 0) {
             var allowedInstitutions =
                 organisationUnitsRelationRepository.getSubOUsRecursive(topLevelInstitutionId);
             allowedInstitutions.add(topLevelInstitutionId);
@@ -330,12 +328,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     private Query createTermsQuery(String field, List<Integer> values) {
-        return TermsQuery.of(t -> t
-            .field(field)
-            .terms(v -> v.value(values.stream()
-                .map(String::valueOf)
-                .map(FieldValue::of)
-                .toList()))
+        return BoolQuery.of(b -> b
+            .should(values.stream()
+                .map(value -> TermQuery.of(tq -> tq
+                    .field(field)
+                    .value(String.valueOf(value))
+                )._toQuery())
+                .toList()
+            )
+            .minimumShouldMatch("1")
         )._toQuery();
     }
 

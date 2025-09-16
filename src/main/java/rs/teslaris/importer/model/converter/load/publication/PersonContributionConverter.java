@@ -143,13 +143,16 @@ public class PersonContributionConverter {
                     contribution.setDisplayAffiliationStatement(
                         multilingualContentConverter.toDTO(affiliation.getDisplayName()));
                 }
-            } else {
+            } else if (Objects.nonNull(affiliation.getDisplayName())) {
                 contribution.setDisplayAffiliationStatement(
                     multilingualContentConverter.toDTO(affiliation.getDisplayName()));
             }
         } else if (Objects.nonNull(person)) {
             contribution.getInstitutionIds().addAll(
                 personService.findInstitutionIdsForPerson(person.getId()));
+        } else if (Objects.nonNull(affiliation) && Objects.nonNull(affiliation.getDisplayName())) {
+            contribution.setDisplayAffiliationStatement(
+                multilingualContentConverter.toDTO(affiliation.getDisplayName()));
         }
     }
 

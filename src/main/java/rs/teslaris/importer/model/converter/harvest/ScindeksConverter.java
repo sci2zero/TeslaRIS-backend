@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
@@ -30,6 +31,7 @@ public class ScindeksConverter {
         if (record.getType().stream()
             .anyMatch(source -> source.equals("info:eu-repo/semantics/article"))) {
             document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+            document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
 
             var journalName =
                 record.getSource().stream().filter(name -> !name.startsWith("ISSN:")).findFirst();

@@ -519,9 +519,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 }
                             }
                         } else if (
-                            record.getType().endsWith("c_5794") ||
-                                record.getType().endsWith(
-                                    "c_0640")) { // COAR type: conference paper or conference output
+                            record.getType().endsWith("c_5794") || record.getType().endsWith(
+                                "c_c94f")) { // COAR type: conference paper, conference output
                             var creationDTO = proceedingsPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 try {

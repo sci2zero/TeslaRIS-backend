@@ -21,6 +21,7 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.oaipmh.publication.BookSeries;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -144,36 +145,49 @@ public class DocumentConverter {
 
     protected void setCommonThesisFields(Publication record, ThesisDTO dto,
                                          LanguageTagService languageTagService,
+                                         LanguageService languageService,
                                          OrganisationUnitService organisationUnitService) {
-        if (Objects.nonNull(record.getLanguage()) && record.getLanguage().equals("sr-Cyrl")) {
-            record.setLanguage("SR-CYR");
+        if (Objects.nonNull(record.getLanguage())) {
+            if (record.getLanguage().equals("sr-Cyrl")) {
+                record.setLanguage("SR-CYR");
+            } else if (record.getLanguage().equals("sr-Latn")) {
+                record.setLanguage("SR-CYR");
+            }
+
+            if (record.getLanguage().toUpperCase().startsWith("SR")) {
+                dto.setWritingLanguageTagId(
+                    languageTagService.findLanguageTagByValue(record.getLanguage().toUpperCase())
+                        .getId());
+            }
+
+            dto.setLanguageId(
+                languageService.findLanguageByCode(
+                    record.getLanguage().substring(0, 2).toUpperCase()).getId());
         }
-        dto.setWritingLanguageTagId(
-            languageTagService.findLanguageTagByValue(record.getLanguage()).getId());
 
         if (Objects.isNull(record.getInstitutions()) || record.getInstitutions().isEmpty()) {
             log.error("Thesis with ID {} has no specified institutions. Skipping.", dto.getOldId());
             throw new NotFoundException("Thesis OU not specified.");
         }
 
-        var publisher = record.getInstitutions().getFirst();
-        if (Objects.nonNull(publisher)) {
-            if (Objects.nonNull(publisher.getOrgUnit()) &&
-                Objects.nonNull(publisher.getOrgUnit().getOldId())) {
+        var institution = record.getInstitutions().getFirst();
+        if (Objects.nonNull(institution)) {
+            if (Objects.nonNull(institution.getOrgUnit()) &&
+                Objects.nonNull(institution.getOrgUnit().getOldId())) {
                 var organisationUnit = organisationUnitService.findOrganisationUnitByOldId(
-                    OAIPMHParseUtility.parseBISISID(publisher.getOrgUnit().getOldId()));
+                    OAIPMHParseUtility.parseBISISID(institution.getOrgUnit().getOldId()));
 
                 if (Objects.isNull(organisationUnit)) {
                     log.error(
                         "Unable to migrate thesis with ID {}. Because OU with ID {} does not exist.",
-                        record.getOldId(), publisher.getOrgUnit().getOldId());
+                        record.getOldId(), institution.getOrgUnit().getOldId());
                     throw new NotFoundException("Thesis OU not found.");
                 }
 
                 dto.setOrganisationUnitId(organisationUnit.getId());
             } else {
                 dto.setExternalOrganisationUnitName(
-                    multilingualContentConverter.toDTO(publisher.getDisplayName()));
+                    multilingualContentConverter.toDTO(institution.getDisplayName()));
             }
         }
 

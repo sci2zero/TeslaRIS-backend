@@ -227,6 +227,9 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             indexMultilingualContent(publisherIndex, publisher,
                 t -> publisher.getCountry().getName(),
                 PublisherIndex::setStateSr, PublisherIndex::setStateOther);
+        } else {
+            publisherIndex.setStateSr(null);
+            publisherIndex.setStateOther(null);
         }
 
         publisherIndex.setNameSrSortable(publisherIndex.getNameSr());
@@ -252,6 +255,11 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+
+        if (srContent.isEmpty() && otherContent.isEmpty()) {
+            srSetter.accept(index, null);
+            otherSetter.accept(index, null);
+        }
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {

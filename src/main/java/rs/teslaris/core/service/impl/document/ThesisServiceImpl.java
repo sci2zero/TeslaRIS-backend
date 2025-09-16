@@ -92,7 +92,7 @@ import rs.teslaris.core.util.xmlutil.XMLUtil;
 public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements ThesisService {
 
     private final Pattern udcPattern =
-        Pattern.compile("^\\d{1,3}([.:/]\\d{1,5})*(\\(\\d{1,5}(\\.\\d{1,5})?\\))?$\n",
+        Pattern.compile("^\\d{1,3}([.:/]\\d{1,5})*(\\(\\d{1,5}(\\.\\d{1,5})?\\))?$",
             Pattern.CASE_INSENSITIVE);
 
     private final ThesisJPAServiceImpl thesisJPAService;
@@ -588,8 +588,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setTypeOfTitle(
             multilingualContentService.getMultilingualContent(thesisDTO.getTypeOfTitle()));
 
-        if (Objects.nonNull(thesisDTO.getUdc()) &&
-            udcPattern.matcher(thesisDTO.getUdc()).matches()) {
+        if (Objects.nonNull(thesisDTO.getUdc())) {
+            // udcPattern.matcher(thesisDTO.getUdc()).matches()
             thesis.setUdc(thesisDTO.getUdc());
         }
 

@@ -1253,6 +1253,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
 
         documentRepository.findById(documentId).ifPresent(document -> {
+            if (document instanceof Thesis || Objects.isNull(document.getContributors())) {
+                return;
+            }
+
             document.getContributors().forEach(contribution -> {
                 if (Objects.isNull(contribution.getPerson())) {
                     return;
@@ -1521,7 +1525,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         if (tokens.size() <= 2) {
             minShouldMatch = "1"; // Allow partial match for very short queries
         } else {
-            minShouldMatch = String.valueOf((int) Math.ceil(tokens.size() * 0.8));
+            minShouldMatch = String.valueOf(Math.min((int) Math.ceil(tokens.size() * 0.7), 10));
         }
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {

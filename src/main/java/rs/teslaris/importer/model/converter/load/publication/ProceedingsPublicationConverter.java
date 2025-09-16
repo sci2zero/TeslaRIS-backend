@@ -96,7 +96,7 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         dto.setProceedingsName(multilingualContentConverter.toLoaderDTO(document.getPublishedIn()));
         dto.setConferenceName(
             multilingualContentConverter.toLoaderDTO(document.getEvent().getName()));
-        dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+        dto.setProceedingsPublicationType(document.getProceedingsPublicationType());
         dto.setArticleNumber(document.getArticleNumber());
         dto.setNumberOfPages(document.getNumberOfPages());
         dto.setStartPage(document.getStartPage());

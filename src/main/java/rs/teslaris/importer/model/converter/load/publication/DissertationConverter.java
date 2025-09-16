@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -25,6 +26,8 @@ public class DissertationConverter extends DocumentConverter
 
     private final LanguageTagService languageTagService;
 
+    private final LanguageService languageService;
+
 
     @Autowired
     public DissertationConverter(MultilingualContentConverter multilingualContentConverter,
@@ -33,11 +36,13 @@ public class DissertationConverter extends DocumentConverter
                                  JournalService journalService,
                                  PersonContributionConverter personContributionConverter,
                                  OrganisationUnitService organisationUnitService,
-                                 LanguageTagService languageTagService) {
+                                 LanguageTagService languageTagService,
+                                 LanguageService languageService) {
         super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
             personContributionConverter);
         this.organisationUnitService = organisationUnitService;
         this.languageTagService = languageTagService;
+        this.languageService = languageService;
     }
 
     @Override
@@ -51,7 +56,8 @@ public class DissertationConverter extends DocumentConverter
         dto.setThesisType(ThesisType.PHD);
 
         try {
-            setCommonThesisFields(record, dto, languageTagService, organisationUnitService);
+            setCommonThesisFields(record, dto, languageTagService, languageService,
+                organisationUnitService);
         } catch (NotFoundException ignored) {
             return null;
         }

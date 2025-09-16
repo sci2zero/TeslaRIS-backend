@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
@@ -160,8 +162,10 @@ public class TaggedBibliographicFormatUtility {
         doc.setEndPage("");
         if ("JOUR".equalsIgnoreCase(content) || "Journal Article".equalsIgnoreCase(content)) {
             doc.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+            doc.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
         } else if ("CONF".equalsIgnoreCase(content) || "COnference Proceedings".equals(content)) {
             doc.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+            doc.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
         } else {
             return null;
         }

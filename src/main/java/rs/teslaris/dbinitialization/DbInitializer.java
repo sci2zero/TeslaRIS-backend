@@ -314,7 +314,7 @@ public class DbInitializer implements ApplicationRunner {
                 putThesisOnPublicReview, editDocumentFiles, archiveThesis,
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
                 validateMetadata, validateUploadedFiles, promotePreliminaryAttachments,
-                setDefaultContent, createUserBasic
+                setDefaultContent, createUserBasic, deleteThesisAttachments
             )));
 
         var headOfLibraryAuthority =

@@ -1,6 +1,5 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
-import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,9 +40,6 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
         dto.setDocumentDate(String.valueOf(
             record.getApprovalDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                 .getYear()));
-
-        var dateFormatter = new SimpleDateFormat("dd.MM.yyyy");
-        dto.setDocumentDate(dateFormatter.format(record.getApprovalDate()));
 
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getInventor(),
