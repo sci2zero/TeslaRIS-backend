@@ -358,6 +358,7 @@ public class FileController {
         }
 
         headers.set(HttpHeaders.CONTENT_DISPOSITION, contentDisposition);
+        headers.set(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"));
         return headers;
     }
 

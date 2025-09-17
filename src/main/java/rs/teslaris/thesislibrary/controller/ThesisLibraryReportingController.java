@@ -95,6 +95,7 @@ public class ThesisLibraryReportingController {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.docx")
-            .body(StreamingUtil.createStreamingBody(document.getInputStream()));
+            .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(document.b))
+            .body(StreamingUtil.createStreamingBody(document.a.getInputStream()));
     }
 }

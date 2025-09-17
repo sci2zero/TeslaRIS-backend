@@ -138,8 +138,9 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
     }
 
     @Override
-    public InputStreamResource generatePhdLibraryReportDocument(ThesisReportRequestDTO request,
-                                                                String locale) {
+    public Pair<InputStreamResource, Integer> generatePhdLibraryReportDocument(
+        ThesisReportRequestDTO request,
+        String locale) {
         if (!request.thesisType().equals(ThesisType.PHD) &&
             !request.thesisType().equals(ThesisType.PHD_ART_PROJECT)) {
             throw new ThesisException(

@@ -838,6 +838,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             multilingualContentService.getMultilingualContent(documentDTO.getDescription()));
         document.setKeywords(
             multilingualContentService.getMultilingualContent(documentDTO.getKeywords()));
+        document.setRemark(
+            multilingualContentService.getMultilingualContent(documentDTO.getRemark()));
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 

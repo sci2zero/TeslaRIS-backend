@@ -60,6 +60,8 @@ public class DocumentPublicationConverter {
             MultilingualContentConverter.getMultilingualContentDTO(publication.getDescription()));
         publicationDTO.setKeywords(
             MultilingualContentConverter.getMultilingualContentDTO(publication.getKeywords()));
+        publicationDTO.setRemark(
+            MultilingualContentConverter.getMultilingualContentDTO(publication.getRemark()));
 
         publicationDTO.setContributions(
             PersonContributionConverter.documentContributionToDTO(publication.getContributors()));

@@ -89,6 +89,7 @@ public class DocumentBackupController {
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
             .header(HttpHeaders.CONTENT_TYPE, "application/zip")
+            .header(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"))
             .body(StreamingUtil.createStreamingBody(file, deleteCallback));
     }
 }

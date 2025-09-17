@@ -23,7 +23,7 @@
         <java.version>21</java.version>
         <maven.build.timestamp.format>yyyy-MM-dd_HH-mm-ss</maven.build.timestamp.format>
         <currentDate>${maven.build.timestamp}</currentDate>
-        
+
         <appGitRepoUrl>https://github.com/sci2zero/TeslaRIS-backend</appGitRepoUrl>
         <appGitTag></appGitTag>
         <appGitCommitHash></appGitCommitHash>
@@ -330,7 +330,11 @@
             <artifactId>geoip2</artifactId>
             <version>4.0.1</version>
         </dependency>
-
+        <dependency>
+            <groupId>nl.basjes.parse.useragent</groupId>
+            <artifactId>yauaa</artifactId>
+            <version>7.31.0</version>
+        </dependency>
     </dependencies>
 
     <reporting>
@@ -359,10 +363,10 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                  <include>application.properties</include>
+                    <include>application.properties</include>
                 </includes>
                 <filtering>true</filtering>
-              </resource>
+            </resource>
         </resources>
         <plugins>
             <plugin>
@@ -429,10 +433,11 @@
                 <configuration>
                     <changeLogFile>src/main/resources/db/changelog/db.changelog-master.yaml</changeLogFile>
                     <outputChangeLogFile>src/main/resources/db/changelog/db.changelog-initial.yaml</outputChangeLogFile>
-                    <diffChangeLogFile>src/main/resources/db/changelog/changes/change-${currentDate}.yaml</diffChangeLogFile>
+                    <diffChangeLogFile>src/main/resources/db/changelog/changes/change-${currentDate}.yaml
+                    </diffChangeLogFile>
                     <driver>org.postgresql.Driver</driver>
                     <url>jdbc:postgresql://localhost:5432/TeslaRISDB</url>
-                    <defaultSchemaName />
+                    <defaultSchemaName/>
                     <username>postgres</username>
                     <password>root</password>
                     <referenceUrl>jdbc:postgresql://localhost:5432/TeslaRISDB_stage</referenceUrl>

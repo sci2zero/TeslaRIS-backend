@@ -78,8 +78,6 @@ public class ThesisDTO extends DocumentDTO implements PublishableDTO {
 
     private List<MultilingualContentDTO> extendedAbstract = new ArrayList<>();
 
-    private List<MultilingualContentDTO> remark = new ArrayList<>();
-
     private List<MultilingualContentDTO> typeOfTitle = new ArrayList<>();
 
     // Only for migration

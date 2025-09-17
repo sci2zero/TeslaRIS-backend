@@ -133,7 +133,7 @@ public class DatasetServiceTest {
         var result = datasetService.createDataset(dto, true);
 
         // Then
-        verify(multilingualContentService, times(4)).getMultilingualContent(any());
+        verify(multilingualContentService, times(5)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(datasetJPAService).save(eq(document));

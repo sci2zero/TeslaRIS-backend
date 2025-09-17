@@ -40,9 +40,6 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     private Set<MultiLingualContent> extendedAbstract = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> remark = new HashSet<>();
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> externalOrganisationUnitName = new HashSet<>();
 
     @Column(name = "thesis_type", nullable = false)

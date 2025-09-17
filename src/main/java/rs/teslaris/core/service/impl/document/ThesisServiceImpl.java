@@ -537,6 +537,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {
+        var isAdmin = SessionUtil.isUserLoggedIn() &&
+            Objects.requireNonNull(SessionUtil.getLoggedInUser()).getAuthority().getName()
+                .equals(UserRole.ADMIN.name());
+
         thesis.setThesisType(thesisDTO.getThesisType());
         thesis.setTopicAcceptanceDate(thesisDTO.getTopicAcceptanceDate());
 
@@ -544,7 +548,6 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             multilingualContentService.getMultilingualContent(thesisDTO.getAlternateTitle()));
         thesis.setExtendedAbstract(
             multilingualContentService.getMultilingualContent(thesisDTO.getExtendedAbstract()));
-        thesis.setRemark(multilingualContentService.getMultilingualContent(thesisDTO.getRemark()));
 
         thesis.setPhysicalDescription(new ThesisPhysicalDescription() {{
             setNumberOfPages(thesisDTO.getNumberOfPages());
@@ -556,12 +559,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             setNumberOfAppendices(thesisDTO.getNumberOfAppendices());
         }});
 
-        if (thesis.getPublicReviewCompleted()) {
-            thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
-        }
-
         if (Objects.nonNull(thesisDTO.getThesisDefenceDate())) {
             thesis.setDocumentDate(String.valueOf(thesisDTO.getThesisDefenceDate().getYear()));
+
+            if (thesis.getPublicReviewCompleted() || isAdmin) {
+                thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
+            }
         } else if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
             !thesis.getPublicReviewStartDates().isEmpty()) {
             thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
@@ -625,9 +628,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         setCommonIdentifiers(thesis, thesisDTO);
 
-        if (SessionUtil.isUserLoggedIn() && Objects.requireNonNull(
-                SessionUtil.getLoggedInUser()).getAuthority().getName()
-            .equals(UserRole.ADMIN.name())) {
+        if (isAdmin) {
             if (Objects.nonNull(thesisDTO.getPublicReviewStartDate())) {
                 thesis.getPublicReviewStartDates().clear();
                 thesis.getPublicReviewStartDates().add(thesisDTO.getPublicReviewStartDate());

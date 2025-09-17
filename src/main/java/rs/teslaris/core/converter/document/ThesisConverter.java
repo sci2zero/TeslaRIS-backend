@@ -167,8 +167,6 @@ public class ThesisConverter extends DocumentPublicationConverter {
             MultilingualContentConverter.getMultilingualContentDTO(thesis.getAlternateTitle()));
         thesisDTO.setExtendedAbstract(
             MultilingualContentConverter.getMultilingualContentDTO(thesis.getExtendedAbstract()));
-        thesisDTO.setRemark(
-            MultilingualContentConverter.getMultilingualContentDTO(thesis.getRemark()));
 
         if (Objects.nonNull(thesis.getPhysicalDescription())) {
             var physicalDescription = thesis.getPhysicalDescription();

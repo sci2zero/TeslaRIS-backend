@@ -57,6 +57,14 @@ public class SessionUtil {
         }
     }
 
+    public static String getCurrentClientUserAgent() {
+        try {
+            return Objects.requireNonNullElse(MDC.get(TraceMDCKeys.USER_AGENT), "N/A");
+        } catch (IllegalArgumentException e) {
+            return "N/A";
+        }
+    }
+
     public static String getCurrentTracingContextId() {
         try {
             var tracingContextID = MDC.get(TraceMDCKeys.TRACING_CONTEXT_ID);

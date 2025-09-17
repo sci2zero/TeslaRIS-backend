@@ -139,7 +139,7 @@ public class DocumentConverter {
         setContributionInformation(record, dto);
 
         if (Objects.nonNull(record.getNote()) && !record.getNote().isEmpty()) {
-            dto.setNote(record.getNote().getFirst().getValue());
+            dto.setRemark(multilingualContentConverter.toDTO(record.getNote()));
         }
     }
 

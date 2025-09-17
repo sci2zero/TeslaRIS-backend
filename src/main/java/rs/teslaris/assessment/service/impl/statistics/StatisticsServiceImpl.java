@@ -69,6 +69,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.session.YauaaBotDetector;
 
 @Service
 @Primary
@@ -237,6 +238,18 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         index.setIpAddress(clientIp);
         index.setCountryName(geoliteIPUtil.getCountry(clientIp));
         index.setCountryCode(geoliteIPUtil.getCountryCode(clientIp));
+
+        var userAgent = SessionUtil.getCurrentClientUserAgent();
+        if (!YauaaBotDetector.isValidUserAgent(userAgent)) {
+            return;
+        }
+
+        index.setUserAgent(userAgent);
+        index.setBot(YauaaBotDetector.isBot(userAgent));
+
+        var deviceClassAndOS = YauaaBotDetector.getDeviceClassAndOS(userAgent);
+        index.setDeviceClass(deviceClassAndOS.a);
+        index.setOperatingSystem(deviceClassAndOS.b);
 
         updateTotalCount(index);
 

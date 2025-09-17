@@ -428,7 +428,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     creationDTO instanceof ImportPersonDTO importDTO) {
                     Map<String, Function<ImportPersonDTO, String>> identifierResolvers = Map.of(
                         "scopusAuthorIdExistsError", ImportPersonDTO::getScopusAuthorId,
-                        "orcidIdExistsError", ImportPersonDTO::getOrcid
+                        "orcidIdExistsError", ImportPersonDTO::getOrcid,
+                        "apvntExistsError", ImportPersonDTO::getApvnt
                     );
 
                     Optional.ofNullable(identifierResolvers.get(e.getMessage()))
