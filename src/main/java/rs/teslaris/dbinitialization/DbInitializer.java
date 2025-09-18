@@ -200,6 +200,7 @@ public class DbInitializer implements ApplicationRunner {
         var saveOUOutputConfiguration = new Privilege("SAVE_OU_OUTPUT_CONFIGURATION");
         var createBookSeries = new Privilege("CREATE_BOOK_SERIES");
         var getTopCollaborators = new Privilege("GET_TOP_COLLABORATORS");
+        var performExtraMigration = new Privilege("PERFORM_EXTRA_MIGRATION_OPERATIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -235,7 +236,7 @@ public class DbInitializer implements ApplicationRunner {
                 validateMetadata, validateUploadedFiles, archiveDocument, configureHarvestSources,
                 promotePreliminaryAttachments, scheduleDocumentHarvest, performOAIPMHHarvest,
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries,
-                unbindEmployeesFromPublication, getTopCollaborators));
+                unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -269,7 +270,8 @@ public class DbInitializer implements ApplicationRunner {
                 migrateAllEntities, performOaiMigration, saveOUTrustConfiguration, validateMetadata,
                 validateUploadedFiles, archiveDocument, promotePreliminaryAttachments,
                 scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
-                setDefaultContent, saveOUOutputConfiguration, createBookSeries
+                setDefaultContent, saveOUOutputConfiguration, createBookSeries,
+                performExtraMigration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -441,8 +443,9 @@ public class DbInitializer implements ApplicationRunner {
         });
 
         ///////////////////// ASSESSMENT DATA /////////////////////
-        assessmentDataInitializer.initializeIndicators(englishTag, serbianTag);
-        assessmentDataInitializer.initializeAssessmentClassifications(englishTag, serbianTag);
+        assessmentDataInitializer.initializeIndicators(englishTag, serbianTag, serbianCyrillicTag);
+        assessmentDataInitializer.initializeAssessmentClassifications(englishTag, serbianTag,
+            serbianCyrillicTag);
         var commissions = assessmentDataInitializer.initializeCommissions(englishTag, serbianTag,
             serbianCyrillicTag);
         assessmentDataInitializer.initializeRulebooks(englishTag, serbianTag);

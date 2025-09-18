@@ -111,7 +111,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         try {
             proceedings = findProceedingsById(proceedingsId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(proceedingsId);
+            this.clearIndexWhenFailedRead(proceedingsId, DocumentPublicationType.PROCEEDINGS);
             throw e;
         }
 

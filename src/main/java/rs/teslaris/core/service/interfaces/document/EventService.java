@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.document;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,4 +43,7 @@ public interface EventService extends JPAService<Event> {
 
     Pair<Long, Long> getClassifiedEventCountsForCommission(Integer institutionId,
                                                            Integer commissionId);
+
+    void enrichEventInformationFromExternalSource(Integer oldId, LocalDate startDate,
+                                                  LocalDate endDate);
 }

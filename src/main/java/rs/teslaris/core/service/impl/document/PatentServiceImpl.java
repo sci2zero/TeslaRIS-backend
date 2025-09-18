@@ -82,7 +82,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         try {
             patent = patentJPAService.findOne(patentId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(patentId);
+            this.clearIndexWhenFailedRead(patentId, DocumentPublicationType.PATENT);
             throw e;
         }
 

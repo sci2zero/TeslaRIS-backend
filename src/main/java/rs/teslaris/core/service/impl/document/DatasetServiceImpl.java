@@ -81,7 +81,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         try {
             dataset = datasetJPAService.findOne(datasetId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(datasetId);
+            this.clearIndexWhenFailedRead(datasetId, DocumentPublicationType.DATASET);
             throw e;
         }
 

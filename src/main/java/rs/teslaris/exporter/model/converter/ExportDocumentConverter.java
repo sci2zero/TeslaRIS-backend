@@ -450,9 +450,18 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         openairePublication.setDoi(exportDocument.getDoi());
         openairePublication.setScpNumber(exportDocument.getScopus());
-        openairePublication.setIssn(
-            Objects.nonNull(exportDocument.getEIssn()) && !exportDocument.getEIssn().isBlank() ?
-                exportDocument.getEIssn() : exportDocument.getPrintIssn());
+        openairePublication.setIssn(new ArrayList<>());
+
+
+        if (Objects.nonNull(exportDocument.getEIssn()) && !exportDocument.getEIssn().isBlank()) {
+            openairePublication.getIssn().add(exportDocument.getEIssn());
+        }
+
+        if (Objects.nonNull(exportDocument.getPrintIssn()) &&
+            !exportDocument.getPrintIssn().isBlank()) {
+            openairePublication.getIssn().add(exportDocument.getPrintIssn());
+        }
+
         openairePublication.setIsbn(
             Objects.nonNull(exportDocument.getEIsbn()) && !exportDocument.getEIsbn().isBlank() ?
                 exportDocument.getEIsbn() : exportDocument.getPrintIsbn());

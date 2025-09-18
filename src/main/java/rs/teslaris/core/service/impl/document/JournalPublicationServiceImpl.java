@@ -92,7 +92,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         try {
             publication = findJournalPublicationById(publicationId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(publicationId);
+            this.clearIndexWhenFailedRead(publicationId,
+                DocumentPublicationType.JOURNAL_PUBLICATION);
             throw e;
         }
 

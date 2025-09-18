@@ -81,7 +81,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         try {
             software = softwareJPAService.findOne(softwareId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(softwareId);
+            this.clearIndexWhenFailedRead(softwareId, DocumentPublicationType.SOFTWARE);
             throw e;
         }
 

@@ -87,7 +87,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         try {
             monographPublication = monographPublicationJPAService.findOne(monographPublicationId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(monographPublicationId);
+            this.clearIndexWhenFailedRead(monographPublicationId,
+                DocumentPublicationType.MONOGRAPH_PUBLICATION);
             throw e;
         }
 

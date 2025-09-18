@@ -136,7 +136,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         organisationUnitOutputConfigurationService;
 
     private final Pattern doiPattern =
-        Pattern.compile("\"^10\\\\.\\\\d{4,9}\\\\/[-,._;()/:A-Z0-9]+$\"", Pattern.CASE_INSENSITIVE);
+        Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -1457,6 +1457,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         .should(sb -> sb.matchPhrase(
                             mq -> mq.field("author_names").query(token.replace("\\\"", ""))))
                     ));
+                } else if (doiPattern.matcher(StringUtil.performDOIPreprocessing(token))
+                    .matches()) {
+                    String normalizedToken = StringUtil.performDOIPreprocessing(token);
+
+                    eq.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("doi").value(normalizedToken)
+                                .caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("doi").value(normalizedToken)
+                                .caseInsensitive(true)))
+                    ));
                 } else if (token.endsWith("\\*") || token.endsWith(".")) {
                     var wildcard = token.replace("\\*", "").replace(".", "");
                     eq.should(mp -> mp.bool(m -> m
@@ -1594,9 +1606,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         });
     }
 
-    protected void clearIndexWhenFailedRead(Integer documentId) {
-        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
-            .ifPresent(documentPublicationIndexRepository::delete);
+    protected void clearIndexWhenFailedRead(Integer documentId, DocumentPublicationType type) {
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdAndType(
+            documentId, type.name()).ifPresent(documentPublicationIndexRepository::delete);
     }
 
     protected void checkForDocumentDate(DocumentDTO documentDTO) {

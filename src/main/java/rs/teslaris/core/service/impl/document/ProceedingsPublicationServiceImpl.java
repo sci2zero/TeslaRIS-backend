@@ -99,7 +99,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         try {
             publication = proceedingPublicationJPAService.findOne(publicationId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(publicationId);
+            this.clearIndexWhenFailedRead(publicationId,
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION);
             throw e;
         }
 

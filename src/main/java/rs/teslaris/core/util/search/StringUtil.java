@@ -276,4 +276,9 @@ public class StringUtil {
 
         return writer + "\n";
     }
+
+    public static String performDOIPreprocessing(String token) {
+        return token.replace("\\-", "-").replace("\\/", "/").replace("\\:", ":")
+            .replace("https://doi.org/", "");
+    }
 }

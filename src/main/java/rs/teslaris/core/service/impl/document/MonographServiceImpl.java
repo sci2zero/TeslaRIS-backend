@@ -67,7 +67,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private final PublisherService publisherService;
 
-    private final Pattern doiPattern =
+    private final Pattern issnPattern =
         Pattern.compile("^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
 
@@ -132,7 +132,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         try {
             monograph = monographJPAService.findOne(monographId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(monographId);
+            this.clearIndexWhenFailedRead(monographId, DocumentPublicationType.MONOGRAPH);
             throw e;
         }
 
@@ -392,7 +392,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                     return m;
                                 }));
                         } else if (token.contains("\\-") &&
-                            doiPattern.matcher(token.replace("\\-", "-")).matches()) {
+                            issnPattern.matcher(token.replace("\\-", "-")).matches()) {
                             String normalizedToken = token.replace("\\-", "-");
 
                             b.should(mp -> mp.bool(m -> m

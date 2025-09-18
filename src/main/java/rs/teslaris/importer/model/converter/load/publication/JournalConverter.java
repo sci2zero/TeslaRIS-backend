@@ -28,7 +28,13 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
-        dto.setEissn(record.getIssn());
+        if (Objects.nonNull(record.getIssn()) && !record.getIssn().isEmpty()) {
+            dto.setEissn(record.getIssn().getFirst());
+
+            if (record.getIssn().size() > 1) {
+                dto.setPrintISSN(record.getIssn().getLast());
+            }
+        }
 
         dto.setContributions(new ArrayList<>());
         if (Objects.nonNull(record.getAcronym()) && !record.getAcronym().isEmpty()) {

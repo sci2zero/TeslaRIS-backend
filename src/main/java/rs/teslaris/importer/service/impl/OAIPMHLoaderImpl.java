@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
@@ -26,6 +28,7 @@ import rs.teslaris.core.model.oaipmh.person.Person;
 import rs.teslaris.core.model.oaipmh.product.Product;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
@@ -118,6 +121,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     private final MonographPublicationConverter monographPublicationConverter;
 
     private final MonographPublicationService monographPublicationService;
+
+    private final DocumentPublicationService documentPublicationService;
 
 
     @Override
@@ -524,27 +529,24 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 "c_c94f")) { // COAR type: conference paper, conference output
                             var creationDTO = proceedingsPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                try {
-                                    proceedingsPublicationService.createProceedingsPublication(
-                                        creationDTO,
-                                        performIndex);
-                                } catch (Exception e) {
-                                    log.warn(
-                                        "Skipped loading object of type 'PROCEEDINGS_PUBLICATION' with id '{}'. Reason: '{}'.",
-                                        record.getOldId(), e.getMessage());
-                                }
+                                saveWithDuplicateCheck(
+                                    creationDTO,
+                                    record.getOldId(),
+                                    performIndex,
+                                    proceedingsPublicationService::createProceedingsPublication,
+                                    "PROCEEDINGS_PUBLICATION",
+                                    documentPublicationService);
                             }
                         } else if (record.getType().endsWith("c_3248")) { // COAR type: book part
                             var creationDTO = monographPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                try {
-                                    monographPublicationService.createMonographPublication(
-                                        creationDTO, performIndex);
-                                } catch (Exception e) {
-                                    log.warn(
-                                        "Skipped loading object of type 'MONOGRAPH_PUBLICATION' with id '{}'. Reason: '{}'.",
-                                        record.getOldId(), e.getMessage());
-                                }
+                                saveWithDuplicateCheck(
+                                    creationDTO,
+                                    record.getOldId(),
+                                    performIndex,
+                                    monographPublicationService::createMonographPublication,
+                                    "MONOGRAPH_PUBLICATION",
+                                    documentPublicationService);
                             }
                         } else if (record.getType()
                             .endsWith("c_db06")) { // COAR type: dissertation (thesis)
@@ -578,6 +580,55 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     hasNextPage = false;
                     break;
             }
+        }
+    }
+
+    public <T extends DocumentDTO> void saveWithDuplicateCheck(
+        T dto, String sourceId,
+        boolean performIndex,
+        BiConsumer<T, Boolean> saveFn,
+        String entityLabel,
+        DocumentPublicationService documentPublicationService) {
+
+        if (Objects.isNull(dto)) {
+            return;
+        }
+
+        try {
+            saveFn.accept(dto, performIndex);
+        } catch (Exception e) {
+            log.warn("Skipped loading object of type '{}' with id '{}'. Reason: '{}'.",
+                entityLabel, sourceId, e.getMessage());
+
+            documentPublicationService.findDocumentByCommonIdentifier(
+                    dto.getDoi(), dto.getOpenAlexId(),
+                    dto.getScopusId(), dto.getWebOfScienceId())
+                .ifPresent(existingDuplicate -> dto.getTitle().forEach(title -> {
+                    var content = title.getContent().trim();
+                    boolean isTrueMatch = existingDuplicate.getTitle().stream()
+                        .anyMatch(mc -> mc.getContent().trim().equalsIgnoreCase(content));
+
+                    if (!isTrueMatch) {
+                        try {
+                            dto.setDoi(null);
+                            dto.setOpenAlexId(null);
+                            dto.setScopusId(null);
+                            dto.setWebOfScienceId(null);
+                            saveFn.accept(dto, performIndex);
+
+                            log.info("Added {} '{}' without identifiers ({}, {}, {}, {}).",
+                                entityLabel, sourceId,
+                                existingDuplicate.getDoi(),
+                                existingDuplicate.getOpenAlexId(),
+                                existingDuplicate.getScopusId(),
+                                existingDuplicate.getWebOfScienceId());
+                        } catch (Exception ex) {
+                            log.info(
+                                "Tried to add {} '{}' after removing identifiers. Failed because: {}",
+                                entityLabel, sourceId, ex.getMessage());
+                        }
+                    }
+                }));
         }
     }
 }

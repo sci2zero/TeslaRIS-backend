@@ -33,8 +33,19 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
         dto.setNumber(record.getPatentNumber());
 
         dto.setSubTitle(new ArrayList<>());
-        dto.setDescription(new ArrayList<>());
-        dto.setKeywords(new ArrayList<>());
+
+        if (Objects.nonNull(record.getKeywords()) && !record.getKeywords().isEmpty()) {
+            dto.setKeywords(multilingualContentConverter.toDTO(record.getKeywords()));
+        } else {
+            dto.setKeywords(new ArrayList<>());
+        }
+
+        if (Objects.nonNull(record.get_abstract()) && !record.get_abstract().isEmpty()) {
+            dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
+        } else {
+            dto.setDescription(new ArrayList<>());
+        }
+
         dto.setUris(new HashSet<>());
 
         dto.setDocumentDate(String.valueOf(

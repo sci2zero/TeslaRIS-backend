@@ -267,6 +267,21 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 commissionId));
     }
 
+    @Override
+    public void enrichEventInformationFromExternalSource(Integer oldId, LocalDate startDate,
+                                                         LocalDate endDate) {
+        eventRepository.findEventByOldIdsContains(oldId).ifPresent(event -> {
+            event.setDateFrom(startDate);
+            event.setDateTo(endDate);
+
+            save(event);
+            eventIndexRepository.findByDatabaseId(event.getId()).ifPresent(index -> {
+                setIndexDate(event, index);
+                eventIndexRepository.save(index);
+            });
+        });
+    }
+
     private Query buildEventImportSearchQuery(List<String> names, String dateFrom, String dateTo) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
@@ -429,18 +444,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         if (Objects.nonNull(event.getDateFrom()) && Objects.nonNull(event.getDateTo())) {
-            var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
-
-            if (event.getDateFrom().getMonth().equals(Month.JANUARY) &&
-                event.getDateTo().getMonth().equals(Month.DECEMBER)) {
-                index.setDateFromTo(String.valueOf(event.getDateFrom().getYear()));
-            } else {
-                index.setDateFromTo(
-                    event.getDateFrom().format(formatter) + " - " +
-                        event.getDateTo().format(formatter));
-            }
-
-            index.setDateSortable(event.getDateFrom());
+            setIndexDate(event, index);
         } else {
             index.setDateSortable(LocalDate.of(1, 1, 1)); // lowest date ES will parse
         }
@@ -477,5 +481,20 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+    }
+
+    private void setIndexDate(Event event, EventIndex index) {
+        var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+
+        if (event.getDateFrom().getMonth().equals(Month.JANUARY) &&
+            event.getDateTo().getMonth().equals(Month.DECEMBER)) {
+            index.setDateFromTo(String.valueOf(event.getDateFrom().getYear()));
+        } else {
+            index.setDateFromTo(
+                event.getDateFrom().format(formatter) + " - " +
+                    event.getDateTo().format(formatter));
+        }
+
+        index.setDateSortable(event.getDateFrom());
     }
 }

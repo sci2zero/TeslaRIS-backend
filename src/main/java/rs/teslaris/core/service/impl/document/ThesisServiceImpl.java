@@ -182,7 +182,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         try {
             thesis = thesisJPAService.findOne(thesisId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(thesisId);
+            this.clearIndexWhenFailedRead(thesisId, DocumentPublicationType.THESIS);
             throw e;
         }
 

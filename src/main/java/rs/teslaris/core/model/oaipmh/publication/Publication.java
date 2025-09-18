@@ -79,7 +79,7 @@ public class Publication implements PublicationConvertable, HasOldId {
     private String scpNumber;
 
     @XmlElement(name = "ISSN")
-    private String issn;
+    private List<String> issn;
 
     @XmlElement(name = "ISBN")
     private String isbn;

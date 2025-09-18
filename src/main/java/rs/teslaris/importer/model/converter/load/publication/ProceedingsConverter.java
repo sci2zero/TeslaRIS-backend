@@ -48,6 +48,7 @@ public class ProceedingsConverter extends DocumentConverter
 
         dto.setEISBN(record.getIsbn());
         dto.setPublicationSeriesVolume(record.getVolume());
+        dto.setNumberOfPages(record.getNumberOfPages());
 
         dto.setAcronym(multilingualContentConverter.toDTO(record.getAcronym()));
 
