@@ -1,0 +1,60 @@
+databaseChangeLog:
+- changeSet:
+    id: 1758558278239-4
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: theses_remark
+        constraintName: fkis7b1be4tn75sf2qj30se8qb4
+- changeSet:
+    id: 1758558278239-5
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: theses_remark
+        constraintName: fkqyyub3xv94tnp90dffauyx79n
+- changeSet:
+    id: 1758558278239-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_remark_pkey
+            name: document_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_remark_pkey
+            name: remark_id
+            type: INTEGER
+        tableName: documents_remark
+- changeSet:
+    id: 1758558278239-2
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: remark_id
+        constraintName: documents_remark_remark_id_key
+        tableName: documents_remark
+- changeSet:
+    id: 1758558278239-3
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: remark_id
+        baseTableName: documents_remark
+        constraintName: fkiut4l5vysjahlul8ex3wb9jwq
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+
