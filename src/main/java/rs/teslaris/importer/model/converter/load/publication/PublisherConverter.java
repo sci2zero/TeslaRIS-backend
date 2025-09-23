@@ -63,11 +63,13 @@ public class PublisherConverter {
             publisherDTO.setName(multilingualContentConverter.toDTO(publisher.getName()));
             publisherDTO.setPlace(multilingualContentConverter.toDTO(publisher.getPlace()));
 
-            for (var stateName : publisher.getState()) {
-                var match = countryService.findCountryByName(stateName.getValue());
-                if (match.isPresent()) {
-                    publisherDTO.setCountryId(match.get().getId());
-                    break;
+            if (Objects.nonNull(publisher.getState())) {
+                for (var stateName : publisher.getState()) {
+                    var match = countryService.findCountryByName(stateName.getValue());
+                    if (match.isPresent()) {
+                        publisherDTO.setCountryId(match.get().getId());
+                        break;
+                    }
                 }
             }
 
