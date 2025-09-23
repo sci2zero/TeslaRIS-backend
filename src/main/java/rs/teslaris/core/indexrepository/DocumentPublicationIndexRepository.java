@@ -46,9 +46,32 @@ public interface DocumentPublicationIndexRepository extends
 
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
+    @Query("""
+        {
+            "bool": {
+                "must": [
+                    {"term": {"author_ids": ?0}},
+                    {"range": {"year": {"gte": ?1, "lte": ?2}}},
+                    {"exists": {"field": "assessed_by"}}
+                ]
+            }
+        }
+        """)
     Page<DocumentPublicationIndex> findByAuthorIdsAndYearBetween(Integer authorId,
                                                                  Integer startYear, Integer endYear,
                                                                  Pageable pageable);
+
+    @Query("""
+        {
+            "bool": {
+                "must": [
+                    {"term": {"author_ids": ?0}},
+                    {"exists": {"field": "assessed_by"}}
+                ]
+            }
+        }
+        """)
+    Page<DocumentPublicationIndex> findAssessedByAuthorIds(Integer authorId, Pageable pageable);
 
     @Query("""
         {

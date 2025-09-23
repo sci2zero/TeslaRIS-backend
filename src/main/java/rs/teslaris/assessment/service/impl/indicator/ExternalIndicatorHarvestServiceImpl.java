@@ -42,6 +42,7 @@ import rs.teslaris.assessment.util.ExternalMappingConstraintType;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -77,6 +78,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     private final IndicatorService indicatorService;
 
     private final ScopusAuthenticationHelper scopusAuthenticationHelper;
+
+    private final PersonIndexRepository personIndexRepository;
 
     private Map<String, String> externalIndicatorMapping;
 
@@ -492,6 +495,12 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                                  Indicator totalOutputIndicator,
                                                  Indicator hIndexIndicator,
                                                  EntityIndicatorSource source) {
+        var index = personIndexRepository.findByDatabaseId(person.getId());
+        if (index.isEmpty()) {
+            return;
+        }
+        var shouldUpdateIndex = source.equals(EntityIndicatorSource.OPEN_ALEX);
+
         counts.forEach((key, value) -> {
             if (value == 0) {
                 return;
@@ -512,6 +521,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                     .ifPresent(personIndicatorRepository::delete);
                 newCitationCountIndicator.setIndicator(totalIndicator);
                 newCitationCountIndicator.setToDate(LocalDate.now());
+
+                if (shouldUpdateIndex) {
+                    index.get().setTotalCitations(value);
+                }
             } else {
                 if (Objects.isNull(yearlyIndicator)) {
                     return;
@@ -530,10 +543,18 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                 newCitationCountIndicator.setToDate(
                     year == LocalDate.now().getYear() ? LocalDate.now() : LocalDate.of(year, 12, 31)
                 );
+
+                if (shouldUpdateIndex) {
+                    index.get().getCitationsByYear().put(year, value);
+                }
             }
 
             personIndicatorRepository.save(newCitationCountIndicator);
         });
+
+        if (shouldUpdateIndex) {
+            personIndexRepository.save(index.get());
+        }
 
         var hIndex = calculateHIndex(citations);
         if (Objects.nonNull(hIndexIndicator) && hIndex > 0) {

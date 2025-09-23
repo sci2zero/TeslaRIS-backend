@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,16 +52,16 @@ public class EventAssessmentClassificationServiceImpl
     @Autowired
     public EventAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        CommissionService commissionService,
-        DocumentPublicationService documentPublicationService,
+        CommissionService commissionService, DocumentPublicationService documentPublicationService,
         ConferenceService conferenceService,
+        ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         EventService eventService, UserService userService,
         NotificationService notificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, entityAssessmentClassificationRepository);
+            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;

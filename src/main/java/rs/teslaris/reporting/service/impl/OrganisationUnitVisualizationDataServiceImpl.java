@@ -96,6 +96,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                         .size(0)
                         .query(q -> q
                             .bool(b -> b
+                                .must(m -> m.term(t -> t.field("is_approved").value(true)))
                                 .must(organisationUnitMatchQuery(List.of(organisationUnitId),
                                     searchFields))
                                 .must(m -> m.range(
@@ -103,15 +104,17 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                                         .lte(JsonData.of(endYear))))
                                 .must(m -> m.bool(sb -> sb
                                     .should(sn -> sn.term(
-                                        t -> t.field("commission_assessments.a").value(commission.a)))
+                                        t -> t.field("commission_assessment_groups.a")
+                                            .value(commission.a)))
                                     .should(sn -> sn.bool(nb -> nb.mustNot(
-                                        mn -> mn.exists(e -> e.field("commission_assessments.a")))))
+                                        mn -> mn.exists(
+                                            e -> e.field("commission_assessment_groups.a")))))
                                     .minimumShouldMatch("1")
                                 ))
                             )
                         )
                         .aggregations("by_m_category", a -> a
-                            .terms(t -> t.field("commission_assessments.b.keyword")
+                            .terms(t -> t.field("commission_assessment_groups.b.keyword")
                                 .missing("NONE")
                                 .size(11)) // 10 M categories + non-classified
                         ),
@@ -380,6 +383,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 .size(0)
                 .query(q -> q
                     .bool(b -> b
+                        .must(m -> m.term(t -> t.field("is_approved").value(true)))
                         .must(m -> m.term(t -> t.field("year").value(year)))
                         .must(organisationUnitMatchQuery(List.of(organisationUnitId), searchFields))
                         .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
@@ -439,6 +443,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
+                            .must(m -> m.term(t -> t.field("is_approved").value(true)))
                             .must(organisationUnitMatchQuery(List.of(organisationUnitId), searchFields))
                             .must(m -> m.range(t -> t.field("year").gt(JsonData.of(0))))
                         )
@@ -467,19 +472,20 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 .size(0)
                 .query(q -> q
                     .bool(b -> b
+                        .must(m -> m.term(t -> t.field("is_approved").value(true)))
                         .must(m -> m.term(t -> t.field("year").value(year)))
                         .must(organisationUnitMatchQuery(List.of(organisationUnitId), searchFields))
                         .must(m -> m.bool(sb -> sb
                             .should(sn -> sn.term(
-                                t -> t.field("commission_assessments.a").value(commissionId)))
+                                t -> t.field("commission_assessment_groups.a").value(commissionId)))
                             .should(sn -> sn.bool(nb -> nb.mustNot(
-                                mn -> mn.exists(e -> e.field("commission_assessments.a")))))
+                                mn -> mn.exists(e -> e.field("commission_assessment_groups.a")))))
                             .minimumShouldMatch("1")
                         ))
                     )
                 )
                 .aggregations("by_m_category", a -> a
-                    .terms(t -> t.field("commission_assessments.b.keyword")
+                    .terms(t -> t.field("commission_assessment_groups.b.keyword")
                         .missing("NONE")
                         .size(11))
                 ),

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -44,10 +45,12 @@ import rs.teslaris.assessment.service.impl.cruddelegate.DocumentClassificationJP
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.DocumentAssessmentClassificationService;
+import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -119,12 +122,14 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final NotificationService notificationService;
 
+    private final PersonAssessmentClassificationService personAssessmentClassificationService;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
-        ConferenceService conferenceService,
+        ConferenceService conferenceService, ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
@@ -136,9 +141,10 @@ public class DocumentAssessmentClassificationServiceImpl
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository,
         DocumentClassificationJPAServiceImpl documentClassificationJPAService,
-        NotificationService notificationService) {
+        NotificationService notificationService,
+        PersonAssessmentClassificationService personAssessmentClassificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, entityAssessmentClassificationRepository);
+            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -154,6 +160,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.eventIndexRepository = eventIndexRepository;
         this.documentClassificationJPAService = documentClassificationJPAService;
         this.notificationService = notificationService;
+        this.personAssessmentClassificationService = personAssessmentClassificationService;
     }
 
     @Override
@@ -197,6 +204,10 @@ public class DocumentAssessmentClassificationServiceImpl
             documentAssessmentClassificationRepository.save(newDocumentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(document.getId());
 
+        applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
+            document.getContributors().stream().filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId()).toList()));
+
         return EntityAssessmentClassificationConverter.toDTO(savedDocumentClassification);
     }
 
@@ -217,6 +228,10 @@ public class DocumentAssessmentClassificationServiceImpl
         save(documentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(
             documentClassification.getDocument().getId());
+        applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
+            documentClassification.getDocument().getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson())).map(c -> c.getPerson().getId())
+                .toList()));
     }
 
     @Override
@@ -341,6 +356,8 @@ public class DocumentAssessmentClassificationServiceImpl
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
     }
 
     private void assessJournalPublication(DocumentPublicationIndex journalPublicationIndex,
@@ -811,11 +828,20 @@ public class DocumentAssessmentClassificationServiceImpl
                 }
 
                 var assessmentTriple = new Triple<>(commission.getId(),
-                    documentClassification.getAssessmentClassification().getCode().substring(0, 2) +
-                        "0", false);
+                    documentClassification.getAssessmentClassification().getCode(), false);
+
                 if (!documentIndex.getCommissionAssessments().contains(assessmentTriple)) {
                     documentIndex.getCommissionAssessments().add(assessmentTriple);
                 }
+
+                assessmentTriple = new Triple<>(commission.getId(),
+                    documentClassification.getAssessmentClassification().getCode().substring(0, 2) +
+                        "0", false);
+
+                if (!documentIndex.getCommissionAssessmentGroups().contains(assessmentTriple)) {
+                    documentIndex.getCommissionAssessmentGroups().add(assessmentTriple);
+                }
+
                 documentPublicationIndexRepository.save(documentIndex);
             });
     }

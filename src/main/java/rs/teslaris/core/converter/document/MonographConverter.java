@@ -119,7 +119,7 @@ public class MonographConverter extends DocumentPublicationConverter {
         setCommonTaggedFields(monograph, sb, defaultLanguageTag, refMan);
 
         if (Objects.nonNull(monograph.getNumberOfPages())) {
-            sb.append(refMan ? "SP  - " : "%0P ").append(monograph.getNumberOfPages()).append("\n");
+            sb.append(refMan ? "SP  - " : "%7 ").append(monograph.getNumberOfPages()).append("\n");
         }
 
         if (valueExists(monograph.getVolume())) {

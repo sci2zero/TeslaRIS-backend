@@ -92,7 +92,7 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
         }
 
         if (Objects.nonNull(monographPublication.getNumberOfPages())) {
-            sb.append(refMan ? "SP  - " : "%0P ").append(monographPublication.getNumberOfPages())
+            sb.append(refMan ? "SP  - " : "%7 ").append(monographPublication.getNumberOfPages())
                 .append("\n");
         }
 

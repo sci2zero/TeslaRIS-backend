@@ -3,7 +3,9 @@ package rs.teslaris.core.indexmodel;
 import jakarta.persistence.Id;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -86,4 +88,10 @@ public class PersonIndex {
 
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
+
+    @Field(type = FieldType.Integer, name = "total_citations")
+    private Integer totalCitations;
+
+    @Field(type = FieldType.Object, name = "citations_by_year")
+    private Map<Integer, Integer> citationsByYear = new HashMap<>();
 }

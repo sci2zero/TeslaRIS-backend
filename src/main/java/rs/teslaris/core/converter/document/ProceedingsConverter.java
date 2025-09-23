@@ -144,7 +144,7 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         setCommonTaggedFields(proceedings, sb, defaultLanguageTag, refMan);
 
         if (Objects.nonNull(proceedings.getNumberOfPages())) {
-            sb.append(refMan ? "SP  - " : "%0P ").append(proceedings.getNumberOfPages())
+            sb.append(refMan ? "SP  - " : "%7 ").append(proceedings.getNumberOfPages())
                 .append("\n");
         }
 

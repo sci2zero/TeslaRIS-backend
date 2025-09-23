@@ -617,12 +617,17 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setAssessedBy(
             commissionRepository.findCommissionsThatAssessedDocument(documentId));
 
+        index.getCommissionAssessmentGroups().clear();
         index.getCommissionAssessments().clear();
         commissionRepository.findAssessmentClassificationBasicInfoForDocumentAndCommissions(
             documentId, index.getAssessedBy()).forEach(assessment -> {
-            index.getCommissionAssessments().add(
+            index.getCommissionAssessmentGroups().add(
                 new Triple<>(assessment.commissionId(),
                     assessment.assessmentCode().substring(0, 2) + "0",
+                    assessment.manual()));
+            index.getCommissionAssessments().add(
+                new Triple<>(assessment.commissionId(),
+                    assessment.assessmentCode(),
                     assessment.manual()));
         });
     }
