@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -147,11 +148,11 @@ public class EventServiceTest {
 
         eventService.clearEventCommonFields(conference);
 
-        assertEquals(conference.getName().size(), 0);
-        assertEquals(conference.getNameAbbreviation().size(), 0);
+        assertEquals(0, conference.getName().size());
+        assertEquals(0, conference.getNameAbbreviation().size());
         assertNull(conference.getCountry());
-        assertEquals(conference.getPlace().size(), 0);
-        assertEquals(conference.getContributions().size(), 0);
+        assertEquals(0, conference.getPlace().size());
+        assertEquals(0, conference.getContributions().size());
     }
 
     @ParameterizedTest
@@ -185,7 +186,7 @@ public class EventServiceTest {
                 returnOnlySerialEvents, commissionInstitutionId, commissionId);
 
         // Then
-        assertEquals(result.getTotalElements(), 2L);
+        assertEquals(2L, result.getTotalElements());
     }
 
     @Test
@@ -200,7 +201,7 @@ public class EventServiceTest {
         var result = eventService.searchEventsImport(names, "dateFrom", "dateTo");
 
         // Then
-        assertEquals(result.getTotalElements(), 2L);
+        assertEquals(2L, result.getTotalElements());
     }
 
     @Test
@@ -522,5 +523,41 @@ public class EventServiceTest {
         // then
         assertEquals(50L, result.a);
         assertEquals(20L, result.b);
+    }
+
+    @Test
+    void shouldEnrichEventMetadata() {
+        // Given
+        var oldId = 42;
+        var event = new Conference();
+        var startDate = LocalDate.of(2025, 1, 1);
+        var endDate = LocalDate.of(2025, 1, 10);
+
+        when(eventRepository.findEventByOldIdsContains(oldId)).thenReturn(Optional.of(event));
+
+        // When
+        eventService.enrichEventInformationFromExternalSource(oldId, startDate, endDate);
+
+        // Then
+        assertEquals(event.getDateFrom(), startDate);
+        assertEquals(event.getDateTo(), endDate);
+        verify(eventRepository).findEventByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldPerformNoActionWhenGivenNoEvent() {
+        // Given
+        var oldId = 99;
+        var startDate = LocalDate.of(2025, 2, 1);
+        var endDate = LocalDate.of(2025, 2, 5);
+
+        when(eventRepository.findEventByOldIdsContains(oldId)).thenReturn(Optional.empty());
+
+        // When
+        eventService.enrichEventInformationFromExternalSource(oldId, startDate, endDate);
+
+        // Then
+        verify(eventRepository).findEventByOldIdsContains(oldId);
+        verifyNoMoreInteractions(eventRepository);
     }
 }

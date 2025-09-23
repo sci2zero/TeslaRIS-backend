@@ -13,6 +13,8 @@ import org.jbibtex.ParseException;
 import org.jbibtex.Value;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
@@ -43,6 +45,12 @@ public class BibTexConverter {
             isArticle ? DocumentPublicationType.JOURNAL_PUBLICATION :
                 DocumentPublicationType.PROCEEDINGS_PUBLICATION
         );
+
+        if (isArticle) {
+            document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
+        } else {
+            document.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+        }
 
         try {
             parseAuthors(bibEntry, document);

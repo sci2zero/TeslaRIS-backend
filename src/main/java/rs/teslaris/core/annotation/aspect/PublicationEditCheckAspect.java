@@ -132,20 +132,14 @@ public class PublicationEditCheckAspect {
                 }
 
                 break;
-            case INSTITUTIONAL_EDITOR:
+            case INSTITUTIONAL_EDITOR, COMMISSION:
                 if (noResearchersFromUserInstitution(contributors, userId) &&
                     isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
                     handleUnauthorisedUser();
                 }
                 break;
-            case INSTITUTIONAL_LIBRARIAN:
+            case INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY:
                 if (isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
-                    handleUnauthorisedUser();
-                }
-                break;
-            case HEAD_OF_LIBRARY:
-                if (noResearchersFromUserInstitution(contributors, userId) ||
-                    !annotation.value().equalsIgnoreCase("THESIS")) {
                     handleUnauthorisedUser();
                 }
                 break;

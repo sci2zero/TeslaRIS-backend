@@ -20,7 +20,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 @Service
 @Primary

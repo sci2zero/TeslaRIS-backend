@@ -14,8 +14,8 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.service.interfaces.JPAService;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
@@ -69,6 +69,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               SearchRequestType type,
                                                               Integer institutionId,
                                                               Integer commissionId,
+                                                              Boolean authorReprint,
+                                                              Boolean unmanaged,
                                                               List<DocumentPublicationType> allowedTypes);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
@@ -90,6 +92,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                       Integer newContributionOrderNumber);
 
     void unbindResearcherFromContribution(Integer personId, Integer documentId);
+
+    void unbindInstitutionResearchersFromDocument(Integer institutionId, Integer documentId);
 
     boolean isIdentifierInUse(String identifier, Integer documentPublicationId);
 
@@ -113,4 +117,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     void unarchiveDocument(Integer documentId);
 
     void reindexEmploymentInformationForAllPersonPublications(Integer personId);
+
+    void deleteNonManagedDocuments();
 }

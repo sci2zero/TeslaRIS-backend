@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryDissertationReportService;
 
@@ -47,13 +47,14 @@ public class ThesisLibraryDissertationReportServiceImpl implements
         Integer institutionId,
         Integer year,
         Boolean notDefendedOnly,
+        Integer userInstitutionId,
         Pageable pageable) {
 
         Set<Integer> institutionIds = getInstitutionIds(institutionId);
 
         List<Query> mustQueries = new ArrayList<>();
 
-        if (!SessionTrackingUtil.isUserLoggedIn()) {
+        if (!SessionUtil.isUserLoggedIn()) {
             mustQueries.add(
                 TermQuery.of(t -> t
                     .field("is_approved")
@@ -69,6 +70,20 @@ public class ThesisLibraryDissertationReportServiceImpl implements
 
         if (!institutionIds.isEmpty()) {
             mustQueries.add(buildInstitutionQuery(institutionIds));
+        } else if (Objects.nonNull(userInstitutionId) && userInstitutionId > 0) {
+            var userInstitution =
+                organisationUnitService.findOrganisationUnitById(userInstitutionId);
+            if (userInstitution.getLegalEntity()) {
+                mustQueries.add(buildInstitutionQuery(getInstitutionIds(userInstitution.getId())));
+            } else {
+                for (int superOuId : organisationUnitService.getSuperOUsHierarchyRecursive(
+                    userInstitutionId)) {
+                    var institution = organisationUnitService.findOrganisationUnitById(superOuId);
+                    if (institution.getLegalEntity()) {
+                        mustQueries.add(buildInstitutionQuery(Set.of(institution.getId())));
+                    }
+                }
+            }
         }
 
         if (Objects.nonNull(notDefendedOnly) && notDefendedOnly) {

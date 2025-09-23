@@ -26,6 +26,7 @@ import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
 @Component
 @RequiredArgsConstructor
@@ -43,6 +44,8 @@ public class ScheduledTasksRestorer {
 
     private final TaskManagerService taskManagerService;
 
+    private final DocumentPublicationService documentPublicationService;
+
     private final ObjectMapper objectMapper;
 
 
@@ -51,7 +54,8 @@ public class ScheduledTasksRestorer {
         List<ScheduledTaskMetadata> allMetadata = metadataRepository.findTasksByTypes(
             List.of(
                 ScheduledTaskType.DOCUMENT_BACKUP,
-                ScheduledTaskType.REINDEXING
+                ScheduledTaskType.REINDEXING,
+                ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION
             ));
 
         for (ScheduledTaskMetadata metadata : allMetadata) {
@@ -70,6 +74,8 @@ public class ScheduledTasksRestorer {
             restoreDocumentBackup(metadata);
         } else if (metadata.getType().equals(ScheduledTaskType.REINDEXING)) {
             restoreReindexOperation(metadata);
+        } else if (metadata.getType().equals(ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION)) {
+            restoreUnmanagedDocumentsDeletion(metadata);
         }
 
         metadataRepository.deleteTaskForTaskId(metadata.getTaskId());
@@ -131,6 +137,29 @@ public class ScheduledTasksRestorer {
                 put("indexesToRepopulate", indexesToRepopulate);
                 put("userId", userId);
             }}, RecurrenceType.ONCE));
+    }
+
+    private void restoreUnmanagedDocumentsDeletion(ScheduledTaskMetadata metadata) {
+        Map<String, Object> data = metadata.getMetadata();
+
+        var userId = (Integer) data.get("userId");
+
+        var timeToRun = metadata.getTimeToRun();
+
+        if (timeToRun.isBefore(LocalDateTime.now())) {
+            timeToRun = taskManagerService.findNextFreeExecutionTime();
+        }
+
+        var taskId = taskManagerService.scheduleTask(
+            "Unmanaged_Documents_Deletion-" +
+                "-" + UUID.randomUUID(), timeToRun,
+            documentPublicationService::deleteNonManagedDocuments,
+            userId, metadata.getRecurrenceType());
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION, new HashMap<>(),
+                metadata.getRecurrenceType()));
     }
 }
 

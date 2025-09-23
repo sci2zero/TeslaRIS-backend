@@ -72,16 +72,16 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(journalPublication.getJournal())) {
             setMCBibTexField(journalPublication.getJournal().getTitle(), entry,
-                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
+                BibTeXEntry.KEY_JOURNAL, defaultLanguageTag);
 
             if (valueExists(journalPublication.getJournal().getEISSN())) {
-                entry.addField(new Key("eIssn"),
+                entry.addField(new Key("e_issn"),
                     new StringValue(journalPublication.getJournal().getEISSN(),
                         StringValue.Style.BRACED));
             }
 
             if (valueExists(journalPublication.getJournal().getPrintISSN())) {
-                entry.addField(new Key("printIssn"),
+                entry.addField(new Key("print_issn"),
                     new StringValue(journalPublication.getJournal().getPrintISSN(),
                         StringValue.Style.BRACED));
             }
@@ -93,7 +93,8 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
     public static String toTaggedFormat(JournalPublication journalPublication,
                                         String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("JOUR").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "JOUR" : "Journal Article")
+            .append("\n");
 
         setCommonTaggedFields(journalPublication, sb, defaultLanguageTag, refMan);
 
@@ -129,12 +130,12 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
                 defaultLanguageTag);
 
             if (valueExists(journalPublication.getJournal().getEISSN())) {
-                sb.append(refMan ? "SN  - " : "%0S").append("e:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(journalPublication.getJournal().getEISSN()).append("\n");
             }
 
             if (valueExists(journalPublication.getJournal().getPrintISSN())) {
-                sb.append(refMan ? "SN  - " : "%0S").append("print:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(journalPublication.getJournal().getPrintISSN())
                     .append("\n");
             }

@@ -90,6 +90,11 @@ public class StringUtil {
 
     @Nonnull
     public static String performSimpleLatinPreprocessing(String input) {
+        return performSimpleLatinPreprocessing(input, true);
+    }
+
+    @Nonnull
+    public static String performSimpleLatinPreprocessing(String input, boolean performFolding) {
         if (input == null) {
             return "";
         }
@@ -112,7 +117,9 @@ public class StringUtil {
 
         var result = transliterator.transliterate(input.toLowerCase());
 
-        result = applyASCIIFolding(result);
+        if (performFolding) {
+            result = applyASCIIFolding(result);
+        }
 
         var normalizer = Normalizer2.getNFDInstance();
         result = normalizer.normalize(result);
@@ -268,5 +275,10 @@ public class StringUtil {
         }
 
         return writer + "\n";
+    }
+
+    public static String performDOIPreprocessing(String token) {
+        return token.replace("\\-", "-").replace("\\/", "/").replace("\\:", ":")
+            .replace("https://doi.org/", "");
     }
 }

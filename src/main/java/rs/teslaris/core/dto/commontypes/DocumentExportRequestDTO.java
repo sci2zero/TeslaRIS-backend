@@ -29,4 +29,6 @@ public class DocumentExportRequestDTO extends TableExportRequestDTO {
     private Integer institutionId;
 
     private Integer commissionId;
+
+    private Boolean onlyUnmanaged;
 }

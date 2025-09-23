@@ -52,4 +52,16 @@ public class StatisticsIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "country_code")
     private String countryCode;
+
+    @Field(type = FieldType.Keyword, store = true, name = "user_agent")
+    private String userAgent;
+
+    @Field(type = FieldType.Boolean, store = true, name = "is_bot")
+    private boolean isBot;
+
+    @Field(type = FieldType.Keyword, store = true, name = "device_class")
+    private String deviceClass;
+
+    @Field(type = FieldType.Keyword, store = true, name = "os")
+    private String operatingSystem;
 }

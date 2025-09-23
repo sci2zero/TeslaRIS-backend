@@ -51,6 +51,9 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> remark = new HashSet<>();
+
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @BatchSize(size = 50)
     private Set<PersonDocumentContribution> contributors = new HashSet<>();

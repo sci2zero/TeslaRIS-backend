@@ -21,7 +21,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitTrustConfigurationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @RestController
 @RequestMapping("/api/organisation-unit/trust-configuration")

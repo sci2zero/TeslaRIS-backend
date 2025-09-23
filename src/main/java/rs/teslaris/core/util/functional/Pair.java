@@ -1,4 +1,4 @@
-package rs.teslaris.core.util;
+package rs.teslaris.core.util.functional;
 
 import lombok.ToString;
 

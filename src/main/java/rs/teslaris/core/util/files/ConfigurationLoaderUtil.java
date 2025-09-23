@@ -1,4 +1,4 @@
-package rs.teslaris.core.util;
+package rs.teslaris.core.util.files;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;

@@ -23,4 +23,7 @@ public non-sealed class Patent extends Document implements PublisherPublishable 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
+
+    @Column(name = "author_reprint")
+    private Boolean authorReprint = false;
 }

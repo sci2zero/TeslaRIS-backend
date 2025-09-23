@@ -29,10 +29,10 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
@@ -138,8 +138,9 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
     }
 
     @Override
-    public InputStreamResource generatePhdLibraryReportDocument(ThesisReportRequestDTO request,
-                                                                String locale) {
+    public Pair<InputStreamResource, Integer> generatePhdLibraryReportDocument(
+        ThesisReportRequestDTO request,
+        String locale) {
         if (!request.thesisType().equals(ThesisType.PHD) &&
             !request.thesisType().equals(ThesisType.PHD_ART_PROJECT)) {
             throw new ThesisException(

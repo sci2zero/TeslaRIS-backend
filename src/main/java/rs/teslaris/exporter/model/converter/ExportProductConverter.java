@@ -25,11 +25,8 @@ public class ExportProductConverter extends ExportConverterBase {
 
         openaireProduct.setType(inferPublicationCOARType(exportDocument.getType()));
 
-        ExportMultilingualContentConverter.setFieldFromPriorityContent(
-            exportDocument.getKeywords().stream(),
-            content -> List.of(content.split("\n")),
-            openaireProduct::setKeywords
-        );
+        openaireProduct.setKeywords(
+            ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getKeywords()));
 
         if (!exportDocument.getLanguageTags().isEmpty()) {
             openaireProduct.setLanguage(exportDocument.getLanguageTags().getFirst());

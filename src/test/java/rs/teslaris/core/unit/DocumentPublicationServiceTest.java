@@ -3,17 +3,21 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -22,6 +26,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.jbibtex.BibTeXEntry;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +39,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -48,29 +54,36 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -109,6 +122,12 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private SearchFieldsLoader searchFieldsLoader;
+
+    @Mock
+    private OrganisationUnitService organisationUnitService;
+
+    @Mock
+    private InvolvementRepository involvementRepository;
 
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;
@@ -311,7 +330,8 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.SIMPLE, institutionId, commissionId, null);
+                pageable, SearchRequestType.SIMPLE, institutionId, commissionId, false, false,
+                null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -330,7 +350,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.ADVANCED, null, null, new ArrayList<>());
+                pageable, SearchRequestType.ADVANCED, null, null, null, null, new ArrayList<>());
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -476,6 +496,10 @@ public class DocumentPublicationServiceTest {
         var documentId = 1;
 
         var contribution = new PersonDocumentContribution();
+        contribution.setPerson(new Person() {{
+            setId(1);
+        }});
+
         var document = new Software();
         var index = new DocumentPublicationIndex();
 
@@ -503,6 +527,9 @@ public class DocumentPublicationServiceTest {
         var documentId = 1;
 
         var contribution = new PersonDocumentContribution();
+        contribution.setPerson(new Person() {{
+            setId(1);
+        }});
 
         when(personContributionService.findContributionForResearcherAndDocument(personId,
             documentId))
@@ -523,6 +550,9 @@ public class DocumentPublicationServiceTest {
         var documentId = 1;
 
         var contribution = new PersonDocumentContribution();
+        contribution.setPerson(new Person() {{
+            setId(1);
+        }});
         var document = new Software();
 
         when(personContributionService.findContributionForResearcherAndDocument(personId,
@@ -1114,5 +1144,186 @@ public class DocumentPublicationServiceTest {
             assertEquals("endnote-string", result);
             verify(documentRepository).findById(documentId);
         }
+    }
+
+    @Test
+    void whenDocumentDoesNotExistThenNoInteractions() {
+        // Given
+        when(documentRepository.findById(1)).thenReturn(Optional.empty());
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verifyNoInteractions(
+            involvementRepository,
+            documentPublicationIndexRepository,
+            personContributionService
+        );
+    }
+
+    @Test
+    void whenContributorWithoutPersonThenSkipProcessing() {
+        // Given
+        var doc = new MonographPublication();
+        var contribution = new PersonDocumentContribution();
+        doc.setContributors(Set.of(contribution));
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
+            .thenReturn(List.of(10, 20));
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verify(personContributionService, never()).save(any());
+    }
+
+    @Test
+    void whenContributorHasEmploymentInInstitutionThenMigrateToUnmanaged() {
+        // Given
+        var doc = new ProceedingsPublication();
+        var contribution = new PersonDocumentContribution();
+        var person = new Person();
+        person.setId(7);
+        contribution.setPerson(person);
+        doc.setContributors(Set.of(contribution));
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
+            .thenReturn(List.of(10, 20));
+        when(involvementRepository.findActiveEmploymentInstitutionIds(7))
+            .thenReturn(List.of(20));
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verify(personContributionService).save(contribution);
+        assertNull(contribution.getPerson());
+        assertTrue(contribution.getInstitutions().isEmpty());
+        assertFalse(contribution.getIsCorrespondingContributor());
+    }
+
+    @Test
+    void whenAllAuthorIdsAreNonPositiveThenNotifyAdmins() {
+        // Given
+        var doc = new Dataset();
+        doc.setContributors(new HashSet<>(Set.of(new PersonDocumentContribution() {{
+            setAffiliationStatement(new AffiliationStatement() {{
+                setDisplayPersonName(new PersonName("John", null, "Doe", null, null));
+            }});
+            setContributionType(DocumentContributionType.AUTHOR);
+            setIsCorrespondingContributor(false);
+            setIsMainContributor(false);
+        }})));
+
+        var index = new DocumentPublicationIndex();
+        index.setAuthorIds(new ArrayList<>(List.of(-1, 0)));
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(1))
+            .thenReturn(Optional.of(index));
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verify(personContributionService).notifyAdminsAboutUnbindedContribution(doc);
+    }
+
+    @Test
+    void whenAuthorIdsContainPositiveThenDoNotNotifyAdmins() {
+        // Given
+        var doc = new Software();
+        doc.setContributors(Collections.emptySet());
+
+        var index = new DocumentPublicationIndex();
+        index.setAuthorIds(new ArrayList<>(List.of(-1, 2)));
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(1))
+            .thenReturn(Optional.of(index));
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verify(personContributionService, never())
+            .notifyAdminsAboutUnbindedContribution(any());
+    }
+
+    @Test
+    void whenNoDocumentsFoundThenDoNothing() {
+        // Given
+        var spyService = Mockito.spy(documentPublicationService);
+        var emptyPage = new PageImpl<DocumentPublicationIndex>(List.of());
+        doReturn(emptyPage)
+            .when(spyService)
+            .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
+                any());
+
+        // When
+        spyService.deleteNonManagedDocuments();
+
+        // Then
+        verify(spyService, never()).deleteDocumentPublication(any());
+    }
+
+    @Test
+    void whenSinglePageOfDocumentsThenDeleteEachOnce() {
+        // Given
+        var spyService = Mockito.spy(documentPublicationService);
+        var doc1 = new DocumentPublicationIndex();
+        doc1.setDatabaseId(1);
+        var doc2 = new DocumentPublicationIndex();
+        doc2.setDatabaseId(2);
+
+        var page = new PageImpl<>(List.of(doc1, doc2), PageRequest.of(0, 100), 2);
+
+        doReturn(page)
+            .when(spyService)
+            .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
+                any());
+        doNothing()
+            .when(spyService)
+            .deleteDocumentPublication(any());
+
+        // When
+        spyService.deleteNonManagedDocuments();
+
+        // Then
+        verify(spyService).deleteDocumentPublication(1);
+        verify(spyService).deleteDocumentPublication(2);
+    }
+
+    @Test
+    void whenMultiplePagesThenIterateThroughAll() {
+        // Given
+        var spyService = Mockito.spy(documentPublicationService);
+        var doc1 = new DocumentPublicationIndex();
+        doc1.setDatabaseId(10);
+        var firstPage = new PageImpl<>(
+            List.of(doc1),
+            PageRequest.of(0, 100),
+            2
+        );
+
+        doReturn(firstPage)
+            .when(spyService)
+            .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
+                any());
+        doNothing()
+            .when(spyService)
+            .deleteDocumentPublication(any());
+
+        // When
+        spyService.deleteNonManagedDocuments();
+
+        // Then
+        verify(spyService).deleteDocumentPublication(10);
+        verify(spyService, times(1)).searchDocumentPublications(any(), any(), any(), any(), any(),
+            any(), anyBoolean(), any());
     }
 }

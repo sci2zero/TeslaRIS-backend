@@ -7,5 +7,8 @@ public interface CitationService {
 
     CitationResponseDTO craftCitations(DocumentPublicationIndex index, String languageCode);
 
+    String craftCitationInGivenStyle(String style, DocumentPublicationIndex index,
+                                     String languageCode);
+
     CitationResponseDTO craftCitations(Integer documentId, String languageCode);
 }

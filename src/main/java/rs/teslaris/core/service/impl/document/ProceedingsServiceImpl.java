@@ -26,6 +26,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -35,12 +36,13 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputCon
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Transactional
@@ -72,6 +74,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   OrganisationUnitService organisationUnitService,
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
+                                  CitationService citationService,
                                   PersonContributionService personContributionService,
                                   ExpressionTransformer expressionTransformer,
                                   EventService eventService,
@@ -88,10 +91,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitService, documentRepository, documentFileService, citationService,
+            personContributionService, expressionTransformer, eventService, commissionRepository,
+            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
@@ -109,11 +111,11 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         try {
             proceedings = findProceedingsById(proceedingsId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(proceedingsId);
+            this.clearIndexWhenFailedRead(proceedingsId, DocumentPublicationType.PROCEEDINGS);
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !proceedings.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Proceedings with given ID does not exist.");
         }
@@ -205,9 +207,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
         indexCommonFields(proceedings, index);
 
-        if (proceedings.getPublisher() != null) {
+        if (Objects.nonNull(proceedings.getPublisher())) {
             index.setPublisherId(proceedings.getPublisher().getId());
+        } else {
+            index.setPublisherId(null);
         }
+        index.setAuthorReprint(proceedings.getAuthorReprint());
 
         index.setType(DocumentPublicationType.PROCEEDINGS.name());
 
@@ -216,8 +221,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             if (proceedings.getPublicationSeries() instanceof Journal journal) {
                 index.setJournalId(journal.getId());
             }
+        } else {
+            index.setPublicationSeriesId(null);
         }
 
+        index.setApa(
+            citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
     }
 
@@ -266,7 +275,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         proceedings.setEvent(eventService.findOne(proceedingsDTO.getEventId()));
 
-        if (proceedingsDTO.getPublicationSeriesId() != null) {
+        if (Objects.nonNull(proceedingsDTO.getPublicationSeriesId())) {
             var optionalJournal =
                 journalService.tryToFindById(proceedingsDTO.getPublicationSeriesId());
 
@@ -279,7 +288,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             }
         }
 
-        if (proceedingsDTO.getPublisherId() != null) {
+        proceedings.setAuthorReprint(false);
+        proceedings.setPublisher(null);
+
+        if (Objects.nonNull(proceedingsDTO.getAuthorReprint()) &&
+            proceedingsDTO.getAuthorReprint()) {
+            proceedings.setAuthorReprint(true);
+        } else if (Objects.nonNull(proceedingsDTO.getPublisherId())) {
             proceedings.setPublisher(
                 publisherService.findOne(proceedingsDTO.getPublisherId()));
         }

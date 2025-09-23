@@ -33,5 +33,13 @@ public class NotificationConfiguration {
             List.of(NotificationAction.NAVIGATE_TO_URL));
         allowedActions.put(NotificationType.NEW_DOCUMENTS_FOR_VALIDATION,
             List.of(NotificationAction.GO_TO_VALIDATION_PAGE));
+        allowedActions.put(NotificationType.NEW_AUTHOR_UNBINDING,
+            List.of(NotificationAction.REMOVE_FROM_PUBLICATION));
+        allowedActions.put(NotificationType.ALL_AUTHORS_UNBINDED,
+            List.of(NotificationAction.GO_TO_UNBINDED_PUBLICATIONS_PAGE));
+        allowedActions.put(NotificationType.NEW_EMPLOYED_RESEARCHER_UNBINDED,
+            List.of(NotificationAction.REMOVE_EMPLOYEES_FROM_PUBLICATION));
+        allowedActions.put(NotificationType.AUTHOR_UNBINDED_BY_EDITOR,
+            List.of(NotificationAction.RETURN_TO_PUBLICATION));
     }
 }

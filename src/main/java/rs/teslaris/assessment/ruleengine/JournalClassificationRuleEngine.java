@@ -24,7 +24,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Transactional
 public abstract class JournalClassificationRuleEngine {

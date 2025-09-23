@@ -1,12 +1,10 @@
 package rs.teslaris.core.service.impl.institution;
 
-import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
@@ -23,6 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +30,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
+import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
 import rs.teslaris.core.converter.commontypes.GeoLocationConverter;
 import rs.teslaris.core.converter.institution.OrganisationUnitConverter;
 import rs.teslaris.core.converter.institution.RelationConverter;
@@ -68,17 +69,17 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.ImageUtil;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
+import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -114,6 +115,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final SearchFieldsLoader searchFieldsLoader;
 
     private final FileService fileService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -316,7 +319,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 involvementRepository.findActiveEmploymentInstitutionIds(personId);
             b.must(createTermsQuery("databaseId", allowedInstitutions));
         }
-        if (Objects.nonNull(topLevelInstitutionId)) {
+        if (Objects.nonNull(topLevelInstitutionId) && topLevelInstitutionId > 0) {
             var allowedInstitutions =
                 organisationUnitsRelationRepository.getSubOUsRecursive(topLevelInstitutionId);
             allowedInstitutions.add(topLevelInstitutionId);
@@ -325,12 +328,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     private Query createTermsQuery(String field, List<Integer> values) {
-        return TermsQuery.of(t -> t
-            .field(field)
-            .terms(v -> v.value(values.stream()
-                .map(String::valueOf)
-                .map(FieldValue::of)
-                .toList()))
+        return BoolQuery.of(b -> b
+            .should(values.stream()
+                .map(value -> TermQuery.of(tq -> tq
+                    .field(field)
+                    .value(String.valueOf(value))
+                )._toQuery())
+                .toList()
+            )
+            .minimumShouldMatch("1")
         )._toQuery();
     }
 
@@ -459,6 +465,16 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         var organisationUnitToUpdate = getReferenceToOrganisationUnitById(organisationUnitId);
 
+        var oldNames = organisationUnitToUpdate.getName().stream()
+            .map(MultiLingualContent::getContent)
+            .collect(Collectors.toSet());
+
+        var newNames = organisationUnitDTORequest.getName().stream()
+            .map(MultilingualContentDTO::getContent)
+            .collect(Collectors.toSet());
+
+        boolean isNameChanged = !oldNames.equals(newNames);
+
         organisationUnitToUpdate.getName().clear();
         organisationUnitToUpdate.getKeyword().clear();
         organisationUnitToUpdate.getResearchAreas().clear();
@@ -472,6 +488,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
                 organisationUnitId).orElse(new OrganisationUnitIndex());
             indexOrganisationUnit(organisationUnitToUpdate, index);
+        }
+
+        if (isNameChanged) {
+            applicationEventPublisher.publishEvent(
+                new OrganisationUnitSignificantChangeEvent(organisationUnitId));
         }
 
         return organisationUnitToUpdate;
@@ -542,10 +563,26 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     .collect(Collectors.toSet()));
         }
 
-        if (SessionTrackingUtil.isUserLoggedIn() && Objects.requireNonNull(
-                SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+        if (SessionUtil.isUserLoggedIn() && Objects.requireNonNull(
+                SessionUtil.getLoggedInUser()).getAuthority().getName()
             .equals(UserRole.ADMIN.name())) {
-            organisationUnit.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+            organisationUnit.setLegalEntity(organisationUnitDTO.isLegalEntity());
+
+            if (!organisationUnit.getIsClientInstitution()
+                .equals(organisationUnitDTO.isClientInstitution())) {
+                organisationUnit.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+
+                getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId()).forEach(
+                    organisationUnitId -> {
+                        var subOU = findOne(organisationUnitId);
+                        subOU.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
+                        subOU.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
+                        subOU.setAllowSubdomains(organisationUnitDTO.isAllowingSubdomains());
+                        subOU.setInstitutionEmailDomain(
+                            organisationUnitDTO.getInstitutionEmailDomain());
+                        save(subOU);
+                    });
+            }
         }
 
         organisationUnit.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
@@ -783,6 +820,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             organisationUnitId);
         index.ifPresent(organisationUnitIndexRepository::delete);
+
+        // TODO: Add listeners wherever this could raise a side effect (index-wise)
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitDeletedEvent(organisationUnitId));
     }
 
     @Override
@@ -901,6 +942,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.ifPresent(organisationUnitIndex -> {
             indexBelongsToSuperOURelation(savedRelation.getSourceOrganisationUnit(),
                 organisationUnitIndex);
+            organisationUnitIndex.setIsClientInstitution(
+                savedRelation.getTargetOrganisationUnit().getIsClientInstitution());
             organisationUnitIndexRepository.save(organisationUnitIndex);
         });
     }
@@ -923,8 +966,31 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         var relationToDelete = findOrganisationUnitsRelationById(id);
         organisationUnitsRelationJPAService.delete(id);
 
+        reindexSubUnitRelationsAndTerminateClientStatus(
+            relationToDelete.getSourceOrganisationUnit());
+    }
+
+    @Override
+    public void deleteOrganisationUnitsRelation(Integer sourceOrganisationUnitId,
+                                                Integer targetOrganisationUnitId) {
+        var relations =
+            organisationUnitsRelationRepository.findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+                sourceOrganisationUnitId, targetOrganisationUnitId,
+                OrganisationUnitRelationType.BELONGS_TO);
+        if (relations.isEmpty()) {
+            return;
+        }
+
+        var subOu = relations.getFirst().getSourceOrganisationUnit();
+        reindexSubUnitRelationsAndTerminateClientStatus(subOu);
+
+        organisationUnitsRelationRepository.delete(relations.getFirst());
+    }
+
+    private void reindexSubUnitRelationsAndTerminateClientStatus(
+        OrganisationUnit organisationUnit) {
         var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-            relationToDelete.getSourceOrganisationUnit().getId());
+            organisationUnit.getId());
         index.ifPresent(organisationUnitIndex -> {
             organisationUnitIndex.setSuperOUId(null);
             organisationUnitIndex.setSuperOUNameSr(null);
@@ -933,6 +999,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnitIndex.setSuperOUNameOtherSortable(null);
             organisationUnitIndexRepository.save(organisationUnitIndex);
         });
+
+        getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId()).forEach(
+            organisationUnitId -> {
+                var subOU = findOne(organisationUnitId);
+                subOU.setIsClientInstitution(false);
+                subOU.setValidateEmailDomain(false);
+                subOU.setAllowSubdomains(false);
+                save(subOU);
+            });
     }
 
     @Override
@@ -960,6 +1035,22 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             findOrganisationUnitById(relationDTO.getSourceOrganisationUnitId()));
         relation.setTargetOrganisationUnit(
             findOrganisationUnitById(relationDTO.getTargetOrganisationUnitId()));
+
+        if (relation.getTargetOrganisationUnit().getIsClientInstitution() &&
+            !relation.getSourceOrganisationUnit().getIsClientInstitution()) {
+            getOrganisationUnitIdsFromSubHierarchy(
+                relation.getTargetOrganisationUnit().getId()).forEach(
+                organisationUnitId -> {
+                    var subOU = findOne(organisationUnitId);
+                    subOU.setIsClientInstitution(
+                        relation.getTargetOrganisationUnit().getIsClientInstitution());
+                    subOU.setValidateEmailDomain(
+                        relation.getTargetOrganisationUnit().getValidateEmailDomain());
+                    subOU.setAllowSubdomains(
+                        relation.getTargetOrganisationUnit().getAllowSubdomains());
+                    save(subOU);
+                });
+        }
     }
 
     @Override
@@ -1000,7 +1091,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         }
         return false;
-
     }
 
     @Override

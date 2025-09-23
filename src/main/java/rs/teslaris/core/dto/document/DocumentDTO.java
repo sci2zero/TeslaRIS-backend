@@ -69,6 +69,7 @@ public class DocumentDTO {
 
     private Boolean isArchived;
 
-    // Used only for migration
+    private List<MultilingualContentDTO> remark = new ArrayList<>();
+
     private String note;
 }

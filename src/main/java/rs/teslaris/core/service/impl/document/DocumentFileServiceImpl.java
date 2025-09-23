@@ -51,17 +51,17 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.util.InMemoryMultipartFile;
-import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.files.InMemoryMultipartFile;
+import rs.teslaris.core.util.files.ResourceMultipartFile;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchRequestType;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -246,8 +246,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 });
         }
 
-        if (SessionTrackingUtil.isUserLoggedIn()) {
-            var loggedInUser = SessionTrackingUtil.getLoggedInUser();
+        if (SessionUtil.isUserLoggedIn()) {
+            var loggedInUser = SessionUtil.getLoggedInUser();
             if (Objects.nonNull(loggedInUser) &&
                 (loggedInUser.getAuthority().getName().equals(UserRole.ADMIN.name()) ||
                     loggedInUser.getAuthority().getName()

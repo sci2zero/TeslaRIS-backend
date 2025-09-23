@@ -1,6 +1,5 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
-import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,16 +33,24 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
         dto.setNumber(record.getPatentNumber());
 
         dto.setSubTitle(new ArrayList<>());
-        dto.setDescription(new ArrayList<>());
-        dto.setKeywords(new ArrayList<>());
+
+        if (Objects.nonNull(record.getKeywords()) && !record.getKeywords().isEmpty()) {
+            dto.setKeywords(multilingualContentConverter.toDTO(record.getKeywords()));
+        } else {
+            dto.setKeywords(new ArrayList<>());
+        }
+
+        if (Objects.nonNull(record.get_abstract()) && !record.get_abstract().isEmpty()) {
+            dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
+        } else {
+            dto.setDescription(new ArrayList<>());
+        }
+
         dto.setUris(new HashSet<>());
 
         dto.setDocumentDate(String.valueOf(
             record.getApprovalDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                 .getYear()));
-
-        var dateFormatter = new SimpleDateFormat("dd.MM.yyyy");
-        dto.setDocumentDate(dateFormatter.format(record.getApprovalDate()));
 
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getInventor(),

@@ -84,6 +84,11 @@ public class SKOSLoader {
                     languageTagService.findLanguageTagByValue(LanguageAbbreviations.SERBIAN),
                     label.getString(),
                     priority.getAndAdd(1)));
+                names.add(new MultiLingualContent(
+                    languageTagService.findLanguageTagByValue(
+                        LanguageAbbreviations.SERBIAN_CYRILLIC),
+                    label.getString(),
+                    priority.getAndAdd(1)));
             }
         });
         researchArea.setName(names);

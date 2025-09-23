@@ -91,7 +91,6 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.PasswordUtil;
 import rs.teslaris.core.util.email.EmailDomainChecker;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
@@ -106,6 +105,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedE
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.session.PasswordUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -375,17 +375,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var person = resolveOrCreatePerson(registrationRequest, null, null);
         var involvement = personService.getLatestResearcherInvolvement(person);
 
-        var specifiedOU =
-            organisationUnitService.findOne(registrationRequest.getOrganisationUnitId());
-        if (!specifiedOU.getIsClientInstitution()) {
-            throw new RegistrationException(
-                "Institution is not a client. Unable to register researchers.");
-        }
-
-        if (specifiedOU.getValidateEmailDomain()) {
-            validateEmailDomain(registrationRequest.getEmail(),
-                specifiedOU.getInstitutionEmailDomain(), specifiedOU.getAllowSubdomains());
-        }
+        validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
+            registrationRequest.getEmail());
 
         var newUser = buildUser(
             registrationRequest.getEmail(),
@@ -409,6 +400,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var authority = getResearcherAuthority();
         var person = resolveOrCreatePerson(registrationRequest, oAuth2Provider, identifier);
         var involvement = personService.getLatestResearcherInvolvement(person);
+
+        validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
+            registrationRequest.getEmail());
 
         char[] generatedPassword = PasswordUtil.generatePassword(30);
         var newUser = buildUser(
@@ -559,6 +553,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         throws NoSuchAlgorithmException {
         validateEmailUniqueness(email);
 
+        validateInstitutionClientStatus(organisationUnitId, email);
+
         var authority = authorityRepository.findByName(authorityName)
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
@@ -585,7 +581,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             null,
             organisationUnit,
             commission,
-            UserNotificationPeriod.NEVER
+            UserNotificationPeriod.WEEKLY
         );
 
         var savedUser = userRepository.save(newUser);
@@ -619,6 +615,20 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         return savedUser;
     }
 
+    private void validateInstitutionClientStatus(Integer organisationUnitId, String email) {
+        var specifiedOU = organisationUnitService.findOne(organisationUnitId);
+        if (!specifiedOU.getIsClientInstitution()) {
+            throw new RegistrationException(
+                "Institution is not a client. Unable to register researchers.");
+        }
+
+        if (Objects.nonNull(specifiedOU.getValidateEmailDomain()) &&
+            specifiedOU.getValidateEmailDomain()) {
+            validateEmailDomain(email, specifiedOU.getInstitutionEmailDomain(),
+                specifiedOU.getAllowSubdomains());
+        }
+    }
+
     private String generateActivationLink(String language, String activationToken) {
         return clientAppAddress + (clientAppAddress.endsWith("/") ? language : "/" + language) +
             "/activate-account/" + activationToken;
@@ -630,7 +640,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
     }
 
-    private void validateEmailDomain(String email, String domain, boolean allowSubdomains) {
+    private void validateEmailDomain(String email, String domain, Boolean allowSubdomains) {
         if (!EmailDomainChecker.isEmailFromInstitution(email, domain, allowSubdomains)) {
             throw new RegistrationException("emailDomainErrorMessage");
         }
@@ -1124,36 +1134,31 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Scheduled(cron = "0 */10 * ? * *") // every ten minutes
+    @Transactional
     public void cleanupLongLivedRefreshTokens() {
-        var refreshTokens = refreshTokenRepository.findAll();
-
         var now = new Date();
         var twentyMinutesAgo = new Date(now.getTime() - (20 * 60 * 1000));
 
-        refreshTokens.stream().filter(token -> token.getCreateDate().before(twentyMinutesAgo))
-            .forEach(refreshTokenRepository::delete);
+        // Use batch delete with query to avoid loading entities
+        refreshTokenRepository.deleteAllByCreateDateBefore(twentyMinutesAgo);
     }
 
     @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    @Transactional
     public void cleanupLongLivedAccountActivationTokens() {
-        var activationTokens = userAccountActivationRepository.findAll();
-
         var now = new Date();
         var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
-        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
-            .forEach(userAccountActivationRepository::delete);
+        userAccountActivationRepository.deleteAllByCreateDateBefore(sevenDaysAgo);
     }
 
     @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    @Transactional
     public void cleanupLongLivedPasswordResetTokens() {
-        var activationTokens = passwordResetTokenRepository.findAll();
-
         var now = new Date();
         var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
-        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
-            .forEach(passwordResetTokenRepository::delete);
+        passwordResetTokenRepository.deleteAllByCreateDateBefore(sevenDaysAgo);
     }
 
     @Scheduled(cron = "0 * * * * *") // every 15 minutes

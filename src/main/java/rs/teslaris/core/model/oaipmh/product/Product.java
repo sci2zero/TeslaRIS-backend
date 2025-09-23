@@ -32,7 +32,7 @@ public class Product implements ProductConvertable, HasOldId {
     private String id;
 
     @XmlElement(name = "Keyword")
-    private List<String> keywords;
+    private List<MultilingualContent> keywords;
 
     @XmlAttribute(name = "id")
     private String oldId;

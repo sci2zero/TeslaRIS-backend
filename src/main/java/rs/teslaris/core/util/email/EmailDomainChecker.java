@@ -59,8 +59,12 @@ public final class EmailDomainChecker {
         }
 
         final String asciiDomain;
+        final String asciiInstitution;
+
         try {
             asciiDomain = IDN.toASCII(domain, IDN.USE_STD3_ASCII_RULES).toLowerCase();
+            asciiInstitution =
+                IDN.toASCII(institutionDomain, IDN.USE_STD3_ASCII_RULES).toLowerCase();
         } catch (Exception e) {
             return false; // invalid IDN or illegal characters
         }
@@ -77,14 +81,6 @@ public final class EmailDomainChecker {
             if (!DOMAIN_LABEL.matcher(lbl).matches()) {
                 return false;
             }
-        }
-
-        final String asciiInstitution;
-        try {
-            asciiInstitution =
-                IDN.toASCII(institutionDomain, IDN.USE_STD3_ASCII_RULES).toLowerCase();
-        } catch (Exception e) {
-            return false;
         }
 
         if (allowSubdomains) {

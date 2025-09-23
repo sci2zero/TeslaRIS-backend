@@ -1,8 +1,10 @@
-package rs.teslaris.core.util.tracing;
+package rs.teslaris.core.util.session;
 
 public class TraceMDCKeys {
 
     public static final String CLIENT_IP = "clientIp";
+
+    public static final String USER_AGENT = "userAgent";
 
     public static final String SESSION = "session";
 

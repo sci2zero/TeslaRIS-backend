@@ -43,7 +43,7 @@ public class MonographConverter extends DocumentConverter
 
         setCommonFields(record, dto);
 
-        dto.setMonographType(MonographType.BOOK);
+        dto.setMonographType(MonographType.RESEARCH_MONOGRAPH);
         dto.setEisbn(record.getIsbn());
         dto.setVolume(record.getVolume());
         dto.setNumberOfPages(record.getNumberOfPages());

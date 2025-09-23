@@ -2,9 +2,12 @@ package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,15 +40,19 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
@@ -68,6 +76,8 @@ public class DocumentPublicationController {
     private final CitationService citationService;
 
     private final UserService userService;
+
+    private final TaskManagerService taskManagerService;
 
 
     @GetMapping("/{documentId}/can-edit")
@@ -111,6 +121,8 @@ public class DocumentPublicationController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(required = false) Integer institutionId,
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
+        @RequestParam(value = "authorReprint", defaultValue = "false") Boolean authorReprint,
+        @RequestParam(value = "unmanaged", defaultValue = "false") Boolean unmanaged,
         @RequestParam(value = "allowedTypes", required = false)
         List<DocumentPublicationType> allowedTypes,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
@@ -123,7 +135,7 @@ public class DocumentPublicationController {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.SIMPLE, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
-                null, allowedTypes);
+                null, authorReprint, unmanaged, allowedTypes);
     }
 
     @GetMapping("/advanced-search")
@@ -142,7 +154,7 @@ public class DocumentPublicationController {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.ADVANCED, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
-                null, allowedTypes);
+                null, null, null, allowedTypes);
     }
 
     @GetMapping("/deduplication-search")
@@ -276,6 +288,20 @@ public class DocumentPublicationController {
         documentPublicationService.unbindResearcherFromContribution(personId, documentId);
     }
 
+    @PatchMapping("/unbind-institution-researchers/{documentId}")
+    @PreAuthorize("hasAuthority('UNBIND_EMPLOYEES_FROM_PUBLICATION')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PublicationEditCheck
+    public void unbindInstitutionResearchersFromDocument(@PathVariable Integer documentId,
+                                                         @RequestHeader(value = "Authorization")
+                                                         String bearerToken) {
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        var institutionId = userService.getUserOrganisationUnitId(userId);
+
+        documentPublicationService.unbindInstitutionResearchersFromDocument(institutionId,
+            documentId);
+    }
+
     @GetMapping("/identifier-usage/{documentId}")
     @PublicationEditCheck
     public boolean checkIdentifierUsage(@PathVariable Integer documentId,
@@ -316,5 +342,28 @@ public class DocumentPublicationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unarchiveDocument(@PathVariable Integer documentId) {
         documentPublicationService.unarchiveDocument(documentId);
+    }
+
+    @PostMapping("/schedule-unmanaged-documents-deletion")
+    @Idempotent
+    @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void scheduleUnmanagedDocumentsDeletion(
+        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam("recurrence") RecurrenceType recurrence,
+        @RequestHeader("Authorization") String bearerToken) {
+
+        var userId = tokenUtil.extractUserIdFromToken(bearerToken);
+        var taskId = taskManagerService.scheduleTask(
+            "Unmanaged_Documents_Deletion-" +
+                "-" + UUID.randomUUID(), timestamp,
+            documentPublicationService::deleteNonManagedDocuments,
+            userId, recurrence);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timestamp,
+                ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION, new HashMap<>() {{
+                put("userId", userId);
+            }}, recurrence));
     }
 }

@@ -1,4 +1,4 @@
-package rs.teslaris.core.util;
+package rs.teslaris.core.util.files;
 
 import java.io.IOException;
 import java.io.InputStream;

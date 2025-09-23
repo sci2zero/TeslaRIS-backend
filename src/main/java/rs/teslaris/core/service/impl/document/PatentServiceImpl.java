@@ -20,6 +20,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
@@ -29,9 +30,10 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Transactional
@@ -50,6 +52,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitService organisationUnitService,
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
+                             CitationService citationService,
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
@@ -60,10 +63,9 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitService, documentRepository, documentFileService, citationService,
+            personContributionService, expressionTransformer, eventService, commissionRepository,
+            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
@@ -80,11 +82,11 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         try {
             patent = patentJPAService.findOne(patentId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(patentId);
+            this.clearIndexWhenFailedRead(patentId, DocumentPublicationType.PATENT);
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !patent.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -98,11 +100,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         checkForDocumentDate(patentDTO);
         setCommonFields(newPatent, patentDTO);
-
-        newPatent.setNumber(patentDTO.getNumber());
-        if (Objects.nonNull(patentDTO.getPublisherId())) {
-            newPatent.setPublisher(publisherService.findOne(patentDTO.getPublisherId()));
-        }
+        setPatentRelatedFields(newPatent, patentDTO);
 
         var savedPatent = patentJPAService.save(newPatent);
 
@@ -122,12 +120,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         checkForDocumentDate(patentDTO);
         clearCommonFields(patentToUpdate);
         setCommonFields(patentToUpdate, patentDTO);
-
-        patentToUpdate.setNumber(patentDTO.getNumber());
-        if (Objects.nonNull(patentDTO.getPublisherId())) {
-            patentToUpdate.setPublisher(
-                publisherService.findOne(patentDTO.getPublisherId()));
-        }
+        setPatentRelatedFields(patentToUpdate, patentDTO);
 
         var updatedPatent = patentJPAService.save(patentToUpdate);
 
@@ -136,6 +129,19 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                 .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(updatedPatent);
+    }
+
+    private void setPatentRelatedFields(Patent patent, PatentDTO patentDTO) {
+        patent.setNumber(patentDTO.getNumber());
+
+        patent.setPublisher(null);
+        patent.setAuthorReprint(false);
+
+        if (Objects.nonNull(patentDTO.getAuthorReprint()) && patentDTO.getAuthorReprint()) {
+            patent.setAuthorReprint(true);
+        } else if (Objects.nonNull(patentDTO.getPublisherId())) {
+            patent.setPublisher(publisherService.findOne(patentDTO.getPublisherId()));
+        }
     }
 
     @Override
@@ -182,8 +188,13 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         index.setType(DocumentPublicationType.PATENT.name());
         if (Objects.nonNull(patent.getPublisher())) {
             index.setPublisherId(patent.getPublisher().getId());
+        } else {
+            index.setPublisherId(null);
         }
+        index.setAuthorReprint(patent.getAuthorReprint());
 
+        index.setApa(
+            citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
     }
 }

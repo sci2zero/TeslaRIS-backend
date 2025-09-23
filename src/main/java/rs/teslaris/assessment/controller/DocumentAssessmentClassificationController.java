@@ -59,6 +59,7 @@ public class DocumentAssessmentClassificationController {
 
 
     @GetMapping("/{documentId}/can-classify")
+    @PublicationEditCheck
     @PreAuthorize("hasAnyAuthority('ASSESS_DOCUMENT', 'EDIT_DOCUMENT_ASSESSMENT')")
     public boolean canClassifyDocument() {
         return true;

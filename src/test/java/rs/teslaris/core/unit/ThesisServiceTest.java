@@ -75,6 +75,7 @@ import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -135,6 +136,9 @@ public class ThesisServiceTest {
 
     @Mock
     private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
+
+    @Mock
+    private CitationService citationService;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -673,7 +677,7 @@ public class ThesisServiceTest {
         thesisService.transferPreprintToOfficialPublication(1, 42);
 
         // Then
-        assertTrue(thesis.getPreliminaryFiles().isEmpty());
+        assertFalse(thesis.getPreliminaryFiles().isEmpty());
         assertEquals(1, thesis.getFileItems().size());
         assertEquals(ResourceType.OFFICIAL_PUBLICATION,
             thesis.getFileItems().iterator().next().getResourceType());

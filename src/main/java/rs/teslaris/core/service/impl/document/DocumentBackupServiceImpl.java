@@ -1,10 +1,12 @@
 package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.json.JsonData;
 import io.minio.GetObjectResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,11 +49,12 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.BackupZipBuilder;
-import rs.teslaris.core.util.DateUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.files.BackupZipBuilder;
+import rs.teslaris.core.util.scheduling.DateUtil;
+import rs.teslaris.core.util.search.SearchAfterResult;
 import rs.teslaris.core.util.search.StringUtil;
 
 
@@ -132,7 +135,6 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
         from = DateUtil.calculateYearFromProvidedValue(from);
         to = DateUtil.calculateYearFromProvidedValue(to);
 
-        int chunkSize = 100;
         var institutionIds = new HashSet<>(
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId)
         );
@@ -143,23 +145,37 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
 
             var processedDocumentIds = new ArrayList<Integer>();
             for (var documentType : types) {
-                int pageNumber = 0;
+                Object[] searchAfter = null;
                 boolean hasNextPage = true;
 
-                var documentIdsForType =
-                    getDocumentDatabaseIdsForBackup(from, to, institutionIds.stream().toList(),
-                        documentType.name());
                 while (hasNextPage) {
-                    List<Document> chunk = fetchProcessableChunk(documentIdsForType,
-                        PageRequest.of(pageNumber, chunkSize));
+                    SearchAfterResult result = getDocumentDatabaseIdsForBackup(
+                        from, to, institutionIds.stream().toList(), documentType.name(), searchAfter
+                    );
 
-                    for (var document : chunk) {
-                        processDocument(document, documentFileSections, zipBuilder, language);
-                        processedDocumentIds.add(document.getId());
+                    List<Integer> documentIdsForType = result.getDocumentIds();
+                    searchAfter = result.getSearchAfterValues();
+
+                    if (documentIdsForType.isEmpty()) {
+                        hasNextPage = false;
+                        continue;
                     }
 
-                    pageNumber++;
-                    hasNextPage = chunk.size() == chunkSize;
+                    int dbChunkSize = 100;
+                    for (int i = 0; i < documentIdsForType.size(); i += dbChunkSize) {
+                        List<Integer> dbChunk = documentIdsForType.subList(i,
+                            Math.min(i + dbChunkSize, documentIdsForType.size()));
+
+                        List<Document> chunk =
+                            documentRepository.findDocumentByIdIn(dbChunk, Pageable.unpaged());
+
+                        for (var document : chunk) {
+                            processDocument(document, documentFileSections, zipBuilder, language);
+                            processedDocumentIds.add(document.getId());
+                        }
+                    }
+
+                    hasNextPage = Objects.nonNull(searchAfter) && searchAfter.length > 0;
                 }
             }
 
@@ -213,9 +229,9 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
         }
     }
 
-    private List<Integer> getDocumentDatabaseIdsForBackup(Integer startYear, Integer endYear,
-                                                          List<Integer> organisationUnitIds,
-                                                          String type) {
+    private SearchAfterResult getDocumentDatabaseIdsForBackup(Integer startYear, Integer endYear,
+                                                              List<Integer> organisationUnitIds,
+                                                              String type, Object[] searchAfter) {
         var query = NativeQuery.builder()
             .withQuery(q -> q.bool(b -> b
                 .must(m -> m.terms(t -> t.field("organisation_unit_ids").terms(tf -> tf.value(
@@ -229,17 +245,27 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
                 .must(m -> m.term(t -> t.field("type").value(type)))
             ))
             .withSourceFilter(new FetchSourceFilter(new String[] {"databaseId"}, null))
+            .withSort(s -> s.field(f -> f.field("databaseId").order(SortOrder.Asc)))
+            .withPageable(PageRequest.of(0, 1000))
             .build();
+
+        if (Objects.nonNull(searchAfter) && searchAfter.length > 0) {
+            query.setSearchAfter(Arrays.asList(searchAfter));
+        }
 
         var hits = elasticsearchOperations.search(query, DocumentPublicationIndex.class);
 
-        return hits.getSearchHits().stream()
+        Object[] lastSortValues = null;
+        if (!hits.isEmpty()) {
+            var lastHit = hits.getSearchHits().getLast();
+            lastSortValues = lastHit.getSortValues().toArray();
+        }
+
+        var documentIds = hits.getSearchHits().stream()
             .map(hit -> hit.getContent().getDatabaseId())
             .toList();
-    }
 
-    private List<Document> fetchProcessableChunk(List<Integer> documentIds, Pageable pageable) {
-        return documentRepository.findDocumentByIdIn(documentIds, pageable);
+        return new SearchAfterResult(documentIds, lastSortValues);
     }
 
     private void processDocument(Document document, List<DocumentFileSection> documentFileSections,
@@ -312,7 +338,7 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
     }
 
     @Override
-    public GetObjectResponse serveAndDeleteBackupFile(String backupFileName, Integer userId)
+    public GetObjectResponse serveBackupFile(String backupFileName, Integer userId)
         throws IOException {
         var report = documentFileBackupRepository.findByBackupFileName(backupFileName)
             .orElseThrow(() -> new StorageException("No backup with given filename."));
@@ -324,10 +350,16 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
             throw new LoadingException("Unauthorised to download backup.");
         }
 
-        var resource = fileService.loadAsResource(backupFileName);
+        return fileService.loadAsResource(backupFileName);
+    }
+
+    @Override
+    public void deleteBackupFile(String backupFileName) {
+        var report = documentFileBackupRepository.findByBackupFileName(backupFileName)
+            .orElseThrow(() -> new StorageException("No backup with given filename."));
+
         fileService.delete(backupFileName);
         documentFileBackupRepository.delete(report);
-        return resource;
     }
 
     private String generateBackupFileName(Integer from, Integer to,

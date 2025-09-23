@@ -62,7 +62,8 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
     private static void setPublisherInfo(Proceedings proceedings,
                                          ProceedingsResponseDTO proceedingsResponseDTO) {
         var publisher = proceedings.getPublisher();
-        if (publisher == null) {
+        if (Objects.isNull(publisher)) {
+            proceedingsResponseDTO.setAuthorReprint(proceedings.getAuthorReprint());
             return;
         }
 
@@ -99,13 +100,13 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
                 new Key("publicationSeries"), defaultLanguageTag);
 
             if (valueExists(proceedings.getPublicationSeries().getEISSN())) {
-                entry.addField(new Key("eIssn"),
+                entry.addField(new Key("e_issn"),
                     new StringValue(proceedings.getPublicationSeries().getEISSN(),
                         StringValue.Style.BRACED));
             }
 
             if (valueExists(proceedings.getPublicationSeries().getPrintISSN())) {
-                entry.addField(new Key("printIssn"),
+                entry.addField(new Key("print_issn"),
                     new StringValue(proceedings.getPublicationSeries().getPrintISSN(),
                         StringValue.Style.BRACED));
             }
@@ -114,6 +115,11 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(proceedings.getPublisher())) {
             setMCBibTexField(proceedings.getPublisher().getName(), entry,
                 BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
+        } else if (Objects.nonNull(proceedings.getAuthorReprint()) &&
+            proceedings.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
         }
 
         if (valueExists(proceedings.getEISBN())) {
@@ -132,7 +138,8 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
     public static String toTaggedFormat(Proceedings proceedings, String defaultLanguageTag,
                                         boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("CONF").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "CONF" : "Conference Proceedings")
+            .append("\n");
 
         setCommonTaggedFields(proceedings, sb, defaultLanguageTag, refMan);
 
@@ -144,6 +151,10 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(proceedings.getPublisher())) {
             setMCTaggedField(proceedings.getPublisher().getName(), sb, refMan ? "PB" : "%I",
                 defaultLanguageTag);
+        } else if (Objects.nonNull(proceedings.getAuthorReprint()) &&
+            proceedings.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
         }
 
         if (valueExists(proceedings.getPublicationSeriesIssue())) {
@@ -161,25 +172,25 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
                 refMan ? "JA" : "%J", defaultLanguageTag);
 
             if (valueExists(proceedings.getPublicationSeries().getEISSN())) {
-                sb.append(refMan ? "SN  - " : "%0S ").append("e:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(proceedings.getPublicationSeries().getEISSN())
                     .append("\n");
             }
 
             if (valueExists(proceedings.getPublicationSeries().getPrintISSN())) {
-                sb.append(refMan ? "SN  - " : "%0S ").append("print:")
+                sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(proceedings.getPublicationSeries().getPrintISSN())
                     .append("\n");
             }
         }
 
         if (valueExists(proceedings.getEISBN())) {
-            sb.append(refMan ? "SN  - " : "%0S ").append("e:").append(proceedings.getEISBN())
+            sb.append(refMan ? "SN  - " : "%@ ").append("e:").append(proceedings.getEISBN())
                 .append("\n");
         }
 
         if (valueExists(proceedings.getPrintISBN())) {
-            sb.append(refMan ? "SN  - " : "%0S ").append("print:")
+            sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                 .append(proceedings.getPrintISBN()).append("\n");
         }
 

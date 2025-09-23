@@ -45,6 +45,9 @@ public non-sealed class Proceedings extends Document
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
+    @Column(name = "author_reprint")
+    private Boolean authorReprint = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publication_series_id")
     private PublicationSeries publicationSeries;

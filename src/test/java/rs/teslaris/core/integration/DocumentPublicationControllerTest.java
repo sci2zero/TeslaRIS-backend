@@ -200,4 +200,16 @@ public class DocumentPublicationControllerTest extends BaseTest {
                     .contentType(format.getValue()))
             .andExpect(status().isOk());
     }
+
+    @Test
+    @WithMockUser(username = "test.editor@test.com", password = "testEditor")
+    public void testUnbindEmployedResearchersFromPublication() throws Exception {
+        String jwtToken = authenticateInstitutionalEditorAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/document/unbind-institution-researchers/{documentId}", 7)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
 }

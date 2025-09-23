@@ -7,6 +7,8 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
@@ -74,6 +76,7 @@ public class OpenAlexConverter {
         var sourceId = cleanOpenAlexId(source.id());
 
         document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+        document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
         document.getPublishedIn().add(new MultilingualContent("EN", source.displayName(), 1));
         document.setJournalOpenAlexId(sourceId);
 
@@ -93,6 +96,7 @@ public class OpenAlexConverter {
         var sourceId = cleanOpenAlexId(source.id());
 
         document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+        document.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
         document.getPublishedIn()
             .add(new MultilingualContent("EN", "Proceedings of " + source.displayName(), 1));
 

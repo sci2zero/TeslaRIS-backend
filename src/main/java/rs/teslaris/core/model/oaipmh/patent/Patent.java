@@ -29,9 +29,8 @@ import rs.teslaris.core.model.oaipmh.publication.Publisher;
 @ToString
 public class Patent implements PatentConvertable, HasOldId {
 
-    @XmlElement(name = "Keyword")
-    List<String> keywords;
     private String id;
+
     @XmlAttribute(name = "id")
     private String oldId;
 
@@ -40,6 +39,9 @@ public class Patent implements PatentConvertable, HasOldId {
 
     @XmlElement(name = "Title")
     private List<MultilingualContent> title;
+
+    @XmlElement(name = "Keyword")
+    private List<MultilingualContent> keywords;
 
     @XmlElement(name = "ApprovalDate")
     private Date approvalDate;

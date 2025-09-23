@@ -55,6 +55,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -101,6 +102,9 @@ public class ProceedingsPublicationServiceTest {
 
     @Mock
     private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
+
+    @Mock
+    private CitationService citationService;
 
     @InjectMocks
     private ProceedingsPublicationServiceImpl proceedingsPublicationService;
@@ -155,7 +159,7 @@ public class ProceedingsPublicationServiceTest {
             proceedingsPublicationService.createProceedingsPublication(publicationDTO, true);
 
         // Then
-        verify(multilingualContentService, times(4)).getMultilingualContent(any());
+        verify(multilingualContentService, times(5)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(publicationDTO));
         verify(proceedingPublicationJPAService).save(eq(document));

@@ -57,18 +57,19 @@ public class OrgUnitEditCheckAspect {
         }
 
         for (var organisationUnitId : organisationUnitIds) {
-            validateAccessPermissions(role, tokenValue, organisationUnitId);
+            validateAccessPermissions(role, tokenValue, organisationUnitId, annotation);
         }
 
         return joinPoint.proceed();
     }
 
     private void validateAccessPermissions(UserRole role, String tokenValue,
-                                           Integer organisationUnitId) {
+                                           Integer organisationUnitId,
+                                           OrgUnitEditCheck annotation) {
         switch (role) {
             case ADMIN:
                 break;
-            case INSTITUTIONAL_EDITOR:
+            case INSTITUTIONAL_EDITOR, INSTITUTIONAL_LIBRARIAN:
                 var userId = tokenUtil.extractUserIdFromToken(tokenValue);
                 var editableOUs =
                     organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
@@ -76,6 +77,12 @@ public class OrgUnitEditCheckAspect {
                 if (!editableOUs.contains(organisationUnitId)) {
                     throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
                 }
+
+                if (role.equals(UserRole.INSTITUTIONAL_LIBRARIAN) &&
+                    !annotation.value().equalsIgnoreCase("LIBRARY_OPERATIONS")) {
+                    throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");
+                }
+
                 break;
             default:
                 throw new CantEditException("unauthorizedOrgUnitEditAttemptMessage");

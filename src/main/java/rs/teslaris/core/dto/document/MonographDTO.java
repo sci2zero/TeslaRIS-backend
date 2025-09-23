@@ -36,4 +36,6 @@ public class MonographDTO extends DocumentDTO implements PublishableDTO, InSerie
 
     @Positive(message = "Publisher ID cannot be negative or zero.")
     private Integer publisherId;
+
+    private Boolean authorReprint;
 }

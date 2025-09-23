@@ -24,8 +24,8 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.session.SessionUtil;
 
 public class PersonConverter {
 
@@ -252,7 +252,7 @@ public class PersonConverter {
     }
 
     private static void filterSensitiveData(PersonResponseDTO personResponse) {
-        if (!SessionTrackingUtil.isUserLoggedIn()) {
+        if (!SessionUtil.isUserLoggedIn()) {
             personResponse.getPersonalInfo().getContact().setPhoneNumber("");
             personResponse.getPersonalInfo().getContact().setContactEmail("");
             personResponse.getPersonalInfo().setPlaceOfBirth(null);

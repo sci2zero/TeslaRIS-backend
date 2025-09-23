@@ -19,6 +19,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.DatasetJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -28,9 +29,10 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
@@ -48,6 +50,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               OrganisationUnitService organisationUnitService,
                               DocumentRepository documentRepository,
                               DocumentFileService documentFileService,
+                              CitationService citationService,
                               PersonContributionService personContributionService,
                               ExpressionTransformer expressionTransformer,
                               EventService eventService,
@@ -59,10 +62,9 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitService, documentRepository, documentFileService, citationService,
+            personContributionService, expressionTransformer, eventService, commissionRepository,
+            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
@@ -79,11 +81,11 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         try {
             dataset = datasetJPAService.findOne(datasetId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(datasetId);
+            this.clearIndexWhenFailedRead(datasetId, DocumentPublicationType.DATASET);
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !dataset.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -97,12 +99,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
         checkForDocumentDate(datasetDTO);
         setCommonFields(newDataset, datasetDTO);
-
-        newDataset.setInternalNumber(datasetDTO.getInternalNumber());
-        if (Objects.nonNull(datasetDTO.getPublisherId())) {
-            newDataset.setPublisher(
-                publisherService.findOne(datasetDTO.getPublisherId()));
-        }
+        setDatasetRelatedFields(newDataset, datasetDTO);
 
         var savedDataset = datasetJPAService.save(newDataset);
 
@@ -122,12 +119,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         checkForDocumentDate(datasetDTO);
         clearCommonFields(datasetToUpdate);
         setCommonFields(datasetToUpdate, datasetDTO);
-
-        datasetToUpdate.setInternalNumber(datasetDTO.getInternalNumber());
-        if (Objects.nonNull(datasetDTO.getPublisherId())) {
-            datasetToUpdate.setPublisher(
-                publisherService.findOne(datasetDTO.getPublisherId()));
-        }
+        setDatasetRelatedFields(datasetToUpdate, datasetDTO);
 
         datasetJPAService.save(datasetToUpdate);
 
@@ -136,6 +128,19 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                 .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(datasetToUpdate);
+    }
+
+    private void setDatasetRelatedFields(Dataset dataset, DatasetDTO datasetDTO) {
+        dataset.setInternalNumber(datasetDTO.getInternalNumber());
+
+        dataset.setPublisher(null);
+        dataset.setAuthorReprint(false);
+
+        if (Objects.nonNull(datasetDTO.getAuthorReprint()) && datasetDTO.getAuthorReprint()) {
+            dataset.setAuthorReprint(true);
+        } else if (Objects.nonNull(datasetDTO.getPublisherId())) {
+            dataset.setPublisher(publisherService.findOne(datasetDTO.getPublisherId()));
+        }
     }
 
     @Override
@@ -182,7 +187,10 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         if (Objects.nonNull(dataset.getPublisher())) {
             index.setPublisherId(dataset.getPublisher().getId());
         }
+        index.setAuthorReprint(dataset.getAuthorReprint());
 
+        index.setApa(
+            citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
     }
 }

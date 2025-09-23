@@ -79,7 +79,7 @@ public class Publication implements PublicationConvertable, HasOldId {
     private String scpNumber;
 
     @XmlElement(name = "ISSN")
-    private String issn;
+    private List<String> issn;
 
     @XmlElement(name = "ISBN")
     private String isbn;
@@ -187,4 +187,10 @@ public class Publication implements PublicationConvertable, HasOldId {
 
     @XmlElement(name = "Invited")
     private Boolean invited;
+
+    @XmlElement(name = "IsArchived")
+    private Boolean isArchived;
+
+    @XmlElement(name = "IsOnPublicReview")
+    private Boolean isOnPublicReview;
 }

@@ -62,7 +62,7 @@ public class PersonContributionConverter {
 
         var person = resolvePerson(contributor, contribution);
 
-        setInstitutionInfo(contributor, person, contribution);
+        setInstitutionInfo(contributor, contribution);
         setPersonNameIfPresent(contributor, contribution);
 
         if (Objects.nonNull(contribution.getPersonName()) && Objects.nonNull(person) &&
@@ -127,9 +127,8 @@ public class PersonContributionConverter {
         return person;
     }
 
-    private <T extends PersonAttributes> void setInstitutionInfo(
-        T contributor, Person person, PersonDocumentContributionDTO contribution) {
-
+    private <T extends PersonAttributes> void setInstitutionInfo(T contributor,
+                                                                 PersonDocumentContributionDTO contribution) {
         var affiliation = contributor.getAffiliation();
         if (Objects.nonNull(affiliation) && Objects.nonNull(affiliation.getOrgUnit())) {
             var oldId = affiliation.getOrgUnit().getOldId();
@@ -143,13 +142,13 @@ public class PersonContributionConverter {
                     contribution.setDisplayAffiliationStatement(
                         multilingualContentConverter.toDTO(affiliation.getDisplayName()));
                 }
-            } else {
+            } else if (Objects.nonNull(affiliation.getDisplayName())) {
                 contribution.setDisplayAffiliationStatement(
                     multilingualContentConverter.toDTO(affiliation.getDisplayName()));
             }
-        } else if (Objects.nonNull(person)) {
-            contribution.getInstitutionIds().addAll(
-                personService.findInstitutionIdsForPerson(person.getId()));
+        } else if (Objects.nonNull(affiliation) && Objects.nonNull(affiliation.getDisplayName())) {
+            contribution.setDisplayAffiliationStatement(
+                multilingualContentConverter.toDTO(affiliation.getDisplayName()));
         }
     }
 

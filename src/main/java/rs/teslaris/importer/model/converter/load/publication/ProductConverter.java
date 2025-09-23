@@ -35,8 +35,18 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
         DocumentConverter.addUrlsWithoutCRISUNSLandingPages(record.getUrl(), dto);
 
         dto.setSubTitle(new ArrayList<>());
-        dto.setDescription(new ArrayList<>());
-        dto.setKeywords(new ArrayList<>());
+
+        if (Objects.nonNull(record.getKeywords()) && !record.getKeywords().isEmpty()) {
+            dto.setKeywords(multilingualContentConverter.toDTO(record.getKeywords()));
+        } else {
+            dto.setKeywords(new ArrayList<>());
+        }
+
+        if (Objects.nonNull(record.getDescription()) && !record.getDescription().isEmpty()) {
+            dto.setDescription(multilingualContentConverter.toDTO(record.getDescription()));
+        } else {
+            dto.setDescription(new ArrayList<>());
+        }
 
         dto.setDocumentDate(String.valueOf(
             record.getPublicationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()

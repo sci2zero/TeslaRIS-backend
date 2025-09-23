@@ -12,6 +12,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -51,6 +53,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -58,6 +61,7 @@ import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -66,6 +70,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -73,22 +78,22 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputCon
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.IdentifierUtil;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Primary
@@ -110,6 +115,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected final DocumentFileService documentFileService;
 
+    protected final CitationService citationService;
+
     private final PersonContributionService personContributionService;
 
     private final ExpressionTransformer expressionTransformer;
@@ -129,7 +136,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         organisationUnitOutputConfigurationService;
 
     private final Pattern doiPattern =
-        Pattern.compile("\"^10\\\\.\\\\d{4,9}\\\\/[-,._;()/:A-Z0-9]+$\"", Pattern.CASE_INSENSITIVE);
+        Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
@@ -186,7 +193,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             tokens = List.of("*");
         }
 
-        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, allowedTypes);
+        var simpleSearchQuery =
+            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes);
 
         var authorFilter = TermQuery.of(t -> t
             .field("author_ids")
@@ -246,7 +254,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             tokens = List.of("*");
         }
 
-        var simpleSearchQuery = buildSimpleSearchQuery(tokens, null, null, allowedTypes);
+        var simpleSearchQuery =
+            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes);
 
         var outputConfiguration =
             organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
@@ -310,7 +319,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public Long getPublicationCount() {
-        if (SessionTrackingUtil.isUserLoggedIn()) {
+        if (SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.countPublications();
         }
 
@@ -451,6 +460,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         if (Objects.nonNull(document.getEvent())) {
             index.setEventId(document.getEvent().getId());
+        } else {
+            index.setEventId(null);
         }
 
         index.setWordcloudTokensSr(
@@ -696,6 +707,33 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
     }
 
+    @Override
+    public void deleteNonManagedDocuments() {
+        int pageSize = 100;
+        int page = 0;
+        boolean hasMore = true;
+
+        while (hasMore) {
+            var pageResult = searchDocumentPublications(
+                List.of("*"),
+                PageRequest.of(page, pageSize),
+                SearchRequestType.SIMPLE,
+                null,
+                null,
+                null,
+                true,
+                List.of()
+            );
+
+            pageResult.getContent().forEach(documentIndex ->
+                deleteDocumentPublication(documentIndex.getDatabaseId())
+            );
+
+            hasMore = pageResult.hasNext();
+            page++;
+        }
+    }
+
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
         index.setFullTextSr("");
         index.setFullTextOther("");
@@ -808,6 +846,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             multilingualContentService.getMultilingualContent(documentDTO.getDescription()));
         document.setKeywords(
             multilingualContentService.getMultilingualContent(documentDTO.getKeywords()));
+        document.setRemark(
+            multilingualContentService.getMultilingualContent(documentDTO.getRemark()));
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
@@ -840,8 +880,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setApproveStatus(
             document.getIsMetadataValid() ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
 
-        if (SessionTrackingUtil.isUserLoggedIn() &&
-            Objects.requireNonNull(SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+        if (SessionUtil.isUserLoggedIn() &&
+            Objects.requireNonNull(SessionUtil.getLoggedInUser()).getAuthority().getName()
                 .equals(UserRole.ADMIN.name())) {
             document.setAdminNote(documentDTO.getNote());
         }
@@ -1018,16 +1058,20 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      SearchRequestType type,
                                                                      Integer institutionId,
                                                                      Integer commissionId,
+                                                                     Boolean authorReprint,
+                                                                     Boolean unmanaged,
                                                                      List<DocumentPublicationType> allowedTypes) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
-                buildSimpleSearchQuery(tokens, institutionId, commissionId, allowedTypes),
+                buildSimpleSearchQuery(tokens, institutionId, commissionId, authorReprint,
+                    unmanaged, allowedTypes),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
 
         return searchService.runQuery(
-            buildAdvancedSearchQuery(tokens, institutionId, commissionId, allowedTypes), pageable,
+            buildAdvancedSearchQuery(tokens, institutionId, commissionId, authorReprint,
+                unmanaged, allowedTypes), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -1122,9 +1166,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             return;
         }
 
-        contribution.setPerson(null);
-        contribution.getInstitutions().clear();
-        personContributionService.save(contribution);
+        var unbindedAuthorActiveEmployments =
+            involvementRepository.findActiveEmploymentInstitutionIds(
+                contribution.getPerson().getId());
+        migrateContributionToUnmanaged(contribution, true, Collections.emptySet());
 
         var document = documentRepository.findById(documentId);
 
@@ -1139,7 +1184,174 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             var index = indexOptional.get();
             indexCommonFields(document.get(), index);
             documentPublicationIndexRepository.save(index);
+
+            var shouldNotifyInstitutionalEditors = new AtomicBoolean(false);
+            document.get().getContributors().forEach(otherContribution -> {
+                if (Objects.isNull(otherContribution.getPerson())) {
+                    return;
+                }
+
+                var authorEmployments = involvementRepository.findActiveEmploymentInstitutionIds(
+                    otherContribution.getPerson().getId());
+                if (!Collections.disjoint(unbindedAuthorActiveEmployments, authorEmployments)) {
+                    shouldNotifyInstitutionalEditors.set(true);
+                }
+
+                personContributionService.getUserForContributor(
+                        otherContribution.getPerson().getId())
+                    .ifPresent(user -> {
+                        var notificationValues = new HashMap<String, String>();
+                        notificationValues.put("title", document.get().getTitle().stream()
+                            .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get()
+                            .getContent());
+                        notificationValues.put("author",
+                            contribution.getAffiliationStatement().getDisplayPersonName().toText());
+                        notificationValues.put("contributionId",
+                            otherContribution.getId().toString());
+                        notificationValues.put("documentId", document.get().getId().toString());
+                        notificationValues.put("personId",
+                            otherContribution.getPerson().getId().toString());
+                        personContributionService.notifyContributor(
+                            NotificationFactory.constructAuthorUnbindedFromPublicationNotification(
+                                notificationValues, user, false),
+                            NotificationType.NEW_AUTHOR_UNBINDING);
+                    });
+            });
+
+            var notifyAdmin = index.getAuthorIds().stream().noneMatch(id -> id > 0);
+            if (notifyAdmin) {
+                personContributionService.notifyAdminsAboutUnbindedContribution(document.get());
+            } else if (shouldNotifyInstitutionalEditors.get()) {
+                notifyInstitutionalEditors(contribution, unbindedAuthorActiveEmployments,
+                    document.get());
+            }
         }
+    }
+
+    private void notifyInstitutionalEditors(PersonDocumentContribution contribution,
+                                            List<Integer> activeEmployments, Document document) {
+        var notifiableInstitutionIds = new HashSet<Integer>();
+        activeEmployments.forEach(employmentInstitutionId -> {
+            notifiableInstitutionIds.add(employmentInstitutionId);
+            notifiableInstitutionIds.addAll(
+                organisationUnitService.getSuperOUsHierarchyRecursive(employmentInstitutionId));
+        });
+
+        personContributionService.getEditorUsersForContributionInstitutionIds(
+            notifiableInstitutionIds).forEach(institutionalEditorUser -> {
+            var notificationValues = new HashMap<String, String>();
+            notificationValues.put("title", document.getTitle().stream()
+                .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get()
+                .getContent());
+            notificationValues.put("author",
+                contribution.getAffiliationStatement().getDisplayPersonName().toText());
+            notificationValues.put("documentId", document.getId().toString());
+            notificationValues.put("institutionId",
+                institutionalEditorUser.getOrganisationUnit().getId().toString());
+
+            personContributionService.notifyContributor(
+                NotificationFactory.constructAuthorUnbindedFromPublicationNotification(
+                    notificationValues, institutionalEditorUser, true),
+                NotificationType.NEW_EMPLOYED_RESEARCHER_UNBINDED);
+        });
+    }
+
+    @Override
+    public void unbindInstitutionResearchersFromDocument(Integer institutionId,
+                                                         Integer documentId) {
+        var allPossibleInstitutions =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
+
+        documentRepository.findById(documentId).ifPresent(document -> {
+            if (document instanceof Thesis || Objects.isNull(document.getContributors())) {
+                return;
+            }
+
+            document.getContributors().forEach(contribution -> {
+                if (Objects.isNull(contribution.getPerson())) {
+                    return;
+                }
+
+                var user = contribution.getPerson().getUser();
+
+                var employmentIds = involvementRepository.findActiveEmploymentInstitutionIds(
+                    contribution.getPerson().getId());
+                var specifiedEmploymentIds =
+                    contribution.getInstitutions().stream().map(OrganisationUnit::getId)
+                        .collect(Collectors.toSet());
+
+                var employmentIntersection = allPossibleInstitutions.stream()
+                    .filter(employmentIds::contains)
+                    .collect(Collectors.toSet());
+
+                var specifiedInstitutionsIntersection = allPossibleInstitutions.stream()
+                    .filter(specifiedEmploymentIds::contains)
+                    .collect(Collectors.toSet());
+
+                if (!employmentIntersection.isEmpty() ||
+                    !specifiedInstitutionsIntersection.isEmpty()) {
+                    migrateContributionToUnmanaged(contribution, !employmentIntersection.isEmpty(),
+                        specifiedInstitutionsIntersection);
+
+                    if (Objects.nonNull(user)) {
+                        notifyUnbindedAuthorUser(document, contribution, user);
+                    }
+
+                }
+            });
+
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+                .ifPresent(index -> {
+                    indexCommonFields(document, index);
+                    documentPublicationIndexRepository.save(index);
+
+                    var notifyAdmin = !index.getAuthorIds().isEmpty() &&
+                        index.getAuthorIds().stream().noneMatch(id -> id > 0);
+                    if (notifyAdmin) {
+                        personContributionService.notifyAdminsAboutUnbindedContribution(document);
+                    }
+                });
+        });
+    }
+
+    private void migrateContributionToUnmanaged(PersonDocumentContribution contribution,
+                                                Boolean deletePerson,
+                                                Set<Integer> specifiedInstitutionsIntersection) {
+        if (deletePerson) {
+            contribution.setPerson(null);
+            contribution.getInstitutions().clear();
+        } else {
+            specifiedInstitutionsIntersection.forEach(institutionId -> contribution.setInstitutions(
+                contribution.getInstitutions().stream()
+                    .filter(i -> !Objects.equals(i.getId(), institutionId))
+                    .collect(Collectors.toSet())));
+        }
+
+        contribution.setIsCorrespondingContributor(false);
+        contribution.setEmploymentTitle(null);
+
+        if (Objects.nonNull(contribution.getAffiliationStatement()) &&
+            Objects.nonNull(contribution.getAffiliationStatement().getContact())) {
+            contribution.getAffiliationStatement().getContact().setContactEmail("");
+            contribution.getAffiliationStatement().getContact().setPhoneNumber("");
+        }
+
+        personContributionService.save(contribution);
+    }
+
+    private void notifyUnbindedAuthorUser(Document document,
+                                          PersonDocumentContribution contribution, User user) {
+        var notificationValues = new HashMap<String, String>();
+        notificationValues.put("title", document.getTitle().stream()
+            .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get()
+            .getContent());
+        notificationValues.put("personId", user.getPerson().getId().toString());
+        notificationValues.put("documentId", document.getId().toString());
+        notificationValues.put("contributionId", contribution.getId().toString());
+
+        personContributionService.notifyContributor(
+            NotificationFactory.constructAuthorUnbindedByEditorNotification(notificationValues,
+                user), NotificationType.AUTHOR_UNBINDED_BY_EDITOR);
     }
 
     private Query buildDeduplicationSearchQuery(List<String> titles, String doi, String scopusId,
@@ -1157,7 +1369,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
                     if (Objects.nonNull(scopusId) && !scopusId.isBlank()) {
                         eq.should(sb -> sb.match(
-                            m -> m.field("scopusId").query(scopusId)));
+                            m -> m.field("scopus_id").query(scopusId)));
                     }
 
                     if (Objects.nonNull(doi) && !doi.isBlank()) {
@@ -1194,22 +1406,47 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     private Query buildSimpleMetadataQuery(Integer institutionId,
                                            Integer commissionId,
+                                           Boolean authorReprint,
+                                           Boolean unmanaged,
                                            List<DocumentPublicationType> allowedTypes) {
         return BoolQuery.of(b -> {
             if (Objects.nonNull(institutionId) && institutionId > 0) {
-                b.must(q -> q.term(t -> t.field("organisation_unit_ids").value(institutionId)));
+                var allSubInstitutions =
+                    organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
+
+                b.must(q -> q.terms(t -> t.field("organisation_unit_ids").terms(
+                    terms -> terms.value(
+                        allSubInstitutions.stream().map(id -> FieldValue.of(id.toString()))
+                            .collect(Collectors.toList())))));
             }
 
             if (Objects.nonNull(commissionId) && commissionId > 0) {
                 b.mustNot(q -> q.term(t -> t.field("assessed_by").value(commissionId)));
             }
 
+            if (Objects.nonNull(authorReprint) && authorReprint) {
+                b.must(q -> q.term(t -> t.field("author_reprint").value(true)));
+            }
+
             if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
                 b.must(createTypeTermsQuery(allowedTypes));
             }
 
-            if (!SessionTrackingUtil.isUserLoggedIn()) {
+            if (!SessionUtil.isUserLoggedIn()) {
                 b.must(q -> q.term(t -> t.field("is_approved").value(true)));
+            }
+
+            if (Objects.nonNull(unmanaged) && unmanaged) {
+                var allAuthorsUnmanagedScriptQuery =
+                    "if (!doc.containsKey('author_ids') || doc['author_ids'].size() == 0) return false; "
+                        + "for (id in doc['author_ids']) { if (id != -1) return false; } "
+                        + "return true;";
+
+                b.must(sb -> sb.script(s -> s
+                    .script(scr -> scr
+                        .inline(i -> i.source(allAuthorsUnmanagedScriptQuery))
+                    )
+                ));
             }
 
             return b;
@@ -1227,6 +1464,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                             mq -> mq.field("title_other").query(token.replace("\\\"", ""))))
                         .should(sb -> sb.matchPhrase(
                             mq -> mq.field("author_names").query(token.replace("\\\"", ""))))
+                    ));
+                } else if (doiPattern.matcher(StringUtil.performDOIPreprocessing(token))
+                    .matches()) {
+                    String normalizedToken = StringUtil.performDOIPreprocessing(token);
+
+                    eq.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("doi").value(normalizedToken)
+                                .caseInsensitive(true)))
+                        .should(sb -> sb.wildcard(
+                            mq -> mq.field("doi").value(normalizedToken)
+                                .caseInsensitive(true)))
                     ));
                 } else if (token.endsWith("\\*") || token.endsWith(".")) {
                     var wildcard = token.replace("\\*", "").replace(".", "");
@@ -1277,7 +1526,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     .should(sb -> sb.match(m -> m.field("doi").query(token)));
 
                 // TODO: Should we be this restrictive?
-                if (SessionTrackingUtil.isUserLoggedIn()) {
+                if (SessionUtil.isUserLoggedIn()) {
                     eq.should(sb -> sb.match(m -> m.field("full_text_sr").query(token).boost(0.7f)))
                         .should(sb -> sb.match(
                             m -> m.field("full_text_other").query(token).boost(0.7f)));
@@ -1291,16 +1540,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private Query buildSimpleSearchQuery(List<String> tokens,
                                          Integer institutionId,
                                          Integer commissionId,
+                                         Boolean authorReprint,
+                                         Boolean unmanaged,
                                          List<DocumentPublicationType> allowedTypes) {
         String minShouldMatch;
         if (tokens.size() <= 2) {
             minShouldMatch = "1"; // Allow partial match for very short queries
         } else {
-            minShouldMatch = "2<-80% 5<-75% 10<-60%";
+            minShouldMatch = String.valueOf(Math.min((int) Math.ceil(tokens.size() * 0.7), 10));
         }
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(buildSimpleMetadataQuery(institutionId, commissionId, allowedTypes));
+            b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
+                allowedTypes));
             b.must(buildSimpleTokenQuery(tokens, minShouldMatch));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
@@ -1311,9 +1563,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public Query buildAdvancedSearchQuery(List<String> tokens,
                                           Integer institutionId,
                                           Integer commissionId,
+                                          Boolean authorReprint,
+                                          Boolean unmanaged,
                                           List<DocumentPublicationType> allowedTypes) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(buildSimpleMetadataQuery(institutionId, commissionId, allowedTypes));
+            b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
+                allowedTypes));
             b.must(expressionTransformer.parseAdvancedQuery(tokens));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
@@ -1353,16 +1608,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 notificationValues.put("documentId", document.getId().toString());
                 notificationValues.put("personId", contribution.getPerson().getId().toString());
                 personContributionService.notifyContributor(
-                    NotificationFactory.contructAddedToPublicationNotification(
-                        notificationValues,
-                        userOptional.get()));
+                    NotificationFactory.contructAddedToPublicationNotification(notificationValues,
+                        userOptional.get()), NotificationType.ADDED_TO_PUBLICATION);
             }
         });
     }
 
-    protected void clearIndexWhenFailedRead(Integer documentId) {
-        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
-            .ifPresent(documentPublicationIndexRepository::delete);
+    protected void clearIndexWhenFailedRead(Integer documentId, DocumentPublicationType type) {
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdAndType(
+            documentId, type.name()).ifPresent(documentPublicationIndexRepository::delete);
     }
 
     protected void checkForDocumentDate(DocumentDTO documentDTO) {
@@ -1381,7 +1635,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private Boolean shouldValidate(Document document, boolean isMetadata) {
-        var loggedInUser = SessionTrackingUtil.getLoggedInUser();
+        var loggedInUser = SessionUtil.getLoggedInUser();
 
         if (Objects.isNull(loggedInUser)) {
             return true; // only for tests, impossible to reach during runtime

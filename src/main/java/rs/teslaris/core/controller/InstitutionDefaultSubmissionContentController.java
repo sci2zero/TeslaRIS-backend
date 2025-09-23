@@ -30,7 +30,7 @@ public class InstitutionDefaultSubmissionContentController {
 
     @GetMapping("/institution/{organisationUnitId}")
     @PreAuthorize("hasAuthority('SET_DEFAULT_CONTENT')")
-    @OrgUnitEditCheck
+    @OrgUnitEditCheck("LIBRARY_OPERATIONS")
     public InstitutionDefaultSubmissionContentDTO getContentForInstitution(
         @PathVariable Integer organisationUnitId) {
         return institutionDefaultSubmissionContentService.readInstitutionDefaultContent(
@@ -46,7 +46,7 @@ public class InstitutionDefaultSubmissionContentController {
 
     @PatchMapping("/{organisationUnitId}")
     @PreAuthorize("hasAuthority('SET_DEFAULT_CONTENT')")
-    @OrgUnitEditCheck
+    @OrgUnitEditCheck("LIBRARY_OPERATIONS")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveDefaultContent(@PathVariable Integer organisationUnitId, @RequestBody @Valid
     InstitutionDefaultSubmissionContentDTO content) {

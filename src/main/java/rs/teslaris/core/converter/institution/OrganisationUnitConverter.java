@@ -46,6 +46,10 @@ public class OrganisationUnitConverter {
             organisationUnit.getAllowSubdomains() : false);
         dto.setInstitutionEmailDomain(organisationUnit.getInstitutionEmailDomain());
 
+        dto.setLegalEntity(
+            Objects.nonNull(organisationUnit.getLegalEntity()) ? organisationUnit.getLegalEntity() :
+                false);
+
         if (Objects.nonNull(organisationUnit.getLogo())) {
             dto.setLogoServerFilename(organisationUnit.getLogo().getImageServerName());
             dto.setLogoBackgroundHex(organisationUnit.getLogo().getBackgroundHex());

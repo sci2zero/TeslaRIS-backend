@@ -31,7 +31,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.StatisticsByCountry;

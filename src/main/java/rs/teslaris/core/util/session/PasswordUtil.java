@@ -1,4 +1,4 @@
-package rs.teslaris.core.util;
+package rs.teslaris.core.util.session;
 
 import java.security.SecureRandom;
 import java.util.function.Predicate;

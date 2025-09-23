@@ -84,10 +84,10 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonNameService;
-import rs.teslaris.core.util.ImageUtil;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
+import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 

@@ -135,7 +135,7 @@ public class ThesisLibraryBackupServiceTest {
 
         // When & Then
         assertThrows(LoadingException.class,
-            () -> thesisLibraryBackupService.serveAndDeleteBackupFile(fileName, userId));
+            () -> thesisLibraryBackupService.serveBackupFile(fileName, userId));
     }
 
 }

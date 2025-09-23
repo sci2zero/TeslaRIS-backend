@@ -52,7 +52,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -151,7 +151,7 @@ public class CommonLoaderImpl implements CommonLoader {
                     DataSet.DOCUMENT_IMPORTS));
 
         if (removeFromRecord &&
-            Objects.requireNonNull(SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+            Objects.requireNonNull(SessionUtil.getLoggedInUser()).getAuthority().getName()
                 .equals(UserRole.RESEARCHER.name())) {
             Query currentRecordQuery = new Query();
             currentRecordQuery.addCriteria(
@@ -412,7 +412,7 @@ public class CommonLoaderImpl implements CommonLoader {
         }
 
         var savedDocument = documentPublicationService.findDocumentById(newDocumentId);
-        var currentUser = SessionTrackingUtil.getLoggedInUser();
+        var currentUser = SessionUtil.getLoggedInUser();
         if (Objects.isNull(currentUser)) {
             // Should never happen
             log.error(

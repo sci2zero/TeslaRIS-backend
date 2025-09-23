@@ -48,6 +48,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.SoftwareServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.SoftwareJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
@@ -82,6 +83,9 @@ public class SoftwareServiceTest {
 
     @Mock
     private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
+
+    @Mock
+    private CitationService citationService;
 
     @InjectMocks
     private SoftwareServiceImpl softwareService;
@@ -129,7 +133,7 @@ public class SoftwareServiceTest {
         var result = softwareService.createSoftware(dto, true);
 
         // Then
-        verify(multilingualContentService, times(4)).getMultilingualContent(any());
+        verify(multilingualContentService, times(5)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(softwareJPAService).save(eq(document));

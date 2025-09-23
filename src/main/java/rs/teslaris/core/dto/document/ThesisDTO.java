@@ -60,6 +60,8 @@ public class ThesisDTO extends DocumentDTO implements PublishableDTO {
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;
 
+    private Boolean authorReprint;
+
     private LocalDate topicAcceptanceDate;
 
     private LocalDate thesisDefenceDate;
@@ -76,10 +78,12 @@ public class ThesisDTO extends DocumentDTO implements PublishableDTO {
 
     private List<MultilingualContentDTO> extendedAbstract = new ArrayList<>();
 
-    private List<MultilingualContentDTO> remark = new ArrayList<>();
-
     private List<MultilingualContentDTO> typeOfTitle = new ArrayList<>();
 
     // Only for migration
     private LocalDate publicReviewStartDate;
+
+    private Boolean isArchived;
+
+    private Boolean isOnPublicReview;
 }

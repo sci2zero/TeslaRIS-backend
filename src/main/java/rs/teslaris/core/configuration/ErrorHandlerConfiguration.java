@@ -63,7 +63,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
-import rs.teslaris.core.util.tracing.TraceMDCKeys;
+import rs.teslaris.core.util.session.TraceMDCKeys;
 
 @RestControllerAdvice
 @Slf4j

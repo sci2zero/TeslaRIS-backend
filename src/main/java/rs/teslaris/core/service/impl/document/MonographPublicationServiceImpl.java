@@ -23,6 +23,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
@@ -32,9 +33,10 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Transactional
@@ -54,6 +56,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            OrganisationUnitService organisationUnitService,
                                            DocumentRepository documentRepository,
                                            DocumentFileService documentFileService,
+                                           CitationService citationService,
                                            PersonContributionService personContributionService,
                                            ExpressionTransformer expressionTransformer,
                                            EventService eventService,
@@ -65,10 +68,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitService, documentRepository, documentFileService, citationService,
+            personContributionService, expressionTransformer, eventService, commissionRepository,
+            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
             organisationUnitOutputConfigurationService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
@@ -85,11 +87,12 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         try {
             monographPublication = monographPublicationJPAService.findOne(monographPublicationId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(monographPublicationId);
+            this.clearIndexWhenFailedRead(monographPublicationId,
+                DocumentPublicationType.MONOGRAPH_PUBLICATION);
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !monographPublication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException(
                 "Monograph with ID " + monographPublicationId + " does not exist.");
@@ -132,7 +135,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     @Override
     public Page<DocumentPublicationIndex> findAllPublicationsForMonograph(Integer monographId,
                                                                           Pageable pageable) {
-        if (!SessionTrackingUtil.isUserLoggedIn()) {
+        if (!SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.findByTypeAndMonographIdAndIsApprovedTrue(
                 DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, pageable);
         }
@@ -223,6 +226,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
         index.setMonographId(monographPublication.getMonograph().getId());
 
+        index.setApa(
+            citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
     }
 

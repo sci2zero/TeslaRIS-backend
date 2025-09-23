@@ -8,4 +8,6 @@ import rs.teslaris.core.service.interfaces.JPAService;
 public interface LanguageService extends JPAService<Language> {
 
     Language findLanguageById(Integer id);
+
+    Language findLanguageByCode(String languageCode);
 }

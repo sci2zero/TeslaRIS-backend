@@ -33,7 +33,7 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MetadataPrepopulationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.util.RestTemplateProvider;
+import rs.teslaris.core.util.session.RestTemplateProvider;
 
 @Service
 @RequiredArgsConstructor

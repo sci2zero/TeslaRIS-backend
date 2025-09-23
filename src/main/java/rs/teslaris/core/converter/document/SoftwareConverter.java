@@ -17,6 +17,8 @@ public class SoftwareConverter extends DocumentPublicationConverter {
         softwareDTO.setInternalNumber(software.getInternalNumber());
         if (Objects.nonNull(software.getPublisher())) {
             softwareDTO.setPublisherId(software.getPublisher().getId());
+        } else {
+            softwareDTO.setAuthorReprint(software.getAuthorReprint());
         }
 
         return softwareDTO;
@@ -36,6 +38,10 @@ public class SoftwareConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(software.getPublisher())) {
             setMCBibTexField(software.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
                 defaultLanguageTag);
+        } else if (Objects.nonNull(software.getAuthorReprint()) && software.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
         }
 
         return entry;
@@ -44,7 +50,8 @@ public class SoftwareConverter extends DocumentPublicationConverter {
     public static String toTaggedFormat(Software software, String defaultLanguageTag,
                                         boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("GEN").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "GEN" : "Computer Program")
+            .append("\n");
 
         setCommonTaggedFields(software, sb, defaultLanguageTag, refMan);
 
@@ -55,6 +62,9 @@ public class SoftwareConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(software.getPublisher())) {
             setMCTaggedField(software.getPublisher().getName(), sb, refMan ? "PB" : "%I",
                 defaultLanguageTag);
+        } else if (Objects.nonNull(software.getAuthorReprint()) && software.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
         }
 
         if (refMan) {

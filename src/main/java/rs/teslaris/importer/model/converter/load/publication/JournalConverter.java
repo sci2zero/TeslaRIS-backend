@@ -28,12 +28,22 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
         dto.setTitle(multilingualContentConverter.toDTO(record.getTitle()));
-        dto.setEissn(record.getIssn());
+        if (Objects.nonNull(record.getIssn()) && !record.getIssn().isEmpty()) {
+            dto.setEissn(record.getIssn().getFirst());
+
+            if (record.getIssn().size() > 1) {
+                dto.setPrintISSN(record.getIssn().getLast());
+            }
+        }
 
         dto.setContributions(new ArrayList<>());
-        dto.setNameAbbreviation(new ArrayList<>());
+        if (Objects.nonNull(record.getAcronym()) && !record.getAcronym().isEmpty()) {
+            dto.setNameAbbreviation(multilingualContentConverter.toDTO(record.getAcronym()));
+        } else {
+            dto.setNameAbbreviation(new ArrayList<>());
+        }
 
-        dto.setSubtitle(multilingualContentConverter.toDTO(record.getSubtitle()));
+        dto.setSubtitle(new ArrayList<>());
 
         var languageTagValue = record.getLanguage().trim().toUpperCase();
         if (languageTagValue.isEmpty()) {

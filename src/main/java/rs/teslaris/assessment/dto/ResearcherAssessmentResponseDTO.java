@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
-import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.functional.Triple;
 
 @Getter
 @Setter

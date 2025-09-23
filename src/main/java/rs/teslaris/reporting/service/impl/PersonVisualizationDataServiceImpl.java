@@ -30,7 +30,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.StatisticsByCountry;

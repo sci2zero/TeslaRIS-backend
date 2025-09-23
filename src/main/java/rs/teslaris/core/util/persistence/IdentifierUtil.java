@@ -1,10 +1,11 @@
-package rs.teslaris.core.util;
+package rs.teslaris.core.util.persistence;
 
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
+import rs.teslaris.core.util.functional.BiPredicate;
 
 public class IdentifierUtil {
 

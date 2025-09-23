@@ -75,12 +75,12 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.QuadConsumer;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service

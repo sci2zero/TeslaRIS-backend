@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.FieldType;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 
 @Getter
 @Setter
@@ -76,6 +78,12 @@ public class DocumentImport {
 
     @Field("publication_type")
     private DocumentPublicationType publicationType;
+
+    @Field("journal_publication_type")
+    private JournalPublicationType journalPublicationType;
+
+    @Field("proceedings_publication_type")
+    private ProceedingsPublicationType proceedingsPublicationType;
 
     @Field("e_issn")
     private String eIssn;

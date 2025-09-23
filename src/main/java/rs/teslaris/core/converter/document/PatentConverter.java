@@ -17,6 +17,8 @@ public class PatentConverter extends DocumentPublicationConverter {
         patentDTO.setNumber(patent.getNumber());
         if (Objects.nonNull(patent.getPublisher())) {
             patentDTO.setPublisherId(patent.getPublisher().getId());
+        } else {
+            patentDTO.setAuthorReprint(patent.getAuthorReprint());
         }
 
         return patentDTO;
@@ -36,6 +38,10 @@ public class PatentConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(patent.getPublisher())) {
             setMCBibTexField(patent.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
                 defaultLanguageTag);
+        } else if (Objects.nonNull(patent.getAuthorReprint()) && patent.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
         }
 
         return entry;
@@ -43,7 +49,7 @@ public class PatentConverter extends DocumentPublicationConverter {
 
     public static String toTaggedFormat(Patent patent, String defaultLanguageTag, boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append("PAT").append("\n");
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "PAT" : "Patent").append("\n");
 
         setCommonTaggedFields(patent, sb, defaultLanguageTag, refMan);
 
@@ -54,6 +60,9 @@ public class PatentConverter extends DocumentPublicationConverter {
         if (Objects.nonNull(patent.getPublisher())) {
             setMCTaggedField(patent.getPublisher().getName(), sb, refMan ? "PB" : "%I",
                 defaultLanguageTag);
+        } else if (Objects.nonNull(patent.getAuthorReprint()) && patent.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
         }
 
         if (refMan) {

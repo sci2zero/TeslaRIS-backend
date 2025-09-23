@@ -48,6 +48,7 @@ import rs.teslaris.core.service.impl.document.ProceedingsServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingsJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -97,6 +98,9 @@ public class ProceedingsServiceTest {
 
     @Mock
     private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
+
+    @Mock
+    private CitationService citationService;
 
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
@@ -172,7 +176,7 @@ public class ProceedingsServiceTest {
         var result = proceedingsService.createProceedings(proceedingsDTO, true);
 
         // Then
-        verify(multilingualContentService, times(5)).getMultilingualContent(any());
+        verify(multilingualContentService, times(6)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(proceedingsDTO));
         verify(proceedingsJPAService).save(eq(document));

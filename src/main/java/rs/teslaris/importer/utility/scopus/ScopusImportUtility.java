@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
-import rs.teslaris.core.util.ScopusAuthenticationHelper;
+import rs.teslaris.core.util.session.ScopusAuthenticationHelper;
 
 @Slf4j
 @Component
