@@ -102,7 +102,7 @@ public class PersonVisualizationDataServiceTest {
     }
 
     @Test
-    void shouldReturnYearlyCountsWhenGettingPublicationCountsForPerson() throws IOException {
+    void shouldReturnYearlyCountsWhenGettingPublicationCountsForPerson() {
         // Given
         var personId = 42;
         var startYear = 2020;

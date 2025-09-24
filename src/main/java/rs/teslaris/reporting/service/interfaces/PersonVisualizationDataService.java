@@ -5,11 +5,13 @@ import java.time.Year;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import org.springframework.stereotype.Service;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 
+@Service
 public interface PersonVisualizationDataService {
 
     List<YearlyCounts> getPublicationCountsForPerson(
