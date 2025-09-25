@@ -6,7 +6,6 @@ import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
 import co.elastic.clients.elasticsearch._types.aggregations.FieldDateMath;
 import co.elastic.clients.elasticsearch._types.aggregations.MultiBucketBase;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
 import java.io.IOException;
@@ -28,8 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
@@ -37,6 +34,7 @@ import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 import rs.teslaris.reporting.service.interfaces.OrganisationUnitVisualizationDataService;
+import rs.teslaris.reporting.utility.QueryUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -46,19 +44,14 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
 
     private final ElasticsearchClient elasticsearchClient;
 
-    private final OrganisationUnitService organisationUnitService;
-
     private final UserService userService;
-
-    private final OrganisationUnitOutputConfigurationService
-        organisationUnitOutputConfigurationService;
 
 
     @Override
     public List<YearlyCounts> getPublicationCountsForOrganisationUnit(Integer organisationUnitId,
                                                                       Integer startYear,
                                                                       Integer endYear) {
-        var searchFields = getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
         var yearRange = constructYearRange(startYear, endYear, organisationUnitId, searchFields);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
@@ -85,7 +78,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         Integer organisationUnitId, Integer startYear, Integer endYear) {
         var result = new ArrayList<MCategoryCounts>();
 
-        var searchFields = getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
         var commissions = fetchCommissionsForOrganisationUnit(organisationUnitId);
 
         commissions.forEach(commission -> {
@@ -97,7 +90,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                         .query(q -> q
                             .bool(b -> b
                                 .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                                .must(organisationUnitMatchQuery(List.of(organisationUnitId),
+                                .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
                                     searchFields))
                                 .must(m -> m.range(
                                     t -> t.field("year").gte(JsonData.of(startYear))
@@ -151,7 +144,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     @Override
     public List<CommissionYearlyCounts> getMCategoryCountsForOrganisationUnit(
         Integer organisationUnitId, Integer startYear, Integer endYear) {
-        var searchFields = getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
 
         var yearRange = constructYearRange(startYear, endYear, organisationUnitId, searchFields);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
@@ -186,7 +179,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     @Override
     public List<StatisticsByCountry> getByCountryStatisticsForOrganisationUnit(
         Integer organisationUnitId, LocalDate from, LocalDate to) {
-        var allMergedOrganisationUnitIds = getAllMergedOrganisationUnitIds(organisationUnitId);
+        var allMergedOrganisationUnitIds =
+            QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId);
 
         SearchResponse<Void> response;
         try {
@@ -248,7 +242,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     @Override
     public Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer organisationUnitId,
                                                            LocalDate from, LocalDate to) {
-        var allMergedOrganisationUnitIds = getAllMergedOrganisationUnitIds(organisationUnitId);
+        var allMergedOrganisationUnitIds =
+            QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId);
 
         try {
             SearchResponse<Void> response = elasticsearchClient.search(s -> s
@@ -312,8 +307,9 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     @Override
     public Map<Year, Long> getYearlyStatisticsCounts(Integer organisationUnitId, Integer startYear,
                                                      Integer endYear) {
-        var searchFields = getOrganisationUnitOutputSearchFields(organisationUnitId);
-        var allMergedOrganisationUnitIds = getAllMergedOrganisationUnitIds(organisationUnitId);
+        var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var allMergedOrganisationUnitIds =
+            QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId);
 
         try {
             LocalDate from = LocalDate.of(startYear, 1, 1);
@@ -324,8 +320,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(
-                                organisationUnitMatchQuery(allMergedOrganisationUnitIds, searchFields))
+                            .must(QueryUtil.organisationUnitMatchQuery(allMergedOrganisationUnitIds,
+                                searchFields))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
@@ -385,7 +381,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .bool(b -> b
                         .must(m -> m.term(t -> t.field("is_approved").value(true)))
                         .must(m -> m.term(t -> t.field("year").value(year)))
-                        .must(organisationUnitMatchQuery(List.of(organisationUnitId), searchFields))
+                        .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                            searchFields))
                         .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                     )
                 )
@@ -408,32 +405,6 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
             ));
     }
 
-    private List<String> getOrganisationUnitOutputSearchFields(Integer organisationUnitId) {
-        var fields = new ArrayList<String>();
-
-        var outputConfiguration =
-            organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-                organisationUnitId);
-
-        if (!outputConfiguration.showOutputs()) {
-            return Collections.emptyList();
-        }
-
-        if (outputConfiguration.showBySpecifiedAffiliation()) {
-            fields.add("organisation_unit_ids_specified");
-        }
-
-        if (outputConfiguration.showByPublicationYearEmployments()) {
-            fields.add("organisation_unit_ids_year_of_publication");
-        }
-
-        if (outputConfiguration.showByCurrentEmployments()) {
-            fields.add("organisation_unit_ids_active");
-        }
-
-        return fields;
-    }
-
     private Pair<Integer, Integer> findPublicationYearRange(Integer organisationUnitId,
                                                             List<String> searchFields) {
         SearchResponse<Void> response;
@@ -444,7 +415,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .query(q -> q
                         .bool(b -> b
                             .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                            .must(organisationUnitMatchQuery(List.of(organisationUnitId), searchFields))
+                            .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                                searchFields))
                             .must(m -> m.range(t -> t.field("year").gt(JsonData.of(0))))
                         )
                     )
@@ -474,7 +446,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .bool(b -> b
                         .must(m -> m.term(t -> t.field("is_approved").value(true)))
                         .must(m -> m.term(t -> t.field("year").value(year)))
-                        .must(organisationUnitMatchQuery(List.of(organisationUnitId), searchFields))
+                        .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                            searchFields))
                         .must(m -> m.bool(sb -> sb
                             .should(sn -> sn.term(
                                 t -> t.field("commission_assessment_groups.a").value(commissionId)))
@@ -515,18 +488,6 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         return new Pair<>(startYear, endYear);
     }
 
-    private Query organisationUnitMatchQuery(List<Integer> organisationUnitIds,
-                                             List<String> searchFields) {
-        return Query.of(q -> q.bool(b -> {
-            for (String field : searchFields) {
-                for (Integer id : organisationUnitIds) {
-                    b.should(s -> s.term(t -> t.field(field).value(id)));
-                }
-            }
-            return b.minimumShouldMatch("1");
-        }));
-    }
-
     private Set<Pair<Integer, Set<MultiLingualContent>>> fetchCommissionsForOrganisationUnit(
         Integer organisationUnitId) {
         var commissions = new HashSet<Pair<Integer, Set<MultiLingualContent>>>();
@@ -535,12 +496,5 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         });
 
         return commissions;
-    }
-
-    private List<Integer> getAllMergedOrganisationUnitIds(Integer organisationUnitId) {
-        var result = new ArrayList<>(List.of(organisationUnitId));
-        result.addAll(organisationUnitService.findOne(organisationUnitId).getMergedIds());
-
-        return result;
     }
 }

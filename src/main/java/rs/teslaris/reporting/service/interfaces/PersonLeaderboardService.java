@@ -1,20 +1,22 @@
 package rs.teslaris.reporting.service.interfaces;
 
-import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 public interface PersonLeaderboardService {
 
-    Map<PersonIndex, Long> getTopResearchersByPublicationCount(Integer institutionId,
-                                                               Integer fromYear,
-                                                               Integer toYear) throws IOException;
+    List<Pair<PersonIndex, Long>> getTopResearchersByPublicationCount(Integer institutionId,
+                                                                      Integer fromYear,
+                                                                      Integer toYear);
 
-    Map<PersonIndex, Long> getResearchersWithMostCitations(Integer institutionId, Integer fromYear,
-                                                           Integer toYear);
+    List<Pair<PersonIndex, Long>> getResearchersWithMostCitations(Integer institutionId,
+                                                                  Integer fromYear,
+                                                                  Integer toYear);
 
-    Map<PersonIndex, Long> getResearchersWithMostAssessmentPoints(Integer institutionId,
-                                                                  Integer fromYear, Integer toYear);
+    List<Pair<PersonIndex, Double>> getResearchersWithMostAssessmentPoints(Integer institutionId,
+                                                                           Integer fromYear,
+                                                                           Integer toYear);
 }

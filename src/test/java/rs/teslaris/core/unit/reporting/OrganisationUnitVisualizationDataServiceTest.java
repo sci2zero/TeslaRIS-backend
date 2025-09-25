@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -30,6 +31,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.institution.OrganisationUnitOutputConfigurationDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -40,6 +42,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputCon
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.reporting.service.impl.OrganisationUnitVisualizationDataServiceImpl;
+import rs.teslaris.reporting.utility.QueryUtil;
 
 @SpringBootTest
 class OrganisationUnitVisualizationDataServiceTest {
@@ -317,255 +320,252 @@ class OrganisationUnitVisualizationDataServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnCountryStatisticsForOrganisationUnit() throws IOException {
-        // Given
-        var organisationUnitId = 123;
-        var from = LocalDate.of(2023, 1, 1);
-        var to = LocalDate.of(2023, 12, 31);
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var organisationUnitId = 123;
+            var from = LocalDate.of(2023, 1, 1);
+            var to = LocalDate.of(2023, 12, 31);
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
+            queryUtilMock.when(
+                    () -> QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId))
+                .thenReturn(List.of("organisation_unit_ids", "organisation_unit_ids_active"));
 
-        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
-            new OrganisationUnit() {{
-                setId(organisationUnitId);
-            }}
-        );
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId))
+                .thenReturn(List.of(123, 456, 789));
 
-        var mockCountryBucket = mock(StringTermsBucket.class);
-        when(mockCountryBucket.key()).thenReturn(FieldValue.of("US"));
-        when(mockCountryBucket.docCount()).thenReturn(10L);
+            var mockCountryBucket = mock(StringTermsBucket.class);
+            when(mockCountryBucket.key()).thenReturn(FieldValue.of("US"));
+            when(mockCountryBucket.docCount()).thenReturn(10L);
 
-        var mockNameBucket = mock(StringTermsBucket.class);
-        when(mockNameBucket.key()).thenReturn(FieldValue.of("United States"));
+            var mockNameBucket = mock(StringTermsBucket.class);
+            when(mockNameBucket.key()).thenReturn(FieldValue.of("United States"));
 
-        var mockNameAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        when(mockNameAgg.sterms().buckets().array()).thenReturn(List.of(mockNameBucket));
+            var mockNameAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            when(mockNameAgg.sterms().buckets().array()).thenReturn(List.of(mockNameBucket));
 
-        var mockSubAggregations = mock(HashMap.class);
-        when(mockSubAggregations.get("country_name")).thenReturn(mockNameAgg);
+            var mockSubAggregations = mock(HashMap.class);
+            when(mockSubAggregations.get("country_name")).thenReturn(mockNameAgg);
 
-        when(mockCountryBucket.aggregations()).thenReturn(mockSubAggregations);
+            when(mockCountryBucket.aggregations()).thenReturn(mockSubAggregations);
 
-        var mockTermsAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        when(mockTermsAgg.sterms().buckets().array()).thenReturn(List.of(mockCountryBucket));
+            var mockTermsAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            when(mockTermsAgg.sterms().buckets().array()).thenReturn(List.of(mockCountryBucket));
 
-        var mockAggregations = mock(HashMap.class);
-        when(mockAggregations.get("by_country")).thenReturn(mockTermsAgg);
+            var mockAggregations = mock(HashMap.class);
+            when(mockAggregations.get("by_country")).thenReturn(mockTermsAgg);
 
-        var mockResponse = mock(SearchResponse.class);
-        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+            var mockResponse = mock(SearchResponse.class);
+            when(mockResponse.aggregations()).thenReturn(mockAggregations);
 
-        when(elasticsearchClient.search(
-            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(Void.class))).thenReturn(
-            mockResponse);
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class))).thenReturn(
+                mockResponse);
 
-        // When
-        var result =
-            service.getByCountryStatisticsForOrganisationUnit(organisationUnitId, from, to);
+            // When
+            var result =
+                service.getByCountryStatisticsForOrganisationUnit(organisationUnitId, from, to);
 
-        // Then
-        assertEquals(1, result.size());
-        var stats = result.getFirst();
-        assertEquals("US", stats.countryCode());
-        assertEquals("United States", stats.countryName());
+            // Then
+            assertEquals(1, result.size());
+            var stats = result.getFirst();
+            assertEquals("US", stats.countryCode());
+            assertEquals("United States", stats.countryName());
+        }
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnEmptyListWhenIOExceptionInCountryStatistics() throws IOException {
-        // Given
-        var organisationUnitId = 123;
-        var from = LocalDate.of(2023, 1, 1);
-        var to = LocalDate.of(2023, 12, 31);
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var organisationUnitId = 123;
+            var from = LocalDate.of(2023, 1, 1);
+            var to = LocalDate.of(2023, 12, 31);
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
+            queryUtilMock.when(
+                    () -> QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId))
+                .thenReturn(List.of("organisation_unit_ids", "organisation_unit_ids_active"));
 
-        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
-            new OrganisationUnit() {{
-                setId(organisationUnitId);
-            }}
-        );
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId))
+                .thenReturn(List.of(123, 456, 789));
 
-        when(elasticsearchClient.search(
-            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(Void.class))).thenThrow(
-            new IOException());
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class))).thenThrow(
+                new IOException());
 
-        // When
-        var result =
-            service.getByCountryStatisticsForOrganisationUnit(organisationUnitId, from, to);
+            // When
+            var result =
+                service.getByCountryStatisticsForOrganisationUnit(organisationUnitId, from, to);
 
-        // Then
-        assertTrue(result.isEmpty());
+            // Then
+            assertTrue(result.isEmpty());
+        }
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnMonthlyStatisticsCounts() throws IOException {
-        // Given
-        var organisationUnitId = 123;
-        var from = LocalDate.of(2023, 1, 1);
-        var to = LocalDate.of(2023, 3, 31);
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var organisationUnitId = 123;
+            var from = LocalDate.of(2023, 1, 1);
+            var to = LocalDate.of(2023, 3, 31);
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
+            queryUtilMock.when(
+                    () -> QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId))
+                .thenReturn(List.of("organisation_unit_ids", "organisation_unit_ids_active"));
 
-        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
-            new OrganisationUnit() {{
-                setId(organisationUnitId);
-            }}
-        );
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId))
+                .thenReturn(List.of(123, 456, 789));
 
-        // Mock ES response
-        var mockBucket1 = mock(DateHistogramBucket.class);
-        when(mockBucket1.keyAsString()).thenReturn("2023-01");
-        when(mockBucket1.docCount()).thenReturn(15L);
+            var mockBucket1 = mock(DateHistogramBucket.class);
+            when(mockBucket1.keyAsString()).thenReturn("2023-01");
+            when(mockBucket1.docCount()).thenReturn(15L);
 
-        var mockBucket2 = mock(DateHistogramBucket.class);
-        when(mockBucket2.keyAsString()).thenReturn("2023-02");
-        when(mockBucket2.docCount()).thenReturn(20L);
+            var mockBucket2 = mock(DateHistogramBucket.class);
+            when(mockBucket2.keyAsString()).thenReturn("2023-02");
+            when(mockBucket2.docCount()).thenReturn(20L);
 
-        var mockBucket3 = mock(DateHistogramBucket.class);
-        when(mockBucket3.keyAsString()).thenReturn("2023-03");
-        when(mockBucket3.docCount()).thenReturn(25L);
+            var mockBucket3 = mock(DateHistogramBucket.class);
+            when(mockBucket3.keyAsString()).thenReturn("2023-03");
+            when(mockBucket3.docCount()).thenReturn(25L);
 
-        var mockHistogramAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        when(mockHistogramAgg.dateHistogram().buckets().array()).thenReturn(
-            List.of(mockBucket1, mockBucket2, mockBucket3));
+            var mockHistogramAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            when(mockHistogramAgg.dateHistogram().buckets().array()).thenReturn(
+                List.of(mockBucket1, mockBucket2, mockBucket3));
 
-        var mockAggregations = mock(HashMap.class);
-        when(mockAggregations.get("per_month")).thenReturn(mockHistogramAgg);
+            var mockAggregations = mock(HashMap.class);
+            when(mockAggregations.get("per_month")).thenReturn(mockHistogramAgg);
 
-        var mockResponse = mock(SearchResponse.class);
-        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+            var mockResponse = mock(SearchResponse.class);
+            when(mockResponse.aggregations()).thenReturn(mockAggregations);
 
-        when(elasticsearchClient.search(
-            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(Void.class))).thenReturn(
-            mockResponse);
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class))).thenReturn(
+                mockResponse);
 
-        // When
-        var result = service.getMonthlyStatisticsCounts(organisationUnitId, from, to);
+            // When
+            var result = service.getMonthlyStatisticsCounts(organisationUnitId, from, to);
 
-        // Then
-        assertEquals(3, result.size());
-        assertEquals(15L, result.get(YearMonth.of(2023, 1)));
-        assertEquals(20L, result.get(YearMonth.of(2023, 2)));
-        assertEquals(25L, result.get(YearMonth.of(2023, 3)));
+            // Then
+            assertEquals(3, result.size());
+            assertEquals(15L, result.get(YearMonth.of(2023, 1)));
+            assertEquals(20L, result.get(YearMonth.of(2023, 2)));
+            assertEquals(25L, result.get(YearMonth.of(2023, 3)));
+        }
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnEmptyMapWhenIOExceptionInMonthlyStatistics() throws IOException {
-        // Given
-        var organisationUnitId = 123;
-        var from = LocalDate.of(2023, 1, 1);
-        var to = LocalDate.of(2023, 3, 31);
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var organisationUnitId = 123;
+            var from = LocalDate.of(2023, 1, 1);
+            var to = LocalDate.of(2023, 3, 31);
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
+            when(
+                organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
+                    organisationUnitId))
+                .thenReturn(mockOutputConfiguration());
 
-        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
-            new OrganisationUnit() {{
-                setId(organisationUnitId);
-            }}
-        );
+            when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+                new OrganisationUnit() {{
+                    setId(organisationUnitId);
+                }}
+            );
 
-        when(elasticsearchClient.search(
-            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(Void.class))).thenThrow(
-            new IOException());
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class))).thenThrow(
+                new IOException());
 
-        // When
-        var result = service.getMonthlyStatisticsCounts(organisationUnitId, from, to);
+            // When
+            var result = service.getMonthlyStatisticsCounts(organisationUnitId, from, to);
 
-        // Then
-        assertTrue(result.isEmpty());
+            // Then
+            assertTrue(result.isEmpty());
+        }
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnYearlyStatisticsCounts() throws IOException {
-        // Given
-        var organisationUnitId = 123;
-        var startYear = 2022;
-        var endYear = 2023;
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var organisationUnitId = 123;
+            var startYear = 2022;
+            var endYear = 2023;
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
+            queryUtilMock.when(
+                    () -> QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId))
+                .thenReturn(List.of("organisation_unit_ids", "organisation_unit_ids_active"));
 
-        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
-            new OrganisationUnit() {{
-                setId(organisationUnitId);
-            }}
-        );
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId))
+                .thenReturn(List.of(123, 456, 789));
 
-        // Mock ES response
-        var mockBucket1 = mock(DateHistogramBucket.class);
-        when(mockBucket1.keyAsString()).thenReturn("2022");
-        when(mockBucket1.docCount()).thenReturn(30L);
+            // Mock ES response
+            var mockBucket1 = mock(DateHistogramBucket.class);
+            when(mockBucket1.keyAsString()).thenReturn("2022");
+            when(mockBucket1.docCount()).thenReturn(30L);
 
-        var mockBucket2 = mock(DateHistogramBucket.class);
-        when(mockBucket2.keyAsString()).thenReturn("2023");
-        when(mockBucket2.docCount()).thenReturn(45L);
+            var mockBucket2 = mock(DateHistogramBucket.class);
+            when(mockBucket2.keyAsString()).thenReturn("2023");
+            when(mockBucket2.docCount()).thenReturn(45L);
 
-        var mockHistogramAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        when(mockHistogramAgg.dateHistogram().buckets().array()).thenReturn(
-            List.of(mockBucket1, mockBucket2));
+            var mockHistogramAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            when(mockHistogramAgg.dateHistogram().buckets().array()).thenReturn(
+                List.of(mockBucket1, mockBucket2));
 
-        var mockAggregations = mock(HashMap.class);
-        when(mockAggregations.get("per_year")).thenReturn(mockHistogramAgg);
+            var mockAggregations = mock(HashMap.class);
+            when(mockAggregations.get("per_year")).thenReturn(mockHistogramAgg);
 
-        var mockResponse = mock(SearchResponse.class);
-        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+            var mockResponse = mock(SearchResponse.class);
+            when(mockResponse.aggregations()).thenReturn(mockAggregations);
 
-        when(elasticsearchClient.search(
-            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(Void.class))).thenReturn(mockResponse);
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class))).thenReturn(mockResponse);
 
-        // When
-        var result = service.getYearlyStatisticsCounts(organisationUnitId, startYear, endYear);
+            // When
+            var result = service.getYearlyStatisticsCounts(organisationUnitId, startYear, endYear);
 
-        // Then
-        assertEquals(2, result.size());
-        assertEquals(30L, result.get(Year.of(2022)));
-        assertEquals(45L, result.get(Year.of(2023)));
+            // Then
+            assertEquals(2, result.size());
+            assertEquals(30L, result.get(Year.of(2022)));
+            assertEquals(45L, result.get(Year.of(2023)));
+        }
     }
 
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnEmptyMapWhenIOExceptionInYearlyStatistics() throws IOException {
-        // Given
-        var organisationUnitId = 123;
-        var startYear = 2022;
-        var endYear = 2023;
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var organisationUnitId = 123;
+            var startYear = 2022;
+            var endYear = 2023;
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
+            queryUtilMock.when(
+                    () -> QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId))
+                .thenReturn(List.of("organisation_unit_ids", "organisation_unit_ids_active"));
 
-        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
-            new OrganisationUnit() {{
-                setId(organisationUnitId);
-            }}
-        );
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId))
+                .thenReturn(List.of(123, 456, 789));
 
-        when(elasticsearchClient.search(
-            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(Void.class))).thenThrow(new IOException());
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class))).thenThrow(new IOException());
 
-        // When
-        var result = service.getYearlyStatisticsCounts(organisationUnitId, startYear, endYear);
+            // When
+            var result = service.getYearlyStatisticsCounts(organisationUnitId, startYear, endYear);
 
-        // Then
-        assertTrue(result.isEmpty());
+            // Then
+            assertTrue(result.isEmpty());
+        }
     }
 
     private OrganisationUnitOutputConfigurationDTO mockOutputConfiguration() {
