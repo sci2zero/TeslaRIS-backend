@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.reporting.dto.CommissionAssessmentPointsPersonLeaderboard;
 import rs.teslaris.reporting.service.interfaces.PersonLeaderboardService;
 
 @RestController
@@ -35,7 +36,7 @@ public class PersonLeaderboardController {
     }
 
     @GetMapping("/assessment-points")
-    public List<Pair<PersonIndex, Double>> getResearchersWithMostAssessmentPoints(
+    public List<CommissionAssessmentPointsPersonLeaderboard> getResearchersWithMostAssessmentPoints(
         @RequestParam Integer institutionId, @RequestParam Integer yearFrom,
         @RequestParam Integer yearTo) {
         return personLeaderboardService.getResearchersWithMostAssessmentPoints(institutionId,

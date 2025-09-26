@@ -1373,6 +1373,8 @@ public class AssessmentDataInitializer {
             Set.of(new MultiLingualContent(englishTag, "MNO Physics & Chemistry", 1),
                 new MultiLingualContent(serbianTag, "MNO Fizika i Hemija", 2),
                 new MultiLingualContent(serbianCyrillicTag, "МНО Физика и Хемија", 3)));
+        commission6.setRecognisedResearchAreas(
+            Set.of("NATURAL"));
         commission6.setFormalDescriptionOfRule("load-mnoPhysChem");
 
         var commission7 = new Commission();

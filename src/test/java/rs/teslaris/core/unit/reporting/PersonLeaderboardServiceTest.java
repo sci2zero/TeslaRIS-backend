@@ -22,9 +22,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -33,6 +35,8 @@ import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.service.impl.PersonLeaderboardServiceImpl;
 import rs.teslaris.reporting.utility.QueryUtil;
 
@@ -64,6 +68,9 @@ public class PersonLeaderboardServiceTest {
 
             queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(institutionId))
                 .thenReturn(List.of(123, 456, 789));
+
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
 
             var mockPerson1 = new PersonIndex();
             mockPerson1.setDatabaseId(1);
@@ -148,6 +155,9 @@ public class PersonLeaderboardServiceTest {
             queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(institutionId))
                 .thenReturn(List.of(123, 456, 789));
 
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
+
             var mockPersonResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
             when(mockPersonResponse.hits().hits()).thenReturn(Collections.emptyList());
 
@@ -180,6 +190,9 @@ public class PersonLeaderboardServiceTest {
 
             queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(institutionId))
                 .thenReturn(List.of(123, 456, 789));
+
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
 
             var mockPerson = new PersonIndex();
             mockPerson.setDatabaseId(1);
@@ -285,6 +298,9 @@ public class PersonLeaderboardServiceTest {
 
             queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(institutionId))
                 .thenReturn(List.of(123, 456, 789));
+
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
 
             when(elasticsearchClient.search(
                 (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
@@ -415,6 +431,193 @@ public class PersonLeaderboardServiceTest {
         for (var entry : result) {
             assertTrue(entry.b <= previousCount);
             previousCount = entry.b;
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListWhenNoEligiblePersons() throws IOException {
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var institutionId = 123;
+            var fromYear = 2020;
+            var toYear = 2023;
+
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
+            queryUtilMock.when(() -> QueryUtil.getOrganisationUnitOutputSearchFields(institutionId))
+                .thenReturn(List.of("organisation_unit_ids"));
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(institutionId))
+                .thenReturn(List.of(123, 456));
+
+            var emptyPersonResponse =
+                mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+            when(emptyPersonResponse.hits().hits()).thenReturn(List.of());
+
+            when(elasticsearchClient.search(any(Function.class), eq(PersonIndex.class)))
+                .thenReturn(emptyPersonResponse);
+
+            // When
+            var result =
+                service.getResearchersWithMostAssessmentPoints(institutionId, fromYear, toYear);
+
+            // Then
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldHandleEmptyAggregationResults() throws IOException {
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var institutionId = 123;
+            var fromYear = 2020;
+            var toYear = 2023;
+
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
+            queryUtilMock.when(() -> QueryUtil.getOrganisationUnitOutputSearchFields(institutionId))
+                .thenReturn(List.of("organisation_unit_ids"));
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(institutionId))
+                .thenReturn(List.of(123, 456));
+            queryUtilMock.when(() -> QueryUtil.fetchCommissionsForOrganisationUnit(institutionId))
+                .thenReturn(Set.of(new Pair<>(5, new HashSet<MultiLingualContent>())));
+
+            var person = new PersonIndex();
+            person.setDatabaseId(1);
+            when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(person));
+
+            var personResponse =
+                mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+            var hit = mock(Hit.class);
+            when(hit.source()).thenReturn(person);
+            when(personResponse.hits().hits()).thenReturn(List.of(hit));
+
+            var emptyAggResponse = mock(SearchResponse.class);
+            when(emptyAggResponse.aggregations()).thenReturn(null);
+
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(PersonIndex.class)))
+                .thenReturn(personResponse);
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class)))
+                .thenReturn(emptyAggResponse);
+
+            // When
+            var result =
+                service.getResearchersWithMostAssessmentPoints(institutionId, fromYear, toYear);
+
+            // Then
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListWhenIOExceptionOccurs() throws IOException {
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var institutionId = 123;
+            var fromYear = 2020;
+            var toYear = 2023;
+
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
+            queryUtilMock.when(() -> QueryUtil.getOrganisationUnitOutputSearchFields(institutionId))
+                .thenReturn(List.of("organisation_unit_ids"));
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(institutionId))
+                .thenReturn(List.of(123, 456));
+            queryUtilMock.when(() -> QueryUtil.fetchCommissionsForOrganisationUnit(institutionId))
+                .thenReturn(Set.of(new Pair<>(5, new HashSet<MultiLingualContent>())));
+
+            when(elasticsearchClient.search(any(Function.class), any()))
+                .thenThrow(new IOException("Elasticsearch error"));
+
+            // When
+            var result =
+                service.getResearchersWithMostAssessmentPoints(institutionId, fromYear, toYear);
+
+            // Then
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldFilterOutPersonsNotFoundInRepository() throws IOException {
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var institutionId = 123;
+            var fromYear = 2020;
+            var toYear = 2023;
+
+            queryUtilMock.when(() -> QueryUtil.constructYearRange(fromYear, toYear))
+                .thenReturn(new Pair<>(fromYear, toYear));
+            queryUtilMock.when(() -> QueryUtil.getOrganisationUnitOutputSearchFields(institutionId))
+                .thenReturn(List.of("organisation_unit_ids"));
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(institutionId))
+                .thenReturn(List.of(123, 456));
+            queryUtilMock.when(() -> QueryUtil.fetchCommissionsForOrganisationUnit(institutionId))
+                .thenReturn(Set.of(new Pair<>(5, new HashSet<MultiLingualContent>())));
+
+            var personIdResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+            var personHit = mock(Hit.class);
+            var eligiblePerson = new PersonIndex();
+            eligiblePerson.setDatabaseId(1);
+            when(personHit.source()).thenReturn(eligiblePerson);
+            when(personIdResponse.hits().hits()).thenReturn(List.of(personHit));
+
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(PersonIndex.class)
+            )).thenReturn(personIdResponse);
+
+            var bucket1 = mock(LongTermsBucket.class);
+            when(bucket1.key()).thenReturn(1L);
+            var totalPointsAgg1 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            var sumAgg1 = mock(SumAggregate.class);
+            when(sumAgg1.value()).thenReturn(150.5);
+            when(totalPointsAgg1.sum()).thenReturn(sumAgg1);
+            when(bucket1.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg1));
+
+            var bucket2 = mock(LongTermsBucket.class);
+            when(bucket2.key()).thenReturn(2L);
+            var totalPointsAgg2 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            var sumAgg2 = mock(SumAggregate.class);
+            when(sumAgg2.value()).thenReturn(75.0);
+            when(totalPointsAgg2.sum()).thenReturn(sumAgg2);
+            when(bucket2.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg2));
+
+            var byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            when(byPersonAgg.lterms().buckets().array()).thenReturn(List.of(bucket1, bucket2));
+
+            var topAggs = Map.of("by_person", byPersonAgg);
+
+            var mockResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+            when(mockResponse.aggregations()).thenReturn(topAggs);
+
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class)))
+                .thenReturn(mockResponse);
+
+            var person1 = new PersonIndex();
+            person1.setDatabaseId(1);
+            person1.setName("Researcher 1");
+            when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(person1));
+            when(personIndexRepository.findByDatabaseId(2)).thenReturn(Optional.empty());
+
+            // When
+            var result =
+                service.getResearchersWithMostAssessmentPoints(institutionId, fromYear, toYear);
+
+            // Then
+            assertEquals(1, result.size());
+            assertEquals(1, result.getFirst().leaderboardData().size());
+            assertEquals(person1, result.getFirst().leaderboardData().getFirst().a);
         }
     }
 }

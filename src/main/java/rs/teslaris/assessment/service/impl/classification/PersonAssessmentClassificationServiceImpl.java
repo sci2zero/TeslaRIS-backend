@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassi
 import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -626,10 +628,20 @@ public class PersonAssessmentClassificationServiceImpl
             .findFirst();
     }
 
+    @Async
     @EventListener
     protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
+        if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
+            return;
+        }
+
         event.personIds()
             .forEach(personId -> personIndexRepository.findByDatabaseId(personId)
                 .ifPresent(this::reindexPublicationPointsForResearcher));
+    }
+
+    @EventListener
+    protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
+        reindexPublicationPointsForAllResearchers();
     }
 }

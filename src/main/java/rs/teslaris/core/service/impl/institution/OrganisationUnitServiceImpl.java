@@ -904,6 +904,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         var savedRelation = organisationUnitsRelationJPAService.save(newRelation);
         updateIndex(savedRelation);
 
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(
+                savedRelation.getSourceOrganisationUnit().getId()));
+
         return savedRelation;
     }
 
@@ -933,6 +937,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         updateIndex(savedRelation);
 
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(
+                savedRelation.getSourceOrganisationUnit().getId()));
+
         return creationDTO;
     }
 
@@ -959,6 +967,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         setCommonOURelationFields(relationToUpdate, relationDTO);
 
         organisationUnitsRelationJPAService.save(relationToUpdate);
+
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(
+                relationToUpdate.getSourceOrganisationUnit().getId()));
     }
 
     @Override

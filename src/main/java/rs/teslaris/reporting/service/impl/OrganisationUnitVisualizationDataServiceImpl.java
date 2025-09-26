@@ -15,19 +15,15 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
@@ -43,8 +39,6 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     OrganisationUnitVisualizationDataService {
 
     private final ElasticsearchClient elasticsearchClient;
-
-    private final UserService userService;
 
 
     @Override
@@ -79,7 +73,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         var result = new ArrayList<MCategoryCounts>();
 
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
-        var commissions = fetchCommissionsForOrganisationUnit(organisationUnitId);
+        var commissions = QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId);
 
         commissions.forEach(commission -> {
             SearchResponse<Void> response;
@@ -151,7 +145,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
             return Collections.emptyList();
         }
 
-        var commissions = fetchCommissionsForOrganisationUnit(organisationUnitId);
+        var commissions = QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId);
 
         var commissionYearlyCounts = new ArrayList<CommissionYearlyCounts>();
         for (var commission : commissions) {
@@ -486,15 +480,5 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         }
 
         return new Pair<>(startYear, endYear);
-    }
-
-    private Set<Pair<Integer, Set<MultiLingualContent>>> fetchCommissionsForOrganisationUnit(
-        Integer organisationUnitId) {
-        var commissions = new HashSet<Pair<Integer, Set<MultiLingualContent>>>();
-        userService.findCommissionForOrganisationUnitId(organisationUnitId).forEach(commission -> {
-            commissions.add(new Pair<>(commission.getId(), commission.getDescription()));
-        });
-
-        return commissions;
     }
 }

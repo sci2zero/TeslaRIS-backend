@@ -3,6 +3,7 @@ package rs.teslaris.reporting.service.impl;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.TermsInclude;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
@@ -17,38 +18,35 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.indexmodel.PersonIndex;
-import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.dto.CommissionAssessmentPointsPersonLeaderboard;
-import rs.teslaris.reporting.service.interfaces.PersonLeaderboardService;
+import rs.teslaris.reporting.dto.CommissionAssessmentPointsOULeaderboard;
+import rs.teslaris.reporting.service.interfaces.OrganisationUnitLeaderboardService;
 import rs.teslaris.reporting.utility.QueryUtil;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
+public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitLeaderboardService {
 
     private final ElasticsearchClient elasticsearchClient;
 
-    private final PersonIndexRepository personIndexRepository;
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
 
     @Override
-    public List<Pair<PersonIndex, Long>> getTopResearchersByPublicationCount(Integer institutionId,
-                                                                             Integer fromYear,
-                                                                             Integer toYear) {
+    public List<Pair<OrganisationUnitIndex, Long>> getTopSubUnitsByPublicationCount(
+        Integer institutionId, Integer fromYear, Integer toYear) {
         var yearRange = QueryUtil.constructYearRange(fromYear, toYear);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
 
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(institutionId);
-        var allMergedOrganisationUnitIds =
-            QueryUtil.getAllMergedOrganisationUnitIds(institutionId);
 
-        var eligiblePersonIds = getEligiblePersonIds(institutionId);
-        if (eligiblePersonIds.isEmpty()) {
+        var eligibleOUIds = getEligibleOrganisationUnitIds(institutionId);
+        if (eligibleOUIds.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -59,26 +57,30 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     .query(q -> q
                         .bool(b -> b
                             .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                            .must(QueryUtil.organisationUnitMatchQuery(allMergedOrganisationUnitIds,
+                            .must(QueryUtil.organisationUnitMatchQuery(eligibleOUIds,
                                 searchFields))
-                            .must(m -> m.terms(t -> t.field("author_ids").terms(ts -> ts
-                                .value(eligiblePersonIds.stream()
-                                    .map(FieldValue::of)
-                                    .collect(Collectors.toList())))))
                             .must(m -> m.range(
                                 r -> r.field("year").gte(JsonData.of(yearRange.a))
                                     .lte(JsonData.of(yearRange.b))))
                             .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                         )
                     )
-                    .aggregations("by_person", a -> a
-                        .terms(t -> t.field("author_ids").size(10))
+                    .aggregations("by_org_unit", a -> a.terms(
+                        t -> t
+                            .field("organisation_unit_ids")
+                            .size(10)
+                            .include(TermsInclude.of(
+                                i -> i.terms(eligibleOUIds
+                                    .stream()
+                                    .map(Object::toString)
+                                    .toList()
+                                ))))
                     ),
                 Void.class
             );
 
-            var topPersonIds = publicationResponse.aggregations()
-                .get("by_person")
+            var topOUIds = publicationResponse.aggregations()
+                .get("by_org_unit")
                 .lterms()
                 .buckets()
                 .array()
@@ -86,41 +88,46 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                 .map(LongTermsBucket::key)
                 .toList();
 
-            if (topPersonIds.isEmpty()) {
+            if (topOUIds.isEmpty()) {
                 return Collections.emptyList();
             }
 
-            var personMap = new HashMap<Integer, PersonIndex>();
-            topPersonIds.forEach(personId -> {
-                personIndexRepository.findByDatabaseId(personId.intValue()).ifPresent(index ->
-                    personMap.put(personId.intValue(), index)
+            var organisationUnitMap = new HashMap<Integer, OrganisationUnitIndex>();
+            topOUIds.forEach(organisationUnitId -> {
+                organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                    organisationUnitId.intValue()).ifPresent(index ->
+                    organisationUnitMap.put(organisationUnitId.intValue(), index)
                 );
             });
 
             return publicationResponse.aggregations()
-                .get("by_person")
+                .get("by_org_unit")
                 .lterms()
                 .buckets()
                 .array()
                 .stream()
                 .map(b -> {
-                    Integer personId = Math.toIntExact(b.key()); // bucket key is a long
-                    PersonIndex person = personMap.get(personId);
-                    return new Pair<>(person, b.docCount());
+                    var organisationUnitId = Math.toIntExact(b.key());
+                    var organisationUnit = organisationUnitMap.get(organisationUnitId);
+                    return new Pair<>(organisationUnit, b.docCount());
                 })
                 .toList();
         } catch (IOException e) {
-            log.error("Error while fetching person publication count leaderboard. Reason: {}",
+            log.error("Error while fetching OU publication count leaderboard. Reason: {}",
                 e.getMessage());
             return Collections.emptyList();
         }
     }
 
     @Override
-    public List<Pair<PersonIndex, Long>> getResearchersWithMostCitations(Integer institutionId,
-                                                                         Integer fromYear,
-                                                                         Integer toYear) {
+    public List<Pair<OrganisationUnitIndex, Long>> getSubUnitsWithMostCitations(
+        Integer institutionId, Integer fromYear, Integer toYear) {
         if (Objects.isNull(institutionId)) {
+            return Collections.emptyList();
+        }
+
+        var eligibleOUIds = getEligibleOrganisationUnitIds(institutionId);
+        if (eligibleOUIds.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -130,16 +137,24 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     .index("person")
                     .size(0)
                     .query(q -> q.bool(b -> b
-                        .must(m -> m.term(t -> t
-                            .field("employment_institutions_id_hierarchy")
-                            .value(institutionId)))
+                        .must(m -> m.terms(t ->
+                            t.field("employment_institutions_id_hierarchy").terms(
+                                v -> v.value(eligibleOUIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList())
+                            )))
                         .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))))
                     ))
-                    .aggregations("by_person", a -> a
-                        .terms(t -> t
-                            .field("databaseId")
-                            .size(10)
-                        )
+                    .aggregations("by_org_unit", a -> a.terms(
+                            t -> t
+                                .field("employment_institutions_id_hierarchy")
+                                .size(10)
+                                .include(TermsInclude.of(
+                                    i -> i.terms(eligibleOUIds
+                                        .stream()
+                                        .map(Object::toString)
+                                        .toList()
+                                    ))))
                         .aggregations("total_citations", sum -> sum
                             .sum(v -> v.field("total_citations"))
                         )
@@ -147,31 +162,32 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                 Void.class
             );
         } catch (IOException e) {
-            log.error("Error while fetching person citation count leaderboard. Reason: {}",
+            log.error("Error while fetching OU citation count leaderboard. Reason: {}",
                 e.getMessage());
             return Collections.emptyList();
         }
 
         var buckets = response.aggregations()
-            .get("by_person")
+            .get("by_org_unit")
             .lterms()
             .buckets()
             .array();
 
-        var topPersonIds = buckets.stream()
+        var topOUIds = buckets.stream()
             .map(LongTermsBucket::key)
             .map(Long::intValue)
             .collect(Collectors.toSet());
 
-        if (topPersonIds.isEmpty()) {
+        if (topOUIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        var personMap = new HashMap<Integer, PersonIndex>();
-        topPersonIds.forEach(id ->
-            personIndexRepository.findByDatabaseId(id).ifPresent(person ->
-                personMap.put(id, person)
-            )
+        var organisationUnitMap = new HashMap<Integer, OrganisationUnitIndex>();
+        topOUIds.forEach(id ->
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(id)
+                .ifPresent(organisationUnit ->
+                    organisationUnitMap.put(id, organisationUnit)
+                )
         );
 
         return buckets.stream()
@@ -181,8 +197,8 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     .sum()
                     .value();
 
-                PersonIndex person = personMap.get((int) bucket.key());
-                return Objects.nonNull(person) ? new Pair<>(person, (long) sum) : null;
+                var ou = organisationUnitMap.get((int) bucket.key());
+                return Objects.nonNull(ou) ? new Pair<>(ou, (long) sum) : null;
             })
             .filter(Objects::nonNull)
             .sorted((a, b) -> Long.compare(b.b, a.b))
@@ -191,25 +207,22 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
     }
 
     @Override
-    public List<CommissionAssessmentPointsPersonLeaderboard> getResearchersWithMostAssessmentPoints(
-        Integer institutionId,
-        Integer fromYear,
-        Integer toYear) {
+    public List<CommissionAssessmentPointsOULeaderboard> getSubUnitsWithMostAssessmentPoints(
+        Integer institutionId, Integer fromYear, Integer toYear) {
         var yearRange = QueryUtil.constructYearRange(fromYear, toYear);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
 
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(institutionId);
-        var allMergedOrganisationUnitIds = QueryUtil.getAllMergedOrganisationUnitIds(institutionId);
 
-        var eligiblePersonIds = getEligiblePersonIds(institutionId);
-        if (eligiblePersonIds.isEmpty()) {
+        var eligibleOUIds = getEligibleOrganisationUnitIds(institutionId);
+        if (eligibleOUIds.isEmpty()) {
             return Collections.emptyList();
         }
 
         var commissions = QueryUtil.fetchCommissionsForOrganisationUnit(institutionId);
-        var retVal = new ArrayList<CommissionAssessmentPointsPersonLeaderboard>();
+        var retVal = new ArrayList<CommissionAssessmentPointsOULeaderboard>();
 
         commissions.forEach(commission -> {
             try {
@@ -220,23 +233,26 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                             .query(q -> q
                                 .bool(b -> b
                                     .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                                    .must(QueryUtil.organisationUnitMatchQuery(
-                                        allMergedOrganisationUnitIds,
+                                    .must(QueryUtil.organisationUnitMatchQuery(eligibleOUIds,
                                         searchFields))
-                                    .must(
-                                        m -> m.terms(t -> t.field("assessment_points.a").terms(ts -> ts
-                                            .value(eligiblePersonIds.stream()
-                                                .map(FieldValue::of)
-                                                .collect(Collectors.toList())))))
+                                    .must(m -> m.term(
+                                        t -> t.field("assessment_points.b").value(commission.a)))
                                     .must(m -> m.range(
                                         r -> r.field("year").gte(JsonData.of(yearRange.a))
                                             .lte(JsonData.of(yearRange.b))))
                                     .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                                 )
                             )
-                            .aggregations("by_person", a -> a
-                                .terms(t -> t.field("assessment_points.a")
-                                    .size(10))
+                            .aggregations("by_org_unit", a -> a.terms(
+                                    t -> t
+                                        .field("organisation_unit_ids")
+                                        .size(10)
+                                        .include(TermsInclude.of(
+                                            i -> i.terms(eligibleOUIds
+                                                .stream()
+                                                .map(Object::toString)
+                                                .toList()
+                                            ))))
                                 .aggregations("total_points", sum -> sum
                                     .sum(v -> v.field("assessment_points.c"))
                                 )
@@ -245,11 +261,11 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     );
 
                 if (Objects.isNull(publicationResponse.aggregations()) ||
-                    Objects.isNull(publicationResponse.aggregations().get("by_person"))) {
+                    Objects.isNull(publicationResponse.aggregations().get("by_org_unit"))) {
                     return;
                 }
 
-                var termsAgg = publicationResponse.aggregations().get("by_person").lterms();
+                var termsAgg = publicationResponse.aggregations().get("by_org_unit").lterms();
                 if (Objects.isNull(termsAgg)) {
                     return;
                 }
@@ -259,40 +275,42 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     return;
                 }
 
-                var personPoints = buckets.stream()
+                var ouPoints = buckets.stream()
                     .map(bucket -> {
-                        var personId = (int) bucket.key();
+                        var organisationUnitId = (int) bucket.key();
                         double totalPoints =
                             bucket.aggregations().get("total_points").sum().value();
-                        return new Pair<>(personId, totalPoints);
+                        return new Pair<>(organisationUnitId, totalPoints);
                     })
                     .sorted((p1, p2) -> Double.compare(p2.b, p1.b))
                     .toList();
 
-                var topPersonIds = personPoints.stream()
+                var topOUIds = ouPoints.stream()
                     .map(pair -> pair.a)
                     .toList();
 
-                var personMap = new HashMap<Integer, PersonIndex>();
-                topPersonIds.forEach(personId -> {
-                    personIndexRepository.findByDatabaseId(personId).ifPresent(index ->
-                        personMap.put(personId, index)
+                var organisationUnitMap = new HashMap<Integer, OrganisationUnitIndex>();
+                topOUIds.forEach(organisationUnitId -> {
+                    organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                        organisationUnitId).ifPresent(index ->
+                        organisationUnitMap.put(organisationUnitId, index)
                     );
                 });
 
-                var leaderboardData = personPoints.stream()
+                var leaderboardData = ouPoints.stream()
                     .map(pair -> {
-                        var person = personMap.get(pair.a);
-                        return Objects.nonNull(person) ? new Pair<>(person, pair.b) : null;
+                        OrganisationUnitIndex organisationUnit = organisationUnitMap.get(pair.a);
+                        return Objects.nonNull(organisationUnit) ?
+                            new Pair<>(organisationUnit, pair.b) : null;
                     })
                     .filter(Objects::nonNull)
                     .toList();
 
-                retVal.add(new CommissionAssessmentPointsPersonLeaderboard(commission.a,
+                retVal.add(new CommissionAssessmentPointsOULeaderboard(commission.a,
                     MultilingualContentConverter.getMultilingualContentDTO(commission.b),
                     leaderboardData));
             } catch (IOException e) {
-                log.error("Error while fetching person assessment points leaderboard. Reason: {}",
+                log.error("Error while fetching OU assessment points leaderboard. Reason: {}",
                     e.getMessage());
             }
         });
@@ -300,32 +318,31 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
         return retVal;
     }
 
-    private List<Integer> getEligiblePersonIds(Integer institutionId) {
-        SearchResponse<PersonIndex> personIdResponse;
+    private List<Integer> getEligibleOrganisationUnitIds(Integer institutionId) {
+        SearchResponse<OrganisationUnitIndex> ouIdResponse;
         try {
-            personIdResponse = elasticsearchClient.search(s -> s
-                    .index("person")
+            ouIdResponse = elasticsearchClient.search(s -> s
+                    .index("organisation_unit")
                     .size(10000)
                     .query(q -> q
                         .bool(b -> b
                             .must(m -> m.term(
-                                t -> t.field("employment_institutions_id_hierarchy")
-                                    .value(institutionId)))
+                                t -> t.field("super_ou_id").value(institutionId)))
                             .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))))
                         )
                     )
                     .source(sc -> sc.filter(f -> f.includes("databaseId"))),
-                PersonIndex.class
+                OrganisationUnitIndex.class
             );
 
-            return personIdResponse.hits().hits().stream()
+            return ouIdResponse.hits().hits().stream()
                 .map(Hit::source)
                 .filter(Objects::nonNull)
-                .map(PersonIndex::getDatabaseId)
+                .map(OrganisationUnitIndex::getDatabaseId)
                 .filter(id -> id > 0)
                 .toList();
         } catch (IOException e) {
-            log.error("Error while fetching eligible person IDs for institution ({}). Reason: {}",
+            log.error("Error while fetching eligible OU IDs for institution ({}). Reason: {}",
                 institutionId, e.getMessage());
             return Collections.emptyList();
         }

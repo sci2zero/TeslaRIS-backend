@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.reporting.dto.CommissionAssessmentPointsPersonLeaderboard;
 
 @Service
 public interface PersonLeaderboardService {
@@ -16,7 +17,8 @@ public interface PersonLeaderboardService {
                                                                   Integer fromYear,
                                                                   Integer toYear);
 
-    List<Pair<PersonIndex, Double>> getResearchersWithMostAssessmentPoints(Integer institutionId,
-                                                                           Integer fromYear,
-                                                                           Integer toYear);
+    List<CommissionAssessmentPointsPersonLeaderboard> getResearchersWithMostAssessmentPoints(
+        Integer institutionId,
+        Integer fromYear,
+        Integer toYear);
 }

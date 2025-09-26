@@ -1417,6 +1417,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }
 
+    @Async
     @EventListener
     public void handleOUDeletion(OrganisationUnitDeletedEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());

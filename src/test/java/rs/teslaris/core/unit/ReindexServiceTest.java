@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -13,6 +14,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
+import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.impl.commontypes.ReindexServiceImpl;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -91,6 +94,9 @@ public class ReindexServiceTest {
     @Mock
     private ThesisService thesisService;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private ReindexServiceImpl reindexService;
 
@@ -162,9 +168,14 @@ public class ReindexServiceTest {
             verify(monographPublicationService).reindexMonographPublications();
             verify(proceedingsService).reindexProceedings();
             verify(thesisService).reindexTheses();
+            verify(applicationEventPublisher).publishEvent(
+                any(AllResearcherPointsReindexingEvent.class));
         } else if (indexType.equals(EntityType.DOCUMENT_FILE)) {
             verify(documentFileService).deleteIndexes();
             verify(documentFileService).reindexDocumentFiles();
+        } else if (indexType.equals(EntityType.PERSON)) {
+            verify(applicationEventPublisher).publishEvent(
+                any(AllResearcherPointsReindexingEvent.class));
         } else {
             verify(documentFileService, never()).deleteIndexes();
             verify(documentPublicationService, never()).deleteIndexes();

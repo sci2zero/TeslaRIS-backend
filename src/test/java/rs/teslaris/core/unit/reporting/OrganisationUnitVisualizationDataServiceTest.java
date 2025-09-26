@@ -36,11 +36,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.institution.OrganisationUnitOutputConfigurationDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.institution.Commission;
-import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.service.impl.OrganisationUnitVisualizationDataServiceImpl;
 import rs.teslaris.reporting.utility.QueryUtil;
 
@@ -49,15 +45,6 @@ class OrganisationUnitVisualizationDataServiceTest {
 
     @Mock
     private ElasticsearchClient elasticsearchClient;
-
-    @Mock
-    private OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService;
-
-    @Mock
-    private UserService userService;
-
-    @Mock
-    private OrganisationUnitService organisationUnitService;
 
     @InjectMocks
     private OrganisationUnitVisualizationDataServiceImpl service;
@@ -70,11 +57,6 @@ class OrganisationUnitVisualizationDataServiceTest {
         var organisationUnitId = 123;
         var startYear = 2020;
         var endYear = 2022;
-        var searchFields = List.of("field1", "field2");
-
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
 
         // Mock year range response
         var mockMinAgg = mock(MinAggregate.class);
@@ -130,10 +112,6 @@ class OrganisationUnitVisualizationDataServiceTest {
         Integer startYear = null;
         Integer endYear = null;
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
-
         // Mock empty year range response
         var mockMinAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(mockMinAgg.min().value()).thenReturn(Double.NaN);
@@ -164,53 +142,48 @@ class OrganisationUnitVisualizationDataServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnMCategoriesForOrganisationUnitPublications() throws IOException {
-        // Given
-        var organisationUnitId = 123;
-        var startYear = 2020;
-        var endYear = 2022;
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var organisationUnitId = 123;
+            var startYear = 2020;
+            var endYear = 2022;
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
+            queryUtilMock.when(
+                    () -> QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId))
+                .thenReturn(Set.of(new Pair<>(
+                    1, Set.of(new MultiLingualContent(new LanguageTag(), "Commission 1", 1)))
+                ));
 
-        when(userService.findCommissionForOrganisationUnitId(organisationUnitId)).thenReturn(
-            List.of(
-                new Commission() {{
-                    setId(1);
-                    setDescription(
-                        Set.of(new MultiLingualContent(new LanguageTag(), "Commission 1", 1)));
-                }}
-            ));
+            var mockBucket = mock(StringTermsBucket.class);
+            when(mockBucket.key()).thenReturn(FieldValue.of("M21"));
+            when(mockBucket.docCount()).thenReturn(3L);
 
-        var mockBucket = mock(StringTermsBucket.class);
-        when(mockBucket.key()).thenReturn(FieldValue.of("M21"));
-        when(mockBucket.docCount()).thenReturn(3L);
+            var mockTermsAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            when(mockTermsAgg.sterms().buckets()).thenReturn(mock(Buckets.class));
+            when(mockTermsAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket));
 
-        var mockTermsAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        when(mockTermsAgg.sterms().buckets()).thenReturn(mock(Buckets.class));
-        when(mockTermsAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket));
+            var mockAggregations = mock(HashMap.class);
+            when(mockAggregations.get("by_m_category")).thenReturn(mockTermsAgg);
 
-        var mockAggregations = mock(HashMap.class);
-        when(mockAggregations.get("by_m_category")).thenReturn(mockTermsAgg);
+            var mockResponse = mock(SearchResponse.class);
+            when(mockResponse.aggregations()).thenReturn(mockAggregations);
 
-        var mockResponse = mock(SearchResponse.class);
-        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class))).thenReturn(
+                mockResponse);
 
-        when(elasticsearchClient.search(
-            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(Void.class))).thenReturn(
-            mockResponse);
+            // When
+            var result =
+                service.getOrganisationUnitPublicationsByMCategories(organisationUnitId, startYear,
+                    endYear);
 
-        // When
-        var result =
-            service.getOrganisationUnitPublicationsByMCategories(organisationUnitId, startYear,
-                endYear);
-
-        // Then
-        assertEquals(1, result.size());
-        var mCategoryCounts = result.getFirst();
-        assertEquals(1, mCategoryCounts.countsByCategory().size());
-        assertEquals(3L, mCategoryCounts.countsByCategory().get("M21"));
+            // Then
+            assertEquals(1, result.size());
+            var mCategoryCounts = result.getFirst();
+            assertEquals(1, mCategoryCounts.countsByCategory().size());
+            assertEquals(3L, mCategoryCounts.countsByCategory().get("M21"));
+        }
     }
 
     @Test
@@ -220,19 +193,6 @@ class OrganisationUnitVisualizationDataServiceTest {
         var organisationUnitId = 123;
         var startYear = 2020;
         var endYear = 2022;
-
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
-
-        when(userService.findCommissionForOrganisationUnitId(organisationUnitId)).thenReturn(
-            List.of(
-                new Commission() {{
-                    setId(1);
-                    setDescription(
-                        Set.of(new MultiLingualContent(new LanguageTag(), "Commission 1", 1)));
-                }}
-            ));
 
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
@@ -251,70 +211,66 @@ class OrganisationUnitVisualizationDataServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldReturnMCategoryCountsForOrganisationUnit() throws IOException {
-        // Given
-        var organisationUnitId = 123;
-        var startYear = 2020;
-        var endYear = 2022;
-        var searchFields = List.of("field1", "field2");
+        try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
+            // Given
+            var organisationUnitId = 123;
+            var startYear = 2020;
+            var endYear = 2022;
 
-        when(organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-            organisationUnitId))
-            .thenReturn(mockOutputConfiguration());
+            var mockMinAgg = mock(MinAggregate.class);
+            when(mockMinAgg.value()).thenReturn(2020.0);
+            var mockMaxAgg = mock(MaxAggregate.class);
+            when(mockMaxAgg.value()).thenReturn(2022.0);
 
-        // Mock year range
-        var mockMinAgg = mock(MinAggregate.class);
-        when(mockMinAgg.value()).thenReturn(2020.0);
-        var mockMaxAgg = mock(MaxAggregate.class);
-        when(mockMaxAgg.value()).thenReturn(2022.0);
+            var mockRangeAggregations = mock(HashMap.class);
+            when(mockRangeAggregations.get("earliestYear")).thenReturn(mockMinAgg);
+            when(mockRangeAggregations.get("latestYear")).thenReturn(mockMaxAgg);
 
-        var mockRangeAggregations = mock(HashMap.class);
-        when(mockRangeAggregations.get("earliestYear")).thenReturn(mockMinAgg);
-        when(mockRangeAggregations.get("latestYear")).thenReturn(mockMaxAgg);
+            var mockRangeResponse = mock(SearchResponse.class);
+            when(mockRangeResponse.aggregations()).thenReturn(mockRangeAggregations);
 
-        var mockRangeResponse = mock(SearchResponse.class);
-        when(mockRangeResponse.aggregations()).thenReturn(mockRangeAggregations);
+            queryUtilMock.when(
+                    () -> QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId))
+                .thenReturn(Set.of(new Pair<>(
+                    1, Set.of(new MultiLingualContent(new LanguageTag(), "Commission 1", 1)))
+                ));
 
-        when(userService.findCommissionForOrganisationUnitId(organisationUnitId)).thenReturn(
-            List.of(
-                new Commission() {{
-                    setId(1);
-                    setDescription(
-                        Set.of(new MultiLingualContent(new LanguageTag(), "Commission 1", 1)));
-                }}
-            ));
+            var mockBucket = mock(StringTermsBucket.class);
+            when(mockBucket.key()).thenReturn(FieldValue.of("M11"));
+            when(mockBucket.docCount()).thenReturn(2L);
 
-        var mockBucket = mock(StringTermsBucket.class);
-        when(mockBucket.key()).thenReturn(FieldValue.of("M11"));
-        when(mockBucket.docCount()).thenReturn(2L);
+            var mockTermsAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            when(mockTermsAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket));
 
-        var mockTermsAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        when(mockTermsAgg.sterms().buckets().array()).thenReturn(List.of(mockBucket));
+            var mockYearlyAggregations = mock(HashMap.class);
+            when(mockYearlyAggregations.get("by_m_category")).thenReturn(mockTermsAgg);
+            when(mockRangeAggregations.get("by_m_category")).thenReturn(mockTermsAgg);
 
-        var mockYearlyAggregations = mock(HashMap.class);
-        when(mockYearlyAggregations.get("by_m_category")).thenReturn(mockTermsAgg);
-        when(mockRangeAggregations.get("by_m_category")).thenReturn(mockTermsAgg);
+            var mockYearlyResponse = mock(SearchResponse.class);
+            when(mockYearlyResponse.aggregations()).thenReturn(mockYearlyAggregations);
 
-        var mockYearlyResponse = mock(SearchResponse.class);
-        when(mockYearlyResponse.aggregations()).thenReturn(mockYearlyAggregations);
+            when(elasticsearchClient.search(
+                (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+                eq(Void.class)))
+                .thenReturn(mockRangeResponse) // For year range
+                .thenReturn(mockYearlyResponse) // For 2020
+                .thenReturn(mockYearlyResponse) // For 2021
+                .thenReturn(mockYearlyResponse); // For 2022
 
-        when(elasticsearchClient.search(
-            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
-            .thenReturn(mockRangeResponse) // For year range
-            .thenReturn(mockYearlyResponse) // For 2020
-            .thenReturn(mockYearlyResponse) // For 2021
-            .thenReturn(mockYearlyResponse); // For 2022
+            // When
+            var result =
+                service.getMCategoryCountsForOrganisationUnit(organisationUnitId, startYear,
+                    endYear);
 
-        // When
-        var result =
-            service.getMCategoryCountsForOrganisationUnit(organisationUnitId, startYear, endYear);
-
-        // Then
-        assertEquals(1, result.size());
-        var commissionCounts = result.getFirst();
-        assertEquals(3, commissionCounts.yearlyCounts().size());
-        assertEquals(2020, commissionCounts.yearlyCounts().getFirst().year());
-        assertEquals(1, commissionCounts.yearlyCounts().getFirst().countsByCategory().size());
-        assertEquals(2L, commissionCounts.yearlyCounts().getFirst().countsByCategory().get("M11"));
+            // Then
+            assertEquals(1, result.size());
+            var commissionCounts = result.getFirst();
+            assertEquals(3, commissionCounts.yearlyCounts().size());
+            assertEquals(2020, commissionCounts.yearlyCounts().getFirst().year());
+            assertEquals(1, commissionCounts.yearlyCounts().getFirst().countsByCategory().size());
+            assertEquals(2L,
+                commissionCounts.yearlyCounts().getFirst().countsByCategory().get("M11"));
+        }
     }
 
     @Test
@@ -467,16 +423,12 @@ class OrganisationUnitVisualizationDataServiceTest {
             var from = LocalDate.of(2023, 1, 1);
             var to = LocalDate.of(2023, 3, 31);
 
-            when(
-                organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
-                    organisationUnitId))
-                .thenReturn(mockOutputConfiguration());
+            queryUtilMock.when(
+                    () -> QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId))
+                .thenReturn(List.of("organisation_unit_ids", "organisation_unit_ids_active"));
 
-            when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
-                new OrganisationUnit() {{
-                    setId(organisationUnitId);
-                }}
-            );
+            queryUtilMock.when(() -> QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId))
+                .thenReturn(List.of(123, 456, 789));
 
             when(elasticsearchClient.search(
                 (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
