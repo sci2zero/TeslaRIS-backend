@@ -92,7 +92,7 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
         }
 
         if (Objects.nonNull(monographPublication.getNumberOfPages())) {
-            sb.append(refMan ? "SP  - " : "%0P ").append(monographPublication.getNumberOfPages())
+            sb.append(refMan ? "SP  - " : "%7 ").append(monographPublication.getNumberOfPages())
                 .append("\n");
         }
 
@@ -102,7 +102,8 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
         }
 
         if (Objects.nonNull(monographPublication.getMonograph())) {
-            setMCTaggedField(monographPublication.getMonograph().getTitle(), sb, "T2",
+            setMCTaggedField(monographPublication.getMonograph().getTitle(), sb,
+                refMan ? "T2" : "%0T",
                 defaultLanguageTag);
 
             if (valueExists(monographPublication.getMonograph().getEISBN())) {

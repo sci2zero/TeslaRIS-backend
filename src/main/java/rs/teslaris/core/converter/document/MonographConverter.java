@@ -119,7 +119,7 @@ public class MonographConverter extends DocumentPublicationConverter {
         setCommonTaggedFields(monograph, sb, defaultLanguageTag, refMan);
 
         if (Objects.nonNull(monograph.getNumberOfPages())) {
-            sb.append(refMan ? "SP  - " : "%0P ").append(monograph.getNumberOfPages()).append("\n");
+            sb.append(refMan ? "SP  - " : "%7 ").append(monograph.getNumberOfPages()).append("\n");
         }
 
         if (valueExists(monograph.getVolume())) {
@@ -139,7 +139,7 @@ public class MonographConverter extends DocumentPublicationConverter {
         }
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {
-            setMCTaggedField(monograph.getPublicationSeries().getTitle(), sb, "T2",
+            setMCTaggedField(monograph.getPublicationSeries().getTitle(), sb, refMan ? "T2" : "%0T",
                 defaultLanguageTag);
 
             if (valueExists(monograph.getPublicationSeries().getEISSN())) {

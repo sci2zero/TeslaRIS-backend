@@ -107,7 +107,7 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
         }
 
         if (Objects.nonNull(journalPublication.getNumberOfPages())) {
-            sb.append(refMan ? "SP  - " : "%0P ").append(journalPublication.getNumberOfPages())
+            sb.append(refMan ? "SP  - " : "%7 ").append(journalPublication.getNumberOfPages())
                 .append("\n");
         }
 
