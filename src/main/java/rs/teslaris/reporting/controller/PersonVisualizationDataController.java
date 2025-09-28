@@ -1,6 +1,7 @@
 package rs.teslaris.reporting.controller;
 
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
@@ -56,5 +57,12 @@ public class PersonVisualizationDataController {
                                                          @RequestParam LocalDate startDate,
                                                          @RequestParam LocalDate endDate) {
         return personChartService.getMonthlyStatisticsCounts(personId, startDate, endDate);
+    }
+
+    @GetMapping("/yearly-citations/{personId}")
+    public Map<Year, Long> getYearlyCitationsForPerson(@PathVariable Integer personId,
+                                                       @RequestParam Integer from,
+                                                       @RequestParam Integer to) {
+        return personChartService.getYearlyCitationCounts(personId, from, to);
     }
 }

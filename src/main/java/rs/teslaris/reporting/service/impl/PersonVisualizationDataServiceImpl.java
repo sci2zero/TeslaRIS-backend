@@ -21,11 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -49,6 +51,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     private final UserRepository userRepository;
 
     private final InvolvementRepository involvementRepository;
+
+    private final PersonIndexRepository personIndexRepository;
 
 
     @Override
@@ -372,6 +376,21 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
             log.error("Error fetching yearly statistics for person {} and type VIEW", personId);
             return Collections.emptyMap();
         }
+    }
+
+    @Override
+    public Map<Year, Long> getYearlyCitationCounts(Integer personId, Integer startYear,
+                                                   Integer endYear) {
+        var result = new TreeMap<Year, Long>();
+        personIndexRepository.findByDatabaseId(personId).ifPresent(personIndex -> {
+            personIndex.getCitationsByYear().forEach((key, value) -> {
+                if (key >= startYear && key <= endYear) {
+                    result.put(Year.of(key), Long.valueOf(value));
+                }
+            });
+        });
+
+        return result;
     }
 
     private Map<String, Long> getPublicationCountsByTypeForAuthorAndYear(Integer authorId,

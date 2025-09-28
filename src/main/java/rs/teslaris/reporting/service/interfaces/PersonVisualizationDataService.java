@@ -31,4 +31,6 @@ public interface PersonVisualizationDataService {
     Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer personId, LocalDate from, LocalDate to);
 
     Map<Year, Long> getYearlyStatisticsCounts(Integer personId, Integer startYear, Integer endYear);
+
+    Map<Year, Long> getYearlyCitationCounts(Integer personId, Integer startYear, Integer endYear);
 }

@@ -60,4 +60,14 @@ public class PersonVisualizationDataControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
+
+    @Test
+    public void testGetYearlyCitationsForPerson() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/visualization-data/person/yearly-citations/{personId}?from=2005&to=2017",
+                        1)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
 }
