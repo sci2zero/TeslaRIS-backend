@@ -53,6 +53,7 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
                                     .map(FieldValue::of)
                                     .toList())
                             )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value(statisticsType.name())))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
@@ -116,6 +117,7 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
                                     .map(FieldValue::of)
                                     .toList())
                             )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value(statisticsType.name())))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
@@ -184,6 +186,7 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
                                     .map(FieldValue::of)
                                     .toList())
                             )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value(statisticsType.name())))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")

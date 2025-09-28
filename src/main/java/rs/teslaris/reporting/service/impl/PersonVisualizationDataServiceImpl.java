@@ -205,6 +205,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                                     .map(FieldValue::of)
                                     .toList())
                             )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
@@ -266,6 +267,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                                     .map(FieldValue::of)
                                     .toList())
                             )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
@@ -332,6 +334,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                                     .map(FieldValue::of)
                                     .toList())
                             )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")

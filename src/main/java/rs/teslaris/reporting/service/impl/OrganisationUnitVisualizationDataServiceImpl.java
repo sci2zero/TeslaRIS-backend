@@ -188,6 +188,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                                     .map(FieldValue::of)
                                     .toList())
                             )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
@@ -250,6 +251,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                                     .map(FieldValue::of)
                                     .toList())
                             )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
@@ -316,6 +318,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                         .bool(b -> b
                             .must(QueryUtil.organisationUnitMatchQuery(allMergedOrganisationUnitIds,
                                 searchFields))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
                                 .field("timestamp")
