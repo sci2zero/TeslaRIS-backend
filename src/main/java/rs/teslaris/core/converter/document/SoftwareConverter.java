@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class SoftwareConverter extends DocumentPublicationConverter {
 
@@ -30,7 +31,7 @@ public class SoftwareConverter extends DocumentPublicationConverter {
 
         setCommonFields(software, entry, defaultLanguageTag);
 
-        if (valueExists(software.getInternalNumber())) {
+        if (StringUtil.valueExists(software.getInternalNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(software.getInternalNumber(), StringValue.Style.BRACED));
         }
@@ -55,7 +56,7 @@ public class SoftwareConverter extends DocumentPublicationConverter {
 
         setCommonTaggedFields(software, sb, defaultLanguageTag, refMan);
 
-        if (valueExists(software.getInternalNumber())) {
+        if (StringUtil.valueExists(software.getInternalNumber())) {
             sb.append(refMan ? "C6  - " : "%N ").append(software.getInternalNumber()).append("\n");
         }
 

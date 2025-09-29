@@ -31,6 +31,7 @@ import rs.teslaris.core.model.oaipmh.marc21.DataField;
 import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.oaipmh.marc21.SubField;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.util.search.StringUtil;
 
 
 @Component
@@ -91,12 +92,12 @@ public class ThesisConverter extends DocumentPublicationConverter {
                 BibTeXEntry.KEY_INSTITUTION, defaultLanguageTag);
         }
 
-        if (valueExists(thesis.getEISBN())) {
+        if (StringUtil.valueExists(thesis.getEISBN())) {
             entry.addField(new Key("eIsbn"),
                 new StringValue(thesis.getEISBN(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(thesis.getPrintISBN())) {
+        if (StringUtil.valueExists(thesis.getPrintISBN())) {
             entry.addField(new Key("printIsbn"),
                 new StringValue(thesis.getPrintISBN(), StringValue.Style.BRACED));
         }
@@ -131,11 +132,11 @@ public class ThesisConverter extends DocumentPublicationConverter {
                 defaultLanguageTag);
         }
 
-        if (valueExists(thesis.getEISBN())) {
+        if (StringUtil.valueExists(thesis.getEISBN())) {
             sb.append(refMan ? "SN  - e:" : "%@ ").append(thesis.getEISBN()).append("\n");
         }
 
-        if (valueExists(thesis.getPrintISBN())) {
+        if (StringUtil.valueExists(thesis.getPrintISBN())) {
             sb.append(refMan ? "SN  - print:" : "%@ ").append(thesis.getPrintISBN()).append("\n");
         }
 

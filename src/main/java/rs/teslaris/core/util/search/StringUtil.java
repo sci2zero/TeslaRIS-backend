@@ -281,4 +281,8 @@ public class StringUtil {
         return token.replace("\\-", "-").replace("\\/", "/").replace("\\:", ":")
             .replace("https://doi.org/", "");
     }
+
+    public static boolean valueExists(String value) {
+        return Objects.nonNull(value) && !value.isBlank();
+    }
 }

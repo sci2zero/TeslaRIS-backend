@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class MonographPublicationConverter extends DocumentPublicationConverter {
 
@@ -37,8 +38,8 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
 
         setCommonFields(monographPublication, entry, defaultLanguageTag);
 
-        if (valueExists(monographPublication.getStartPage()) &&
-            valueExists((monographPublication.getEndPage()))) {
+        if (StringUtil.valueExists(monographPublication.getStartPage()) &&
+            StringUtil.valueExists((monographPublication.getEndPage()))) {
             entry.addField(BibTeXEntry.KEY_PAGES,
                 new StringValue(monographPublication.getStartPage() + "-" +
                     monographPublication.getEndPage(), StringValue.Style.BRACED));
@@ -50,7 +51,7 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
                     StringValue.Style.BRACED));
         }
 
-        if (valueExists(monographPublication.getArticleNumber())) {
+        if (StringUtil.valueExists(monographPublication.getArticleNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(monographPublication.getArticleNumber(),
                     StringValue.Style.BRACED));
@@ -60,13 +61,13 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
             setMCBibTexField(monographPublication.getMonograph().getTitle(), entry,
                 BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
 
-            if (valueExists(monographPublication.getMonograph().getEISBN())) {
+            if (StringUtil.valueExists(monographPublication.getMonograph().getEISBN())) {
                 entry.addField(new Key("eIsbn"),
                     new StringValue(monographPublication.getMonograph().getEISBN(),
                         StringValue.Style.BRACED));
             }
 
-            if (valueExists(monographPublication.getMonograph().getPrintISBN())) {
+            if (StringUtil.valueExists(monographPublication.getMonograph().getPrintISBN())) {
                 entry.addField(new Key("printIsbn"),
                     new StringValue(monographPublication.getMonograph().getPrintISBN(),
                         StringValue.Style.BRACED));
@@ -83,8 +84,8 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
 
         setCommonTaggedFields(monographPublication, sb, defaultLanguageTag, refMan);
 
-        if (valueExists(monographPublication.getStartPage()) &&
-            valueExists((monographPublication.getEndPage()))) {
+        if (StringUtil.valueExists(monographPublication.getStartPage()) &&
+            StringUtil.valueExists((monographPublication.getEndPage()))) {
             sb.append(refMan ? "SE  - " : "%P ").append(monographPublication.getStartPage())
                 .append("-")
                 .append(monographPublication.getEndPage())
@@ -96,7 +97,7 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
                 .append("\n");
         }
 
-        if (valueExists(monographPublication.getArticleNumber())) {
+        if (StringUtil.valueExists(monographPublication.getArticleNumber())) {
             sb.append(refMan ? "RI  - " : "%N ").append(monographPublication.getArticleNumber())
                 .append("\n");
         }
@@ -106,12 +107,12 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
                 refMan ? "T2" : "%0T",
                 defaultLanguageTag);
 
-            if (valueExists(monographPublication.getMonograph().getEISBN())) {
+            if (StringUtil.valueExists(monographPublication.getMonograph().getEISBN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(monographPublication.getMonograph().getEISBN()).append("\n");
             }
 
-            if (valueExists(monographPublication.getMonograph().getPrintISBN())) {
+            if (StringUtil.valueExists(monographPublication.getMonograph().getPrintISBN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(monographPublication.getMonograph().getPrintISBN())
                     .append("\n");

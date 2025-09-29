@@ -7,6 +7,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class MonographConverter extends DocumentPublicationConverter {
 
@@ -68,12 +69,12 @@ public class MonographConverter extends DocumentPublicationConverter {
 
         setCommonFields(monograph, entry, defaultLanguageTag);
 
-        if (valueExists(monograph.getNumber())) {
+        if (StringUtil.valueExists(monograph.getNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(monograph.getNumber(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(monograph.getVolume())) {
+        if (StringUtil.valueExists(monograph.getVolume())) {
             entry.addField(BibTeXEntry.KEY_VOLUME,
                 new StringValue(monograph.getVolume(), StringValue.Style.BRACED));
         }
@@ -98,12 +99,12 @@ public class MonographConverter extends DocumentPublicationConverter {
                     StringValue.Style.BRACED));
         }
 
-        if (valueExists(monograph.getEISBN())) {
+        if (StringUtil.valueExists(monograph.getEISBN())) {
             entry.addField(new Key("eIsbn"),
                 new StringValue(monograph.getEISBN(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(monograph.getPrintISBN())) {
+        if (StringUtil.valueExists(monograph.getPrintISBN())) {
             entry.addField(new Key("printIsbn"),
                 new StringValue(monograph.getPrintISBN(), StringValue.Style.BRACED));
         }
@@ -122,11 +123,11 @@ public class MonographConverter extends DocumentPublicationConverter {
             sb.append(refMan ? "SP  - " : "%7 ").append(monograph.getNumberOfPages()).append("\n");
         }
 
-        if (valueExists(monograph.getVolume())) {
+        if (StringUtil.valueExists(monograph.getVolume())) {
             sb.append(refMan ? "C6  - " : "%V ").append(monograph.getVolume()).append("\n");
         }
 
-        if (valueExists(monograph.getNumber())) {
+        if (StringUtil.valueExists(monograph.getNumber())) {
             sb.append(refMan ? "C7  - " : "%N ").append(monograph.getNumber()).append("\n");
         }
 
@@ -142,25 +143,25 @@ public class MonographConverter extends DocumentPublicationConverter {
             setMCTaggedField(monograph.getPublicationSeries().getTitle(), sb, refMan ? "T2" : "%0T",
                 defaultLanguageTag);
 
-            if (valueExists(monograph.getPublicationSeries().getEISSN())) {
+            if (StringUtil.valueExists(monograph.getPublicationSeries().getEISSN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(monograph.getPublicationSeries().getEISSN())
                     .append("\n");
             }
 
-            if (valueExists(monograph.getPublicationSeries().getPrintISSN())) {
+            if (StringUtil.valueExists(monograph.getPublicationSeries().getPrintISSN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(monograph.getPublicationSeries().getPrintISSN())
                     .append("\n");
             }
         }
 
-        if (valueExists(monograph.getEISBN())) {
+        if (StringUtil.valueExists(monograph.getEISBN())) {
             sb.append(refMan ? "SN  - " : "%@ ").append("e:").append(monograph.getEISBN())
                 .append("\n");
         }
 
-        if (valueExists(monograph.getPrintISBN())) {
+        if (StringUtil.valueExists(monograph.getPrintISBN())) {
             sb.append(refMan ? "SN  - " : "%@ ").append("print:").append(monograph.getPrintISBN())
                 .append("\n");
         }

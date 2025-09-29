@@ -422,7 +422,15 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     public static Publication toOpenaireModel(ExportDocument exportDocument) {
         var openairePublication = new Publication();
-        openairePublication.setOldId("Publications/(TESLARIS)" + exportDocument.getDatabaseId());
+
+        if (Objects.nonNull(exportDocument.getOldIds()) && !exportDocument.getOldIds().isEmpty()) {
+            openairePublication.setOldId("Publications/" + legacyIdentifierPrefix +
+                exportDocument.getOldIds().stream().findFirst().get());
+        } else {
+            openairePublication.setOldId(
+                "Publications/(TESLARIS)" + exportDocument.getDatabaseId());
+        }
+
         openairePublication.setTitle(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
         openairePublication.setSubtitle(
