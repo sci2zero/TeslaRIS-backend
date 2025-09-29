@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -122,6 +123,7 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
     @Override
     public List<Pair<OrganisationUnitIndex, Long>> getSubUnitsWithMostCitations(
         Integer institutionId, Integer fromYear, Integer toYear) {
+
         if (Objects.isNull(institutionId)) {
             return Collections.emptyList();
         }
@@ -134,33 +136,35 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
         SearchResponse<Void> response;
         try {
             response = elasticsearchClient.search(s -> s
-                    .index("person")
-                    .size(0)
-                    .query(q -> q.bool(b -> b
-                        .must(m -> m.terms(t ->
-                            t.field("employment_institutions_id_hierarchy").terms(
-                                v -> v.value(eligibleOUIds.stream()
-                                    .map(FieldValue::of)
-                                    .toList())
-                            )))
-                        .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))))
-                    ))
-                    .aggregations("by_org_unit", a -> a.terms(
-                            t -> t
-                                .field("employment_institutions_id_hierarchy")
-                                .size(10)
-                                .include(TermsInclude.of(
-                                    i -> i.terms(eligibleOUIds
-                                        .stream()
-                                        .map(Object::toString)
-                                        .toList()
-                                    ))))
-                        .aggregations("total_citations", sum -> sum
-                            .sum(v -> v.field("total_citations"))
-                        )
-                    ),
-                Void.class
-            );
+                .index("person")
+                .size(0)
+                .query(q -> q.bool(b -> b
+                    .must(m -> m.terms(t ->
+                        t.field("employment_institutions_id_hierarchy").terms(
+                            v -> v.value(eligibleOUIds.stream()
+                                .map(FieldValue::of)
+                                .toList())
+                        )))
+                    .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))))
+                ))
+                .aggregations("by_org_unit", a -> {
+                    var agg = a.terms(
+                        t -> t
+                            .field("employment_institutions_id_hierarchy")
+                            .size(10)
+                            .include(TermsInclude.of(
+                                i -> i.terms(eligibleOUIds.stream()
+                                    .map(Object::toString)
+                                    .toList()
+                                ))));
+
+                    for (int year = fromYear; year <= toYear; year++) {
+                        var finalYear = year;
+                        agg.aggregations("year_" + year, sum -> sum
+                            .sum(v -> v.field("citations_by_year." + finalYear)));
+                    }
+                    return agg;
+                }), Void.class);
         } catch (IOException e) {
             log.error("Error while fetching OU citation count leaderboard. Reason: {}",
                 e.getMessage());
@@ -192,13 +196,16 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
 
         return buckets.stream()
             .map(bucket -> {
-                double sum = bucket.aggregations()
-                    .get("total_citations")
-                    .sum()
-                    .value();
+                long periodSum = 0L;
+                for (int year = fromYear; year <= toYear; year++) {
+                    var agg = bucket.aggregations().get("year_" + year).sum();
+                    if (agg != null && agg.value() > 0) {
+                        periodSum += (long) agg.value();
+                    }
+                }
 
                 var ou = organisationUnitMap.get((int) bucket.key());
-                return Objects.nonNull(ou) ? new Pair<>(ou, (long) sum) : null;
+                return (periodSum > 0 && ou != null) ? new Pair<>(ou, periodSum) : null;
             })
             .filter(Objects::nonNull)
             .sorted((a, b) -> Long.compare(b.b, a.b))
@@ -221,7 +228,11 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
             return Collections.emptyList();
         }
 
-        var commissions = QueryUtil.fetchCommissionsForOrganisationUnit(institutionId);
+        var commissions =
+            new HashSet<>(QueryUtil.fetchCommissionsForOrganisationUnit(institutionId));
+        eligibleOUIds.forEach(organisationUnitId -> commissions.addAll(
+            QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId)));
+
         var retVal = new ArrayList<CommissionAssessmentPointsOULeaderboard>();
 
         commissions.forEach(commission -> {

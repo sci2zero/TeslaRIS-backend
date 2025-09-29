@@ -232,59 +232,6 @@ public class PersonLeaderboardServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldFilterOutResearchersWithNoCitationsInRange() throws IOException {
-        // Given
-        var institutionId = 123;
-
-        LongTermsBucket bucket1 = mock(LongTermsBucket.class);
-        when(bucket1.key()).thenReturn(1L);
-        Aggregate totalCitationsAgg1 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        SumAggregate sumAgg1 = mock(SumAggregate.class);
-        when(sumAgg1.value()).thenReturn(25.0);
-        when(totalCitationsAgg1.sum()).thenReturn(sumAgg1);
-        when(bucket1.aggregations()).thenReturn(Map.of("total_citations", totalCitationsAgg1));
-
-        LongTermsBucket bucket2 = mock(LongTermsBucket.class);
-        when(bucket2.key()).thenReturn(2L);
-        Aggregate totalCitationsAgg2 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        SumAggregate sumAgg2 = mock(SumAggregate.class);
-        when(sumAgg2.value()).thenReturn(0.0);
-        when(totalCitationsAgg2.sum()).thenReturn(sumAgg2);
-        when(bucket2.aggregations()).thenReturn(Map.of("total_citations", totalCitationsAgg2));
-
-        Aggregate byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        when(byPersonAgg.lterms().buckets().array()).thenReturn(List.of(bucket1, bucket2));
-
-        Map<String, Aggregate> topAggs = Map.of("by_person", byPersonAgg);
-
-        SearchResponse<Void> mockResponse = mock(SearchResponse.class);
-        when(mockResponse.aggregations()).thenReturn(topAggs);
-
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class)))
-            .thenReturn(mockResponse);
-
-        PersonIndex person1 = new PersonIndex();
-        person1.setDatabaseId(1);
-        person1.setName("Researcher 1");
-        when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(person1));
-
-        PersonIndex person2 = new PersonIndex();
-        person2.setDatabaseId(2);
-        person2.setName("Researcher 2");
-        when(personIndexRepository.findByDatabaseId(2)).thenReturn(Optional.of(person2));
-
-        // When
-        var result = service.getResearchersWithMostCitations(institutionId, 2020, 2023);
-
-        // Then
-        assertEquals(2, result.size());
-        assertEquals(person1, result.getFirst().a);
-        assertEquals(25L, result.getFirst().b);
-    }
-
-
-    @Test
-    @SuppressWarnings("unchecked")
     void shouldReturnEmptyMapWhenIOExceptionOccursInPublicationCount() throws IOException {
         try (MockedStatic<QueryUtil> queryUtilMock = mockStatic(QueryUtil.class)) {
             // Given
@@ -338,32 +285,96 @@ public class PersonLeaderboardServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void shouldFilterOutResearchersWithNoCitationsInRange() throws IOException {
+        // Given
+        var institutionId = 123;
+
+        LongTermsBucket bucket1 = mock(LongTermsBucket.class);
+        when(bucket1.key()).thenReturn(1L);
+        Map<String, Aggregate> aggs1 = new HashMap<>();
+        for (int y = 2020; y <= 2023; y++) {
+            Aggregate agg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            SumAggregate sum = mock(SumAggregate.class);
+            when(sum.value()).thenReturn(y == 2020 ? 25.0 : 0.0);
+            when(agg.sum()).thenReturn(sum);
+            aggs1.put("year_" + y, agg);
+        }
+        when(bucket1.aggregations()).thenReturn(aggs1);
+
+        LongTermsBucket bucket2 = mock(LongTermsBucket.class);
+        when(bucket2.key()).thenReturn(2L);
+        Map<String, Aggregate> aggs2 = new HashMap<>();
+        for (int y = 2020; y <= 2023; y++) {
+            Aggregate agg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            SumAggregate sum = mock(SumAggregate.class);
+            when(sum.value()).thenReturn(0.0);
+            when(agg.sum()).thenReturn(sum);
+            aggs2.put("year_" + y, agg);
+        }
+        when(bucket2.aggregations()).thenReturn(aggs2);
+
+        Aggregate byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(byPersonAgg.lterms().buckets().array()).thenReturn(List.of(bucket1, bucket2));
+        SearchResponse<Void> mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(Map.of("by_person", byPersonAgg));
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class)))
+            .thenReturn(mockResponse);
+
+        PersonIndex person1 = new PersonIndex();
+        person1.setDatabaseId(1);
+        person1.setName("Researcher 1");
+        when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(person1));
+
+        PersonIndex person2 = new PersonIndex();
+        person2.setDatabaseId(2);
+        person2.setName("Researcher 2");
+        when(personIndexRepository.findByDatabaseId(2)).thenReturn(Optional.of(person2));
+
+        // When
+        var result = service.getResearchersWithMostCitations(institutionId, 2020, 2023);
+
+        // Then
+        assertEquals(1, result.size());
+        assertEquals(person1, result.getFirst().a);
+        assertEquals(25L, result.getFirst().b);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void shouldReturnResearchersWithMostCitations() throws IOException {
         // Given
         var institutionId = 123;
 
         var bucket1 = mock(LongTermsBucket.class);
         when(bucket1.key()).thenReturn(1L);
-        var totalCitations1 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        var sum1 = mock(SumAggregate.class);
-        when(sum1.value()).thenReturn(50.0);
-        when(totalCitations1.sum()).thenReturn(sum1);
-        when(bucket1.aggregations()).thenReturn(Map.of("total_citations", totalCitations1));
+        Map<String, Aggregate> aggs1 = new HashMap<>();
+        for (int y = 2020; y <= 2023; y++) {
+            Aggregate agg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            SumAggregate sum = mock(SumAggregate.class);
+            when(sum.value()).thenReturn(y == 2020 ? 50.0 : 0.0);
+            when(agg.sum()).thenReturn(sum);
+            aggs1.put("year_" + y, agg);
+        }
+        when(bucket1.aggregations()).thenReturn(aggs1);
 
         var bucket2 = mock(LongTermsBucket.class);
         when(bucket2.key()).thenReturn(2L);
-        var totalCitations2 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-        var sum2 = mock(SumAggregate.class);
-        when(sum2.value()).thenReturn(55.0);
-        when(totalCitations2.sum()).thenReturn(sum2);
-        when(bucket2.aggregations()).thenReturn(Map.of("total_citations", totalCitations2));
+        Map<String, Aggregate> aggs2 = new HashMap<>();
+        for (int y = 2020; y <= 2023; y++) {
+            Aggregate agg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+            SumAggregate sum = mock(SumAggregate.class);
+            when(sum.value()).thenReturn(y == 2020 ? 55.0 : 0.0);
+            when(agg.sum()).thenReturn(sum);
+            aggs2.put("year_" + y, agg);
+        }
+        when(bucket2.aggregations()).thenReturn(aggs2);
 
         Aggregate byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(byPersonAgg.lterms().buckets().array()).thenReturn(List.of(bucket1, bucket2));
-        Map<String, Aggregate> topAggs = Map.of("by_person", byPersonAgg);
-
-        var mockResponse = mock(SearchResponse.class);
-        when(mockResponse.aggregations()).thenReturn(topAggs);
+        SearchResponse<Void> mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(Map.of("by_person", byPersonAgg));
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class)))
+            .thenReturn(mockResponse);
 
         var person1 = new PersonIndex();
         person1.setDatabaseId(1);
@@ -371,9 +382,6 @@ public class PersonLeaderboardServiceTest {
         var person2 = new PersonIndex();
         person2.setDatabaseId(2);
         person2.setName("Researcher 2");
-
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
-            mockResponse);
         when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(person1));
         when(personIndexRepository.findByDatabaseId(2)).thenReturn(Optional.of(person2));
 
@@ -395,42 +403,42 @@ public class PersonLeaderboardServiceTest {
         var institutionId = 123;
 
         List<LongTermsBucket> buckets = new ArrayList<>();
-        Map<Integer, PersonIndex> personMap = new HashMap<>();
         for (int i = 1; i <= 15; i++) {
             LongTermsBucket bucket = mock(LongTermsBucket.class);
             when(bucket.key()).thenReturn((long) i);
-            Aggregate totalAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-            SumAggregate sum = mock(SumAggregate.class);
-            when(sum.value()).thenReturn((double) (i * 10));
-            when(totalAgg.sum()).thenReturn(sum);
-            when(bucket.aggregations()).thenReturn(Map.of("total_citations", totalAgg));
+            Map<String, Aggregate> aggs = new HashMap<>();
+            for (int y = 2020; y <= 2023; y++) {
+                Aggregate agg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+                SumAggregate sum = mock(SumAggregate.class);
+                when(sum.value()).thenReturn((double) (i * 10));
+                when(agg.sum()).thenReturn(sum);
+                aggs.put("year_" + y, agg);
+            }
+            when(bucket.aggregations()).thenReturn(aggs);
             buckets.add(bucket);
 
             PersonIndex person = new PersonIndex();
             person.setDatabaseId(i);
             person.setName("Researcher " + i);
-            personMap.put(i, person);
             when(personIndexRepository.findByDatabaseId(i)).thenReturn(Optional.of(person));
         }
 
         var byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
         when(byPersonAgg.lterms().buckets().array()).thenReturn(buckets);
-        var topAggs = Map.of("by_person", byPersonAgg);
-
         var mockResponse = mock(SearchResponse.class);
-        when(mockResponse.aggregations()).thenReturn(topAggs);
-        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
-            mockResponse);
+        when(mockResponse.aggregations()).thenReturn(Map.of("by_person", byPersonAgg));
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class)))
+            .thenReturn(mockResponse);
 
         // When
         var result = service.getResearchersWithMostCitations(institutionId, 2020, 2023);
 
         // Then
         assertEquals(10, result.size());
-        long previousCount = Long.MAX_VALUE;
+        long previous = Long.MAX_VALUE;
         for (var entry : result) {
-            assertTrue(entry.b <= previousCount);
-            previousCount = entry.b;
+            assertTrue(entry.b <= previous);
+            previous = entry.b;
         }
     }
 

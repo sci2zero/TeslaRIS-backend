@@ -112,9 +112,8 @@ public class OrganisationUnitLeaderboardServiceTest {
             // Given
             var institutionId = 123;
             var fromYear = 2020;
-            var toYear = 2023;
+            var toYear = 2021;
 
-            var eligibleOUIds = List.of(1, 2, 3);
             var ouResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
             var hit = mock(Hit.class);
             var ouIndex = new OrganisationUnitIndex();
@@ -126,26 +125,35 @@ public class OrganisationUnitLeaderboardServiceTest {
 
             var bucket1 = mock(LongTermsBucket.class);
             when(bucket1.key()).thenReturn(1L);
-            var sumAgg1 = mock(SumAggregate.class);
-            when(sumAgg1.value()).thenReturn(100.0);
-            var agg1 = mock(Aggregate.class);
-            when(agg1.sum()).thenReturn(sumAgg1);
-            when(bucket1.aggregations()).thenReturn(Map.of("total_citations", agg1));
+            var sum2020a = mock(SumAggregate.class);
+            when(sum2020a.value()).thenReturn(40.0);
+            var sum2021a = mock(SumAggregate.class);
+            when(sum2021a.value()).thenReturn(60.0);
+            when(bucket1.aggregations()).thenReturn(Map.of(
+                "year_2020", mock(Aggregate.class, RETURNS_DEEP_STUBS),
+                "year_2021", mock(Aggregate.class, RETURNS_DEEP_STUBS)
+            ));
+            when(bucket1.aggregations().get("year_2020").sum()).thenReturn(sum2020a);
+            when(bucket1.aggregations().get("year_2021").sum()).thenReturn(sum2021a);
 
             var bucket2 = mock(LongTermsBucket.class);
             when(bucket2.key()).thenReturn(2L);
-            var sumAgg2 = mock(SumAggregate.class);
-            when(sumAgg2.value()).thenReturn(50.0);
-            var agg2 = mock(Aggregate.class);
-            when(agg2.sum()).thenReturn(sumAgg2);
-            when(bucket2.aggregations()).thenReturn(Map.of("total_citations", agg2));
+            var sum2020b = mock(SumAggregate.class);
+            when(sum2020b.value()).thenReturn(30.0);
+            var sum2021b = mock(SumAggregate.class);
+            when(sum2021b.value()).thenReturn(20.0);
+            when(bucket2.aggregations()).thenReturn(Map.of(
+                "year_2020", mock(Aggregate.class, RETURNS_DEEP_STUBS),
+                "year_2021", mock(Aggregate.class, RETURNS_DEEP_STUBS)
+            ));
+            when(bucket2.aggregations().get("year_2020").sum()).thenReturn(sum2020b);
+            when(bucket2.aggregations().get("year_2021").sum()).thenReturn(sum2021b);
 
             var termsAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
             when(termsAgg.lterms().buckets().array()).thenReturn(List.of(bucket1, bucket2));
 
             var mockResponse = mock(SearchResponse.class);
             when(mockResponse.aggregations()).thenReturn(Map.of("by_org_unit", termsAgg));
-
             when(elasticsearchClient.search(any(Function.class), eq(Void.class)))
                 .thenReturn(mockResponse);
 
@@ -164,8 +172,8 @@ public class OrganisationUnitLeaderboardServiceTest {
 
             // Then
             assertEquals(2, result.size());
-            assertEquals(100L, result.get(0).b);
-            assertEquals(50L, result.get(1).b);
+            assertEquals(100L, result.get(0).b); // 40 + 60
+            assertEquals(50L, result.get(1).b);  // 30 + 20
         }
     }
 

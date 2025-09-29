@@ -117,16 +117,17 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
     }
 
     @Override
-    public List<Pair<PersonIndex, Long>> getResearchersWithMostCitations(Integer institutionId,
-                                                                         Integer fromYear,
-                                                                         Integer toYear) {
+    public List<Pair<PersonIndex, Long>> getResearchersWithMostCitations(
+        Integer institutionId, Integer fromYear, Integer toYear) {
+
         if (Objects.isNull(institutionId)) {
             return Collections.emptyList();
         }
 
         SearchResponse<Void> response;
         try {
-            response = elasticsearchClient.search(s -> s
+            response = elasticsearchClient.search(s -> {
+                var search = s
                     .index("person")
                     .size(0)
                     .query(q -> q.bool(b -> b
@@ -135,17 +136,23 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                             .value(institutionId)))
                         .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))))
                     ))
-                    .aggregations("by_person", a -> a
-                        .terms(t -> t
-                            .field("databaseId")
-                            .size(10)
-                        )
-                        .aggregations("total_citations", sum -> sum
-                            .sum(v -> v.field("total_citations"))
-                        )
-                    ),
-                Void.class
-            );
+                    .aggregations("by_person", a -> {
+                        var agg = a.terms(
+                            t -> t
+                                .field("databaseId")
+                                .size(10)
+                        );
+
+                        for (int year = fromYear; year <= toYear; year++) {
+                            var finalYear = year;
+                            agg.aggregations("year_" + year, sum -> sum
+                                .sum(v -> v.field("citations_by_year." + finalYear)));
+                        }
+                        return agg;
+                    });
+
+                return search;
+            }, Void.class);
         } catch (IOException e) {
             log.error("Error while fetching person citation count leaderboard. Reason: {}",
                 e.getMessage());
@@ -176,13 +183,16 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
 
         return buckets.stream()
             .map(bucket -> {
-                double sum = bucket.aggregations()
-                    .get("total_citations")
-                    .sum()
-                    .value();
+                long periodSum = 0L;
+                for (int year = fromYear; year <= toYear; year++) {
+                    var agg = bucket.aggregations().get("year_" + year).sum();
+                    if (agg != null && agg.value() > 0) {
+                        periodSum += (long) agg.value();
+                    }
+                }
 
                 PersonIndex person = personMap.get((int) bucket.key());
-                return Objects.nonNull(person) ? new Pair<>(person, (long) sum) : null;
+                return (periodSum > 0 && person != null) ? new Pair<>(person, periodSum) : null;
             })
             .filter(Objects::nonNull)
             .sorted((a, b) -> Long.compare(b.b, a.b))
