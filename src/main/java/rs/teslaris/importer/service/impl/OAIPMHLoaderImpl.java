@@ -167,12 +167,29 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     DataSet.PUBLICATIONS, query, userId);
             case RESEARCH_ARTICLES:
                 query.addCriteria(Criteria.where("type").regex("c_2df8fbb1"));
+                query.addCriteria(Criteria.where("type").regex("c_3e5a"));
                 return (R) findAndConvertEntity(Publication.class, journalPublicationConverter,
                     DataSet.PUBLICATIONS, query, userId);
             case CONFERENCE_PUBLICATIONS:
                 query.addCriteria(Criteria.where("type").regex("c_5794"));
-                query.addCriteria(Criteria.where("type").regex("c_0640"));
+                query.addCriteria(Criteria.where("type").regex("c_c94f"));
                 return (R) findAndConvertEntity(Publication.class, proceedingsPublicationConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case PHD_THESES:
+                query.addCriteria(Criteria.where("type").regex("c_db06"));
+                return (R) findAndConvertEntity(Publication.class, dissertationConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MR_THESES:
+                query.addCriteria(Criteria.where("type").regex("c_46ec"));
+                return (R) findAndConvertEntity(Publication.class, magistrateConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MONOGRAPHS:
+                query.addCriteria(Criteria.where("type").regex("c_2f33"));
+                return (R) findAndConvertEntity(Publication.class, monographConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MONOGRAPH_PUBLICATIONS:
+                query.addCriteria(Criteria.where("type").regex("c_3248"));
+                return (R) findAndConvertEntity(Publication.class, monographPublicationConverter,
                     DataSet.PUBLICATIONS, query, userId);
             case ORGANISATION_UNITS:
                 var orgUnit = (OrganisationUnitWizardDTO) findAndConvertEntity(OrgUnit.class,
