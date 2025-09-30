@@ -13,16 +13,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +44,7 @@ import rs.teslaris.assessment.service.interfaces.indicator.ExternalIndicatorHarv
 import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.util.ExternalMappingConstraintType;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
+import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -80,13 +85,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     private final ScopusAuthenticationHelper scopusAuthenticationHelper;
 
     private final PersonIndexRepository personIndexRepository;
-
+    private final Lock harvestLock = new ReentrantLock();
     private Map<String, String> externalIndicatorMapping;
-
     private Map<String, Integer> harvestPeriodOffsets;
-
     private Map<String, Integer> rateLimits;
-
     @Value("${harvest-external-indicators.allowed}")
     private Boolean harvestAllowed;
 
@@ -381,6 +383,9 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         int citationCount = result[0].count();
                         totalPublications.getAndIncrement();
                         allCitationCounts.add(citationCount);
+
+                        doc.setTotalCitations((long) citationCount);
+                        documentPublicationIndexRepository.save(doc);
                     }
                 });
 
@@ -523,7 +528,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                 newCitationCountIndicator.setToDate(LocalDate.now());
 
                 if (shouldUpdateIndex) {
-                    index.get().setTotalCitations(value);
+                    index.get().setTotalCitations((long) value);
                 }
             } else {
                 if (Objects.isNull(yearlyIndicator)) {
@@ -627,14 +632,33 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         return existingMap;
     }
 
+    @EventListener
+    @Async
+    protected void handleManualIndicatorHarvest(HarvestExternalIndicatorsEvent ignored) {
+        performIndicatorHarvest();
+    }
+
     @Scheduled(cron = "${harvest-external-indicators.schedule}")
-    protected void performIndicatorHarvest() {
+    protected void performScheduledIndicatorHarvest() {
+        performIndicatorHarvest();
+    }
+
+    private void performIndicatorHarvest() {
         if (!harvestAllowed) {
             return;
         }
 
-        performPersonIndicatorHarvest();
-        performOUIndicatorDeduction();
+        if (!harvestLock.tryLock()) {
+            log.info("Harvest already in progress, skipping execution");
+            return;
+        }
+
+        try {
+            performPersonIndicatorHarvest();
+            performOUIndicatorDeduction();
+        } finally {
+            harvestLock.unlock();
+        }
     }
 
     public record OpenAlexResults(

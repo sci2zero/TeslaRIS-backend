@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
@@ -116,6 +118,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     protected final DocumentFileService documentFileService;
 
     protected final CitationService citationService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final PersonContributionService personContributionService;
 
@@ -425,6 +429,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
+        var oldYear = index.getYear();
+        var oldAuthors = index.getAuthorIds().stream().sorted().toList();
+
         clearCommonIndexFields(index);
 
         setBasicMetadata(document, index);
@@ -434,6 +441,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setIsApproved(Objects.nonNull(document.getApproveStatus()) &&
             document.getApproveStatus().equals(ApproveStatus.APPROVED));
         index.setAreFilesValid(document.getAreFilesValid());
+
+        if (Objects.nonNull(index.getId()) && (!index.getYear().equals(oldYear) ||
+            !index.getAuthorIds().stream().sorted().toList().equals(oldAuthors))) {
+            applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
+                index.getAuthorIds().stream().filter(id -> id > 0).toList()));
+        }
     }
 
     private void setBasicMetadata(Document document, DocumentPublicationIndex index) {

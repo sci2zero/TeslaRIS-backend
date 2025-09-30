@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
@@ -51,6 +52,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               DocumentRepository documentRepository,
                               DocumentFileService documentFileService,
                               CitationService citationService,
+                              ApplicationEventPublisher applicationEventPublisher,
                               PersonContributionService personContributionService,
                               ExpressionTransformer expressionTransformer,
                               EventService eventService,
@@ -63,9 +65,10 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }

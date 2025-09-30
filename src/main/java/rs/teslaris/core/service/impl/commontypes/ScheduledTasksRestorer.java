@@ -50,7 +50,7 @@ public class ScheduledTasksRestorer {
 
 
     @EventListener(ApplicationReadyEvent.class)
-    public void restoreTasksOnStartup() {
+    protected void restoreTasksOnStartup() {
         List<ScheduledTaskMetadata> allMetadata = metadataRepository.findTasksByTypes(
             List.of(
                 ScheduledTaskType.DOCUMENT_BACKUP,
@@ -115,6 +115,8 @@ public class ScheduledTasksRestorer {
         );
 
         var userId = (Integer) data.get("userId");
+        var reharvestCitationIndicators =
+            Boolean.parseBoolean((String) data.get("reharvestCitationIndicators"));
 
         var timeToRun = metadata.getTimeToRun();
 
@@ -128,7 +130,7 @@ public class ScheduledTasksRestorer {
                     EntityType::name).toList(), "-") +
                 "-" + UUID.randomUUID(),
             timeToRun,
-            () -> reindexService.reindexDatabase(indexesToRepopulate),
+            () -> reindexService.reindexDatabase(indexesToRepopulate, reharvestCitationIndicators),
             userId, RecurrenceType.ONCE);
 
         taskManagerService.saveTaskMetadata(
@@ -136,6 +138,7 @@ public class ScheduledTasksRestorer {
                 ScheduledTaskType.REINDEXING, new HashMap<>() {{
                 put("indexesToRepopulate", indexesToRepopulate);
                 put("userId", userId);
+                put("reharvestCitationIndicators", String.valueOf(reharvestCitationIndicators));
             }}, RecurrenceType.ONCE));
     }
 

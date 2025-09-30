@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
+import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.impl.commontypes.ReindexServiceImpl;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -36,6 +37,7 @@ import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.functional.Pair;
 
 @SpringBootTest
 public class ReindexServiceTest {
@@ -101,25 +103,34 @@ public class ReindexServiceTest {
     private ReindexServiceImpl reindexService;
 
 
-    static Stream<EntityType> indexTypeProvider() {
+    static Stream<Pair<EntityType, Boolean>> indexTypeProvider() {
         return Stream.of(
-            EntityType.USER_ACCOUNT,
-            EntityType.JOURNAL,
-            EntityType.PUBLISHER,
-            EntityType.PERSON,
-            EntityType.ORGANISATION_UNIT,
-            EntityType.BOOK_SERIES,
-            EntityType.EVENT,
-            EntityType.PUBLICATION,
-            EntityType.DOCUMENT_FILE
+            new Pair<>(EntityType.USER_ACCOUNT, false),
+            new Pair<>(EntityType.JOURNAL, false),
+            new Pair<>(EntityType.PUBLISHER, false),
+            new Pair<>(EntityType.PERSON, false),
+            new Pair<>(EntityType.ORGANISATION_UNIT, false),
+            new Pair<>(EntityType.BOOK_SERIES, false),
+            new Pair<>(EntityType.EVENT, false),
+            new Pair<>(EntityType.PUBLICATION, false),
+            new Pair<>(EntityType.DOCUMENT_FILE, false),
+            new Pair<>(EntityType.USER_ACCOUNT, true),
+            new Pair<>(EntityType.JOURNAL, true),
+            new Pair<>(EntityType.PUBLISHER, true),
+            new Pair<>(EntityType.PERSON, true),
+            new Pair<>(EntityType.ORGANISATION_UNIT, true),
+            new Pair<>(EntityType.BOOK_SERIES, true),
+            new Pair<>(EntityType.EVENT, true),
+            new Pair<>(EntityType.PUBLICATION, true),
+            new Pair<>(EntityType.DOCUMENT_FILE, true)
         );
     }
 
     @ParameterizedTest
     @MethodSource("indexTypeProvider")
-    void testReindexDatabase(EntityType indexType) {
+    void testReindexDatabase(Pair<EntityType, Boolean> indexType) {
         // Given
-        var indexesToRepopulate = List.of(indexType);
+        var indexesToRepopulate = List.of(indexType.a);
 
         // Return completed futures for all mocked services
         when(userService.reindexUsers()).thenReturn(CompletableFuture.completedFuture(null));
@@ -137,27 +148,29 @@ public class ReindexServiceTest {
             CompletableFuture.completedFuture(null));
 
         // When
-        reindexService.reindexDatabase(indexesToRepopulate);
+        reindexService.reindexDatabase(indexesToRepopulate, indexType.b);
 
         // Then
         verify(userService,
-            indexType.equals(EntityType.USER_ACCOUNT) ? times(1) : never()).reindexUsers();
+            indexType.a.equals(EntityType.USER_ACCOUNT) ? times(1) : never()).reindexUsers();
         verify(publisherService,
-            indexType.equals(EntityType.PUBLISHER) ? times(1) : never()).reindexPublishers();
+            indexType.a.equals(EntityType.PUBLISHER) ? times(1) : never()).reindexPublishers();
         verify(personService,
-            indexType.equals(EntityType.PERSON) ? times(1) : never()).reindexPersons();
-        verify(organisationUnitService, indexType.equals(EntityType.ORGANISATION_UNIT) ? times(1) :
-            never()).reindexOrganisationUnits();
+            indexType.a.equals(EntityType.PERSON) ? times(1) : never()).reindexPersons();
+        verify(organisationUnitService,
+            indexType.a.equals(EntityType.ORGANISATION_UNIT) ? times(1) :
+                never()).reindexOrganisationUnits();
         verify(journalService,
-            indexType.equals(EntityType.JOURNAL) ? times(1) : never()).reindexJournals();
+            indexType.a.equals(EntityType.JOURNAL) ? times(1) : never()).reindexJournals();
         verify(bookSeriesService,
-            indexType.equals(EntityType.BOOK_SERIES) ? times(1) : never()).reindexBookSeries();
+            indexType.a.equals(EntityType.BOOK_SERIES) ? times(1) : never()).reindexBookSeries();
         verify(conferenceService,
-            indexType.equals(EntityType.EVENT) ? times(1) : never()).reindexConferences();
+            indexType.a.equals(EntityType.EVENT) ? times(1) : never()).reindexConferences();
         verify(documentFileService,
-            indexType.equals(EntityType.DOCUMENT_FILE) ? times(1) : never()).reindexDocumentFiles();
+            indexType.a.equals(EntityType.DOCUMENT_FILE) ? times(1) :
+                never()).reindexDocumentFiles();
 
-        if (indexType.equals(EntityType.PUBLICATION)) {
+        if (indexType.a.equals(EntityType.PUBLICATION)) {
             verify(documentPublicationService).deleteIndexes();
             verify(journalPublicationService).reindexJournalPublications();
             verify(proceedingsPublicationService).reindexProceedingsPublications();
@@ -170,10 +183,10 @@ public class ReindexServiceTest {
             verify(thesisService).reindexTheses();
             verify(applicationEventPublisher).publishEvent(
                 any(AllResearcherPointsReindexingEvent.class));
-        } else if (indexType.equals(EntityType.DOCUMENT_FILE)) {
+        } else if (indexType.a.equals(EntityType.DOCUMENT_FILE)) {
             verify(documentFileService).deleteIndexes();
             verify(documentFileService).reindexDocumentFiles();
-        } else if (indexType.equals(EntityType.PERSON)) {
+        } else if (indexType.a.equals(EntityType.PERSON)) {
             verify(applicationEventPublisher).publishEvent(
                 any(AllResearcherPointsReindexingEvent.class));
         } else {
@@ -188,6 +201,10 @@ public class ReindexServiceTest {
             verify(monographPublicationService, never()).reindexMonographPublications();
             verify(proceedingsService, never()).reindexProceedings();
             verify(thesisService, never()).reindexTheses();
+        }
+
+        if (indexType.b) {
+            applicationEventPublisher.publishEvent(any(HarvestExternalIndicatorsEvent.class));
         }
     }
 }

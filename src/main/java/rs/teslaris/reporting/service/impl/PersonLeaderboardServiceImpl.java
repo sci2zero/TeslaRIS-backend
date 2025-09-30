@@ -2,10 +2,12 @@ package rs.teslaris.reporting.service.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
+import co.elastic.clients.util.NamedValue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -124,35 +126,39 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
             return Collections.emptyList();
         }
 
+        var eligiblePersonIds = getEligiblePersonIds(institutionId);
+        if (eligiblePersonIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         SearchResponse<Void> response;
         try {
-            response = elasticsearchClient.search(s -> {
-                var search = s
-                    .index("person")
-                    .size(0)
-                    .query(q -> q.bool(b -> b
-                        .must(m -> m.term(t -> t
-                            .field("employment_institutions_id_hierarchy")
-                            .value(institutionId)))
-                        .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))))
-                    ))
-                    .aggregations("by_person", a -> {
-                        var agg = a.terms(
-                            t -> t
-                                .field("databaseId")
-                                .size(10)
-                        );
+            response = elasticsearchClient.search(s -> s
+                .index("person")
+                .size(0)
+                .query(q -> q.bool(b -> b
+                    .must(m -> m.term(t -> t
+                        .field("employment_institutions_id_hierarchy")
+                        .value(institutionId)))
+                    .must(m -> m.terms(t -> t.field("databaseId").terms(ts -> ts
+                        .value(eligiblePersonIds.stream()
+                            .map(FieldValue::of)
+                            .collect(Collectors.toList())))))
+                ))
+                .aggregations("by_person", a -> {
+                    var agg = a.terms(
+                        t -> t
+                            .field("databaseId")
+                            .size(2000)
+                    );
 
-                        for (int year = fromYear; year <= toYear; year++) {
-                            var finalYear = year;
-                            agg.aggregations("year_" + year, sum -> sum
-                                .sum(v -> v.field("citations_by_year." + finalYear)));
-                        }
-                        return agg;
-                    });
-
-                return search;
-            }, Void.class);
+                    for (int year = fromYear; year <= toYear; year++) {
+                        var currentYear = year;
+                        agg.aggregations("year_" + year, sum -> sum
+                            .sum(v -> v.field("citations_by_year." + currentYear)));
+                    }
+                    return agg;
+                }), Void.class);
         } catch (IOException e) {
             log.error("Error while fetching person citation count leaderboard. Reason: {}",
                 e.getMessage());
@@ -190,13 +196,16 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                         periodSum += (long) agg.value();
                     }
                 }
-
-                PersonIndex person = personMap.get((int) bucket.key());
-                return (periodSum > 0 && person != null) ? new Pair<>(person, periodSum) : null;
+                return periodSum > 0 ? new Pair<>((int) bucket.key(), periodSum) : null;
             })
             .filter(Objects::nonNull)
             .sorted((a, b) -> Long.compare(b.b, a.b))
             .limit(10)
+            .map(pair -> {
+                PersonIndex person = personMap.get(pair.a);
+                return person != null ? new Pair<>(person, pair.b) : null;
+            })
+            .filter(Objects::nonNull)
             .toList();
     }
 
@@ -246,7 +255,10 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                             )
                             .aggregations("by_person", a -> a
                                 .terms(t -> t.field("assessment_points.a")
-                                    .size(10))
+                                    .size(10)
+                                    .order(List.of(
+                                        NamedValue.of("total_points", SortOrder.Desc)
+                                    )))
                                 .aggregations("total_points", sum -> sum
                                     .sum(v -> v.field("assessment_points.c"))
                                 )

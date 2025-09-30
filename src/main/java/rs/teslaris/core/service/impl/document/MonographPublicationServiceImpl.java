@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +58,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            DocumentRepository documentRepository,
                                            DocumentFileService documentFileService,
                                            CitationService citationService,
+                                           ApplicationEventPublisher applicationEventPublisher,
                                            PersonContributionService personContributionService,
                                            ExpressionTransformer expressionTransformer,
                                            EventService eventService,
@@ -69,9 +71,10 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            MonographService monographService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
     }

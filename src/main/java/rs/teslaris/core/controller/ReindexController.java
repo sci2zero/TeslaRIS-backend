@@ -46,6 +46,7 @@ public class ReindexController {
                                         LocalDateTime timestamp,
                                         @RequestParam(defaultValue = "ONCE")
                                         RecurrenceType recurrence,
+                                        @RequestParam Boolean reharvestCitationIndicators,
                                         @RequestHeader("Authorization")
                                         String bearerToken,
                                         @RequestBody ReindexRequestDTO reindexRequest) {
@@ -55,7 +56,8 @@ public class ReindexController {
                     EntityType::name).toList(), "-") +
                 "-" + UUID.randomUUID(),
             timestamp,
-            () -> reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate()),
+            () -> reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate(),
+                reharvestCitationIndicators),
             tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
 
         taskManagerService.saveTaskMetadata(
@@ -63,13 +65,16 @@ public class ReindexController {
                 ScheduledTaskType.REINDEXING, new HashMap<>() {{
                 put("indexesToRepopulate", reindexRequest.getIndexesToRepopulate());
                 put("userId", tokenUtil.extractUserIdFromToken(bearerToken));
+                put("reharvestCitationIndicators", String.valueOf(reharvestCitationIndicators));
             }}, recurrence));
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('REINDEX_DATABASE')")
     @Idempotent
-    public void reindexDatabase(@RequestBody ReindexRequestDTO reindexRequest) {
-        reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate());
+    public void reindexDatabase(@RequestBody ReindexRequestDTO reindexRequest,
+                                @RequestParam Boolean reharvestCitationIndicators) {
+        reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate(),
+            reharvestCitationIndicators);
     }
 }

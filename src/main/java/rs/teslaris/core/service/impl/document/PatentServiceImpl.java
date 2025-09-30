@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              CitationService citationService,
+                             ApplicationEventPublisher applicationEventPublisher,
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
@@ -64,9 +66,10 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
     }

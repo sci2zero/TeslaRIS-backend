@@ -89,8 +89,8 @@ public class PersonIndex {
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
 
-    @Field(type = FieldType.Integer, name = "total_citations")
-    private Integer totalCitations;
+    @Field(type = FieldType.Long, name = "total_citations")
+    private Long totalCitations;
 
     @Field(type = FieldType.Object, name = "citations_by_year")
     private Map<Integer, Integer> citationsByYear = new HashMap<>();

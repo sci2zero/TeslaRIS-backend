@@ -7,5 +7,5 @@ import rs.teslaris.core.indexmodel.EntityType;
 @Service
 public interface ReindexService {
 
-    void reindexDatabase(List<EntityType> indexesToRepopulate);
+    void reindexDatabase(List<EntityType> indexesToRepopulate, Boolean reharvestCitationIndicators);
 }

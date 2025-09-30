@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -65,6 +66,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              DocumentRepository documentRepository,
                                              DocumentFileService documentFileService,
                                              CitationService citationService,
+                                             ApplicationEventPublisher applicationEventPublisher,
                                              PersonContributionService personContributionService,
                                              ExpressionTransformer expressionTransformer,
                                              EventService eventService,
@@ -79,9 +81,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              ConferenceService conferenceService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;

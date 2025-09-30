@@ -276,6 +276,16 @@ public class PersonLeaderboardServiceTest {
             eq(Void.class)
         )).thenThrow(new IOException("Connection failed"));
 
+        SearchResponse<PersonIndex> mockPersonResponse =
+            mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        var mockHit = mock(Hit.class);
+        when(mockHit.source()).thenReturn(new PersonIndex() {{
+            setDatabaseId(1);
+        }});
+        when(mockPersonResponse.hits().hits()).thenReturn(List.of(mockHit));
+        when(elasticsearchClient.search(any(Function.class), eq(PersonIndex.class)))
+            .thenReturn(mockPersonResponse);
+
         // When
         var result = service.getResearchersWithMostCitations(institutionId, fromYear, toYear);
 
@@ -319,6 +329,16 @@ public class PersonLeaderboardServiceTest {
         when(mockResponse.aggregations()).thenReturn(Map.of("by_person", byPersonAgg));
         when(elasticsearchClient.search(any(Function.class), eq(Void.class)))
             .thenReturn(mockResponse);
+
+        SearchResponse<PersonIndex> mockPersonResponse =
+            mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        var mockHit = mock(Hit.class);
+        when(mockHit.source()).thenReturn(new PersonIndex() {{
+            setDatabaseId(1);
+        }});
+        when(mockPersonResponse.hits().hits()).thenReturn(List.of(mockHit));
+        when(elasticsearchClient.search(any(Function.class), eq(PersonIndex.class)))
+            .thenReturn(mockPersonResponse);
 
         PersonIndex person1 = new PersonIndex();
         person1.setDatabaseId(1);
@@ -376,6 +396,16 @@ public class PersonLeaderboardServiceTest {
         when(elasticsearchClient.search(any(Function.class), eq(Void.class)))
             .thenReturn(mockResponse);
 
+        SearchResponse<PersonIndex> mockPersonResponse =
+            mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        var mockHit = mock(Hit.class);
+        when(mockHit.source()).thenReturn(new PersonIndex() {{
+            setDatabaseId(1);
+        }});
+        when(mockPersonResponse.hits().hits()).thenReturn(List.of(mockHit));
+        when(elasticsearchClient.search(any(Function.class), eq(PersonIndex.class)))
+            .thenReturn(mockPersonResponse);
+
         var person1 = new PersonIndex();
         person1.setDatabaseId(1);
         person1.setName("Researcher 1");
@@ -429,6 +459,16 @@ public class PersonLeaderboardServiceTest {
         when(mockResponse.aggregations()).thenReturn(Map.of("by_person", byPersonAgg));
         when(elasticsearchClient.search(any(Function.class), eq(Void.class)))
             .thenReturn(mockResponse);
+
+        SearchResponse<PersonIndex> mockPersonResponse =
+            mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        var mockHit = mock(Hit.class);
+        when(mockHit.source()).thenReturn(new PersonIndex() {{
+            setDatabaseId(1);
+        }});
+        when(mockPersonResponse.hits().hits()).thenReturn(List.of(mockHit));
+        when(elasticsearchClient.search(any(Function.class), eq(PersonIndex.class)))
+            .thenReturn(mockPersonResponse);
 
         // When
         var result = service.getResearchersWithMostCitations(institutionId, 2020, 2023);

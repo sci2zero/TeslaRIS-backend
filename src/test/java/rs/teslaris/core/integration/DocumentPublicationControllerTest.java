@@ -91,7 +91,7 @@ public class DocumentPublicationControllerTest extends BaseTest {
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                        "http://localhost:8081/api/reindex")
+                        "http://localhost:8081/api/reindex?reharvestCitationIndicators=false")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)

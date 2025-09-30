@@ -2,11 +2,13 @@ package rs.teslaris.reporting.service.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.TermsInclude;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
+import co.elastic.clients.util.NamedValue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -151,7 +153,7 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                     var agg = a.terms(
                         t -> t
                             .field("employment_institutions_id_hierarchy")
-                            .size(10)
+                            .size(2000)
                             .include(TermsInclude.of(
                                 i -> i.terms(eligibleOUIds.stream()
                                     .map(Object::toString)
@@ -159,9 +161,9 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                                 ))));
 
                     for (int year = fromYear; year <= toYear; year++) {
-                        var finalYear = year;
+                        var currentYear = year;
                         agg.aggregations("year_" + year, sum -> sum
-                            .sum(v -> v.field("citations_by_year." + finalYear)));
+                            .sum(v -> v.field("citations_by_year." + currentYear)));
                     }
                     return agg;
                 }), Void.class);
@@ -199,17 +201,20 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                 long periodSum = 0L;
                 for (int year = fromYear; year <= toYear; year++) {
                     var agg = bucket.aggregations().get("year_" + year).sum();
-                    if (agg != null && agg.value() > 0) {
+                    if (Objects.nonNull(agg) && agg.value() > 0) {
                         periodSum += (long) agg.value();
                     }
                 }
-
-                var ou = organisationUnitMap.get((int) bucket.key());
-                return (periodSum > 0 && ou != null) ? new Pair<>(ou, periodSum) : null;
+                return periodSum > 0 ? new Pair<>((int) bucket.key(), periodSum) : null;
             })
             .filter(Objects::nonNull)
             .sorted((a, b) -> Long.compare(b.b, a.b))
             .limit(10)
+            .map(pair -> {
+                var ou = organisationUnitMap.get(pair.a);
+                return Objects.nonNull(ou) ? new Pair<>(ou, pair.b) : null;
+            })
+            .filter(Objects::nonNull)
             .toList();
     }
 
@@ -258,6 +263,9 @@ public class OrganisationUnitLeaderboardServiceImpl implements OrganisationUnitL
                                     t -> t
                                         .field("organisation_unit_ids")
                                         .size(10)
+                                        .order(List.of(
+                                            NamedValue.of("total_points", SortOrder.Desc)
+                                        ))
                                         .include(TermsInclude.of(
                                             i -> i.terms(eligibleOUIds
                                                 .stream()

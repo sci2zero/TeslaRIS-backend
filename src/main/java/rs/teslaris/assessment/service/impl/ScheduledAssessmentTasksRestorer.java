@@ -50,7 +50,7 @@ public class ScheduledAssessmentTasksRestorer {
 
 
     @EventListener(ApplicationReadyEvent.class)
-    public void restoreTasksOnStartup() {
+    protected void restoreTasksOnStartup() {
         List<ScheduledTaskMetadata> allMetadata = metadataRepository.findTasksByTypes(
             List.of(
                 ScheduledTaskType.REPORT_GENERATION,

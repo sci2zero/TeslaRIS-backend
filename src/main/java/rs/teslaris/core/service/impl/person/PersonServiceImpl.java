@@ -1413,13 +1413,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Async
     @EventListener
-    public void handleOUSignificantChange(OrganisationUnitSignificantChangeEvent event) {
+    protected void handleOUSignificantChange(OrganisationUnitSignificantChangeEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }
 
     @Async
     @EventListener
-    public void handleOUDeletion(OrganisationUnitDeletedEvent event) {
+    protected void handleOUDeletion(OrganisationUnitDeletedEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }
 

@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
+import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -78,7 +79,8 @@ public class ReindexServiceImpl implements ReindexService {
 
 
     @Override
-    public void reindexDatabase(List<EntityType> indexesToRepopulate) {
+    public void reindexDatabase(List<EntityType> indexesToRepopulate,
+                                Boolean reharvestCitationIndicators) {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         if (indexesToRepopulate.contains(EntityType.USER_ACCOUNT)) {
@@ -123,6 +125,10 @@ public class ReindexServiceImpl implements ReindexService {
             if (indexesToRepopulate.contains(EntityType.PUBLICATION) ||
                 indexesToRepopulate.contains(EntityType.PERSON)) {
                 applicationEventPublisher.publishEvent(new AllResearcherPointsReindexingEvent());
+
+                if (reharvestCitationIndicators) {
+                    applicationEventPublisher.publishEvent(new HarvestExternalIndicatorsEvent());
+                }
             }
         } catch (CompletionException e) {
             log.error("Error during parallel reindexing. Reason: ", e);

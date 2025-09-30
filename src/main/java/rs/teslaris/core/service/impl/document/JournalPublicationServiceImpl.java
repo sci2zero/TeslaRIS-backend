@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -60,6 +61,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          DocumentRepository documentRepository,
                                          DocumentFileService documentFileService,
                                          CitationService citationService,
+                                         ApplicationEventPublisher applicationEventPublisher,
                                          PersonContributionService personContributionService,
                                          ExpressionTransformer expressionTransformer,
                                          EventService eventService,
@@ -73,9 +75,10 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;

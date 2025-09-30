@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.data.domain.PageRequest;
@@ -136,6 +137,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              CitationService citationService,
+                             ApplicationEventPublisher applicationEventPublisher,
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
@@ -151,12 +153,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitIndexRepository organisationUnitIndexRepository,
                              UserService userService, MessageSource messageSource,
                              BrandingInformationService brandingInformationService,
-                             EmailUtil emailUtil, DocumentFileService documentFileService1) {
+                             EmailUtil emailUtil,
+                             DocumentFileService documentFileService1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;
