@@ -2,10 +2,14 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -17,10 +21,12 @@ import static org.mockito.Mockito.when;
 
 import jakarta.xml.bind.JAXBException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -50,6 +56,9 @@ import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -75,6 +84,7 @@ import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -139,6 +149,9 @@ public class ThesisServiceTest {
 
     @Mock
     private CitationService citationService;
+
+    @Mock
+    private TaskManagerService taskManagerService;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -799,6 +812,90 @@ public class ThesisServiceTest {
             //then
             assertTrue(result.isEmpty());
         }
+    }
+
+    @Test
+    void shouldSchedulePublicReviewEndCheckAndSaveMetadata() {
+        // Given
+        var timestamp = LocalDateTime.now().plusDays(1);
+        var types = List.of(ThesisType.MASTER, ThesisType.PHD);
+        var publicReviewLengthDays = 30;
+        var userId = 42;
+        var recurrence = RecurrenceType.ONCE;
+
+        var fakeTaskId = "task-123";
+        when(taskManagerService.scheduleTask(
+            anyString(),
+            any(LocalDateTime.class),
+            any(Runnable.class),
+            anyInt(),
+            any(RecurrenceType.class)
+        )).thenReturn(fakeTaskId);
+
+        // When
+        thesisService.schedulePublicReviewEndCheck(
+            timestamp, types, publicReviewLengthDays, userId, recurrence
+        );
+
+        // Then
+        verify(taskManagerService).scheduleTask(
+            argThat(name -> name.startsWith("PublicReviewEndCheck-")),
+            eq(timestamp),
+            any(Runnable.class),
+            eq(userId),
+            eq(recurrence)
+        );
+
+        var metadataCaptor = org.mockito.ArgumentCaptor.forClass(ScheduledTaskMetadata.class);
+        verify(taskManagerService).saveTaskMetadata(metadataCaptor.capture());
+
+        var metadata = metadataCaptor.getValue();
+        assertEquals(fakeTaskId, metadata.getTaskId());
+        assertEquals(timestamp, metadata.getTimeToRun());
+        assertEquals(ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK, metadata.getType());
+        assertEquals(recurrence, metadata.getRecurrenceType());
+
+        var extra = metadata.getMetadata();
+        assertEquals(types, extra.get("types"));
+        assertEquals(publicReviewLengthDays, extra.get("publicReviewLengthDays"));
+        assertEquals(userId, extra.get("userId"));
+    }
+
+    @Test
+    void shouldGenerateUniqueTaskIdsEachCallWhenScheduling() {
+        // Given
+        var timestamp = LocalDateTime.now().plusDays(2);
+        var types = List.of(ThesisType.MASTER);
+        var publicReviewLengthDays = 15;
+        var userId = 7;
+        var recurrence = RecurrenceType.DAILY;
+
+        when(taskManagerService.scheduleTask(
+            anyString(),
+            any(LocalDateTime.class),
+            any(Runnable.class),
+            anyInt(),
+            any(RecurrenceType.class)
+        )).thenReturn(UUID.randomUUID().toString());
+
+        // When
+        thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays, userId,
+            recurrence);
+        thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays, userId,
+            recurrence);
+
+        // Then
+        var taskIdCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(taskManagerService, times(2)).scheduleTask(
+            taskIdCaptor.capture(),
+            eq(timestamp),
+            any(Runnable.class),
+            eq(userId),
+            eq(recurrence)
+        );
+
+        var taskIds = taskIdCaptor.getAllValues();
+        assertNotEquals(taskIds.get(0), taskIds.get(1));
     }
 
     private Set<DocumentFile> createMockDocuments(int count) {

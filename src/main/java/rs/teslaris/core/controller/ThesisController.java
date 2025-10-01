@@ -1,6 +1,8 @@
 package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -28,8 +30,10 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -182,6 +186,24 @@ public class ThesisController {
         return ResponseEntity.ok()
             .headers(headers)
             .body(content);
+    }
+
+    @PostMapping("/schedule-public-review-end-check")
+    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK')")
+    @Idempotent
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void schedulePublicReviewEndCheck(@RequestParam("timestamp")
+                                             LocalDateTime timestamp,
+                                             @RequestParam("types")
+                                             List<ThesisType> types,
+                                             @RequestParam(defaultValue = "ONCE")
+                                             RecurrenceType recurrence,
+                                             @RequestParam("publicReviewLengthDays")
+                                             Integer publicReviewLengthDays,
+                                             @RequestHeader("Authorization")
+                                             String bearerToken) {
+        thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays,
+            tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
     }
 
     private void performReferenceAdditionChecks(ThesisDTO thesis, String bearerToken) {

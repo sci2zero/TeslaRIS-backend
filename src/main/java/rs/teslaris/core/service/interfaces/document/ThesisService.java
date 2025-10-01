@@ -1,14 +1,18 @@
 package rs.teslaris.core.service.interfaces.document;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
+import rs.teslaris.core.model.document.ThesisType;
 
 @Service
 public interface ThesisService {
@@ -48,4 +52,8 @@ public interface ThesisService {
     String getSingleLibraryReferenceFormat(Integer thesisId, LibraryFormat libraryFormat);
 
     void transferPreprintToOfficialPublication(Integer thesisId, Integer documentFileId);
+
+    void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
+                                      Integer publicReviewLengthDays, Integer userId,
+                                      RecurrenceType recurrence);
 }
