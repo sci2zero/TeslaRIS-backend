@@ -340,6 +340,7 @@ public class SecurityConfiguration {
                 // VISUALIZATION & LEADERBOARD DATA
                 .requestMatchers(HttpMethod.GET, "/api/visualization-data/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/leaderboard-data/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/collaboration-network/**").permitAll()
 
                 // FILE DOWNLOAD - authentication is performed outside SpringSecurity due to message streaming optimisations
                 .requestMatchers(HttpMethod.GET, "/api/document/backup/download/{backupFileName}").permitAll()
