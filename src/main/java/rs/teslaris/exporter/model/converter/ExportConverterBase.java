@@ -36,10 +36,16 @@ public class ExportConverterBase {
     // static M toMARC21Model(T commonExportEntity); // where applicable
 
     protected static String repositoryName;
+
     protected static String baseFrontendUrl;
+
     protected static List<String> clientLanguages = new ArrayList<>();
+
+    protected static String legacyIdentifierPrefix;
+
     @Autowired
     private Environment environment;
+
 
     protected static <T> void addContentToList(List<T> sourceList,
                                                Function<T, String> preprocessingFunction,
@@ -179,5 +185,6 @@ public class ExportConverterBase {
         clientLanguages.addAll(Arrays.asList(
             Objects.requireNonNull(environment.getProperty("client.localization.languages"))
                 .split(",")));
+        legacyIdentifierPrefix = environment.getProperty("legacy-identifier.prefix");
     }
 }

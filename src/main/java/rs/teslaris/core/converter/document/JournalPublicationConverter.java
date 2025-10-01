@@ -7,6 +7,7 @@ import org.jbibtex.StringValue;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class JournalPublicationConverter extends DocumentPublicationConverter {
 
@@ -41,25 +42,25 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
 
         setCommonFields(journalPublication, entry, defaultLanguageTag);
 
-        if (valueExists(journalPublication.getStartPage()) &&
-            valueExists((journalPublication.getEndPage()))) {
+        if (StringUtil.valueExists(journalPublication.getStartPage()) &&
+            StringUtil.valueExists((journalPublication.getEndPage()))) {
             entry.addField(BibTeXEntry.KEY_PAGES,
                 new StringValue(journalPublication.getStartPage() + "-" +
                     journalPublication.getEndPage(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(journalPublication.getArticleNumber())) {
+        if (StringUtil.valueExists(journalPublication.getArticleNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(journalPublication.getArticleNumber(),
                     StringValue.Style.BRACED));
         }
 
-        if (valueExists(journalPublication.getVolume())) {
+        if (StringUtil.valueExists(journalPublication.getVolume())) {
             entry.addField(BibTeXEntry.KEY_VOLUME,
                 new StringValue(journalPublication.getVolume(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(journalPublication.getIssue())) {
+        if (StringUtil.valueExists(journalPublication.getIssue())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(journalPublication.getIssue(), StringValue.Style.BRACED));
         }
@@ -74,13 +75,13 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
             setMCBibTexField(journalPublication.getJournal().getTitle(), entry,
                 BibTeXEntry.KEY_JOURNAL, defaultLanguageTag);
 
-            if (valueExists(journalPublication.getJournal().getEISSN())) {
+            if (StringUtil.valueExists(journalPublication.getJournal().getEISSN())) {
                 entry.addField(new Key("e_issn"),
                     new StringValue(journalPublication.getJournal().getEISSN(),
                         StringValue.Style.BRACED));
             }
 
-            if (valueExists(journalPublication.getJournal().getPrintISSN())) {
+            if (StringUtil.valueExists(journalPublication.getJournal().getPrintISSN())) {
                 entry.addField(new Key("print_issn"),
                     new StringValue(journalPublication.getJournal().getPrintISSN(),
                         StringValue.Style.BRACED));
@@ -98,8 +99,8 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
 
         setCommonTaggedFields(journalPublication, sb, defaultLanguageTag, refMan);
 
-        if (valueExists(journalPublication.getStartPage()) &&
-            valueExists((journalPublication.getEndPage()))) {
+        if (StringUtil.valueExists(journalPublication.getStartPage()) &&
+            StringUtil.valueExists((journalPublication.getEndPage()))) {
             sb.append(refMan ? "SE  - " : "%P ").append(journalPublication.getStartPage())
                 .append("-")
                 .append(journalPublication.getEndPage())
@@ -111,17 +112,17 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
                 .append("\n");
         }
 
-        if (valueExists(journalPublication.getArticleNumber())) {
+        if (StringUtil.valueExists(journalPublication.getArticleNumber())) {
             sb.append(refMan ? "RI  - " : "%N ").append("articleNumber:")
                 .append(journalPublication.getArticleNumber()).append("\n");
         }
 
-        if (valueExists(journalPublication.getVolume())) {
+        if (StringUtil.valueExists(journalPublication.getVolume())) {
             sb.append(refMan ? "C6  - " : "%V ").append(journalPublication.getVolume())
                 .append("\n");
         }
 
-        if (valueExists(journalPublication.getIssue())) {
+        if (StringUtil.valueExists(journalPublication.getIssue())) {
             sb.append(refMan ? "C2  - " : "%N ").append(journalPublication.getIssue()).append("\n");
         }
 
@@ -129,12 +130,12 @@ public class JournalPublicationConverter extends DocumentPublicationConverter {
             setMCTaggedField(journalPublication.getJournal().getTitle(), sb, "JA",
                 defaultLanguageTag);
 
-            if (valueExists(journalPublication.getJournal().getEISSN())) {
+            if (StringUtil.valueExists(journalPublication.getJournal().getEISSN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(journalPublication.getJournal().getEISSN()).append("\n");
             }
 
-            if (valueExists(journalPublication.getJournal().getPrintISSN())) {
+            if (StringUtil.valueExists(journalPublication.getJournal().getPrintISSN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(journalPublication.getJournal().getPrintISSN())
                     .append("\n");

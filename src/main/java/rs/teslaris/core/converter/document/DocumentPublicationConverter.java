@@ -110,22 +110,22 @@ public class DocumentPublicationConverter {
                     StringValue.Style.BRACED));
         }
 
-        if (valueExists(publication.getDoi())) {
+        if (StringUtil.valueExists(publication.getDoi())) {
             entry.addField(BibTeXEntry.KEY_DOI,
                 new StringValue(publication.getDoi(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(publication.getScopusId())) {
+        if (StringUtil.valueExists(publication.getScopusId())) {
             entry.addField(new Key("scopusId"),
                 new StringValue(publication.getScopusId(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(publication.getOpenAlexId())) {
+        if (StringUtil.valueExists(publication.getOpenAlexId())) {
             entry.addField(new Key("openAlexId"),
                 new StringValue(publication.getOpenAlexId(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(publication.getWebOfScienceId())) {
+        if (StringUtil.valueExists(publication.getWebOfScienceId())) {
             entry.addField(new Key("wosId"),
                 new StringValue(publication.getWebOfScienceId(), StringValue.Style.BRACED));
         }
@@ -154,11 +154,11 @@ public class DocumentPublicationConverter {
             PersonContributionConverter.toTaggedAuthors(publication.getContributors(), sb, refMan);
         }
 
-        if (valueExists(publication.getDoi())) {
+        if (StringUtil.valueExists(publication.getDoi())) {
             sb.append(refMan ? "DO  - " : "%R ").append(publication.getDoi()).append("\n");
         }
 
-        if (valueExists(publication.getDocumentDate())) {
+        if (StringUtil.valueExists(publication.getDocumentDate())) {
             sb.append(refMan ? "PY  - " : "%D ").append(publication.getDocumentDate().split("-")[0])
                 .append("\n");
         }
@@ -243,10 +243,6 @@ public class DocumentPublicationConverter {
                 sb.append("TT  - ").append(mc.getContent()).append("\n");
             }
         });
-    }
-
-    protected static boolean valueExists(String value) {
-        return Objects.nonNull(value) && !value.isBlank();
     }
 
     public static BibTeXEntry toBibTeXEntry(Document document, String defaultLanguageTag) {

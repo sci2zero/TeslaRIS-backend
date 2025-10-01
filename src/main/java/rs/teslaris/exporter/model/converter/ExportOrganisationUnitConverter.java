@@ -82,7 +82,15 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
 
     public static OrgUnit toOpenaireModel(ExportOrganisationUnit organisationUnit) {
         var orgUnit = new OrgUnit();
-        orgUnit.setOldId("Orgunits/(TESLARIS)" + organisationUnit.getDatabaseId());
+
+        if (Objects.nonNull(organisationUnit.getOldIds()) &&
+            !organisationUnit.getOldIds().isEmpty()) {
+            orgUnit.setOldId("Orgunits/" + legacyIdentifierPrefix +
+                organisationUnit.getOldIds().stream().findFirst().get());
+        } else {
+            orgUnit.setOldId("Orgunits/(TESLARIS)" + organisationUnit.getDatabaseId());
+        }
+
         orgUnit.setName(
             ExportMultilingualContentConverter.toOpenaireModel(organisationUnit.getName()));
         if (Objects.nonNull(organisationUnit.getSuperOU())) {

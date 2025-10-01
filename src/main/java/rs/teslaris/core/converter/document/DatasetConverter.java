@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class DatasetConverter extends DocumentPublicationConverter {
 
@@ -30,7 +31,7 @@ public class DatasetConverter extends DocumentPublicationConverter {
 
         setCommonFields(dataset, entry, defaultLanguageTag);
 
-        if (valueExists(dataset.getInternalNumber())) {
+        if (StringUtil.valueExists(dataset.getInternalNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(dataset.getInternalNumber(), StringValue.Style.BRACED));
         }
@@ -54,7 +55,7 @@ public class DatasetConverter extends DocumentPublicationConverter {
 
         setCommonTaggedFields(dataset, sb, defaultLanguageTag, refMan);
 
-        if (valueExists(dataset.getInternalNumber())) {
+        if (StringUtil.valueExists(dataset.getInternalNumber())) {
             sb.append(refMan ? "C6  - " : "%N ").append(dataset.getInternalNumber()).append("\n");
         }
 

@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.model.document.ProceedingsPublication;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class ProceedingsPublicationConverter extends DocumentPublicationConverter {
 
@@ -36,8 +37,8 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
 
         setCommonFields(proceedingsPublication, entry, defaultLanguageTag);
 
-        if (valueExists(proceedingsPublication.getStartPage()) &&
-            valueExists((proceedingsPublication.getEndPage()))) {
+        if (StringUtil.valueExists(proceedingsPublication.getStartPage()) &&
+            StringUtil.valueExists((proceedingsPublication.getEndPage()))) {
             entry.addField(BibTeXEntry.KEY_PAGES,
                 new StringValue(proceedingsPublication.getStartPage() + "-" +
                     proceedingsPublication.getEndPage(), StringValue.Style.BRACED));
@@ -49,7 +50,7 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
                     StringValue.Style.BRACED));
         }
 
-        if (valueExists(proceedingsPublication.getArticleNumber())) {
+        if (StringUtil.valueExists(proceedingsPublication.getArticleNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(proceedingsPublication.getArticleNumber(),
                     StringValue.Style.BRACED));
@@ -59,13 +60,13 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
             setMCBibTexField(proceedingsPublication.getProceedings().getTitle(), entry,
                 BibTeXEntry.KEY_BOOKTITLE, defaultLanguageTag);
 
-            if (valueExists(proceedingsPublication.getProceedings().getEISBN())) {
+            if (StringUtil.valueExists(proceedingsPublication.getProceedings().getEISBN())) {
                 entry.addField(new Key("eIsbn"),
                     new StringValue(proceedingsPublication.getProceedings().getEISBN(),
                         StringValue.Style.BRACED));
             }
 
-            if (valueExists(proceedingsPublication.getProceedings().getPrintISBN())) {
+            if (StringUtil.valueExists(proceedingsPublication.getProceedings().getPrintISBN())) {
                 entry.addField(new Key("printIsbn"),
                     new StringValue(proceedingsPublication.getProceedings().getPrintISBN(),
                         StringValue.Style.BRACED));
@@ -82,8 +83,8 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
 
         setCommonTaggedFields(proceedingsPublication, sb, defaultLanguageTag, refMan);
 
-        if (valueExists(proceedingsPublication.getStartPage()) &&
-            valueExists((proceedingsPublication.getEndPage()))) {
+        if (StringUtil.valueExists(proceedingsPublication.getStartPage()) &&
+            StringUtil.valueExists((proceedingsPublication.getEndPage()))) {
             sb.append(refMan ? "SE  - " : "%P ").append(proceedingsPublication.getStartPage())
                 .append("-")
                 .append(proceedingsPublication.getEndPage())
@@ -95,7 +96,7 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
                 .append("\n");
         }
 
-        if (valueExists(proceedingsPublication.getArticleNumber())) {
+        if (StringUtil.valueExists(proceedingsPublication.getArticleNumber())) {
             sb.append(refMan ? "RI  - " : "%N ").append(proceedingsPublication.getArticleNumber())
                 .append("\n");
         }
@@ -104,13 +105,13 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
             setMCTaggedField(proceedingsPublication.getProceedings().getTitle(), sb,
                 refMan ? "C3" : "%J", defaultLanguageTag);
 
-            if (valueExists(proceedingsPublication.getProceedings().getEISBN())) {
+            if (StringUtil.valueExists(proceedingsPublication.getProceedings().getEISBN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(proceedingsPublication.getProceedings().getEISBN())
                     .append("\n");
             }
 
-            if (valueExists(proceedingsPublication.getProceedings().getPrintISBN())) {
+            if (StringUtil.valueExists(proceedingsPublication.getProceedings().getPrintISBN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(proceedingsPublication.getProceedings().getPrintISBN())
                     .append("\n");

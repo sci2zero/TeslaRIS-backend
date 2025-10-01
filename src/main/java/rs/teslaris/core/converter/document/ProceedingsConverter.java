@@ -8,6 +8,7 @@ import org.jbibtex.StringValue;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class ProceedingsConverter extends DocumentPublicationConverter {
 
@@ -78,12 +79,12 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
 
         setCommonFields(proceedings, entry, defaultLanguageTag);
 
-        if (valueExists(proceedings.getPublicationSeriesIssue())) {
+        if (StringUtil.valueExists(proceedings.getPublicationSeriesIssue())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(proceedings.getPublicationSeriesIssue(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(proceedings.getPublicationSeriesVolume())) {
+        if (StringUtil.valueExists(proceedings.getPublicationSeriesVolume())) {
             entry.addField(BibTeXEntry.KEY_VOLUME,
                 new StringValue(proceedings.getPublicationSeriesVolume(),
                     StringValue.Style.BRACED));
@@ -99,13 +100,13 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
             setMCBibTexField(proceedings.getPublicationSeries().getTitle(), entry,
                 new Key("publicationSeries"), defaultLanguageTag);
 
-            if (valueExists(proceedings.getPublicationSeries().getEISSN())) {
+            if (StringUtil.valueExists(proceedings.getPublicationSeries().getEISSN())) {
                 entry.addField(new Key("e_issn"),
                     new StringValue(proceedings.getPublicationSeries().getEISSN(),
                         StringValue.Style.BRACED));
             }
 
-            if (valueExists(proceedings.getPublicationSeries().getPrintISSN())) {
+            if (StringUtil.valueExists(proceedings.getPublicationSeries().getPrintISSN())) {
                 entry.addField(new Key("print_issn"),
                     new StringValue(proceedings.getPublicationSeries().getPrintISSN(),
                         StringValue.Style.BRACED));
@@ -122,12 +123,12 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
                     StringValue.Style.BRACED));
         }
 
-        if (valueExists(proceedings.getEISBN())) {
+        if (StringUtil.valueExists(proceedings.getEISBN())) {
             entry.addField(new Key("eIsbn"),
                 new StringValue(proceedings.getEISBN(), StringValue.Style.BRACED));
         }
 
-        if (valueExists(proceedings.getPrintISBN())) {
+        if (StringUtil.valueExists(proceedings.getPrintISBN())) {
             entry.addField(new Key("printIsbn"),
                 new StringValue(proceedings.getPrintISBN(), StringValue.Style.BRACED));
         }
@@ -157,12 +158,12 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
                 .append("\n");
         }
 
-        if (valueExists(proceedings.getPublicationSeriesIssue())) {
+        if (StringUtil.valueExists(proceedings.getPublicationSeriesIssue())) {
             sb.append(refMan ? "M1  - " : "%N ").append(proceedings.getPublicationSeriesIssue())
                 .append("\n");
         }
 
-        if (valueExists(proceedings.getPublicationSeriesVolume())) {
+        if (StringUtil.valueExists(proceedings.getPublicationSeriesVolume())) {
             sb.append(refMan ? "SV  - " : "%V ").append(proceedings.getPublicationSeriesVolume())
                 .append("\n");
         }
@@ -171,25 +172,25 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
             setMCTaggedField(proceedings.getPublicationSeries().getTitle(), sb,
                 refMan ? "JA" : "%J", defaultLanguageTag);
 
-            if (valueExists(proceedings.getPublicationSeries().getEISSN())) {
+            if (StringUtil.valueExists(proceedings.getPublicationSeries().getEISSN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("e:")
                     .append(proceedings.getPublicationSeries().getEISSN())
                     .append("\n");
             }
 
-            if (valueExists(proceedings.getPublicationSeries().getPrintISSN())) {
+            if (StringUtil.valueExists(proceedings.getPublicationSeries().getPrintISSN())) {
                 sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                     .append(proceedings.getPublicationSeries().getPrintISSN())
                     .append("\n");
             }
         }
 
-        if (valueExists(proceedings.getEISBN())) {
+        if (StringUtil.valueExists(proceedings.getEISBN())) {
             sb.append(refMan ? "SN  - " : "%@ ").append("e:").append(proceedings.getEISBN())
                 .append("\n");
         }
 
-        if (valueExists(proceedings.getPrintISBN())) {
+        if (StringUtil.valueExists(proceedings.getPrintISBN())) {
             sb.append(refMan ? "SN  - " : "%@ ").append("print:")
                 .append(proceedings.getPrintISBN()).append("\n");
         }

@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
@@ -42,6 +43,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.importer.model.converter.load.event.EventConverter;
 import rs.teslaris.importer.model.converter.load.institution.OrganisationUnitConverter;
@@ -165,12 +167,29 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     DataSet.PUBLICATIONS, query, userId);
             case RESEARCH_ARTICLES:
                 query.addCriteria(Criteria.where("type").regex("c_2df8fbb1"));
+                query.addCriteria(Criteria.where("type").regex("c_3e5a"));
                 return (R) findAndConvertEntity(Publication.class, journalPublicationConverter,
                     DataSet.PUBLICATIONS, query, userId);
             case CONFERENCE_PUBLICATIONS:
                 query.addCriteria(Criteria.where("type").regex("c_5794"));
-                query.addCriteria(Criteria.where("type").regex("c_0640"));
+                query.addCriteria(Criteria.where("type").regex("c_c94f"));
                 return (R) findAndConvertEntity(Publication.class, proceedingsPublicationConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case PHD_THESES:
+                query.addCriteria(Criteria.where("type").regex("c_db06"));
+                return (R) findAndConvertEntity(Publication.class, dissertationConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MR_THESES:
+                query.addCriteria(Criteria.where("type").regex("c_46ec"));
+                return (R) findAndConvertEntity(Publication.class, magistrateConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MONOGRAPHS:
+                query.addCriteria(Criteria.where("type").regex("c_2f33"));
+                return (R) findAndConvertEntity(Publication.class, monographConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MONOGRAPH_PUBLICATIONS:
+                query.addCriteria(Criteria.where("type").regex("c_3248"));
+                return (R) findAndConvertEntity(Publication.class, monographPublicationConverter,
                     DataSet.PUBLICATIONS, query, userId);
             case ORGANISATION_UNITS:
                 var orgUnit = (OrganisationUnitWizardDTO) findAndConvertEntity(OrgUnit.class,
@@ -506,13 +525,14 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                         Criteria.where("type").regex("c_c94f$"),
                         Criteria.where("type").regex("c_db06$"),
                         Criteria.where("type").regex("c_3248$"),
-                        Criteria.where("type").regex("c_46ec$")
+                        Criteria.where("type").regex("c_46ec$"),
+                        Criteria.where("type").regex("c_3e5a$")
                     );
                     var publicationBatch =
                         mongoTemplate.find(query.addCriteria(criteria), Publication.class);
                     publicationBatch.forEach(record -> {
-                        if (record.getType()
-                            .endsWith("c_2df8fbb1")) { // COAR type: research article
+                        if (record.getType().endsWith("c_2df8fbb1") || record.getType().endsWith(
+                            "c_3e5a")) { // COAR type: research article, contribution to journal
                             var creationDTO = journalPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 try {
@@ -625,6 +645,44 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                         } catch (Exception ex) {
                             log.info(
                                 "Tried to add {} '{}' after removing identifiers. Failed because: {}",
+                                entityLabel, sourceId, ex.getMessage());
+                        }
+                    } else {
+                        var identifierUpdateRequest = new DocumentIdentifierUpdateDTO();
+
+                        if (!StringUtil.valueExists(existingDuplicate.getDoi()) &&
+                            StringUtil.valueExists(dto.getDoi())) {
+                            identifierUpdateRequest.setDoi(dto.getDoi());
+                        }
+
+                        if (!StringUtil.valueExists(existingDuplicate.getScopusId()) &&
+                            StringUtil.valueExists(dto.getScopusId())) {
+                            identifierUpdateRequest.setScopusId(dto.getScopusId());
+                        }
+
+                        if (!StringUtil.valueExists(existingDuplicate.getOpenAlexId()) &&
+                            StringUtil.valueExists(dto.getOpenAlexId())) {
+                            identifierUpdateRequest.setOpenAlexId(dto.getOpenAlexId());
+                        }
+
+                        if (!StringUtil.valueExists(existingDuplicate.getWebOfScienceId()) &&
+                            StringUtil.valueExists(dto.getWebOfScienceId())) {
+                            identifierUpdateRequest.setWebOfScienceId(dto.getWebOfScienceId());
+                        }
+
+                        documentPublicationService.updateDocumentIdentifiers(
+                            existingDuplicate.getId(), identifierUpdateRequest);
+
+                        try {
+                            log.info("Updated identifiers for {} '{}' ({}, {}, {}, {}).",
+                                entityLabel, sourceId,
+                                existingDuplicate.getDoi(),
+                                existingDuplicate.getOpenAlexId(),
+                                existingDuplicate.getScopusId(),
+                                existingDuplicate.getWebOfScienceId());
+                        } catch (Exception ex) {
+                            log.info(
+                                "Tried to enrich identifiers for {} '{}'. Failed because: {}",
                                 entityLabel, sourceId, ex.getMessage());
                         }
                     }

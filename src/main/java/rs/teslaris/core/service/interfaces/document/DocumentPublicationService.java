@@ -9,6 +9,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.BibliographicFormat;
@@ -119,4 +120,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     void reindexEmploymentInformationForAllPersonPublications(Integer personId);
 
     void deleteNonManagedDocuments();
+
+    void updateDocumentIdentifiers(Integer documentId, DocumentIdentifierUpdateDTO requestDTO);
 }

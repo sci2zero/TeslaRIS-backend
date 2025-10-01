@@ -428,8 +428,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         if (Objects.nonNull(registrationRequest.getPersonId())) {
             if (userRepository.personAlreadyBinded(registrationRequest.getPersonId())) {
                 throw new PersonReferenceConstraintViolationException(
-                    "Person you have selected is already assigned to a user.");
+                    "personAlreadyHasAccountMessage");
             }
+
             var person = personService.findOne(registrationRequest.getPersonId());
             if (oAuth2Provider == OAuth2Provider.ORCID) {
                 if (!allowNewResearcherCreation && !person.getOrcid().equals(identifier)) {

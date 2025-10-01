@@ -49,6 +49,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -1325,5 +1326,77 @@ public class DocumentPublicationServiceTest {
         verify(spyService).deleteDocumentPublication(10);
         verify(spyService, times(1)).searchDocumentPublications(any(), any(), any(), any(), any(),
             any(), anyBoolean(), any());
+    }
+
+    @Test
+    void shouldUpdateAllIdentifiersWhenValuesExist() {
+        // Given
+        var documentId = 1;
+        var document = new Software();
+        document.setId(documentId);
+
+        var dto = new DocumentIdentifierUpdateDTO();
+        dto.setDoi("10.1234/example");
+        dto.setScopusId("SC12345");
+        dto.setOpenAlexId("OA6789");
+        dto.setWebOfScienceId("WOS999");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentPublicationService.updateDocumentIdentifiers(documentId, dto);
+
+        // Then
+        assertEquals("10.1234/example", document.getDoi());
+        assertEquals("SC12345", document.getScopusId());
+        assertEquals("OA6789", document.getOpenAlexId());
+        assertEquals("WOS999", document.getWebOfScienceId());
+
+        verify(documentRepository).save(document);
+    }
+
+    @Test
+    void shouldUpdateOnlyNonEmptyIdentifiers() {
+        // Given
+        var documentId = 2;
+        var document = new Patent();
+        document.setId(documentId);
+        document.setDoi("old-doi");
+        document.setScopusId("old-scopus");
+
+        var dto = new DocumentIdentifierUpdateDTO();
+        dto.setDoi(""); // empty -> should not overwrite
+        dto.setScopusId(null); // null -> should not overwrite
+        dto.setOpenAlexId("OA111");
+        dto.setWebOfScienceId("WOS222");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentPublicationService.updateDocumentIdentifiers(documentId, dto);
+
+        // Then
+        assertEquals("old-doi", document.getDoi()); // unchanged
+        assertEquals("old-scopus", document.getScopusId()); // unchanged
+        assertEquals("OA111", document.getOpenAlexId());
+        assertEquals("WOS222", document.getWebOfScienceId());
+
+        verify(documentRepository).save(document);
+    }
+
+    @Test
+    void shouldThrowWhenDocumentNotFound() {
+        // Given
+        var documentId = 99;
+        var dto = new DocumentIdentifierUpdateDTO();
+        dto.setDoi("10.5678/xyz");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThrows(NotFoundException.class,
+            () -> documentPublicationService.updateDocumentIdentifiers(documentId, dto));
+
+        verify(documentRepository, never()).save(any());
     }
 }

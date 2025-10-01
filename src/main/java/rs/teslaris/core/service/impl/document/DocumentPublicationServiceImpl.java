@@ -49,6 +49,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -750,6 +751,30 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             hasMore = pageResult.hasNext();
             page++;
         }
+    }
+
+    @Override
+    public void updateDocumentIdentifiers(Integer documentId,
+                                          DocumentIdentifierUpdateDTO requestDTO) {
+        var document = findOne(documentId);
+
+        if (StringUtil.valueExists(requestDTO.getDoi())) {
+            document.setDoi(requestDTO.getDoi());
+        }
+
+        if (StringUtil.valueExists(requestDTO.getScopusId())) {
+            document.setScopusId(requestDTO.getScopusId());
+        }
+
+        if (StringUtil.valueExists(requestDTO.getOpenAlexId())) {
+            document.setOpenAlexId(requestDTO.getOpenAlexId());
+        }
+
+        if (StringUtil.valueExists(requestDTO.getWebOfScienceId())) {
+            document.setWebOfScienceId(requestDTO.getWebOfScienceId());
+        }
+
+        save(document);
     }
 
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {

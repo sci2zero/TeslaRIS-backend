@@ -24,6 +24,10 @@ public enum DataSet {
     JOURNALS("crisuns_journals", Publication.class),
     RESEARCH_ARTICLES("crisuns_research_articles", Publication.class),
     CONFERENCE_PUBLICATIONS("crisuns_conference_publications", Publication.class),
+    PHD_THESES("crisuns_phd_theses", Publication.class),
+    MR_THESES("crisuns_mr_theses", Publication.class),
+    MONOGRAPHS("crisuns_monographs", Publication.class),
+    MONOGRAPH_PUBLICATIONS("crisuns_monograph_publications", Publication.class),
 
 
     // Used for common imports

@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class PatentConverter extends DocumentPublicationConverter {
 
@@ -30,7 +31,7 @@ public class PatentConverter extends DocumentPublicationConverter {
 
         setCommonFields(patent, entry, defaultLanguageTag);
 
-        if (valueExists(patent.getNumber())) {
+        if (StringUtil.valueExists(patent.getNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(patent.getNumber(), StringValue.Style.BRACED));
         }
@@ -53,7 +54,7 @@ public class PatentConverter extends DocumentPublicationConverter {
 
         setCommonTaggedFields(patent, sb, defaultLanguageTag, refMan);
 
-        if (valueExists(patent.getNumber())) {
+        if (StringUtil.valueExists(patent.getNumber())) {
             sb.append(refMan ? "C6  - " : "%N ").append(patent.getNumber()).append("\n");
         }
 
