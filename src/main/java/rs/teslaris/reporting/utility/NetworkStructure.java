@@ -36,9 +36,10 @@ public class NetworkStructure {
     }
 
     public void addConnection(Integer sourceAuthorId, Integer targetAuthorId,
-                              Long publicationCount) {
+                              Long publicationCount, CollaborationType collaborationType) {
         if (connectionExists(sourceAuthorId, targetAuthorId) ||
-            connectionExists(rootAuthorId, targetAuthorId)) {
+            (!collaborationType.equals(CollaborationType.MENTORSHIP) &&
+                connectionExists(rootAuthorId, targetAuthorId))) {
             return;
         }
 

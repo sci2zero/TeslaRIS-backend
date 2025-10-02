@@ -1,6 +1,8 @@
 package rs.teslaris.reporting.service.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,35 +14,50 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.DocumentCollaborationService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CollaborationLink;
 import rs.teslaris.reporting.dto.CollaborationNetworkDTO;
 import rs.teslaris.reporting.dto.PersonNode;
 import rs.teslaris.reporting.service.interfaces.PersonCollaborationNetworkService;
+import rs.teslaris.reporting.utility.CollaborationType;
 import rs.teslaris.reporting.utility.NetworkStructure;
 
 @Service
 @RequiredArgsConstructor
+@Primary
 @Slf4j
-public class PersonCollaborationNetworkServiceImpl implements PersonCollaborationNetworkService {
+public class PersonCollaborationNetworkServiceImpl implements PersonCollaborationNetworkService,
+    DocumentCollaborationService {
 
     private final ElasticsearchClient elasticsearchClient;
 
     private final PersonIndexRepository personIndexRepository;
 
+    private final SearchService<DocumentPublicationIndex> searchService;
+
 
     @Override
-    public CollaborationNetworkDTO findCollaborationNetwork(Integer authorId, int depth) {
+    public CollaborationNetworkDTO findCollaborationNetwork(Integer authorId, Integer depth,
+                                                            CollaborationType collaborationType) {
         try {
-            if (depth < 1 || depth > 3) {
-                throw new IllegalArgumentException("Depth must be between 1 and 3");
+            if (Objects.isNull(depth) || depth < 1 || depth > 3) {
+                throw new IllegalArgumentException("Depth must be between 1 and 3.");
             }
 
-            var networkStructure = buildNetworkStructure(authorId, depth);
+            if (Objects.isNull(collaborationType)) {
+                throw new IllegalArgumentException("Collaboration type cannot be null.");
+            }
+
+            var networkStructure = buildNetworkStructure(authorId, depth, collaborationType);
 
             Map<Integer, PersonIndex> personMap =
                 fetchPersonDetails(networkStructure.getAllAuthorIds());
@@ -58,53 +75,75 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
         }
     }
 
-    private NetworkStructure buildNetworkStructure(Integer authorId, int depth) {
+    @Override
+    public Page<DocumentPublicationIndex> findPublicationsForCollaboration(Integer sourcePersonId,
+                                                                           Integer targetPersonId,
+                                                                           String collaborationType,
+                                                                           Pageable pageable) {
+        var searchQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.must(buildCollaborationQuery(sourcePersonId, targetPersonId,
+                CollaborationType.valueOf(collaborationType)));
+            return b;
+        })))._toQuery();
+
+        return searchService.runQuery(searchQuery, pageable, DocumentPublicationIndex.class,
+            "document_publication");
+    }
+
+    private NetworkStructure buildNetworkStructure(Integer authorId, int depth,
+                                                   CollaborationType collaborationType) {
         var structure = new NetworkStructure(authorId);
 
         structure.addAuthor(authorId, 0);
-        buildNetworkLevel(structure, authorId, 1, depth);
+        buildNetworkLevel(structure, authorId, 1, depth, collaborationType);
 
         return structure;
     }
 
     private void buildNetworkLevel(NetworkStructure structure, Integer authorId, int currentDepth,
-                                   int maxDepth) {
+                                   int maxDepth, CollaborationType collaborationType) {
         if (currentDepth > maxDepth) {
             return;
         }
 
-        List<Pair<Integer, Long>> collaborators = findTopCollaborators(authorId);
+        var queryAndAggregationFields =
+            getQueryAndAggregationFields(collaborationType);
+        List<Pair<Integer, Long>> collaborators =
+            findTopCollaborators(authorId, queryAndAggregationFields.a,
+                queryAndAggregationFields.b);
 
         for (Pair<Integer, Long> collaborator : collaborators) {
             var collaboratorId = collaborator.a;
             var publicationCount = collaborator.b;
 
             structure.addAuthor(collaboratorId, currentDepth);
-            structure.addConnection(authorId, collaboratorId, publicationCount);
+            structure.addConnection(authorId, collaboratorId, publicationCount, collaborationType);
         }
 
         for (Pair<Integer, Long> collaborator : collaborators) {
             if (currentDepth < maxDepth) {
                 var collaboratorId = collaborator.a;
-                buildNetworkLevel(structure, collaboratorId, currentDepth + 1, maxDepth);
+                buildNetworkLevel(structure, collaboratorId, currentDepth + 1, maxDepth,
+                    collaborationType);
             }
         }
     }
 
-    private List<Pair<Integer, Long>> findTopCollaborators(Integer authorId) {
+    private List<Pair<Integer, Long>> findTopCollaborators(Integer authorId, String queryField,
+                                                           String aggregationField) {
         try {
             var response = elasticsearchClient.search(s -> s
                     .index("document_publication")
                     .size(0)
                     .query(q -> q
                         .term(t -> t
-                            .field("author_ids")
+                            .field(queryField)
                             .value(authorId)
                         )
                     )
-                    .aggregations("coauthors", a -> a
+                    .aggregations("collaborators", a -> a
                         .terms(t -> t
-                            .field("author_ids")
+                            .field(aggregationField)
                             .size(100)
                             .minDocCount(1)
                         )
@@ -113,7 +152,7 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
             );
 
             var termsAgg = response.aggregations()
-                .get("coauthors")
+                .get("collaborators")
                 .lterms();
 
             if (Objects.isNull(termsAgg)) {
@@ -209,5 +248,31 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
 
     private int calculateEdgeWidth(long publicationCount) {
         return Math.max(1, Math.min(8, (int) (publicationCount / 2)));
+    }
+
+    private Pair<String, String> getQueryAndAggregationFields(CollaborationType collaborationType) {
+        return switch (collaborationType) {
+            case COAUTHORSHIP -> new Pair<>("author_ids", "author_ids");
+            case MENTORSHIP -> new Pair<>("author_ids", "advisor_ids");
+            case CO_MENTORSHIP -> new Pair<>("advisor_ids", "advisor_ids");
+            case CO_EDITORSHIP -> new Pair<>("editor_ids", "editor_ids");
+            case CO_MEMBERSHIP_COMMISSION -> new Pair<>("author_ids", "board_member_ids");
+        };
+    }
+
+    private Query buildCollaborationQuery(Integer sourcePersonId,
+                                          Integer targetPersonId,
+                                          CollaborationType collaborationType) {
+        if (Objects.isNull(sourcePersonId) || Objects.isNull(targetPersonId)) {
+            throw new IllegalArgumentException("Source and target parson IDs cannot be null.");
+        }
+
+        var sourceAndTargetFields = getQueryAndAggregationFields(collaborationType);
+        return BoolQuery.of(b -> {
+            b.must(q -> q.term(t -> t.field(sourceAndTargetFields.a).value(sourcePersonId)));
+            b.must(q -> q.term(t -> t.field(sourceAndTargetFields.b).value(targetPersonId)));
+
+            return b;
+        })._toQuery();
     }
 }

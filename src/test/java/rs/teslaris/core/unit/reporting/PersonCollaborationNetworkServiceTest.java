@@ -1,11 +1,14 @@
 package rs.teslaris.core.unit.reporting;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -23,10 +26,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.reporting.service.impl.PersonCollaborationNetworkServiceImpl;
+import rs.teslaris.reporting.utility.CollaborationType;
 
 @SpringBootTest
 class PersonCollaborationNetworkServiceTest {
@@ -37,13 +44,17 @@ class PersonCollaborationNetworkServiceTest {
     @Mock
     private PersonIndexRepository personIndexRepository;
 
+    @Mock
+    private SearchService<DocumentPublicationIndex> searchService;
+
     @InjectMocks
     private PersonCollaborationNetworkServiceImpl collaborationService;
 
 
     @Test
     void shouldReturnEmptyNetworkWhenDepthIsInvalid() {
-        var result = collaborationService.findCollaborationNetwork(1, 0);
+        var result =
+            collaborationService.findCollaborationNetwork(1, 0, CollaborationType.COAUTHORSHIP);
         assertNotNull(result);
         assertTrue(result.nodes().isEmpty());
         assertTrue(result.links().isEmpty());
@@ -54,7 +65,8 @@ class PersonCollaborationNetworkServiceTest {
         when(elasticsearchClient.search(any(SearchRequest.class), eq(Void.class)))
             .thenThrow(new IOException("ES failure"));
 
-        var result = collaborationService.findCollaborationNetwork(1, 1);
+        var result =
+            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP);
 
         assertNotNull(result);
         assertTrue(result.nodes().isEmpty());
@@ -69,7 +81,7 @@ class PersonCollaborationNetworkServiceTest {
 
         var response = mock(SearchResponse.class);
         when(response.aggregations()).thenReturn(
-            Map.of("coauthors", Aggregate.of(a -> a.lterms(emptyAgg)))
+            Map.of("collaborators", Aggregate.of(a -> a.lterms(emptyAgg)))
         );
         when(elasticsearchClient.search(any(SearchRequest.class), eq(Void.class)))
             .thenReturn(response);
@@ -80,7 +92,8 @@ class PersonCollaborationNetworkServiceTest {
         when(personIndexRepository.findByDatabaseIdIn(anyList(), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of(person)));
 
-        var result = collaborationService.findCollaborationNetwork(1, 1);
+        var result =
+            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP);
 
         assertNotNull(result.nodes());
         assertTrue(result.links().isEmpty());
@@ -95,7 +108,7 @@ class PersonCollaborationNetworkServiceTest {
 
         var response = mock(SearchResponse.class);
         when(response.aggregations()).thenReturn(
-            Map.of("coauthors", Aggregate.of(a -> a.lterms(termsAgg)))
+            Map.of("collaborators", Aggregate.of(a -> a.lterms(termsAgg)))
         );
         when(elasticsearchClient.search(any(SearchRequest.class), eq(Void.class)))
             .thenReturn(response);
@@ -109,9 +122,66 @@ class PersonCollaborationNetworkServiceTest {
         when(personIndexRepository.findByDatabaseIdIn(anyList(), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of(p1, p2)));
 
-        var result = collaborationService.findCollaborationNetwork(1, 1);
+        var result =
+            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP);
 
         assertNotNull(result.nodes());
         assertNotNull(result.links());
+    }
+
+    @Test
+    void shouldRunQueryWithCorrectParamsWhenValidInputGiven() {
+        var sourcePersonId = 1;
+        var targetPersonId = 2;
+        var collaborationType = CollaborationType.COAUTHORSHIP.name();
+        var pageable = PageRequest.of(0, 10);
+        var expectedPage = new PageImpl<DocumentPublicationIndex>(List.of());
+
+        when(searchService.runQuery(any(), eq(pageable), eq(DocumentPublicationIndex.class),
+            eq("document_publication")))
+            .thenReturn(expectedPage);
+
+        var result = collaborationService.findPublicationsForCollaboration(sourcePersonId,
+            targetPersonId, collaborationType, pageable);
+
+        assertEquals(expectedPage, result);
+        verify(searchService).runQuery(any(), eq(pageable), eq(DocumentPublicationIndex.class),
+            eq("document_publication"));
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenSourcePersonIdIsNull() {
+        var targetPersonId = 2;
+        var collaborationType = CollaborationType.COAUTHORSHIP.name();
+        var pageable = PageRequest.of(0, 10);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            collaborationService.findPublicationsForCollaboration(null, targetPersonId,
+                collaborationType, pageable)
+        );
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenTargetPersonIdIsNull() {
+        var sourcePersonId = 1;
+        var collaborationType = CollaborationType.COAUTHORSHIP.name();
+        var pageable = PageRequest.of(0, 10);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            collaborationService.findPublicationsForCollaboration(sourcePersonId, null,
+                collaborationType, pageable)
+        );
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenCollaborationTypeIsInvalid() {
+        var sourcePersonId = 1;
+        var targetPersonId = 2;
+        var pageable = PageRequest.of(0, 10);
+
+        assertThrows(IllegalArgumentException.class, () ->
+            collaborationService.findPublicationsForCollaboration(sourcePersonId,
+                targetPersonId, "INVALID_TYPE", pageable)
+        );
     }
 }
