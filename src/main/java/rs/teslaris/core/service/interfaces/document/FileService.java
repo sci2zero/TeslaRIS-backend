@@ -13,4 +13,6 @@ public interface FileService {
     void delete(String serverFilename);
 
     GetObjectResponse loadAsResource(String serverFilename) throws IOException;
+
+    String duplicateFile(String serverFilename);
 }

@@ -456,6 +456,10 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     private EmploymentTitle mapToEmploymentTitle(EmploymentPosition position) {
+        if (Objects.isNull(position)) {
+            return null;
+        }
+
         return switch (position) {
             case FULL_PROFESSOR -> EmploymentTitle.FULL_PROFESSOR;
             case ASSISTANT_PROFESSOR -> EmploymentTitle.ASSISTANT_PROFESSOR;

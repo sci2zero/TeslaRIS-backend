@@ -73,6 +73,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
@@ -129,6 +130,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private final TaskManagerService taskManagerService;
 
+    private final FileService fileService;
+
     private final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
 
     @Value("${thesis.public-review.duration-days}")
@@ -165,7 +168,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              UserService userService, MessageSource messageSource,
                              BrandingInformationService brandingInformationService,
                              EmailUtil emailUtil, DocumentFileService documentFileService1,
-                             TaskManagerService taskManagerService) {
+                             TaskManagerService taskManagerService, FileService fileService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             personContributionService, expressionTransformer, eventService, commissionRepository,
@@ -184,6 +187,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         this.emailUtil = emailUtil;
         this.documentFileService = documentFileService1;
         this.taskManagerService = taskManagerService;
+        this.fileService = fileService;
     }
 
     @Override
@@ -372,13 +376,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             var officialPublication = new DocumentFile();
             officialPublication.setDocument(file.getDocument());
             officialPublication.setFilename(file.getFilename());
-            officialPublication.setServerFilename(file.getServerFilename());
             officialPublication.setMimeType(file.getMimeType());
             officialPublication.setFileSize(file.getFileSize());
             officialPublication.setAccessRights(file.getAccessRights());
             officialPublication.setLicense(file.getLicense());
             officialPublication.setApproveStatus(file.getApproveStatus());
-            officialPublication.setLegacyFilename(file.getLegacyFilename());
             officialPublication.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
 
             var description = new HashSet<>();
@@ -386,6 +388,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 new MultiLingualContent(multiLingualContent)));
             officialPublication.setDescription((Set) description);
 
+            var newServerFilename = fileService.duplicateFile(file.getServerFilename());
+            officialPublication.setServerFilename(newServerFilename);
             documentFileService.save(officialPublication);
 
             thesis.getFileItems().add(officialPublication);
@@ -473,6 +477,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         if (thesis.getTitle().isEmpty() || Objects.isNull(thesis.getOrganisationUnit()) ||
+            Objects.isNull(thesis.getScientificArea()) || thesis.getScientificArea().isEmpty() ||
             thesis.getPreliminaryFiles().isEmpty() || thesis.getCommissionReports().isEmpty()) {
             throw new ThesisException("noAttachmentsMessage");
         }

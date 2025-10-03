@@ -5,8 +5,10 @@ import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.StatObjectArgs;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tika.io.FilenameUtils;
@@ -83,6 +85,41 @@ public class FileServiceMinioImpl implements FileService {
                 .build();
 
             return Objects.requireNonNull(minioClient.getObject(args));
+        } catch (Exception e) {
+            throw new NotFoundException("Document " + serverFilename + " does not exist.");
+        }
+    }
+
+    @Override
+    public String duplicateFile(String serverFilename) {
+        try {
+            var statArgs = StatObjectArgs.builder()
+                .bucket(bucketName)
+                .object(serverFilename)
+                .build();
+
+            var stat = minioClient.statObject(statArgs);
+            long fileSize = stat.size();
+
+            GetObjectArgs getArgs = GetObjectArgs.builder()
+                .bucket(bucketName)
+                .object(serverFilename)
+                .build();
+
+            try (GetObjectResponse file = minioClient.getObject(getArgs)) {
+                var serverFilenameTokens = serverFilename.split("\\.");
+                var extension = serverFilenameTokens[serverFilenameTokens.length - 1];
+                var newServerFilename = UUID.randomUUID() + "." + extension;
+
+                PutObjectArgs putArgs = PutObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(newServerFilename)
+                    .stream(file, fileSize, -1)
+                    .build();
+
+                minioClient.putObject(putArgs);
+                return newServerFilename;
+            }
         } catch (Exception e) {
             throw new NotFoundException("Document " + serverFilename + " does not exist.");
         }

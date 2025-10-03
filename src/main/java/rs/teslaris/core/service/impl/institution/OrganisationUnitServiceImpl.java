@@ -581,6 +581,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                         subOU.setInstitutionEmailDomain(
                             organisationUnitDTO.getInstitutionEmailDomain());
                         save(subOU);
+
+                        organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+                            organisationUnitId).ifPresent(subOUIndex -> {
+                            subOUIndex.setIsClientInstitution(subOU.getIsClientInstitution());
+                            organisationUnitIndexRepository.save(subOUIndex);
+                        });
                     });
             }
         }

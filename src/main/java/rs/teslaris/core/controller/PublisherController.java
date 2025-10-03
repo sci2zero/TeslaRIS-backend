@@ -22,7 +22,9 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.PublisherBasicAdditionDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PublisherIndex;
+import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -34,6 +36,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class PublisherController {
 
     private final PublisherService publisherService;
+
+    private final DeduplicationService deduplicationService;
 
     private final EmailUtil emailUtil;
 
@@ -110,6 +114,7 @@ public class PublisherController {
     @PreAuthorize("hasAuthority('EDIT_PUBLISHERS')")
     public void deletePublisher(@PathVariable Integer publisherId) {
         publisherService.deletePublisher(publisherId);
+        deduplicationService.deleteSuggestion(publisherId, EntityType.PUBLISHER);
     }
 
     @DeleteMapping("/force/{publisherId}")
@@ -117,5 +122,6 @@ public class PublisherController {
     @PreAuthorize("hasAuthority('FORCE_DELETE_ENTITIES')")
     public void forceDeletePublisher(@PathVariable Integer publisherId) {
         publisherService.forceDeletePublisher(publisherId);
+        deduplicationService.deleteSuggestion(publisherId, EntityType.PUBLISHER);
     }
 }
