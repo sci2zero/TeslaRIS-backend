@@ -394,16 +394,24 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             notificationRepository.getNewOtherNameNotificationsForUser(
                 notification.getUser().getId());
         for (var oldNotification : newOtherNameNotifications) {
-            if (oldNotification.getValues().get("firstname")
-                .equals(notification.getValues().get("firstname")) &&
-                oldNotification.getValues().get("middlename")
-                    .equals(notification.getValues().get("middlename")) &&
-                oldNotification.getValues().get("lastname")
-                    .equals(notification.getValues().get("lastname"))) {
+            if (haveSameNameFields(oldNotification, notification)) {
                 return;
             }
         }
 
         notificationRepository.save(notification);
+    }
+
+    private boolean haveSameNameFields(Notification oldNotification, Notification newNotification) {
+        return haveSameField(oldNotification, newNotification, "firstname") &&
+            haveSameField(oldNotification, newNotification, "middlename") &&
+            haveSameField(oldNotification, newNotification, "lastname");
+    }
+
+    private boolean haveSameField(Notification oldNotif, Notification newNotif, String fieldName) {
+        String oldValue = oldNotif.getValues().get(fieldName);
+        String newValue = newNotif.getValues().get(fieldName);
+        return (Objects.isNull(oldValue) && Objects.isNull(newValue)) ||
+            Objects.equals(oldValue, newValue);
     }
 }
