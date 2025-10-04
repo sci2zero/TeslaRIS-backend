@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.assessment.dto.AssessmentResearchAreaDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
-import rs.teslaris.core.util.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.files.ConfigurationLoaderUtil;
 
 @Component
 public class ResearchAreasConfigurationLoader {

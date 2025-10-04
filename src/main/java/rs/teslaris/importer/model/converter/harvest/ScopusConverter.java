@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
@@ -42,7 +44,8 @@ public class ScopusConverter {
         }
 
         if (Objects.nonNull(entry.isbn()) && !entry.isbn().isEmpty()) {
-            document.setIsbn(entry.isbn().getFirst().value());
+            document.setIsbn(
+                entry.isbn().getFirst().value().replace("[", "").replace("]", "").split(",")[0]);
         }
 
         document.setDoi(entry.doi());
@@ -76,17 +79,35 @@ public class ScopusConverter {
                                               ScopusImportUtility scopusImportUtility) {
         switch (entry.subtypeDescription()) {
             case "Article":
+            case "Data Paper":
+            case "Article-in-Press":
+            case "Business Article":
+                document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+                document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
+                break;
             case "Short Survey":
             case "Review":
-            case "Data Paper":
-            case "Business Article":
+                document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+                document.setJournalPublicationType(JournalPublicationType.REVIEW_ARTICLE);
+                break;
+            case "Erratum":
+                document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+                document.setJournalPublicationType(JournalPublicationType.LEXICOGRAPHIC_UNIT);
+                break;
             case "Note":
+                document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+                document.setJournalPublicationType(JournalPublicationType.COMMENT);
+                break;
             case "Letter":
+                // TODO: Should this be polemics or something else?
             case "Editorial":
                 document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+                document.setJournalPublicationType(JournalPublicationType.EDITORIAL);
                 break;
             case "Conference Paper":
                 document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+                document.setProceedingsPublicationType(
+                    ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
 
                 var abstractData = scopusImportUtility.getAbstractData(entry.identifier());
                 setConferenceInfo(abstractData, document);

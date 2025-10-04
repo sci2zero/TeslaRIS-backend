@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
@@ -44,10 +45,10 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.ResourceMultipartFile;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.files.ResourceMultipartFile;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 import rs.teslaris.thesislibrary.model.RegistryBookReport;
@@ -77,10 +78,14 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
 
 
     @Override
-    public String scheduleReportGeneration(LocalDate from, LocalDate to, Integer institutionId,
+    public String scheduleReportGeneration(RelativeDateDTO from, RelativeDateDTO to,
+                                           Integer institutionId,
                                            String lang, Integer userId, String authorName,
                                            String authorTitle, RecurrenceType recurrence) {
-        if (from.isAfter(to)) {
+        var dateFrom = from.computeDate();
+        var dateTo = to.computeDate();
+
+        if (dateFrom.isAfter(dateTo)) {
             throw new RegistryBookException("dateRangeIssueMessage");
         }
 
@@ -89,7 +94,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
             "Registry_Book-" + institutionId +
                 "-" + from + "_" + to + "_" + lang +
                 "-" + UUID.randomUUID(), reportGenerationTime,
-            () -> generateReport(from, to, authorName, authorTitle, institutionId, lang),
+            () -> generateReport(dateFrom, dateTo, authorName, authorTitle, institutionId, lang),
             userId, recurrence);
 
         taskManagerService.saveTaskMetadata(
@@ -210,7 +215,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                                                                         Integer institutionId,
                                                                         String lang) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
         var groupedRows = new TreeMap<String, List<List<String>>>();
 

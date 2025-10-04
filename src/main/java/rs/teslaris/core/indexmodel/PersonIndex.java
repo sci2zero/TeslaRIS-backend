@@ -39,20 +39,20 @@ public class PersonIndex {
     @Field(type = FieldType.Text, store = true, name = "employments_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String employmentsSr;
 
-    @Field(type = FieldType.Keyword, name = "employments_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "employments_sr_sortable", normalizer = "serbian_normalizer")
     private String employmentsSrSortable;
 
     @Field(type = FieldType.Text, store = true, name = "employments_other", analyzer = "english", searchAnalyzer = "english")
     private String employmentsOther;
 
-    @Field(type = FieldType.Keyword, name = "employments_other_sortable")
+    @Field(type = FieldType.Keyword, name = "employments_other_sortable", normalizer = "english_normalizer")
     private String employmentsOtherSortable;
 
     @Field(type = FieldType.Integer, name = "employment_institutions_id", store = true)
     private List<Integer> employmentInstitutionsId = new ArrayList<>();
 
     @Field(type = FieldType.Integer, name = "past_employment_institution_ids", store = true)
-    private List<Integer> pastEmploymentInstitutionIds;
+    private List<Integer> pastEmploymentInstitutionIds = new ArrayList<>();
 
     @Field(type = FieldType.Text, store = true, name = "birthdate")
     private String birthdate;

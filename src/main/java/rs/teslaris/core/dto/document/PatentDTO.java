@@ -10,10 +10,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PatentDTO extends DocumentDTO {
+public class PatentDTO extends DocumentDTO implements PublishableDTO {
 
     private String number;
 
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;
+
+    private Boolean authorReprint;
 }

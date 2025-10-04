@@ -36,6 +36,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -62,6 +63,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     private final DocumentFileService documentFileService;
 
     private final EmploymentRepository employmentRepository;
+
+    private final DocumentPublicationService documentPublicationService;
+
 
     @Override
     protected JpaRepository<Involvement, Integer> getEntityRepository() {
@@ -132,6 +136,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                 return;
             }
 
+            if (directAndIndirectEmployments.stream()
+                .anyMatch(e -> e.getOrganisationUnitId()
+                    .equals(employment.getOrganisationUnit().getId()))) {
+                return;
+            }
+
             directAndIndirectEmployments.add(InvolvementConverter.toDTO(employment));
 
             var employmentOU = employment.getOrganisationUnit();
@@ -185,7 +195,11 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
         personService.indexPerson(personInvolved);
 
-        return involvementRepository.save(newEmployment);
+        var savedEmployment = involvementRepository.save(newEmployment);
+
+        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(personId);
+
+        return savedEmployment;
     }
 
     @Override
@@ -208,6 +222,13 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         personService.save(person);
         userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
+
+        // TODO: This is an administrative task that we run once a year, maybe a better solution
+        //  for this is to run reindexing task after migration, to avoid so many index updates
+        //  with each new insert.
+        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
+            person.getId());
+
         return InvolvementConverter.toDTO(employment);
     }
 
@@ -379,18 +400,30 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(
             employmentToUpdate.getPersonInvolved().getId());
         personService.indexPerson(employmentToUpdate.getPersonInvolved());
+
+        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
+            employmentToUpdate.getPersonInvolved().getId());
     }
 
     @Override
     public void deleteInvolvement(Integer involvementId) {
         var involvementToDelete = findOne(involvementId);
-        var personId = involvementToDelete.getPersonInvolved().getId();
+        var person = involvementToDelete.getPersonInvolved();
 
         involvementToDelete.getProofs()
             .forEach(proof -> documentFileService.deleteDocumentFile(proof.getServerFilename()));
 
         delete(involvementId);
-        userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
+        userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
+
+        if (involvementToDelete instanceof Employment) {
+            documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
+                involvementToDelete.getPersonInvolved().getId());
+        }
+
+        person.removeInvolvement(involvementToDelete);
+        personService.save(person);
+        personService.indexPerson(person);
     }
 
     @Override
@@ -406,6 +439,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         employment.get().setDateTo(LocalDate.now());
         employmentRepository.save(employment.get());
         personService.indexPerson(employment.get().getPersonInvolved());
+
+        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
+            employment.get().getPersonInvolved().getId());
     }
 
     @Override
@@ -420,6 +456,10 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     private EmploymentTitle mapToEmploymentTitle(EmploymentPosition position) {
+        if (Objects.isNull(position)) {
+            return null;
+        }
+
         return switch (position) {
             case FULL_PROFESSOR -> EmploymentTitle.FULL_PROFESSOR;
             case ASSISTANT_PROFESSOR -> EmploymentTitle.ASSISTANT_PROFESSOR;

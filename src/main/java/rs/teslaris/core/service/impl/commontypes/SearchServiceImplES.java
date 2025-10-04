@@ -16,7 +16,7 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 @RequiredArgsConstructor

@@ -106,4 +106,9 @@ public class FileServiceFileSystemImpl implements FileService {
             throw new StorageException("Could not read file: " + filename);
         }
     }
+
+    @Override
+    public String duplicateFile(String serverFilename) {
+        return "";
+    }
 }

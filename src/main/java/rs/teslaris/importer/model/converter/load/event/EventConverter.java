@@ -74,6 +74,8 @@ public class EventConverter implements RecordConverter<Event, ConferenceDTO> {
         dto.setSerialEvent(false);
         dto.setContributions(new ArrayList<>());
 
+        dto.setNumber(record.getNumber());
+
         return dto;
     }
 }

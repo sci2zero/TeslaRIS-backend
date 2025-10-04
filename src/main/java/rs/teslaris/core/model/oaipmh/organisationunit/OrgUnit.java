@@ -58,4 +58,7 @@ public class OrgUnit implements OrgUnitConvertable, HasOldId {
 
     @XmlElement(name = "ResearchArea")
     private List<String> researchArea;
+
+    @XmlElement(name = "IsInstitution")
+    private Boolean isInstitution;
 }

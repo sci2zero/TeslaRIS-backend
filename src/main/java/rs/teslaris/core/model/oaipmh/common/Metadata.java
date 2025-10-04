@@ -16,6 +16,7 @@ import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.etdms.ETDMSThesis;
 import rs.teslaris.core.model.oaipmh.event.Event;
 import rs.teslaris.core.model.oaipmh.event.EventConvertable;
+import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnitConvertable;
 import rs.teslaris.core.model.oaipmh.patent.Patent;
@@ -38,6 +39,15 @@ import rs.teslaris.core.model.oaipmh.publication.PublicationConvertable;
 public class Metadata {
 
     @XmlElements({
+        @XmlElement(name = "Publication", type = Publication.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
+        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/"),
+        @XmlElement(name = "thesis", type = ETDMSThesis.class, namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/"),
+        @XmlElement(name = "dim", type = Dim.class, namespace = "http://www.dspace.org/xmlns/dspace/dim"),
+        @XmlElement(name = "marc21", type = Marc21.class, namespace = "http://www.loc.gov/MARC21/slim")
+    })
+    private PublicationConvertable publication;
+
+    @XmlElements({
         @XmlElement(name = "OrgUnit", type = OrgUnit.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
         @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
     })
@@ -54,14 +64,6 @@ public class Metadata {
         @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/")
     })
     private EventConvertable event;
-
-    @XmlElements({
-        @XmlElement(name = "Publication", type = Publication.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),
-        @XmlElement(name = "dc", type = DC.class, namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/"),
-        @XmlElement(name = "thesis", type = ETDMSThesis.class, namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/"),
-        @XmlElement(name = "dim", type = Dim.class, namespace = "http://www.dspace.org/xmlns/dspace/dim")
-    })
-    private PublicationConvertable publication;
 
     @XmlElements({
         @XmlElement(name = "Patent", type = Patent.class, namespace = "https://www.openaire.eu/cerif-profile/1.1/"),

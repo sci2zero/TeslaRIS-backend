@@ -14,7 +14,7 @@ public class ExpressionTransformer {
     private final Map<String, Integer> priorities = Map.of("AND", 2, "OR", 1, "NOT", 3);
 
     public Query parseAdvancedQuery(List<String> expression) {
-        if (expression.isEmpty()) {
+        if (expression.isEmpty() || (expression.size() == 1 && expression.getFirst().equals("*"))) {
             return MatchAllQuery.of(ma -> ma)._toQuery();
         }
 

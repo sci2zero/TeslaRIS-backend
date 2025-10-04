@@ -43,6 +43,9 @@ public class PublicationSeriesConverter {
         responseDTO.setId(publicationSeries.getId());
         responseDTO.setTitle(
             MultilingualContentConverter.getMultilingualContentDTO(publicationSeries.getTitle()));
+        responseDTO.setSubtitle(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                publicationSeries.getSubtitle()));
         responseDTO.setEissn(publicationSeries.getEISSN());
         responseDTO.setPrintISSN(publicationSeries.getPrintISSN());
         responseDTO.setOpenAlexId(publicationSeries.getOpenAlexId());

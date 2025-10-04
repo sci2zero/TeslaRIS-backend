@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -23,6 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
@@ -41,7 +43,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.converter.person.UserConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
@@ -56,9 +60,14 @@ import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.dto.user.UserUpdateRequestDTO;
 import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.person.Employment;
+import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.EmailUpdateRequest;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
@@ -69,29 +78,34 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
+import rs.teslaris.core.repository.user.OAuthCodeRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.PasswordUtil;
+import rs.teslaris.core.util.email.EmailDomainChecker;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
+import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.exceptionhandling.exception.RegistrationException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.session.PasswordUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -134,9 +148,34 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final EmailUpdateRequestRepository emailUpdateRequestRepository;
 
+    private final OAuthCodeRepository oAuthCodeRepository;
+
+    private final BrandingInformationService brandingInformationService;
+
     @Value("${frontend.application.address}")
     private String clientAppAddress;
 
+    @Value("${registration.allow-creation-of-researchers}")
+    private boolean allowNewResearcherCreation;
+
+
+    @NotNull
+    private static BasicPersonDTO createBasicPersonDTO(
+        ResearcherRegistrationRequestDTO registrationRequest, OAuth2Provider oAuth2Provider,
+        String identifier) {
+        var basicPersonDTO = new BasicPersonDTO();
+        var personNameDTO = new PersonNameDTO();
+        personNameDTO.setFirstname(registrationRequest.getFirstName());
+        personNameDTO.setLastname(registrationRequest.getLastName());
+        personNameDTO.setOtherName("");
+        basicPersonDTO.setPersonName(personNameDTO);
+        basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
+
+        if (oAuth2Provider == OAuth2Provider.ORCID) {
+            basicPersonDTO.setOrcid(identifier);
+        }
+        return basicPersonDTO;
+    }
 
     @Override
     protected JpaRepository<User, Integer> getEntityRepository() {
@@ -221,6 +260,31 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Override
     @Transactional
+    public AuthenticationResponseDTO finishOAuthWorkflow(String code, String identifier,
+                                                         String fingerprint) {
+        var oAuthCode = oAuthCodeRepository.getCodeForCodeAndIdentifier(code, identifier);
+
+        if (oAuthCode.isEmpty()) {
+            oAuthCodeRepository.deleteByIdentifier(identifier);
+            throw new InvalidOAuth2CodeException("Invalid OAuth2 code");
+        }
+
+        var user = findOne(oAuthCode.get().getUserId());
+
+        var authentication =
+            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        var refreshTokenValue = createAndSaveRefreshTokenForUser(user);
+
+        oAuthCodeRepository.deleteByIdentifier(identifier);
+
+        return new AuthenticationResponseDTO(tokenUtil.generateToken(authentication, fingerprint),
+            refreshTokenValue);
+    }
+
+    @Override
+    @Transactional
     public AuthenticationResponseDTO refreshToken(String refreshTokenValue, String fingerprint) {
         var hashedRefreshToken =
             Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();
@@ -297,45 +361,133 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    public boolean isNewResearcherCreationAllowed() {
+        return allowNewResearcherCreation;
+    }
+
+    @Override
     @Transactional
     public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
         validateEmailUniqueness(registrationRequest.getEmail());
         validatePasswordStrength(registrationRequest.getPassword());
 
-        var authority = authorityRepository.findByName(UserRole.RESEARCHER.toString())
-            .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
-
-        Person person;
-        if (registrationRequest.getPersonId() != null) {
-            if (userRepository.personAlreadyBinded(registrationRequest.getPersonId())) {
-                throw new PersonReferenceConstraintViolationException(
-                    "Person you have selected is already assigned to a user.");
-            }
-
-            person = personService.findOne(registrationRequest.getPersonId());
-        } else {
-            BasicPersonDTO basicPersonDTO = new BasicPersonDTO();
-            PersonNameDTO personNameDTO = new PersonNameDTO();
-            personNameDTO.setFirstname(registrationRequest.getFirstName());
-            personNameDTO.setLastname(registrationRequest.getLastName());
-            personNameDTO.setOtherName("");
-            basicPersonDTO.setPersonName(personNameDTO);
-            basicPersonDTO.setOrganisationUnitId(registrationRequest.getOrganisationUnitId());
-
-            person = personService.createPersonWithBasicInfo(basicPersonDTO, true);
-        }
+        var authority = getResearcherAuthority();
+        var person = resolveOrCreatePerson(registrationRequest, null, null);
         var involvement = personService.getLatestResearcherInvolvement(person);
 
-        var newUser =
-            new User(registrationRequest.getEmail(),
-                passwordEncoder.encode(registrationRequest.getPassword()), "",
-                person.getName().getFirstname(), person.getName().getLastname(), true, false,
-                languageTagService.findOne(registrationRequest.getPreferredLanguageId()),
-                languageTagService.findOne(registrationRequest.getPreferredLanguageId()), authority,
-                person, Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
-                null, UserNotificationPeriod.NEVER);
-        var savedUser = userRepository.save(newUser);
+        validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
+            registrationRequest.getEmail());
 
+        var newUser = buildUser(
+            registrationRequest.getEmail(),
+            passwordEncoder.encode(registrationRequest.getPassword()),
+            person, involvement, authority,
+            registrationRequest.getPreferredLanguageId()
+        );
+
+        personService.indexPerson(person);
+        return saveAndNotifyUser(newUser);
+    }
+
+    @Override
+    @Transactional
+    public User registerResearcherOAuth(
+        ResearcherRegistrationRequestDTO registrationRequest,
+        OAuth2Provider oAuth2Provider, String identifier) {
+
+        validateEmailUniqueness(registrationRequest.getEmail());
+
+        var authority = getResearcherAuthority();
+        var person = resolveOrCreatePerson(registrationRequest, oAuth2Provider, identifier);
+        var involvement = personService.getLatestResearcherInvolvement(person);
+
+        validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
+            registrationRequest.getEmail());
+
+        char[] generatedPassword = PasswordUtil.generatePassword(30);
+        var newUser = buildUser(
+            registrationRequest.getEmail(),
+            passwordEncoder.encode(new String(generatedPassword)),
+            person, involvement, authority,
+            registrationRequest.getPreferredLanguageId()
+        );
+
+        Arrays.fill(generatedPassword, '\0');
+        return saveAndNotifyUser(newUser);
+    }
+
+    private Authority getResearcherAuthority() {
+        return authorityRepository.findByName(UserRole.RESEARCHER.toString())
+            .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
+    }
+
+    private Person resolveOrCreatePerson(
+        ResearcherRegistrationRequestDTO registrationRequest,
+        OAuth2Provider oAuth2Provider, String identifier) {
+
+        if (Objects.nonNull(registrationRequest.getPersonId())) {
+            if (userRepository.personAlreadyBinded(registrationRequest.getPersonId())) {
+                throw new PersonReferenceConstraintViolationException(
+                    "personAlreadyHasAccountMessage");
+            }
+
+            var person = personService.findOne(registrationRequest.getPersonId());
+            if (oAuth2Provider == OAuth2Provider.ORCID) {
+                if (!allowNewResearcherCreation && !person.getOrcid().equals(identifier)) {
+                    throw new PersonReferenceConstraintViolationException(
+                        "Rewriting researcher ORCID upon user registration is disallowed.");
+                } else {
+                    person.setOrcid(identifier);
+                }
+            }
+            addOrganisationIfMissing(person, registrationRequest.getOrganisationUnitId());
+            return person;
+        } else if (allowNewResearcherCreation) {
+            var basicPersonDTO =
+                createBasicPersonDTO(registrationRequest, oAuth2Provider, identifier);
+
+            var person = personService.createPersonWithBasicInfo(basicPersonDTO, true);
+            addOrganisationIfMissing(person, registrationRequest.getOrganisationUnitId());
+            return person;
+        }
+        throw new PersonReferenceConstraintViolationException(
+            "Creation of new researchers upon user registration is disallowed.");
+    }
+
+    private void addOrganisationIfMissing(Person person, Integer organisationUnitId) {
+        if (Objects.nonNull(organisationUnitId) &&
+            person.getInvolvements().stream().noneMatch(
+                i -> Objects.nonNull(i.getOrganisationUnit()) &&
+                    i.getOrganisationUnit().getId().equals(organisationUnitId))) {
+
+            var institution = organisationUnitService.findOrganisationUnitById(organisationUnitId);
+            var employment = new Employment(
+                null, null, ApproveStatus.APPROVED, new HashSet<>(),
+                InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                institution, null, new HashSet<>()
+            );
+            person.addInvolvement(employment);
+        }
+    }
+
+    private User buildUser(
+        String email, String encodedPassword,
+        Person person, Involvement involvement, Authority authority,
+        Integer preferredLanguageId) {
+
+        var language = languageTagService.findOne(preferredLanguageId);
+
+        return new User(
+            email, encodedPassword, "",
+            person.getName().getFirstname(), person.getName().getLastname(), true, false,
+            language, language, authority, person,
+            Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
+            null, UserNotificationPeriod.WEEKLY
+        );
+    }
+
+    private User saveAndNotifyUser(User newUser) {
+        var savedUser = userRepository.save(newUser);
         indexUser(savedUser, new UserAccountIndex());
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -352,9 +504,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "accountActivation.mailBodyResearcher",
-            new Object[] {activationLink},
+            new Object[] {systemName, activationLink},
             Locale.forLanguageTag(language)
         );
         emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
@@ -400,6 +554,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         throws NoSuchAlgorithmException {
         validateEmailUniqueness(email);
 
+        validateInstitutionClientStatus(organisationUnitId, email);
+
         var authority = authorityRepository.findByName(authorityName)
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
 
@@ -426,7 +582,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             null,
             organisationUnit,
             commission,
-            UserNotificationPeriod.NEVER
+            UserNotificationPeriod.WEEKLY
         );
 
         var savedUser = userRepository.save(newUser);
@@ -446,9 +602,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "accountActivation.mailBodyEmployee",
-            new Object[] {activationLink, new String(generatedPassword)},
+            new Object[] {systemName, activationLink, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
 
@@ -456,6 +614,20 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         Arrays.fill(generatedPassword, '\0');
         return savedUser;
+    }
+
+    private void validateInstitutionClientStatus(Integer organisationUnitId, String email) {
+        var specifiedOU = organisationUnitService.findOne(organisationUnitId);
+        if (!specifiedOU.getIsClientInstitution()) {
+            throw new RegistrationException(
+                "Institution is not a client. Unable to register researchers.");
+        }
+
+        if (Objects.nonNull(specifiedOU.getValidateEmailDomain()) &&
+            specifiedOU.getValidateEmailDomain()) {
+            validateEmailDomain(email, specifiedOU.getInstitutionEmailDomain(),
+                specifiedOU.getAllowSubdomains());
+        }
     }
 
     private String generateActivationLink(String language, String activationToken) {
@@ -466,6 +638,12 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private void validateEmailUniqueness(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new UserAlreadyExistsException("emailInUseMessage");
+        }
+    }
+
+    private void validateEmailDomain(String email, String domain, Boolean allowSubdomains) {
+        if (!EmailDomainChecker.isEmailFromInstitution(email, domain, allowSubdomains)) {
+            throw new RegistrationException("emailDomainErrorMessage");
         }
     }
 
@@ -696,7 +874,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     public CompletableFuture<Void> reindexUsers() {
         userAccountIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -756,6 +934,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         userRepository.deleteRefreshTokenForUser(userId);
 
         userToDelete.setPerson(null);
+        userToDelete.setLocked(true);
         userRepository.delete(userToDelete);
         userAccountIndexRepository.findByDatabaseId(userId)
             .ifPresent(userAccountIndexRepository::delete);
@@ -946,37 +1125,42 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         });
     }
 
-    @Scheduled(cron = "0 */10 * ? * *") // every ten minutes
-    public void cleanupLongLivedRefreshTokens() {
-        var refreshTokens = refreshTokenRepository.findAll();
+    private String getSystemName(String language) {
+        var brandingTitle = brandingInformationService.readBrandingInformation().title();
+        return brandingTitle.stream()
+            .filter(t -> t.getLanguageTag().equalsIgnoreCase(language))
+            .findFirst()
+            .or(() -> brandingTitle.stream().findFirst())
+            .map(MultilingualContentDTO::getContent)
+            .orElse("TeslaRIS");
+    }
 
+    @Scheduled(cron = "0 */10 * ? * *") // every ten minutes
+    @Transactional
+    public void cleanupLongLivedRefreshTokens() {
         var now = new Date();
         var twentyMinutesAgo = new Date(now.getTime() - (20 * 60 * 1000));
 
-        refreshTokens.stream().filter(token -> token.getCreateDate().before(twentyMinutesAgo))
-            .forEach(refreshTokenRepository::delete);
+        // Use batch delete with query to avoid loading entities
+        refreshTokenRepository.deleteAllByCreateDateBefore(twentyMinutesAgo);
     }
 
     @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    @Transactional
     public void cleanupLongLivedAccountActivationTokens() {
-        var activationTokens = userAccountActivationRepository.findAll();
-
         var now = new Date();
         var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
-        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
-            .forEach(userAccountActivationRepository::delete);
+        userAccountActivationRepository.deleteAllByCreateDateBefore(sevenDaysAgo);
     }
 
     @Scheduled(cron = "0 0 0 * * *") // every day at midnight
+    @Transactional
     public void cleanupLongLivedPasswordResetTokens() {
-        var activationTokens = passwordResetTokenRepository.findAll();
-
         var now = new Date();
         var sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
 
-        activationTokens.stream().filter(token -> token.getCreateDate().before(sevenDaysAgo))
-            .forEach(passwordResetTokenRepository::delete);
+        passwordResetTokenRepository.deleteAllByCreateDateBefore(sevenDaysAgo);
     }
 
     @Scheduled(cron = "0 * * * * *") // every 15 minutes

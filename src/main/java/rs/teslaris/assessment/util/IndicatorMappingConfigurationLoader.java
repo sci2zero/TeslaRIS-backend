@@ -12,8 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
-import rs.teslaris.core.util.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.files.ConfigurationLoaderUtil;
 
 @Component
 public class IndicatorMappingConfigurationLoader {
@@ -133,6 +133,7 @@ public class IndicatorMappingConfigurationLoader {
         @JsonProperty(value = "nameColumn", required = true) Integer nameColumn,
         @JsonProperty(value = "eIssnColumn", required = true) Integer eIssnColumn,
         @JsonProperty(value = "editionColumn") Integer editionColumn,
+        @JsonProperty(value = "abbreviationColumn") Integer abbreviationColumn,
         @JsonProperty(value = "printIssnColumn", required = true) Integer printIssnColumn,
         @JsonProperty(value = "identifierDelimiter") String identifierDelimiter,
         @JsonProperty(value = "categoryColumn", required = true) Integer categoryColumn,

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -24,11 +25,17 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
 
     @Query(value = "SELECT * FROM theses t WHERE " +
         "t.is_archived = TRUE AND " +
-        "t.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY'", nativeQuery = true)
-    Page<Thesis> findAllModifiedInLast24Hours(Pageable pageable);
+        "(:allTime = TRUE OR t.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
+        "t.approve_status = 1", nativeQuery = true)
+    Page<Thesis> findAllModified(Pageable pageable, boolean allTime);
 
-    @Query("SELECT t FROM Thesis t WHERE t.isOnPublicReview = true")
+    @Query("SELECT t FROM Thesis t WHERE t.isOnPublicReview = TRUE")
     List<Thesis> findAllOnPublicReview();
+
+    @Query("SELECT t FROM Thesis t WHERE " +
+        "t.thesisType IN :types AND " +
+        "t.isOnPublicReview = TRUE")
+    List<Thesis> findAllOnPublicReviewOfGivenTypes(List<ThesisType> types);
 
     @Query("SELECT COUNT(t) FROM Thesis t WHERE " +
         "t.thesisDefenceDate >= :startDate AND " +
@@ -85,13 +92,13 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
         "(:putOnReview = FALSE AND (d < :startDate OR d > :endDate OR d IS NULL))" +
         ")" +
         ")")
-    Page<Thesis> findThesesForBackup(LocalDate startDate,
-                                     LocalDate endDate,
-                                     List<ThesisType> types,
-                                     Integer institutionId,
-                                     Boolean defended,
-                                     Boolean putOnReview,
-                                     Pageable pageable);
+    Slice<Thesis> findThesesForBackup(LocalDate startDate,
+                                      LocalDate endDate,
+                                      List<ThesisType> types,
+                                      Integer institutionId,
+                                      Boolean defended,
+                                      Boolean putOnReview,
+                                      Pageable pageable);
 
     @Query(value = "SELECT *, 0 AS clazz_ FROM theses WHERE " +
         "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)

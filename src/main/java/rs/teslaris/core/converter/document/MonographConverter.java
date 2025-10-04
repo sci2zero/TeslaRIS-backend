@@ -2,8 +2,12 @@ package rs.teslaris.core.converter.document;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import org.jbibtex.BibTeXEntry;
+import org.jbibtex.Key;
+import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class MonographConverter extends DocumentPublicationConverter {
 
@@ -31,6 +35,12 @@ public class MonographConverter extends DocumentPublicationConverter {
             monographResponseDTO.setResearchAreaId(monograph.getResearchArea().getId());
         }
 
+        if (Objects.nonNull(monograph.getPublisher())) {
+            monographResponseDTO.setPublisherId(monograph.getPublisher().getId());
+        } else {
+            monographResponseDTO.setAuthorReprint(monograph.getAuthorReprint());
+        }
+
         setLanguageInfo(monograph, monographResponseDTO);
         setPublicationSeriesInfo(monograph, monographResponseDTO);
     }
@@ -51,5 +61,115 @@ public class MonographConverter extends DocumentPublicationConverter {
         }
 
         monographResponseDTO.setPublicationSeriesId(publicationSeries.getId());
+    }
+
+    public static BibTeXEntry toBibTexEntry(Monograph monograph, String defaultLanguageTag) {
+        var entry = new BibTeXEntry(BibTeXEntry.TYPE_BOOK,
+            new Key("(TESLARIS)" + monograph.getId().toString()));
+
+        setCommonFields(monograph, entry, defaultLanguageTag);
+
+        if (StringUtil.valueExists(monograph.getNumber())) {
+            entry.addField(BibTeXEntry.KEY_NUMBER,
+                new StringValue(monograph.getNumber(), StringValue.Style.BRACED));
+        }
+
+        if (StringUtil.valueExists(monograph.getVolume())) {
+            entry.addField(BibTeXEntry.KEY_VOLUME,
+                new StringValue(monograph.getVolume(), StringValue.Style.BRACED));
+        }
+
+        if (Objects.nonNull(monograph.getNumberOfPages())) {
+            entry.addField(new Key("pageNumber"),
+                new StringValue(String.valueOf(monograph.getNumberOfPages()),
+                    StringValue.Style.BRACED));
+        }
+
+        if (Objects.nonNull(monograph.getPublicationSeries())) {
+            setMCBibTexField(monograph.getPublicationSeries().getTitle(), entry,
+                BibTeXEntry.KEY_SERIES, defaultLanguageTag);
+        }
+
+        if (Objects.nonNull(monograph.getPublisher())) {
+            setMCBibTexField(monograph.getPublisher().getName(), entry,
+                BibTeXEntry.KEY_PUBLISHER, defaultLanguageTag);
+        } else if (Objects.nonNull(monograph.getAuthorReprint()) && monograph.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
+        }
+
+        if (StringUtil.valueExists(monograph.getEISBN())) {
+            entry.addField(new Key("eIsbn"),
+                new StringValue(monograph.getEISBN(), StringValue.Style.BRACED));
+        }
+
+        if (StringUtil.valueExists(monograph.getPrintISBN())) {
+            entry.addField(new Key("printIsbn"),
+                new StringValue(monograph.getPrintISBN(), StringValue.Style.BRACED));
+        }
+
+        return entry;
+    }
+
+    public static String toTaggedFormat(Monograph monograph, String defaultLanguageTag,
+                                        boolean refMan) {
+        var sb = new StringBuilder();
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "SER" : "Book").append("\n");
+
+        setCommonTaggedFields(monograph, sb, defaultLanguageTag, refMan);
+
+        if (Objects.nonNull(monograph.getNumberOfPages())) {
+            sb.append(refMan ? "SP  - " : "%7 ").append(monograph.getNumberOfPages()).append("\n");
+        }
+
+        if (StringUtil.valueExists(monograph.getVolume())) {
+            sb.append(refMan ? "C6  - " : "%V ").append(monograph.getVolume()).append("\n");
+        }
+
+        if (StringUtil.valueExists(monograph.getNumber())) {
+            sb.append(refMan ? "C7  - " : "%N ").append(monograph.getNumber()).append("\n");
+        }
+
+        if (Objects.nonNull(monograph.getPublisher())) {
+            setMCTaggedField(monograph.getPublisher().getName(), sb, refMan ? "PB" : "%I",
+                defaultLanguageTag);
+        } else if (Objects.nonNull(monograph.getAuthorReprint()) && monograph.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
+        }
+
+        if (Objects.nonNull(monograph.getPublicationSeries())) {
+            setMCTaggedField(monograph.getPublicationSeries().getTitle(), sb, refMan ? "T2" : "%0T",
+                defaultLanguageTag);
+
+            if (StringUtil.valueExists(monograph.getPublicationSeries().getEISSN())) {
+                sb.append(refMan ? "SN  - " : "%@ ").append("e:")
+                    .append(monograph.getPublicationSeries().getEISSN())
+                    .append("\n");
+            }
+
+            if (StringUtil.valueExists(monograph.getPublicationSeries().getPrintISSN())) {
+                sb.append(refMan ? "SN  - " : "%@ ").append("print:")
+                    .append(monograph.getPublicationSeries().getPrintISSN())
+                    .append("\n");
+            }
+        }
+
+        if (StringUtil.valueExists(monograph.getEISBN())) {
+            sb.append(refMan ? "SN  - " : "%@ ").append("e:").append(monograph.getEISBN())
+                .append("\n");
+        }
+
+        if (StringUtil.valueExists(monograph.getPrintISBN())) {
+            sb.append(refMan ? "SN  - " : "%@ ").append("print:").append(monograph.getPrintISBN())
+                .append("\n");
+        }
+
+        if (refMan) {
+            sb.append("ER  -\n");
+        }
+
+        return sb.toString();
     }
 }

@@ -2,9 +2,12 @@ package rs.teslaris.exporter.service.impl;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +60,7 @@ import rs.teslaris.exporter.service.interfaces.CommonExportService;
 @RequiredArgsConstructor
 @Transactional
 @Traceable
+@Slf4j
 public class CommonExportServiceImpl implements CommonExportService {
 
     private final MongoTemplate mongoTemplate;
@@ -87,146 +91,205 @@ public class CommonExportServiceImpl implements CommonExportService {
 
     private final ThesisRepository thesisRepository;
 
+    private final ReentrantLock organisationUnitExportLock = new ReentrantLock();
+
+    private final ReentrantLock personExportLock = new ReentrantLock();
+
+    private final ReentrantLock eventExportLock = new ReentrantLock();
+
+    private final ReentrantLock documentExportLock = new ReentrantLock();
+
+    @Value("${export-to-common.allowed}")
+    private Boolean exportAllowed;
+
 
     @Override
-    @Scheduled(cron = "${export-to-common.schedule.ou}")
-    public void exportOrganisationUnitsToCommonModel() {
-        exportEntities(
-            organisationUnitRepository::findAllModifiedInLast24Hours,
-            ExportOrganisationUnitConverter::toCommonExportModel,
-            ExportOrganisationUnit.class,
-            OrganisationUnit::getId
-        );
+    public void exportOrganisationUnitsToCommonModel(boolean allTime) {
+        if (!organisationUnitExportLock.tryLock()) {
+            log.info("OU export already in progress, skipping this run.");
+            return;
+        }
+
+        try {
+            exportEntities(
+                organisationUnitRepository::findAllModified,
+                ExportOrganisationUnitConverter::toCommonExportModel,
+                ExportOrganisationUnit.class,
+                OrganisationUnit::getId,
+                allTime
+            );
+        } finally {
+            organisationUnitExportLock.unlock();
+        }
     }
 
     @Override
-    @Scheduled(cron = "${export-to-common.schedule.person}")
-    public void exportPersonsToCommonModel() {
-        exportEntities(
-            personRepository::findAllModifiedInLast24Hours,
-            ExportPersonConverter::toCommonExportModel,
-            ExportPerson.class,
-            Person::getId
-        );
+    public void exportPersonsToCommonModel(boolean allTime) {
+        if (!personExportLock.tryLock()) {
+            log.info("Person export already in progress, skipping this run.");
+            return;
+        }
+
+        try {
+            exportEntities(
+                personRepository::findAllModified,
+                ExportPersonConverter::toCommonExportModel,
+                ExportPerson.class,
+                Person::getId,
+                allTime
+            );
+        } finally {
+            personExportLock.unlock();
+        }
     }
 
     @Override
-    @Scheduled(cron = "${export-to-common.schedule.event}")
-    public void exportConferencesToCommonModel() {
-        exportEntities(
-            conferenceRepository::findAllModifiedInLast24Hours,
-            ExportEventConverter::toCommonExportModel,
-            ExportEvent.class,
-            Conference::getId
-        );
+    public void exportConferencesToCommonModel(boolean allTime) {
+        if (!eventExportLock.tryLock()) {
+            log.info("Event export already in progress, skipping this run.");
+            return;
+        }
+
+        try {
+            exportEntities(
+                conferenceRepository::findAllModified,
+                ExportEventConverter::toCommonExportModel,
+                ExportEvent.class,
+                Conference::getId,
+                allTime
+            );
+        } finally {
+            eventExportLock.unlock();
+        }
     }
 
     @Override
-    @Scheduled(cron = "${export-to-common.schedule.documents}")
-    public void exportDocumentsToCommonModel() {
-        var datasetFuture = exportEntitiesAsync(
-            datasetRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            Dataset::getId
-        );
+    public void exportDocumentsToCommonModel(boolean allTime) {
+        if (!documentExportLock.tryLock()) {
+            log.info("Document export already in progress, skipping this run.");
+            return;
+        }
 
-        var softwareFuture = exportEntitiesAsync(
-            softwareRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            Software::getId
-        );
+        try {
+            var datasetFuture = exportEntitiesAsync(
+                datasetRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                Dataset::getId,
+                allTime
+            );
 
-        var patentFuture = exportEntitiesAsync(
-            patentRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            Patent::getId
-        );
+            var softwareFuture = exportEntitiesAsync(
+                softwareRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                Software::getId,
+                allTime
+            );
 
-        var journalFuture = exportEntitiesAsync(
-            journalRepository::findAllModifiedInLast24Hours,
-            ExportPublicationSeriesConverter::toCommonExportModel,
-            ExportDocument.class,
-            Journal::getId
-        );
+            var patentFuture = exportEntitiesAsync(
+                patentRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                Patent::getId,
+                allTime
+            );
 
-        var journalPublicationFuture = exportEntitiesAsync(
-            journalPublicationRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            JournalPublication::getId
-        );
+            var journalFuture = exportEntitiesAsync(
+                journalRepository::findAllModified,
+                ExportPublicationSeriesConverter::toCommonExportModel,
+                ExportDocument.class,
+                Journal::getId,
+                allTime
+            );
 
-        var proceedingsFuture = exportEntitiesAsync(
-            proceedingsRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            Proceedings::getId
-        );
+            var journalPublicationFuture = exportEntitiesAsync(
+                journalPublicationRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                JournalPublication::getId,
+                allTime
+            );
 
-        var proceedingsPublicationFuture = exportEntitiesAsync(
-            proceedingsPublicationRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            ProceedingsPublication::getId
-        );
+            var proceedingsFuture = exportEntitiesAsync(
+                proceedingsRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                Proceedings::getId,
+                allTime
+            );
 
-        var monographFuture = exportEntitiesAsync(
-            monographRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            Monograph::getId
-        );
+            var proceedingsPublicationFuture = exportEntitiesAsync(
+                proceedingsPublicationRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                ProceedingsPublication::getId,
+                allTime
+            );
 
-        var monographPublicationFuture = exportEntitiesAsync(
-            monographPublicationRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            MonographPublication::getId
-        );
+            var monographFuture = exportEntitiesAsync(
+                monographRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                Monograph::getId,
+                allTime
+            );
 
-        var thesisFuture = exportEntitiesAsync(
-            thesisRepository::findAllModifiedInLast24Hours,
-            ExportDocumentConverter::toCommonExportModel,
-            ExportDocument.class,
-            Thesis::getId
-        );
+            var monographPublicationFuture = exportEntitiesAsync(
+                monographPublicationRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                MonographPublication::getId,
+                allTime
+            );
 
-        CompletableFuture.allOf(
-            datasetFuture, softwareFuture, patentFuture,
-            journalFuture, journalPublicationFuture,
-            proceedingsFuture, proceedingsPublicationFuture,
-            monographFuture, monographPublicationFuture,
-            thesisFuture
-        ).join();
+            var thesisFuture = exportEntitiesAsync(
+                thesisRepository::findAllModified,
+                ExportDocumentConverter::toCommonExportModel,
+                ExportDocument.class,
+                Thesis::getId,
+                allTime
+            );
+
+            CompletableFuture.allOf(
+                datasetFuture, softwareFuture, patentFuture,
+                journalFuture, journalPublicationFuture,
+                proceedingsFuture, proceedingsPublicationFuture,
+                monographFuture, monographPublicationFuture,
+                thesisFuture
+            ).join();
+        } finally {
+            documentExportLock.unlock();
+        }
     }
 
     @Async("taskExecutor")
     public <T, E> CompletableFuture<Void> exportEntitiesAsync(
-        Function<Pageable, Page<T>> repositoryFunction,
+        BiFunction<Pageable, Boolean, Page<T>> repositoryFunction,
         BiFunction<T, Boolean, E> converter,
         Class<E> exportClass,
-        Function<T, Integer> idGetter
+        Function<T, Integer> idGetter,
+        boolean allTime
     ) {
-        exportEntities(repositoryFunction, converter, exportClass, idGetter);
+        exportEntities(repositoryFunction, converter, exportClass, idGetter, allTime);
         return CompletableFuture.completedFuture(null);
     }
 
     private <T, E> void exportEntities(
-        Function<Pageable, Page<T>> repositoryFunction,
+        BiFunction<Pageable, Boolean, Page<T>> repositoryFunction,
         BiFunction<T, Boolean, E> converter,
         Class<E> exportClass,
-        Function<T, Integer> idGetter
+        Function<T, Integer> idGetter,
+        boolean allTime
     ) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
             List<T> chunk =
-                repositoryFunction.apply(PageRequest.of(pageNumber, chunkSize)).getContent();
+                repositoryFunction.apply(PageRequest.of(pageNumber, chunkSize), allTime)
+                    .getContent();
             for (T entity : chunk) {
                 var query = new Query();
                 query.addCriteria(Criteria.where("database_id").is(idGetter.apply(entity)));
@@ -241,5 +304,41 @@ public class CommonExportServiceImpl implements CommonExportService {
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+    }
+
+    @Scheduled(cron = "${export-to-common.schedule.documents}")
+    protected void performScheduledDocumentExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
+        exportDocumentsToCommonModel(false);
+    }
+
+    @Scheduled(cron = "${export-to-common.schedule.event}")
+    protected void performScheduledEventExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
+        exportConferencesToCommonModel(false);
+    }
+
+    @Scheduled(cron = "${export-to-common.schedule.person}")
+    protected void performScheduledPersonExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
+        exportPersonsToCommonModel(false);
+    }
+
+    @Scheduled(cron = "${export-to-common.schedule.ou}")
+    protected void performScheduledOrganisationUnitExport() {
+        if (!exportAllowed) {
+            return;
+        }
+
+        exportOrganisationUnitsToCommonModel(false);
     }
 }

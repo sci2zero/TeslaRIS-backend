@@ -9,7 +9,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.institution.OrganisationUnitTrustConfiguration;
 import rs.teslaris.core.service.interfaces.JPAService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 public interface OrganisationUnitTrustConfigurationService

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
@@ -26,8 +29,11 @@ import rs.teslaris.core.model.oaipmh.person.Person;
 import rs.teslaris.core.model.oaipmh.product.Product;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
+import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -36,7 +42,8 @@ import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.importer.model.converter.load.event.EventConverter;
 import rs.teslaris.importer.model.converter.load.institution.OrganisationUnitConverter;
@@ -44,6 +51,9 @@ import rs.teslaris.importer.model.converter.load.person.PersonConverter;
 import rs.teslaris.importer.model.converter.load.publication.DissertationConverter;
 import rs.teslaris.importer.model.converter.load.publication.JournalConverter;
 import rs.teslaris.importer.model.converter.load.publication.JournalPublicationConverter;
+import rs.teslaris.importer.model.converter.load.publication.MagistrateConverter;
+import rs.teslaris.importer.model.converter.load.publication.MonographConverter;
+import rs.teslaris.importer.model.converter.load.publication.MonographPublicationConverter;
 import rs.teslaris.importer.model.converter.load.publication.PatentConverter;
 import rs.teslaris.importer.model.converter.load.publication.ProceedingsConverter;
 import rs.teslaris.importer.model.converter.load.publication.ProceedingsPublicationConverter;
@@ -102,7 +112,19 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
     private final DissertationConverter dissertationConverter;
 
+    private final MagistrateConverter magistrateConverter;
+
     private final ThesisService thesisService;
+
+    private final MonographConverter monographConverter;
+
+    private final MonographService monographService;
+
+    private final MonographPublicationConverter monographPublicationConverter;
+
+    private final MonographPublicationService monographPublicationService;
+
+    private final DocumentPublicationService documentPublicationService;
 
 
     @Override
@@ -145,12 +167,29 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     DataSet.PUBLICATIONS, query, userId);
             case RESEARCH_ARTICLES:
                 query.addCriteria(Criteria.where("type").regex("c_2df8fbb1"));
+                query.addCriteria(Criteria.where("type").regex("c_3e5a"));
                 return (R) findAndConvertEntity(Publication.class, journalPublicationConverter,
                     DataSet.PUBLICATIONS, query, userId);
             case CONFERENCE_PUBLICATIONS:
                 query.addCriteria(Criteria.where("type").regex("c_5794"));
-                query.addCriteria(Criteria.where("type").regex("c_0640"));
+                query.addCriteria(Criteria.where("type").regex("c_c94f"));
                 return (R) findAndConvertEntity(Publication.class, proceedingsPublicationConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case PHD_THESES:
+                query.addCriteria(Criteria.where("type").regex("c_db06"));
+                return (R) findAndConvertEntity(Publication.class, dissertationConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MR_THESES:
+                query.addCriteria(Criteria.where("type").regex("c_46ec"));
+                return (R) findAndConvertEntity(Publication.class, magistrateConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MONOGRAPHS:
+                query.addCriteria(Criteria.where("type").regex("c_2f33"));
+                return (R) findAndConvertEntity(Publication.class, monographConverter,
+                    DataSet.PUBLICATIONS, query, userId);
+            case MONOGRAPH_PUBLICATIONS:
+                query.addCriteria(Criteria.where("type").regex("c_3248"));
+                return (R) findAndConvertEntity(Publication.class, monographPublicationConverter,
                     DataSet.PUBLICATIONS, query, userId);
             case ORGANISATION_UNITS:
                 var orgUnit = (OrganisationUnitWizardDTO) findAndConvertEntity(OrgUnit.class,
@@ -275,7 +314,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     @Override
     public void loadRecordsAuto(DataSet requestDataSet, boolean performIndex,
                                 Integer userId) {
-        int batchSize = 10;
+        int batchSize = 500;
         int page = 0;
         boolean hasNextPage = true;
 
@@ -300,7 +339,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                 case PUBLICATIONS:
                     var criteria = new Criteria().orOperator(
                         Criteria.where("type").regex("c_f744$"),
-                        Criteria.where("type").regex("c_0640$")
+                        Criteria.where("type").regex("c_0640$"),
+                        Criteria.where("type").regex("c_2f33$")
                     );
                     var batch = mongoTemplate.find(query.addCriteria(criteria), Publication.class);
                     batch.forEach(record -> {
@@ -353,6 +393,29 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                     }
                                 }
                             }
+                        } else if (record.getType().endsWith("c_2f33")) { // COAR type: monograph
+                            var creationDTO = monographConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                try {
+                                    monographService.createMonograph(creationDTO, performIndex);
+                                } catch (Exception e) {
+                                    log.warn(
+                                        "Skipped loading object of type 'MONOGRAPH' with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                    if (e.getMessage().endsWith("isbnExistsError")) {
+                                        var potentialMatch = monographService.findMonographByIsbn(
+                                            creationDTO.getEisbn(), creationDTO.getPrintISBN());
+                                        if (Objects.nonNull(potentialMatch)) {
+                                            monographService.addOldId(potentialMatch.getId(),
+                                                creationDTO.getOldId());
+                                            log.info(
+                                                "Successfully merged MONOGRAPH '{}' using ISSN ({}, {}).",
+                                                record.getOldId(), creationDTO.getEisbn(),
+                                                creationDTO.getPrintISBN());
+                                        }
+                                    }
+                                }
+                            }
                         }
                     });
                     hasNextPage = batch.size() == batchSize;
@@ -389,7 +452,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     creationDTO instanceof ImportPersonDTO importDTO) {
                     Map<String, Function<ImportPersonDTO, String>> identifierResolvers = Map.of(
                         "scopusAuthorIdExistsError", ImportPersonDTO::getScopusAuthorId,
-                        "orcidIdExistsError", ImportPersonDTO::getOrcid
+                        "orcidIdExistsError", ImportPersonDTO::getOrcid,
+                        "apvntExistsError", ImportPersonDTO::getApvnt
                     );
 
                     Optional.ofNullable(identifierResolvers.get(e.getMessage()))
@@ -409,7 +473,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
     }
 
     private void handleDataRelations(DataSet requestDataSet, boolean performIndex) {
-        int batchSize = 10;
+        int batchSize = 500;
         int page = 0;
         boolean hasNextPage = true;
 
@@ -459,13 +523,16 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                         Criteria.where("type").regex("c_2df8fbb1$"),
                         Criteria.where("type").regex("c_5794$"),
                         Criteria.where("type").regex("c_c94f$"),
-                        Criteria.where("type").regex("c_db06$")
+                        Criteria.where("type").regex("c_db06$"),
+                        Criteria.where("type").regex("c_3248$"),
+                        Criteria.where("type").regex("c_46ec$"),
+                        Criteria.where("type").regex("c_3e5a$")
                     );
                     var publicationBatch =
                         mongoTemplate.find(query.addCriteria(criteria), Publication.class);
                     publicationBatch.forEach(record -> {
-                        if (record.getType()
-                            .endsWith("c_2df8fbb1")) { // COAR type: research article
+                        if (record.getType().endsWith("c_2df8fbb1") || record.getType().endsWith(
+                            "c_3e5a")) { // COAR type: research article, contribution to journal
                             var creationDTO = journalPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 try {
@@ -478,20 +545,28 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 }
                             }
                         } else if (
-                            record.getType().endsWith("c_5794") ||
-                                record.getType().endsWith(
-                                    "c_0640")) { // COAR type: conference paper or conference output
+                            record.getType().endsWith("c_5794") || record.getType().endsWith(
+                                "c_c94f")) { // COAR type: conference paper, conference output
                             var creationDTO = proceedingsPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
-                                try {
-                                    proceedingsPublicationService.createProceedingsPublication(
-                                        creationDTO,
-                                        performIndex);
-                                } catch (Exception e) {
-                                    log.warn(
-                                        "Skipped loading object of type 'PROCEEDINGS_PUBLICATION' with id '{}'. Reason: '{}'.",
-                                        record.getOldId(), e.getMessage());
-                                }
+                                saveWithDuplicateCheck(
+                                    creationDTO,
+                                    record.getOldId(),
+                                    performIndex,
+                                    proceedingsPublicationService::createProceedingsPublication,
+                                    "PROCEEDINGS_PUBLICATION",
+                                    documentPublicationService);
+                            }
+                        } else if (record.getType().endsWith("c_3248")) { // COAR type: book part
+                            var creationDTO = monographPublicationConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                saveWithDuplicateCheck(
+                                    creationDTO,
+                                    record.getOldId(),
+                                    performIndex,
+                                    monographPublicationService::createMonographPublication,
+                                    "MONOGRAPH_PUBLICATION",
+                                    documentPublicationService);
                             }
                         } else if (record.getType()
                             .endsWith("c_db06")) { // COAR type: dissertation (thesis)
@@ -501,7 +576,18 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                     thesisService.createThesis(creationDTO, performIndex);
                                 } catch (Exception e) {
                                     log.warn(
-                                        "Skipped loading object of type 'THESIS' with id '{}'. Reason: '{}'.",
+                                        "Skipped loading object of type 'THESIS' (PHD) with id '{}'. Reason: '{}'.",
+                                        record.getOldId(), e.getMessage());
+                                }
+                            }
+                        } else if (record.getType().endsWith("c_46ec")) { // COAR type: MR (thesis)
+                            var creationDTO = magistrateConverter.toDTO(record);
+                            if (Objects.nonNull(creationDTO)) {
+                                try {
+                                    thesisService.createThesis(creationDTO, performIndex);
+                                } catch (Exception e) {
+                                    log.warn(
+                                        "Skipped loading object of type 'THESIS' (MR) with id '{}'. Reason: '{}'.",
                                         record.getOldId(), e.getMessage());
                                 }
                             }
@@ -514,6 +600,93 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     hasNextPage = false;
                     break;
             }
+        }
+    }
+
+    public <T extends DocumentDTO> void saveWithDuplicateCheck(
+        T dto, String sourceId,
+        boolean performIndex,
+        BiConsumer<T, Boolean> saveFn,
+        String entityLabel,
+        DocumentPublicationService documentPublicationService) {
+
+        if (Objects.isNull(dto)) {
+            return;
+        }
+
+        try {
+            saveFn.accept(dto, performIndex);
+        } catch (Exception e) {
+            log.warn("Skipped loading object of type '{}' with id '{}'. Reason: '{}'.",
+                entityLabel, sourceId, e.getMessage());
+
+            documentPublicationService.findDocumentByCommonIdentifier(
+                    dto.getDoi(), dto.getOpenAlexId(),
+                    dto.getScopusId(), dto.getWebOfScienceId())
+                .ifPresent(existingDuplicate -> dto.getTitle().forEach(title -> {
+                    var content = title.getContent().trim();
+                    boolean isTrueMatch = existingDuplicate.getTitle().stream()
+                        .anyMatch(mc -> mc.getContent().trim().equalsIgnoreCase(content));
+
+                    if (!isTrueMatch) {
+                        try {
+                            dto.setDoi(null);
+                            dto.setOpenAlexId(null);
+                            dto.setScopusId(null);
+                            dto.setWebOfScienceId(null);
+                            saveFn.accept(dto, performIndex);
+
+                            log.info("Added {} '{}' without identifiers ({}, {}, {}, {}).",
+                                entityLabel, sourceId,
+                                existingDuplicate.getDoi(),
+                                existingDuplicate.getOpenAlexId(),
+                                existingDuplicate.getScopusId(),
+                                existingDuplicate.getWebOfScienceId());
+                        } catch (Exception ex) {
+                            log.info(
+                                "Tried to add {} '{}' after removing identifiers. Failed because: {}",
+                                entityLabel, sourceId, ex.getMessage());
+                        }
+                    } else {
+                        var identifierUpdateRequest = new DocumentIdentifierUpdateDTO();
+
+                        if (!StringUtil.valueExists(existingDuplicate.getDoi()) &&
+                            StringUtil.valueExists(dto.getDoi())) {
+                            identifierUpdateRequest.setDoi(dto.getDoi());
+                        }
+
+                        if (!StringUtil.valueExists(existingDuplicate.getScopusId()) &&
+                            StringUtil.valueExists(dto.getScopusId())) {
+                            identifierUpdateRequest.setScopusId(dto.getScopusId());
+                        }
+
+                        if (!StringUtil.valueExists(existingDuplicate.getOpenAlexId()) &&
+                            StringUtil.valueExists(dto.getOpenAlexId())) {
+                            identifierUpdateRequest.setOpenAlexId(dto.getOpenAlexId());
+                        }
+
+                        if (!StringUtil.valueExists(existingDuplicate.getWebOfScienceId()) &&
+                            StringUtil.valueExists(dto.getWebOfScienceId())) {
+                            identifierUpdateRequest.setWebOfScienceId(dto.getWebOfScienceId());
+                        }
+
+                        documentPublicationService.updateDocumentIdentifiers(
+                            existingDuplicate.getId(), identifierUpdateRequest);
+
+                        try {
+                            log.info("Updated identifiers for {} '{}' ({}, {}, {}, {}).",
+                                entityLabel, sourceId,
+                                existingDuplicate.getDoi(),
+                                existingDuplicate.getOpenAlexId(),
+                                existingDuplicate.getScopusId(),
+                                existingDuplicate.getWebOfScienceId());
+                        } catch (Exception ex) {
+                            log.info(
+                                "Tried to enrich identifiers for {} '{}'. Failed because: {}",
+                                entityLabel, sourceId, ex.getMessage());
+                        }
+                    }
+                }));
         }
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 
@@ -27,6 +28,7 @@ public interface ThesisLibraryReportingService {
         ThesisReportRequestDTO request,
         Pageable pageable);
 
-    InputStreamResource generatePhdLibraryReportDocument(ThesisReportRequestDTO request,
-                                                         String locale);
+    Pair<InputStreamResource, Integer> generatePhdLibraryReportDocument(
+        ThesisReportRequestDTO request,
+        String locale);
 }

@@ -34,6 +34,7 @@ class ThesisLibraryDissertationReportServiceTest {
     @InjectMocks
     private ThesisLibraryDissertationReportServiceImpl service;
 
+
     @BeforeEach
     void setup() {
         ReflectionTestUtils.setField(service, "daysOnPublicReview", 30);
@@ -68,7 +69,7 @@ class ThesisLibraryDissertationReportServiceTest {
 
         // When
         var result = service.fetchPublicReviewDissertations(
-            institutionId, year, notDefendedOnly, pageable
+            institutionId, year, notDefendedOnly, null, pageable
         );
 
         // Then
@@ -106,7 +107,7 @@ class ThesisLibraryDissertationReportServiceTest {
 
         // When
         var result = service.fetchPublicReviewDissertations(
-            institutionId, year, notDefendedOnly, pageable
+            institutionId, year, notDefendedOnly, null, pageable
         );
 
         // Then
@@ -120,8 +121,8 @@ class ThesisLibraryDissertationReportServiceTest {
             eq("document_publication")))
             .thenReturn(Page.empty());
 
-        var result = service.fetchPublicReviewDissertations(null, null, null,
-            PageRequest.of(0, 10));
+        var result =
+            service.fetchPublicReviewDissertations(null, null, null, -1, PageRequest.of(0, 10));
 
         // Then
         assertThat(result).isNotNull();

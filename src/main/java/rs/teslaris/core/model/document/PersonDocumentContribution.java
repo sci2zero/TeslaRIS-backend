@@ -3,6 +3,7 @@ package rs.teslaris.core.model.document;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -15,7 +16,12 @@ import org.hibernate.annotations.SQLRestriction;
 @Setter
 @Entity
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "person_document_contributions")
+@Table(
+    name = "person_document_contribution",
+    indexes = {
+        @Index(name = "idx_pdc_docid_contribtype", columnList = "document_id, contribution_type")
+    }
+)
 @SQLRestriction("deleted=false")
 public class PersonDocumentContribution extends PersonContribution {
 

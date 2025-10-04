@@ -40,9 +40,6 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     private Set<MultiLingualContent> extendedAbstract = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> remark = new HashSet<>();
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> externalOrganisationUnitName = new HashSet<>();
 
     @Column(name = "thesis_type", nullable = false)
@@ -70,6 +67,9 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
+
+    @Column(name = "author_reprint")
+    private Boolean authorReprint = false;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "writing_language_id")

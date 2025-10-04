@@ -10,6 +10,10 @@ public record OrganisationUnitImportSourceConfigurationDTO(
     Boolean importOpenAlex,
 
     @NotNull(message = "Specify whether WoS is harvested.")
-    Boolean importWebOfScience
+    Boolean importWebOfScience,
+
+    Boolean scopusConfigured,
+
+    Boolean webOfScienceConfigured
 ) {
 }

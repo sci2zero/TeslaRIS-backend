@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -41,6 +42,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -80,11 +82,11 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.util.ImageUtil;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
+import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 
@@ -126,6 +128,9 @@ public class OrganisationUnitServiceTest {
 
     @Mock
     private FileService fileService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private OrganisationUnitServiceImpl organisationUnitService;
@@ -292,6 +297,8 @@ public class OrganisationUnitServiceTest {
             new OrganisationUnitsRelation() {{
                 setSourceOrganisationUnit(new OrganisationUnit());
             }});
+        when(organisationUnitRepository.findByIdWithLangDataAndResearchArea(any())).thenReturn(
+            Optional.of(new OrganisationUnit()));
 
         // when
         organisationUnitService.deleteOrganisationUnitsRelation(relationId);
@@ -603,7 +610,7 @@ public class OrganisationUnitServiceTest {
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
                 SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-                onlyReturnOnesWhichCanHarvest, null);
+                onlyReturnOnesWhichCanHarvest, null, null, null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
@@ -1170,6 +1177,103 @@ public class OrganisationUnitServiceTest {
 
         assertEquals("Organisation Unit with given ID does not exist.", exception.getMessage());
         verify(organisationUnitRepository).findRaw(entityId);
+    }
+
+    @Test
+    void shouldDoNothingWhenNoRelationsFound() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+        when(organisationUnitsRelationRepository
+            .findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+                sourceId, targetId, OrganisationUnitRelationType.BELONGS_TO))
+            .thenReturn(Collections.emptyList());
+
+        // When
+        organisationUnitService.deleteOrganisationUnitsRelation(sourceId, targetId);
+
+        // Then
+        verify(organisationUnitsRelationRepository, never()).delete(any());
+        verifyNoInteractions(organisationUnitIndexRepository);
+    }
+
+    @Test
+    void shouldReindexAndDeleteRelationWhenRelationExists() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+
+        var subOU = new OrganisationUnit();
+        subOU.setId(sourceId);
+
+        var relation = new OrganisationUnitsRelation();
+        relation.setSourceOrganisationUnit(subOU);
+
+        when(organisationUnitsRelationRepository
+            .findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+                sourceId, targetId, OrganisationUnitRelationType.BELONGS_TO))
+            .thenReturn(List.of(relation));
+
+        var index = new OrganisationUnitIndex();
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(sourceId))
+            .thenReturn(Optional.of(index));
+
+        var spyService = Mockito.spy(organisationUnitService);
+        doReturn(List.of(sourceId)).when(spyService)
+            .getOrganisationUnitIdsFromSubHierarchy(sourceId);
+        doReturn(subOU).when(spyService).findOne(sourceId);
+        doReturn(subOU).when(spyService).save(subOU);
+
+        // When
+        spyService.deleteOrganisationUnitsRelation(sourceId, targetId);
+
+        // Then
+        assertNull(index.getSuperOUId());
+        assertNull(index.getSuperOUNameSr());
+        assertNull(index.getSuperOUNameOther());
+        verify(organisationUnitIndexRepository).save(index);
+
+        assertFalse(subOU.getIsClientInstitution());
+        assertFalse(subOU.getValidateEmailDomain());
+        assertFalse(subOU.getAllowSubdomains());
+        verify(spyService).save(subOU);
+
+        verify(organisationUnitsRelationRepository).delete(relation);
+    }
+
+    @Test
+    void shouldSkipIndexUpdateWhenIndexNotFound() {
+        // Given
+        var sourceId = 1;
+        var targetId = 2;
+
+        var subOU = new OrganisationUnit();
+        subOU.setId(sourceId);
+
+        var relation = new OrganisationUnitsRelation();
+        relation.setSourceOrganisationUnit(subOU);
+
+        when(organisationUnitsRelationRepository
+            .findBySourceOrganisationUnitIdAndTargetOrganisationUnitIdAndRelationType(
+                sourceId, targetId, OrganisationUnitRelationType.BELONGS_TO))
+            .thenReturn(List.of(relation));
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(sourceId))
+            .thenReturn(Optional.empty());
+
+        var spyService = Mockito.spy(organisationUnitService);
+        doReturn(List.of(sourceId)).when(spyService)
+            .getOrganisationUnitIdsFromSubHierarchy(sourceId);
+        doReturn(subOU).when(spyService).findOne(sourceId);
+        doReturn(subOU).when(spyService).save(subOU);
+
+        // When
+        spyService.deleteOrganisationUnitsRelation(sourceId, targetId);
+
+        // Then
+        verify(organisationUnitIndexRepository, never()).save(any());
+        verify(spyService).save(subOU);
+        verify(organisationUnitsRelationRepository).delete(relation);
     }
 
     private MultipartFile createMockMultipartFile() {

@@ -119,7 +119,7 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
     @ValueSource(strings = {"sr", "en"})
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDownloadReportDocument(String language) throws Exception {
-        String jwtToken = authenticateAdminAndGetToken();
+        var authResponse = authenticateAdminAndGetTokenWithFingerprintCookie();
 
         var request = getTestPayload();
 
@@ -129,7 +129,8 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
                         "http://localhost:8081/api/thesis-library/report/download/{lang}", language)
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + authResponse.a)
+                    .cookie(authResponse.b))
             .andExpect(status().isOk());
     }
 }

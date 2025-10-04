@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import rs.teslaris.core.model.oaipmh.publication.PublicationConvertable;
 
 @XmlType(name = "TMarc21", namespace = "http://www.loc.gov/MARC21/slim")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -21,7 +22,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Marc21 {
+public class Marc21 implements PublicationConvertable {
 
     @XmlElement(name = "leader", namespace = "http://www.loc.gov/MARC21/slim")
     private String leader;
@@ -31,5 +32,4 @@ public class Marc21 {
 
     @XmlElement(name = "datafield", namespace = "http://www.loc.gov/MARC21/slim")
     private List<DataField> dataFields = new ArrayList<>();
-
 }

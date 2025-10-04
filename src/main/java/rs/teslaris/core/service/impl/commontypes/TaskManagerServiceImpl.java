@@ -30,7 +30,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -142,7 +142,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         }
 
         var userId = (Integer) taskMetadata.get().getMetadata().get("userId");
-        var currentUser = SessionTrackingUtil.getLoggedInUser();
+        var currentUser = SessionUtil.getLoggedInUser();
 
         if (Objects.isNull(currentUser)) {
             return false; // should never happen
@@ -205,7 +205,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     @Override
     public List<ScheduledTaskResponseDTO> listScheduledHarvestTasks(Integer userId, String role) {
-        return listScheduledTasks(userId, role, this::isHarvestTask);
+        return listScheduledTasks(userId, role, (taskId) -> isHarvestTask(taskId, role));
     }
 
     @Override
@@ -263,7 +263,11 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         return taskId.startsWith("Library_Backup-");
     }
 
-    private boolean isHarvestTask(String taskId) {
+    private boolean isHarvestTask(String taskId, String role) {
+        if (role.equals(UserRole.ADMIN.name()) && taskId.startsWith("OAIPMH_Harvest-")) {
+            return true;
+        }
+
         return taskId.startsWith("Harvest-");
     }
 

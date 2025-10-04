@@ -2,6 +2,7 @@ package rs.teslaris.importer.model.converter.load.institution;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitWizardDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -49,6 +51,18 @@ public class OrganisationUnitConverter
 
         // TODO: How to set research areas from serbian names?
         dto.setResearchAreasId(new ArrayList<>());
+
+        if (Objects.nonNull(organisationUnit.getIsInstitution()) &&
+            organisationUnit.getIsInstitution()) {
+            dto.setLegalEntity(true);
+            dto.setAllowedThesisTypes(new HashSet<>(
+                List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT, ThesisType.MASTER,
+                    ThesisType.MR, ThesisType.BACHELOR, ThesisType.BACHELOR_WITH_HONORS,
+                    ThesisType.UNDERGRADUATE_THESIS)));
+        }
+
+        dto.setClientInstitution(
+            false); // explicitly set every single one to false, clients will be updated manually
 
         dto.setLocation(new GeoLocationDTO());
 

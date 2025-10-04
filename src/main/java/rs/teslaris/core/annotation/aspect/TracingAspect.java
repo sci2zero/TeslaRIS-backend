@@ -1,6 +1,5 @@
 package rs.teslaris.core.annotation.aspect;
 
-import jakarta.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
@@ -15,8 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
-import rs.teslaris.core.util.tracing.TraceMDCKeys;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.session.TraceMDCKeys;
 
 @Aspect
 @Component
@@ -29,17 +29,18 @@ public class TracingAspect {
 
     @Around("@within(rs.teslaris.core.annotation.Traceable)")
     public Object traceMethodCalls(ProceedingJoinPoint joinPoint) throws Throwable {
+        Class<?> targetClass = joinPoint.getTarget().getClass();
+        boolean isRestController = targetClass.isAnnotationPresent(RestController.class);
+
+        populateMDC(isRestController);
+
         if (!tracingEnabled) {
             return joinPoint.proceed();
         }
 
-        Class<?> targetClass = joinPoint.getTarget().getClass();
         String method = joinPoint.getSignature().toShortString();
         String args = Arrays.toString(joinPoint.getArgs());
 
-        boolean isRestController = targetClass.isAnnotationPresent(RestController.class);
-
-        populateMDC(isRestController);
         ensureTracingContextExists();
 
         // Pull context values
@@ -89,11 +90,16 @@ public class TracingAspect {
 
     private void populateMDC(boolean isRestController) {
         if (isRestController) {
-            String clientIp = extractClientIp();
-            MDC.put(TraceMDCKeys.CLIENT_IP, Objects.nonNull(clientIp) ? clientIp : "N/A");
+            var clientIpAndUserAgent = extractClientIpAndUserAgent();
+            MDC.put(TraceMDCKeys.CLIENT_IP,
+                Objects.nonNull(clientIpAndUserAgent.a) ? clientIpAndUserAgent.a : "N/A");
+            MDC.put(TraceMDCKeys.USER_AGENT,
+                Objects.nonNull(clientIpAndUserAgent.b) ? clientIpAndUserAgent.b : "N/A");
 
-            String trackingCookieValue = SessionTrackingUtil.getJSessionId();
+            String trackingCookieValue = SessionUtil.getJSessionId();
             MDC.put(TraceMDCKeys.SESSION, trackingCookieValue);
+
+
         } else {
             if (Objects.isNull(MDC.get(TraceMDCKeys.SESSION))) {
                 MDC.put(TraceMDCKeys.SESSION, "Server-side");
@@ -108,8 +114,7 @@ public class TracingAspect {
         }
     }
 
-    @Nullable
-    private String extractClientIp() {
+    private Pair<String, String> extractClientIpAndUserAgent() {
         var requestAttributes = RequestContextHolder.getRequestAttributes();
         if (requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
             var request = servletRequestAttributes.getRequest();
@@ -121,8 +126,11 @@ public class TracingAspect {
                 // If multiple IPs (e.g., X-Forwarded-For: client, proxy1, proxy2)
                 ip = ip.split(",")[0].trim();
             }
-            return ip;
+            var userAgent = request.getHeader("User-Agent");
+
+            return new Pair<>(ip, userAgent);
         }
-        return null;
+
+        return new Pair<>(null, null);
     }
 }

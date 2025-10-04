@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -180,7 +181,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     public CompletableFuture<Void> reindexBookSeries() {
         bookSeriesIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -205,6 +206,26 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Override
     public void save(BookSeries bookSeries) {
         bookSeriesJPAService.save(bookSeries);
+    }
+
+    @Override
+    @Nullable
+    public BookSeriesIndex readBookSeriesByIssn(String eIssn, String printIssn) {
+        boolean isEissnBlank = (Objects.isNull(eIssn) || eIssn.isBlank());
+        boolean isPrintIssnBlank = (Objects.isNull(printIssn) || printIssn.isBlank());
+
+        if (isEissnBlank && isPrintIssnBlank) {
+            return null;
+        }
+
+        if (isEissnBlank) {
+            eIssn = printIssn;
+        } else if (isPrintIssnBlank) {
+            printIssn = eIssn;
+        }
+
+        return bookSeriesIndexRepository.findBookSeriesIndexByeISSNOrPrintISSN(eIssn, printIssn)
+            .orElse(null);
     }
 
     private void setBookSeriesFields(BookSeries bookSeries, BookSeriesDTO bookSeriesDTO) {
@@ -243,7 +264,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        var minShouldMatch = "2<-100% 5<-80% 10<-70%";
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
@@ -270,6 +291,16 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("print_issn").value(normalizedToken)))
                     ));
+                } else if (token.contains("\\-") &&
+                    partialIssnPattern.matcher(token.replace("\\-", "-")).matches()) {
+                    String normalizedToken = token.replace("\\-", "-");
+
+                    b.should(mp -> mp.bool(m -> m
+                        .should(sb -> sb.prefix(
+                            p -> p.field("e_issn").value(normalizedToken)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("print_issn").value(normalizedToken)))
+                    ));
                 } else if (token.endsWith("\\*") || token.endsWith(".")) {
                     var wildcard = token.replace("\\*", "").replace(".", "");
                     b.should(mp -> mp.bool(m -> m
@@ -294,10 +325,15 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                             mq -> mq.field("title_sr").query(token)))
                         .should(sb -> sb.match(
                             mq -> mq.field("title_other").query(token)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("e_issn").value(token)))
+                        .should(sb -> sb.prefix(
+                            p -> p.field("print_issn").value(token)))
                     ));
                 }
             });
-            return b.minimumShouldMatch(Integer.toString(minShouldMatch));
+
+            return b.minimumShouldMatch(minShouldMatch);
         })))._toQuery();
     }
 }

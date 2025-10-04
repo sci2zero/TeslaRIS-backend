@@ -17,6 +17,7 @@ import lombok.ToString;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
+import rs.teslaris.core.model.oaipmh.publication.Publisher;
 
 @XmlType(name = "TPatent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -28,9 +29,8 @@ import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 @ToString
 public class Patent implements PatentConvertable, HasOldId {
 
-    @XmlElement(name = "Keyword")
-    List<String> keywords;
     private String id;
+
     @XmlAttribute(name = "id")
     private String oldId;
 
@@ -40,11 +40,11 @@ public class Patent implements PatentConvertable, HasOldId {
     @XmlElement(name = "Title")
     private List<MultilingualContent> title;
 
+    @XmlElement(name = "Keyword")
+    private List<MultilingualContent> keywords;
+
     @XmlElement(name = "ApprovalDate")
     private Date approvalDate;
-
-    @XmlElement(name = "PublicationDate")
-    private Date publicationDate;
 
     @XmlElement(name = "PatentNumber")
     private String patentNumber;
@@ -62,4 +62,15 @@ public class Patent implements PatentConvertable, HasOldId {
     private List<Integer> importUserId;
 
     private Boolean loaded;
+
+    // Additional Migration fields - not part of the OAI-PMH specification
+
+    @XmlElement(name = "DOI")
+    private String doi;
+
+    @XmlElement(name = "URL")
+    private List<String> url;
+
+    @XmlElement(name = "Publisher")
+    private Publisher publisher;
 }

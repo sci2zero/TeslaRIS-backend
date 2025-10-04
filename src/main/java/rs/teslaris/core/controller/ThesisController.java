@@ -1,9 +1,13 @@
 package rs.teslaris.core.controller;
 
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,12 +30,16 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("/api/thesis")
@@ -49,9 +57,13 @@ public class ThesisController {
 
 
     @GetMapping("/{documentId}")
-    public ThesisResponseDTO readThesis(
+    public ResponseEntity<ThesisResponseDTO> readThesis(
         @PathVariable Integer documentId) {
-        return thesisService.readThesisById(documentId);
+        var dto = thesisService.readThesisById(documentId);
+
+        return ResponseEntity.ok()
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/thesis"))
+            .body(dto);
     }
 
     @GetMapping("/old-id/{oldId}")
@@ -157,9 +169,41 @@ public class ThesisController {
     }
 
     @GetMapping("/library-formats/{documentId}")
-    public ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(
+    public ThesisLibraryFormatsResponseDTO getAllLibraryReferenceFormats(
         @PathVariable Integer documentId) {
         return thesisService.getLibraryReferenceFormat(documentId);
+    }
+
+    @GetMapping("/library-format/{documentId}/{libraryFormat}")
+    public ResponseEntity<String> getSingleLibraryReferenceFormat(@PathVariable Integer documentId,
+                                                                  @PathVariable
+                                                                  LibraryFormat libraryFormat) {
+        var content = thesisService.getSingleLibraryReferenceFormat(documentId, libraryFormat);
+
+        var headers = new HttpHeaders();
+        FairSignpostingL1Utility.addHeadersForMetadataFormats(headers, documentId);
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(content);
+    }
+
+    @PostMapping("/schedule-public-review-end-check")
+    @PreAuthorize("hasAnyAuthority('SCHEDULE_TASK')")
+    @Idempotent
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void schedulePublicReviewEndCheck(@RequestParam("timestamp")
+                                             LocalDateTime timestamp,
+                                             @RequestParam("types")
+                                             List<ThesisType> types,
+                                             @RequestParam(defaultValue = "ONCE")
+                                             RecurrenceType recurrence,
+                                             @RequestParam("publicReviewLengthDays")
+                                             Integer publicReviewLengthDays,
+                                             @RequestHeader("Authorization")
+                                             String bearerToken) {
+        thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays,
+            tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
     }
 
     private void performReferenceAdditionChecks(ThesisDTO thesis, String bearerToken) {

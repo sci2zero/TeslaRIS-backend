@@ -26,7 +26,5 @@ public class AddedToPublicationNotificationHandler implements NotificationHandle
         var personId = Integer.parseInt(notification.getValues().get("personId"));
         var documentId = Integer.parseInt(notification.getValues().get("documentId"));
         documentPublicationService.unbindResearcherFromContribution(personId, documentId);
-
-        // TODO: notify admin?
     }
 }

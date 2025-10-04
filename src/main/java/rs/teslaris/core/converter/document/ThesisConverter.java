@@ -8,6 +8,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.jbibtex.BibTeXEntry;
+import org.jbibtex.Key;
+import org.jbibtex.StringValue;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
@@ -28,6 +31,7 @@ import rs.teslaris.core.model.oaipmh.marc21.DataField;
 import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.oaipmh.marc21.SubField;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.util.search.StringUtil;
 
 
 @Component
@@ -51,6 +55,98 @@ public class ThesisConverter extends DocumentPublicationConverter {
         return thesisDTO;
     }
 
+    public static BibTeXEntry toBibTexEntry(Thesis thesis, String defaultLanguageTag) {
+        var type = new Key("thesis");
+        if (thesis.getThesisType().equals(rs.teslaris.core.model.document.ThesisType.PHD) ||
+            thesis.getThesisType()
+                .equals(rs.teslaris.core.model.document.ThesisType.PHD_ART_PROJECT)) {
+            type = BibTeXEntry.TYPE_PHDTHESIS;
+        } else if (thesis.getThesisType()
+            .equals(rs.teslaris.core.model.document.ThesisType.MASTER)) {
+            type = BibTeXEntry.TYPE_MASTERSTHESIS;
+        }
+
+        var entry = new BibTeXEntry(type, new Key("(TESLARIS)" + thesis.getId().toString()));
+
+        setCommonFields(thesis, entry, defaultLanguageTag);
+
+        if (Objects.nonNull(thesis.getAlternateTitle())) {
+            setMCBibTexField(thesis.getAlternateTitle(), entry, new Key("alternateTitle"),
+                defaultLanguageTag);
+        }
+
+        if (Objects.nonNull(thesis.getPublisher())) {
+            setMCBibTexField(thesis.getPublisher().getName(), entry, BibTeXEntry.KEY_PUBLISHER,
+                defaultLanguageTag);
+        } else if (Objects.nonNull(thesis.getAuthorReprint()) && thesis.getAuthorReprint()) {
+            entry.addField(BibTeXEntry.KEY_PUBLISHER,
+                new StringValue(getAuthorReprintString(defaultLanguageTag),
+                    StringValue.Style.BRACED));
+        }
+
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
+            setMCBibTexField(thesis.getOrganisationUnit().getName(), entry,
+                BibTeXEntry.KEY_INSTITUTION, defaultLanguageTag);
+        } else if (Objects.nonNull(thesis.getExternalOrganisationUnitName())) {
+            setMCBibTexField(thesis.getExternalOrganisationUnitName(), entry,
+                BibTeXEntry.KEY_INSTITUTION, defaultLanguageTag);
+        }
+
+        if (StringUtil.valueExists(thesis.getEISBN())) {
+            entry.addField(new Key("eIsbn"),
+                new StringValue(thesis.getEISBN(), StringValue.Style.BRACED));
+        }
+
+        if (StringUtil.valueExists(thesis.getPrintISBN())) {
+            entry.addField(new Key("printIsbn"),
+                new StringValue(thesis.getPrintISBN(), StringValue.Style.BRACED));
+        }
+
+        return entry;
+    }
+
+    public static String toTaggedFormat(Thesis thesis, String defaultLanguageTag, boolean refMan) {
+        var sb = new StringBuilder();
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "THES" : "Thesis").append("\n");
+
+        setCommonTaggedFields(thesis, sb, defaultLanguageTag, refMan);
+
+        if (Objects.nonNull(thesis.getAlternateTitle())) {
+            setMCTaggedField(thesis.getAlternateTitle(), sb, refMan ? "T2" : "%0T",
+                defaultLanguageTag);
+        }
+
+        if (Objects.nonNull(thesis.getPublisher())) {
+            setMCTaggedField(thesis.getPublisher().getName(), sb, refMan ? "PB" : "%I",
+                defaultLanguageTag);
+        } else if (Objects.nonNull(thesis.getAuthorReprint()) && thesis.getAuthorReprint()) {
+            sb.append(refMan ? "PB  - " : "%I ").append(getAuthorReprintString(defaultLanguageTag))
+                .append("\n");
+        }
+
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
+            setMCTaggedField(thesis.getOrganisationUnit().getName(), sb, refMan ? "A2" : "%C",
+                defaultLanguageTag);
+        } else if (Objects.nonNull(thesis.getExternalOrganisationUnitName())) {
+            setMCTaggedField(thesis.getExternalOrganisationUnitName(), sb, refMan ? "A2" : "%C",
+                defaultLanguageTag);
+        }
+
+        if (StringUtil.valueExists(thesis.getEISBN())) {
+            sb.append(refMan ? "SN  - e:" : "%@ ").append(thesis.getEISBN()).append("\n");
+        }
+
+        if (StringUtil.valueExists(thesis.getPrintISBN())) {
+            sb.append(refMan ? "SN  - print:" : "%@ ").append(thesis.getPrintISBN()).append("\n");
+        }
+
+        if (refMan) {
+            sb.append("ER  -\n");
+        }
+
+        return sb.toString();
+    }
+
     private static void setThesisRelatedFields(Thesis thesis, ThesisResponseDTO thesisDTO) {
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             thesisDTO.setOrganisationUnitId(thesis.getOrganisationUnit().getId());
@@ -72,8 +168,6 @@ public class ThesisConverter extends DocumentPublicationConverter {
             MultilingualContentConverter.getMultilingualContentDTO(thesis.getAlternateTitle()));
         thesisDTO.setExtendedAbstract(
             MultilingualContentConverter.getMultilingualContentDTO(thesis.getExtendedAbstract()));
-        thesisDTO.setRemark(
-            MultilingualContentConverter.getMultilingualContentDTO(thesis.getRemark()));
 
         if (Objects.nonNull(thesis.getPhysicalDescription())) {
             var physicalDescription = thesis.getPhysicalDescription();
@@ -115,6 +209,8 @@ public class ThesisConverter extends DocumentPublicationConverter {
 
         if (Objects.nonNull(thesis.getPublisher())) {
             thesisDTO.setPublisherId(thesis.getPublisher().getId());
+        } else {
+            thesisDTO.setAuthorReprint(thesis.getAuthorReprint());
         }
 
         thesis.getPreliminaryFiles().forEach(file -> {

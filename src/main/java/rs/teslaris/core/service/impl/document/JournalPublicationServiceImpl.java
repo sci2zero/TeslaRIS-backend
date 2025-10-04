@@ -20,20 +20,24 @@ import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Transactional
@@ -55,20 +59,23 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          OrganisationUnitService organisationUnitService,
                                          DocumentRepository documentRepository,
                                          DocumentFileService documentFileService,
+                                         CitationService citationService,
                                          PersonContributionService personContributionService,
                                          ExpressionTransformer expressionTransformer,
                                          EventService eventService,
                                          CommissionRepository commissionRepository,
                                          SearchFieldsLoader searchFieldsLoader,
                                          OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                                         InvolvementRepository involvementRepository,
+                                         OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService);
+            organisationUnitService, documentRepository, documentFileService, citationService,
+            personContributionService, expressionTransformer, eventService, commissionRepository,
+            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
@@ -85,11 +92,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         try {
             publication = findJournalPublicationById(publicationId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(publicationId);
+            this.clearIndexWhenFailedRead(publicationId,
+                DocumentPublicationType.JOURNAL_PUBLICATION);
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !publication.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -107,7 +115,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     @Override
     public Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
                                                                     Pageable pageable) {
-        if (!SessionTrackingUtil.isUserLoggedIn()) {
+        if (!SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.findByTypeAndJournalIdAndIsApprovedTrue(
                 DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
         }
@@ -179,6 +187,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         index.setJournalId(publication.getJournal().getId());
 
+        index.setApa(
+            citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
     }
 
@@ -195,7 +205,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         // Super service does the initial deletion
 
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

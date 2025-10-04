@@ -68,4 +68,8 @@ public class DocumentDTO {
     private Boolean areFilesValid;
 
     private Boolean isArchived;
+
+    private List<MultilingualContentDTO> remark = new ArrayList<>();
+
+    private String note;
 }

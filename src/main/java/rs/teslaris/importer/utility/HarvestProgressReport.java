@@ -17,5 +17,5 @@ public class HarvestProgressReport {
 
     private Integer userId;
 
-    private DataSet dataset;
+    private String dataset;
 }

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("/api/proceedings")
@@ -36,8 +38,13 @@ public class ProceedingsController {
 
 
     @GetMapping("/{documentId}")
-    public ProceedingsResponseDTO readProceedings(@PathVariable Integer documentId) {
-        return proceedingsService.readProceedingsById(documentId);
+    public ResponseEntity<ProceedingsResponseDTO> readProceedings(
+        @PathVariable Integer documentId) {
+        var dto = proceedingsService.readProceedingsById(documentId);
+
+        return ResponseEntity.ok()
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/proceedings"))
+            .body(dto);
     }
 
     @GetMapping("/for-event/{eventId}")

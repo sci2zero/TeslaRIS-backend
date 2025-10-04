@@ -44,6 +44,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.person.InvolvementServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -72,6 +73,9 @@ public class InvolvementServiceTest {
 
     @Mock
     private EmploymentRepository employmentRepository;
+
+    @Mock
+    private DocumentPublicationService documentPublicationService;
 
     @InjectMocks
     private InvolvementServiceImpl involvementService;

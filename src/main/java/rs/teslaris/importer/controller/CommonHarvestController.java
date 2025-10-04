@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
@@ -33,7 +34,7 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.importer.dto.AuthorCentricInstitutionHarvestRequestDTO;
@@ -107,8 +108,8 @@ public class CommonHarvestController {
     @PreAuthorize("hasAuthority('SCHEDULE_DOCUMENT_HARVEST')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleHarvestPublicationsForAuthor(
-        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
-        @RequestParam LocalDate dateTo, @RequestParam(required = false) Integer institutionId,
+        @RequestHeader("Authorization") String bearerToken, @RequestParam RelativeDateDTO dateFrom,
+        @RequestParam RelativeDateDTO dateTo, @RequestParam(required = false) Integer institutionId,
         @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("recurrence") RecurrenceType recurrenceType) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
@@ -120,7 +121,8 @@ public class CommonHarvestController {
                     userService.getUserOrganisationUnitId(userId)) +
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timestamp,
-            () -> performHarvest(userId, userRole, dateFrom, dateTo, institutionId),
+            () -> performHarvest(userId, userRole, dateFrom.computeDate(), dateTo.computeDate(),
+                institutionId),
             userId, recurrenceType);
 
         taskManagerService.saveTaskMetadata(
@@ -194,22 +196,23 @@ public class CommonHarvestController {
 
     @PostMapping("/author-centric-for-institution")
     public Integer performAuthorCentricHarvestForInstitution(
-        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
-        @RequestParam LocalDate dateTo,
+        @RequestHeader("Authorization") String bearerToken, @RequestParam RelativeDateDTO dateFrom,
+        @RequestParam RelativeDateDTO dateTo,
         @RequestBody AuthorCentricInstitutionHarvestRequestDTO request) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
-        return performAuthorCentricLoading(userId, userRole, dateFrom, dateTo, request.authorIds(),
-            request.allAuthors(), request.institutionId());
+        return performAuthorCentricLoading(userId, userRole, dateFrom.computeDate(),
+            dateTo.computeDate(), request.authorIds(), request.allAuthors(),
+            request.institutionId());
     }
 
     @PostMapping("/schedule/author-centric-for-institution")
     @PreAuthorize("hasAuthority('SCHEDULE_DOCUMENT_HARVEST')")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleAuthorCentricHarvestForInstitution(
-        @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
-        @RequestParam LocalDate dateTo, @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestHeader("Authorization") String bearerToken, @RequestParam RelativeDateDTO dateFrom,
+        @RequestParam RelativeDateDTO dateTo, @RequestParam("timestamp") LocalDateTime timestamp,
         @RequestParam("recurrence") RecurrenceType recurrenceType,
         @RequestBody AuthorCentricInstitutionHarvestRequestDTO request) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
@@ -221,8 +224,9 @@ public class CommonHarvestController {
                     request.institutionId() : userService.getUserOrganisationUnitId(userId)) +
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timestamp,
-            () -> performAuthorCentricLoading(userId, userRole, dateFrom, dateTo,
-                request.authorIds(), request.allAuthors(), request.institutionId()),
+            () -> performAuthorCentricLoading(userId, userRole, dateFrom.computeDate(),
+                dateTo.computeDate(), request.authorIds(), request.allAuthors(),
+                request.institutionId()),
             userId, recurrenceType);
 
         taskManagerService.saveTaskMetadata(

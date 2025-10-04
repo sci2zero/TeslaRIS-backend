@@ -1,19 +1,22 @@
 package rs.teslaris.exporter.model.converter;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.model.oaipmh.person.PersonName;
-import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
-import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 
@@ -21,11 +24,22 @@ import rs.teslaris.exporter.model.common.ExportPersonName;
 @Transactional
 public class ExportPersonConverter extends ExportConverterBase {
 
-    private static DocumentRepository documentRepository;
+    private static DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    private static PersonIndexRepository personIndexRepository;
+
+    private static InvolvementRepository involvementRepository;
+
 
     @Autowired
-    public ExportPersonConverter(DocumentRepository documentRepository) {
-        ExportPersonConverter.documentRepository = documentRepository;
+    public ExportPersonConverter(
+        DocumentPublicationIndexRepository documentPublicationIndexRepository,
+        PersonIndexRepository personIndexRepository,
+        InvolvementRepository involvementRepository) {
+        ExportPersonConverter.documentPublicationIndexRepository =
+            documentPublicationIndexRepository;
+        ExportPersonConverter.personIndexRepository = personIndexRepository;
+        ExportPersonConverter.involvementRepository = involvementRepository;
     }
 
     public static ExportPerson toCommonExportModel(Person person, boolean computeRelations) {
@@ -51,15 +65,9 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
         commonExportPerson.getOldIds().addAll(person.getOldIds());
 
-        person.getInvolvements().forEach(involvement -> {
-            if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY) &&
-                    Objects.nonNull(involvement.getOrganisationUnit())) {
-                commonExportPerson.getEmploymentInstitutions().add(
-                    ExportOrganisationUnitConverter.toCommonExportModel(
-                        involvement.getOrganisationUnit(), false));
-            }
-        });
+        involvementRepository.findActiveEmploymentInstitutions(person.getId()).forEach(
+            institution -> commonExportPerson.getEmploymentInstitutions()
+                .add(ExportOrganisationUnitConverter.toCommonExportModel(institution, false)));
 
         if (computeRelations) {
             commonExportPerson.getRelatedInstitutionIds()
@@ -72,25 +80,24 @@ public class ExportPersonConverter extends ExportConverterBase {
 
     private static Set<Integer> getRelatedInstitutions(Person person, boolean onlyActive) {
         var relations = new HashSet<Integer>();
-        person.getInvolvements().forEach(involvement -> {
-            if (involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
-                involvement.getInvolvementType().equals(InvolvementType.HIRED_BY) &&
-                    Objects.nonNull(involvement.getOrganisationUnit())) {
-                if (onlyActive && Objects.nonNull(involvement.getDateTo()) &&
-                    involvement.getDateTo().isBefore(LocalDate.now())) {
-                    return;
-                }
-                relations.add(involvement.getOrganisationUnit().getId());
+
+        personIndexRepository.findByDatabaseId(person.getId()).ifPresent(personIndex -> {
+            relations.addAll(
+                personIndex.getEmploymentInstitutionsId().stream().filter(id -> id > 0).toList());
+
+            if (!onlyActive) {
+                relations.addAll(personIndex.getPastEmploymentInstitutionIds());
             }
         });
 
-        documentRepository.getDocumentsForAuthorId(person.getId()).forEach(document -> {
-            document.getContributors().forEach(contribution -> {
-                contribution.getInstitutions().forEach(institution -> {
-                    relations.add(institution.getId());
-                });
-            });
-        });
+        var page = PageRequest.of(0, 500);
+        Page<DocumentPublicationIndex> result;
+
+        do {
+            result = documentPublicationIndexRepository.findByAuthorIds(person.getId(), page);
+            result.forEach(document -> relations.addAll(document.getOrganisationUnitIds()));
+            page = page.next();
+        } while (!result.isLast());
 
         return relations;
     }
@@ -98,7 +105,14 @@ public class ExportPersonConverter extends ExportConverterBase {
     public static rs.teslaris.core.model.oaipmh.person.Person toOpenaireModel(
         ExportPerson exportPerson) {
         var openairePerson = new rs.teslaris.core.model.oaipmh.person.Person();
-        openairePerson.setOldId("Persons/(TESLARIS)" + exportPerson.getDatabaseId());
+
+        if (Objects.nonNull(exportPerson.getOldIds()) && !exportPerson.getOldIds().isEmpty()) {
+            openairePerson.setOldId("Persons/" + legacyIdentifierPrefix +
+                exportPerson.getOldIds().stream().findFirst().get());
+        } else {
+            openairePerson.setOldId("Persons/(TESLARIS)" + exportPerson.getDatabaseId());
+        }
+
         openairePerson.setScopusAuthorId(exportPerson.getScopusAuthorId());
 
         if (Objects.nonNull(exportPerson.getOrcid())) {

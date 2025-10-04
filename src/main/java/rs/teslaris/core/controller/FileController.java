@@ -23,6 +23,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
@@ -45,11 +47,16 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
+import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/file")
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
 @Traceable
 public class FileController {
@@ -71,7 +78,7 @@ public class FileController {
 
     @GetMapping("/{filename}")
     @ResponseBody
-    public ResponseEntity<Object> serveFile(
+    public ResponseEntity<StreamingResponseBody> serveFile(
         HttpServletRequest request,
         @PathVariable String filename,
         @RequestParam(value = "inline", defaultValue = "false") Boolean inline,
@@ -92,12 +99,12 @@ public class FileController {
         }
 
         if (!isOpenAccess && !authenticatedUser) {
-            return ErrorResponseUtil.buildUnavailableResponse(request,
+            return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
                 "loginToViewDocumentMessage");
         }
 
         if (isOpenAccess && !authenticatedUser && !isVerifiedDocument) {
-            return ErrorResponseUtil.buildUnavailableResponse(request,
+            return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
                 "loginToViewCCDocumentMessage");
         }
 
@@ -170,19 +177,25 @@ public class FileController {
         return serveFile(filename, documentFile, file, inline);
     }
 
-    private ResponseEntity<Object> serveFile(String filename, DocumentFile documentFile,
-                                             GetObjectResponse file, Boolean inline)
-        throws IOException {
+    private ResponseEntity<StreamingResponseBody> serveFile(String filename,
+                                                            DocumentFile documentFile,
+                                                            GetObjectResponse file,
+                                                            boolean inline) {
         recordDownloadIfApplicable(filename, documentFile.getResourceType());
 
-        byte[] fileBytes = file.readAllBytes();
+        var headers = getFileHeaders(file, inline, null);
+        FairSignpostingL1Utility.addHeadersForDocumentFileItems(headers, documentFile);
+
+        var body = StreamingUtil.createStreamingBodyFromS3Response(file);
+
         return ResponseEntity.ok()
-            .headers(getFileHeaders(file, inline, fileBytes))
-            .body(fileBytes);
+            .headers(headers)
+            .body(body);
     }
 
-    private ResponseEntity<Object> handleUnauthorisedUser(HttpServletRequest request) {
-        return ErrorResponseUtil.buildUnauthorisedResponse(request,
+    private ResponseEntity<StreamingResponseBody> handleUnauthorisedUser(
+        HttpServletRequest request) {
+        return ErrorResponseUtil.buildUnauthorisedStreamingResponse(request,
             "unauthorisedToViewDocumentMessage");
     }
 
@@ -345,6 +358,30 @@ public class FileController {
         }
 
         headers.set(HttpHeaders.CONTENT_DISPOSITION, contentDisposition);
+        headers.set(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"));
         return headers;
+    }
+
+    @GetMapping("/linkset/{filename}/{linksetFormat}")
+    @ResponseBody
+    public ResponseEntity<Object> serveLinksetFile(HttpServletRequest request,
+                                                   @PathVariable String filename,
+                                                   @PathVariable LinksetFormat linksetFormat) {
+        var documentFile = documentFileService.getDocumentByServerFilename(filename);
+        var accessRights = documentFile.getAccessRights();
+        var isVerifiedDocument = documentFile.getIsVerifiedData();
+        var isOpenAccess = isOpenAccess(accessRights);
+
+        if (isOpenAccess && isVerifiedDocument) {
+            var headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(FairSignpostingL2Utility.addLinksForDocumentFileItems(documentFile,
+                    linksetFormat));
+        }
+
+        return ErrorResponseUtil.buildUnavailableResponse(request,
+            "loginToViewDocumentMessage");
     }
 }

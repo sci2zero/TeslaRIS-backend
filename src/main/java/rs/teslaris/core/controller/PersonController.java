@@ -7,7 +7,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,9 +40,13 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @Validated
 @RestController
@@ -74,8 +80,28 @@ public class PersonController {
     }
 
     @GetMapping("/{personId}")
-    public PersonResponseDTO readPersonWithBasicInfo(@PathVariable Integer personId) {
-        return personService.readPersonWithBasicInfo(personId);
+    public ResponseEntity<PersonResponseDTO> readPersonWithBasicInfo(
+        @PathVariable Integer personId) {
+        var dto = personService.readPersonWithBasicInfo(personId);
+
+        var headers = new HttpHeaders();
+        FairSignpostingL1Utility.addHeadersForPerson(headers, dto, "/api/person");
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(dto);
+    }
+
+    @GetMapping("/linkset/{personId}/{linksetFormat}")
+    public ResponseEntity<String> getPersonLinkset(@PathVariable Integer personId,
+                                                   @PathVariable LinksetFormat linksetFormat) {
+        var dto = personService.readPersonWithBasicInfo(personId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksetForPerson(dto, linksetFormat));
     }
 
     @GetMapping("/old-id/{personOldId}")
@@ -271,5 +297,14 @@ public class PersonController {
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         @RequestParam("export") Boolean onlyExportFields) {
         return personService.getSearchFields(onlyExportFields);
+    }
+
+    @GetMapping("/top-collaborators")
+    @PreAuthorize("hasAuthority('GET_TOP_COLLABORATORS')")
+    public List<Pair<String, Integer>> getTopCollaborators(
+        @RequestHeader("Authorization") String bearerToken) {
+        var personId =
+            personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken));
+        return personService.getTopCoauthorsForPerson(personId);
     }
 }

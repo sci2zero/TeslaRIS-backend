@@ -1,13 +1,17 @@
 package rs.teslaris.assessment.repository.indicator;
 
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.indicator.EntityIndicatorSource;
 import rs.teslaris.assessment.model.indicator.PublicationSeriesIndicator;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -80,9 +84,31 @@ public interface PublicationSeriesIndicatorRepository extends
         LocalDate date, String category,
         String indicatorCode);
 
+    @Transactional
+    @Modifying
+    @Query(value = """
+        DELETE FROM entity_indicators psi
+        USING indicators i
+        WHERE psi.indicator_id = i.id
+          AND psi.publication_series_id = :publicationSeriesId
+          AND i.code = :indicatorCode
+          AND psi.source = :source
+          AND psi.from_date = :date
+          AND (psi.category_identifier = :category OR (:category IS NULL AND psi.category_identifier IS NULL))
+          AND psi.entity_type = 'PUBLICATION_SERIES_INDICATOR'
+        """, nativeQuery = true)
+    void deleteByPublicationSeriesIdAndSourceAndYearAndCategory(
+        Integer publicationSeriesId,
+        EntityIndicatorSource source,
+        LocalDate date,
+        String category,
+        String indicatorCode);
+
+    @Transactional
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
         "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
         "psi.indicator.code = :code")
-    Optional<PublicationSeriesIndicator> findIndicatorForCodeAndPublicationSeries(String code,
-                                                                                  Integer publicationSeriesId);
+    Optional<PublicationSeriesIndicator> findIndicatorForCodeAndPublicationSeriesId(String code,
+                                                                                    Integer publicationSeriesId);
 }

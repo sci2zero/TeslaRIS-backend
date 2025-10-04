@@ -8,6 +8,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +21,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @SpringBootTest
 public class BookSeriesControllerTest extends BaseTest {
@@ -135,5 +138,15 @@ public class BookSeriesControllerTest extends BaseTest {
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/book-series/publications/{bookSeriesId}", 2)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(LinksetFormat.class)
+    public void testGetLinkset(LinksetFormat format) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/book-series/linkset/{bookSeriesId}/{format}", 3, format)
+                    .contentType(format.getValue()))
+            .andExpect(status().isOk());
     }
 }

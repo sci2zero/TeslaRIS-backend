@@ -9,12 +9,14 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.service.interfaces.JPAService;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
@@ -22,12 +24,16 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     DocumentDTO readDocumentPublication(Integer documentId);
 
+    String readBibliographicMetadataById(Integer datasetId, BibliographicFormat format);
+
     Document findDocumentById(Integer documentId);
 
     Document findDocumentByOldId(Integer documentId);
 
     Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
                                                               List<Integer> ignore,
+                                                              List<String> tokens,
+                                                              List<DocumentPublicationType> allowedTypes,
                                                               Pageable pageable);
 
     List<Integer> getResearchOutputIdsForDocument(Integer documentId);
@@ -64,11 +70,14 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               SearchRequestType type,
                                                               Integer institutionId,
                                                               Integer commissionId,
+                                                              Boolean authorReprint,
+                                                              Boolean unmanaged,
                                                               List<DocumentPublicationType> allowedTypes);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
                                                           String scopusId, String openAlexId,
-                                                          String webOfScienceId);
+                                                          String webOfScienceId,
+                                                          List<String> internalIdentifiers);
 
     Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
                                                               Integer personId,
@@ -85,6 +94,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     void unbindResearcherFromContribution(Integer personId, Integer documentId);
 
+    void unbindInstitutionResearchersFromDocument(Integer institutionId, Integer documentId);
+
     boolean isIdentifierInUse(String identifier, Integer documentPublicationId);
 
     Pair<Long, Long> getDocumentCountsBelongingToInstitution(Integer institutionId);
@@ -95,8 +106,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
     List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields);
 
-    List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
-                                                           boolean foreignLanguage);
+    List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId, String language);
 
     Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
                                                       String scopusId, String webOfScienceId);
@@ -106,4 +116,10 @@ public interface DocumentPublicationService extends JPAService<Document> {
     void archiveDocument(Integer documentId);
 
     void unarchiveDocument(Integer documentId);
+
+    void reindexEmploymentInformationForAllPersonPublications(Integer personId);
+
+    void deleteNonManagedDocuments();
+
+    void updateDocumentIdentifiers(Integer documentId, DocumentIdentifierUpdateDTO requestDTO);
 }

@@ -1,9 +1,9 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
-import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.PatentDTO;
@@ -21,6 +21,8 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
 
     private final PersonContributionConverter personContributionConverter;
 
+    private final PublisherConverter publisherConverter;
+
 
     @Override
     public PatentDTO toDTO(Patent record) {
@@ -31,20 +33,45 @@ public class PatentConverter implements RecordConverter<Patent, PatentDTO> {
         dto.setNumber(record.getPatentNumber());
 
         dto.setSubTitle(new ArrayList<>());
-        dto.setDescription(new ArrayList<>());
-        dto.setKeywords(new ArrayList<>());
+
+        if (Objects.nonNull(record.getKeywords()) && !record.getKeywords().isEmpty()) {
+            dto.setKeywords(multilingualContentConverter.toDTO(record.getKeywords()));
+        } else {
+            dto.setKeywords(new ArrayList<>());
+        }
+
+        if (Objects.nonNull(record.get_abstract()) && !record.get_abstract().isEmpty()) {
+            dto.setDescription(multilingualContentConverter.toDTO(record.get_abstract()));
+        } else {
+            dto.setDescription(new ArrayList<>());
+        }
+
         dto.setUris(new HashSet<>());
 
         dto.setDocumentDate(String.valueOf(
-            record.getPublicationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+            record.getApprovalDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
                 .getYear()));
-
-        var dateFormatter = new SimpleDateFormat("dd.MM.yyyy");
-        dto.setDocumentDate(dateFormatter.format(record.getApprovalDate()));
 
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getInventor(),
             DocumentContributionType.AUTHOR, dto.getContributions());
+
+        dto.setDoi(record.getDoi());
+
+        if (Objects.nonNull(record.getUrl())) {
+            record.getUrl().forEach(url -> {
+                if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId") ||
+                    url.startsWith("https://www.cris.uns.ac.rs/DownloadFileServlet")) {
+                    return;
+                }
+
+                dto.getUris().add(url);
+            });
+        }
+
+        if (Objects.nonNull(record.getPublisher())) {
+            publisherConverter.setPublisherInformation(record.getPublisher(), dto);
+        }
 
         return dto;
     }

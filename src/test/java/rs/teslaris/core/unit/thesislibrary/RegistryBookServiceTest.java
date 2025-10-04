@@ -13,6 +13,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -562,6 +563,10 @@ class RegistryBookServiceTest {
     void shouldReturnIdIfThesisHasRegistryBookEntry() {
         // Given
         var thesisId = 123;
+        when(thesisService.getThesisById(thesisId)).thenReturn(new Thesis() {{
+            setPublicReviewCompleted(true);
+            setThesisDefenceDate(LocalDate.of(2020, 5, 1));
+        }});
         when(registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId)).thenReturn(1);
 
         // When
@@ -570,6 +575,36 @@ class RegistryBookServiceTest {
         // Then
         assertEquals(1, result);
         verify(registryBookEntryRepository).hasThesisRegistryBookEntry(thesisId);
+    }
+
+    @Test
+    void shouldThrowIfThesisIsWithoutDefenceDate() {
+        // Given
+        var thesisId = 123;
+        when(thesisService.getThesisById(thesisId)).thenReturn(new Thesis() {{
+            setPublicReviewCompleted(true);
+        }});
+
+        // When & Then
+        assertThrows(ThesisException.class,
+            () -> registryBookService.hasThesisRegistryBookEntry(thesisId));
+
+        verifyNoInteractions(registryBookEntryRepository);
+    }
+
+    @Test
+    void shouldThrowIfThesisPublicReviewNotCompleted() {
+        // Given
+        var thesisId = 123;
+        when(thesisService.getThesisById(thesisId)).thenReturn(new Thesis() {{
+            setPublicReviewCompleted(false);
+        }});
+
+        // When & Then
+        assertThrows(ThesisException.class,
+            () -> registryBookService.hasThesisRegistryBookEntry(thesisId));
+
+        verifyNoInteractions(registryBookEntryRepository);
     }
 
     @Test

@@ -38,20 +38,23 @@ import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRep
 import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.indicator.PublicationSeriesIndicatorService;
 import rs.teslaris.assessment.util.EntityIndicatorType;
+import rs.teslaris.assessment.util.IndicatorBatchWriter;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 
@@ -71,6 +74,10 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     private final TaskManagerService taskManagerService;
 
     private final JournalIndexRepository journalIndexRepository;
+
+    private final IndicatorBatchWriter indicatorBatchWriter;
+
+    private final LanguageTagService languageTagService;
 
     @Value("${assessment.indicators.publication-series.wos}")
     private String WOS_DIRECTORY;
@@ -93,13 +100,17 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                                  CsvDataLoader csvDataLoader,
                                                  JournalService journalService,
                                                  TaskManagerService taskManagerService,
-                                                 JournalIndexRepository journalIndexRepository) {
+                                                 JournalIndexRepository journalIndexRepository,
+                                                 IndicatorBatchWriter indicatorBatchWriter,
+                                                 LanguageTagService languageTagService) {
         super(indicatorService, entityIndicatorRepository, documentFileService);
         this.publicationSeriesIndicatorRepository = publicationSeriesIndicatorRepository;
         this.csvDataLoader = csvDataLoader;
         this.journalService = journalService;
         this.taskManagerService = taskManagerService;
         this.journalIndexRepository = journalIndexRepository;
+        this.indicatorBatchWriter = indicatorBatchWriter;
+        this.languageTagService = languageTagService;
     }
 
     @Override
@@ -115,7 +126,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     @Override
     public void computeFiveYearIFRank(List<Integer> classificationYears) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -206,7 +217,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 "fiveYearJIFRank");
         existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
 
-        publicationSeriesIndicatorRepository.save(if5Rank);
+        indicatorBatchWriter.bufferIndicator(if5Rank);
     }
 
     @Override
@@ -384,7 +395,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                 csvFile.normalize().toAbsolutePath().toString(),
                                 mapping, this::processIndicatorsLine, mapping.yearParseRegex(),
                                 separator,
-                                mapping.parallelize());
+                                mapping.parallelize(), indicatorBatchWriter);
                             log.info("Loaded {} of {}", counter.getAndIncrement(), csvFileCount);
                         });
                 }
@@ -435,6 +446,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         var publicationSeries =
             journalService.findOrCreatePublicationSeries(line, mapping.defaultLanguage(),
                 line[mapping.nameColumn()].trim(), eIssn, printIssn, issnSpecified);
+        updateJournalAbbreviation(line, mapping, publicationSeries);
 
         LocalDate startDate, endDate;
         if (Objects.nonNull(year)) {
@@ -452,14 +464,19 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                     try {
                         return LocalDate.parse(matcher.group());
                     } catch (Exception exception) {
-                        return LocalDate.of(Integer.parseInt(matcher.group()), 1, 1);
+                        var group = matcher.group();
+                        if (Objects.isNull(group)) {
+                            return null;
+                        }
+
+                        return LocalDate.of(Integer.parseInt(group), 1, 1);
                     }
                 }
                 throw new IllegalArgumentException("Invalid date format in column: " + columnIndex);
             };
 
             startDate = parseDateFromColumn.apply(mapping.startDateColumn());
-            if (startDate == null) {
+            if (Objects.isNull(startDate)) {
                 startDate = LocalDate.now();
             }
 
@@ -569,11 +586,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             return;
         }
 
-        var existingIndicatorValue =
-            publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
-                publicationSeries.getId(), source, startDate, categoryIdentifier,
-                indicator.getCode());
-        existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
+        publicationSeriesIndicatorRepository.deleteByPublicationSeriesIdAndSourceAndYearAndCategory(
+            publicationSeries.getId(), source, startDate, categoryIdentifier, indicator.getCode());
 
         var newJournalIndicator = new PublicationSeriesIndicator();
         newJournalIndicator.setIndicator(indicator);
@@ -621,6 +635,28 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 newJournalIndicator.setTextualValue(indicatorValue.trim());
         }
 
-        publicationSeriesIndicatorRepository.save(newJournalIndicator);
+        indicatorBatchWriter.bufferIndicator(newJournalIndicator);
+    }
+
+    private void updateJournalAbbreviation(String[] line,
+                                           IndicatorMappingConfigurationLoader.PublicationSeriesIndicatorMapping mapping,
+                                           PublicationSeries publicationSeries) {
+        if (Objects.nonNull(mapping.abbreviationColumn()) && publicationSeries instanceof Journal) {
+            var abbreviation = line[mapping.abbreviationColumn()];
+            if (Objects.isNull(abbreviation) || abbreviation.isBlank()) {
+                return;
+            }
+
+            if (publicationSeries.getNameAbbreviation().stream()
+                .anyMatch(abbr -> abbr.getContent().equals(abbreviation))) {
+                return;
+            }
+
+            publicationSeries.getNameAbbreviation().clear();
+            publicationSeries.getNameAbbreviation().add(
+                new MultiLingualContent(languageTagService.findLanguageTagByValue("EN"),
+                    abbreviation, 1));
+            journalService.save((Journal) publicationSeries);
+        }
     }
 }

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +21,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.ReindexRequestDTO;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.document.BibliographicFormat;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -44,7 +47,7 @@ public class DocumentPublicationControllerTest extends BaseTest {
     @Test
     public void testGetAllPublicationsForUser() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get(
-                "http://localhost:8081/api/document/for-researcher/{personId}", 22)
+                "http://localhost:8081/api/document/for-researcher/{personId}?tokens=*", 22)
             .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
@@ -119,13 +122,12 @@ public class DocumentPublicationControllerTest extends BaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    public void testGetWordCloudForSingleDocument(Boolean foreignLanguage) throws Exception {
+    @ValueSource(strings = {"SR", "SR-CYR", "EN"})
+    public void testGetWordCloudForSingleDocument(String language) throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/document/wordcloud/{documentId}?foreignLanguage={foreignLanguage}",
-                        1,
-                        foreignLanguage)
+                        "http://localhost:8081/api/document/wordcloud/{documentId}?language={foreignLanguage}",
+                        1, language)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
@@ -176,6 +178,38 @@ public class DocumentPublicationControllerTest extends BaseTest {
                         "http://localhost:8081/api/document/unarchive/{documentId}", 13)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @ParameterizedTest
+    @EnumSource(BibliographicFormat.class)
+    public void testGetMetadataFormatForDocument(BibliographicFormat format) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/document/metadata/{documentId}/{format}", 13, format)
+                    .contentType(format.getValue()))
+            .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(LinksetFormat.class)
+    public void testGetLinkset(LinksetFormat format) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/document/linkset/{documentId}/{format}", 13, format)
+                    .contentType(format.getValue()))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.editor@test.com", password = "testEditor")
+    public void testUnbindEmployedResearchersFromPublication() throws Exception {
+        String jwtToken = authenticateInstitutionalEditorAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/document/unbind-institution-researchers/{documentId}", 7)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
 }

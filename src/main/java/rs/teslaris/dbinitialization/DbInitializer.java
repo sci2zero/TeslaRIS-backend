@@ -36,6 +36,7 @@ import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
 import rs.teslaris.core.util.seeding.SKOSLoader;
@@ -135,6 +136,7 @@ public class DbInitializer implements ApplicationRunner {
         var mergePublisherPublications = new Privilege("MERGE_PUBLISHER_PUBLICATIONS");
         var mergePublishersMetadata = new Privilege("MERGE_PUBLISHERS_METADATA");
         var unbindYourselfFromPublication = new Privilege("UNBIND_YOURSELF_FROM_PUBLICATION");
+        var unbindEmployeesFromPublication = new Privilege("UNBIND_EMPLOYEES_FROM_PUBLICATION");
         var editEntityAssessmentClassifications =
             new Privilege("EDIT_ENTITY_ASSESSMENT_CLASSIFICATION");
         var editEventAssessmentClassification =
@@ -193,7 +195,12 @@ public class DbInitializer implements ApplicationRunner {
         var promotePreliminaryAttachments = new Privilege("PROMOTE_PRELIMINARY_ATTACHMENTS");
         var scheduleDocumentHarvest = new Privilege("SCHEDULE_DOCUMENT_HARVEST");
         var configureHarvestSources = new Privilege("CONFIGURE_HARVEST_SOURCES");
+        var performOAIPMHHarvest = new Privilege("PERFORM_OAIPMH_HARVEST");
         var setDefaultContent = new Privilege("SET_DEFAULT_CONTENT");
+        var saveOUOutputConfiguration = new Privilege("SAVE_OU_OUTPUT_CONFIGURATION");
+        var createBookSeries = new Privilege("CREATE_BOOK_SERIES");
+        var getTopCollaborators = new Privilege("GET_TOP_COLLABORATORS");
+        var performExtraMigration = new Privilege("PERFORM_EXTRA_MIGRATION_OPERATIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -227,7 +234,9 @@ public class DbInitializer implements ApplicationRunner {
                 deleteOrganisationUnit, saveOUPageConfiguration, migrateAllEntities,
                 migrateInstitutionEntities, performOaiMigration, saveOUTrustConfiguration,
                 validateMetadata, validateUploadedFiles, archiveDocument, configureHarvestSources,
-                promotePreliminaryAttachments, scheduleDocumentHarvest, setDefaultContent));
+                promotePreliminaryAttachments, scheduleDocumentHarvest, performOAIPMHHarvest,
+                setDefaultContent, saveOUOutputConfiguration, createBookSeries,
+                unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -260,7 +269,9 @@ public class DbInitializer implements ApplicationRunner {
                 harvestIdfMetadata, addSubUnit, deleteOrganisationUnit, saveOUPageConfiguration,
                 migrateAllEntities, performOaiMigration, saveOUTrustConfiguration, validateMetadata,
                 validateUploadedFiles, archiveDocument, promotePreliminaryAttachments,
-                scheduleDocumentHarvest, configureHarvestSources, setDefaultContent
+                scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
+                setDefaultContent, saveOUOutputConfiguration, createBookSeries,
+                performExtraMigration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -268,7 +279,8 @@ public class DbInitializer implements ApplicationRunner {
                 editDocumentFiles, editDocumentIndicators, claimDocument, createConference,
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
-                createPublisher, performLoading, harvestIdfMetadata)));
+                createBookSeries, createPublisher, performLoading, harvestIdfMetadata,
+                getTopCollaborators)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -282,7 +294,8 @@ public class DbInitializer implements ApplicationRunner {
                     mergeOUEmployments, mergeDocumentsMetadata, deletePerson, validateMetadata,
                     deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities,
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
-                    scheduleDocumentHarvest, configureHarvestSources, setDefaultContent)));
+                    scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
+                    saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -303,7 +316,7 @@ public class DbInitializer implements ApplicationRunner {
                 putThesisOnPublicReview, editDocumentFiles, archiveThesis,
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
                 validateMetadata, validateUploadedFiles, promotePreliminaryAttachments,
-                setDefaultContent
+                setDefaultContent, createUserBasic, deleteThesisAttachments
             )));
 
         var headOfLibraryAuthority =
@@ -430,9 +443,11 @@ public class DbInitializer implements ApplicationRunner {
         });
 
         ///////////////////// ASSESSMENT DATA /////////////////////
-        assessmentDataInitializer.initializeIndicators(englishTag, serbianTag);
-        assessmentDataInitializer.initializeAssessmentClassifications(englishTag, serbianTag);
-        var commissions = assessmentDataInitializer.initializeCommissions(englishTag, serbianTag);
+        assessmentDataInitializer.initializeIndicators(englishTag, serbianTag, serbianCyrillicTag);
+        assessmentDataInitializer.initializeAssessmentClassifications(englishTag, serbianTag,
+            serbianCyrillicTag);
+        var commissions = assessmentDataInitializer.initializeCommissions(englishTag, serbianTag,
+            serbianCyrillicTag);
         assessmentDataInitializer.initializeRulebooks(englishTag, serbianTag);
 
         ///////////////////// TESTING DATA /////////////////////
@@ -452,25 +467,23 @@ public class DbInitializer implements ApplicationRunner {
 
         var names = new HashSet<MultiLingualContent>();
         var nameList = line[1].split(";");
+
+        int cyrillicCount = 0;
         for (int i = 0; i < nameList.length; i++) {
             var nameParts = nameList[i].split("@");
             if (nameParts.length == 2) {
                 var content = nameParts[0].trim();
                 var languageTagCode = nameParts[1].trim().toUpperCase();
+                var basePriority = i + 1 + cyrillicCount;
 
-                var languageTag = languageTagRepository
-                    .findLanguageTagByLanguageTag(languageTagCode)
-                    .orElseGet(() -> {
-                        var newLanguageTag = new LanguageTag();
-                        newLanguageTag.setLanguageTag(languageTagCode);
-                        newLanguageTag.setDisplay(languageTagCode);
-                        log.info("Created new language tag: {}", languageTagCode);
-                        return languageTagRepository.save(newLanguageTag);
-                    });
+                addMultilingualContent(languageTagCode, content, names, basePriority);
 
-                var multilingualContent =
-                    new MultiLingualContent(languageTag, content, i + 1);
-                names.add(multilingualContent);
+                if (languageTagCode.equals(LanguageAbbreviations.SERBIAN)) {
+                    var cyrillicContent = SerbianTransliteration.toCyrillic(content);
+                    addMultilingualContent(LanguageAbbreviations.SERBIAN_CYRILLIC, cyrillicContent,
+                        names, basePriority + 1);
+                    cyrillicCount++;
+                }
             }
         }
         country.setName(names);
@@ -480,6 +493,23 @@ public class DbInitializer implements ApplicationRunner {
                 StringUtil.performSimpleLatinPreprocessing(name.getContent()));
         });
         countryRepository.save(country);
+    }
+
+    private void addMultilingualContent(String languageTagCode, String content,
+                                        HashSet<MultiLingualContent> mc, int priority) {
+        var languageTag = languageTagRepository
+            .findLanguageTagByLanguageTag(languageTagCode)
+            .orElseGet(() -> {
+                var newLanguageTag = new LanguageTag();
+                newLanguageTag.setLanguageTag(languageTagCode);
+                newLanguageTag.setDisplay(languageTagCode);
+                log.info("Created new language tag: {}", languageTagCode);
+                return languageTagRepository.save(newLanguageTag);
+            });
+
+        var multilingualContent =
+            new MultiLingualContent(languageTag, content, priority);
+        mc.add(multilingualContent);
     }
 
     private void setupDefaultBranding(LanguageTag serbianTag, LanguageTag englishTag) {

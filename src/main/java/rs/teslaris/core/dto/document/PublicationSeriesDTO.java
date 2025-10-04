@@ -1,6 +1,7 @@
 package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,7 @@ public class PublicationSeriesDTO {
 
     private Integer oldId;
 
-    @NotNull(message = "You have to provide title.")
+    @NotNull(message = "You have to provide a title.")
     private List<MultilingualContentDTO> title;
 
     private String eissn;
@@ -38,4 +39,6 @@ public class PublicationSeriesDTO {
     private List<MultilingualContentDTO> nameAbbreviation;
 
     private Set<String> uris;
+
+    private List<MultilingualContentDTO> subtitle = new ArrayList<>();
 }

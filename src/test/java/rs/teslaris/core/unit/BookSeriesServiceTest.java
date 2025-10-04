@@ -2,13 +2,16 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -334,5 +337,86 @@ public class BookSeriesServiceTest {
 
         assertEquals("Book Series with given ID does not exist.", exception.getMessage());
         verify(bookSeriesRepository).findRaw(entityId);
+    }
+
+    @Test
+    void givenBothIssnsBlank_whenReadBookSeriesByIssn_thenReturnNull() {
+        // Given
+        var eIssn = " ";
+
+        // When
+        BookSeriesIndex result = bookSeriesService.readBookSeriesByIssn(eIssn, null);
+
+        // Then
+        assertNull(result);
+        verifyNoInteractions(bookSeriesIndexRepository);
+    }
+
+    @Test
+    void givenEissnBlank_whenReadBookSeriesByIssn_thenUsePrintIssn() {
+        // Given
+        var mockIndex = mock(BookSeriesIndex.class);
+        var eIssn = " ";
+        var printIssn = "1234-5678";
+        when(bookSeriesIndexRepository.findBookSeriesIndexByeISSNOrPrintISSN(printIssn, printIssn))
+            .thenReturn(Optional.of(mockIndex));
+
+        // When
+        BookSeriesIndex result = bookSeriesService.readBookSeriesByIssn(eIssn, printIssn);
+
+        // Then
+        assertEquals(result, mockIndex);
+        verify(bookSeriesIndexRepository).findBookSeriesIndexByeISSNOrPrintISSN(printIssn,
+            printIssn);
+    }
+
+    @Test
+    void givenPrintIssnBlank_whenReadBookSeriesByIssn_thenUseEissn() {
+        // Given
+        var mockIndex = mock(BookSeriesIndex.class);
+        var eIssn = "8765-4321";
+        var printIssn = "";
+        when(bookSeriesIndexRepository.findBookSeriesIndexByeISSNOrPrintISSN(eIssn, eIssn))
+            .thenReturn(Optional.of(mockIndex));
+
+        // When
+        var result = bookSeriesService.readBookSeriesByIssn(eIssn, printIssn);
+
+        // Then
+        assertEquals(result, mockIndex);
+        verify(bookSeriesIndexRepository).findBookSeriesIndexByeISSNOrPrintISSN(eIssn, eIssn);
+    }
+
+    @Test
+    void givenBothIssnsPresentAndRepositoryReturnsResult_whenReadBookSeriesByIssn_thenReturnEntity() {
+        // Given
+        var mockIndex = mock(BookSeriesIndex.class);
+        var eIssn = "8765-4321";
+        var printIssn = "1234-5678";
+        when(bookSeriesIndexRepository.findBookSeriesIndexByeISSNOrPrintISSN(eIssn, printIssn))
+            .thenReturn(Optional.of(mockIndex));
+
+        // When
+        var result = bookSeriesService.readBookSeriesByIssn(eIssn, printIssn);
+
+        // Then
+        assertEquals(result, mockIndex);
+        verify(bookSeriesIndexRepository).findBookSeriesIndexByeISSNOrPrintISSN(eIssn, printIssn);
+    }
+
+    @Test
+    void givenBothIssnsPresentAndRepositoryReturnsEmpty_whenReadBookSeriesByIssn_thenReturnNull() {
+        // Given
+        var eIssn = "8765-4321";
+        var printIssn = "1234-5678";
+        when(bookSeriesIndexRepository.findBookSeriesIndexByeISSNOrPrintISSN(eIssn, printIssn))
+            .thenReturn(Optional.empty());
+
+        // When
+        var result = bookSeriesService.readBookSeriesByIssn(eIssn, printIssn);
+
+        // Then
+        assertNull(result);
+        verify(bookSeriesIndexRepository).findBookSeriesIndexByeISSNOrPrintISSN(eIssn, printIssn);
     }
 }

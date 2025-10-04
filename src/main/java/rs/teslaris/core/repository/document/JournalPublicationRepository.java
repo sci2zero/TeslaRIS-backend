@@ -11,7 +11,7 @@ import rs.teslaris.core.model.document.JournalPublication;
 public interface JournalPublicationRepository extends JpaRepository<JournalPublication, Integer> {
 
     @Query(value = "SELECT * FROM journal_publications jp WHERE " +
-        "jp.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "jp.approveStatus = 1", nativeQuery = true)
-    Page<JournalPublication> findAllModifiedInLast24Hours(Pageable pageable);
+        "(:allTime = TRUE OR jp.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
+        "jp.approve_status = 1", nativeQuery = true)
+    Page<JournalPublication> findAllModified(Pageable pageable, boolean allTime);
 }

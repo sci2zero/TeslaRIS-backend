@@ -170,7 +170,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     public CompletableFuture<Void> reindexPublishers() {
         publisherIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -221,12 +221,23 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         indexMultilingualContent(publisherIndex, publisher, Publisher::getPlace,
             PublisherIndex::setPlaceSr, PublisherIndex::setPlaceOther);
 
-
+        publisherIndex.setStateSr("");
+        publisherIndex.setStateOther("");
         if (Objects.nonNull(publisher.getCountry())) {
             indexMultilingualContent(publisherIndex, publisher,
                 t -> publisher.getCountry().getName(),
                 PublisherIndex::setStateSr, PublisherIndex::setStateOther);
+        } else {
+            publisherIndex.setStateSr(null);
+            publisherIndex.setStateOther(null);
         }
+
+        publisherIndex.setNameSrSortable(publisherIndex.getNameSr());
+        publisherIndex.setNameOtherSortable(publisherIndex.getNameOther());
+        publisherIndex.setStateSrSortable(publisherIndex.getStateSr());
+        publisherIndex.setStateOtherSortable(publisherIndex.getStateOther());
+        publisherIndex.setPlaceSrSortable(publisherIndex.getPlaceSr());
+        publisherIndex.setPlaceOtherSortable(publisherIndex.getPlaceOther());
     }
 
     private void indexMultilingualContent(PublisherIndex index, Publisher publisher,
@@ -244,6 +255,11 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             !srContent.isEmpty() ? srContent.toString() : otherContent.toString());
         otherSetter.accept(index,
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+
+        if (srContent.isEmpty() && otherContent.isEmpty()) {
+            srSetter.accept(index, null);
+            otherSetter.accept(index, null);
+        }
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {

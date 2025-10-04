@@ -8,6 +8,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +22,7 @@ import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @SpringBootTest
 public class JournalControllerTest extends BaseTest {
@@ -157,5 +160,15 @@ public class JournalControllerTest extends BaseTest {
             MockMvcRequestBuilders.get(
                     "http://localhost:8081/api/journal/identifier?eIssn=1234-1234&printIssn=4321-4321&openAlexId=S1234")
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(LinksetFormat.class)
+    public void testGetLinkset(LinksetFormat format) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/journal/linkset/{journalId}/{format}", 1, format)
+                    .contentType(format.getValue()))
+            .andExpect(status().isOk());
     }
 }

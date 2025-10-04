@@ -10,8 +10,11 @@ import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,5 +72,9 @@ public class DeduplicationUtil {
         var oldEmbedding = Nd4j.create(backup.getEmbedding());
         var similarity = DeduplicationUtil.cosineSimilarity(newEmbedding, oldEmbedding);
         return similarity > DeduplicationUtil.MIN_SIMILARITY_THRESHOLD;
+    }
+
+    public static List<Double> toDoubleList(INDArray embedding) {
+        return Arrays.stream(embedding.toDoubleVector()).boxed().collect(Collectors.toList());
     }
 }

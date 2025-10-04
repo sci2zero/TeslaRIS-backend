@@ -52,6 +52,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.exceptionhandling.exception.RegistrationException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
 import rs.teslaris.core.util.exceptionhandling.exception.ResearchAreaReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ScopusIdMissingException;
@@ -62,7 +63,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
-import rs.teslaris.core.util.tracing.TraceMDCKeys;
+import rs.teslaris.core.util.session.TraceMDCKeys;
 
 @RestControllerAdvice
 @Slf4j
@@ -462,6 +463,14 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleDocumentHarvestException(HttpServletRequest request,
                                                DocumentHarvestException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(RegistrationException.class)
+    @ResponseBody
+    ErrorObject handleRegistrationException(HttpServletRequest request,
+                                            RegistrationException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

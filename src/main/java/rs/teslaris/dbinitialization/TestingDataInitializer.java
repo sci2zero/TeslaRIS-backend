@@ -209,7 +209,7 @@ public class TestingDataInitializer {
             new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);
-        person1.setOrcid("0000-0002-1825-0097");
+        person1.setOrcid("0009-0008-0599-0599");
         person1.setOpenAlexId("A5070362523");
         person1.setScopusAuthorId("35795419600");
         person1.setWebOfScienceResearcherId("J-4074-2012");
@@ -235,6 +235,11 @@ public class TestingDataInitializer {
         dummyOU.setOpenAlexId("I4401727005");
         dummyOU.setLocation(new GeoLocation(19.850885, 45.245688, "NOWHERE"));
         dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
+        dummyOU.getAllowedThesisTypes().addAll(
+            List.of(ThesisType.PHD.name(), ThesisType.PHD_ART_PROJECT.name(),
+                ThesisType.MASTER.name(), ThesisType.BACHELOR.name(),
+                ThesisType.BACHELOR_WITH_HONORS.name()));
+        dummyOU.setIsClientInstitution(true);
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
         userRepository.save(researcherUser);
@@ -319,6 +324,7 @@ public class TestingDataInitializer {
         person2.setName(
             new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null));
         person2.setScopusAuthorId("14619562900");
+        person2.setOrcid("0000-0002-8096-5149");
         person2.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 2, 1));
         personRepository.save(person2);
 
@@ -485,7 +491,7 @@ public class TestingDataInitializer {
 
         var researcherUser2 =
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
-                "Schöpfel", "Joachim", false, false, germanTag, germanTag,
+                "Schöpfel", "Joachim", false, false, englishTag, germanTag,
                 researcherAuthority, person2,
                 null, null, UserNotificationPeriod.WEEKLY);
         userRepository.save(researcherUser2);
@@ -533,6 +539,7 @@ public class TestingDataInitializer {
         person4.setName(
             new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null));
         person4.setScopusAuthorId("14419566900");
+//        person4.setOrcid("0009-0008-0599-0599");
         personRepository.save(person4);
 
         var conferenceEvent3 = new Conference();

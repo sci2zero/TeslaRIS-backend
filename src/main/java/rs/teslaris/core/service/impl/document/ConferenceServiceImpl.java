@@ -33,9 +33,9 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 @Service
 @Transactional
@@ -215,7 +215,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public CompletableFuture<Void> reindexConferences() {
         eventIndexRepository.deleteAll();
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -232,7 +232,10 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
-        conference.setNumber(conferenceDTO.getNumber());
+        if (!conference.getSerialEvent()) {
+            conference.setNumber(conferenceDTO.getNumber());
+        }
+
         conference.setFee(conferenceDTO.getFee());
 
         IdentifierUtil.validateAndSetIdentifier(

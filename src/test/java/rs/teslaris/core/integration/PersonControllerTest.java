@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @SpringBootTest
 public class PersonControllerTest extends BaseTest {
@@ -84,6 +86,17 @@ public class PersonControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
+    public void testGetTopCollaborators() throws Exception {
+        String jwtToken = authenticateResearcherAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.get(
+                "http://localhost:8081/api/person/top-collaborators")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+            .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.researcher@test.com", password = "testResearcher")
     public void testUpdatePersonMainName() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
 
@@ -108,6 +121,16 @@ public class PersonControllerTest extends BaseTest {
                         "http://localhost:8081/api/person/fields?export={export}", onlyExportFields)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(LinksetFormat.class)
+    public void testGetLinkset(LinksetFormat format) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/person/linkset/{personId}/{format}", 1, format)
+                    .contentType(format.getValue()))
             .andExpect(status().isOk());
     }
 }

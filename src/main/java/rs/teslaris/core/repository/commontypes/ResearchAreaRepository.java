@@ -31,13 +31,15 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
     boolean isResearchedInMonograph(Integer researchAreaId);
 
     @Query(value =
-        "SELECT ra FROM ResearchArea ra LEFT JOIN ra.name name WHERE (name.language.languageTag = :languageTag AND " +
-            "LOWER(name.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))) OR " +
-            "ra.processedName LIKE CONCAT('%', :searchExpression, '%')",
+        "SELECT ra FROM ResearchArea ra LEFT JOIN ra.name name WHERE " +
+            "(name.language.languageTag = :languageTag AND " +
+            "(LOWER(name.content) LIKE LOWER(CONCAT('%', :searchExpression, '%')) OR " +
+            "ra.processedName LIKE CONCAT('%', :searchExpression, '%')))",
         countQuery =
-            "SELECT count(DISTINCT ra) FROM ResearchArea ra JOIN ra.name n WHERE (n.language.languageTag = :languageTag AND " +
-                "LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%'))) OR " +
-                "ra.processedName LIKE CONCAT('%', :searchExpression, '%')")
+            "SELECT count(DISTINCT ra) FROM ResearchArea ra JOIN ra.name n WHERE " +
+                "(n.language.languageTag = :languageTag AND " +
+                "(LOWER(n.content) LIKE LOWER(CONCAT('%', :searchExpression, '%')) OR " +
+                "ra.processedName LIKE CONCAT('%', :searchExpression, '%')))")
     Page<ResearchArea> searchResearchAreas(String searchExpression, String languageTag,
                                            Pageable pageable);
 }

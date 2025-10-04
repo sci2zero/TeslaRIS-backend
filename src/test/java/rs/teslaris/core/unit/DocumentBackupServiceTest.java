@@ -162,12 +162,10 @@ class DocumentBackupServiceTest {
         when(fileService.loadAsResource(backupFileName)).thenReturn(resource);
 
         // When
-        var result = documentBackupService.serveAndDeleteBackupFile(backupFileName, userId);
+        var result = documentBackupService.serveBackupFile(backupFileName, userId);
 
         // Then
         assertEquals(resource, result);
-        verify(fileService).delete(backupFileName);
-        verify(documentFileBackupRepository).delete(documentBackup);
     }
 
     @Test
@@ -191,7 +189,7 @@ class DocumentBackupServiceTest {
 
         // When / Then
         assertThrows(LoadingException.class,
-            () -> documentBackupService.serveAndDeleteBackupFile(backupFileName, userId));
+            () -> documentBackupService.serveBackupFile(backupFileName, userId));
     }
 
     @ParameterizedTest

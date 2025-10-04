@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("/api/monograph")
@@ -39,8 +41,12 @@ public class MonographController {
 
 
     @GetMapping("/{documentId}")
-    public MonographDTO readMonograph(@PathVariable Integer documentId) {
-        return monographService.readMonographById(documentId);
+    public ResponseEntity<MonographDTO> readMonograph(@PathVariable Integer documentId) {
+        var dto = monographService.readMonographById(documentId);
+
+        return ResponseEntity.ok()
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/monograph"))
+            .body(dto);
     }
 
     @GetMapping("/simple-search")

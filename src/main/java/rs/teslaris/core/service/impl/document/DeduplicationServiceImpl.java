@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.ScriptQuery;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -11,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexmodel.PublisherIndex;
 import rs.teslaris.core.indexmodel.deduplication.DeduplicationBlacklist;
 import rs.teslaris.core.indexmodel.deduplication.DeduplicationSuggestion;
 import rs.teslaris.core.indexrepository.BookSeriesIndexRepository;
@@ -35,6 +38,7 @@ import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.indexrepository.PublisherIndexRepository;
 import rs.teslaris.core.indexrepository.deduplication.DocumentDeduplicationBlacklistRepository;
 import rs.teslaris.core.indexrepository.deduplication.DocumentDeduplicationSuggestionRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -61,6 +65,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private final JournalIndexRepository journalIndexRepository;
 
+    private final PublisherIndexRepository publisherIndexRepository;
+
     private final EventIndexRepository eventIndexRepository;
 
     private final PersonIndexRepository personIndexRepository;
@@ -75,6 +81,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     private final SearchService<DocumentPublicationIndex> documentSearchService;
 
+    private final SearchService<PublisherIndex> publisherSearchService;
+
     private final SearchService<JournalIndex> journalSearchService;
 
     private final SearchService<BookSeriesIndex> bookSeriesSearchService;
@@ -88,6 +96,9 @@ public class DeduplicationServiceImpl implements DeduplicationService {
     private final SearchService<EventIndex> eventSearchService;
 
     private final SearchService<PersonIndex> personSearchService;
+
+    @Value("${deduplication.allowed}")
+    private Boolean deduplicationAllowed;
 
 
     @Override
@@ -150,6 +161,10 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
     @Scheduled(cron = "${deduplication.schedule}")
     protected synchronized void performAllScheduledDeduplicationProcesses() {
+        if (!deduplicationAllowed) {
+            return;
+        }
+
         if (deduplicationLock) {
             log.info("Deduplication startup aborted due to process already running.");
             return;
@@ -167,7 +182,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 CompletableFuture.runAsync(this::performScheduledEventDeduplication),
                 CompletableFuture.runAsync(this::performScheduledPersonDeduplication),
                 CompletableFuture.runAsync(this::performScheduledBookSeriesDeduplication),
-                CompletableFuture.runAsync(this::performScheduledOrganisationUnitsDeduplication)
+                CompletableFuture.runAsync(this::performScheduledOrganisationUnitsDeduplication),
+                CompletableFuture.runAsync(this::performScheduledPublisherDeduplication)
             );
 
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -264,6 +280,41 @@ public class DeduplicationServiceImpl implements DeduplicationService {
             JournalIndex::getTitleOther,
             null,
             "journal"
+        );
+    }
+
+    private void performScheduledPublisherDeduplication() {
+        performScheduledDeduplication(
+            EntityType.PUBLISHER.name(),
+            (pageNumber) -> publisherIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE))
+                .getContent(),
+            publisherSearchService,
+            item -> BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+                b.must(bq -> {
+                    bq.bool(eq -> {
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("name_sr").query((item).getNameSr())));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("name_other").query((item).getNameOther())));
+                        return eq;
+                    });
+                    return bq;
+                });
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("databaseId").query((item).getDatabaseId())));
+                b.must(sb -> sb.script(ScriptQuery.of(sq -> sq.script(s -> s.inline(i -> i.source(
+                        "doc['name_sr_sortable'].value.length() == " + item.getNameSr().length() +
+                            " && doc['name_other_sortable'].value.length() == " +
+                            item.getNameOther().length())
+                    ))
+                )));
+                return b;
+            }))),
+            PublisherIndex::getDatabaseId,
+            PublisherIndex::getNameSr,
+            PublisherIndex::getNameOther,
+            null,
+            "publisher"
         );
     }
 
@@ -383,9 +434,10 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 .getContent(),
             personSearchService,
             item -> {
-                var person = (PersonIndex) item;
-                var tokens = List.of(person.getName().trim().split(" "));
-                var minShouldMatch = (int) Math.ceil(tokens.size() * 0.9);
+                var tokens = Arrays.stream(item.getName().trim().split("; "))
+                    .flatMap(name -> Arrays.stream(name.split(" ")))
+                    .map(namePart -> namePart.replace("(", "").replace(")", ""))
+                    .toList();
 
                 return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
                     b.must(bq -> {
@@ -397,22 +449,23 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                                     }
 
                                     eq.should(
-                                        sb -> sb.match(m -> m.field("name").query(token)));
+                                        sb -> sb.matchPhrase(m -> m.field("name").query(token)));
                                 }
                             );
 
-                            if (Objects.nonNull(person.getBirthdate()) &&
-                                !person.getBirthdate().isBlank()) {
-                                eq.should(sb -> sb.match(
-                                    m -> m.field("birthdate").query(person.getBirthdate())));
+                            if (Objects.nonNull(item.getBirthdate()) &&
+                                !item.getBirthdate().isBlank()) {
+                                eq.must(sb -> sb.match(
+                                    m -> m.field("birthdate").query(item.getBirthdate())));
                             }
 
-                            return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+                            return eq.minimumShouldMatch(String.valueOf(Math.ceil(
+                                0.7 * tokens.stream().filter(String::isBlank).toList().size())));
                         });
                         return bq;
                     });
                     b.mustNot(sb -> sb.match(
-                        m -> m.field("databaseId").query(person.getDatabaseId())));
+                        m -> m.field("databaseId").query(item.getDatabaseId())));
                     return b;
                 })));
             },
@@ -492,6 +545,12 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 );
 
             if (blacklistEntry.isPresent()) {
+                continue;
+            }
+
+            if (!deduplicationSuggestionRepository.findByTwoEntitiesAndType(
+                    getIdFunction.apply(entity), getIdFunction.apply(similarEntity), indexType.name())
+                .isEmpty()) {
                 continue;
             }
 

@@ -3,59 +3,51 @@ package rs.teslaris.importer.service.impl;
 import jakarta.annotation.Nullable;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import javax.net.ssl.SSLContext;
+import java.util.Set;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.sax.SAXSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
-import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
-import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.ssl.SSLContexts;
-import org.apache.hc.core5.ssl.TrustStrategy;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.model.oaipmh.common.Metadata;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.model.oaipmh.common.ResumptionToken;
-import rs.teslaris.core.model.oaipmh.event.Event;
-import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
-import rs.teslaris.core.model.oaipmh.patent.Patent;
-import rs.teslaris.core.model.oaipmh.person.Person;
-import rs.teslaris.core.model.oaipmh.product.Product;
-import rs.teslaris.core.model.oaipmh.publication.Publication;
-import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTemplateException;
+import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NetworkException;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.session.RestTemplateProvider;
+import rs.teslaris.importer.model.common.DocumentImport;
+import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.service.interfaces.OAIPMHHarvester;
-import rs.teslaris.importer.utility.DataSet;
+import rs.teslaris.importer.utility.CommonHarvestUtility;
+import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeepObjectMerger;
 import rs.teslaris.importer.utility.HarvestProgressReport;
-import rs.teslaris.importer.utility.ProgressReportUtility;
-import rs.teslaris.importer.utility.oaipmh.OAIPMHSource;
+import rs.teslaris.importer.utility.oaipmh.OAIPMHHarvestConfigurationLoader;
 
 @Service
 @RequiredArgsConstructor
@@ -65,61 +57,59 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
     private static final int MAX_RESTART_NUMBER = 10;
 
     private final MongoTemplate mongoTemplate;
-    @Value("${ssl.trust-store}")
-    private String trustStorePath;
 
-    @Value("${ssl.trust-store-password}")
-    private String trustStorePassword;
+    private final RestTemplateProvider restTemplateProvider;
 
-    @Value("${proxy.enabled}")
-    private Boolean proxyEnabled;
+    private final PersonService personService;
 
-    @Value("${proxy.host:}")
-    private String proxyHost;
-
-    @Value("${proxy.port:80}")
-    private Integer proxyPort;
+    private final PersonIndexRepository personIndexRepository;
 
 
     @Override
-    public void harvest(DataSet requestDataSet, OAIPMHSource source, Integer userId) {
-        String endpoint =
-            constructOAIPMHEndpoint(requestDataSet.getStringValue(), source.getStringValue());
-        var restTemplate = constructRestTemplate();
+    public void harvest(String sourceName, LocalDate startDate, LocalDate endDate, Integer userId) {
+        var sourceConfiguration = getSourceConfiguration(sourceName);
 
-        // Reset Loader progress
-        ProgressReportUtility.resetProgressReport(requestDataSet, userId, null, mongoTemplate);
+        var adminUserIds = CommonImportUtility.getAdminUserIds();
 
-        var harvestProgressReport = getProgressReport(requestDataSet, userId);
+        var endpoint = constructOAIPMHEndpoint(sourceConfiguration, startDate, endDate);
+        var restTemplate = restTemplateProvider.provideRestTemplate();
+        var identifyingDataset = constructIdentifyingDatasetName(sourceConfiguration);
+        var harvestProgressReport = getProgressReport(identifyingDataset, userId);
 
         if (Objects.nonNull(harvestProgressReport)) {
-            endpoint = source.getStringValue() + "?verb=ListRecords&resumptionToken=" +
+            endpoint = sourceConfiguration.baseUrl() + "?verb=ListRecords&resumptionToken=" +
                 harvestProgressReport.getResumptionToken();
         }
 
+        var newEntriesCount = new HashMap<Integer, Integer>();
         int restartCount = 0;
+
         while (true) {
             try {
                 ResponseEntity<String> responseEntity =
                     restTemplate.getForEntity(endpoint, String.class);
+
                 if (responseEntity.getStatusCode() == HttpStatus.OK) {
                     String responseBody = responseEntity.getBody();
                     var optionalOaiPmhResponse = parseResponse(responseBody);
+
                     if (optionalOaiPmhResponse.isEmpty()) {
                         break;
                     }
 
-                    var optionalResumptionToken =
-                        handleOAIPMHResponse(requestDataSet, optionalOaiPmhResponse.get(), userId);
-                    if (optionalResumptionToken.isEmpty() ||
-                        optionalResumptionToken.get().getValue().isBlank()) {
+                    var parsedResponse = handleOAIPMHResponse(optionalOaiPmhResponse.get());
+                    processParsedRecords(parsedResponse.a, sourceConfiguration, newEntriesCount,
+                        userId, adminUserIds);
+
+                    if (parsedResponse.b.isEmpty() || parsedResponse.b.get().getValue().isBlank()) {
                         break;
                     }
 
-                    endpoint = source.getStringValue() + "?verb=ListRecords&resumptionToken=" +
-                        optionalResumptionToken.get().getValue();
+                    endpoint =
+                        sourceConfiguration.baseUrl() + "?verb=ListRecords&resumptionToken=" +
+                            parsedResponse.b.get().getValue();
 
-                    updateProgressReport(requestDataSet, optionalResumptionToken.get().getValue(),
+                    updateProgressReport(identifyingDataset, parsedResponse.b.get().getValue(),
                         userId);
                 } else {
                     log.error("OAI-PMH request failed with response code: " +
@@ -128,7 +118,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
             } catch (Exception e) {
                 if (restartCount == MAX_RESTART_NUMBER) {
                     var message =
-                        "Harvest did not complete because host (" + source.getStringValue() +
+                        "Harvest did not complete because host (" + sourceConfiguration.baseUrl() +
                             ") keeps crashing. Manual restart required.";
                     log.error(message);
                     throw new NetworkException(message);
@@ -136,70 +126,136 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
 
                 restartCount += 1;
 
-                log.warn(
-                    "No route to host for endpoint: " + endpoint + " - Restarting " +
-                        restartCount + " of " + MAX_RESTART_NUMBER);
+                log.warn("No route to host for endpoint: " + endpoint + " - Restarting " +
+                    restartCount + " of " + MAX_RESTART_NUMBER);
             }
         }
 
-        // Delete progress report after completing the harvest
-        deleteProgressReport(requestDataSet, userId);
+        deleteProgressReport(identifyingDataset, userId);
     }
 
-    private Optional<ResumptionToken> handleOAIPMHResponse(DataSet requestDataSet,
-                                                           OAIPMHResponse oaiPmhResponse,
-                                                           Integer userId) {
-        if (oaiPmhResponse.getListRecords() == null) {
-            return Optional.empty();
+    @Override
+    public List<String> getSources() {
+        return OAIPMHHarvestConfigurationLoader.getAllSourceNames();
+    }
+
+    private OAIPMHHarvestConfigurationLoader.Source getSourceConfiguration(String sourceName) {
+        var config = OAIPMHHarvestConfigurationLoader.getSourceConfigurationByName(sourceName);
+        if (Objects.isNull(config)) {
+            throw new NotFoundException("OAIPMH source with given name does not exist.");
         }
-        var records = oaiPmhResponse.getListRecords().getRecords();
-        records.forEach(
-            record -> {
-                if (Objects.nonNull(record.getHeader().getStatus()) &&
-                    record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
-                    // TODO: should deleted records be removed from our db?
-                    return;
-                }
-                var metadata = record.getMetadata();
-                switch (requestDataSet) {
-                    case EVENTS:
-                        ((Event) metadata.getEvent()).setImportUserId(List.of(userId));
-                        ((Event) metadata.getEvent()).setLoaded(false);
-                        mongoTemplate.save(metadata.getEvent());
-                        break;
-                    case PATENTS:
-                        ((Patent) metadata.getPatent()).setImportUserId(List.of(userId));
-                        ((Patent) metadata.getPatent()).setLoaded(false);
-                        mongoTemplate.save(metadata.getPatent());
-                        break;
-                    case PERSONS:
-                        ((Person) metadata.getPerson()).setImportUserId(List.of(userId));
-                        ((Person) metadata.getPerson()).setLoaded(false);
-                        mongoTemplate.save(metadata.getPerson());
-                        break;
-                    case PRODUCTS:
-                        ((Product) metadata.getProduct()).setImportUserId(List.of(userId));
-                        ((Product) metadata.getProduct()).setLoaded(false);
-                        mongoTemplate.save(metadata.getProduct());
-                        break;
-                    case PUBLICATIONS:
-                        ((Publication) metadata.getPublication()).setImportUserId(List.of(userId));
-                        ((Publication) metadata.getPublication()).setLoaded(false);
-                        mongoTemplate.save(metadata.getPublication());
-                        break;
-                    case ORGANISATION_UNITS:
-                        ((OrgUnit) metadata.getOrgUnit()).setImportUserId(List.of(userId));
-                        ((OrgUnit) metadata.getOrgUnit()).setLoaded(false);
-                        mongoTemplate.save(metadata.getOrgUnit());
-                        break;
-                }
-            });
-        var resumptionToken = oaiPmhResponse.getListRecords().getResumptionToken();
-        if (resumptionToken.getValue() == null) {
-            return Optional.empty();
+        return config;
+    }
+
+    private void processParsedRecords(
+        List<Metadata> records,
+        OAIPMHHarvestConfigurationLoader.Source sourceConfiguration,
+        Map<Integer, Integer> newEntriesCount,
+        Integer userId,
+        Set<Integer> adminUserIds
+    ) {
+        try {
+            Class<?> converterClass = Class.forName(
+                "rs.teslaris.importer.model.converter.harvest." +
+                    sourceConfiguration.converterClass());
+            Class<?> responseClass = Class.forName(
+                "rs.teslaris.core.model." + sourceConfiguration.responseObjectClass());
+            var method = converterClass.getMethod("toCommonImportModel", responseClass);
+
+            for (var record : records) {
+                processSingleRecord(record, method, responseClass, newEntriesCount, userId,
+                    adminUserIds);
+            }
+        } catch (ClassNotFoundException | NoSuchMethodException e) {
+            log.error(
+                "SERIOUS: Invalid converter ({}) or response ({}) class specified in OAI-PMH harvest.",
+                sourceConfiguration.converterClass(), sourceConfiguration.responseObjectClass());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void processSingleRecord(
+        Metadata record,
+        Method method,
+        Class<?> responseClass,
+        Map<Integer, Integer> newEntriesCount,
+        Integer userId,
+        Set<Integer> adminUserIds
+    ) {
+        var publication = record.getPublication();
+        if (!responseClass.isInstance(publication)) {
+            throw new IllegalArgumentException(
+                "Publication is not an instance of specified class.");
         }
 
-        return Optional.of(resumptionToken);
+        try {
+            ((Optional<DocumentImport>) method.invoke(null, responseClass.cast(publication)))
+                .ifPresent(documentImport -> {
+                    bindImportUsersForAll(documentImport);
+                    if (documentImport.getImportUsersId().isEmpty()) {
+                        return;
+                    }
+
+                    var existingImport =
+                        CommonImportUtility.findExistingImport(documentImport.getIdentifier());
+                    if (Objects.isNull(existingImport)) {
+                        existingImport =
+                            CommonImportUtility.findImportByDOIOrMetadata(documentImport);
+                        if (Objects.nonNull(existingImport)) {
+                            // Probably imported before from other sources, which have higher priorities
+                            // perform metadata enrichment, if possible
+                            DeepObjectMerger.deepMerge(existingImport, documentImport);
+                            mongoTemplate.save(existingImport, "documentImports");
+                            return;
+                        }
+                    }
+
+                    var embedding = CommonImportUtility.generateEmbedding(documentImport);
+                    if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+                        return;
+                    }
+
+                    if (Objects.nonNull(embedding)) {
+                        documentImport.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
+                    }
+
+                    documentImport.getImportUsersId().addAll(adminUserIds);
+                    newEntriesCount.merge(userId, 1, Integer::sum);
+
+                    CommonHarvestUtility.updateContributorEntryCount(documentImport,
+                        documentImport.getContributions().stream()
+                            .map(c -> c.getPerson().getOrcid()).toList(),
+                        newEntriesCount,
+                        personService);
+
+                    mongoTemplate.save(documentImport, "documentImports");
+                });
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            log.error("SERIOUS: Invalid converter invocation.", e);
+        }
+    }
+
+    private void bindImportUsersForAll(DocumentImport documentImport) {
+        documentImport.getContributions().forEach(authorship -> {
+            if (Objects.nonNull(authorship.getPerson().getOrcid()) &&
+                !authorship.getPerson().getOrcid().isBlank()) {
+                var researcher =
+                    personService.findUserByIdentifier(authorship.getPerson().getOrcid());
+                if (researcher.isPresent()) {
+                    documentImport.getImportUsersId().add(researcher.get().getId());
+                    personIndexRepository.findByDatabaseId(
+                            personService.getPersonIdForUserId(researcher.get().getId()))
+                        .ifPresent(personIndex -> {
+                            documentImport.getImportInstitutionsId()
+                                .addAll(personIndex.getEmploymentInstitutionsIdHierarchy());
+                        });
+                } else {
+                    bindImportUsers(documentImport, authorship);
+                }
+            } else {
+                bindImportUsers(documentImport, authorship);
+            }
+        });
     }
 
     public Optional<OAIPMHResponse> parseResponse(String xml) {
@@ -228,72 +284,83 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
         }
     }
 
-    public RestTemplate constructRestTemplate() {
-        TrustStrategy acceptingTrustStrategy = new TrustSelfSignedStrategy();
+    private Pair<ArrayList<Metadata>, Optional<ResumptionToken>> handleOAIPMHResponse(
+        OAIPMHResponse oaiPmhResponse) {
+        var parsedRecords = new ArrayList<Metadata>();
 
-        SSLContext sslContext;
-        try (InputStream truststoreInputStream = new FileInputStream(trustStorePath)) {
-            KeyStore truststore = KeyStore.getInstance(KeyStore.getDefaultType());
-            truststore.load(truststoreInputStream, trustStorePassword.toCharArray());
-
-            sslContext = SSLContexts.custom()
-                .loadTrustMaterial(truststore, acceptingTrustStrategy)
-                .build();
-        } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException |
-                 CertificateException | IOException e) {
-            log.error("Rest template construction failed. Reason:\n" + e.getMessage());
-            throw new CantConstructRestTemplateException(
-                "Unable to establish secure connection to remote host.");
+        if (Objects.isNull(oaiPmhResponse.getListRecords())) {
+            return new Pair<>(parsedRecords, Optional.empty());
         }
 
-        SSLConnectionSocketFactory connectionSocketFactory =
-            new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
-        var connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
-            .setSSLSocketFactory(connectionSocketFactory).build();
-        var httpClient = HttpClients.custom()
-            .setConnectionManager(connectionManager)
-            .build();
+        var records = oaiPmhResponse.getListRecords().getRecords();
+        records.forEach(
+            record -> {
+                if (Objects.nonNull(record.getHeader().getStatus()) &&
+                    record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
+                    // TODO: should deleted records be removed from our db?
+                    return;
+                }
+                var metadata = record.getMetadata();
+                parsedRecords.add(metadata);
+            });
 
-        if (proxyEnabled) {
-            httpClient = HttpClients.custom()
-                .setConnectionManager(connectionManager)
-                .setProxy(new HttpHost(proxyHost, proxyPort))
-                .build();
+        var resumptionToken = oaiPmhResponse.getListRecords().getResumptionToken();
+        if (Objects.isNull(resumptionToken) || Objects.isNull(resumptionToken.getValue())) {
+            return new Pair<>(parsedRecords, Optional.empty());
         }
 
-        HttpComponentsClientHttpRequestFactory requestFactory =
-            new HttpComponentsClientHttpRequestFactory(httpClient);
-
-        return new RestTemplate(requestFactory);
+        return new Pair<>(parsedRecords, Optional.of(resumptionToken));
     }
 
-    private String constructOAIPMHEndpoint(String set, String base) {
-        return base + "?verb=ListRecords&set=" + set + "&metadataPrefix=oai_cerif_openaire";
+    private String constructOAIPMHEndpoint(OAIPMHHarvestConfigurationLoader.Source sourceConfig,
+                                           LocalDate from, LocalDate until) {
+        return sourceConfig.baseUrl() + "?verb=ListRecords&set=" + sourceConfig.dataset() +
+            "&metadataPrefix=" + sourceConfig.metadataFormat() + "&from=" + from.toString() +
+            "&until=" + until.toString();
     }
 
-    private void updateProgressReport(DataSet requestDataSet, String resumptionToken,
-                                      Integer userId) {
-        Query deleteQuery = new Query();
-        deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet))
-            .addCriteria(Criteria.where("userId").is(userId));
-        mongoTemplate.remove(deleteQuery, HarvestProgressReport.class);
-
-        mongoTemplate.save(new HarvestProgressReport(resumptionToken, userId, requestDataSet));
+    private String constructIdentifyingDatasetName(
+        OAIPMHHarvestConfigurationLoader.Source sourceConfig) {
+        return "HARVEST_" + sourceConfig.sourceName() + "_" + sourceConfig.dataset();
     }
 
     @Nullable
-    private HarvestProgressReport getProgressReport(DataSet requestDataSet, Integer userId) {
+    private HarvestProgressReport getProgressReport(String datasetName, Integer userId) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("dataset").is(requestDataSet.name()))
+        query.addCriteria(Criteria.where("dataset").is(datasetName))
             .addCriteria(Criteria.where("userId").is(userId));
         return mongoTemplate.findOne(query, HarvestProgressReport.class);
     }
 
-    private void deleteProgressReport(DataSet requestDataSet, Integer userId) {
+    private void updateProgressReport(String datasetName, String resumptionToken,
+                                      Integer userId) {
         Query deleteQuery = new Query();
-        deleteQuery.addCriteria(Criteria.where("dataset").is(requestDataSet.name()))
+        deleteQuery.addCriteria(Criteria.where("dataset").is(datasetName))
+            .addCriteria(Criteria.where("userId").is(userId));
+        mongoTemplate.remove(deleteQuery, HarvestProgressReport.class);
+
+        mongoTemplate.save(new HarvestProgressReport(resumptionToken, userId, datasetName));
+    }
+
+    private void deleteProgressReport(String datasetName, Integer userId) {
+        Query deleteQuery = new Query();
+        deleteQuery.addCriteria(Criteria.where("dataset").is(datasetName))
             .addCriteria(Criteria.where("userId").is(userId));
         mongoTemplate.remove(deleteQuery, HarvestProgressReport.class);
     }
 
+    private void bindImportUsers(DocumentImport documentImport,
+                                 PersonDocumentContribution authorship) {
+        personService.findPeopleByNameAndEmployment(Arrays.stream(
+                    authorship.getPerson().getName().toString().split(" "))
+                .toList(), Pageable.unpaged(), false, null, false)
+            .forEach(person -> {
+                if (Objects.nonNull(person.getUserId()) && person.getUserId() > 0) {
+                    documentImport.getImportUsersId().add(person.getUserId());
+                }
+
+                documentImport.getImportInstitutionsId()
+                    .addAll(person.getEmploymentInstitutionsIdHierarchy());
+            });
+    }
 }

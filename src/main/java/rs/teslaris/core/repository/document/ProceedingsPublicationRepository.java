@@ -19,7 +19,7 @@ public interface ProceedingsPublicationRepository
                                                                        Integer authorId);
 
     @Query(value = "SELECT * FROM proceedings_publications pp WHERE " +
-        "pp.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "pp.approveStatus = 1", nativeQuery = true)
-    Page<ProceedingsPublication> findAllModifiedInLast24Hours(Pageable pageable);
+        "(:allTime = TRUE OR pp.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
+        "pp.approve_status = 1", nativeQuery = true)
+    Page<ProceedingsPublication> findAllModified(Pageable pageable, boolean allTime);
 }

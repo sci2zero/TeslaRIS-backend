@@ -9,8 +9,9 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.EventService;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
 import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
@@ -27,29 +28,15 @@ public class ProceedingsConverter extends DocumentConverter
 
     @Autowired
     public ProceedingsConverter(MultilingualContentConverter multilingualContentConverter,
+                                PublisherConverter publisherConverter,
+                                BookSeriesService bookSeriesService,
+                                JournalService journalService,
                                 PersonContributionConverter personContributionConverter,
                                 EventService eventService, LanguageTagService languageTagService) {
-        super(multilingualContentConverter, personContributionConverter);
+        super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
+            personContributionConverter);
         this.eventService = eventService;
         this.languageTagService = languageTagService;
-    }
-
-    private static String deduceLanguageTagValue(Publication record) {
-        var languageTagValue = record.getLanguage().trim().toUpperCase();
-        if (languageTagValue.isEmpty()) {
-            languageTagValue = LanguageAbbreviations.ENGLISH;
-        }
-
-        // Common language tag mistakes
-        if (languageTagValue.equals("GE")) {
-            languageTagValue = LanguageAbbreviations.GERMAN;
-        } else if (languageTagValue.equals("SP")) {
-            languageTagValue = LanguageAbbreviations.SPANISH;
-        } else if (languageTagValue.equals("RS")) {
-            languageTagValue = LanguageAbbreviations.SERBIAN;
-        }
-
-        return languageTagValue;
     }
 
     @Override
@@ -60,6 +47,10 @@ public class ProceedingsConverter extends DocumentConverter
         setCommonFields(record, dto);
 
         dto.setEISBN(record.getIsbn());
+        dto.setPublicationSeriesVolume(record.getVolume());
+        dto.setNumberOfPages(record.getNumberOfPages());
+
+        dto.setAcronym(multilingualContentConverter.toDTO(record.getAcronym()));
 
         if (Objects.nonNull(record.getLanguage())) {
             var languageTagValue = deduceLanguageTagValue(record);
@@ -68,7 +59,7 @@ public class ProceedingsConverter extends DocumentConverter
             if (Objects.nonNull(languageTag.getId())) {
                 dto.setLanguageTagIds(List.of(languageTag.getId()));
             } else {
-                log.warn("No saved language with tag: " + languageTagValue);
+                log.warn("No saved language with tag: {}", languageTagValue);
                 return null;
             }
         } else {
@@ -82,7 +73,8 @@ public class ProceedingsConverter extends DocumentConverter
             if (Objects.nonNull(event)) {
                 dto.setEventId(event.getId());
             } else {
-                log.warn("No saved event with id: " + record.getOutputFrom().getEvent().getOldId());
+                log.warn("No saved event with id: {}",
+                    record.getOutputFrom().getEvent().getOldId());
                 return null;
             }
 
@@ -92,8 +84,16 @@ public class ProceedingsConverter extends DocumentConverter
                         event.getName()));
             }
         } else {
-            log.warn("Could not load, no event specified: " + record.getOldId());
+            log.warn("Could not load, no event specified: {}", record.getOldId());
             return null;
+        }
+
+        if (Objects.nonNull(record.getPublisher())) {
+            publisherConverter.setPublisherInformation(record.getPublisher(), dto);
+        }
+
+        if (Objects.nonNull(record.getBookSeries())) {
+            setBookSeriesInformation(record.getBookSeries(), dto);
         }
 
         return dto;

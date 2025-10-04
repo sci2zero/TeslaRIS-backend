@@ -6,7 +6,9 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
-import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -91,9 +93,11 @@ public class CSVConverter {
 
         if ("Article".equals(type) && !record[16].isBlank()) {
             document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+            document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
             document.getPublishedIn().add(new MultilingualContent("EN", record[16], 1));
         } else if ("Conference paper".equals(type) && !record[15].isBlank()) {
             document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+            document.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
             document.getPublishedIn()
                 .add(new MultilingualContent("EN", "Proceedings of " + record[15], 1));
 

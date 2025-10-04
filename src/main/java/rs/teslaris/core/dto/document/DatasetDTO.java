@@ -16,4 +16,6 @@ public class DatasetDTO extends DocumentDTO {
 
     @Positive(message = "Publisher id cannot be a negative number.")
     private Integer publisherId;
+
+    private Boolean authorReprint;
 }

@@ -71,7 +71,7 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
                 startDate.toString(), endDate.toString());
 
         processHarvestedRecords(harvestedRecords, userId, adminUserIds, employmentInstitutionIds,
-            newEntriesCount);
+            newEntriesCount, false);
 
         return newEntriesCount;
     }
@@ -111,8 +111,7 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
             institutionName.get().getContent(), startDate.toString(), endDate.toString());
 
         processHarvestedRecords(harvestedRecords, userId, adminUserIds,
-            allInstitutionsThatCanImport,
-            newEntriesCount);
+            allInstitutionsThatCanImport, newEntriesCount, true);
 
         return newEntriesCount;
     }
@@ -166,7 +165,7 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
                     endDate.toString());
 
             processHarvestedRecords(harvestedRecords, userId, adminUserIds,
-                allInstitutionsThatCanImport, newEntriesCount);
+                allInstitutionsThatCanImport, newEntriesCount, true);
         }
 
         return newEntriesCount;
@@ -175,17 +174,16 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
     private void processHarvestedRecords(
         List<WebOfScienceImportUtility.WosPublication> harvestedRecords, Integer userId,
         Set<Integer> adminUserIds, List<Integer> institutionIds,
-        HashMap<Integer, Integer> newEntriesCount) {
+        HashMap<Integer, Integer> newEntriesCount, Boolean employeeUser) {
         harvestedRecords.forEach(
             publication -> WebOfScienceConverter.toCommonImportModel(publication)
                 .ifPresent(documentImport -> {
                     var existingImport =
                         CommonImportUtility.findExistingImport(documentImport.getIdentifier());
-                    if (Objects.isNull(existingImport) &&
-                        Objects.nonNull(documentImport.getDoi())) {
+                    if (Objects.isNull(existingImport)) {
                         if (Objects.nonNull(
                             (existingImport =
-                                CommonImportUtility.findImportByDOI(documentImport.getDoi())))) {
+                                CommonImportUtility.findImportByDOIOrMetadata(documentImport)))) {
                             // Probably imported before from Scopus/OpenAlex, which have higher priorities
                             // perform metadata enrichment, if possible
                             DeepObjectMerger.deepMerge(existingImport, documentImport);
@@ -200,13 +198,16 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
                     }
 
                     if (Objects.nonNull(embedding)) {
-                        documentImport.setEmbedding(embedding.toFloatVector());
+                        documentImport.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
                     }
 
                     documentImport.getImportUsersId().add(userId);
                     documentImport.getImportUsersId().addAll(adminUserIds);
                     documentImport.getImportInstitutionsId().addAll(institutionIds);
-                    newEntriesCount.merge(userId, 1, Integer::sum);
+
+                    if (employeeUser) {
+                        newEntriesCount.merge(userId, 1, Integer::sum);
+                    }
 
                     CommonHarvestUtility.updateContributorEntryCount(documentImport,
                         documentImport.getContributions().stream()

@@ -18,13 +18,13 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
-import rs.teslaris.core.util.Pair;
-import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.dto.ThesisSearchRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisSearchService;
 
@@ -106,7 +106,8 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                                   List<ThesisType> allowedTypes, LocalDate startDate,
                                   LocalDate endDate, SearchRequestType searchRequestType,
                                   Boolean showOnlyOpenAccessTheses) {
-        int minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        var minShouldMatch = "2<-80% 5<-70% 10<-60%";
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildMetadataQuery(facultyIds, authorIds, advisorIds, boardMemberIds,
                 boardPresidentIds, allowedTypes, startDate, endDate, showOnlyOpenAccessTheses));
@@ -159,7 +160,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                 b.must(m -> m.term(tq -> tq.field("is_open_access").value(true)));
             }
 
-            if (!SessionTrackingUtil.isUserLoggedIn()) {
+            if (!SessionUtil.isUserLoggedIn()) {
                 b.must(q -> q.term(t -> t.field("is_approved").value(true)));
             }
 
@@ -168,7 +169,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
         })._toQuery();
     }
 
-    private Query buildTokenQuery(List<String> tokens, int minShouldMatch) {
+    private Query buildTokenQuery(List<String> tokens, String minShouldMatch) {
         return BoolQuery.of(eq -> {
             tokens.forEach(token -> {
                 if (token.startsWith("\"") && token.endsWith("\"")) {
@@ -201,7 +202,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                     .should(sb -> sb.match(m -> m.field("board_member_names").query(token)))
                     .should(sb -> sb.match(m -> m.field("doi").query(token)));
             });
-            return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+            return eq.minimumShouldMatch(minShouldMatch);
         })._toQuery();
     }
 

@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -45,9 +46,9 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
-import rs.teslaris.core.util.FunctionalUtil;
-import rs.teslaris.core.util.RestTemplateProvider;
-import rs.teslaris.core.util.ScopusAuthenticationHelper;
+import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.session.RestTemplateProvider;
+import rs.teslaris.core.util.session.ScopusAuthenticationHelper;
 
 @Service
 @RequiredArgsConstructor
@@ -82,6 +83,9 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     private Map<String, Integer> harvestPeriodOffsets;
 
     private Map<String, Integer> rateLimits;
+
+    @Value("${harvest-external-indicators.allowed}")
+    private Boolean harvestAllowed;
 
 
     @Override
@@ -604,6 +608,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     @Scheduled(cron = "${harvest-external-indicators.schedule}")
     protected void performIndicatorHarvest() {
+        if (!harvestAllowed) {
+            return;
+        }
+
         performPersonIndicatorHarvest();
         performOUIndicatorDeduction();
     }

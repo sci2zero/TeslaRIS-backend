@@ -25,7 +25,7 @@ import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.repository.institution.CommissionRepository;
-import rs.teslaris.core.util.Pair;
+import rs.teslaris.core.util.functional.Pair;
 
 @Component
 @RequiredArgsConstructor
@@ -45,17 +45,21 @@ public class AssessmentDataInitializer {
     private final AssessmentRulebookRepository assessmentRulebookRepository;
 
 
-    public void initializeIndicators(LanguageTag englishTag, LanguageTag serbianTag) {
+    public void initializeIndicators(LanguageTag englishTag, LanguageTag serbianTag,
+                                     LanguageTag serbianCyrillicTag) {
         var totalViews = new Indicator();
         totalViews.setCode("viewsTotal");
         totalViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Total views", 1),
-            new MultiLingualContent(serbianTag, "Ukupno pregleda", 2)));
+            new MultiLingualContent(serbianTag, "Ukupno pregleda", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Укупно прегледа", 3)));
         totalViews.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of views.",
                     1),
                 new MultiLingualContent(serbianTag, "Ukupan broj pregleda.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "Укупан број прегледа.",
+                    3)));
         totalViews.setAccessLevel(AccessLevel.OPEN);
         totalViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -66,14 +70,18 @@ public class AssessmentDataInitializer {
         var yearlyViews = new Indicator();
         yearlyViews.setCode("viewsYear");
         yearlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "This year's views", 1),
-            new MultiLingualContent(serbianTag, "Pregleda ove godine", 2)));
+            new MultiLingualContent(serbianTag, "Pregleda ove godine", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Прегледа ове године", 3)));
         yearlyViews.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of views in the last year.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "Ukupan broj pregleda u poslednjih godinu dana.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Укупан број прегледа у поледњих годину дана.",
+                    3)));
         yearlyViews.setAccessLevel(AccessLevel.OPEN);
         yearlyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -83,13 +91,17 @@ public class AssessmentDataInitializer {
         var weeklyViews = new Indicator();
         weeklyViews.setCode("viewsWeek");
         weeklyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Week's views", 1),
-            new MultiLingualContent(serbianTag, "Pregleda ove sedmice", 2)));
+            new MultiLingualContent(serbianTag, "Pregleda ove sedmice", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Прегледа ове седмице", 3)));
         weeklyViews.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of views in the last 7 days.",
                     1),
                 new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih 7 dana.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Укупан број прегледа у последњих 7 дана.",
+                    3)));
         weeklyViews.setAccessLevel(AccessLevel.OPEN);
         weeklyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -99,13 +111,17 @@ public class AssessmentDataInitializer {
         var monthlyViews = new Indicator();
         monthlyViews.setCode("viewsMonth");
         monthlyViews.setTitle(Set.of(new MultiLingualContent(englishTag, "Month's views", 1),
-            new MultiLingualContent(serbianTag, "Pregleda ovog meseca", 2)));
+            new MultiLingualContent(serbianTag, "Pregleda ovog meseca", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Прегледа овог месеца", 3)));
         monthlyViews.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of views in the last month.",
                     1),
                 new MultiLingualContent(serbianTag, "Ukupan broj pregleda u poslednjih mesec dana.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Укупан број прегледа у последњих месец дана.",
+                    3)));
         monthlyViews.setAccessLevel(AccessLevel.OPEN);
         monthlyViews.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -115,13 +131,16 @@ public class AssessmentDataInitializer {
         var totalDownloads = new Indicator();
         totalDownloads.setCode("downloadsTotal");
         totalDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Total downloads", 1),
-            new MultiLingualContent(serbianTag, "Ukupno preuzimanja", 2)));
+            new MultiLingualContent(serbianTag, "Ukupno preuzimanja", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Укупно преузимања", 3)));
         totalDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads.",
                     1),
                 new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "Укупан број преузимања.",
+                    3)));
         totalDownloads.setAccessLevel(AccessLevel.OPEN);
         totalDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -132,14 +151,18 @@ public class AssessmentDataInitializer {
         yearlyDownloads.setCode("downloadsYear");
         yearlyDownloads.setTitle(
             Set.of(new MultiLingualContent(englishTag, "This year's downloads", 1),
-                new MultiLingualContent(serbianTag, "Preuzimanja ove godine", 2)));
+                new MultiLingualContent(serbianTag, "Preuzimanja ove godine", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Преузимања ове године", 3)));
         yearlyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last year.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "Ukupan broj preuzimanja u poslednjih godinu dana.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Укупан број преузимања у последњих годину дана.",
+                    3)));
         yearlyDownloads.setAccessLevel(AccessLevel.OPEN);
         yearlyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -149,13 +172,17 @@ public class AssessmentDataInitializer {
         var weeklyDownloads = new Indicator();
         weeklyDownloads.setCode("downloadsWeek");
         weeklyDownloads.setTitle(Set.of(new MultiLingualContent(englishTag, "Week's downloads", 1),
-            new MultiLingualContent(serbianTag, "Preuzimanja ove sedmice", 2)));
+            new MultiLingualContent(serbianTag, "Preuzimanja ove sedmice", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Преузимања ове седмице", 3)));
         weeklyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last 7 days.",
                     1),
                 new MultiLingualContent(serbianTag, "Ukupan broj preuzimanja u poslednjih 7 dana.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Укупан број преузимања у последњих 7 дана.",
+                    3)));
         weeklyDownloads.setAccessLevel(AccessLevel.OPEN);
         weeklyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -166,14 +193,18 @@ public class AssessmentDataInitializer {
         monthlyDownloads.setCode("downloadsMonth");
         monthlyDownloads.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Month's downloads", 1),
-                new MultiLingualContent(serbianTag, "Preuzimanja ovog meseca", 2)));
+                new MultiLingualContent(serbianTag, "Preuzimanja ovog meseca", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Преузимања овог месеца", 3)));
         monthlyDownloads.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of downloads in the last month.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "Ukupan broj preuzimanja u poslednjih mesec dana.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Укупан број преузимања у последњих месец дана.",
+                    3)));
         monthlyDownloads.setAccessLevel(AccessLevel.OPEN);
         monthlyDownloads.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.DOCUMENT, ApplicableEntityType.PERSON,
@@ -184,14 +215,17 @@ public class AssessmentDataInitializer {
         numberOfPages.setCode("pageNum");
         numberOfPages.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Number of pages", 1),
-                new MultiLingualContent(serbianTag, "Broj stranica", 2)));
+                new MultiLingualContent(serbianTag, "Broj stranica", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Број страница", 3)));
         numberOfPages.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total number of pages in a document.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "Ukupan broj stranica u dokumentu.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "Укупан број страница у документу.",
+                    3)));
         numberOfPages.setAccessLevel(AccessLevel.CLOSED);
         numberOfPages.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
         numberOfPages.setContentType(IndicatorContentType.NUMBER);
@@ -200,14 +234,17 @@ public class AssessmentDataInitializer {
         totalCitations.setCode("totalCitations");
         totalCitations.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Total citations", 1),
-                new MultiLingualContent(serbianTag, "Broj citata", 2)));
+                new MultiLingualContent(serbianTag, "Broj citata", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Број цитата", 3)));
         totalCitations.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total citation count.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "Ukupan broj citata.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "Укупан број цитата.",
+                    3)));
         totalCitations.setAccessLevel(AccessLevel.CLOSED);
         totalCitations.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.PUBLICATION_SERIES, ApplicableEntityType.DOCUMENT,
@@ -218,14 +255,17 @@ public class AssessmentDataInitializer {
         yearlyCitations.setCode("yearlyCitations");
         yearlyCitations.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Yearly citations", 1),
-                new MultiLingualContent(serbianTag, "Godišnja citiranost", 2)));
+                new MultiLingualContent(serbianTag, "Godišnja citiranost", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Годишња цитираност", 3)));
         yearlyCitations.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "Total citation count by year.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "Ukupan broj citata po godinama.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "Укупан број цитата по годинама",
+                    3)));
         yearlyCitations.setAccessLevel(AccessLevel.CLOSED);
         yearlyCitations.getApplicableTypes().addAll(
             List.of(ApplicableEntityType.PERSON, ApplicableEntityType.ORGANISATION_UNIT));
@@ -235,14 +275,17 @@ public class AssessmentDataInitializer {
         fiveYearJIF.setCode("fiveYearJIF");
         fiveYearJIF.setTitle(
             Set.of(new MultiLingualContent(englishTag, "5 Year JIF", 1),
-                new MultiLingualContent(serbianTag, "Petogodišnji IF", 2)));
+                new MultiLingualContent(serbianTag, "Petogodišnji JIF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Петогодишњи JIF", 3)));
         fiveYearJIF.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "JIF in the last 5 years.",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "IF u poslednjih 5 godina.",
-                    2)));
+                    "JIF u poslednjih 5 godina.",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "JIF у последњих 5 година",
+                    3)));
         fiveYearJIF.setAccessLevel(AccessLevel.CLOSED);
         fiveYearJIF.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         fiveYearJIF.setContentType(IndicatorContentType.NUMBER);
@@ -251,14 +294,17 @@ public class AssessmentDataInitializer {
         currentJIF.setCode("currentJIF");
         currentJIF.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Journal Impact Factor", 1),
-                new MultiLingualContent(serbianTag, "Impakt Faktor", 2)));
+                new MultiLingualContent(serbianTag, "Impakt Faktor", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Импакт Фактор", 3)));
         currentJIF.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "JIF in the current year.",
                     1),
                 new MultiLingualContent(serbianTag,
                     "IF ove godine.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "IF ове године",
+                    3)));
         currentJIF.setAccessLevel(AccessLevel.CLOSED);
         currentJIF.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         currentJIF.setContentType(IndicatorContentType.NUMBER);
@@ -267,14 +313,17 @@ public class AssessmentDataInitializer {
         fiveYearJIFRank.setCode("fiveYearJIFRank");
         fiveYearJIFRank.setTitle(
             Set.of(new MultiLingualContent(englishTag, "5 Year JIF Rank", 1),
-                new MultiLingualContent(serbianTag, "Petogodišnji IF Rank", 2)));
+                new MultiLingualContent(serbianTag, "Petogodišnji JIF Rank", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Петогодишњи JIF Rank", 3)));
         fiveYearJIFRank.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "JIF Rank in the last 5 years.",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "IF Rank u poslednjih 5 godina.",
-                    2)));
+                    "JIF Rank u poslednjih 5 godina.",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "JIF Rank у последњих 5 година.",
+                    3)));
         fiveYearJIFRank.setAccessLevel(AccessLevel.CLOSED);
         fiveYearJIFRank.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         fiveYearJIFRank.setContentType(IndicatorContentType.TEXT);
@@ -283,14 +332,17 @@ public class AssessmentDataInitializer {
         currentJIFRank.setCode("currentJIFRank");
         currentJIFRank.setTitle(
             Set.of(new MultiLingualContent(englishTag, "JIF Rank", 1),
-                new MultiLingualContent(serbianTag, "IF Rank", 2)));
+                new MultiLingualContent(serbianTag, "IF Rank", 2),
+                new MultiLingualContent(serbianCyrillicTag, "IF Rank", 3)));
         currentJIFRank.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag, "JIF rank in the current year.",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "IF rank ove godine.",
-                    2)));
+                    "JIF rank ove godine.",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "JIF ове године.",
+                    3)));
         currentJIFRank.setAccessLevel(AccessLevel.CLOSED);
         currentJIFRank.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         currentJIFRank.setContentType(IndicatorContentType.TEXT);
@@ -299,7 +351,8 @@ public class AssessmentDataInitializer {
         eigenFactorNorm.setCode("eigenFactorNorm");
         eigenFactorNorm.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Normalized Eigenfactor", 1),
-                new MultiLingualContent(serbianTag, "Normalizovani Eigenfactor", 2)));
+                new MultiLingualContent(serbianTag, "Normalizovani Eigenfactor", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Нормализовани Eigenfactor", 3)));
         eigenFactorNorm.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -307,7 +360,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Mera ukupnog uticaja časopisa u periodu od 5 godina, uzevši u obzir i kvalitet i kvantitet citata.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Мера укупног утицаја часописа у периоду од 5 година, узевши у обзир и кавлитет и квантитет цитата.",
+                    3)));
         eigenFactorNorm.setAccessLevel(AccessLevel.CLOSED);
         eigenFactorNorm.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         eigenFactorNorm.setContentType(IndicatorContentType.NUMBER);
@@ -316,7 +372,8 @@ public class AssessmentDataInitializer {
         ais.setCode("ais");
         ais.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Article Influence Score", 1),
-                new MultiLingualContent(serbianTag, "Article Influence Score", 2)));
+                new MultiLingualContent(serbianTag, "Article Influence Score", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Article Influence Score", 3)));
         ais.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -324,7 +381,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Metrika koja se koristi da prikaže srednju vrednost uticaja radova u časopisu kroz prvih pet godina nakon publikacije.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Метрика која се користи да прикаже средњу вредност утицаја радова у часопису кроз првих пет година након публикације.",
+                    3)));
         ais.setAccessLevel(AccessLevel.CLOSED);
         ais.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         ais.setContentType(IndicatorContentType.NUMBER);
@@ -333,7 +393,8 @@ public class AssessmentDataInitializer {
         citedHL.setCode("citedHL");
         citedHL.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Cited Half-Life", 1),
-                new MultiLingualContent(serbianTag, "Cited Half-Life", 2)));
+                new MultiLingualContent(serbianTag, "Cited Half-Life", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Cited Half-Life", 3)));
         citedHL.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -341,7 +402,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Izračunava srednju starost članaka citiranih u časopisu tokom jedne kalendarske godine. Polovina citata se odnosi na članke objavljene pre ovog vremena, a polovina na članke objavljene kasnije.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Израчунава средњу старост чланака цитираних у часопису током једне календарске године. Половина цитата се односи на чанке објављене пре овог времена, а половина на чланке објављене касније.",
+                    3)));
         citedHL.setAccessLevel(AccessLevel.CLOSED);
         citedHL.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         citedHL.setContentType(IndicatorContentType.NUMBER);
@@ -350,15 +414,19 @@ public class AssessmentDataInitializer {
         citingHL.setCode("citingHL");
         citingHL.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Citing Half-Life", 1),
-                new MultiLingualContent(serbianTag, "Citing Half-Life", 2)));
+                new MultiLingualContent(serbianTag, "Citing Half-Life", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Citing Half-Life", 3)));
         citingHL.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
-                    "Counts all the references made by the journal during one calendar year and calculates the median article publication date—half of the cited references were published before this time, half were published afterwards.",
+                    "Counts all the references made by the journal during one calendar year and calculates the median article publication date - half of the cited references were published before this time, half were published afterwards.",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "Broji sve reference koje je časopis naveo tokom jedne kalendarske godine i izračunava srednji datum objavljivanja članka – polovina citiranih referenci je objavljena pre ovog vremena, polovina je objavljena kasnije.",
-                    2)));
+                    "Broji sve reference koje je časopis naveo tokom jedne kalendarske godine i izračunava srednji datum objavljivanja članka - polovina citiranih referenci je objavljena pre ovog vremena, polovina je objavljena kasnije.",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Броји све референце које је часопис навео током једне календарске године и израчунава среднњи датум објављивања чланка - половина цитираних референци је објављена пре овог времена, половина је објављена касније.",
+                    3)));
         citingHL.setAccessLevel(AccessLevel.CLOSED);
         citingHL.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         citingHL.setContentType(IndicatorContentType.NUMBER);
@@ -368,7 +436,8 @@ public class AssessmentDataInitializer {
         sjr.setCode("sjr");
         sjr.setTitle(
             Set.of(new MultiLingualContent(englishTag, "SCImago Journal Rank", 1),
-                new MultiLingualContent(serbianTag, "SCImago Journal Rank", 2)));
+                new MultiLingualContent(serbianTag, "SCImago Journal Rank", 2),
+                new MultiLingualContent(serbianCyrillicTag, "SCImago Journal Rank", 3)));
         sjr.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -376,7 +445,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "SCImago Journal Rank (SJR) je mera prestiža naučnog časopisa koja uzima u obzir i broj citata i prestiž časopisa iz kojeg ti citati dolaze.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "SCImago Journal Rank (SJR) је мера престижа научног часописа која узима у обзир и број цитата и престиж часописа из којег ти цитати долазе.",
+                    3)));
         sjr.setAccessLevel(AccessLevel.CLOSED);
         sjr.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         sjr.setContentType(IndicatorContentType.TEXT);
@@ -385,7 +457,8 @@ public class AssessmentDataInitializer {
         hIndex.setCode("hIndex");
         hIndex.setTitle(
             Set.of(new MultiLingualContent(englishTag, "H Index", 1),
-                new MultiLingualContent(serbianTag, "H Index", 2)));
+                new MultiLingualContent(serbianTag, "H Index", 2),
+                new MultiLingualContent(serbianCyrillicTag, "H Index", 3)));
         hIndex.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -393,7 +466,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "H-indeks se izračunava kao ukupan broj publikacija koje su citirali drugi autori najmanje isti broj puta.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Х-индекс се израчунава као укупан број публикација које су цитирали други аутори најмање исти број пута.",
+                    3)));
         hIndex.setAccessLevel(AccessLevel.CLOSED);
         hIndex.getApplicableTypes()
             .addAll(List.of(ApplicableEntityType.PUBLICATION_SERIES, ApplicableEntityType.PERSON));
@@ -403,7 +479,8 @@ public class AssessmentDataInitializer {
         totalOutputCount.setCode("totalOutputCount");
         totalOutputCount.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Total results", 1),
-                new MultiLingualContent(serbianTag, "Ukupno rezultata", 2)));
+                new MultiLingualContent(serbianTag, "Ukupno rezultata", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Укупно резултата", 3)));
         totalOutputCount.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -411,7 +488,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Ukupan broj publikacija svih tipova.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Укупан број публикација свих типова.",
+                    3)));
         totalOutputCount.setAccessLevel(AccessLevel.CLOSED);
         totalOutputCount.getApplicableTypes()
             .addAll(List.of(ApplicableEntityType.ORGANISATION_UNIT, ApplicableEntityType.PERSON));
@@ -421,7 +501,9 @@ public class AssessmentDataInitializer {
         sdg.setCode("sdg");
         sdg.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Sustainable Development Goals (SDG)", 1),
-                new MultiLingualContent(serbianTag, "Sustainable Development Goals (SDG)", 2)));
+                new MultiLingualContent(serbianTag, "Sustainable Development Goals (SDG)", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Sustainable Development Goals (SDG)",
+                    3)));
         sdg.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -429,7 +511,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "SDG označava povezanost časopisa sa Ciljevima održivog razvoja Ujedinjenih nacija na osnovu njihovog istraživačkog fokusa i doprinosa globalnoj održivosti.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "SDG означава повезаност часописа са Циљевима одрживог развоја Уједињених нација на основу њиховог истраживачког фокуса и доприноса глобалној одрживости.",
+                    3)));
         sdg.setAccessLevel(AccessLevel.CLOSED);
         sdg.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         sdg.setContentType(IndicatorContentType.NUMBER);
@@ -438,7 +523,8 @@ public class AssessmentDataInitializer {
         overton.setCode("overton");
         overton.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Overton", 1),
-                new MultiLingualContent(serbianTag, "Overton", 2)));
+                new MultiLingualContent(serbianTag, "Overton", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Overton", 3)));
         overton.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -446,7 +532,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Overton meri uticaj akademskih časopisa praćenjem citata u političkim dokumentima, pravnim tekstovima, patentima i drugim neakademskim izvorima, čime odražava njihov uticaj na javne politike i praktične primene.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Overton мери утицај академских часописа праћењем цитата у политичким документима, правним текстовима, патентима и другим неакадемским изворима, чиме одражава њихов утицај на јавне политике и практичне примене.",
+                    3)));
         overton.setAccessLevel(AccessLevel.CLOSED);
         overton.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         overton.setContentType(IndicatorContentType.NUMBER);
@@ -455,7 +544,8 @@ public class AssessmentDataInitializer {
         erihPlus.setCode("erihPlus");
         erihPlus.setTitle(
             Set.of(new MultiLingualContent(englishTag, "ERIH PLUS list", 1),
-                new MultiLingualContent(serbianTag, "ERIH PLUS lista", 2)));
+                new MultiLingualContent(serbianTag, "ERIH PLUS lista", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ERIH PLUS листа", 3)));
         erihPlus.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -463,7 +553,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "ERIH PLUS lista je evropski referentni indeks za naučne časopise iz oblasti humanističkih i društvenih nauka, sa ciljem povećanja njihove vidljivosti i kvaliteta.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "ERIH PLUS листа је европси референтни индекс за научне часописе из области хуманистичких и друштвених наука, са циљем повећања њихове видљивости и квалитета.",
+                    3)));
         erihPlus.setAccessLevel(AccessLevel.CLOSED);
         erihPlus.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         erihPlus.setContentType(IndicatorContentType.BOOL);
@@ -472,7 +565,9 @@ public class AssessmentDataInitializer {
         jci.setCode("jci");
         jci.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Journal Citation Indicator (JCI)", 1),
-                new MultiLingualContent(serbianTag, "Indikator citiranosti časopisa (JCI)", 2)));
+                new MultiLingualContent(serbianTag, "Indikator citiranosti časopisa (JCI)", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Индикатор цитираности часописа (JCI)",
+                    3)));
         jci.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -480,6 +575,9 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Normalizovana metrika koja meri uticaj citiranosti publikacija časopisa tokom trogodišnjeg perioda, omogućavajući poređenje među disciplinama.",
+                    2),
+                new MultiLingualContent(serbianTag,
+                    "Нормализована метрика која мери утицај цитираности публикација часописа током трогодишњег периодс, омогућавајући поређење међу дисциплинама.",
                     2)));
         jci.setAccessLevel(AccessLevel.CLOSED);
         jci.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
@@ -492,7 +590,9 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag, "Journal Citation Indicator (JCI) percentile",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "Indikator citiranosti časopisa (JCI) percentil", 2)));
+                    "Indikator citiranosti časopisa (JCI) percentil", 2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Индикатор цитираности часописа (JCI) перцентил", 3)));
         jciPercentile.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -500,7 +600,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Percentil Journal Citation Indicator-a (JCI) prikazuje relativnu poziciju časopisa unutar svoje oblasti istraživanja, pri čemu veći procenat označava bolje performanse u odnosu na druge časopise u istoj kategoriji.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Перцентил Journal Citation Indicator-а (JCI) приказује релативну позицију часописа унутар своје области истраживања, при чему већи проценат означава боље перформансе у односу на друге часописе у истој категорији.",
+                    3)));
         jciPercentile.setAccessLevel(AccessLevel.CLOSED);
         jciPercentile.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         jciPercentile.setContentType(IndicatorContentType.NUMBER);
@@ -509,7 +612,9 @@ public class AssessmentDataInitializer {
         jcr.setCode("jcr");
         jcr.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Journal Citation Rank (JCR) list", 1),
-                new MultiLingualContent(serbianTag, "Journal Citation Rank (JCR) lista", 2)));
+                new MultiLingualContent(serbianTag, "Journal Citation Rank (JCR) lista", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Journal Citation Rank (JCR) листа",
+                    3)));
         jcr.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -517,7 +622,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Lista Journal Citation Reports (JCR) pruža metrike, poput faktora uticaja, za ocenjivanje i rangiranje naučnih časopisa na osnovu podataka o citatima.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Листа Journal Citation Reports (JCR) пружа метрике, попут фактора утицаја, за оцењивање и рангирање научних часописа на основу података о цитатима.",
+                    3)));
         jcr.setAccessLevel(AccessLevel.CLOSED);
         jcr.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         jcr.setContentType(IndicatorContentType.BOOL);
@@ -526,7 +634,8 @@ public class AssessmentDataInitializer {
         scimago.setCode("scimago");
         scimago.setTitle(
             Set.of(new MultiLingualContent(englishTag, "SciMAGO list", 1),
-                new MultiLingualContent(serbianTag, "SciMago lista", 2)));
+                new MultiLingualContent(serbianTag, "SciMago lista", 2),
+                new MultiLingualContent(serbianCyrillicTag, "SciMago листа", 3)));
         scimago.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -534,7 +643,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Lista SciMAGO Journal Rank (SJR) rangira časopise koristeći podatke o citatima iz Scopus baze, naglašavajući vidljivost i prestiž.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Листа SciMAGO Journal Rank (SJR) рангира часописе користећи податке о цитатима из Scopus базе, наглашавајући видљивост и престиж.",
+                    3)));
         scimago.setAccessLevel(AccessLevel.CLOSED);
         scimago.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         scimago.setContentType(IndicatorContentType.BOOL);
@@ -543,7 +655,8 @@ public class AssessmentDataInitializer {
         numParticipants.setCode("numParticipants");
         numParticipants.setTitle(
             Set.of(new MultiLingualContent(englishTag, "Number of Participants", 1),
-                new MultiLingualContent(serbianTag, "Broj učesnika", 2)));
+                new MultiLingualContent(serbianTag, "Broj učesnika", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Број учесника", 3)));
         numParticipants.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
@@ -551,7 +664,10 @@ public class AssessmentDataInitializer {
                     1),
                 new MultiLingualContent(serbianTag,
                     "Broj učesnika na konferenciji.",
-                    2)));
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Број учесника на конференцији.",
+                    3)));
         numParticipants.setAccessLevel(AccessLevel.CLOSED);
         numParticipants.getApplicableTypes().add(ApplicableEntityType.EVENT);
         numParticipants.setContentType(IndicatorContentType.NUMBER);
@@ -560,11 +676,13 @@ public class AssessmentDataInitializer {
         numPresentations.setCode("numPresentations");
         numPresentations.setTitle(Set.of(
             new MultiLingualContent(englishTag, "Number of Presentations", 1),
-            new MultiLingualContent(serbianTag, "Broj saopštenja na skupu", 2)
+            new MultiLingualContent(serbianTag, "Broj saopštenja na skupu", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Број саопштења на скупу", 3)
         ));
         numPresentations.setDescription(Set.of(
             new MultiLingualContent(englishTag, "Number of presentations at the conference.", 1),
-            new MultiLingualContent(serbianTag, "Broj saopštenja na skupu.", 2)
+            new MultiLingualContent(serbianTag, "Broj saopštenja na skupu.", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Број саопштења на скупу.", 3)
         ));
         numPresentations.setAccessLevel(AccessLevel.CLOSED);
         numPresentations.getApplicableTypes().add(ApplicableEntityType.EVENT);
@@ -574,12 +692,16 @@ public class AssessmentDataInitializer {
         numParticipantCountries.setCode("numParticipantCountries");
         numParticipantCountries.setTitle(Set.of(
             new MultiLingualContent(englishTag, "Number of Participant Countries", 1),
-            new MultiLingualContent(serbianTag, "Broj zemalja koji imaju učesnika na skupu", 2)
+            new MultiLingualContent(serbianTag, "Broj zemalja koje imaju učesnika na skupu.", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Број земаља које имају учесника на скупу.",
+                3)
         ));
         numParticipantCountries.setDescription(Set.of(
             new MultiLingualContent(englishTag,
                 "Number of countries represented by participants at the conference.", 1),
-            new MultiLingualContent(serbianTag, "Broj zemalja koji imaju učesnika na skupu.", 2)
+            new MultiLingualContent(serbianTag, "Broj zemalja koje imaju učesnika na skupu.", 2),
+            new MultiLingualContent(serbianCyrillicTag, "Број земаља које имају учесника на скупу.",
+                3)
         ));
         numParticipantCountries.setAccessLevel(AccessLevel.CLOSED);
         numParticipantCountries.getApplicableTypes().add(ApplicableEntityType.EVENT);
@@ -591,13 +713,17 @@ public class AssessmentDataInitializer {
             new MultiLingualContent(englishTag,
                 "Number of Countries Represented in Scientific Committee", 1),
             new MultiLingualContent(serbianTag,
-                "Broj zemalja koji imaju učesnika u naučnom odboru skupa", 2)
+                "Broj zemalja koje imaju učesnika u naučnom odboru skupa", 2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Број земаља које имају учесника у научном одбору скупа", 3)
         ));
         numCountriesInScientificCommittee.setDescription(Set.of(
             new MultiLingualContent(englishTag,
                 "Number of countries represented in the scientific committee.", 1),
             new MultiLingualContent(serbianTag,
-                "Broj zemalja koji imaju učesnika u naučnom odboru skupa.", 2)
+                "Broj zemalja koje imaju učesnika u naučnom odboru skupa.", 2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Број земаља које имају учесника у научном одбору скупа.", 3)
         ));
         numCountriesInScientificCommittee.setAccessLevel(AccessLevel.CLOSED);
         numCountriesInScientificCommittee.getApplicableTypes().add(ApplicableEntityType.EVENT);
@@ -610,7 +736,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Skup organizuje naučno-istraživačka institucija, ili institucija od nacionalnog značaja",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Скуп организује научно-истраживачка институција, или институција од националног значаја",
+                3)
         ));
         organizedByScientificInstitution.setDescription(Set.of(
             new MultiLingualContent(englishTag,
@@ -618,7 +747,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Da li skup organizuje naučno-istraživačka institucija, ili institucija od nacionalnog značaja.",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Да ли скуп организује научно-истраживачка институција, или институција од националног значаја.",
+                3)
         ));
         organizedByScientificInstitution.setAccessLevel(AccessLevel.CLOSED);
         organizedByScientificInstitution.getApplicableTypes().add(ApplicableEntityType.EVENT);
@@ -631,7 +763,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "MKS Slavisti Kategorija",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "МКС Слависти Категорија",
+                3)
         ));
         slavistiCategory.setDescription(Set.of(
             new MultiLingualContent(englishTag,
@@ -639,7 +774,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Referentna lista slavističkih časopisa međunarodnog komiteta slavista.",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Референтна листа славистичких часописа међународног комитета слависта.",
+                3)
         ));
         slavistiCategory.setAccessLevel(AccessLevel.CLOSED);
         slavistiCategory.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
@@ -652,7 +790,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Postoji poziv za predavanje",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Постоји позив за предавање",
+                3)
         ));
         lectureInvitation.setDescription(Set.of(
             new MultiLingualContent(englishTag,
@@ -660,7 +801,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Postoji poziv za predavanje.",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Постоји позив за предавање",
+                3)
         ));
         lectureInvitation.setAccessLevel(AccessLevel.CLOSED);
         lectureInvitation.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
@@ -673,7 +817,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Rad je teorijski",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Рад је теоријски",
+                3)
         ));
         isTheoretical.setDescription(Set.of(
             new MultiLingualContent(englishTag,
@@ -681,7 +828,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Rad je teorijski kada se fokusira na razvoj modela, koncepata ili okvira zasnovanih na apstraktnom razmišljanju ili matematici.",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Рад је теоријски када се фокусира на развој модела, концепата или оквира заснованих на апстрактном размишљању или математици.",
+                3)
         ));
         isTheoretical.setAccessLevel(AccessLevel.CLOSED);
         isTheoretical.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
@@ -694,7 +844,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Rad je eksperimentalni",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Рад је експериментални",
+                3)
         ));
         isExperimental.setDescription(Set.of(
             new MultiLingualContent(englishTag,
@@ -702,7 +855,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Rad je eksperimentalni kada uključuje testiranje ili posmatranje fenomena kroz eksperimente u stvarnom svetu ili praktične postavke.",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Рад је експериментални када укључује тестирање или посматрање феномена кроз експерименте у стварном свету или практичне поставке.",
+                3)
         ));
         isExperimental.setAccessLevel(AccessLevel.CLOSED);
         isExperimental.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
@@ -715,7 +871,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Rad je simulacija ili analiza",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Рад је симулација или анализа",
+                3)
         ));
         isSimulation.setDescription(Set.of(
             new MultiLingualContent(englishTag,
@@ -723,7 +882,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Rad spada u ovu kategoriju kada koristi računarske modele za oponašanje realnih procesa ili sistema, ili kada ispituje podatke, rezultate ili sisteme kako bi se izvukli uvidi ili zaključci.",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Рад спада у ову категорију када користи рачунарске моделе за опонашање реалних процеса или система, или када испитује податке, резултате или системе како би се извукли увиди или закључци.",
+                3)
         ));
         isSimulation.setAccessLevel(AccessLevel.CLOSED);
         isSimulation.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
@@ -736,7 +898,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Revidiran broj autora",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Ревидиран број аутора",
+                3)
         ));
         authorCount.setDescription(Set.of(
             new MultiLingualContent(englishTag,
@@ -744,7 +909,10 @@ public class AssessmentDataInitializer {
                 1),
             new MultiLingualContent(serbianTag,
                 "Prilikom vrednovanja rezultata ostvarenih u velikim međunarodnim kolaboracijama, koji imaju 20 ili više autora i čije direktno normiranje ne bi dalo realnu procenu doprinosa autora, nadležni matični naučni odbor verifikuje i priznaje puno autorstvo na objavljenom radu kolaboracije samo istraživaču sa liste autora koji ispunjavaju najmanje jedan od uslova.",
-                2)
+                2),
+            new MultiLingualContent(serbianCyrillicTag,
+                "Приликом вредновања резултата остварених у великим међународним колаборацијама, који имају 20 или више аутора и чије директно нормирање не би дало реалну процену доприноса аутора, надлежни матични научни одбор верификује и признаје пуно ауторство на објављеном раду колаборације само истраживачу са листе аутора који испуњавају најмање један од услова.",
+                3)
         ));
         authorCount.setAccessLevel(AccessLevel.CLOSED);
         authorCount.getApplicableTypes().add(ApplicableEntityType.DOCUMENT);
@@ -762,14 +930,19 @@ public class AssessmentDataInitializer {
     }
 
     public void initializeAssessmentClassifications(LanguageTag englishTag,
-                                                    LanguageTag serbianTag) {
+                                                    LanguageTag serbianTag,
+                                                    LanguageTag serbianCyrillicTag) {
         var journalM21APlus = new AssessmentClassification();
         journalM21APlus.setFormalDescriptionOfRule("handleM21APlus");
         journalM21APlus.setCode("journalM21APlus");
         journalM21APlus.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21A+.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Vodeći međunarodni časopis kategorije M21A+.",
+                    2),
+                new MultiLingualContent(englishTag, "Leading international journal category M21A+.",
+                    1),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Водећи међународни часопис категорије М21А+.", 3)));
         journalM21APlus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM21A = new AssessmentClassification();
@@ -777,8 +950,12 @@ public class AssessmentDataInitializer {
         journalM21A.setCode("journalM21A");
         journalM21A.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21A.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Vodeći međunarodni časopis kategorije M21A.",
+                    2),
+                new MultiLingualContent(englishTag, "Leading international journal category M21A.",
+                    1),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Водећи међународни часопис категорије М21А.", 3)));
         journalM21A.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM21 = new AssessmentClassification();
@@ -786,8 +963,12 @@ public class AssessmentDataInitializer {
         journalM21.setCode("journalM21");
         journalM21.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Vodeći međunarodni časopis kategorije M21.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Vodeći međunarodni časopis kategorije M21.",
+                    2),
+                new MultiLingualContent(englishTag, "Leading international journal category M21.",
+                    1),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Водећи међународни часопис категорије М21.", 3)));
         journalM21.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM22 = new AssessmentClassification();
@@ -795,8 +976,10 @@ public class AssessmentDataInitializer {
         journalM22.setCode("journalM22");
         journalM22.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M22.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Međunarodni časopis kategorije M22.", 2),
+                new MultiLingualContent(englishTag, "International journal category M22.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Међународни часопис категорије М22.",
+                    3)));
         journalM22.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM23 = new AssessmentClassification();
@@ -804,8 +987,10 @@ public class AssessmentDataInitializer {
         journalM23.setCode("journalM23");
         journalM23.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M23.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Međunarodni časopis kategorije M23.", 2),
+                new MultiLingualContent(englishTag, "International journal category M23.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Међународни часопис категорије М23.",
+                    3)));
         journalM23.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM23e = new AssessmentClassification();
@@ -813,8 +998,10 @@ public class AssessmentDataInitializer {
         journalM23e.setCode("journalM23e");
         journalM23e.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M23e.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Međunarodni časopis kategorije M23e.", 2),
+                new MultiLingualContent(englishTag, "International journal category M23e.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Међународни часопис категорије М23е.",
+                    3)));
         journalM23e.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM24plus = new AssessmentClassification();
@@ -822,8 +1009,10 @@ public class AssessmentDataInitializer {
         journalM24plus.setCode("journalM24Plus");
         journalM24plus.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Međunarodni časopis kategorije M24+.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Međunarodni časopis kategorije M24+.", 2),
+                new MultiLingualContent(englishTag, "International journal category M24+.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Међународни часопис категорије М24+.",
+                    3)));
         journalM24plus.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM24 = new AssessmentClassification();
@@ -831,9 +1020,10 @@ public class AssessmentDataInitializer {
         journalM24.setCode("journalM24");
         journalM24.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag,
-                    "Vodeći nacionalni časopis kategorije M24.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Vodeći nacionalni časopis kategorije M24.", 2),
+                new MultiLingualContent(englishTag, "Leading national journal category M24.", 1),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Водећи национални часопис категорије М24.", 3)));
         journalM24.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM51 = new AssessmentClassification();
@@ -841,8 +1031,10 @@ public class AssessmentDataInitializer {
         journalM51.setCode("journalM51");
         journalM51.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Vodeći nacionalni časopis kategorije M51.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Vodeći nacionalni časopis kategorije M51.", 2),
+                new MultiLingualContent(englishTag, "Leading national journal category M51.", 1),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Водећи национални часопис категорије М51.", 3)));
         journalM51.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM52 = new AssessmentClassification();
@@ -850,8 +1042,10 @@ public class AssessmentDataInitializer {
         journalM52.setCode("journalM52");
         journalM52.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Nacionalni časopis kategorije M52.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Nacionalni časopis kategorije M52.", 2),
+                new MultiLingualContent(englishTag, "National journal category M52.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Национални часопис категорије М52.",
+                    3)));
         journalM52.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM53 = new AssessmentClassification();
@@ -859,8 +1053,10 @@ public class AssessmentDataInitializer {
         journalM53.setCode("journalM53");
         journalM53.setTitle(
             Set.of(
-                new MultiLingualContent(englishTag, "Nacionalni časopis kategorije M53.",
-                    1)));
+                new MultiLingualContent(serbianTag, "Nacionalni časopis kategorije M53.", 2),
+                new MultiLingualContent(englishTag, "National journal category M53.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Национални часопис категорије М53.",
+                    3)));
         journalM53.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var journalM54 = new AssessmentClassification();
@@ -868,9 +1064,12 @@ public class AssessmentDataInitializer {
         journalM54.setCode("journalM54");
         journalM54.setTitle(
             Set.of(
+                new MultiLingualContent(serbianTag,
+                    "Nacionalni naučni časopis koji se prvi put kategoriše.", 2),
                 new MultiLingualContent(englishTag,
-                    "Nacionalni naučni časopis koji se prvi put kategoriše.",
-                    1)));
+                    "National scientific journal being categorized for the first time.", 1),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Национални научни часопис који се први пут категорише.", 3)));
         journalM54.setApplicableTypes(Set.of(ApplicableEntityType.PUBLICATION_SERIES));
 
         var multinationalConf = new AssessmentClassification();
@@ -879,7 +1078,8 @@ public class AssessmentDataInitializer {
         multinationalConf.setTitle(
             Set.of(
                 new MultiLingualContent(serbianTag, "Međunarodna konferencija.", 2),
-                new MultiLingualContent(englishTag, "Multinational conference.", 1)));
+                new MultiLingualContent(englishTag, "Multinational conference.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Међународна конференција.", 3)));
         multinationalConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
 
         var nationalConf = new AssessmentClassification();
@@ -888,7 +1088,8 @@ public class AssessmentDataInitializer {
         nationalConf.setTitle(
             Set.of(
                 new MultiLingualContent(serbianTag, "Domaća konferencija.", 2),
-                new MultiLingualContent(englishTag, "National conference.", 1)));
+                new MultiLingualContent(englishTag, "National conference.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Домаћа конференција.", 3)));
         nationalConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
 
         var nonAcademicConf = new AssessmentClassification();
@@ -897,7 +1098,9 @@ public class AssessmentDataInitializer {
         nonAcademicConf.setTitle(
             Set.of(
                 new MultiLingualContent(serbianTag, "Tehnička (ne-naučna) konferencija.", 2),
-                new MultiLingualContent(englishTag, "Technical (non-academic) conference.", 1)));
+                new MultiLingualContent(englishTag, "Technical (non-academic) conference.", 1),
+                new MultiLingualContent(serbianCyrillicTag, "Техничка (не-научна) конференција.",
+                    3)));
         nonAcademicConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
 
         var M21APlus = new AssessmentClassification();
@@ -1131,7 +1334,8 @@ public class AssessmentDataInitializer {
     }
 
     public Pair<Commission, Commission> initializeCommissions(LanguageTag englishTag,
-                                                              LanguageTag serbianTag) {
+                                                              LanguageTag serbianTag,
+                                                              LanguageTag serbianCyrillicTag) {
         var commission1 = new Commission();
         commission1.setDescription(Set.of(new MultiLingualContent(englishTag, "Web Of Science", 1),
             new MultiLingualContent(serbianTag, "Web Of Science", 2)));
@@ -1157,7 +1361,8 @@ public class AssessmentDataInitializer {
         var commission5 = new Commission();
         commission5.setDescription(
             Set.of(new MultiLingualContent(englishTag, "MNO ALL", 1),
-                new MultiLingualContent(serbianTag, "MNO SVE", 2)));
+                new MultiLingualContent(serbianTag, "MNO SVE", 2),
+                new MultiLingualContent(serbianCyrillicTag, "МНО СВЕ", 3)));
         commission5.setFormalDescriptionOfRule("load-mno");
         commission5.setRecognisedResearchAreas(
             Set.of("NATURAL", "SOCIAL", "TECHNICAL", "HUMANITIES"));
@@ -1166,67 +1371,78 @@ public class AssessmentDataInitializer {
         var commission6 = new Commission();
         commission6.setDescription(
             Set.of(new MultiLingualContent(englishTag, "MNO Physics & Chemistry", 1),
-                new MultiLingualContent(serbianTag, "MNO Fizika i Hemija", 2)));
+                new MultiLingualContent(serbianTag, "MNO Fizika i Hemija", 2),
+                new MultiLingualContent(serbianCyrillicTag, "МНО Физика и Хемија", 3)));
         commission6.setFormalDescriptionOfRule("load-mnoPhysChem");
 
         var commission7 = new Commission();
         commission7.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DMI-PMF", 1),
-                new MultiLingualContent(serbianTag, "DMI-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DMI-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДМИ-ПМФ", 3)));
         commission7.setFormalDescriptionOfRule("load-mno");
 
         var commission8 = new Commission();
         commission8.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DH-PMF", 1),
-                new MultiLingualContent(serbianTag, "DH-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DH-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДХ-ПМФ", 3)));
         commission8.setFormalDescriptionOfRule("load-mno");
 
         var commission9 = new Commission();
         commission9.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DGTH-NAT-PMF", 1),
-                new MultiLingualContent(serbianTag, "DGTH-NAT-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DGTH-NAT-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДГТХ-НАТ-ПМФ", 3)));
         commission9.setFormalDescriptionOfRule("load-mno");
 
         var commission10 = new Commission();
         commission10.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DF-PMF", 1),
-                new MultiLingualContent(serbianTag, "DF-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DF-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДФ-ПМФ", 3)));
         commission10.setFormalDescriptionOfRule("load-mno");
 
         var commission11 = new Commission();
         commission11.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DBE-PMF", 1),
-                new MultiLingualContent(serbianTag, "DBE-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DBE-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДБЕ-ПМФ", 3)));
         commission11.setFormalDescriptionOfRule("load-mno");
 
         var commission12 = new Commission();
         commission12.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DMI-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DMI-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DMI-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДМИ-СОЦ-ПМФ", 3)));
         commission12.setFormalDescriptionOfRule("load-mno");
 
         var commission13 = new Commission();
         commission13.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DH-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DH-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DH-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДХ-СОЦ-ПМФ", 3)));
         commission13.setFormalDescriptionOfRule("load-mno");
 
         var commission14 = new Commission();
         commission14.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DGTH-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DGTH-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DGTH-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДГТХ-СОЦ-ПМФ", 3)));
         commission14.setFormalDescriptionOfRule("load-mno");
 
         var commission15 = new Commission();
         commission15.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DF-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DF-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DF-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДФ-СОЦ-ПМФ", 3)));
         commission15.setFormalDescriptionOfRule("load-mno");
 
         var commission16 = new Commission();
         commission16.setDescription(
             Set.of(new MultiLingualContent(englishTag, "DBE-SOC-PMF", 1),
-                new MultiLingualContent(serbianTag, "DBE-SOC-PMF", 2)));
+                new MultiLingualContent(serbianTag, "DBE-SOC-PMF", 2),
+                new MultiLingualContent(serbianCyrillicTag, "ДБЕ-СОЦ-ПМФ", 3)));
         commission16.setFormalDescriptionOfRule("load-mno");
 
         commissionRepository.saveAll(

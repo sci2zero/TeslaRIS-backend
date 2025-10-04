@@ -2,6 +2,8 @@ package rs.teslaris.importer.model.converter.load.publication;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,8 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
 
     private final PersonContributionConverter personContributionConverter;
 
+    private final PublisherConverter publisherConverter;
+
 
     @Override
     public SoftwareDTO toDTO(Product record) {
@@ -31,8 +35,18 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
         DocumentConverter.addUrlsWithoutCRISUNSLandingPages(record.getUrl(), dto);
 
         dto.setSubTitle(new ArrayList<>());
-        dto.setDescription(new ArrayList<>());
-        dto.setKeywords(new ArrayList<>());
+
+        if (Objects.nonNull(record.getKeywords()) && !record.getKeywords().isEmpty()) {
+            dto.setKeywords(multilingualContentConverter.toDTO(record.getKeywords()));
+        } else {
+            dto.setKeywords(new ArrayList<>());
+        }
+
+        if (Objects.nonNull(record.getDescription()) && !record.getDescription().isEmpty()) {
+            dto.setDescription(multilingualContentConverter.toDTO(record.getDescription()));
+        } else {
+            dto.setDescription(new ArrayList<>());
+        }
 
         dto.setDocumentDate(String.valueOf(
             record.getPublicationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
@@ -41,6 +55,25 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
         dto.setContributions(new ArrayList<>());
         personContributionConverter.addContributors(record.getCreators(),
             DocumentContributionType.AUTHOR, dto.getContributions());
+
+        dto.setDoi(record.getDoi());
+        dto.setInternalNumber(record.getInternalNumber());
+
+        if (Objects.nonNull(record.getUrl())) {
+            dto.setUris(new HashSet<>());
+            record.getUrl().forEach(url -> {
+                if (url.startsWith("https://www.cris.uns.ac.rs/record.jsf?recordId") ||
+                    url.startsWith("https://www.cris.uns.ac.rs/DownloadFileServlet")) {
+                    return;
+                }
+
+                dto.getUris().add(url);
+            });
+        }
+
+        if (Objects.nonNull(record.getPublisher())) {
+            publisherConverter.setPublisherInformation(record.getPublisher(), dto);
+        }
 
         return dto;
     }

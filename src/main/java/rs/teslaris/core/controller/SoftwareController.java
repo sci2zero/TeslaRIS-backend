@@ -3,6 +3,7 @@ package rs.teslaris.core.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("api/software")
@@ -27,9 +29,13 @@ public class SoftwareController {
     private final SoftwareService softwareService;
 
     @GetMapping("/{documentId}")
-    public SoftwareDTO readSoftware(
+    public ResponseEntity<SoftwareDTO> readSoftware(
         @PathVariable Integer documentId) {
-        return softwareService.readSoftwareById(documentId);
+        var dto = softwareService.readSoftwareById(documentId);
+
+        return ResponseEntity.ok()
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/software"))
+            .body(dto);
     }
 
     @PostMapping

@@ -6,7 +6,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +35,9 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/journal")
@@ -96,8 +101,27 @@ public class JournalController {
     }
 
     @GetMapping("/{journalId}")
-    public JournalResponseDTO readJournal(@PathVariable Integer journalId) {
-        return journalService.readJournal(journalId);
+    public ResponseEntity<JournalResponseDTO> readJournal(@PathVariable Integer journalId) {
+        var dto = journalService.readJournal(journalId);
+
+        var headers = new HttpHeaders();
+        FairSignpostingL1Utility.addHeadersForPublicationSeries(headers, dto, "/api/journal");
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(dto);
+    }
+
+    @GetMapping("/linkset/{journalId}/{linksetFormat}")
+    public ResponseEntity<String> getJournalLinkset(@PathVariable Integer journalId,
+                                                    @PathVariable LinksetFormat linksetFormat) {
+        var dto = journalService.readJournal(journalId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksForPublicationSeries(dto, linksetFormat));
     }
 
     @GetMapping("/identifier")

@@ -6,7 +6,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +30,9 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/book-series")
@@ -61,13 +66,33 @@ public class BookSeriesController {
     }
 
     @GetMapping("/{bookSeriesId}")
-    public BookSeriesResponseDTO readBookSeries(@PathVariable Integer bookSeriesId) {
-        return bookSeriesService.readBookSeries(bookSeriesId);
+    public ResponseEntity<BookSeriesResponseDTO> readBookSeries(
+        @PathVariable Integer bookSeriesId) {
+        var dto = bookSeriesService.readBookSeries(bookSeriesId);
+
+        var headers = new HttpHeaders();
+        FairSignpostingL1Utility.addHeadersForPublicationSeries(headers, dto, "/api/book-series");
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(dto);
+    }
+
+    @GetMapping("/linkset/{bookSeriesId}/{linksetFormat}")
+    public ResponseEntity<String> getBookSeriesLinkset(@PathVariable Integer bookSeriesId,
+                                                       @PathVariable LinksetFormat linksetFormat) {
+        var dto = bookSeriesService.readBookSeries(bookSeriesId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksForPublicationSeries(dto, linksetFormat));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES')")
+    @PreAuthorize("hasAuthority('CREATE_BOOK_SERIES')")
     @Idempotent
     public BookSeriesDTO createBookSeries(@RequestBody @Valid BookSeriesDTO bookSeriesDTO) {
         var createdBookSeries = bookSeriesService.createBookSeries(bookSeriesDTO, true);

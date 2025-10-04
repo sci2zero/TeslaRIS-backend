@@ -16,10 +16,11 @@ import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.service.interfaces.JPAService;
-import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 
 @Service
@@ -46,7 +47,9 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                         Integer personId,
                                                         Integer topLevelInstitutionId,
                                                         Boolean onlyReturnOnesWhichCanHarvest,
-                                                        Boolean onlyIndependent);
+                                                        Boolean onlyIndependent,
+                                                        ThesisType allowedThesisType,
+                                                        Boolean onlyClientInstitutions);
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
@@ -81,6 +84,9 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     void deleteOrganisationUnitsRelation(Integer id);
 
+    void deleteOrganisationUnitsRelation(Integer sourceOrganisationUnitId,
+                                         Integer targetOrganisationUnitId);
+
     void approveRelation(Integer relationId, Boolean approve);
 
     void addRelationProofs(List<DocumentFileDTO> documentFiles, Integer relationId);
@@ -113,4 +119,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     void indexOrganisationUnit(OrganisationUnit organisationUnit);
 
     OrganisationUnit findRaw(Integer organisationUnitId);
+
+    OrganisationUnitsRelation getSuperOrganisationUnitRelation(Integer organisationUnitId);
 }

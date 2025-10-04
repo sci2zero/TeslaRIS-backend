@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.MethodOrderer;
@@ -201,5 +202,20 @@ public class ThesisControllerTest extends BaseTest {
                         11).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testSchedulePublicReviewEndCheck() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/thesis/schedule-public-review-end-check?types=PHD&types=PHD_ART_PROJECT&publicReviewLengthDays=20&timestamp=" +
+                            LocalDateTime.now().plusMinutes(1) + "&recurrence=DAILY")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_THESIS_SCHEDULE"))
+            .andExpect(status().isAccepted());
     }
 }

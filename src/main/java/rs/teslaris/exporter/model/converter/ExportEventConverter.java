@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
@@ -24,10 +25,15 @@ public class ExportEventConverter extends ExportConverterBase {
 
     private static EventRepository eventRepository;
 
+    private static EventIndexRepository eventIndexRepository;
+
+
     @Autowired
     public ExportEventConverter(
-        EventRepository eventRepository) {
+        EventRepository eventRepository,
+        EventIndexRepository eventIndexRepository) {
         ExportEventConverter.eventRepository = eventRepository;
+        ExportEventConverter.eventIndexRepository = eventIndexRepository;
     }
 
     public static ExportEvent toCommonExportModel(Conference event, boolean computeRelations) {
@@ -90,20 +96,24 @@ public class ExportEventConverter extends ExportConverterBase {
 
     private static Set<Integer> getRelatedInstitutions(Event event) {
         var relations = new HashSet<Integer>();
-        event.getContributions().forEach(contribution -> {
-            contribution.getInstitutions().forEach(institution -> {
-                relations.add(institution.getId());
-            });
-        });
-        relations.addAll(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
-            event.getId()));
+
+        eventIndexRepository.findByDatabaseId(event.getId())
+            .ifPresent(eventIndex -> relations.addAll(eventIndex.getRelatedInstitutionIds()));
+
         return relations;
     }
 
     public static rs.teslaris.core.model.oaipmh.event.Event toOpenaireModel(
         ExportEvent exportEvent) {
         var openaireEvent = new rs.teslaris.core.model.oaipmh.event.Event();
-        openaireEvent.setOldId("Events/(TESLARIS)" + exportEvent.getDatabaseId());
+
+        if (Objects.nonNull(exportEvent.getOldIds()) && !exportEvent.getOldIds().isEmpty()) {
+            openaireEvent.setOldId("Events/" + legacyIdentifierPrefix +
+                exportEvent.getOldIds().stream().findFirst().get());
+        } else {
+            openaireEvent.setOldId("Events/(TESLARIS)" + exportEvent.getDatabaseId());
+        }
+
         openaireEvent.setEventName(
             ExportMultilingualContentConverter.toOpenaireModel(exportEvent.getName()));
 

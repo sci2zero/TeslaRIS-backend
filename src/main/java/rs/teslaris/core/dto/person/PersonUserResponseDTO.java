@@ -15,6 +15,8 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 @AllArgsConstructor
 public class PersonUserResponseDTO {
 
+    Integer personId;
+
     PersonNameDTO personName;
 
     List<PersonNameDTO> personOtherNames;
@@ -28,4 +30,8 @@ public class PersonUserResponseDTO {
     ApproveStatus approveStatus;
 
     UserResponseDTO user;
+
+    List<MultilingualContentDTO> employmentInstitutionName;
+
+    Integer employmentInstitutionId;
 }

@@ -11,7 +11,7 @@ import rs.teslaris.core.model.document.Software;
 public interface SoftwareRepository extends JpaRepository<Software, Integer> {
 
     @Query(value = "SELECT * FROM software s WHERE " +
-        "s.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY' AND " +
-        "s.approveStatus = 1", nativeQuery = true)
-    Page<Software> findAllModifiedInLast24Hours(Pageable pageable);
+        "(:allTime = TRUE OR s.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
+        "s.approve_status = 1", nativeQuery = true)
+    Page<Software> findAllModified(Pageable pageable, boolean allTime);
 }

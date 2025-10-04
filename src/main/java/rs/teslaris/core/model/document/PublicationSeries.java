@@ -58,6 +58,9 @@ public abstract class PublicationSeries extends BaseEntity implements Mergeable 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> nameAbbreviation = new HashSet<>();
 
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> subtitle = new HashSet<>();
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")
     private Set<Integer> oldIds = new HashSet<>();

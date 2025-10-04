@@ -16,6 +16,7 @@ import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.document.PersonalTitle;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -61,8 +62,23 @@ public class PersonContributionConverter {
 
         var person = resolvePerson(contributor, contribution);
 
-        setInstitutionInfo(contributor, person, contribution);
+        setInstitutionInfo(contributor, contribution);
         setPersonNameIfPresent(contributor, contribution);
+
+        if (Objects.nonNull(contribution.getPersonName()) && Objects.nonNull(person) &&
+            !isNameEqual(contribution.getPersonName(), person.getName()) &&
+            person.getOtherNames().stream()
+                .noneMatch(name -> isNameEqual(contribution.getPersonName(), name))) {
+            try {
+                personService.addPersonOtherName(contribution.getPersonName(), person.getId());
+
+                log.info("Added new other name for Person {} -> {}", person.getId(),
+                    contribution.getPersonName().toString());
+            } catch (Exception e) {
+                log.error("Unable to add other name for Person {}. Reason: {}", person.getId(),
+                    e.getMessage());
+            }
+        }
 
         contribution.setOrderNumber(orderNumber + 1);
 
@@ -111,9 +127,8 @@ public class PersonContributionConverter {
         return person;
     }
 
-    private <T extends PersonAttributes> void setInstitutionInfo(
-        T contributor, Person person, PersonDocumentContributionDTO contribution) {
-
+    private <T extends PersonAttributes> void setInstitutionInfo(T contributor,
+                                                                 PersonDocumentContributionDTO contribution) {
         var affiliation = contributor.getAffiliation();
         if (Objects.nonNull(affiliation) && Objects.nonNull(affiliation.getOrgUnit())) {
             var oldId = affiliation.getOrgUnit().getOldId();
@@ -127,13 +142,13 @@ public class PersonContributionConverter {
                     contribution.setDisplayAffiliationStatement(
                         multilingualContentConverter.toDTO(affiliation.getDisplayName()));
                 }
-            } else {
+            } else if (Objects.nonNull(affiliation.getDisplayName())) {
                 contribution.setDisplayAffiliationStatement(
                     multilingualContentConverter.toDTO(affiliation.getDisplayName()));
             }
-        } else if (Objects.nonNull(person)) {
-            contribution.getInstitutionIds().addAll(
-                personService.findInstitutionIdsForPerson(person.getId()));
+        } else if (Objects.nonNull(affiliation) && Objects.nonNull(affiliation.getDisplayName())) {
+            contribution.setDisplayAffiliationStatement(
+                multilingualContentConverter.toDTO(affiliation.getDisplayName()));
         }
     }
 
@@ -141,6 +156,15 @@ public class PersonContributionConverter {
         T contributor, PersonDocumentContributionDTO contribution) {
 
         if (Objects.nonNull(contributor.getDisplayName())) {
+            if (contributor.getDisplayName().contains(", ")) {
+                var nameParts = contributor.getDisplayName().split(", ");
+                if (nameParts.length == 2) {
+                    contribution.setPersonName(
+                        new PersonNameDTO(null, nameParts[1], "", nameParts[0], null, null));
+                    return;
+                }
+            }
+
             contribution.setPersonName(
                 new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null));
         }
@@ -206,5 +230,20 @@ public class PersonContributionConverter {
 
         log.info("Unable to deduce employment title while performing migration: '{}'", name);
         return null; // should never happen
+    }
+
+    private boolean isNameEqual(PersonNameDTO nameDTO, PersonName name) {
+        return Objects.equals(
+            name.getFirstname() != null ? name.getFirstname() : "",
+            nameDTO.getFirstname() != null ? nameDTO.getFirstname() : ""
+        ) &&
+            Objects.equals(
+                name.getLastname() != null ? name.getLastname() : "",
+                nameDTO.getLastname() != null ? nameDTO.getLastname() : ""
+            ) &&
+            Objects.equals(
+                name.getOtherName() != null ? name.getOtherName() : "",
+                nameDTO.getOtherName() != null ? nameDTO.getOtherName() : ""
+            );
     }
 }

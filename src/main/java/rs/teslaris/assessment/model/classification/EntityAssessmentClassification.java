@@ -6,6 +6,7 @@ import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
@@ -28,7 +29,16 @@ import rs.teslaris.core.model.institution.Commission;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "entity_assessment_classifications")
+@Table(
+    name = "entity_assessment_classifications",
+    indexes = {
+        @Index(name = "idx_pub_series_comm_year", columnList = "publication_series_id, commission_id, classification_year"),
+        @Index(name = "idx_pub_series_category_year_comm", columnList = "publication_series_id, category_identifier, classification_year, commission_id"),
+        @Index(name = "idx_doc_comm", columnList = "document_id, commission_id"),
+        @Index(name = "idx_doc_comm_manual", columnList = "document_id, commission_id, manual"),
+        @Index(name = "idx_event_comm_year", columnList = "event_id, commission_id, classification_year")
+    }
+)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "entity_type", discriminatorType = DiscriminatorType.STRING)
 public class EntityAssessmentClassification extends BaseEntity {

@@ -14,9 +14,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.functional.Triple;
 
 @Component
 @RequiredArgsConstructor

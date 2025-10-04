@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -243,10 +244,10 @@ public class MergeServiceTest {
         var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
 
         when(documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(0, 10)))
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(0, 100)))
             .thenReturn(page1);
         when(documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(1, 10)))
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(1, 100)))
             .thenReturn(page2);
 
         var publication1 = new JournalPublication();
@@ -304,11 +305,11 @@ public class MergeServiceTest {
         when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
             List.of(DocumentPublicationType.MONOGRAPH.name(),
                 DocumentPublicationType.PROCEEDINGS.name()), sourceId,
-            PageRequest.of(0, 10))).thenReturn(page1);
+            PageRequest.of(0, 100))).thenReturn(page1);
         when(documentPublicationIndexRepository.findByTypeInAndPublicationSeriesId(
             List.of(DocumentPublicationType.MONOGRAPH.name(),
                 DocumentPublicationType.PROCEEDINGS.name()), sourceId,
-            PageRequest.of(1, 10))).thenReturn(page2);
+            PageRequest.of(1, 100))).thenReturn(page2);
 
         var publication1 = new Monograph();
         var publication2 = new Proceedings();
@@ -372,10 +373,16 @@ public class MergeServiceTest {
             List.of(publicationIndex1, publicationIndex2));
         var page2 = new PageImpl<DocumentPublicationIndex>(List.of());
 
-        when(documentPublicationService.findResearcherPublications(sourceId, List.of(),
-            PageRequest.of(0, 10))).thenReturn(page1);
-        when(documentPublicationService.findResearcherPublications(sourceId, List.of(),
-            PageRequest.of(1, 10))).thenReturn(page2);
+        when(
+            documentPublicationService.findResearcherPublications(sourceId, List.of(), List.of("*"),
+                Arrays.asList(DocumentPublicationType.values()),
+                PageRequest.of(0, 100))).thenReturn(
+            page1);
+        when(
+            documentPublicationService.findResearcherPublications(sourceId, List.of(), List.of("*"),
+                Arrays.asList(DocumentPublicationType.values()),
+                PageRequest.of(1, 100))).thenReturn(
+            page2);
 
         var contribution = new PersonDocumentContribution();
         var affiliationStatement = new AffiliationStatement();
@@ -439,7 +446,7 @@ public class MergeServiceTest {
         employment.setOrganisationUnit(organisationUnit);
         person.setInvolvements(Set.of(employment));
         var personIndex = new PersonIndex();
-        var pageRequest = PageRequest.of(0, 10);
+        var pageRequest = PageRequest.of(0, 100);
         var page = new PageImpl<>(List.of(personIndex));
         when(
             personService.findPeopleForOrganisationUnit(sourceOUId, searchTokens, pageRequest,
@@ -539,10 +546,10 @@ public class MergeServiceTest {
 
         when(documentPublicationIndexRepository.findByTypeAndProceedingsId(
             DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), sourceId,
-            PageRequest.of(0, 10)))
+            PageRequest.of(0, 100)))
             .thenReturn(page1);
         when(documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(1, 10)))
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(1, 100)))
             .thenReturn(page2);
 
         var publication1 = new ProceedingsPublication();
@@ -1155,10 +1162,10 @@ public class MergeServiceTest {
 
         when(documentPublicationIndexRepository.findByTypeAndMonographId(
             DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), sourceId,
-            PageRequest.of(0, 10)))
+            PageRequest.of(0, 100)))
             .thenReturn(page1);
         when(documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(1, 10)))
+            DocumentPublicationType.JOURNAL_PUBLICATION.name(), sourceId, PageRequest.of(1, 100)))
             .thenReturn(page2);
 
         var publication1 = new MonographPublication();

@@ -22,26 +22,31 @@ import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.document.PublisherService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.IdentifierUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
@@ -60,7 +65,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private final MonographRepository monographRepository;
 
-    private final Pattern doiPattern =
+    private final PublisherService publisherService;
+
+    private final Pattern issnPattern =
         Pattern.compile("^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
 
@@ -71,29 +78,34 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 OrganisationUnitService organisationUnitService,
                                 DocumentRepository documentRepository,
                                 DocumentFileService documentFileService,
+                                CitationService citationService,
                                 PersonContributionService personContributionService,
                                 ExpressionTransformer expressionTransformer,
                                 EventService eventService,
                                 CommissionRepository commissionRepository,
                                 SearchFieldsLoader searchFieldsLoader,
                                 OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                                InvolvementRepository involvementRepository,
+                                OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                 MonographJPAServiceImpl monographJPAService,
                                 LanguageTagService languageTagService,
                                 JournalService journalService,
                                 BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
-                                MonographRepository monographRepository) {
+                                MonographRepository monographRepository,
+                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService);
+            organisationUnitService, documentRepository, documentFileService, citationService,
+            personContributionService, expressionTransformer, eventService, commissionRepository,
+            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
         this.journalService = journalService;
         this.bookSeriesService = bookSeriesService;
         this.researchAreaService = researchAreaService;
         this.monographRepository = monographRepository;
+        this.publisherService = publisherService;
     }
 
     @Override
@@ -120,16 +132,39 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         try {
             monograph = monographJPAService.findOne(monographId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(monographId);
+            this.clearIndexWhenFailedRead(monographId, DocumentPublicationType.MONOGRAPH);
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !monograph.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Monograph with ID " + monographId + " does not exist.");
         }
 
         return MonographConverter.toDTO(monograph);
+    }
+
+    @Override
+    public Monograph findMonographByIsbn(String eIsbn, String printIsbn) {
+        boolean isEisbnBlank = (Objects.isNull(eIsbn) || eIsbn.isBlank());
+        boolean isPrintIsbnBlank = (Objects.isNull(printIsbn) || printIsbn.isBlank());
+
+        if (isEisbnBlank && isPrintIsbnBlank) {
+            return null;
+        }
+
+        if (isEisbnBlank) {
+            eIsbn = printIsbn;
+        } else if (isPrintIsbnBlank) {
+            printIsbn = eIsbn;
+        }
+
+        var results = monographRepository.findByISBN(eIsbn, printIsbn);
+        if (results.isEmpty()) {
+            return null;
+        }
+
+        return results.getFirst();
     }
 
     @Override
@@ -201,7 +236,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         // Super service does the initial deletion
 
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -248,6 +283,15 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             monograph.setResearchArea(
                 researchAreaService.findOne(monographDTO.getResearchAreaId()));
         }
+
+        monograph.setAuthorReprint(false);
+        monograph.setPublisher(null);
+
+        if (Objects.nonNull(monographDTO.getAuthorReprint()) && monographDTO.getAuthorReprint()) {
+            monograph.setAuthorReprint(true);
+        } else if (Objects.nonNull(monographDTO.getPublisherId())) {
+            monograph.setPublisher(publisherService.findOne(monographDTO.getPublisherId()));
+        }
     }
 
     @Override
@@ -258,8 +302,20 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             index.setPublicationSeriesId(monograph.getPublicationSeries().getId());
             if (monograph.getPublicationSeries() instanceof Journal journal) {
                 index.setJournalId(journal.getId());
+            } else {
+                index.setJournalId(null);
             }
+        } else {
+            index.setPublicationSeriesId(null);
+            index.setJournalId(null);
         }
+
+        if (Objects.nonNull(monograph.getPublisher())) {
+            index.setPublisherId(monograph.getPublisher().getId());
+        } else {
+            index.setPublisherId(null);
+        }
+        index.setAuthorReprint(monograph.getAuthorReprint());
 
         index.setType(DocumentPublicationType.MONOGRAPH.name());
 
@@ -267,6 +323,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             index.setPublicationType(monograph.getMonographType().name());
         }
 
+        index.setApa(
+            citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
     }
 
@@ -306,8 +364,15 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             super.isIdentifierInUse(identifier, monographId);
     }
 
+    @Override
+    public void addOldId(Integer id, Integer oldId) {
+        var monograph = findOne(id);
+        monograph.getOldIds().add(oldId);
+        save(monograph);
+    }
+
     private Query buildSimpleSearchQuery(List<String> tokens, boolean onlyBooks) {
-        var minShouldMatch = (int) Math.ceil(tokens.size() * 0.8);
+        var minShouldMatch = String.valueOf(Math.ceil(0.8 * tokens.size()));
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(bq -> {
@@ -327,7 +392,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                     return m;
                                 }));
                         } else if (token.contains("\\-") &&
-                            doiPattern.matcher(token.replace("\\-", "-")).matches()) {
+                            issnPattern.matcher(token.replace("\\-", "-")).matches()) {
                             String normalizedToken = token.replace("\\-", "-");
 
                             b.should(mp -> mp.bool(m -> m
@@ -407,7 +472,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                             ));
                         }
                     });
-                    return eq.minimumShouldMatch(Integer.toString(minShouldMatch));
+                    return eq.minimumShouldMatch(minShouldMatch);
                 });
                 return bq;
             });

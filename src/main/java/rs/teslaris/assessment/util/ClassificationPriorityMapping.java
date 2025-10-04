@@ -24,9 +24,9 @@ import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
-import rs.teslaris.core.util.ConfigurationLoaderUtil;
-import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.files.ConfigurationLoaderUtil;
+import rs.teslaris.core.util.functional.Pair;
 
 @Component
 public class ClassificationPriorityMapping {

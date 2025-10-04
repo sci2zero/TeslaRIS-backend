@@ -14,8 +14,10 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
-import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -25,6 +27,7 @@ import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
 import rs.teslaris.importer.model.converter.harvest.BibTexConverter;
 import rs.teslaris.importer.utility.CommonImportUtility;
+import rs.teslaris.importer.utility.DeepObjectMerger;
 
 @Component
 @Slf4j
@@ -99,13 +102,21 @@ public class TaggedBibliographicFormatUtility {
                     doc.getDocumentDate(), StandardCharsets.UTF_8)
             .toString());
         var existingImport = CommonImportUtility.findExistingImport(doc.getIdentifier());
+
+        existingImport = CommonImportUtility.findImportByDOIOrMetadata(doc);
+        if (Objects.nonNull(existingImport)) {
+            DeepObjectMerger.deepMerge(existingImport, doc);
+            mongoTemplate.save(existingImport, "documentImports");
+            return;
+        }
+
         var embedding = CommonImportUtility.generateEmbedding(doc);
         if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
             return;
         }
 
         if (Objects.nonNull(embedding)) {
-            doc.setEmbedding(embedding.toFloatVector());
+            doc.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
         }
 
         count.merge(userId, 1, Integer::sum);
@@ -151,8 +162,10 @@ public class TaggedBibliographicFormatUtility {
         doc.setEndPage("");
         if ("JOUR".equalsIgnoreCase(content) || "Journal Article".equalsIgnoreCase(content)) {
             doc.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+            doc.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
         } else if ("CONF".equalsIgnoreCase(content) || "COnference Proceedings".equals(content)) {
             doc.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+            doc.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
         } else {
             return null;
         }

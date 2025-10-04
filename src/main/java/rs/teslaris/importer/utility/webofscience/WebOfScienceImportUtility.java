@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import rs.teslaris.core.util.RestTemplateProvider;
+import rs.teslaris.core.util.session.RestTemplateProvider;
 
 @Component
 @RequiredArgsConstructor

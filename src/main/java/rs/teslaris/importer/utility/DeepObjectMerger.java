@@ -7,8 +7,16 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class DeepObjectMerger {
+
+    private static final Set<Class<?>> IMMUTABLE_TYPES = Set.of(
+        String.class, Integer.class, Long.class, Double.class, Float.class,
+        Boolean.class, Character.class, Byte.class, Short.class,
+        java.math.BigDecimal.class, java.math.BigInteger.class
+    );
+
 
     public static <T> T deepMerge(T primary, T secondary) {
         if (Objects.isNull(primary) || Objects.isNull(secondary)) {
@@ -18,7 +26,14 @@ public class DeepObjectMerger {
         Class<?> clazz = primary.getClass();
         while (Objects.nonNull(clazz)) {
             for (Field field : clazz.getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers())) {
+                if (IMMUTABLE_TYPES.contains(field.getType()) ||
+                    field.getType().toString().equals("int") ||
+                    field.getType().toString().equals("boolean")) {
+                    continue; // don't reflect into immutable types
+                }
+
+                if (Modifier.isStatic(field.getModifiers()) ||
+                    Modifier.isFinal(field.getModifiers())) {
                     continue;
                 }
 

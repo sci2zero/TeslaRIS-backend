@@ -7,7 +7,9 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.importer.dto.ProceedingsPublicationLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -27,9 +29,13 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
     @Autowired
     public ProceedingsPublicationConverter(
         MultilingualContentConverter multilingualContentConverter,
+        PublisherConverter publisherConverter,
+        BookSeriesService bookSeriesService,
+        JournalService journalService,
         PersonContributionConverter personContributionConverter,
         DocumentPublicationService documentPublicationService) {
-        super(multilingualContentConverter, personContributionConverter);
+        super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
+            personContributionConverter);
         this.documentPublicationService = documentPublicationService;
     }
 
@@ -38,16 +44,23 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         var dto = new ProceedingsPublicationDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
+        var isInvited =
+            Objects.nonNull(record.getInvited()) && record.getInvited().equals(Boolean.TRUE);
         if (record.getType().endsWith("c_5794")) {
-            dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+            dto.setProceedingsPublicationType(
+                isInvited ? ProceedingsPublicationType.INVITED_FULL_ARTICLE :
+                    ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
         } else {
-            dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_ABSTRACT_ARTICLE);
+            dto.setProceedingsPublicationType(
+                isInvited ? ProceedingsPublicationType.INVITED_ABSTRACT_ARTICLE :
+                    ProceedingsPublicationType.REGULAR_ABSTRACT_ARTICLE);
         }
 
         setCommonFields(record, dto);
 
         dto.setArticleNumber(record.getNumber());
         dto.setStartPage(record.getStartPage());
+        dto.setNumberOfPages(record.getNumberOfPages());
 
         if (Objects.nonNull(dto.getStartPage()) && dto.getStartPage().contains("\\")) {
             dto.setStartPage(dto.getStartPage().replace("\\", ""));
@@ -58,10 +71,16 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         var proceedings = documentPublicationService.findDocumentByOldId(
             OAIPMHParseUtility.parseBISISID(record.getPartOf().getPublication().getOldId()));
         if (Objects.isNull(proceedings)) {
+            log.warn("No saved proceedings with id: {}",
+                record.getPartOf().getPublication().getOldId());
+            return null;
+        } else if (Objects.isNull(proceedings.getEvent())) {
             log.warn(
-                "No saved proceedings with id: " + record.getPartOf().getPublication().getOldId());
+                "The following proceedings is not associated with an event: {}. Skipping loading publication...",
+                record.getPartOf().getPublication().getOldId());
             return null;
         }
+
         dto.setProceedingsId(proceedings.getId());
         dto.setEventId(proceedings.getEvent().getId());
 
@@ -77,7 +96,7 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         dto.setProceedingsName(multilingualContentConverter.toLoaderDTO(document.getPublishedIn()));
         dto.setConferenceName(
             multilingualContentConverter.toLoaderDTO(document.getEvent().getName()));
-        dto.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+        dto.setProceedingsPublicationType(document.getProceedingsPublicationType());
         dto.setArticleNumber(document.getArticleNumber());
         dto.setNumberOfPages(document.getNumberOfPages());
         dto.setStartPage(document.getStartPage());

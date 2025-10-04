@@ -5,12 +5,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @SpringBootTest
 public class OrganisationUnitControllerTest extends BaseTest {
@@ -105,5 +107,16 @@ public class OrganisationUnitControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_OU_SUB_RELATION"))
             .andExpect(status().isCreated());
+    }
+
+    @ParameterizedTest
+    @EnumSource(LinksetFormat.class)
+    public void testGetLinkset(LinksetFormat format) throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/organisation-unit/linkset/{organisationUnitId}/{format}",
+                        1, format)
+                    .contentType(format.getValue()))
+            .andExpect(status().isOk());
     }
 }

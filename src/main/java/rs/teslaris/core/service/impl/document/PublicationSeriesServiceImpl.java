@@ -20,7 +20,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.IdentifierUtil;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 @Service
 @Primary
@@ -42,6 +42,9 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
 
     protected final Pattern issnPattern =
         Pattern.compile("^(\\d{4}-\\d{4}|\\d{4}-\\d{3}[\\dX]?)$", Pattern.CASE_INSENSITIVE);
+
+    protected final Pattern partialIssnPattern =
+        Pattern.compile("^\\d{4}-\\d{0,2}$", Pattern.CASE_INSENSITIVE);
 
 
     @Override
@@ -71,6 +74,8 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         publicationSeries.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(
                 publicationSeriesDTO.getNameAbbreviation()));
+        publicationSeries.setSubtitle(
+            multilingualContentService.getMultilingualContent(publicationSeriesDTO.getSubtitle()));
 
         if (Objects.nonNull(publicationSeriesDTO.getOldId())) {
             publicationSeries.getOldIds().add(publicationSeriesDTO.getOldId());

@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
-import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
+import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.importer.dto.JournalPublicationLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
@@ -26,10 +26,14 @@ public class JournalPublicationConverter extends DocumentConverter
 
     @Autowired
     public JournalPublicationConverter(MultilingualContentConverter multilingualContentConverter,
+                                       PublisherConverter publisherConverter,
+                                       BookSeriesService bookSeriesService,
+                                       JournalService journalService,
                                        PersonContributionConverter personContributionConverter,
-                                       JournalService journalService) {
-        super(multilingualContentConverter, personContributionConverter);
-        this.journalService = journalService;
+                                       JournalService journalService1) {
+        super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
+            personContributionConverter);
+        this.journalService = journalService1;
     }
 
     @Override
@@ -64,7 +68,7 @@ public class JournalPublicationConverter extends DocumentConverter
         setCommonFields(document, dto);
 
         dto.setJournalName(multilingualContentConverter.toLoaderDTO(document.getPublishedIn()));
-        dto.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
+        dto.setJournalPublicationType(document.getJournalPublicationType());
         dto.setArticleNumber(document.getArticleNumber());
         dto.setVolume(document.getVolume());
         dto.setIssue(document.getIssue());

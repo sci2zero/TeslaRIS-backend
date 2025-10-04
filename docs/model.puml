@@ -468,6 +468,7 @@ package document {
       -String webOfScienceId
       -Set<Integer> oldIds
       -Set<Integer> mergedIds
+      -Set<String> internalIdentifiers
     }
   !endsub
 

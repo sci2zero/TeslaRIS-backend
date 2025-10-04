@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,9 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     private final DocumentPublicationService documentPublicationService;
 
     private final DeclinedDocumentClaimRepository declinedDocumentClaimRepository;
+
+    @Value("${refresh-potential-claims.allowed}")
+    private Boolean refreshClaimsAllowed;
 
 
     private static int getIndexOfNthUnmanagedAuthor(List<Integer> array, int nth) {
@@ -129,6 +133,10 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
 
     @Scheduled(cron = "${refresh-potential-claims.schedule}")
     protected void updateClaimerInformation() {
+        if (!refreshClaimsAllowed) {
+            return;
+        }
+
         int pageNumber = 0;
         int chunkSize = 50;
         boolean hasNextPage = true;

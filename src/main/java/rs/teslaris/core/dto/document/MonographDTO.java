@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.document;
 
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import rs.teslaris.core.model.document.MonographType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MonographDTO extends DocumentDTO {
+public class MonographDTO extends DocumentDTO implements PublishableDTO, InSeriesDTO {
 
     private Integer id;
 
@@ -32,4 +33,9 @@ public class MonographDTO extends DocumentDTO {
     private List<Integer> languageTagIds;
 
     private Integer researchAreaId;
+
+    @Positive(message = "Publisher ID cannot be negative or zero.")
+    private Integer publisherId;
+
+    private Boolean authorReprint;
 }

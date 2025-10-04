@@ -7,7 +7,9 @@ import java.util.Optional;
 import org.apache.logging.log4j.util.Strings;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
-import rs.teslaris.core.util.FunctionalUtil;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -24,58 +26,101 @@ public class WebOfScienceConverter {
         document.setIdentifier(record.uid().replace("WOS:", ""));
         document.setWebOfScienceId(document.getIdentifier());
 
-        document.getTitle().add(new MultilingualContent("EN", record.title(), 1));
+        addTitle(document, record);
+        addDoiIfPresent(document, record);
+        if (!setPublicationMetadata(document, record)) {
+            return Optional.empty();
+        }
+        document.setDocumentDate(String.valueOf(record.source().publishYear()));
+        setPageInfo(document, record);
+        addContributions(document, record);
+        addKeywords(document, record);
+        addUris(document, record);
 
+        return Optional.of(document);
+    }
+
+    private static void addTitle(DocumentImport document,
+                                 WebOfScienceImportUtility.WosPublication record) {
+        document.getTitle().add(new MultilingualContent("EN", record.title(), 1));
+    }
+
+    private static void addDoiIfPresent(DocumentImport document,
+                                        WebOfScienceImportUtility.WosPublication record) {
         if (Objects.nonNull(record.identifiers()) && Objects.nonNull(record.identifiers().doi()) &&
             !record.identifiers().doi().contains("***")) {
             document.setDoi(record.identifiers().doi());
         }
+    }
 
-        if (record.sourceTypes().contains("Article") || record.sourceTypes().contains("Meeting")) {
+    private static boolean setPublicationMetadata(DocumentImport document,
+                                                  WebOfScienceImportUtility.WosPublication record) {
+        var sourceTypes = record.sourceTypes();
+
+        if (sourceTypes.contains("Article") || sourceTypes.contains("Meeting")) {
             document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
+            document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
             document.getPublishedIn()
                 .add(new MultilingualContent("EN", record.source().sourceTitle(), 1));
-            if (Objects.nonNull(record.identifiers()) &&
-                Objects.nonNull(record.identifiers().issn()) &&
-                !record.identifiers().issn().contains("***")) {
-                document.setPrintIssn(record.identifiers().issn());
-            } else if (Objects.nonNull(record.identifiers()) &&
-                Objects.nonNull(record.identifiers().eissn()) &&
-                !record.identifiers().eissn().contains("***")) {
-                document.setEIssn(record.identifiers().eissn());
-            }
-        } else if (record.sourceTypes().contains("Proceedings Paper")) {
+            addIssn(document, record);
+        } else if (sourceTypes.contains("Proceedings Paper")) {
             document.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
-
-            var conferenceName = record.source().sourceTitle();
-            document.getPublishedIn()
-                .add(new MultilingualContent("EN", "Proceedings of " + conferenceName, 1));
-
-            var event = new Event();
-            event.getName().add(new MultilingualContent("EN", conferenceName, 1));
-            event.setDateFrom(LocalDate.of(record.source().publishYear(), 1, 1));
-            event.setDateTo(LocalDate.of(record.source().publishYear(), 12, 31));
-            document.setEvent(event);
-
-            if (Objects.nonNull(record.identifiers()) &&
-                Objects.nonNull(record.identifiers().isbn()) &&
-                !record.identifiers().isbn().contains("***")) {
-                document.setIsbn(record.identifiers().isbn());
-            } else if (Objects.nonNull(record.identifiers()) &&
-                Objects.nonNull(record.identifiers().eisbn()) &&
-                !record.identifiers().eisbn().contains("***")) {
-                document.setEisbn(record.identifiers().eisbn());
-            }
+            document.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+            addProceedingsMetadata(document, record);
         } else {
-            return Optional.empty();
+            return false;
         }
 
-        document.setDocumentDate(String.valueOf(record.source().publishYear()));
+        return true;
+    }
 
+    private static void addIssn(DocumentImport document,
+                                WebOfScienceImportUtility.WosPublication record) {
+        var identifiers = record.identifiers();
+        if (identifiers == null) {
+            return;
+        }
+
+        if (Objects.nonNull(identifiers.issn()) && !identifiers.issn().contains("***")) {
+            document.setPrintIssn(identifiers.issn());
+        } else if (Objects.nonNull(identifiers.eissn()) && !identifiers.eissn().contains("***")) {
+            document.setEIssn(identifiers.eissn());
+        }
+    }
+
+    private static void addProceedingsMetadata(DocumentImport document,
+                                               WebOfScienceImportUtility.WosPublication record) {
+        var conferenceName = record.source().sourceTitle();
+        document.getPublishedIn()
+            .add(new MultilingualContent("EN", "Proceedings of " + conferenceName, 1));
+
+        var event = new Event();
+        event.getName().add(new MultilingualContent("EN", conferenceName, 1));
+        event.setDateFrom(LocalDate.of(record.source().publishYear(), 1, 1));
+        event.setDateTo(LocalDate.of(record.source().publishYear(), 12, 31));
+        document.setEvent(event);
+
+        var identifiers = record.identifiers();
+        if (identifiers == null) {
+            return;
+        }
+
+        if (Objects.nonNull(identifiers.isbn()) && !identifiers.isbn().contains("***")) {
+            document.setIsbn(identifiers.isbn());
+        } else if (Objects.nonNull(identifiers.eisbn()) && !identifiers.eisbn().contains("***")) {
+            document.setEisbn(identifiers.eisbn());
+        }
+    }
+
+    private static void setPageInfo(DocumentImport document,
+                                    WebOfScienceImportUtility.WosPublication record) {
         document.setStartPage(record.source().pages().begin());
         document.setEndPage(record.source().pages().end());
         document.setNumberOfPages(record.source().pages().count());
+    }
 
+    private static void addContributions(DocumentImport document,
+                                         WebOfScienceImportUtility.WosPublication record) {
         FunctionalUtil.forEachWithCounter(record.names().authors(), (i, authorship) -> {
             var contribution = new PersonDocumentContribution();
             contribution.setOrderNumber(i + 1);
@@ -84,24 +129,24 @@ public class WebOfScienceConverter {
 
             var person = new Person();
             person.setImportId(authorship.researcherId());
-            person.setOpenAlexId(person.getImportId());
             person.setWebOfScienceResearcherId(person.getImportId());
 
             var nameParts = authorship.displayName().split(", ");
             person.setName(new PersonName(nameParts[1], "", nameParts[0]));
 
-            var personNameParts = authorship.displayName().split(", ");
-            person.setName(new PersonName(personNameParts[1], "", personNameParts[0]));
             contribution.setPerson(person);
-
             document.getContributions().add(contribution);
         });
+    }
 
+    private static void addKeywords(DocumentImport document,
+                                    WebOfScienceImportUtility.WosPublication record) {
         var keywords = new ArrayList<>(record.keywords().authorKeywords());
         document.getKeywords().add(new MultilingualContent("EN", Strings.join(keywords, '\n'), 1));
+    }
 
+    private static void addUris(DocumentImport document,
+                                WebOfScienceImportUtility.WosPublication record) {
         document.getUris().add(record.links().record());
-
-        return Optional.of(document);
     }
 }

@@ -43,7 +43,8 @@ import rs.teslaris.core.util.deduplication.Mergeable;
     @Index(name = "idx_person_scopus_author_id", columnList = "scopus_author_id"),
     @Index(name = "idx_wos_researcher_id", columnList = "web_of_science_researcher_id"),
     @Index(name = "idx_open_alex_id", columnList = "open_alex_id"),
-    @Index(name = "idx_person_approve_status", columnList = "approve_status")
+    @Index(name = "idx_person_approve_status", columnList = "approve_status"),
+    @Index(name = "idx_person_name_id", columnList = "name_id")
 })
 @SQLRestriction("deleted=false")
 public class Person extends BaseEntity implements Mergeable {
@@ -51,7 +52,7 @@ public class Person extends BaseEntity implements Mergeable {
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private PersonName name;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<PersonName> otherNames = new HashSet<>();
 
     @Embedded
@@ -124,7 +125,6 @@ public class Person extends BaseEntity implements Mergeable {
 
     @Column(name = "date_of_last_indicator_harvest")
     private LocalDate dateOfLastIndicatorHarvest;
-
 
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {

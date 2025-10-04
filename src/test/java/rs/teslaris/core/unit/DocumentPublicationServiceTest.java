@@ -3,71 +3,93 @@ package rs.teslaris.core.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
+import org.jbibtex.BibTeXEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.converter.document.DocumentPublicationConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AffiliationStatement;
+import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
-import rs.teslaris.core.util.Triple;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.core.util.search.StringUtil;
 
 @SpringBootTest
 public class DocumentPublicationServiceTest {
@@ -101,6 +123,12 @@ public class DocumentPublicationServiceTest {
 
     @Mock
     private SearchFieldsLoader searchFieldsLoader;
+
+    @Mock
+    private OrganisationUnitService organisationUnitService;
+
+    @Mock
+    private InvolvementRepository involvementRepository;
 
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;
@@ -303,7 +331,8 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.SIMPLE, institutionId, commissionId, null);
+                pageable, SearchRequestType.SIMPLE, institutionId, commissionId, false, false,
+                null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -322,7 +351,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
-                pageable, SearchRequestType.ADVANCED, null, null, new ArrayList<>());
+                pageable, SearchRequestType.ADVANCED, null, null, null, null, new ArrayList<>());
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -397,17 +426,16 @@ public class DocumentPublicationServiceTest {
         var authorId = 123;
         var pageable = PageRequest.of(0, 10);
         var expectedPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
-        when(documentPublicationIndexRepository.findByAuthorIdsAndDatabaseIdNotIn(anyInt(), any(),
-            any(Pageable.class))).thenReturn(expectedPage);
+        when(searchService.runQuery(any(), any(), any(), any())).thenReturn(expectedPage);
 
         // when
         var resultPage =
-            documentPublicationService.findResearcherPublications(authorId, List.of(), pageable);
+            documentPublicationService.findResearcherPublications(authorId, Collections.emptyList(),
+                Collections.emptyList(), Collections.emptyList(), pageable);
 
         // then
         assertEquals(expectedPage, resultPage);
-        verify(documentPublicationIndexRepository).findByAuthorIdsAndDatabaseIdNotIn(authorId,
-            List.of(), pageable);
+        verify(searchService).runQuery(any(), any(), any(), any());
     }
 
     @Test
@@ -437,7 +465,7 @@ public class DocumentPublicationServiceTest {
         // when
         var result =
             documentPublicationService.findDocumentDuplicates(titles, "DOI", "scopusId",
-                "openAlexId", "webOfScienceId");
+                "openAlexId", "webOfScienceId", List.of("internalId"));
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -469,6 +497,10 @@ public class DocumentPublicationServiceTest {
         var documentId = 1;
 
         var contribution = new PersonDocumentContribution();
+        contribution.setPerson(new Person() {{
+            setId(1);
+        }});
+
         var document = new Software();
         var index = new DocumentPublicationIndex();
 
@@ -496,6 +528,9 @@ public class DocumentPublicationServiceTest {
         var documentId = 1;
 
         var contribution = new PersonDocumentContribution();
+        contribution.setPerson(new Person() {{
+            setId(1);
+        }});
 
         when(personContributionService.findContributionForResearcherAndDocument(personId,
             documentId))
@@ -516,6 +551,9 @@ public class DocumentPublicationServiceTest {
         var documentId = 1;
 
         var contribution = new PersonDocumentContribution();
+        contribution.setPerson(new Person() {{
+            setId(1);
+        }});
         var document = new Software();
 
         when(personContributionService.findContributionForResearcherAndDocument(personId,
@@ -796,7 +834,8 @@ public class DocumentPublicationServiceTest {
         when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
 
         // when
-        var result = documentPublicationService.getWordCloudForSingleDocument(documentId, false);
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            LanguageAbbreviations.SERBIAN);
 
         // then
         assertEquals(3, result.size());
@@ -805,6 +844,32 @@ public class DocumentPublicationServiceTest {
         assertEquals("abc", result.get(1).a);
         assertEquals(2L, result.get(1).b);
         assertEquals("def", result.get(2).a);
+        assertEquals(1L, result.get(2).b);
+    }
+
+    @Test
+    public void shouldReturnSortedWordFrequenciesForDocumentInSerbianCyrillic() {
+        // given
+        Integer documentId = 123;
+        DocumentPublicationIndex mockDoc = mock(DocumentPublicationIndex.class);
+        List<String> terms = List.of("abc", "def", "abc", "xyz", "xyz", "xyz");
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(mockDoc));
+        when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
+
+        // when
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            LanguageAbbreviations.SERBIAN_CYRILLIC);
+
+        // then
+        assertEquals(3, result.size());
+        assertEquals("xyз", result.get(0).a);
+        assertEquals(3L, result.get(0).b);
+        assertEquals("абц", result.get(1).a);
+        assertEquals(2L, result.get(1).b);
+        assertEquals("деф", result.get(2).a);
         assertEquals(1L, result.get(2).b);
     }
 
@@ -818,7 +883,8 @@ public class DocumentPublicationServiceTest {
 
         // when & then
         assertThrows(NotFoundException.class, () -> {
-            documentPublicationService.getWordCloudForSingleDocument(documentId, false);
+            documentPublicationService.getWordCloudForSingleDocument(documentId,
+                LanguageAbbreviations.SERBIAN);
         });
     }
 
@@ -835,7 +901,8 @@ public class DocumentPublicationServiceTest {
         when(mockDoc.getWordcloudTokensOther()).thenReturn(foreignTerms);
 
         // when
-        var result = documentPublicationService.getWordCloudForSingleDocument(documentId, true);
+        var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            LanguageAbbreviations.ENGLISH);
 
         // then
         assertEquals(3, result.size());
@@ -998,5 +1065,338 @@ public class DocumentPublicationServiceTest {
         // Then
         assertFalse(document.getIsArchived());
         verify(documentRepository).save(document);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = BibliographicFormat.class, names = {"BIBTEX"})
+    void shouldReadBibTeXMetadata(BibliographicFormat format) {
+        // Given
+        var documentId = 1;
+        var documentPublication = mock(Document.class);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+
+        try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
+            DocumentPublicationConverter.class);
+             MockedStatic<StringUtil> mockedStringUtil = mockStatic(StringUtil.class)) {
+
+            var fakeEntry = mock(BibTeXEntry.class);
+            mockedConverter.when(
+                    () -> DocumentPublicationConverter.toBibTeXEntry(documentPublication,
+                        LanguageAbbreviations.ENGLISH))
+                .thenReturn(fakeEntry);
+            mockedStringUtil.when(() -> StringUtil.bibTexEntryToString(fakeEntry))
+                .thenReturn("bibtex-string");
+
+            // When
+            var result =
+                documentPublicationService.readBibliographicMetadataById(documentId, format);
+
+            // Then
+            assertEquals("bibtex-string", result);
+            verify(documentRepository).findById(documentId);
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = BibliographicFormat.class, names = {"REFMAN"})
+    void shouldReadRefmanMetadata(BibliographicFormat format) {
+        // Given
+        var documentId = 2;
+        var documentPublication = mock(Document.class);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+
+        try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
+            DocumentPublicationConverter.class)) {
+            mockedConverter.when(
+                    () -> DocumentPublicationConverter.toTaggedFormat(documentPublication,
+                        LanguageAbbreviations.ENGLISH, true))
+                .thenReturn("refman-string");
+
+            // When
+            var result =
+                documentPublicationService.readBibliographicMetadataById(documentId, format);
+
+            // Then
+            assertEquals("refman-string", result);
+            verify(documentRepository).findById(documentId);
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = BibliographicFormat.class, names = {"ENDNOTE"})
+    void shouldReadEndnoteMetadata(BibliographicFormat format) {
+        // Given
+        var documentId = 3;
+        var documentPublication = mock(Document.class);
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+
+        try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
+            DocumentPublicationConverter.class)) {
+            mockedConverter.when(
+                    () -> DocumentPublicationConverter.toTaggedFormat(documentPublication,
+                        LanguageAbbreviations.ENGLISH, false))
+                .thenReturn("endnote-string");
+
+            // When
+            var result =
+                documentPublicationService.readBibliographicMetadataById(documentId, format);
+
+            // Then
+            assertEquals("endnote-string", result);
+            verify(documentRepository).findById(documentId);
+        }
+    }
+
+    @Test
+    void whenDocumentDoesNotExistThenNoInteractions() {
+        // Given
+        when(documentRepository.findById(1)).thenReturn(Optional.empty());
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verifyNoInteractions(
+            involvementRepository,
+            documentPublicationIndexRepository,
+            personContributionService
+        );
+    }
+
+    @Test
+    void whenContributorWithoutPersonThenSkipProcessing() {
+        // Given
+        var doc = new MonographPublication();
+        var contribution = new PersonDocumentContribution();
+        doc.setContributors(Set.of(contribution));
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
+            .thenReturn(List.of(10, 20));
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verify(personContributionService, never()).save(any());
+    }
+
+    @Test
+    void whenContributorHasEmploymentInInstitutionThenMigrateToUnmanaged() {
+        // Given
+        var doc = new ProceedingsPublication();
+        var contribution = new PersonDocumentContribution();
+        var person = new Person();
+        person.setId(7);
+        contribution.setPerson(person);
+        doc.setContributors(Set.of(contribution));
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
+            .thenReturn(List.of(10, 20));
+        when(involvementRepository.findActiveEmploymentInstitutionIds(7))
+            .thenReturn(List.of(20));
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verify(personContributionService).save(contribution);
+        assertNull(contribution.getPerson());
+        assertTrue(contribution.getInstitutions().isEmpty());
+        assertFalse(contribution.getIsCorrespondingContributor());
+    }
+
+    @Test
+    void whenAllAuthorIdsAreNonPositiveThenNotifyAdmins() {
+        // Given
+        var doc = new Dataset();
+        doc.setContributors(new HashSet<>(Set.of(new PersonDocumentContribution() {{
+            setAffiliationStatement(new AffiliationStatement() {{
+                setDisplayPersonName(new PersonName("John", null, "Doe", null, null));
+            }});
+            setContributionType(DocumentContributionType.AUTHOR);
+            setIsCorrespondingContributor(false);
+            setIsMainContributor(false);
+        }})));
+
+        var index = new DocumentPublicationIndex();
+        index.setAuthorIds(new ArrayList<>(List.of(-1, 0)));
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(1))
+            .thenReturn(Optional.of(index));
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verify(personContributionService).notifyAdminsAboutUnbindedContribution(doc);
+    }
+
+    @Test
+    void whenAuthorIdsContainPositiveThenDoNotNotifyAdmins() {
+        // Given
+        var doc = new Software();
+        doc.setContributors(Collections.emptySet());
+
+        var index = new DocumentPublicationIndex();
+        index.setAuthorIds(new ArrayList<>(List.of(-1, 2)));
+
+        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(1))
+            .thenReturn(Optional.of(index));
+
+        // When
+        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+
+        // Then
+        verify(personContributionService, never())
+            .notifyAdminsAboutUnbindedContribution(any());
+    }
+
+    @Test
+    void whenNoDocumentsFoundThenDoNothing() {
+        // Given
+        var spyService = Mockito.spy(documentPublicationService);
+        var emptyPage = new PageImpl<DocumentPublicationIndex>(List.of());
+        doReturn(emptyPage)
+            .when(spyService)
+            .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
+                any());
+
+        // When
+        spyService.deleteNonManagedDocuments();
+
+        // Then
+        verify(spyService, never()).deleteDocumentPublication(any());
+    }
+
+    @Test
+    void whenSinglePageOfDocumentsThenDeleteEachOnce() {
+        // Given
+        var spyService = Mockito.spy(documentPublicationService);
+        var doc1 = new DocumentPublicationIndex();
+        doc1.setDatabaseId(1);
+        var doc2 = new DocumentPublicationIndex();
+        doc2.setDatabaseId(2);
+
+        var page = new PageImpl<>(List.of(doc1, doc2), PageRequest.of(0, 100), 2);
+
+        doReturn(page)
+            .when(spyService)
+            .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
+                any());
+        doNothing()
+            .when(spyService)
+            .deleteDocumentPublication(any());
+
+        // When
+        spyService.deleteNonManagedDocuments();
+
+        // Then
+        verify(spyService).deleteDocumentPublication(1);
+        verify(spyService).deleteDocumentPublication(2);
+    }
+
+    @Test
+    void whenMultiplePagesThenIterateThroughAll() {
+        // Given
+        var spyService = Mockito.spy(documentPublicationService);
+        var doc1 = new DocumentPublicationIndex();
+        doc1.setDatabaseId(10);
+        var firstPage = new PageImpl<>(
+            List.of(doc1),
+            PageRequest.of(0, 100),
+            2
+        );
+
+        doReturn(firstPage)
+            .when(spyService)
+            .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
+                any());
+        doNothing()
+            .when(spyService)
+            .deleteDocumentPublication(any());
+
+        // When
+        spyService.deleteNonManagedDocuments();
+
+        // Then
+        verify(spyService).deleteDocumentPublication(10);
+        verify(spyService, times(1)).searchDocumentPublications(any(), any(), any(), any(), any(),
+            any(), anyBoolean(), any());
+    }
+
+    @Test
+    void shouldUpdateAllIdentifiersWhenValuesExist() {
+        // Given
+        var documentId = 1;
+        var document = new Software();
+        document.setId(documentId);
+
+        var dto = new DocumentIdentifierUpdateDTO();
+        dto.setDoi("10.1234/example");
+        dto.setScopusId("SC12345");
+        dto.setOpenAlexId("OA6789");
+        dto.setWebOfScienceId("WOS999");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentPublicationService.updateDocumentIdentifiers(documentId, dto);
+
+        // Then
+        assertEquals("10.1234/example", document.getDoi());
+        assertEquals("SC12345", document.getScopusId());
+        assertEquals("OA6789", document.getOpenAlexId());
+        assertEquals("WOS999", document.getWebOfScienceId());
+
+        verify(documentRepository).save(document);
+    }
+
+    @Test
+    void shouldUpdateOnlyNonEmptyIdentifiers() {
+        // Given
+        var documentId = 2;
+        var document = new Patent();
+        document.setId(documentId);
+        document.setDoi("old-doi");
+        document.setScopusId("old-scopus");
+
+        var dto = new DocumentIdentifierUpdateDTO();
+        dto.setDoi(""); // empty -> should not overwrite
+        dto.setScopusId(null); // null -> should not overwrite
+        dto.setOpenAlexId("OA111");
+        dto.setWebOfScienceId("WOS222");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentPublicationService.updateDocumentIdentifiers(documentId, dto);
+
+        // Then
+        assertEquals("old-doi", document.getDoi()); // unchanged
+        assertEquals("old-scopus", document.getScopusId()); // unchanged
+        assertEquals("OA111", document.getOpenAlexId());
+        assertEquals("WOS222", document.getWebOfScienceId());
+
+        verify(documentRepository).save(document);
+    }
+
+    @Test
+    void shouldThrowWhenDocumentNotFound() {
+        // Given
+        var documentId = 99;
+        var dto = new DocumentIdentifierUpdateDTO();
+        dto.setDoi("10.5678/xyz");
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThrows(NotFoundException.class,
+            () -> documentPublicationService.updateDocumentIdentifiers(documentId, dto));
+
+        verify(documentRepository, never()).save(any());
     }
 }

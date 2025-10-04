@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +25,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
 @RequestMapping("/api/monograph-publication")
@@ -39,8 +41,13 @@ public class MonographPublicationController {
 
 
     @GetMapping("/{documentId}")
-    public MonographPublicationDTO readMonographPublication(@PathVariable Integer documentId) {
-        return monographPublicationService.readMonographPublicationById(documentId);
+    public ResponseEntity<MonographPublicationDTO> readMonographPublication(
+        @PathVariable Integer documentId) {
+        var dto = monographPublicationService.readMonographPublicationById(documentId);
+
+        return ResponseEntity.ok()
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/monograph-publication"))
+            .body(dto);
     }
 
     @PostMapping

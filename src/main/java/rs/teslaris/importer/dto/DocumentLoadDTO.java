@@ -38,4 +38,6 @@ public class DocumentLoadDTO {
     private String webOfScienceId;
 
     private Integer eventId;
+
+    private List<String> internalIdentifiers;
 }

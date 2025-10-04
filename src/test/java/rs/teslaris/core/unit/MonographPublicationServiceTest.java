@@ -43,6 +43,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
@@ -90,6 +91,9 @@ public class MonographPublicationServiceTest {
 
     @Mock
     private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
+
+    @Mock
+    private CitationService citationService;
 
     @InjectMocks
     private MonographPublicationServiceImpl monographPublicationService;

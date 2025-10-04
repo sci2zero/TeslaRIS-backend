@@ -2,23 +2,31 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.xml.bind.JAXBException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -31,6 +39,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +47,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -46,15 +56,22 @@ import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.etdms.ETDMSThesis;
+import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -67,8 +84,11 @@ import rs.teslaris.core.service.impl.document.ThesisServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
@@ -127,6 +147,15 @@ public class ThesisServiceTest {
 
     @Mock
     private OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService;
+
+    @Mock
+    private CitationService citationService;
+
+    @Mock
+    private FileService fileService;
+
+    @Mock
+    private TaskManagerService taskManagerService;
 
     @InjectMocks
     private ThesisServiceImpl thesisService;
@@ -196,7 +225,10 @@ public class ThesisServiceTest {
         thesisToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
         thesisToUpdate.setDocumentDate("2023");
 
-        when(organisationUnitService.findOne(1)).thenReturn(new OrganisationUnit());
+        when(organisationUnitService.findOne(1)).thenReturn(
+            new OrganisationUnit() {{
+                getAllowedThesisTypes().add(ThesisType.PHD.name());
+            }});
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesisToUpdate);
         when(thesisJPAService.save(any())).thenReturn(thesisToUpdate);
 
@@ -309,6 +341,8 @@ public class ThesisServiceTest {
         when(thesis.getPreliminarySupplements()).thenReturn(Set.of(new DocumentFile()));
         when(thesis.getCommissionReports()).thenReturn(Set.of(new DocumentFile()));
         when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
+        when(thesis.getScientificArea()).thenReturn(
+            new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, false);
@@ -391,6 +425,8 @@ public class ThesisServiceTest {
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
         when(thesis.getCommissionReports()).thenReturn(Set.of(mock(DocumentFile.class)));
         when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
+        when(thesis.getScientificArea()).thenReturn(
+            new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, true);
@@ -420,6 +456,8 @@ public class ThesisServiceTest {
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
         when(thesis.getCommissionReports()).thenReturn(Set.of(mock(DocumentFile.class)));
         when(thesis.getTitle()).thenReturn(new HashSet<>(List.of(mock(MultiLingualContent.class))));
+        when(thesis.getScientificArea()).thenReturn(
+            new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
         thesisService.putOnPublicReview(thesisId, true);
@@ -539,6 +577,7 @@ public class ThesisServiceTest {
         thesis.getPreliminaryFiles().addAll(createMockDocuments(files));
         thesis.getCommissionReports().addAll(createMockDocuments(reports));
         thesis.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
+        thesis.setScientificArea(new HashSet<>(List.of(mock(MultiLingualContent.class))));
         thesis.setOrganisationUnit(new OrganisationUnit());
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
@@ -657,12 +696,13 @@ public class ThesisServiceTest {
         thesis.setFileItems(new HashSet<>());
 
         when(thesisJPAService.findOne(1)).thenReturn(thesis);
+        when(fileService.duplicateFile(any())).thenReturn(UUID.randomUUID() + ".pdf");
 
         // When
         thesisService.transferPreprintToOfficialPublication(1, 42);
 
         // Then
-        assertTrue(thesis.getPreliminaryFiles().isEmpty());
+        assertFalse(thesis.getPreliminaryFiles().isEmpty());
         assertEquals(1, thesis.getFileItems().size());
         assertEquals(ResourceType.OFFICIAL_PUBLICATION,
             thesis.getFileItems().iterator().next().getResourceType());
@@ -685,6 +725,189 @@ public class ThesisServiceTest {
         // When / Then
         assertThrows(ThesisException.class,
             () -> thesisService.transferPreprintToOfficialPublication(1, 123));
+    }
+
+    @Test
+    void shouldReturnAllLibraryFormatsWhenConversionSucceeds() throws Exception {
+        //given
+        var thesis = new Thesis();
+        thesis.setId(1);
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        try (MockedStatic<ThesisConverter> converterMock = mockStatic(ThesisConverter.class);
+             MockedStatic<XMLUtil> xmlUtilMock = mockStatic(XMLUtil.class)) {
+
+            var etdmsModel = new ETDMSThesis();
+            var dcModel = new DC();
+            var marc21Model = new Marc21();
+
+            converterMock.when(() -> ThesisConverter.toETDMSModel(thesis)).thenReturn(etdmsModel);
+            converterMock.when(() -> ThesisConverter.toDCModel(thesis)).thenReturn(dcModel);
+            converterMock.when(() -> ThesisConverter.convertToMarc21(thesis))
+                .thenReturn(marc21Model);
+
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(etdmsModel)).thenReturn("<etdms/>");
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(dcModel)).thenReturn("<dc/>");
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(marc21Model)).thenReturn("<marc21/>");
+
+            //when
+            var result = thesisService.getLibraryReferenceFormat(1);
+
+            //then
+            assertEquals("<etdms/>", result.etdMs());
+            assertEquals("<dc/>", result.dublinCore());
+            assertEquals("<marc21/>", result.marc21());
+        }
+    }
+
+    @Test
+    void shouldThrowExceptionWhenConversionFails() throws Exception {
+        //given
+        var thesis = new Thesis();
+        thesis.setId(1);
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        try (MockedStatic<ThesisConverter> converterMock = mockStatic(ThesisConverter.class);
+             MockedStatic<XMLUtil> xmlUtilMock = mockStatic(XMLUtil.class)) {
+
+            var etdmsModel = new ETDMSThesis();
+            converterMock.when(() -> ThesisConverter.toETDMSModel(thesis)).thenReturn(etdmsModel);
+
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(etdmsModel))
+                .thenThrow(new JAXBException("failure"));
+
+            //when + then
+            assertThrows(ThesisException.class, () -> thesisService.getLibraryReferenceFormat(1));
+        }
+    }
+
+    @Test
+    void shouldReturnSingleFormatWhenETDMSRequested() throws Exception {
+        //given
+        var thesis = new Thesis();
+        thesis.setId(1);
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        try (MockedStatic<ThesisConverter> converterMock = mockStatic(ThesisConverter.class);
+             MockedStatic<XMLUtil> xmlUtilMock = mockStatic(XMLUtil.class)) {
+
+            var etdmsModel = new ETDMSThesis();
+            converterMock.when(() -> ThesisConverter.toETDMSModel(thesis)).thenReturn(etdmsModel);
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(etdmsModel)).thenReturn("<etdms/>");
+
+            //when
+            var result = thesisService.getSingleLibraryReferenceFormat(1, LibraryFormat.ETD_MS);
+
+            //then
+            assertEquals("<etdms/>", result);
+        }
+    }
+
+    @Test
+    void shouldReturnEmptyStringWhenSingleFormatFails() throws Exception {
+        //given
+        var thesis = new Thesis();
+        thesis.setId(1);
+        when(thesisJPAService.findOne(1)).thenReturn(thesis);
+
+        try (MockedStatic<ThesisConverter> converterMock = mockStatic(ThesisConverter.class);
+             MockedStatic<XMLUtil> xmlUtilMock = mockStatic(XMLUtil.class)) {
+
+            var etdmsModel = new ETDMSThesis();
+            converterMock.when(() -> ThesisConverter.toETDMSModel(thesis)).thenReturn(etdmsModel);
+            xmlUtilMock.when(() -> XMLUtil.convertToXml(etdmsModel))
+                .thenThrow(new JAXBException("fail"));
+
+            //when
+            var result = thesisService.getSingleLibraryReferenceFormat(1, LibraryFormat.ETD_MS);
+
+            //then
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    @Test
+    void shouldSchedulePublicReviewEndCheckAndSaveMetadata() {
+        // Given
+        var timestamp = LocalDateTime.now().plusDays(1);
+        var types = List.of(ThesisType.MASTER, ThesisType.PHD);
+        var publicReviewLengthDays = 30;
+        var userId = 42;
+        var recurrence = RecurrenceType.ONCE;
+
+        var fakeTaskId = "task-123";
+        when(taskManagerService.scheduleTask(
+            anyString(),
+            any(LocalDateTime.class),
+            any(Runnable.class),
+            anyInt(),
+            any(RecurrenceType.class)
+        )).thenReturn(fakeTaskId);
+
+        // When
+        thesisService.schedulePublicReviewEndCheck(
+            timestamp, types, publicReviewLengthDays, userId, recurrence
+        );
+
+        // Then
+        verify(taskManagerService).scheduleTask(
+            argThat(name -> name.startsWith("PublicReviewEndCheck-")),
+            eq(timestamp),
+            any(Runnable.class),
+            eq(userId),
+            eq(recurrence)
+        );
+
+        var metadataCaptor = org.mockito.ArgumentCaptor.forClass(ScheduledTaskMetadata.class);
+        verify(taskManagerService).saveTaskMetadata(metadataCaptor.capture());
+
+        var metadata = metadataCaptor.getValue();
+        assertEquals(fakeTaskId, metadata.getTaskId());
+        assertEquals(timestamp, metadata.getTimeToRun());
+        assertEquals(ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK, metadata.getType());
+        assertEquals(recurrence, metadata.getRecurrenceType());
+
+        var extra = metadata.getMetadata();
+        assertEquals(types, extra.get("types"));
+        assertEquals(publicReviewLengthDays, extra.get("publicReviewLengthDays"));
+        assertEquals(userId, extra.get("userId"));
+    }
+
+    @Test
+    void shouldGenerateUniqueTaskIdsEachCallWhenScheduling() {
+        // Given
+        var timestamp = LocalDateTime.now().plusDays(2);
+        var types = List.of(ThesisType.MASTER);
+        var publicReviewLengthDays = 15;
+        var userId = 7;
+        var recurrence = RecurrenceType.DAILY;
+
+        when(taskManagerService.scheduleTask(
+            anyString(),
+            any(LocalDateTime.class),
+            any(Runnable.class),
+            anyInt(),
+            any(RecurrenceType.class)
+        )).thenReturn(UUID.randomUUID().toString());
+
+        // When
+        thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays, userId,
+            recurrence);
+        thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays, userId,
+            recurrence);
+
+        // Then
+        var taskIdCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(taskManagerService, times(2)).scheduleTask(
+            taskIdCaptor.capture(),
+            eq(timestamp),
+            any(Runnable.class),
+            eq(userId),
+            eq(recurrence)
+        );
+
+        var taskIds = taskIdCaptor.getAllValues();
+        assertNotEquals(taskIds.get(0), taskIds.get(1));
     }
 
     private Set<DocumentFile> createMockDocuments(int count) {

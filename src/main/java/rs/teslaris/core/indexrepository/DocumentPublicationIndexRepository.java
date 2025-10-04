@@ -18,6 +18,9 @@ public interface DocumentPublicationIndexRepository extends
 
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseId(Integer databaseId);
 
+    Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseIdAndType(
+        Integer databaseId, String type);
+
     Page<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseIdIn(
         List<Integer> databaseIds, Pageable pageable);
 
@@ -40,22 +43,6 @@ public interface DocumentPublicationIndexRepository extends
     List<DocumentPublicationIndex> findByTypeAndMonographIdAndAuthorIds(String type,
                                                                         Integer monographId,
                                                                         Integer authorId);
-
-    @Query("""
-        {
-          "bool": {
-            "must": [
-              { "terms": { "author_ids": [?0] } }
-            ],
-            "must_not": [
-              { "terms": { "databaseId": ?1 } }
-            ]
-          }
-        }
-        """)
-    Page<DocumentPublicationIndex> findByAuthorIdsAndDatabaseIdNotIn(Integer authorId,
-                                                                     List<Integer> databaseIds,
-                                                                     Pageable pageable);
 
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 

@@ -60,7 +60,7 @@ public class BeanConfiguration {
     public Cache<String, Byte> idempotencyCacheStore() {
         return CacheBuilder.newBuilder()
             .maximumSize(10000)
-            .expireAfterWrite(5, TimeUnit.SECONDS)
+            .expireAfterWrite(1, TimeUnit.SECONDS)
             .build();
     }
 
@@ -81,7 +81,8 @@ public class BeanConfiguration {
                     .allowCredentials(true)
                     .allowedOriginPatterns("sameOrigin")
                     .allowedOrigins(frontendUrl)
-                    .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH");
+                    .allowedMethods("OPTIONS", "GET", "POST", "PUT", "DELETE", "PATCH")
+                    .exposedHeaders("Link");
             }
         };
     }

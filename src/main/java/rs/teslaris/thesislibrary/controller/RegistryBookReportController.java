@@ -1,11 +1,10 @@
 package rs.teslaris.thesislibrary.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +19,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
+import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookReportService;
 
 @RestController
@@ -39,8 +44,8 @@ public class RegistryBookReportController {
     @PostMapping("/schedule-generation")
     @PreAuthorize("hasAuthority('GENERATE_REG_BOOK_REPORT')")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public String generateReport(@RequestParam(required = false) LocalDate from,
-                                 @RequestParam(required = false) LocalDate to,
+    public String generateReport(@RequestParam(required = false) RelativeDateDTO from,
+                                 @RequestParam(required = false) RelativeDateDTO to,
                                  @RequestParam(required = false, defaultValue = "")
                                  String authorName,
                                  @RequestParam(required = false, defaultValue = "")
@@ -51,8 +56,8 @@ public class RegistryBookReportController {
                                  @RequestHeader(value = "Authorization")
                                  String bearerToken) {
         return registryBookReportService.scheduleReportGeneration(
-            Objects.nonNull(from) ? from : LocalDate.of(1000, 1, 1),
-            Objects.nonNull(to) ? to : LocalDate.now(), institutionId, lang,
+            Objects.nonNull(from) ? from : RelativeDateDTO.of(1000, 1, 1),
+            Objects.nonNull(to) ? to : RelativeDateDTO.now(), institutionId, lang,
             tokenUtil.extractUserIdFromToken(bearerToken), authorName, authorTitle, recurrence);
     }
 
@@ -74,16 +79,25 @@ public class RegistryBookReportController {
     }
 
     @GetMapping("/download/{reportFileName}")
-    @PreAuthorize("hasAuthority('GENERATE_REG_BOOK_REPORT')")
     @ResponseBody
-    public ResponseEntity<Object> serveFile(@PathVariable String reportFileName,
-                                            @RequestHeader(value = "Authorization")
-                                            String bearerToken) throws IOException {
+    public ResponseEntity<StreamingResponseBody> serveFile(HttpServletRequest request,
+                                                           @PathVariable String reportFileName,
+                                                           @RequestHeader(value = "Authorization")
+                                                           String bearerToken) throws IOException {
+        if (!SessionUtil.isSessionValid(request, bearerToken) ||
+            !SessionUtil.hasAnyRole(bearerToken,
+                List.of(UserRole.ADMIN, UserRole.PROMOTION_REGISTRY_ADMINISTRATOR))) {
+            return ErrorResponseUtil.buildUnauthorisedStreamingResponse(request,
+                "unauthorisedToViewDocumentMessage");
+        }
+
         var file = registryBookReportService.serveReportFile(reportFileName,
             tokenUtil.extractUserIdFromToken(bearerToken));
+
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
             .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
-            .body(new InputStreamResource(file));
+            .header(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"))
+            .body(StreamingUtil.createStreamingBody(file));
     }
 }

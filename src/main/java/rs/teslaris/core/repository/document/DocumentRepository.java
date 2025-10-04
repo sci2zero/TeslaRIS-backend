@@ -12,6 +12,9 @@ import rs.teslaris.core.model.document.Document;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
 
+    @Query("SELECT d FROM Document d JOIN FETCH d.contributors WHERE d.id IN :ids")
+    List<Document> findBulkDocuments(List<Integer> ids);
+
     @Query(value = """
         SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
         UNION ALL
@@ -32,6 +35,27 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         SELECT id FROM theses WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
         """, nativeQuery = true)
     Optional<Integer> findDocumentByOldIdsContains(Integer oldId);
+
+    @Query(value = """
+        SELECT id FROM datasets WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM software WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM monographs WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM patents WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM proceedings WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM journal_publications WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM proceedings_publications WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM monograph_publications WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM theses WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        """, nativeQuery = true)
+    Optional<Integer> findDocumentByInternalIdentifiersContains(String internalId);
 
     @Query("SELECT d FROM Document d " +
         "JOIN FETCH d.contributors " +

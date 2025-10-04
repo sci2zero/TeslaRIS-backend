@@ -27,5 +27,32 @@ public interface DocumentDeduplicationSuggestionRepository
         "] } } ] } }")
     List<DeduplicationSuggestion> findByEntityIdAndEntityType(Integer entityId, String entityType);
 
+    @Query("{" +
+        "  \"bool\": {" +
+        "    \"should\": [" +
+        "      {" +
+        "        \"bool\": {" +
+        "          \"must\": [" +
+        "            { \"term\": { \"left_entity_database_id\": \"?0\" } }," +
+        "            { \"term\": { \"right_entity_database_id\": \"?1\" } }," +
+        "            { \"term\": { \"entity_type\": \"?2\" } }" +
+        "          ]" +
+        "        }" +
+        "      }," +
+        "      {" +
+        "        \"bool\": {" +
+        "          \"must\": [" +
+        "            { \"term\": { \"left_entity_database_id\": \"?1\" } }," +
+        "            { \"term\": { \"right_entity_database_id\": \"?0\" } }," +
+        "            { \"term\": { \"entity_type\": \"?2\" } }" +
+        "          ]" +
+        "        }" +
+        "      }" +
+        "    ]" +
+        "  }" +
+        "}")
+    List<DeduplicationSuggestion> findByTwoEntitiesAndType(Integer entityId1, Integer entityId2,
+                                                           String entityType);
+
     void deleteByEntityType(String entityType);
 }

@@ -5,7 +5,9 @@ import jakarta.persistence.Id;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,13 +31,13 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Text, name = "title_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String titleSr;
 
-    @Field(type = FieldType.Keyword, name = "title_sr_sortable")
+    @Field(type = FieldType.Keyword, name = "title_sr_sortable", normalizer = "serbian_normalizer")
     private String titleSrSortable;
 
     @Field(type = FieldType.Text, name = "title_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String titleOther;
 
-    @Field(type = FieldType.Keyword, name = "title_other_sortable")
+    @Field(type = FieldType.Keyword, name = "title_other_sortable", normalizer = "english_normalizer")
     private String titleOtherSortable;
 
     @Field(type = FieldType.Text, name = "description_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
@@ -140,6 +142,15 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "organisation_unit_ids", store = true)
     private List<Integer> organisationUnitIds = new ArrayList<>();
 
+    @Field(type = FieldType.Integer, name = "organisation_unit_ids_specified", store = true)
+    private List<Integer> organisationUnitIdsSpecified = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "organisation_unit_ids_year_of_publication", store = true)
+    private List<Integer> organisationUnitIdsYearOfPublication = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "organisation_unit_ids_active", store = true)
+    private List<Integer> organisationUnitIdsActive = new ArrayList<>();
+
     @Field(type = FieldType.Integer, name = "claimer_ids", store = true)
     private List<Integer> claimerIds = new ArrayList<>();
 
@@ -205,4 +216,13 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "are_files_valid", store = true)
     private Boolean areFilesValid;
+
+    @Field(type = FieldType.Keyword, name = "internal_identifiers", store = true)
+    private Set<String> internalIdentifiers = new HashSet<>();
+
+    @Field(type = FieldType.Boolean, name = "author_reprint", store = true)
+    private Boolean authorReprint;
+
+    @Field(type = FieldType.Keyword, name = "apa", index = false)
+    private String apa;
 }

@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -42,8 +45,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.configuration.OAuth2Provider;
+import rs.teslaris.core.dto.commontypes.BrandingInformationDTO;
+import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
@@ -63,6 +70,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.EmailUpdateRequest;
+import rs.teslaris.core.model.user.OAuthCode;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.RefreshToken;
 import rs.teslaris.core.model.user.User;
@@ -72,21 +80,25 @@ import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
+import rs.teslaris.core.repository.user.OAuthCodeRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.user.UserServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
+import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
+import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -148,13 +160,36 @@ public class UserServiceTest {
     @Mock
     private EmailUpdateRequestRepository emailUpdateRequestRepository;
 
+    @Mock
+    private OAuthCodeRepository oAuthCodeRepository;
+
+    @Mock
+    private BrandingInformationService brandingInformationService;
+
     @InjectMocks
     private UserServiceImpl userService;
+
+    private LanguageTag language;
+
+    private Authority authority;
 
 
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(userService, "clientAppAddress", "protocol://test.test/");
+
+        language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+
+        authority = new Authority();
+        authority.setName(UserRole.RESEARCHER.toString());
+
+        // Default mocks
+        when(languageTagService.findOne(anyInt())).thenReturn(language);
+        when(authorityRepository.findByName(UserRole.RESEARCHER.toString()))
+            .thenReturn(Optional.of(authority));
+        when(passwordEncoder.encode(anyString())).thenReturn("EncodedPassword");
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Message");
     }
 
     @Test
@@ -214,10 +249,14 @@ public class UserServiceTest {
         registrationRequest.setPassword("Password123");
         registrationRequest.setPreferredLanguageId(1);
         registrationRequest.setPersonId(1);
+        registrationRequest.setOrganisationUnitId(1);
 
         var language = new LanguageTag();
         language.setLanguageTag(LanguageAbbreviations.SERBIAN);
         when(languageTagService.findOne(1)).thenReturn(language);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         var authority = new Authority();
         authority.setName(UserRole.RESEARCHER.toString());
@@ -246,6 +285,10 @@ public class UserServiceTest {
 
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitution(true);
+            setValidateEmailDomain(false);
+        }});
 
         // when
         var savedUser = userService.registerResearcher(registrationRequest);
@@ -283,6 +326,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
+        organisationUnit.setIsClientInstitution(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("johndoe@example.com", "password123", "",
@@ -295,6 +339,8 @@ public class UserServiceTest {
         when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
             activationToken);
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -335,6 +381,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
+        organisationUnit.setIsClientInstitution(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("johndoe@example.com", "password123", "",
@@ -347,6 +394,8 @@ public class UserServiceTest {
         when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
             activationToken);
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
@@ -390,6 +439,7 @@ public class UserServiceTest {
             Set.of(
                 new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
                     "University", 1)));
+        organisationUnit.setIsClientInstitution(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("regadmin@example.com", "password123", "",
@@ -404,6 +454,9 @@ public class UserServiceTest {
 
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         // When
         var savedUser = userService.registerInstitutionEmployee(registrationRequest,
@@ -443,6 +496,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
+        organisationUnit.setIsClientInstitution(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
@@ -460,6 +514,9 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
 
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
         // When
         var savedUser = userService.registerCommissionUser(registrationRequest);
 
@@ -475,10 +532,12 @@ public class UserServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenAuthorityNotFound() {
         // given
+        ReflectionTestUtils.setField(userService, "allowNewResearcherCreation", true);
+
         var registrationRequest = new ResearcherRegistrationRequestDTO();
         registrationRequest.setPassword("Password123");
 
-        when(authorityRepository.findById(2)).thenReturn(Optional.empty());
+        when(authorityRepository.findByName(anyString())).thenReturn(Optional.empty());
 
         // when
         assertThrows(NotFoundException.class,
@@ -1226,5 +1285,187 @@ public class UserServiceTest {
         assertFalse(result);
         verify(userRepository, never()).save(any());
         verify(emailUpdateRequestRepository, never()).delete(any());
+    }
+
+    @Test
+    void shouldFinishOAuthWorkflowWhenCodeIsValid() {
+        // given
+        SecurityContextHolder.clearContext();
+        var code = "test-code";
+        var identifier = "test-identifier";
+        var fingerprint = "fp";
+        var userId = 123;
+
+        var oauthCodeEntity = new OAuthCode(code, identifier, userId);
+        var user = new User();
+        user.setId(userId);
+        user.setAuthority(new Authority() {{
+            setName("ROLE_USER");
+        }});
+
+        when(oAuthCodeRepository.getCodeForCodeAndIdentifier(code, identifier))
+            .thenReturn(Optional.of(oauthCodeEntity));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(tokenUtil.generateToken(any(Authentication.class), eq(fingerprint)))
+            .thenReturn("jwt-token");
+
+        // when
+        var result = userService.finishOAuthWorkflow(code, identifier, fingerprint);
+
+        // then
+        assertEquals("jwt-token", result.getToken());
+        assertNotNull(result.getRefreshToken());
+        verify(oAuthCodeRepository).deleteByIdentifier(identifier);
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCodeIsInvalid() {
+        // given
+        SecurityContextHolder.clearContext();
+        var code = "invalid-code";
+        var identifier = "test-identifier";
+
+        when(oAuthCodeRepository.getCodeForCodeAndIdentifier(code, identifier))
+            .thenReturn(Optional.empty());
+
+        // when / then
+        assertThrows(InvalidOAuth2CodeException.class,
+            () -> userService.finishOAuthWorkflow(code, identifier, "fp"));
+
+        verify(oAuthCodeRepository).deleteByIdentifier(identifier);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void shouldRegisterResearcherOAuthWithExistingPerson() {
+        // given
+        ReflectionTestUtils.setField(userService, "allowNewResearcherCreation", false);
+
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("oauthuser@example.com");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setPersonId(1);
+        registrationRequest.setOrganisationUnitId(2);
+
+        var person = new Person();
+        person.setName(new PersonName("Jane", "", "Doe", LocalDate.of(1990, 5, 12), null));
+        person.setOrcid("orcid-identifier");
+        when(personService.findOne(1)).thenReturn(person);
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setIsClientInstitution(true);
+        when(organisationUnitService.findOne(anyInt())).thenReturn(organisationUnit);
+
+        var newUser = new User("oauthuser@example.com", "EncodedPassword", "",
+            "Jane", "Doe", true, false, language, language, authority,
+            person, organisationUnit, null, UserNotificationPeriod.NEVER);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class)))
+            .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
+
+        // when
+        var savedUser = userService.registerResearcherOAuth(
+            registrationRequest, OAuth2Provider.ORCID, "orcid-identifier"
+        );
+
+        // then
+        assertNotNull(savedUser);
+        assertEquals("oauthuser@example.com", savedUser.getEmail());
+        assertEquals("Jane", savedUser.getFirstname());
+        assertEquals("Doe", savedUser.getLastName());
+        assertEquals("orcid-identifier", person.getOrcid());
+    }
+
+    @Test
+    void shouldRegisterResearcherOAuthWithNewPersonAllowed() {
+        // given
+        ReflectionTestUtils.setField(userService, "allowNewResearcherCreation", true);
+
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("newperson@example.com");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setFirstName("Alice");
+        registrationRequest.setLastName("Smith");
+        registrationRequest.setOrganisationUnitId(1);
+
+        var person = new Person();
+        person.setName(new PersonName("Alice", "", "Smith", null, null));
+        person.setOrcid("orcid-id");
+        when(personService.createPersonWithBasicInfo(any(BasicPersonDTO.class), eq(true)))
+            .thenReturn(person);
+
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setName(
+            Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
+                "Content", 1)));
+        organisationUnit.setIsClientInstitution(true);
+        when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+
+        var newUser = new User("newperson@example.com", "EncodedPassword", "",
+            "Alice", "Smith", true, false, language, language, authority,
+            person, null, null, UserNotificationPeriod.NEVER);
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class)))
+            .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
+
+        // when
+        var savedUser = userService.registerResearcherOAuth(
+            registrationRequest, OAuth2Provider.ORCID, "orcid-id"
+        );
+
+        // then
+        assertNotNull(savedUser);
+        assertEquals("Alice", savedUser.getFirstname());
+        assertEquals("Smith", savedUser.getLastName());
+        assertEquals("orcid-id", person.getOrcid());
+    }
+
+    @Test
+    void shouldThrowWhenPersonAlreadyBounded() {
+        // given
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("test@example.com");
+        registrationRequest.setPersonId(5);
+
+        when(userRepository.personAlreadyBinded(5)).thenReturn(true);
+
+        // when / then
+        assertThrows(PersonReferenceConstraintViolationException.class, () ->
+            userService.registerResearcherOAuth(registrationRequest, OAuth2Provider.ORCID, "id"));
+    }
+
+    @Test
+    void shouldThrowWhenCreationNotAllowedAndNoPersonId() {
+        // given
+        ReflectionTestUtils.setField(userService, "allowNewResearcherCreation", false);
+
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("noallowed@example.com");
+
+        // when / then
+        assertThrows(PersonReferenceConstraintViolationException.class, () ->
+            userService.registerResearcherOAuth(registrationRequest, OAuth2Provider.ORCID, "id"));
+    }
+
+    @Test
+    void shouldThrowWhenAuthorityNotFound() {
+        // given
+        when(authorityRepository.findByName(UserRole.RESEARCHER.toString()))
+            .thenReturn(Optional.empty());
+
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("noauth@example.com");
+        registrationRequest.setPersonId(1);
+
+        // when / then
+        assertThrows(NotFoundException.class, () ->
+            userService.registerResearcherOAuth(registrationRequest, OAuth2Provider.ORCID, "id"));
     }
 }

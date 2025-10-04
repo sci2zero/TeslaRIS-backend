@@ -17,7 +17,14 @@ public class ExportProductConverter extends ExportConverterBase {
     public static Product toOpenaireModel(
         ExportDocument exportDocument) {
         var openaireProduct = new Product();
-        openaireProduct.setOldId("Products/(TESLARIS)" + exportDocument.getDatabaseId());
+
+        if (Objects.nonNull(exportDocument.getOldIds()) && !exportDocument.getOldIds().isEmpty()) {
+            openaireProduct.setOldId("Products/" + legacyIdentifierPrefix +
+                exportDocument.getOldIds().stream().findFirst().get());
+        } else {
+            openaireProduct.setOldId("Products/(TESLARIS)" + exportDocument.getDatabaseId());
+        }
+
         openaireProduct.setName(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
         openaireProduct.setDescription(
@@ -25,11 +32,8 @@ public class ExportProductConverter extends ExportConverterBase {
 
         openaireProduct.setType(inferPublicationCOARType(exportDocument.getType()));
 
-        ExportMultilingualContentConverter.setFieldFromPriorityContent(
-            exportDocument.getKeywords().stream(),
-            content -> List.of(content.split("\n")),
-            openaireProduct::setKeywords
-        );
+        openaireProduct.setKeywords(
+            ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getKeywords()));
 
         if (!exportDocument.getLanguageTags().isEmpty()) {
             openaireProduct.setLanguage(exportDocument.getLanguageTags().getFirst());

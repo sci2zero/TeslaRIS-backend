@@ -29,6 +29,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
 import rs.teslaris.core.util.notificationhandling.NotificationConfiguration;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.AddedToPublicationNotificationHandler;
+import rs.teslaris.core.util.notificationhandling.handlerimpl.AuthorRemovedByEditorNotificationHandler;
+import rs.teslaris.core.util.notificationhandling.handlerimpl.EmployedResearcherUnbindedHandler;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotificationHandler;
 
 @Service
@@ -45,6 +47,10 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     private final NewOtherNameNotificationHandler newOtherNameNotificationHandler;
 
     private final AddedToPublicationNotificationHandler addedToPublicationNotificationHandler;
+
+    private final EmployedResearcherUnbindedHandler employedResearcherUnbindedHandler;
+
+    private final AuthorRemovedByEditorNotificationHandler authorRemovedByEditorNotificationHandler;
 
     private final UserAccountIndexRepository userAccountIndexRepository;
 
@@ -94,8 +100,14 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             case NEW_OTHER_NAME_DETECTED:
                 newOtherNameNotificationHandler.handle(notification, notificationAction);
                 break;
-            case ADDED_TO_PUBLICATION:
+            case ADDED_TO_PUBLICATION, NEW_AUTHOR_UNBINDING:
                 addedToPublicationNotificationHandler.handle(notification, notificationAction);
+                break;
+            case NEW_EMPLOYED_RESEARCHER_UNBINDED:
+                employedResearcherUnbindedHandler.handle(notification, notificationAction);
+                break;
+            case AUTHOR_UNBINDED_BY_EDITOR:
+                authorRemovedByEditorNotificationHandler.handle(notification, notificationAction);
                 break;
             case DEDUPLICATION_SCAN_FINISHED:
                 // Redirection to deduplication page done by frontend logic.
@@ -164,7 +176,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     private void sendNotifications(UserNotificationPeriod notificationPeriod) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {

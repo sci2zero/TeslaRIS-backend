@@ -9,7 +9,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +21,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.DocumentFileBackup;
 import rs.teslaris.core.model.document.DocumentFileSection;
@@ -70,8 +70,8 @@ public class ThesisLibraryBackupServiceTest {
     void shouldScheduleBackupWithCorrectFormatAndReturnTime(ExportFileType metadataFormat) {
         // Given
         var institutionId = 1;
-        var from = LocalDate.of(2023, 1, 1);
-        var to = LocalDate.of(2023, 12, 31);
+        var from = RelativeDateDTO.of(2023, 1, 1);
+        var to = RelativeDateDTO.of(2023, 12, 31);
         var types = List.of(ThesisType.MASTER);
         var fileSections = new ArrayList<FileSection>(List.of(DocumentFileSection.FILE_ITEMS));
         var defended = true;
@@ -135,7 +135,7 @@ public class ThesisLibraryBackupServiceTest {
 
         // When & Then
         assertThrows(LoadingException.class,
-            () -> thesisLibraryBackupService.serveAndDeleteBackupFile(fileName, userId));
+            () -> thesisLibraryBackupService.serveBackupFile(fileName, userId));
     }
 
 }

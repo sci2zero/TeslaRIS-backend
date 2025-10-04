@@ -3,10 +3,10 @@ package rs.teslaris.core.converter.person;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -20,9 +20,12 @@ import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.dto.person.PrizeResponseDTO;
 import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.session.SessionUtil;
 
 public class PersonConverter {
 
@@ -219,7 +222,19 @@ public class PersonConverter {
             contact.setPhoneNumber(person.getPersonalInfo().getContact().getPhoneNumber());
         }
 
+        var instituion = new Pair<Integer, List<MultilingualContentDTO>>(null, null);
+        person.getInvolvements().stream().filter(i -> Objects.nonNull(i.getOrganisationUnit()) &&
+                i.getOrganisationUnit().getIsClientInstitution() &&
+                List.of(InvolvementType.EMPLOYED_AT, InvolvementType.HIRED_BY)
+                    .contains(i.getInvolvementType()) && Objects.isNull(i.getDateTo())).findAny()
+            .ifPresent(currentInvolvement -> {
+                instituion.a = currentInvolvement.getOrganisationUnit().getId();
+                instituion.b = MultilingualContentConverter.getMultilingualContentDTO(
+                    currentInvolvement.getOrganisationUnit().getName());
+            });
+
         return new PersonUserResponseDTO(
+            person.getId(),
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
@@ -233,15 +248,11 @@ public class PersonConverter {
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,
-            keyword, person.getApproveStatus(), userDTO);
+            keyword, person.getApproveStatus(), userDTO, instituion.b, instituion.a);
     }
 
     private static void filterSensitiveData(PersonResponseDTO personResponse) {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (Objects.isNull(authentication) || !authentication.isAuthenticated() ||
-            (authentication.getPrincipal() instanceof String &&
-                authentication.getPrincipal().equals("anonymousUser"))) {
+        if (!SessionUtil.isUserLoggedIn()) {
             personResponse.getPersonalInfo().getContact().setPhoneNumber("");
             personResponse.getPersonalInfo().getContact().setContactEmail("");
             personResponse.getPersonalInfo().setPlaceOfBirth(null);

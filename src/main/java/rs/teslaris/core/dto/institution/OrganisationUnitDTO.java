@@ -11,6 +11,7 @@ import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.model.document.ThesisType;
 
 @Getter
 @Setter
@@ -45,4 +46,16 @@ public class OrganisationUnitDTO {
     private String logoServerFilename;
 
     private String logoBackgroundHex;
+
+    private List<ThesisType> allowedThesisTypes;
+
+    private boolean isClientInstitution;
+
+    private String institutionEmailDomain;
+
+    private boolean validatingEmailDomain;
+
+    private boolean allowingSubdomains;
+
+    private boolean isLegalEntity;
 }

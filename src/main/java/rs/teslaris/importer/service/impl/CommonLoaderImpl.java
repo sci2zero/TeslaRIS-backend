@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -33,10 +34,12 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -49,7 +52,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -67,6 +70,7 @@ import rs.teslaris.importer.utility.ProgressReportUtility;
 @RequiredArgsConstructor
 @Traceable
 @Transactional
+@Slf4j
 public class CommonLoaderImpl implements CommonLoader {
 
     private static final Object institutionLock = new Object();
@@ -147,7 +151,7 @@ public class CommonLoaderImpl implements CommonLoader {
                     DataSet.DOCUMENT_IMPORTS));
 
         if (removeFromRecord &&
-            Objects.requireNonNull(SessionTrackingUtil.getLoggedInUser()).getAuthority().getName()
+            Objects.requireNonNull(SessionUtil.getLoggedInUser()).getAuthority().getName()
                 .equals(UserRole.RESEARCHER.name())) {
             Query currentRecordQuery = new Query();
             currentRecordQuery.addCriteria(
@@ -197,7 +201,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
     @Override
     public void markRecordAsLoaded(Integer userId, Integer institutionId, Integer oldDocumentId,
-                                   Boolean deleteOldDocument) {
+                                   Boolean deleteOldDocument, Integer newDocumentId) {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
@@ -235,6 +239,8 @@ public class CommonLoaderImpl implements CommonLoader {
 
         handleDeduplication(oldDocumentId, deleteOldDocument, (DocumentImport) updatedRecord,
             progressReport);
+
+        migrateInternalIdentifiers(newDocumentId, (DocumentImport) updatedRecord);
     }
 
     @Override
@@ -400,6 +406,61 @@ public class CommonLoaderImpl implements CommonLoader {
         }
     }
 
+    private void migrateInternalIdentifiers(Integer newDocumentId, DocumentImport updatedRecord) {
+        if (Objects.isNull(newDocumentId) || newDocumentId <= 0) {
+            return;
+        }
+
+        var savedDocument = documentPublicationService.findDocumentById(newDocumentId);
+        var currentUser = SessionUtil.getLoggedInUser();
+        if (Objects.isNull(currentUser)) {
+            // Should never happen
+            log.error(
+                "CRITICAL: Unable to get current user when performing import, possible breach!");
+            return;
+        }
+
+        if (!hasPermissionToModify(savedDocument, currentUser)) {
+            return;
+        }
+
+        var internalIdentifiers = updatedRecord.getInternalIdentifiers();
+        if (Objects.nonNull(internalIdentifiers) && !internalIdentifiers.isEmpty()) {
+            savedDocument.getInternalIdentifiers().addAll(internalIdentifiers);
+            documentPublicationService.save(savedDocument);
+        }
+    }
+
+    private boolean hasPermissionToModify(Document savedDocument, User currentUser) {
+        return isResearcherWithAccess(savedDocument, currentUser) ||
+            isInstitutionalEditorWithAccess(savedDocument, currentUser);
+    }
+
+    private boolean isResearcherWithAccess(Document document, User user) {
+        if (!UserRole.RESEARCHER.name().equals(user.getAuthority().getName())) {
+            return false;
+        }
+
+        var personId = user.getPerson().getId();
+        return document.getContributors().stream()
+            .filter(c -> Objects.nonNull(c.getPerson()))
+            .anyMatch(c -> c.getPerson().getId().equals(personId));
+    }
+
+    private boolean isInstitutionalEditorWithAccess(Document document, User user) {
+        if (!UserRole.INSTITUTIONAL_EDITOR.name().equals(user.getAuthority().getName())) {
+            return false;
+        }
+
+        var institutionIds = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+            user.getOrganisationUnit().getId());
+
+        return document.getContributors().stream()
+            .flatMap(c -> c.getInstitutions().stream())
+            .map(rs.teslaris.core.model.institution.OrganisationUnit::getId)
+            .anyMatch(institutionIds::contains);
+    }
+
     private List<Integer> fetchPotentialDuplicateIds(DocumentImport record) {
         var doi = Objects.requireNonNullElse(record.getDoi(), "");
         var scopus =
@@ -411,7 +472,8 @@ public class CommonLoaderImpl implements CommonLoader {
         var titles = record.getTitle().stream().map(
             MultilingualContent::getContent).toList();
 
-        return documentPublicationService.findDocumentDuplicates(titles, doi, scopus, openAlex, wos)
+        return documentPublicationService.findDocumentDuplicates(titles, doi, scopus, openAlex, wos,
+                record.getInternalIdentifiers().stream().toList())
             .getContent()
             .stream().map(
                 DocumentPublicationIndex::getDatabaseId).toList();

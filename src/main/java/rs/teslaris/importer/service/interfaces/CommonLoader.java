@@ -16,7 +16,7 @@ public interface CommonLoader {
     void skipRecord(Integer userId, Integer institutionId, Boolean removeFromRecord);
 
     void markRecordAsLoaded(Integer userId, Integer institutionId, Integer oldDocumentId,
-                            Boolean deleteOldDocument);
+                            Boolean deleteOldDocument, Integer newDocumentId);
 
     Integer countRemainingDocumentsForLoading(Integer userId, Integer institutionId);
 

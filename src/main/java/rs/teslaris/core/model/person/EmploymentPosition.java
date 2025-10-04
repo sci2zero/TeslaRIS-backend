@@ -1,5 +1,8 @@
 package rs.teslaris.core.model.person;
 
+import lombok.Getter;
+
+@Getter
 public enum EmploymentPosition {
     SCIENTIFIC_ADVISOR("scientificAdvisor"),
     ASSISTANT_TRAINEE("assistantTrainee"),
@@ -30,7 +33,8 @@ public enum EmploymentPosition {
     RESEARCH_ASSOCIATE("researchAssociate"),
     SCIENTIFIC_COLLABORATOR("scientificCollaborator"),
     SENIOR_SCIENTIFIC_COLLABORATOR("seniorScientificCollaborator"),
-    TEACHING_ASSOCIATE("teachingAssociate");
+    TEACHING_ASSOCIATE("teachingAssociate"),
+    ASSOCIATE_WITHOUT_TITLE("associateWithoutTitle");
 
     private final String value;
 
@@ -38,7 +42,4 @@ public enum EmploymentPosition {
         this.value = value;
     }
 
-    public String getValue() {
-        return this.value;
-    }
 }

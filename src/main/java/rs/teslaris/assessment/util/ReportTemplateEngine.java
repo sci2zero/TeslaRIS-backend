@@ -14,7 +14,8 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.service.interfaces.document.FileService;
-import rs.teslaris.core.util.ResourceMultipartFile;
+import rs.teslaris.core.util.files.ResourceMultipartFile;
+import rs.teslaris.core.util.functional.Pair;
 
 @Component
 public class ReportTemplateEngine {
@@ -139,14 +140,17 @@ public class ReportTemplateEngine {
         return text;
     }
 
-    public static InputStreamResource getReportAsResource(XWPFDocument document)
+    public static Pair<InputStreamResource, Integer> getReportAsResource(XWPFDocument document)
         throws IOException {
-        var byteArrayOutputStream = new ByteArrayOutputStream();
-        document.write(byteArrayOutputStream);
-        document.close();
+        try (var baos = new ByteArrayOutputStream()) {
+            document.write(baos);
+            document.close();
 
-        return new InputStreamResource(
-            new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+            byte[] bytes = baos.toByteArray();
+            var resource = new InputStreamResource(new ByteArrayInputStream(bytes));
+
+            return new Pair<>(resource, bytes.length);
+        }
     }
 
     public static void saveReport(XWPFDocument document, String reportName) throws IOException {

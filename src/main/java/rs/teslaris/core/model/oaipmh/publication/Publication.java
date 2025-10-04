@@ -79,7 +79,7 @@ public class Publication implements PublicationConvertable, HasOldId {
     private String scpNumber;
 
     @XmlElement(name = "ISSN")
-    private String issn;
+    private List<String> issn;
 
     @XmlElement(name = "ISBN")
     private String isbn;
@@ -95,9 +95,9 @@ public class Publication implements PublicationConvertable, HasOldId {
     @XmlElement(name = "Editor")
     private List<PersonAttributes> editors;
 
-    @XmlElementWrapper(name = "Publishers")
-    @XmlElement(name = "Publisher")
-    private List<Publisher> publishers;
+    @XmlElementWrapper(name = "Institutions")
+    @XmlElement(name = "Institution")
+    private List<Institution> institutions;
 
     @XmlElement(name = "Keyword")
     private List<MultilingualContent> keywords;
@@ -124,4 +124,73 @@ public class Publication implements PublicationConvertable, HasOldId {
     @XmlElementWrapper(name = "BoardMembers")
     @XmlElement(name = "BoardMember")
     private List<PersonAttributes> boardMembers;
+
+    @XmlElement(name = "AlternativeTitle")
+    private List<MultilingualContent> alternativeTitle;
+
+    @XmlElement(name = "AcceptedOnDate")
+    private Date acceptedOnDate;
+
+    @XmlElement(name = "DefendedOnDate")
+    private Date defendedOnDate;
+
+    @XmlElement(name = "PublicReviewStartDate")
+    private Date publicReviewStartDate;
+
+    @XmlElement(name = "NumberOfPages")
+    private Integer numberOfPages;
+
+    @XmlElement(name = "NumberOfChapters")
+    private Integer numberOfChapters;
+
+    @XmlElement(name = "NumberOfReferences")
+    private Integer numberOfReferences;
+
+    @XmlElement(name = "NumberOfTables")
+    private Integer numberOfTables;
+
+    @XmlElement(name = "NumberOfPictures")
+    private Integer numberOfPictures;
+
+    @XmlElement(name = "NumberOfGraphs")
+    private Integer numberOfGraphs;
+
+    @XmlElement(name = "NumberOfAppendixes")
+    private Integer numberOfAppendixes;
+
+    @XmlElement(name = "ExtendedAbstract")
+    private List<MultilingualContent> extendedAbstract;
+
+    @XmlElement(name = "Note")
+    private List<MultilingualContent> note;
+
+    @XmlElement(name = "ResearchArea")
+    private String researchArea;
+
+    @XmlElement(name = "HoldingData")
+    private String holdingData;
+
+    @XmlElement(name = "UDC")
+    private String udc;
+
+    @XmlElement(name = "LevelOfEducation")
+    private String levelOfEducation;
+
+    @XmlElement(name = "Publisher")
+    private Publisher publisher;
+
+    @XmlElement(name = "Acronym")
+    private List<MultilingualContent> acronym;
+
+    @XmlElement(name = "BookSeries")
+    private BookSeries bookSeries;
+
+    @XmlElement(name = "Invited")
+    private Boolean invited;
+
+    @XmlElement(name = "IsArchived")
+    private Boolean isArchived;
+
+    @XmlElement(name = "IsOnPublicReview")
+    private Boolean isOnPublicReview;
 }

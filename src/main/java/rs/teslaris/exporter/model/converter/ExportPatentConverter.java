@@ -15,7 +15,14 @@ public class ExportPatentConverter extends ExportConverterBase {
 
     public static Patent toOpenaireModel(ExportDocument exportDocument) {
         var openairePatent = new Patent();
-        openairePatent.setOldId("Patents/(TESLARIS)" + exportDocument.getDatabaseId() + ")");
+
+        if (Objects.nonNull(exportDocument.getOldIds()) && !exportDocument.getOldIds().isEmpty()) {
+            openairePatent.setOldId("Patents/" + legacyIdentifierPrefix +
+                exportDocument.getOldIds().stream().findFirst().get());
+        } else {
+            openairePatent.setOldId("Patents/(TESLARIS)" + exportDocument.getDatabaseId());
+        }
+
         openairePatent.setTitle(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
 

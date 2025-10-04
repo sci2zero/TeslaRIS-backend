@@ -9,6 +9,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.Notification;
+import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.PersonContribution;
@@ -34,7 +35,11 @@ public interface PersonContributionService extends JPAService<PersonContribution
 
     Optional<User> getUserForContributor(Integer contributorId);
 
-    void notifyContributor(Notification notification);
+    List<User> getEditorUsersForContributionInstitutionIds(Set<Integer> institutionIds);
+
+    void notifyContributor(Notification notification, NotificationType notificationType);
+
+    void notifyAdminsAboutUnbindedContribution(Document document);
 
     void reorderContributions(Set<PersonContribution> contributions,
                               Integer contributionId,

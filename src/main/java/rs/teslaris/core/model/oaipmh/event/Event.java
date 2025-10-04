@@ -57,4 +57,9 @@ public class Event implements EventConvertable, HasOldId {
     private List<Integer> importUserId;
 
     private Boolean loaded;
+
+    // Additional Migration fields - not part of the OAI-PMH specification
+
+    @XmlElement(name = "Number")
+    private String number;
 }

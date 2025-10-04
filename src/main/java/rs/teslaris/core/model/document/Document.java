@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
@@ -50,7 +51,11 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> remark = new HashSet<>();
+
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @BatchSize(size = 50)
     private Set<PersonDocumentContribution> contributors = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -60,9 +65,11 @@ public abstract class Document extends BaseEntity implements Mergeable {
     private String documentDate;
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
     private Set<DocumentFile> fileItems = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
     private Set<DocumentFile> proofs = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -103,6 +110,10 @@ public abstract class Document extends BaseEntity implements Mergeable {
 
     @Column(name = "is_archived")
     private Boolean isArchived = false;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "internal_identifiers")
+    private Set<String> internalIdentifiers = new HashSet<>();
 
 
     public void addDocumentContribution(PersonDocumentContribution contribution) {

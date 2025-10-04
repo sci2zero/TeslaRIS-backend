@@ -2,7 +2,6 @@ package rs.teslaris.importer.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +15,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
@@ -23,6 +23,7 @@ import rs.teslaris.core.service.impl.commontypes.ScheduledTasksRestorer;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.importer.controller.CommonHarvestController;
+import rs.teslaris.importer.service.interfaces.OAIPMHHarvester;
 
 @Component
 @RequiredArgsConstructor
@@ -37,6 +38,8 @@ public class ScheduledImportTasksRestorer {
     private final CommonHarvestController commonHarvestController;
 
     private final UserService userService;
+
+    private final OAIPMHHarvester oaipmhHarvester;
 
     private final ObjectMapper objectMapper;
 
@@ -66,6 +69,8 @@ public class ScheduledImportTasksRestorer {
         } else if (metadata.getType()
             .equals(ScheduledTaskType.AUTHOR_CENTRIC_PUBLICATION_HARVEST)) {
             restoreAuthorCentricPublicationHarvest(metadata);
+        } else if (metadata.getType().equals(ScheduledTaskType.OAI_PMH_HARVEST)) {
+            restoreOAIPMHHarvest(metadata);
         }
 
         metadataRepository.deleteTaskForTaskId(metadata.getTaskId());
@@ -76,8 +81,8 @@ public class ScheduledImportTasksRestorer {
 
         var userId = (Integer) data.get("userId");
         var userRole = (String) data.get("userRole");
-        var dateFrom = LocalDate.parse((String) data.get("dateFrom"));
-        var dateTo = LocalDate.parse((String) data.get("dateTo"));
+        var dateFrom = RelativeDateDTO.parse((String) data.get("dateFrom"));
+        var dateTo = RelativeDateDTO.parse((String) data.get("dateTo"));
         var institutionId = (Integer) data.get("institutionId");
 
         var timeToRun = metadata.getTimeToRun();
@@ -91,8 +96,8 @@ public class ScheduledImportTasksRestorer {
                 userService.getUserOrganisationUnitId(userId)) +
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timeToRun,
-            () -> commonHarvestController.performHarvest(userId, userRole, dateFrom, dateTo,
-                institutionId),
+            () -> commonHarvestController.performHarvest(userId, userRole, dateFrom.computeDate(),
+                dateTo.computeDate(), institutionId),
             userId, metadata.getRecurrenceType());
 
         taskManagerService.saveTaskMetadata(
@@ -111,8 +116,8 @@ public class ScheduledImportTasksRestorer {
 
         var userId = (Integer) data.get("userId");
         var userRole = (String) data.get("userRole");
-        var dateFrom = LocalDate.parse((String) data.get("dateFrom"));
-        var dateTo = LocalDate.parse((String) data.get("dateTo"));
+        var dateFrom = RelativeDateDTO.parse((String) data.get("dateFrom"));
+        var dateTo = RelativeDateDTO.parse((String) data.get("dateTo"));
         var institutionId = (Integer) data.get("institutionId");
         var allAuthors = (Boolean) data.get("allAuthors");
 
@@ -133,7 +138,7 @@ public class ScheduledImportTasksRestorer {
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timeToRun,
             () -> commonHarvestController.performAuthorCentricLoading(userId, userRole,
-                dateFrom, dateTo, authorIds, allAuthors, institutionId),
+                dateFrom.computeDate(), dateTo.computeDate(), authorIds, allAuthors, institutionId),
             userId, metadata.getRecurrenceType());
 
         taskManagerService.saveTaskMetadata(
@@ -149,4 +154,38 @@ public class ScheduledImportTasksRestorer {
             }}, metadata.getRecurrenceType()));
     }
 
+    private void restoreOAIPMHHarvest(ScheduledTaskMetadata metadata) {
+        Map<String, Object> data = metadata.getMetadata();
+
+        var userId = (Integer) data.get("userId");
+        var sourceName = (String) data.get("sourceName");
+        var from = RelativeDateDTO.parse((String) data.get("from"));
+        var until = RelativeDateDTO.parse((String) data.get("until"));
+
+        var timeToRun = metadata.getTimeToRun();
+
+        if (timeToRun.isBefore(LocalDateTime.now())) {
+            timeToRun = taskManagerService.findNextFreeExecutionTime();
+        }
+
+        var taskId = taskManagerService.scheduleTask(
+            "OAIPMH_Harvest-" + sourceName +
+                "-" + from + "_" + until +
+                "-" + UUID.randomUUID(), timeToRun,
+            () -> oaipmhHarvester.harvest(
+                sourceName,
+                from.computeDate(),
+                until.computeDate(),
+                userId),
+            userId, metadata.getRecurrenceType());
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.OAI_PMH_HARVEST, new HashMap<>() {{
+                put("sourceName", sourceName);
+                put("from", from.toString());
+                put("until", until.toString());
+                put("userId", userId);
+            }}, metadata.getRecurrenceType()));
+    }
 }

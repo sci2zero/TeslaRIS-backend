@@ -7,7 +7,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,11 +34,15 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.Triple;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
+import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
+import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @RestController
 @RequestMapping("/api/organisation-unit")
@@ -67,8 +73,34 @@ public class OrganisationUnitController {
     }
 
     @GetMapping("/{organisationUnitId}")
-    public OrganisationUnitDTO getOrganisationUnit(@PathVariable Integer organisationUnitId) {
-        return organisationUnitService.readOrganisationUnitById(organisationUnitId);
+    public ResponseEntity<OrganisationUnitDTO> getOrganisationUnit(
+        @PathVariable Integer organisationUnitId) {
+        var dto = organisationUnitService.readOrganisationUnitById(organisationUnitId);
+
+        var headers = new HttpHeaders();
+        FairSignpostingL1Utility.addHeadersForOrganisationUnit(headers, dto,
+            organisationUnitService.getSuperOrganisationUnitRelation(organisationUnitId),
+            "/api/organisation-unit");
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(dto);
+    }
+
+    @GetMapping("/linkset/{organisationUnitId}/{linksetFormat}")
+    public ResponseEntity<String> getOrganisationUnitLinkset(
+        @PathVariable Integer organisationUnitId,
+        @PathVariable LinksetFormat linksetFormat) {
+        var dto = organisationUnitService.readOrganisationUnitById(organisationUnitId);
+        var superRelation =
+            organisationUnitService.getSuperOrganisationUnitRelation(organisationUnitId);
+
+        var headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, linksetFormat.getValue());
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(FairSignpostingL2Utility.createLinksetForOrganisationUnit(dto, superRelation,
+                linksetFormat));
     }
 
     @GetMapping("/sub-units/{organisationUnitId}")
@@ -97,11 +129,13 @@ public class OrganisationUnitController {
         Integer topLevelInstitutionId,
         @RequestParam(required = false) Boolean onlyReturnOnesWhichCanHarvest,
         @RequestParam(required = false) Boolean onlyIndependent,
+        @RequestParam(required = false) ThesisType allowedThesisType,
+        @RequestParam(required = false) Boolean onlyClients,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
             SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-            onlyReturnOnesWhichCanHarvest, onlyIndependent);
+            onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType, onlyClients);
     }
 
     @GetMapping("/advanced-search")
@@ -110,7 +144,7 @@ public class OrganisationUnitController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.ADVANCED, null, null, null, null);
+            SearchRequestType.ADVANCED, null, null, null, null, null, null);
     }
 
     @PostMapping

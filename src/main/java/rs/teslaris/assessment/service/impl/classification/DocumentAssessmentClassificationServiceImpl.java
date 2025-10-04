@@ -75,10 +75,11 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
-import rs.teslaris.core.util.Pair;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.QuadConsumer;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
@@ -265,7 +266,8 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         journalPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
-            assessJournalPublication(journalPublicationIndex.get(), organisationUnitId, null));
+            assessJournalPublication(journalPublicationIndex.get(), organisationUnitId, null,
+                null));
     }
 
     @Override
@@ -281,7 +283,7 @@ public class DocumentAssessmentClassificationServiceImpl
 
         proceedingsPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
             assessProceedingsPublication(proceedingsPublicationIndex.get(), organisationUnitId,
-                null));
+                null, null));
     }
 
     private void classifyJournalPublications(LocalDate fromDate, Integer commissionId,
@@ -302,14 +304,16 @@ public class DocumentAssessmentClassificationServiceImpl
                                       List<Integer> authorIds, List<Integer> orgUnitIds,
                                       List<Integer> entityIds,
                                       DocumentPublicationType publicationType,
-                                      TriConsumer<DocumentPublicationIndex, Integer, Commission> assessFunction) {
+                                      QuadConsumer<DocumentPublicationIndex, Integer, Commission, ArrayList<DocumentAssessmentClassification>> assessFunction) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 500;
         boolean hasNextPage = true;
 
         Commission presetCommission = Objects.nonNull(commissionId)
             ? commissionService.findOneWithFetchedRelations(commissionId)
             : null;
+
+        var batchClassifications = new ArrayList<DocumentAssessmentClassification>();
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> chunk = searchService
@@ -321,12 +325,17 @@ public class DocumentAssessmentClassificationServiceImpl
 
             chunk.forEach(publicationIndex -> {
                 if (Objects.nonNull(presetCommission)) {
-                    assessFunction.accept(publicationIndex, null, presetCommission);
+                    assessFunction.accept(publicationIndex, null, presetCommission,
+                        batchClassifications);
                 } else {
                     publicationIndex.getOrganisationUnitIds().forEach(organisationUnitId ->
-                        assessFunction.accept(publicationIndex, organisationUnitId, null));
+                        assessFunction.accept(publicationIndex, organisationUnitId, null,
+                            batchClassifications));
                 }
             });
+
+            documentAssessmentClassificationRepository.saveAll(batchClassifications);
+            batchClassifications.clear();
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
@@ -334,8 +343,8 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     private void assessJournalPublication(DocumentPublicationIndex journalPublicationIndex,
-                                          Integer organisationUnitId,
-                                          Commission presetCommission) {
+                                          Integer organisationUnitId, Commission presetCommission,
+                                          ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         List<Commission> commissions = (presetCommission != null)
             ? List.of(presetCommission)
             : findCommissionInHierarchy(organisationUnitId);
@@ -387,13 +396,14 @@ public class DocumentAssessmentClassificationServiceImpl
                 journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(),
                 commission,
                 List.of(journalPublicationIndex.getYear(), journalPublicationIndex.getYear() - 1,
-                    journalPublicationIndex.getYear() - 2));
+                    journalPublicationIndex.getYear() - 2), batchedClassifications);
         });
     }
 
     private void assessProceedingsPublication(DocumentPublicationIndex proceedingsPublicationIndex,
                                               Integer organisationUnitId,
-                                              Commission presetCommission) {
+                                              Commission presetCommission,
+                                              ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         List<Commission> commissions = (presetCommission != null)
             ? List.of(presetCommission)
             : findCommissionInHierarchy(organisationUnitId);
@@ -433,7 +443,7 @@ public class DocumentAssessmentClassificationServiceImpl
                     }
                 },
                 proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
-                commission, List.of(proceedingsPublicationIndex.getYear()));
+                commission, List.of(proceedingsPublicationIndex.getYear()), batchedClassifications);
         });
     }
 
@@ -538,7 +548,8 @@ public class DocumentAssessmentClassificationServiceImpl
     private void performPublicationAssessment(
         TriConsumer<Integer, ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>, Commission> yearHandler,
         Integer classificationYear, Integer documentId,
-        Commission commission, List<Integer> yearsToConsider) {
+        Commission commission, List<Integer> yearsToConsider,
+        ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         var classifications =
             new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
 
@@ -551,8 +562,8 @@ public class DocumentAssessmentClassificationServiceImpl
                 ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
                     ResultCalculationMethod.BEST_VALUE);
             bestClassification.ifPresent((documentClassification) -> {
-                handleClassification(documentClassification.a,
-                    commission, documentId, classificationYear);
+                handleClassification(documentClassification.a, commission, documentId,
+                    classificationYear, batchedClassifications);
             });
         }
     }
@@ -667,7 +678,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private void handleClassification(AssessmentClassification classification,
                                       Commission commission,
-                                      Integer documentId, Integer classificationYear) {
+                                      Integer documentId, Integer classificationYear,
+                                      ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         var mappedCode = ClassificationPriorityMapping.getDocClassificationCodeBasedOnCode(
             classification.getCode(), documentId);
         if (mappedCode.isEmpty()) {
@@ -677,7 +689,7 @@ public class DocumentAssessmentClassificationServiceImpl
         var documentClassification = assessmentClassificationService
             .readAssessmentClassificationByCode(mappedCode.get());
         saveDocumentClassification(documentClassification, commission, documentId,
-            classificationYear);
+            classificationYear, batchedClassifications);
     }
 
     private Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> handleRelationAssessments(
@@ -766,7 +778,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private void saveDocumentClassification(AssessmentClassification assessmentClassification,
                                             Commission commission, Integer documentId,
-                                            Integer classificationYear) {
+                                            Integer classificationYear,
+                                            ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         var documentClassification = new DocumentAssessmentClassification();
         documentClassification.setTimestamp(LocalDateTime.now());
         documentClassification.setCommission(commission);
@@ -774,8 +787,19 @@ public class DocumentAssessmentClassificationServiceImpl
         documentClassification.setClassificationYear(classificationYear);
         documentClassification.setDocument(documentRepository.getReferenceById(documentId));
 
-        documentAssessmentClassificationRepository.save(documentClassification);
-        documentPublicationService.reindexDocumentVolatileInformation(documentId);
+        if (Objects.nonNull(batchedClassifications)) {
+            batchedClassifications.add(documentClassification);
+        } else {
+            documentAssessmentClassificationRepository.save(documentClassification);
+        }
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(documentIndex -> {
+                if (!documentIndex.getAssessedBy().contains(commission.getId())) {
+                    documentIndex.getAssessedBy().add(commission.getId());
+                }
+                documentPublicationIndexRepository.save(documentIndex);
+            });
     }
 
     private void setCommonFields(DocumentAssessmentClassification documentClassification,

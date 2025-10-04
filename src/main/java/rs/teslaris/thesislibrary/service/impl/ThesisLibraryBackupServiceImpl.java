@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
@@ -33,15 +34,15 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.DocumentFileBackupRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.interfaces.commontypes.CSVExportService;
+import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
-import rs.teslaris.core.util.BackupZipBuilder;
 import rs.teslaris.core.util.exceptionhandling.exception.BackupException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
-import rs.teslaris.thesislibrary.dto.ThesisCSVExportRequestDTO;
+import rs.teslaris.core.util.files.BackupZipBuilder;
+import rs.teslaris.thesislibrary.dto.ThesisTableExportRequestDTO;
 import rs.teslaris.thesislibrary.model.ThesisFileSection;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
@@ -66,7 +67,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
     private final MessageSource messageSource;
 
-    private final CSVExportService csvExportService;
+    private final TableExportService tableExportService;
 
 
     private final Map<FileSection, Function<Thesis, Set<DocumentFile>>> sectionAccessors = Map.of(
@@ -80,7 +81,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
     @Override
     public String scheduleBackupGeneration(Integer institutionId,
-                                           LocalDate from, LocalDate to,
+                                           RelativeDateDTO from, RelativeDateDTO to,
                                            List<ThesisType> types,
                                            List<FileSection> thesisFileSections,
                                            Boolean defended, Boolean putOnReview,
@@ -91,7 +92,10 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             throw new BackupException("You must select at least one of: defended or putOnReview.");
         }
 
-        if (from.isAfter(to)) {
+        var fromDate = from.computeDate();
+        var toDate = to.computeDate();
+
+        if (fromDate.isAfter(toDate)) {
             throw new BackupException("dateRangeIssueMessage");
         }
 
@@ -100,7 +104,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             "Library_Backup-" + institutionId +
                 "-" + from + "_" + to +
                 "-" + UUID.randomUUID(), reportGenerationTime,
-            () -> generateBackupForPeriodAndInstitution(institutionId, from, to, types,
+            () -> generateBackupForPeriodAndInstitution(institutionId, fromDate, toDate, types,
                 thesisFileSections, defended, putOnReview, language, metadataFormat),
             userId, recurrence);
 
@@ -108,8 +112,8 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             new ScheduledTaskMetadata(taskId, reportGenerationTime,
                 ScheduledTaskType.THESIS_LIBRARY_BACKUP, new HashMap<>() {{
                 put("institutionId", institutionId);
-                put("from", from);
-                put("to", to);
+                put("from", from.toString());
+                put("to", to.toString());
                 put("types", types);
                 put("thesisFileSections", thesisFileSections);
                 put("defended", defended);
@@ -130,7 +134,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
                                                        String language,
                                                        ExportFileType metadataFormat) {
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         BackupZipBuilder zipBuilder = null;
@@ -175,7 +179,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
     private void createMetadataCSV(List<Integer> exportEntityIds, String language,
                                    BackupZipBuilder zipBuilder, ExportFileType metadataFormat) {
-        var exportRequest = new ThesisCSVExportRequestDTO();
+        var exportRequest = new ThesisTableExportRequestDTO();
         exportRequest.setExportMaxPossibleAmount(false);
         exportRequest.setExportEntityIds(exportEntityIds);
         exportRequest.setExportLanguage(language);
@@ -192,7 +196,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         exportRequest.setHarvard(true);
         exportRequest.setVancouver(true);
 
-        var metadataFile = csvExportService.exportDocumentsToCSV(exportRequest);
+        var metadataFile = tableExportService.exportDocumentsToFile(exportRequest);
         try {
             zipBuilder.copyFileToRoot(metadataFile.getInputStream(), "metadata.csv");
         } catch (IOException e) {
@@ -285,7 +289,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
     }
 
     @Override
-    public GetObjectResponse serveAndDeleteBackupFile(String backupFileName, Integer userId)
+    public GetObjectResponse serveBackupFile(String backupFileName, Integer userId)
         throws IOException {
         var report = documentFileBackupRepository.findByBackupFileName(backupFileName)
             .orElseThrow(() -> new StorageException("No backup with given filename."));
@@ -297,10 +301,16 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             throw new LoadingException("Unauthorised to download backup.");
         }
 
-        var resource = fileService.loadAsResource(backupFileName);
+        return fileService.loadAsResource(backupFileName);
+    }
+
+    @Override
+    public void deleteBackupFile(String backupFileName) {
+        var report = documentFileBackupRepository.findByBackupFileName(backupFileName)
+            .orElseThrow(() -> new StorageException("No backup with given filename."));
+
         fileService.delete(backupFileName);
         documentFileBackupRepository.delete(report);
-        return resource;
     }
 
     private String generateBackupFileName(LocalDate from, LocalDate to,

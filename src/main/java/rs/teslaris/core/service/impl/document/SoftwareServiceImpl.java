@@ -15,20 +15,24 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.SoftwareJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
@@ -46,19 +50,22 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                OrganisationUnitService organisationUnitService,
                                DocumentRepository documentRepository,
                                DocumentFileService documentFileService,
+                               CitationService citationService,
                                PersonContributionService personContributionService,
                                ExpressionTransformer expressionTransformer,
                                EventService eventService,
                                CommissionRepository commissionRepository,
                                SearchFieldsLoader searchFieldsLoader,
                                OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                               InvolvementRepository involvementRepository,
+                               OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                SoftwareJPAServiceImpl softwareJPAService,
                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
-            organisationUnitService, documentRepository, documentFileService,
-            personContributionService,
-            expressionTransformer, eventService, commissionRepository, searchFieldsLoader,
-            organisationUnitTrustConfigurationService);
+            organisationUnitService, documentRepository, documentFileService, citationService,
+            personContributionService, expressionTransformer, eventService, commissionRepository,
+            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
+            organisationUnitOutputConfigurationService);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }
@@ -74,11 +81,11 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         try {
             software = softwareJPAService.findOne(softwareId);
         } catch (NotFoundException e) {
-            this.clearIndexWhenFailedRead(softwareId);
+            this.clearIndexWhenFailedRead(softwareId, DocumentPublicationType.SOFTWARE);
             throw e;
         }
 
-        if (!SessionTrackingUtil.isUserLoggedIn() &&
+        if (!SessionUtil.isUserLoggedIn() &&
             !software.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             throw new NotFoundException("Document with given id does not exist.");
         }
@@ -92,12 +99,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
         checkForDocumentDate(softwareDTO);
         setCommonFields(newSoftware, softwareDTO);
-
-        newSoftware.setInternalNumber(softwareDTO.getInternalNumber());
-        if (Objects.nonNull(softwareDTO.getPublisherId())) {
-            newSoftware.setPublisher(
-                publisherService.findOne(softwareDTO.getPublisherId()));
-        }
+        setSoftwareRelatedFields(newSoftware, softwareDTO);
 
         var savedSoftware = softwareJPAService.save(newSoftware);
 
@@ -117,12 +119,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         checkForDocumentDate(softwareDTO);
         clearCommonFields(softwareToUpdate);
         setCommonFields(softwareToUpdate, softwareDTO);
-
-        softwareToUpdate.setInternalNumber(softwareDTO.getInternalNumber());
-        if (Objects.nonNull(softwareDTO.getPublisherId())) {
-            softwareToUpdate.setPublisher(
-                publisherService.findOne(softwareDTO.getPublisherId()));
-        }
+        setSoftwareRelatedFields(softwareToUpdate, softwareDTO);
 
         softwareJPAService.save(softwareToUpdate);
 
@@ -131,6 +128,20 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                 .orElse(new DocumentPublicationIndex()));
 
         sendNotifications(softwareToUpdate);
+    }
+
+    private void setSoftwareRelatedFields(Software software, SoftwareDTO softwareDTO) {
+        software.setInternalNumber(softwareDTO.getInternalNumber());
+
+        software.setPublisher(null);
+        software.setAuthorReprint(false);
+
+        if (Objects.nonNull(softwareDTO.getAuthorReprint()) && softwareDTO.getAuthorReprint()) {
+            software.setAuthorReprint(true);
+        } else if (Objects.nonNull(softwareDTO.getPublisherId())) {
+            software.setPublisher(
+                publisherService.findOne(softwareDTO.getPublisherId()));
+        }
     }
 
     @Override
@@ -148,7 +159,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         // Super service does the initial deletion
 
         int pageNumber = 0;
-        int chunkSize = 10;
+        int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
@@ -177,7 +188,10 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         if (Objects.nonNull(software.getPublisher())) {
             index.setPublisherId(software.getPublisher().getId());
         }
+        index.setAuthorReprint(software.getAuthorReprint());
 
+        index.setApa(
+            citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
     }
 }

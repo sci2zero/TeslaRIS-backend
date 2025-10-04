@@ -36,6 +36,7 @@ import rs.teslaris.assessment.repository.indicator.PersonIndicatorRepository;
 import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.service.interfaces.statistics.StatisticsService;
+import rs.teslaris.assessment.util.GeoliteIPUtil;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.indexmodel.BookSeriesIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -64,10 +65,11 @@ import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
-import rs.teslaris.core.util.FunctionalUtil;
 import rs.teslaris.core.util.deduplication.Mergeable;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.tracing.SessionTrackingUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.session.YauaaBotDetector;
 
 @Service
 @Primary
@@ -114,6 +116,8 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
 
     private final BookSeriesIndexRepository bookSeriesIndexRepository;
 
+    private final GeoliteIPUtil geoliteIPUtil;
+
 
     @Override
     public List<String> fetchStatisticsTypeIndicators(StatisticsType statisticsType) {
@@ -126,10 +130,12 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         statisticsEntry.setPublicationSeriesId(publicationSeriesId);
         saveView(statisticsEntry);
         log.info(
-            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: PUBLICATION_SERIES_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: PUBLICATION_SERIES_VIEW - ID: {}",
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             publicationSeriesId
         );
     }
@@ -140,10 +146,12 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         statisticsEntry.setEventId(eventId);
         saveView(statisticsEntry);
         log.info(
-            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: EVENT_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: EVENT_VIEW - ID: {}",
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             eventId
         );
     }
@@ -154,10 +162,12 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         statisticsEntry.setPersonId(personId);
         saveView(statisticsEntry);
         log.info(
-            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: PERSON_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: PERSON_VIEW - ID: {}",
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             personId
         );
     }
@@ -168,10 +178,12 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         statisticsEntry.setDocumentId(documentId);
         saveView(statisticsEntry);
         log.info(
-            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: DOCUMENT_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: DOCUMENT_VIEW - ID: {}",
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             documentId
         );
     }
@@ -182,10 +194,12 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         statisticsEntry.setOrganisationUnitId(organisationUnitId);
         saveView(statisticsEntry);
         log.info(
-            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: ORGANISATION_UNIT_VIEW - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: ORGANISATION_UNIT_VIEW - ID: {}",
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             organisationUnitId
         );
     }
@@ -196,10 +210,12 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         statisticsEntry.setDocumentId(documentId);
         saveDownload(statisticsEntry);
         log.info(
-            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - TYPE: DOCUMENT_DOWNLOAD - ID: {}",
-            SessionTrackingUtil.getCurrentTracingContextId(),
-            SessionTrackingUtil.getJSessionId(),
-            SessionTrackingUtil.getCurrentClientIP(),
+            "STATISTICS - CONTEXT: {} - TRACKING_COOKIE: {} - IP: {} - COUNTRY: {} - COUNTRY_CODE: {} - TYPE: DOCUMENT_DOWNLOAD - ID: {}",
+            SessionUtil.getCurrentTracingContextId(),
+            SessionUtil.getJSessionId(),
+            SessionUtil.getCurrentClientIP(),
+            geoliteIPUtil.getCountry(SessionUtil.getCurrentClientIP()),
+            geoliteIPUtil.getCountryCode(SessionUtil.getCurrentClientIP()),
             documentId
         );
     }
@@ -216,7 +232,24 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
 
     private void save(StatisticsIndex index) {
         index.setTimestamp(LocalDateTime.now());
-        index.setSessionId(SessionTrackingUtil.getJSessionId());
+        index.setSessionId(SessionUtil.getJSessionId());
+
+        var clientIp = SessionUtil.getCurrentClientIP();
+        index.setIpAddress(clientIp);
+        index.setCountryName(geoliteIPUtil.getCountry(clientIp));
+        index.setCountryCode(geoliteIPUtil.getCountryCode(clientIp));
+
+        var userAgent = SessionUtil.getCurrentClientUserAgent();
+        if (!YauaaBotDetector.isValidUserAgent(userAgent)) {
+            return;
+        }
+
+        index.setUserAgent(userAgent);
+        index.setBot(YauaaBotDetector.isBot(userAgent));
+
+        var deviceClassAndOS = YauaaBotDetector.getDeviceClassAndOS(userAgent);
+        index.setDeviceClass(deviceClassAndOS.a);
+        index.setOperatingSystem(deviceClassAndOS.b);
 
         updateTotalCount(index);
 
@@ -272,7 +305,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
             updateIndicator(index.getPublicationSeriesId(),
                 indicator.getCode(),
                 publicationSeriesRepository::findById,
-                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeriesId,
                 (id) -> new PublicationSeriesIndicator(),
                 entityIndicator -> {
                     entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
@@ -283,7 +316,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
             updateIndicator(index.getEventId(),
                 indicator.getCode(),
                 eventRepository::findById,
-                eventIndicatorRepository::findIndicatorsForCodeAndEvent,
+                eventIndicatorRepository::findIndicatorsForCodeAndEventId,
                 (id) -> new EventIndicator(),
                 entityIndicator -> {
                     entityIndicator.setNumericValue(entityIndicator.getNumericValue() + 1);
@@ -449,7 +482,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                     return totalCount.get();
                 },
                 JournalIndex::getDatabaseId,
-                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeriesId,
                 id -> new PublicationSeriesIndicator(),
                 PublicationSeriesIndicator::setPublicationSeries,
                 publicationSeriesIndicatorRepository,
@@ -473,7 +506,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                     return totalCount.get();
                 },
                 BookSeriesIndex::getDatabaseId,
-                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeries,
+                publicationSeriesIndicatorRepository::findIndicatorForCodeAndPublicationSeriesId,
                 id -> new PublicationSeriesIndicator(),
                 PublicationSeriesIndicator::setPublicationSeries,
                 publicationSeriesIndicatorRepository,
@@ -497,7 +530,7 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
                     return totalCount.get();
                 },
                 EventIndex::getDatabaseId,
-                eventIndicatorRepository::findIndicatorsForCodeAndEvent,
+                eventIndicatorRepository::findIndicatorsForCodeAndEventId,
                 id -> new EventIndicator(),
                 EventIndicator::setEvent,
                 eventIndicatorRepository,
@@ -583,13 +616,12 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         }
     }
 
-    private <T, R> void updateIndicator(Integer id,
-                                        String indicatorCode,
-                                        Function<Integer, Optional<T>> findEntityById,
-                                        BiFunction<String, Integer, Optional<R>> findIndicator,
-                                        Function<Integer, R> createIndicator,
-                                        Consumer<R> updateAndSaveIndicatorValue) {
-
+    private synchronized <T, R> void updateIndicator(Integer id,
+                                                     String indicatorCode,
+                                                     Function<Integer, Optional<T>> findEntityById,
+                                                     BiFunction<String, Integer, Optional<R>> findIndicator,
+                                                     Function<Integer, R> createIndicator,
+                                                     Consumer<R> updateAndSaveIndicatorValue) {
         var optionalIndicator = findIndicator.apply(indicatorCode, id);
         R indicatorEntity;
         if (optionalIndicator.isEmpty()) {
