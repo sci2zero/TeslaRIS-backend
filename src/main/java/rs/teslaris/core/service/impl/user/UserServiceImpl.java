@@ -934,6 +934,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         userRepository.deleteRefreshTokenForUser(userId);
 
         userToDelete.setPerson(null);
+        userToDelete.setLocked(true);
         userRepository.delete(userToDelete);
         userAccountIndexRepository.findByDatabaseId(userId)
             .ifPresent(userAccountIndexRepository::delete);

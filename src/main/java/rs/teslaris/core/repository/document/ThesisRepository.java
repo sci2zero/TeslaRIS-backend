@@ -29,8 +29,13 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
         "t.approve_status = 1", nativeQuery = true)
     Page<Thesis> findAllModified(Pageable pageable, boolean allTime);
 
-    @Query("SELECT t FROM Thesis t WHERE t.isOnPublicReview = true")
+    @Query("SELECT t FROM Thesis t WHERE t.isOnPublicReview = TRUE")
     List<Thesis> findAllOnPublicReview();
+
+    @Query("SELECT t FROM Thesis t WHERE " +
+        "t.thesisType IN :types AND " +
+        "t.isOnPublicReview = TRUE")
+    List<Thesis> findAllOnPublicReviewOfGivenTypes(List<ThesisType> types);
 
     @Query("SELECT COUNT(t) FROM Thesis t WHERE " +
         "t.thesisDefenceDate >= :startDate AND " +

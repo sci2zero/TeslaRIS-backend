@@ -22,11 +22,13 @@ import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.DocumentFileSection;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ThesisService;
 
 @Component
 @RequiredArgsConstructor
@@ -46,6 +48,8 @@ public class ScheduledTasksRestorer {
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final ThesisService thesisService;
+
     private final ObjectMapper objectMapper;
 
 
@@ -55,7 +59,8 @@ public class ScheduledTasksRestorer {
             List.of(
                 ScheduledTaskType.DOCUMENT_BACKUP,
                 ScheduledTaskType.REINDEXING,
-                ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION
+                ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION,
+                ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK
             ));
 
         for (ScheduledTaskMetadata metadata : allMetadata) {
@@ -76,6 +81,8 @@ public class ScheduledTasksRestorer {
             restoreReindexOperation(metadata);
         } else if (metadata.getType().equals(ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION)) {
             restoreUnmanagedDocumentsDeletion(metadata);
+        } else if (metadata.getType().equals(ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK)) {
+            restorePublicReviewEndDateCheck(metadata);
         }
 
         metadataRepository.deleteTaskForTaskId(metadata.getTaskId());
@@ -163,6 +170,26 @@ public class ScheduledTasksRestorer {
             new ScheduledTaskMetadata(taskId, timeToRun,
                 ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION, new HashMap<>(),
                 metadata.getRecurrenceType()));
+    }
+
+    private void restorePublicReviewEndDateCheck(ScheduledTaskMetadata metadata) {
+        Map<String, Object> data = metadata.getMetadata();
+
+        var userId = (Integer) data.get("userId");
+        var publicReviewLengthDays = (Integer) data.get("publicReviewLengthDays");
+        var types = objectMapper.convertValue(
+            data.get("types"), new TypeReference<ArrayList<ThesisType>>() {
+            }
+        );
+
+        var timeToRun = metadata.getTimeToRun();
+
+        if (timeToRun.isBefore(LocalDateTime.now())) {
+            timeToRun = taskManagerService.findNextFreeExecutionTime();
+        }
+
+        thesisService.schedulePublicReviewEndCheck(timeToRun, types, publicReviewLengthDays, userId,
+            metadata.getRecurrenceType());
     }
 }
 

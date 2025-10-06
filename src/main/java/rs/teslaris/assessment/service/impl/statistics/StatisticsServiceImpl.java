@@ -616,13 +616,12 @@ public class StatisticsServiceImpl implements StatisticsService, DocumentDownloa
         }
     }
 
-    private <T, R> void updateIndicator(Integer id,
-                                        String indicatorCode,
-                                        Function<Integer, Optional<T>> findEntityById,
-                                        BiFunction<String, Integer, Optional<R>> findIndicator,
-                                        Function<Integer, R> createIndicator,
-                                        Consumer<R> updateAndSaveIndicatorValue) {
-
+    private synchronized <T, R> void updateIndicator(Integer id,
+                                                     String indicatorCode,
+                                                     Function<Integer, Optional<T>> findEntityById,
+                                                     BiFunction<String, Integer, Optional<R>> findIndicator,
+                                                     Function<Integer, R> createIndicator,
+                                                     Consumer<R> updateAndSaveIndicatorValue) {
         var optionalIndicator = findIndicator.apply(indicatorCode, id);
         R indicatorEntity;
         if (optionalIndicator.isEmpty()) {

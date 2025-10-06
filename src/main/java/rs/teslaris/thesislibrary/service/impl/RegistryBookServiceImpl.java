@@ -716,8 +716,11 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     dto.setLocalBirthDate(info.getLocalBirthDate());
                     dto.setPlaceOfBirth(info.getPlaceOfBrith());
                     dto.setPostalAddress(PostalAddressConverter.toDto(info.getPostalAddress()));
-                    dto.setContact(new ContactDTO(info.getContact().getContactEmail(),
-                        info.getContact().getPhoneNumber()));
+
+                    if (Objects.nonNull(info.getContact())) {
+                        dto.setContact(new ContactDTO(info.getContact().getContactEmail(),
+                            info.getContact().getPhoneNumber()));
+                    }
                 }
             });
     }

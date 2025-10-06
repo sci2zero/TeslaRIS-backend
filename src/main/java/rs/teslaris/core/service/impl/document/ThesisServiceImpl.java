@@ -2,21 +2,25 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.xml.bind.JAXBException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +47,9 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.LibraryFormat;
@@ -63,9 +70,11 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
@@ -120,6 +129,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private final DocumentFileService documentFileService;
 
+    private final TaskManagerService taskManagerService;
+
+    private final FileService fileService;
+
     private final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
 
     @Value("${thesis.public-review.duration-days}")
@@ -127,6 +140,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Value("${feedback.email}")
     private String feedbackEmail;
+
+    @Value("${thesis.check-public-review-end.enable-fallback}")
+    private Boolean fallbackPublicReviewCheckEnabled;
 
 
     @Autowired
@@ -153,8 +169,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitIndexRepository organisationUnitIndexRepository,
                              UserService userService, MessageSource messageSource,
                              BrandingInformationService brandingInformationService,
-                             EmailUtil emailUtil,
-                             DocumentFileService documentFileService1) {
+                             EmailUtil emailUtil, DocumentFileService documentFileService1,
+                             TaskManagerService taskManagerService, FileService fileService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -173,6 +189,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         this.brandingInformationService = brandingInformationService;
         this.emailUtil = emailUtil;
         this.documentFileService = documentFileService1;
+        this.taskManagerService = taskManagerService;
+        this.fileService = fileService;
     }
 
     @Override
@@ -361,13 +379,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             var officialPublication = new DocumentFile();
             officialPublication.setDocument(file.getDocument());
             officialPublication.setFilename(file.getFilename());
-            officialPublication.setServerFilename(file.getServerFilename());
             officialPublication.setMimeType(file.getMimeType());
             officialPublication.setFileSize(file.getFileSize());
             officialPublication.setAccessRights(file.getAccessRights());
             officialPublication.setLicense(file.getLicense());
             officialPublication.setApproveStatus(file.getApproveStatus());
-            officialPublication.setLegacyFilename(file.getLegacyFilename());
             officialPublication.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
 
             var description = new HashSet<>();
@@ -375,11 +391,34 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 new MultiLingualContent(multiLingualContent)));
             officialPublication.setDescription((Set) description);
 
+            var newServerFilename = fileService.duplicateFile(file.getServerFilename());
+            officialPublication.setServerFilename(newServerFilename);
             documentFileService.save(officialPublication);
 
             thesis.getFileItems().add(officialPublication);
             thesisJPAService.save(thesis);
         });
+    }
+
+    @Override
+    public void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
+                                             Integer publicReviewLengthDays, Integer userId,
+                                             RecurrenceType recurrence) {
+        var taskId = taskManagerService.scheduleTask("PublicReviewEndCheck-" +
+                StringUtils.join(types.stream().map(ThesisType::name).toList(), "-") + "-" +
+                publicReviewLengthDays + "_DAYS-" +
+                UUID.randomUUID(),
+            timestamp,
+            () -> removeFromPublicReview(types, publicReviewLengthDays),
+            userId, recurrence);
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timestamp,
+                ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK, new HashMap<>() {{
+                put("types", types);
+                put("publicReviewLengthDays", publicReviewLengthDays);
+                put("userId", userId);
+            }}, recurrence));
     }
 
     @Override
@@ -441,6 +480,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         if (thesis.getTitle().isEmpty() || Objects.isNull(thesis.getOrganisationUnit()) ||
+            Objects.isNull(thesis.getScientificArea()) || thesis.getScientificArea().isEmpty() ||
             thesis.getPreliminaryFiles().isEmpty() || thesis.getCommissionReports().isEmpty()) {
             throw new ThesisException("noAttachmentsMessage");
         }
@@ -756,15 +796,23 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Scheduled(cron = "${thesis.check-public-review-end.period}")
-    public void removeFromPublicReview() {
-        var thesesOnPublicReview = thesisRepository.findAllOnPublicReview();
+    protected void removeFromPublicReviewScheduledFallback() {
+        if (Objects.nonNull(fallbackPublicReviewCheckEnabled) && fallbackPublicReviewCheckEnabled) {
+            removeFromPublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
+                daysOnPublicReview);
+        }
+    }
 
-        var thirtyDaysAgo = LocalDate.now().minusDays(daysOnPublicReview);
+    private void removeFromPublicReview(List<ThesisType> thesisTypes,
+                                        Integer publicReviewLengthDays) {
+        var thesesOnPublicReview = thesisRepository.findAllOnPublicReviewOfGivenTypes(thesisTypes);
+
+        var latestPossibleStartDate = LocalDate.now().minusDays(publicReviewLengthDays);
         var thesesByInstitution =
             new ConcurrentHashMap<Integer, List<Triple<String, Set<MultiLingualContent>, String>>>();
 
         thesesOnPublicReview.stream()
-            .filter(thesis -> isPublicReviewExpired(thesis, thirtyDaysAgo))
+            .filter(thesis -> isPublicReviewExpired(thesis, latestPossibleStartDate))
             .forEach(thesis -> {
                 updateThesisAndIndex(thesis);
 
@@ -772,8 +820,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 thesesByInstitution.putIfAbsent(institutionId, new ArrayList<>());
 
                 var authorName = getAuthorName(thesis);
-                if (authorName == null) {
-                    return;
+                if (Objects.isNull(authorName)) {
+                    return; // should never happen
                 }
 
                 var latestReviewDate = thesis.getPublicReviewStartDates().stream()

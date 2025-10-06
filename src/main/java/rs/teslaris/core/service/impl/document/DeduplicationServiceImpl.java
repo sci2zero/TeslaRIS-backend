@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.ScriptQuery;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -433,7 +434,10 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 .getContent(),
             personSearchService,
             item -> {
-                var tokens = List.of(item.getName().trim().split("; "));
+                var tokens = Arrays.stream(item.getName().trim().split("; "))
+                    .flatMap(name -> Arrays.stream(name.split(" ")))
+                    .map(namePart -> namePart.replace("(", "").replace(")", ""))
+                    .toList();
 
                 return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
                     b.must(bq -> {

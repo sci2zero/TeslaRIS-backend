@@ -19,7 +19,6 @@ import rs.teslaris.core.model.document.FileSection;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.service.impl.commontypes.ScheduledTasksRestorer;
-import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookReportService;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
 
@@ -34,8 +33,6 @@ public class ScheduledLibraryTasksRestorer {
     private final RegistryBookReportService registryBookReportService;
 
     private final ScheduledTaskMetadataRepository metadataRepository;
-
-    private final TaskManagerService taskManagerService;
 
     private final ObjectMapper objectMapper;
 

@@ -2,7 +2,9 @@ package rs.teslaris.thesislibrary.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -20,6 +22,7 @@ import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
 @Aspect
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class RegistryBookEntryEditCheckAspect {
 
     private final JwtUtil tokenUtil;
@@ -51,7 +54,17 @@ public class RegistryBookEntryEditCheckAspect {
                         userService.getUserOrganisationUnitId(userId))
                     .contains(registryBookService.findOne(registryBookEntryId)
                         .getDissertationInformation().getOrganisationUnit().getId())) {
-                    throw new CantEditException("Unauthorised to edit or use this promotion.");
+
+                    // TODO: Remove this
+                    var subunits = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                        userService.getUserOrganisationUnitId(userId));
+                    log.warn("REGISTRY BOOK ENTRY EDIT CHECK -> SUBUNITS: [{}] -> PROMOTION_OU: {}",
+                        subunits.stream().map(String::valueOf).collect(Collectors.joining(",")),
+                        registryBookService.findOne(registryBookEntryId)
+                            .getDissertationInformation().getOrganisationUnit().getId());
+
+                    throw new CantEditException(
+                        "Unauthorised to edit or use this registry book entry.");
                 }
                 break;
             default:
