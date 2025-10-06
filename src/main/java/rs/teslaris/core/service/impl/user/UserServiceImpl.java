@@ -984,9 +984,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "adminPasswordReset.mailBodyEmployee",
-            new Object[] {new String(generatedPassword)},
+            new Object[] {systemName, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
 

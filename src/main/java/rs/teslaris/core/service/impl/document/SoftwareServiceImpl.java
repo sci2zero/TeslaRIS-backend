@@ -155,6 +155,9 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
         softwareJPAService.delete(softwareId);
         this.delete(softwareId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(softwareId));
     }
 
     @Override

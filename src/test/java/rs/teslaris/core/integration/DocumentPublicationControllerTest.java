@@ -126,8 +126,8 @@ public class DocumentPublicationControllerTest extends BaseTest {
     public void testGetWordCloudForSingleDocument(String language) throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/document/wordcloud/{documentId}?language={foreignLanguage}",
-                        1, language)
+                        "http://localhost:8081/api/document/wordcloud/{documentId}?documentType=THESIS&language={foreignLanguage}",
+                        15, language)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }

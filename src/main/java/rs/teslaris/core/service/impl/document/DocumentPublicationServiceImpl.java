@@ -1008,9 +1008,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     public List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
+                                                                  DocumentPublicationType documentType,
                                                                   String language) {
         var document =
-            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdAndType(
+                    documentId, documentType.name())
                 .orElseThrow(() -> new NotFoundException(
                     "Document with ID " + documentId + " does not exist."));
 
@@ -1695,7 +1697,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         } else {
             return !roleAuthority.equals(UserRole.ADMIN.name()) &&
                 !roleAuthority.equals(UserRole.INSTITUTIONAL_EDITOR.name()) &&
-                !roleAuthority.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name());
+                !roleAuthority.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name()) &&
+                !roleAuthority.equals(UserRole.HEAD_OF_LIBRARY.name());
         }
     }
 

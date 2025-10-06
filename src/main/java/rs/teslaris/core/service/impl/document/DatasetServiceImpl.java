@@ -154,6 +154,9 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
         datasetJPAService.delete(datasetId);
         this.delete(datasetId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(datasetId));
     }
 
     @Override

@@ -205,6 +205,9 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         proceedingPublicationJPAService.delete(proceedingsPublicationId);
         this.delete(proceedingsPublicationId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(proceedingsPublicationId));
     }
 
     @Override

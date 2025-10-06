@@ -1201,6 +1201,8 @@ public class UserServiceTest {
         var emailFuture = CompletableFuture.completedFuture(true);
         when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
         when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         // When
         var result = userService.generateNewPasswordForUser(8);
@@ -1224,6 +1226,8 @@ public class UserServiceTest {
 
         var emailFuture = CompletableFuture.completedFuture(false);
         when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         // When
         var result = userService.generateNewPasswordForUser(9);

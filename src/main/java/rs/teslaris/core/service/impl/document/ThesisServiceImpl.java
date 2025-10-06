@@ -305,6 +305,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         checkIfAvailableForEditing(thesisToDelete);
 
         thesisJPAService.delete(thesisId);
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(thesisId));
     }
 
     @Override

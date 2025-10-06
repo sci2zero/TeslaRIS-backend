@@ -174,6 +174,9 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         journalPublicationJPAService.delete(journalPublicationId);
         this.delete(journalPublicationId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(journalPublicationId));
     }
 
     @Override

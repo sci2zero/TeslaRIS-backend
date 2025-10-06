@@ -181,13 +181,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void deleteProceedings(Integer proceedingsId) {
         var proceedingsToDelete = findProceedingsById(proceedingsId);
 
-        if (proceedingsRepository.hasPublications(proceedingsId)) {
+        if (proceedingsRepository.hasPublications(proceedingsToDelete.getId())) {
             throw new ProceedingsReferenceConstraintViolationException("proceedingsInUse");
         }
 
 //        TODO: Should we delete files if we have soft delete
 //        deleteProofsAndFileItems(proceedingsToDelete);
-        proceedingsJPAService.delete(proceedingsId);
+        proceedingsJPAService.delete(proceedingsToDelete.getId());
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(proceedingsId));

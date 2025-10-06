@@ -63,8 +63,8 @@ public class RegistryBookController {
     }
 
     @GetMapping("/{registryBookEntryId}")
-    @PreAuthorize("hasAuthority('UPDATE_REGISTRY_BOOK')")
-    public RegistryBookEntryDTO getRegistryBookEntriesForPromotion(
+    @PreAuthorize("hasAuthority('READ_REGISTRY_BOOK')")
+    public RegistryBookEntryDTO getRegistryBookEntryForPromotion(
         @PathVariable Integer registryBookEntryId) {
         return registryBookService.readRegistryBookEntry(registryBookEntryId);
     }

@@ -155,6 +155,9 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         patentJPAService.delete(patentId);
         this.delete(patentId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(patentId));
     }
 
     @Override
