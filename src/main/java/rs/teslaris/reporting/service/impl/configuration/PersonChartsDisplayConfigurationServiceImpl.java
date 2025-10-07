@@ -4,46 +4,48 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
-import rs.teslaris.reporting.PersonChartsDisplayConfigurationRepository;
-import rs.teslaris.reporting.dto.PersonChartDisplaySettingsDTO;
-import rs.teslaris.reporting.model.ChartDisplaySettings;
-import rs.teslaris.reporting.model.PersonChartsDisplayConfiguration;
+import rs.teslaris.reporting.ChartsDisplayConfigurationRepository;
+import rs.teslaris.reporting.dto.configuration.PersonChartDisplaySettingsDTO;
+import rs.teslaris.reporting.model.ChartsDisplayConfiguration;
 import rs.teslaris.reporting.service.interfaces.configuration.PersonChartsDisplayConfigurationService;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class PersonChartsDisplayConfigurationServiceImpl
-    extends JPAServiceImpl<PersonChartsDisplayConfiguration>
+    extends BaseChartsDisplayConfigurationServiceImpl
     implements PersonChartsDisplayConfigurationService {
-
-    private final PersonChartsDisplayConfigurationRepository
-        personChartsDisplayConfigurationRepository;
 
     private final InvolvementService involvementService;
 
     private final OrganisationUnitService organisationUnitService;
 
 
+    @Autowired
+    public PersonChartsDisplayConfigurationServiceImpl(
+        ChartsDisplayConfigurationRepository chartsDisplayConfigurationRepository,
+        InvolvementService involvementService, OrganisationUnitService organisationUnitService) {
+        super(chartsDisplayConfigurationRepository);
+        this.involvementService = involvementService;
+        this.organisationUnitService = organisationUnitService;
+    }
+
     @Override
     public PersonChartDisplaySettingsDTO getDisplaySettingsForPerson(Integer personId) {
         var personEmploymentInstitutions =
             involvementService.getDirectEmploymentInstitutionIdsForPerson(personId);
-        var configurations = new ArrayList<PersonChartsDisplayConfiguration>();
+        var configurations = new ArrayList<ChartsDisplayConfiguration>();
 
         personEmploymentInstitutions.forEach(employmentInstitutionId -> {
             var currentInstitutionId = employmentInstitutionId;
 
             while (Objects.nonNull(currentInstitutionId)) {
                 var configuration =
-                    personChartsDisplayConfigurationRepository.getConfigurationForInstitution(
+                    chartsDisplayConfigurationRepository.getConfigurationForInstitution(
                         currentInstitutionId);
 
                 if (configuration.isPresent()) {
@@ -64,101 +66,43 @@ public class PersonChartsDisplayConfigurationServiceImpl
             addDefaultConfiguration(configurations);
         }
 
-        return new PersonChartDisplaySettingsDTO(
-            createChartSetting(configurations, "publicationCountTotal"),
-            createChartSetting(configurations, "publicationCountByYear"),
-            createChartSetting(configurations, "publicationTypeByYear"),
-            createChartSetting(configurations, "publicationCategoryByYear"),
-            createChartSetting(configurations, "publicationTypeRatio"),
-            createChartSetting(configurations, "publicationCategoryRatio"),
-            createChartSetting(configurations, "citationCountTotal"),
-            createChartSetting(configurations, "citationCountByYear"),
-            createChartSetting(configurations, "viewCountTotal"),
-            createChartSetting(configurations, "viewCountByMonth"),
-            createChartSetting(configurations, "viewCountByCountry")
-        );
+        var trueConfiguration = new PersonChartDisplaySettingsDTO(
+            deduceBaseConfigurationFormMultipleSources(configurations,
+                ChartsDisplayConfiguration::getPersonChartDisplaySettings));
+
+        trueConfiguration.setCitationCountTotal(
+            createChartSetting(configurations, "citationCountTotal",
+                ChartsDisplayConfiguration::getOuChartDisplaySettings));
+        trueConfiguration.setCitationCountByYear(
+            createChartSetting(configurations, "citationCountByYear",
+                ChartsDisplayConfiguration::getOuChartDisplaySettings));
+
+        return trueConfiguration;
     }
 
     @Override
     public void savePersonDisplaySettings(Integer institutionId,
                                           PersonChartDisplaySettingsDTO settings) {
         var existingConfiguration =
-            personChartsDisplayConfigurationRepository.getConfigurationForInstitution(
+            chartsDisplayConfigurationRepository.getConfigurationForInstitution(
                 institutionId);
         var configuration =
-            existingConfiguration.orElseGet(PersonChartsDisplayConfiguration::new);
+            existingConfiguration.orElseGet(ChartsDisplayConfiguration::new);
 
-        if (Objects.isNull(configuration.getChartDisplaySettings())) {
-            configuration.setChartDisplaySettings(new HashMap<>());
+        if (Objects.isNull(configuration.getPersonChartDisplaySettings())) {
+            configuration.setPersonChartDisplaySettings(new HashMap<>());
         }
 
-        configuration.getChartDisplaySettings()
-            .put("publicationCountTotal", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("publicationCountByYear", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("publicationTypeByYear", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("publicationCategoryByYear", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("publicationTypeRatio", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("publicationCategoryRatio", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("citationCountTotal", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("citationCountByYear", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("viewCountTotal", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("viewCountByMonth", settings.publicationCountTotal());
-        configuration.getChartDisplaySettings()
-            .put("viewCountByCountry", settings.publicationCountTotal());
+        setBaseConfigurationFields(configuration.getPersonChartDisplaySettings(), settings);
 
         save(configuration);
     }
 
-    @Override
-    protected JpaRepository<PersonChartsDisplayConfiguration, Integer> getEntityRepository() {
-        return personChartsDisplayConfigurationRepository;
-    }
+    private void addDefaultConfiguration(List<ChartsDisplayConfiguration> configurations) {
+        var configuration = new ChartsDisplayConfiguration();
 
-    private ChartDisplaySettings createChartSetting(
-        List<PersonChartsDisplayConfiguration> configurations, String chartKey) {
-        boolean display = configurations.stream()
-            .anyMatch(conf -> conf.getChartDisplaySettings()
-                .getOrDefault(chartKey, new ChartDisplaySettings(true, true)).getDisplay());
-        boolean spanWholeRow = configurations.stream()
-            .anyMatch(conf -> conf.getChartDisplaySettings()
-                .getOrDefault(chartKey, new ChartDisplaySettings(true, true)).getSpanWholeRow());
-        return new ChartDisplaySettings(display, spanWholeRow);
-    }
-
-    private void addDefaultConfiguration(List<PersonChartsDisplayConfiguration> configurations) {
-        var configuration = new PersonChartsDisplayConfiguration();
-
-        configuration.getChartDisplaySettings()
-            .put("publicationCountTotal", new ChartDisplaySettings(true, false));
-        configuration.getChartDisplaySettings()
-            .put("publicationCountByYear", new ChartDisplaySettings(true, false));
-        configuration.getChartDisplaySettings()
-            .put("publicationTypeByYear", new ChartDisplaySettings(true, true));
-        configuration.getChartDisplaySettings()
-            .put("publicationCategoryByYear", new ChartDisplaySettings(true, true));
-        configuration.getChartDisplaySettings()
-            .put("publicationTypeRatio", new ChartDisplaySettings(true, true));
-        configuration.getChartDisplaySettings()
-            .put("publicationCategoryRatio", new ChartDisplaySettings(true, true));
-        configuration.getChartDisplaySettings()
-            .put("citationCountTotal", new ChartDisplaySettings(true, false));
-        configuration.getChartDisplaySettings()
-            .put("citationCountByYear", new ChartDisplaySettings(true, false));
-        configuration.getChartDisplaySettings()
-            .put("viewCountTotal", new ChartDisplaySettings(true, false));
-        configuration.getChartDisplaySettings()
-            .put("viewCountByMonth", new ChartDisplaySettings(true, false));
-        configuration.getChartDisplaySettings()
-            .put("viewCountByCountry", new ChartDisplaySettings(true, true));
+        setDefaultConfigurationValues(configuration.getPersonChartDisplaySettings());
+        setPersonConfigurationSpecificDefaultFields(configuration.getPersonChartDisplaySettings());
 
         configurations.add(configuration);
     }

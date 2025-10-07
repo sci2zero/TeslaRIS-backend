@@ -23,13 +23,21 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @AllArgsConstructor
 @Entity
 @Table(name = "person_charts_display_configuration")
-public class PersonChartsDisplayConfiguration extends BaseEntity {
+public class ChartsDisplayConfiguration extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb", name = "chart_display_settings")
-    private Map<String, ChartDisplaySettings> chartDisplaySettings = new HashMap<>();
+    @Column(columnDefinition = "jsonb", name = "person_chart_display_settings")
+    private Map<String, ChartDisplaySettings> personChartDisplaySettings = new HashMap<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "ou_chart_display_settings")
+    private Map<String, ChartDisplaySettings> ouChartDisplaySettings = new HashMap<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "document_chart_display_settings")
+    private Map<String, ChartDisplaySettings> documentChartDisplaySettings = new HashMap<>();
 }

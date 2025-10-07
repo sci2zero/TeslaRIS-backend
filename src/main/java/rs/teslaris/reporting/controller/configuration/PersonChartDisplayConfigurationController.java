@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.controller;
+package rs.teslaris.reporting.controller.configuration;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.OrgUnitEditCheck;
-import rs.teslaris.reporting.dto.PersonChartDisplaySettingsDTO;
+import rs.teslaris.reporting.dto.configuration.PersonChartDisplaySettingsDTO;
 import rs.teslaris.reporting.service.interfaces.configuration.PersonChartsDisplayConfigurationService;
 
 @RestController

@@ -10,6 +10,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChartDisplaySettings {
+
     private Boolean display;
+
     private Boolean spanWholeRow;
+
+
+    public ChartDisplaySettings(ChartDisplaySettings other) {
+        this.display = other.display;
+        this.spanWholeRow = other.spanWholeRow;
+    }
 }

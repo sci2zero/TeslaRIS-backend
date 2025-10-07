@@ -51,7 +51,12 @@ public class OrgUnitEditCheckAspect {
             organisationUnitIds.add(organisationUnitService.findOrganisationUnitsRelationById(
                     Integer.parseInt(attributeMap.get("relationId"))).getSourceOrganisationUnit()
                 .getId());
-        } else {
+        } else if (attributeMap.containsKey("sourceId") && attributeMap.containsKey("targetId")) {
+            organisationUnitIds.add(Integer.parseInt(attributeMap.get("sourceId")));
+            organisationUnitIds.add(Integer.parseInt(attributeMap.get("targetId")));
+        }
+
+        if (organisationUnitIds.isEmpty()) {
             throw new IllegalArgumentException(
                 "Missing OU identifiers."); // should never happen in prod, only for testing
         }
