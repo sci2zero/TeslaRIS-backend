@@ -26,7 +26,7 @@ public class ReportTemplateEngine {
         ReportTemplateEngine.fileService = fileService;
     }
 
-    public static XWPFDocument loadDocumentTemplate(String templateName) throws IOException {
+    public static synchronized XWPFDocument loadDocumentTemplate(String templateName) throws IOException {
         FileInputStream fis =
             new FileInputStream("src/main/resources/reportTemplates/" + templateName);
         var document = new XWPFDocument(fis);
@@ -34,7 +34,7 @@ public class ReportTemplateEngine {
         return document;
     }
 
-    public static void addColumnsToFirstRow(XWPFDocument document, List<String> columnsData,
+    public static synchronized void addColumnsToFirstRow(XWPFDocument document, List<String> columnsData,
                                             int tableIndex) {
         var table = document.getTables().get(tableIndex);
         var firstRow = table.getRow(0);
@@ -45,7 +45,7 @@ public class ReportTemplateEngine {
         }
     }
 
-    public static void dynamicallyGenerateTableRows(XWPFDocument document,
+    public static synchronized void dynamicallyGenerateTableRows(XWPFDocument document,
                                                     List<List<String>> rowsData,
                                                     Integer tableIndex) {
         var table = document.getTables().get(tableIndex);
@@ -88,20 +88,20 @@ public class ReportTemplateEngine {
         }
     }
 
-    private static void setText(XWPFTableCell cell, String text) {
+    private static synchronized void setText(XWPFTableCell cell, String text) {
         var paragraph = cell.addParagraph();
         var run = paragraph.createRun();
         run.setText(text);
     }
 
-    private static void setColoredText(XWPFTableCell cell, String text, String color) {
+    private static synchronized void setColoredText(XWPFTableCell cell, String text, String color) {
         var paragraph = cell.addParagraph();
         var run = paragraph.createRun();
         run.setTextHighlightColor(color);
         run.setText(text);
     }
 
-    public static void insertFields(XWPFDocument document, Map<String, String> replacements) {
+    public static synchronized void insertFields(XWPFDocument document, Map<String, String> replacements) {
         document.getParagraphs().forEach(paragraph -> processParagraph(paragraph, replacements));
 
         document.getTables().forEach(table ->
@@ -115,7 +115,7 @@ public class ReportTemplateEngine {
         );
     }
 
-    private static void processParagraph(XWPFParagraph paragraph,
+    private static synchronized void processParagraph(XWPFParagraph paragraph,
                                          Map<String, String> replacements) {
         StringBuilder fullText = new StringBuilder();
         for (var run : paragraph.getRuns()) {
@@ -133,14 +133,14 @@ public class ReportTemplateEngine {
         }
     }
 
-    private static String replacePlaceholders(String text, Map<String, String> replacements) {
+    private static synchronized String replacePlaceholders(String text, Map<String, String> replacements) {
         for (Map.Entry<String, String> entry : replacements.entrySet()) {
             text = text.replace(entry.getKey(), entry.getValue());
         }
         return text;
     }
 
-    public static Pair<InputStreamResource, Integer> getReportAsResource(XWPFDocument document)
+    public static synchronized Pair<InputStreamResource, Integer> getReportAsResource(XWPFDocument document)
         throws IOException {
         try (var baos = new ByteArrayOutputStream()) {
             document.write(baos);
@@ -153,12 +153,12 @@ public class ReportTemplateEngine {
         }
     }
 
-    public static void saveReport(XWPFDocument document, String reportName) throws IOException {
+    public static synchronized void saveReport(XWPFDocument document, String reportName) throws IOException {
         fileService.store(convertToMultipartFile(document, reportName), reportName.split("\\.")[0]);
         document.close();
     }
 
-    private static MultipartFile convertToMultipartFile(XWPFDocument document, String fileName)
+    private static synchronized MultipartFile convertToMultipartFile(XWPFDocument document, String fileName)
         throws IOException {
         var byteArrayOutputStream = new ByteArrayOutputStream();
         document.write(byteArrayOutputStream);

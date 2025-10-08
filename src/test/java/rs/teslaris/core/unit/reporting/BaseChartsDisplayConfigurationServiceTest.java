@@ -123,9 +123,9 @@ public class BaseChartsDisplayConfigurationServiceTest {
         assertTrue(ouSettings.getPublicationCountTotal().getDisplay());
         assertFalse(ouSettings.getPublicationCountTotal().getSpanWholeRow());
         assertTrue(ouSettings.getPublicationCountPersonLeaderboard().getDisplay());
-        assertTrue(ouSettings.getPublicationCountPersonLeaderboard().getSpanWholeRow());
+        assertFalse(ouSettings.getPublicationCountPersonLeaderboard().getSpanWholeRow());
         assertTrue(ouSettings.getCitationCountPersonLeaderboard().getDisplay());
-        assertTrue(ouSettings.getCitationCountPersonLeaderboard().getSpanWholeRow());
+        assertFalse(ouSettings.getCitationCountPersonLeaderboard().getSpanWholeRow());
 
         var documentSettings = result.getDocumentChartDisplaySettings();
         assertNotNull(documentSettings);

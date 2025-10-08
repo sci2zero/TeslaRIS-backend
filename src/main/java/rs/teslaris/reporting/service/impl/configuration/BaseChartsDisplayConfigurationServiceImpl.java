@@ -85,17 +85,17 @@ public class BaseChartsDisplayConfigurationServiceImpl
     protected void setOUConfigurationSpecificDefaultFields(
         Map<String, ChartDisplaySettings> configuration) {
         configuration
-            .put("publicationCountPersonLeaderboard", new ChartDisplaySettings(true, true));
+            .put("publicationCountPersonLeaderboard", new ChartDisplaySettings(true, false));
         configuration
-            .put("publicationCountSubUnitLeaderboard", new ChartDisplaySettings(true, true));
+            .put("publicationCountSubUnitLeaderboard", new ChartDisplaySettings(true, false));
         configuration
-            .put("citationCountPersonLeaderboard", new ChartDisplaySettings(true, true));
+            .put("citationCountPersonLeaderboard", new ChartDisplaySettings(true, false));
         configuration
-            .put("citationCountSubUnitLeaderboard", new ChartDisplaySettings(true, true));
+            .put("citationCountSubUnitLeaderboard", new ChartDisplaySettings(true, false));
         configuration
-            .put("assessmentPointCountPersonLeaderboard", new ChartDisplaySettings(true, true));
+            .put("assessmentPointCountPersonLeaderboard", new ChartDisplaySettings(true, false));
         configuration
-            .put("assessmentPointCountSubUnitLeaderboard", new ChartDisplaySettings(true, true));
+            .put("assessmentPointCountSubUnitLeaderboard", new ChartDisplaySettings(true, false));
     }
 
     protected void setPersonConfigurationSpecificDefaultFields(
