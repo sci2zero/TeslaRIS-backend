@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.reporting.ChartsDisplayConfigurationRepository;
 import rs.teslaris.reporting.dto.configuration.BaseChartDisplaySettingsDTO;
 import rs.teslaris.reporting.dto.configuration.DocumentChartDisplaySettingsDTO;
@@ -30,6 +31,8 @@ public class BaseChartsDisplayConfigurationServiceImpl
     protected final ChartsDisplayConfigurationRepository
         chartsDisplayConfigurationRepository;
 
+    protected final OrganisationUnitService organisationUnitService;
+
 
     @Override
     protected JpaRepository<ChartsDisplayConfiguration, Integer> getEntityRepository() {
@@ -41,25 +44,21 @@ public class BaseChartsDisplayConfigurationServiceImpl
         configuration
             .put("publicationCountTotal", settings.getPublicationCountTotal());
         configuration
-            .put("publicationCountByYear", settings.getPublicationCountTotal());
+            .put("publicationCountByYear", settings.getPublicationCountByYear());
         configuration
-            .put("publicationTypeByYear", settings.getPublicationCountTotal());
+            .put("publicationTypeByYear", settings.getPublicationTypeByYear());
         configuration
-            .put("publicationCategoryByYear", settings.getPublicationCountTotal());
+            .put("publicationCategoryByYear", settings.getPublicationCategoryByYear());
         configuration
-            .put("publicationTypeRatio", settings.getPublicationCountTotal());
+            .put("publicationTypeRatio", settings.getPublicationTypeRatio());
         configuration
-            .put("publicationCategoryRatio", settings.getPublicationCountTotal());
+            .put("publicationCategoryRatio", settings.getPublicationCategoryRatio());
         configuration
-            .put("citationCountTotal", settings.getPublicationCountTotal());
+            .put("viewCountTotal", settings.getViewCountTotal());
         configuration
-            .put("citationCountByYear", settings.getPublicationCountTotal());
+            .put("viewCountByMonth", settings.getViewCountByMonth());
         configuration
-            .put("viewCountTotal", settings.getPublicationCountTotal());
-        configuration
-            .put("viewCountByMonth", settings.getPublicationCountTotal());
-        configuration
-            .put("viewCountByCountry", settings.getPublicationCountTotal());
+            .put("viewCountByCountry", settings.getViewCountByCountry());
     }
 
     protected void setDefaultConfigurationValues(Map<String, ChartDisplaySettings> configuration) {
@@ -224,5 +223,13 @@ public class BaseChartsDisplayConfigurationServiceImpl
         ));
 
         return response;
+    }
+
+    protected ChartsDisplayConfiguration createNewConfiguration(Integer institutionId) {
+        var configuration = new ChartsDisplayConfiguration();
+        configuration.setOrganisationUnit(
+            organisationUnitService.findOrganisationUnitById(institutionId));
+
+        return configuration;
     }
 }

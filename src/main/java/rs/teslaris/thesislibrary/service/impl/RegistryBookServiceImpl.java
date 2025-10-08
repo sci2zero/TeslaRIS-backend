@@ -161,6 +161,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var thesis = thesisService.getThesisById(thesisId);
         newEntry.setThesis(thesis);
 
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
+            dto.setPromotionInstitutionId(thesis.getOrganisationUnit().getId());
+        }
+
         setCommonFields(newEntry, dto, false);
         handlePromotionInfo(dto, newEntry);
 
@@ -609,8 +613,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                 "You don't have rights to view this institution's registry book.");
         }
 
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
         return registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
-                institutionId, from, to, authorName, authorTitle,
+                institutionIds, from, to, authorName, authorTitle,
                 SerbianTransliteration.toCyrillic(authorName),
                 SerbianTransliteration.toCyrillic(authorTitle), pageable)
             .map(RegistryBookEntryConverter::toDTO);

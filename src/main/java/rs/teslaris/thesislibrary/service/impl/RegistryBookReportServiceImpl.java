@@ -222,7 +222,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
         while (hasNextPage) {
             List<RegistryBookEntry> chunk =
                 registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
-                        institutionId, from, to, authorName, authorTitle,
+                        List.of(institutionId), from, to, authorName, authorTitle,
                         SerbianTransliteration.toCyrillic(authorName),
                         SerbianTransliteration.toCyrillic(authorTitle),
                         PageRequest.of(pageNumber, chunkSize))

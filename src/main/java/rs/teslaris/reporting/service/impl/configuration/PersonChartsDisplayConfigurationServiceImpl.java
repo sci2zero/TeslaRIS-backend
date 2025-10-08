@@ -22,16 +22,13 @@ public class PersonChartsDisplayConfigurationServiceImpl
 
     private final InvolvementService involvementService;
 
-    private final OrganisationUnitService organisationUnitService;
-
 
     @Autowired
     public PersonChartsDisplayConfigurationServiceImpl(
         ChartsDisplayConfigurationRepository chartsDisplayConfigurationRepository,
-        InvolvementService involvementService, OrganisationUnitService organisationUnitService) {
-        super(chartsDisplayConfigurationRepository);
+        OrganisationUnitService organisationUnitService, InvolvementService involvementService) {
+        super(chartsDisplayConfigurationRepository, organisationUnitService);
         this.involvementService = involvementService;
-        this.organisationUnitService = organisationUnitService;
     }
 
     @Override
@@ -72,10 +69,10 @@ public class PersonChartsDisplayConfigurationServiceImpl
 
         trueConfiguration.setCitationCountTotal(
             createChartSetting(configurations, "citationCountTotal",
-                ChartsDisplayConfiguration::getOuChartDisplaySettings));
+                ChartsDisplayConfiguration::getPersonChartDisplaySettings));
         trueConfiguration.setCitationCountByYear(
             createChartSetting(configurations, "citationCountByYear",
-                ChartsDisplayConfiguration::getOuChartDisplaySettings));
+                ChartsDisplayConfiguration::getPersonChartDisplaySettings));
 
         return trueConfiguration;
     }
@@ -87,13 +84,18 @@ public class PersonChartsDisplayConfigurationServiceImpl
             chartsDisplayConfigurationRepository.getConfigurationForInstitution(
                 institutionId);
         var configuration =
-            existingConfiguration.orElseGet(ChartsDisplayConfiguration::new);
+            existingConfiguration.orElseGet(() -> createNewConfiguration(institutionId));
 
         if (Objects.isNull(configuration.getPersonChartDisplaySettings())) {
             configuration.setPersonChartDisplaySettings(new HashMap<>());
         }
 
         setBaseConfigurationFields(configuration.getPersonChartDisplaySettings(), settings);
+
+        configuration.getPersonChartDisplaySettings()
+            .put("citationCountTotal", settings.getCitationCountTotal());
+        configuration.getPersonChartDisplaySettings()
+            .put("citationCountByYear", settings.getCitationCountByYear());
 
         save(configuration);
     }

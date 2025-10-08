@@ -26,17 +26,14 @@ public class DocumentChartsDisplayConfigurationServiceImpl
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
-    private final OrganisationUnitService organisationUnitService;
-
 
     @Autowired
     public DocumentChartsDisplayConfigurationServiceImpl(
         ChartsDisplayConfigurationRepository chartsDisplayConfigurationRepository,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        OrganisationUnitService organisationUnitService) {
-        super(chartsDisplayConfigurationRepository);
+        OrganisationUnitService organisationUnitService,
+        DocumentPublicationIndexRepository documentPublicationIndexRepository) {
+        super(chartsDisplayConfigurationRepository, organisationUnitService);
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
-        this.organisationUnitService = organisationUnitService;
     }
 
     @Override
@@ -97,7 +94,7 @@ public class DocumentChartsDisplayConfigurationServiceImpl
             chartsDisplayConfigurationRepository.getConfigurationForInstitution(
                 institutionId);
         var configuration =
-            existingConfiguration.orElseGet(ChartsDisplayConfiguration::new);
+            existingConfiguration.orElseGet(() -> createNewConfiguration(institutionId));
 
         if (Objects.isNull(configuration.getDocumentChartDisplaySettings())) {
             configuration.setDocumentChartDisplaySettings(new HashMap<>());

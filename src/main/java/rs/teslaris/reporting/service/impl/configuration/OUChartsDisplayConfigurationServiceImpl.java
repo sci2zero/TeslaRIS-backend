@@ -19,22 +19,20 @@ public class OUChartsDisplayConfigurationServiceImpl
     extends BaseChartsDisplayConfigurationServiceImpl
     implements OUChartsDisplayConfigurationService {
 
-    private final OrganisationUnitService organisationUnitService;
-
-
     @Autowired
     public OUChartsDisplayConfigurationServiceImpl(
         ChartsDisplayConfigurationRepository chartsDisplayConfigurationRepository,
         OrganisationUnitService organisationUnitService) {
-        super(chartsDisplayConfigurationRepository);
-        this.organisationUnitService = organisationUnitService;
+        super(chartsDisplayConfigurationRepository, organisationUnitService);
     }
 
     @Override
     public OUChartDisplaySettingsDTO getDisplaySettingsForOrganisationUnit(
         Integer organisationUnitId) {
-        var institutionIds =
-            organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId);
+        var institutionIds = new ArrayList<>(List.of(organisationUnitId));
+        institutionIds.addAll(
+            organisationUnitService.getSuperOUsHierarchyRecursive(organisationUnitId));
+
         var configurations = new ArrayList<ChartsDisplayConfiguration>();
 
         for (var institutionId : institutionIds) {
@@ -85,7 +83,7 @@ public class OUChartsDisplayConfigurationServiceImpl
             chartsDisplayConfigurationRepository.getConfigurationForInstitution(
                 institutionId);
         var configuration =
-            existingConfiguration.orElseGet(ChartsDisplayConfiguration::new);
+            existingConfiguration.orElseGet(() -> createNewConfiguration(institutionId));
 
         if (Objects.isNull(configuration.getOuChartDisplaySettings())) {
             configuration.setOuChartDisplaySettings(new HashMap<>());

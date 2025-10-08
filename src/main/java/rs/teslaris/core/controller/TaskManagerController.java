@@ -67,7 +67,7 @@ public class TaskManagerController {
     }
 
     @GetMapping("/registry-book-report-generation")
-    @PreAuthorize("hasAuthority('GENERATE_THESIS_LIBRARY_BACKUP')")
+    @PreAuthorize("hasAuthority('GENERATE_REG_BOOK_REPORT')")
     public List<ScheduledTaskResponseDTO> listScheduledRegistryBookTasks(
         @RequestHeader(value = "Authorization") String bearerToken) {
         return taskManagerService.listScheduledRegistryBookGenerationTasks(
