@@ -18,6 +18,8 @@ public interface DocumentPublicationIndexRepository extends
 
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseId(Integer databaseId);
 
+    Optional<DocumentPublicationIndex> findByDoi(String doi);
+
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseIdAndType(
         Integer databaseId, String type);
 

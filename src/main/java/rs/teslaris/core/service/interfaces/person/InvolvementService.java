@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.person.PersonInternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
@@ -52,4 +53,6 @@ public interface InvolvementService extends JPAService<Involvement> {
     void endEmployment(Integer institutionId, Integer personId);
 
     EmploymentTitle getCurrentEmploymentTitle(Integer personId);
+
+    void migrateInternalIdentifiers(PersonInternalIdentifierMigrationDTO dto);
 }

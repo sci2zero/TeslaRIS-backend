@@ -478,14 +478,17 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             index.setEventId(null);
         }
 
-        index.setWordcloudTokensSr(
-            StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
-                index.getKeywordsSr()));
+        index.setWordcloudTokensSr(StringUtil.extractKeywords(index.getTitleSr(),
+            StringUtil.valueExists(index.getDescriptionSr()) ? index.getDescriptionSr() :
+                index.getFullTextSr(), index.getKeywordsSr()));
+
         index.setWordcloudTokensOther(StringUtil.extractKeywords(
             MultilingualContentConverter.getLocalizedContent(document.getTitle(),
                 LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN),
-            MultilingualContentConverter.getLocalizedContent(document.getDescription(),
-                LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN),
+            (Objects.nonNull(document.getDescription()) && !document.getDescription().isEmpty()) ?
+                MultilingualContentConverter.getLocalizedContent(document.getDescription(),
+                    LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN) :
+                index.getFullTextOther(),
             MultilingualContentConverter.getLocalizedContent(document.getKeywords(),
                 LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN)));
     }

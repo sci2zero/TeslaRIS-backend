@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.AtomicDouble;
+import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -53,6 +54,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.core.util.session.ScopusAuthenticationHelper;
 
@@ -203,8 +205,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             PageRequest.of(0, 50),
             personService::findPersonsByLRUHarvest,
             people -> people.forEach(person -> {
-                if (Objects.nonNull(person.getOpenAlexId()) && !person.getOpenAlexId().isBlank() &&
-                    openAlexRateLimit.getAndDecrement() > 0) {
+                if (openAlexRateLimit.getAndDecrement() > 0) {
                     harvestFromOpenAlex(
                         person,
                         totalCitationsIndicator,
@@ -253,8 +254,18 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var endDate = LocalDate.now();
         var startDate = endDate.minusYears(harvestPeriodOffset);
 
-        var baseUrl = "https://api.openalex.org/works?per-page=100" +
-            "&filter=author.id:" + person.getOpenAlexId() +
+        if (!StringUtil.valueExists(person.getOpenAlexId()) ||
+            !StringUtil.valueExists(person.getOrcid()) ||
+            !StringUtil.valueExists(person.getScopusAuthorId())) {
+            performDataEnrichment(person);
+        }
+
+        var filter = constructAdequateOpenALexSearchFilter(person);
+        if (Objects.isNull(filter)) {
+            return;
+        }
+
+        var baseUrl = "https://api.openalex.org/works?per-page=100" + "&filter=" + filter +
             ",from_publication_date:" + startDate + ",to_publication_date:" + endDate;
 
         var cursor = "*";
@@ -281,6 +292,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
                 if (Objects.nonNull(results.citationCounts()) &&
                     !results.citationCounts.isEmpty()) {
+                    updateDocumentCitationCounts(results);
+
                     var citationCounts = results.citationCounts.stream()
                         .filter(citationResult -> citationResult.citationCount > 0).toList();
                     totalPublications += results.citationCounts.size();
@@ -383,9 +396,6 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         int citationCount = result[0].count();
                         totalPublications.getAndIncrement();
                         allCitationCounts.add(citationCount);
-
-                        doc.setTotalCitations((long) citationCount);
-                        documentPublicationIndexRepository.save(doc);
                     }
                 });
 
@@ -632,6 +642,93 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         return existingMap;
     }
 
+    private void performDataEnrichment(Person person) {
+        var baseURL = "https://api.openalex.org/authors/";
+
+        if (StringUtil.valueExists(person.getOpenAlexId())) {
+            baseURL += person.getOpenAlexId();
+        } else if (StringUtil.valueExists(person.getOrcid())) {
+            baseURL += "orcid:" + person.getOrcid();
+        } else if (StringUtil.valueExists(person.getScopusAuthorId())) {
+            baseURL += "scopus:" + person.getScopusAuthorId();
+        }
+
+        var objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        try {
+            ResponseEntity<String> responseEntity =
+                restTemplateProvider.provideRestTemplate()
+                    .getForEntity(baseURL, String.class);
+
+            if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                return;
+            }
+
+            var results =
+                objectMapper.readValue(responseEntity.getBody(), PersonIdentifierResponse.class);
+
+            if (!StringUtil.valueExists(person.getOpenAlexId()) &&
+                results.identifiers().containsKey("openalex")) {
+                var identifier =
+                    results.identifiers().get("openalex").replace("https://openalex.org/", "");
+                if (!personService.isIdentifierInUse(identifier, person.getId())) {
+                    person.setOpenAlexId(identifier);
+                }
+            }
+
+            if (!StringUtil.valueExists(person.getOrcid()) &&
+                results.identifiers().containsKey("orcid")) {
+                var identifier =
+                    results.identifiers().get("orcid").replace("https://orcid.org/", "");
+                if (!personService.isIdentifierInUse(identifier, person.getId())) {
+                    person.setOrcid(identifier);
+                }
+            }
+
+            if (!StringUtil.valueExists(person.getScopusAuthorId()) &&
+                results.identifiers().containsKey("scopus")) {
+                var identifier = results.identifiers().get("scopus").split("&")[0].replace(
+                    "http://www.scopus.com/inward/authorDetails.url?authorID=", "");
+                if (!personService.isIdentifierInUse(identifier, person.getId())) {
+                    person.setScopusAuthorId(identifier);
+                }
+            }
+
+            personService.save(person);
+        } catch (Exception e) {
+            log.warn("Unable to fetch author data from OpenAlex for {}. Reason: {}",
+                baseURL.replace("https://api.openalex.org/authors/", ""), e.getMessage());
+        }
+    }
+
+    @Nullable
+    private String constructAdequateOpenALexSearchFilter(Person person) {
+        if (StringUtil.valueExists(person.getOpenAlexId())) {
+            return "author.id:" + person.getOpenAlexId();
+        } else if (StringUtil.valueExists(person.getOrcid())) {
+            return "author.orcid:" + person.getOrcid();
+        }
+
+        return null;
+    }
+
+    private void updateDocumentCitationCounts(OpenAlexResults results) {
+        results.citationCounts.forEach(publicationCitations -> {
+            if (Objects.isNull(publicationCitations.doi())) {
+                return;
+            }
+
+            documentPublicationIndexRepository.findByDoi(
+                    publicationCitations.doi().replace("https://doi.org/", ""))
+                .ifPresent(docIndex -> {
+                    docIndex.setTotalCitations(
+                        (long) publicationCitations.citationCount);
+                    documentPublicationIndexRepository.save(docIndex);
+                });
+        });
+    }
+
     @EventListener
     @Async
     protected void handleManualIndicatorHarvest(HarvestExternalIndicatorsEvent ignored) {
@@ -713,6 +810,11 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     public record ScopusCursor(
         @JsonProperty("@next") String next
+    ) {
+    }
+
+    public record PersonIdentifierResponse(
+        @JsonProperty("ids") Map<String, String> identifiers
     ) {
     }
 }

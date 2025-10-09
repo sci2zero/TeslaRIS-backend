@@ -49,12 +49,14 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
     public CollaborationNetworkDTO findCollaborationNetwork(Integer authorId, Integer depth,
                                                             CollaborationType collaborationType) {
         try {
-            if (Objects.isNull(depth) || depth < 1 || depth > 3) {
-                throw new IllegalArgumentException("Depth must be between 1 and 3.");
-            }
-
             if (Objects.isNull(collaborationType)) {
                 throw new IllegalArgumentException("Collaboration type cannot be null.");
+            }
+
+            if (Objects.isNull(depth) || depth < 1 ||
+                (collaborationType.equals(CollaborationType.COAUTHORSHIP) && depth > 3) ||
+                (!collaborationType.equals(CollaborationType.COAUTHORSHIP) && depth > 2)) {
+                throw new IllegalArgumentException("Depth must be between 1 and 3.");
             }
 
             var networkStructure = buildNetworkStructure(authorId, depth, collaborationType);
