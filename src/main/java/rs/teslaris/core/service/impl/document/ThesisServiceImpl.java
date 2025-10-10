@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,6 +42,7 @@ import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -393,12 +395,22 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 new MultiLingualContent(multiLingualContent)));
             officialPublication.setDescription((Set) description);
 
-            var newServerFilename = fileService.duplicateFile(file.getServerFilename());
-            officialPublication.setServerFilename(newServerFilename);
+            var copiedFileResource = fileService.duplicateFile(file.getServerFilename());
+            officialPublication.setServerFilename(copiedFileResource.a);
             documentFileService.save(officialPublication);
+
+            documentFileService.parseAndIndexPdfDocument(officialPublication, copiedFileResource.b,
+                officialPublication.getFilename(), officialPublication.getServerFilename(),
+                new DocumentFileIndex());
 
             thesis.getFileItems().add(officialPublication);
             thesisJPAService.save(thesis);
+
+            try {
+                copiedFileResource.b.close();
+            } catch (IOException e) {
+                log.error("Unable to close stream of duplicated file {}.", copiedFileResource.a);
+            }
         });
     }
 

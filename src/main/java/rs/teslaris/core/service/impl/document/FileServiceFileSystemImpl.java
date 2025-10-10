@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import io.minio.GetObjectResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 @RequiredArgsConstructor
@@ -108,7 +110,7 @@ public class FileServiceFileSystemImpl implements FileService {
     }
 
     @Override
-    public String duplicateFile(String serverFilename) {
-        return "";
+    public Pair<String, InputStream> duplicateFile(String serverFilename) {
+        return null;
     }
 }

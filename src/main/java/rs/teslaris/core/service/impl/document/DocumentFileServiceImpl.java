@@ -6,6 +6,7 @@ import io.minio.GetObjectResponse;
 import jakarta.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -468,9 +469,33 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             return;
         }
 
-        var documentContent = extractDocumentContent(multipartPdfFile);
-        var documentTitle = Objects.nonNull(documentFile.getId()) ? documentFile.getFilename() :
-            extractDocumentTitle(multipartPdfFile);
+        try (var inputStream = multipartPdfFile.getInputStream()) {
+            var documentContent = extractDocumentContent(inputStream);
+            var documentTitle = Objects.nonNull(documentFile.getId()) ? documentFile.getFilename() :
+                extractDocumentTitle(multipartPdfFile);
+
+            var contentLanguageDetected = detectLanguage(documentContent);
+            var titleLanguageDetected = detectLanguage(documentTitle);
+
+            saveDocumentIndex(documentContent, documentTitle, contentLanguageDetected,
+                titleLanguageDetected, documentFile, serverFilename, documentIndex);
+        } catch (IOException e) {
+            throw new LoadingException("Error while trying to index PDF file content.");
+        }
+
+        documentFileIndexRepository.save(documentIndex);
+    }
+
+    @Override
+    public void parseAndIndexPdfDocument(DocumentFile documentFile, InputStream inputStream,
+                                         String documentTitle, String serverFilename,
+                                         DocumentFileIndex documentIndex) {
+        // only called for duplicated files, no danger from any kind of injection/spoofing
+        if (!serverFilename.endsWith(".pdf")) {
+            return;
+        }
+
+        var documentContent = extractDocumentContent(inputStream);
 
         var contentLanguageDetected = detectLanguage(documentContent);
         var titleLanguageDetected = detectLanguage(documentTitle);
@@ -576,9 +601,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         }
     }
 
-    private String extractDocumentContent(MultipartFile multipartPdfFile) {
-        try (var inputStream = multipartPdfFile.getInputStream();
-             var pdDocument = Loader.loadPDF(inputStream.readAllBytes())) {
+    private String extractDocumentContent(InputStream inputStream) {
+        try (var pdDocument = Loader.loadPDF(inputStream.readAllBytes())) {
             var textStripper = new PDFTextStripper();
             return textStripper.getText(pdDocument);
         } catch (IOException e) {
