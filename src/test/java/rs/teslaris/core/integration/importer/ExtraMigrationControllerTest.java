@@ -2,16 +2,25 @@ package rs.teslaris.core.integration.importer;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.person.PersonInternalIdentifierMigrationDTO;
 import rs.teslaris.core.integration.BaseTest;
 
 @SpringBootTest
 public class ExtraMigrationControllerTest extends BaseTest {
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
@@ -21,6 +30,24 @@ public class ExtraMigrationControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.patch(
                         "http://localhost:8081/api/extra-migration/event?oldId=2020&dateFrom=2020-01-01&dateTo=2020-01-10")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testEnrichPersonInternalIdsFromExternalSource() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var payload = new PersonInternalIdentifierMigrationDTO(Map.of(1, 1, 2, 2),
+            1, LocalDate.of(2020, 1, 1));
+        String requestBody = objectMapper.writeValueAsString(payload);
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/extra-migration/person-internal-identifier")
+                    .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

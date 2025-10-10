@@ -2,8 +2,10 @@ package rs.teslaris.core.service.interfaces.document;
 
 import io.minio.GetObjectResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 public interface FileService {
@@ -14,5 +16,5 @@ public interface FileService {
 
     GetObjectResponse loadAsResource(String serverFilename) throws IOException;
 
-    String duplicateFile(String serverFilename);
+    Pair<String, InputStream> duplicateFile(String serverFilename);
 }

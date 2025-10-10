@@ -2,19 +2,24 @@ package rs.teslaris.core.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -23,6 +28,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.person.PersonInternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
@@ -595,5 +601,275 @@ public class InvolvementServiceTest {
         assertNotNull(result);
         assertEquals(LocalDate.of(2022, 6, 1), oldEmployment.getDateTo());
         verify(personService).save(person);
+    }
+
+    @Test
+    void shouldMigrateInternalIdentifierWhenOldIdMatches() {
+        // Given
+        var institutionId = 1;
+        var oldToInternalMapping = Map.of(100, 1000);
+        var defaultEndDate = LocalDate.of(2023, 12, 31);
+        var dto = new PersonInternalIdentifierMigrationDTO(oldToInternalMapping, institutionId,
+            defaultEndDate);
+
+        var institutionIds = List.of(1, 2, 3);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(institutionIds);
+
+        var person = new Person();
+        person.setOldIds(Set.of(100, 200));
+        person.setInternalIdentifiers(new HashSet<>(Set.of("500")));
+
+        var employment = new Employment();
+        employment.setPersonInvolved(person);
+        employment.setDateTo(null);
+
+        when(involvementRepository.findActiveEmploymentsForInstitutions(institutionIds))
+            .thenReturn(List.of(employment));
+
+        // When
+        involvementService.migrateInternalIdentifiers(dto);
+
+        // Then
+        assertTrue(person.getInternalIdentifiers().contains("1000"));
+        assertNull(employment.getDateTo());
+
+        verify(personService).save(person);
+        verify(involvementRepository).save(employment);
+    }
+
+    @Test
+    void shouldSetEndDateWhenNoOldIdMatches() {
+        // Given
+        var institutionId = 1;
+        var oldToInternalMapping = Map.of(300, 3000);
+        var defaultEndDate = LocalDate.of(2023, 12, 31);
+        var dto = new PersonInternalIdentifierMigrationDTO(oldToInternalMapping, institutionId,
+            defaultEndDate);
+
+        var institutionIds = List.of(1, 2, 3);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(institutionIds);
+
+        var person = new Person();
+        person.setOldIds(Set.of(100, 200));
+        person.setInternalIdentifiers(new HashSet<>(Set.of("500")));
+
+        var employment = new Employment();
+        employment.setPersonInvolved(person);
+        employment.setDateTo(null);
+
+        when(involvementRepository.findActiveEmploymentsForInstitutions(institutionIds))
+            .thenReturn(List.of(employment));
+
+        // When
+        involvementService.migrateInternalIdentifiers(dto);
+
+        // Then
+        assertEquals(Set.of("500"), person.getInternalIdentifiers());
+        assertEquals(defaultEndDate, employment.getDateTo());
+
+        verify(personService, never()).save(person);
+        verify(involvementRepository).save(employment);
+    }
+
+    @Test
+    void shouldSkipEmploymentWhenPersonInvolvedIsNull() {
+        // Given
+        var institutionId = 1;
+        var oldToInternalMapping = Map.of(100, 1000);
+        var defaultEndDate = LocalDate.of(2023, 12, 31);
+        var dto = new PersonInternalIdentifierMigrationDTO(oldToInternalMapping, institutionId,
+            defaultEndDate);
+
+        var institutionIds = List.of(1, 2, 3);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(institutionIds);
+
+        var employment = new Employment();
+        employment.setPersonInvolved(null);
+
+        when(involvementRepository.findActiveEmploymentsForInstitutions(institutionIds))
+            .thenReturn(List.of(employment));
+
+        // When
+        involvementService.migrateInternalIdentifiers(dto);
+
+        // Then
+        verify(personService, never()).save(any());
+        verify(involvementRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldHandleMultipleEmploymentsWithMixedResults() {
+        // Given
+        var institutionId = 1;
+        var oldToInternalMapping = Map.of(100, 1000, 300, 3000);
+        var defaultEndDate = LocalDate.of(2023, 12, 31);
+        var dto = new PersonInternalIdentifierMigrationDTO(oldToInternalMapping, institutionId,
+            defaultEndDate);
+
+        var institutionIds = List.of(1, 2, 3);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(institutionIds);
+
+        var person1 = new Person();
+        person1.setOldIds(Set.of(100, 200));
+        person1.setInternalIdentifiers(new HashSet<>(Set.of("500")));
+        var employment1 = new Employment();
+        employment1.setPersonInvolved(person1);
+        employment1.setDateTo(null);
+
+        var person2 = new Person();
+        person2.setOldIds(Set.of(400, 500));
+        person2.setInternalIdentifiers(new HashSet<>(Set.of("600")));
+        var employment2 = new Employment();
+        employment2.setPersonInvolved(person2);
+        employment2.setDateTo(null);
+
+        when(involvementRepository.findActiveEmploymentsForInstitutions(institutionIds))
+            .thenReturn(List.of(employment1, employment2));
+
+        // When
+        involvementService.migrateInternalIdentifiers(dto);
+
+        // Then
+        assertTrue(person1.getInternalIdentifiers().contains("1000"));
+        assertNull(employment1.getDateTo());
+
+        assertEquals(Set.of("600"), person2.getInternalIdentifiers());
+        assertEquals(defaultEndDate, employment2.getDateTo());
+
+        verify(involvementRepository, times(2)).save(any(Employment.class));
+    }
+
+    @Test
+    void shouldAddMultipleInternalIdentifiersWhenMultipleOldIdsMatch() {
+        // Given
+        var institutionId = 1;
+        var oldToInternalMapping = Map.of(100, 1000, 200, 2000);
+        var defaultEndDate = LocalDate.of(2023, 12, 31);
+        var dto = new PersonInternalIdentifierMigrationDTO(oldToInternalMapping, institutionId,
+            defaultEndDate);
+
+        var institutionIds = List.of(1, 2, 3);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(institutionIds);
+
+        var person = new Person();
+        person.setOldIds(Set.of(100, 200, 300));
+        person.setInternalIdentifiers(new HashSet<>(Set.of("500")));
+
+        var employment = new Employment();
+        employment.setPersonInvolved(person);
+        employment.setDateTo(null);
+
+        when(involvementRepository.findActiveEmploymentsForInstitutions(institutionIds))
+            .thenReturn(List.of(employment));
+
+        // When
+        involvementService.migrateInternalIdentifiers(dto);
+
+        // Then
+        assertTrue(person.getInternalIdentifiers().contains("1000"));
+        assertTrue(person.getInternalIdentifiers().contains("2000"));
+        assertFalse(person.getInternalIdentifiers().contains("3000"));
+        assertEquals(3, person.getInternalIdentifiers().size());
+
+        verify(personService, atLeastOnce()).save(person);
+        verify(involvementRepository).save(employment);
+    }
+
+    @Test
+    void shouldDoNothingWhenInstitutionHierarchyIsEmpty() {
+        // Given
+        var institutionId = 1;
+        var oldToInternalMapping = Map.of(100, 1000);
+        var defaultEndDate = LocalDate.of(2023, 12, 31);
+        var dto = new PersonInternalIdentifierMigrationDTO(oldToInternalMapping, institutionId,
+            defaultEndDate);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(Collections.emptyList());
+        when(involvementRepository.findActiveEmploymentsForInstitutions(Collections.emptyList()))
+            .thenReturn(Collections.emptyList());
+
+        // When
+        involvementService.migrateInternalIdentifiers(dto);
+
+        // Then
+        verify(involvementRepository, never()).save(any());
+        verify(personService, never()).save(any());
+    }
+
+    @Test
+    void shouldSetEndDateWhenPersonHasEmptyOldIds() {
+        // Given
+        var institutionId = 1;
+        var oldToInternalMapping = Map.of(100, 1000);
+        var defaultEndDate = LocalDate.of(2023, 12, 31);
+        var dto = new PersonInternalIdentifierMigrationDTO(oldToInternalMapping, institutionId,
+            defaultEndDate);
+
+        var institutionIds = List.of(1, 2, 3);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(institutionIds);
+
+        var person = new Person();
+        person.setOldIds(Collections.emptySet());
+        person.setInternalIdentifiers(new HashSet<>(Set.of("500")));
+
+        var employment = new Employment();
+        employment.setPersonInvolved(person);
+        employment.setDateTo(null);
+
+        when(involvementRepository.findActiveEmploymentsForInstitutions(institutionIds))
+            .thenReturn(List.of(employment));
+
+        // When
+        involvementService.migrateInternalIdentifiers(dto);
+
+        // Then
+        assertEquals(Set.of("500"), person.getInternalIdentifiers());
+        assertEquals(defaultEndDate, employment.getDateTo());
+
+        verify(personService, never()).save(person);
+        verify(involvementRepository).save(employment);
+    }
+
+    @Test
+    void shouldPreserveExistingEndDateWhenMigrationOccurs() {
+        // Given
+        var institutionId = 1;
+        var oldToInternalMapping = Map.of(100, 1000);
+        var existingEndDate = LocalDate.of(2022, 6, 30);
+        var defaultEndDate = LocalDate.of(2023, 12, 31);
+        var dto = new PersonInternalIdentifierMigrationDTO(oldToInternalMapping, institutionId,
+            defaultEndDate);
+
+        var institutionIds = List.of(1, 2, 3);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(institutionIds);
+
+        var person = new Person();
+        person.setOldIds(Set.of(100));
+        person.setInternalIdentifiers(new HashSet<>(Set.of("500")));
+
+        var employment = new Employment();
+        employment.setPersonInvolved(person);
+        employment.setDateTo(existingEndDate);
+
+        when(involvementRepository.findActiveEmploymentsForInstitutions(institutionIds))
+            .thenReturn(List.of(employment));
+
+        // When
+        involvementService.migrateInternalIdentifiers(dto);
+
+        // Then
+        assertTrue(person.getInternalIdentifiers().contains("1000"));
+        assertEquals(existingEndDate, employment.getDateTo());
+
+        verify(personService).save(person);
+        verify(involvementRepository).save(employment);
     }
 }

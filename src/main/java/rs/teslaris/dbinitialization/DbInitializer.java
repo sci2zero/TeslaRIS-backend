@@ -201,6 +201,8 @@ public class DbInitializer implements ApplicationRunner {
         var createBookSeries = new Privilege("CREATE_BOOK_SERIES");
         var getTopCollaborators = new Privilege("GET_TOP_COLLABORATORS");
         var performExtraMigration = new Privilege("PERFORM_EXTRA_MIGRATION_OPERATIONS");
+        var readRegistryBook = new Privilege("READ_REGISTRY_BOOK");
+        var saveChartDisplayConfiguration = new Privilege("SAVE_CHART_DISPLAY_CONFIGURATION");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -235,8 +237,9 @@ public class DbInitializer implements ApplicationRunner {
                 migrateInstitutionEntities, performOaiMigration, saveOUTrustConfiguration,
                 validateMetadata, validateUploadedFiles, archiveDocument, configureHarvestSources,
                 promotePreliminaryAttachments, scheduleDocumentHarvest, performOAIPMHHarvest,
-                setDefaultContent, saveOUOutputConfiguration, createBookSeries,
-                unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration));
+                setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
+                unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
+                saveChartDisplayConfiguration));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -270,8 +273,8 @@ public class DbInitializer implements ApplicationRunner {
                 migrateAllEntities, performOaiMigration, saveOUTrustConfiguration, validateMetadata,
                 validateUploadedFiles, archiveDocument, promotePreliminaryAttachments,
                 scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
-                setDefaultContent, saveOUOutputConfiguration, createBookSeries,
-                performExtraMigration
+                setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
+                performExtraMigration, saveChartDisplayConfiguration
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -295,7 +298,8 @@ public class DbInitializer implements ApplicationRunner {
                     deleteOrganisationUnit, saveOUPageConfiguration, migrateInstitutionEntities,
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
                     scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
-                    saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication)));
+                    saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
+                    saveChartDisplayConfiguration)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
@@ -316,14 +320,14 @@ public class DbInitializer implements ApplicationRunner {
                 putThesisOnPublicReview, editDocumentFiles, archiveThesis,
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
                 validateMetadata, validateUploadedFiles, promotePreliminaryAttachments,
-                setDefaultContent, createUserBasic, deleteThesisAttachments
+                setDefaultContent, createUserBasic, deleteThesisAttachments, readRegistryBook
             )));
 
         var headOfLibraryAuthority =
             new Authority(UserRole.HEAD_OF_LIBRARY.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
-                unarchiveThesis, performThesisReport, generateThesisLibraryBackup
+                unarchiveThesis, performThesisReport, generateThesisLibraryBackup, readRegistryBook
             )));
 
         var promotionRegistryAdministratorAuthority =
@@ -331,7 +335,7 @@ public class DbInitializer implements ApplicationRunner {
                 new HashSet<>(List.of(
                     updateProfile, allowAccountTakeover, addToPromotion, removeFromPromotion,
                     updateRegistryBook, managePromotions, generatePromotionReport,
-                    generateRegBookReport
+                    generateRegBookReport, readRegistryBook
                 )));
 
         authorityRepository.saveAll(

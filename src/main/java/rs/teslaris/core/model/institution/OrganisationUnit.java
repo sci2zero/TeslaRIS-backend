@@ -2,7 +2,6 @@ package rs.teslaris.core.model.institution;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -77,10 +76,12 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
     @Embedded
     private Contact contact;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "accounting_ids")
     private Set<String> accountingIds = new HashSet<>();
 
     @Embedded

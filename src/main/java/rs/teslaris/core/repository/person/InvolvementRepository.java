@@ -42,4 +42,9 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
         "AND e.dateTo IS null")
     List<Employment> findActiveEmploymentsForPersonAndInstitutions(List<Integer> institutionIds,
                                                                    Integer personId);
+
+    @Query("SELECT e FROM Employment e LEFT JOIN FETCH e.organisationUnit " +
+        "WHERE e.organisationUnit.id IN :institutionIds " +
+        "AND e.dateTo IS null")
+    List<Employment> findActiveEmploymentsForInstitutions(List<Integer> institutionIds);
 }

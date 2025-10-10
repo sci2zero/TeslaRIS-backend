@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.document;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,10 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
 
     void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,
                                   String serverFilename, DocumentFileIndex documentIndex);
+
+    void parseAndIndexPdfDocument(DocumentFile documentFile, InputStream inputStream,
+                                  String documentTitle, String serverFilename,
+                                  DocumentFileIndex documentIndex);
 
     Page<DocumentFileIndex> searchDocumentFiles(List<String> tokens, Pageable pageable,
                                                 SearchRequestType type);

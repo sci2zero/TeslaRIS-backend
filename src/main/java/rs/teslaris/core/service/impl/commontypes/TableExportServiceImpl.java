@@ -35,6 +35,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
+import rs.teslaris.reporting.service.interfaces.PersonCollaborationNetworkService;
 
 @Service
 @Slf4j
@@ -56,6 +57,8 @@ public class TableExportServiceImpl implements TableExportService {
 
     private final CitationService citationService;
 
+    private final PersonCollaborationNetworkService personCollaborationNetworkService;
+
     @Value("${table-export.maximum-export-amount}")
     private Integer maximumExportAmount;
 
@@ -68,7 +71,8 @@ public class TableExportServiceImpl implements TableExportService {
         OrganisationUnitService organisationUnitService,
         PersonService personService,
         DocumentPublicationService documentPublicationService,
-        CitationService citationService) {
+        CitationService citationService,
+        PersonCollaborationNetworkService personCollaborationNetworkService) {
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
         this.personIndexRepository = personIndexRepository;
         this.organisationUnitIndexRepository = organisationUnitIndexRepository;
@@ -76,6 +80,7 @@ public class TableExportServiceImpl implements TableExportService {
         this.personService = personService;
         this.documentPublicationService = documentPublicationService;
         this.citationService = citationService;
+        this.personCollaborationNetworkService = personCollaborationNetworkService;
     }
 
     @Override
@@ -278,6 +283,11 @@ public class TableExportServiceImpl implements TableExportService {
                     Arrays.stream(endpointTokenParameters.get(1).split("tokens="))
                         .filter(t -> !t.isBlank()).toList(), pageable,
                     Boolean.parseBoolean(endpointTokenParameters.getLast()));
+            case COLLABORATION_PUBLICATIONS ->
+                (Page<T>) personCollaborationNetworkService.findPublicationsForCollaboration(
+                    Integer.parseInt(endpointTokenParameters.getFirst()),
+                    Integer.parseInt(endpointTokenParameters.get(1)),
+                    endpointTokenParameters.getLast(), pageable);
         };
     }
 }

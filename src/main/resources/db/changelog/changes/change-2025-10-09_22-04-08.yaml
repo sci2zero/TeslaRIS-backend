@@ -1,6 +1,6 @@
 databaseChangeLog:
 - changeSet:
-    id: 1757363721156-1
+    id: 1760047472083-1
     author: milospopovic (generated)
     changes:
     - createTable:
@@ -82,7 +82,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: person_document_contributions
 - changeSet:
-    id: 1757363721156-2
+    id: 1760047472083-2
     author: milospopovic (generated)
     changes:
     - createTable:
@@ -103,75 +103,13 @@ databaseChangeLog:
             type: INTEGER
         tableName: person_contributions_institutions
 - changeSet:
-    id: 1757363721156-3
+    id: 1760047472083-3
     author: milospopovic (generated)
     changes:
     - addColumn:
         columns:
         - column:
-            name: author_reprint
-            type: BOOLEAN
-        tableName: datasets
-- changeSet:
-    id: 1757363721156-4
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: author_reprint
-            type: BOOLEAN
-        tableName: monographs
-- changeSet:
-    id: 1757363721156-5
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: author_reprint
-            type: BOOLEAN
-        tableName: patents
-- changeSet:
-    id: 1757363721156-6
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: author_reprint
-            type: BOOLEAN
-        tableName: proceedings
-- changeSet:
-    id: 1757363721156-7
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: author_reprint
-            type: BOOLEAN
-        tableName: software
-- changeSet:
-    id: 1757363721156-8
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: author_reprint
-            type: BOOLEAN
-        tableName: theses
-- changeSet:
-    id: 1757363721156-9
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: legal_entity
-            type: BOOLEAN
-        tableName: organisation_units
+            name: internal_identifiers
+            type: JSONB
+        tableName: persons
 

@@ -2,7 +2,6 @@ package rs.teslaris.core.model.project;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
@@ -14,7 +13,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
@@ -39,7 +40,8 @@ public class Project extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> keywords = new HashSet<>();
 
-    @ElementCollection
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -54,7 +56,8 @@ public class Project extends BaseEntity {
     @Column(name = "date_to", nullable = false)
     private LocalDate dateTo;
 
-    @ElementCollection
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "project_statuses")
     private Set<ProjectStatus> statuses = new HashSet<>();
 
     @Column(name = "type", nullable = false)

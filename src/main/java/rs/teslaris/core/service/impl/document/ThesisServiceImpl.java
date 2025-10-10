@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +42,7 @@ import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -152,6 +155,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              CitationService citationService,
+                             ApplicationEventPublisher applicationEventPublisher,
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
@@ -171,9 +175,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              TaskManagerService taskManagerService, FileService fileService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;
@@ -302,6 +307,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         checkIfAvailableForEditing(thesisToDelete);
 
         thesisJPAService.delete(thesisId);
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(thesisId));
     }
 
     @Override
@@ -388,12 +395,22 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 new MultiLingualContent(multiLingualContent)));
             officialPublication.setDescription((Set) description);
 
-            var newServerFilename = fileService.duplicateFile(file.getServerFilename());
-            officialPublication.setServerFilename(newServerFilename);
+            var copiedFileResource = fileService.duplicateFile(file.getServerFilename());
+            officialPublication.setServerFilename(copiedFileResource.a);
             documentFileService.save(officialPublication);
+
+            documentFileService.parseAndIndexPdfDocument(officialPublication, copiedFileResource.b,
+                officialPublication.getFilename(), officialPublication.getServerFilename(),
+                new DocumentFileIndex());
 
             thesis.getFileItems().add(officialPublication);
             thesisJPAService.save(thesis);
+
+            try {
+                copiedFileResource.b.close();
+            } catch (IOException e) {
+                log.error("Unable to close stream of duplicated file {}.", copiedFileResource.a);
+            }
         });
     }
 
@@ -606,12 +623,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             if (thesis.getPublicReviewCompleted() || isAdmin) {
                 thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
             }
-        } else if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
-            !thesis.getPublicReviewStartDates().isEmpty()) {
-            thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
-                .ifPresent(latestPublicReviewDate -> {
-                    thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
-                });
+        } else {
+            thesis.setThesisDefenceDate(null);
+
+            if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
+                !thesis.getPublicReviewStartDates().isEmpty()) {
+                thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
+                    .ifPresent(latestPublicReviewDate -> {
+                        thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
+                    });
+            }
         }
 
         thesis.setPublisher(null);

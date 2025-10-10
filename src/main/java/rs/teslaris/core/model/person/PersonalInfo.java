@@ -2,7 +2,6 @@ package rs.teslaris.core.model.person;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.FetchType;
@@ -14,6 +13,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Getter
@@ -38,7 +39,8 @@ public class PersonalInfo {
     @Embedded
     private Contact contact;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
