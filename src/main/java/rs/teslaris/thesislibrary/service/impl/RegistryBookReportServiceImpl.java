@@ -220,9 +220,11 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
         var groupedRows = new TreeMap<String, List<List<String>>>();
 
         while (hasNextPage) {
+            var institutionIds =
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
             List<RegistryBookEntry> chunk =
                 registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
-                        List.of(institutionId), from, to, authorName, authorTitle,
+                        institutionIds, from, to, authorName, authorTitle,
                         SerbianTransliteration.toCyrillic(authorName),
                         SerbianTransliteration.toCyrillic(authorTitle),
                         PageRequest.of(pageNumber, chunkSize))

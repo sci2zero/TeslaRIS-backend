@@ -611,12 +611,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             if (thesis.getPublicReviewCompleted() || isAdmin) {
                 thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
             }
-        } else if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
-            !thesis.getPublicReviewStartDates().isEmpty()) {
-            thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
-                .ifPresent(latestPublicReviewDate -> {
-                    thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
-                });
+        } else {
+            thesis.setThesisDefenceDate(null);
+
+            if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
+                !thesis.getPublicReviewStartDates().isEmpty()) {
+                thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
+                    .ifPresent(latestPublicReviewDate -> {
+                        thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
+                    });
+            }
         }
 
         thesis.setPublisher(null);

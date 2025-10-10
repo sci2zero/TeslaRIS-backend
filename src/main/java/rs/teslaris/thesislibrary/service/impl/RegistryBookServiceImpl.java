@@ -726,6 +726,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     if (Objects.nonNull(info.getContact())) {
                         dto.setContact(new ContactDTO(info.getContact().getContactEmail(),
                             info.getContact().getPhoneNumber()));
+                    } else {
+                        dto.setContact(new ContactDTO("", ""));
                     }
                 }
             });

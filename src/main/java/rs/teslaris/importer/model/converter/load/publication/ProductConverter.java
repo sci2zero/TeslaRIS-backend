@@ -37,7 +37,8 @@ public class ProductConverter implements RecordConverter<Product, SoftwareDTO> {
         dto.setSubTitle(new ArrayList<>());
 
         if (Objects.nonNull(record.getKeywords()) && !record.getKeywords().isEmpty()) {
-            dto.setKeywords(multilingualContentConverter.toDTO(record.getKeywords()));
+            dto.setKeywords(multilingualContentConverter.toDTO(
+                OAIPMHParseUtility.groupParsedMultilingualKeywords(record.getKeywords())));
         } else {
             dto.setKeywords(new ArrayList<>());
         }

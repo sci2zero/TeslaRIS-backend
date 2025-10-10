@@ -292,7 +292,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
 
         if (Objects.nonNull(documentFileToEdit.getDocument()) &&
-            documentFileToEdit.getDocument().getIsArchived()) {
+            documentFileToEdit.getDocument().getIsArchived() &&
+            !SessionUtil.isUserLoggedInAndAdmin()) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 

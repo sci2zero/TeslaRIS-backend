@@ -2,7 +2,6 @@ package rs.teslaris.core.model.document;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
@@ -69,7 +68,8 @@ public abstract class PublicationSeries extends BaseEntity implements Mergeable 
     @Column(columnDefinition = "jsonb", name = "merged_ids")
     private Set<Integer> mergedIds = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
 

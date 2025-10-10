@@ -349,7 +349,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                    Boolean isProof) {
         var document = findOne(documentId);
 
-        if (document.getIsArchived()) {
+        if (document.getIsArchived() && !SessionUtil.isUserLoggedInAndAdmin()) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 
@@ -380,7 +380,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void deleteDocumentFile(Integer documentId, Integer documentFileId) {
         var document = findOne(documentId);
 
-        if (document.getIsArchived()) {
+        if (document.getIsArchived() && !SessionUtil.isUserLoggedInAndAdmin()) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 

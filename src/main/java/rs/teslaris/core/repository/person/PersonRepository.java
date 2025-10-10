@@ -106,10 +106,11 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "(i.involvementType = 4 OR i.involvementType = 5)")
     List<Integer> findInstitutionIdsForPerson(Integer personId);
 
-    @Query("SELECT p FROM Person p " +
-        "JOIN p.accountingIds aid " +
-        "WHERE aid = :id AND p.approveStatus = 1")
-    Optional<Person> findApprovedPersonByAccountingId(String id);
+    @Query(value = "SELECT * FROM person p " +
+        "WHERE p.accounting_ids @> :accountingId " +
+        "AND p.approve_status = 1",
+        nativeQuery = true)
+    Optional<Person> findApprovedPersonByAccountingId(String accountingId);
 
     @Query("SELECT p FROM Person p ORDER BY " +
         "CASE WHEN p.dateOfLastIndicatorHarvest IS NULL THEN 0 ELSE 1 END, " +

@@ -22,7 +22,6 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
-import org.springframework.data.mongodb.core.mapping.Field;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -121,13 +120,15 @@ public class Person extends BaseEntity implements Mergeable {
     @Column(name = "institution_id")
     private Set<Integer> employmentInstitutionsIdHierarchy = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "accounting_ids")
     private Set<String> accountingIds = new HashSet<>();
 
     @Column(name = "date_of_last_indicator_harvest")
     private LocalDate dateOfLastIndicatorHarvest;
 
-    @Field(name = "internal_identifiers")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "internal_identifiers")
     private Set<String> internalIdentifiers = new HashSet<>();
 
     public void addInvolvement(Involvement involvement) {
