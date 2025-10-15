@@ -25,19 +25,21 @@ public class PersonCollaborationNetworkController {
     public CollaborationNetworkDTO getPersonCollaborationNetwork(@PathVariable Integer personId,
                                                                  @RequestParam Integer depth,
                                                                  @RequestParam
-                                                                 CollaborationType collaborationType) {
+                                                                 CollaborationType collaborationType,
+                                                                 @RequestParam Integer yearFrom,
+                                                                 @RequestParam Integer yearTo) {
         return personCollaborationNetworkService.findCollaborationNetwork(personId, depth,
-            collaborationType);
+            collaborationType, yearFrom, yearTo);
     }
 
     @GetMapping("/works/{sourcePersonId}/{targetPersonId}")
     public Page<DocumentPublicationIndex> getPublicationsForCollaboration(
         @PathVariable Integer sourcePersonId,
         @PathVariable Integer targetPersonId,
-        @RequestParam
-        CollaborationType collaborationType,
+        @RequestParam Integer yearFrom, @RequestParam Integer yearTo,
+        @RequestParam CollaborationType collaborationType,
         Pageable pageable) {
         return personCollaborationNetworkService.findPublicationsForCollaboration(sourcePersonId,
-            targetPersonId, collaborationType.name(), pageable);
+            targetPersonId, collaborationType.name(), yearFrom, yearTo, pageable);
     }
 }

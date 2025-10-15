@@ -5,11 +5,15 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.service.interfaces.DocumentVisualizationDataService;
@@ -38,5 +42,17 @@ public class DocumentVisualizationDataController {
                                                                 @RequestParam LocalDate endDate) {
         return documentVisualizationDataService.getMonthlyStatisticsCounts(documentId, startDate,
             endDate, statisticsType);
+    }
+
+    @GetMapping("/publications")
+    public Page<DocumentPublicationIndex> getPublicationsForTypeAndPeriod(
+        @RequestParam DocumentPublicationType type,
+        @RequestParam Integer yearFrom,
+        @RequestParam Integer yearTo,
+        @RequestParam(required = false) Integer personId,
+        @RequestParam(required = false) Integer institutionId,
+        Pageable pageable) {
+        return documentVisualizationDataService.findPublicationsForTypeAndPeriod(type, yearFrom,
+            yearTo, personId, institutionId, pageable);
     }
 }

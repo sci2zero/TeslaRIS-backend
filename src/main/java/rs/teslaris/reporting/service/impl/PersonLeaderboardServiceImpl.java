@@ -73,16 +73,35 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                             .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                         )
                     )
-                    .aggregations("by_person", a -> a
-                        .terms(t -> t.field("author_ids").size(10))
-                    ),
-                Void.class
-            );
+                    .aggregations("by_all_persons", a -> a
+                        .filter(f -> f
+                            .terms(t -> t
+                                .field("author_ids")
+                                .terms(ts -> ts.value(
+                                    eligiblePersonIds.stream()
+                                        .map(FieldValue::of)
+                                        .collect(Collectors.toList())
+                                ))
+                            )
+                        )
+                        .aggregations("by_person", aa -> aa
+                            .terms(t -> t
+                                .field("author_ids")
+                                .size(10)
+                            )
+                        )
+                    )
+                , Void.class);
 
-            var topPersonIds = publicationResponse.aggregations()
+            var byAllPersonsAgg = publicationResponse.aggregations()
+                .get("by_all_persons")
+                .filter();
+
+            var byPersonAgg = byAllPersonsAgg.aggregations()
                 .get("by_person")
-                .lterms()
-                .buckets()
+                .lterms();
+
+            var topPersonIds = byPersonAgg.buckets()
                 .array()
                 .stream()
                 .map(LongTermsBucket::key)
@@ -99,14 +118,11 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                 );
             });
 
-            return publicationResponse.aggregations()
-                .get("by_person")
-                .lterms()
-                .buckets()
+            return byPersonAgg.buckets()
                 .array()
                 .stream()
                 .map(b -> {
-                    Integer personId = Math.toIntExact(b.key()); // bucket key is a long
+                    Integer personId = Math.toIntExact(b.key());
                     PersonIndex person = personMap.get(personId);
                     return new Pair<>(person, b.docCount());
                 })

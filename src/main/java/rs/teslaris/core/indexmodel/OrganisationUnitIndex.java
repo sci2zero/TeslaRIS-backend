@@ -85,4 +85,7 @@ public class OrganisationUnitIndex {
 
     @Field(type = FieldType.Boolean, store = true, name = "is_client_institution")
     private Boolean isClientInstitution = false;
+
+    @Field(type = FieldType.Integer, store = true, name = "employee_count")
+    private Integer employeeCount;
 }

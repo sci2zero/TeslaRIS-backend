@@ -9,5 +9,6 @@ import rs.teslaris.reporting.utility.CollaborationType;
 public interface PersonCollaborationNetworkService extends DocumentCollaborationService {
 
     CollaborationNetworkDTO findCollaborationNetwork(Integer authorId, Integer depth,
-                                                     CollaborationType collaborationType);
+                                                     CollaborationType collaborationType,
+                                                     Integer yearFrom, Integer yearTo);
 }

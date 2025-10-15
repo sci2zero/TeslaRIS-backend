@@ -3,6 +3,7 @@ package rs.teslaris.reporting.service.impl;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.json.JsonData;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,7 +48,8 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
 
     @Override
     public CollaborationNetworkDTO findCollaborationNetwork(Integer authorId, Integer depth,
-                                                            CollaborationType collaborationType) {
+                                                            CollaborationType collaborationType,
+                                                            Integer yearFrom, Integer yearTo) {
         try {
             if (Objects.isNull(collaborationType)) {
                 throw new IllegalArgumentException("Collaboration type cannot be null.");
@@ -59,7 +61,8 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
                 throw new IllegalArgumentException("Depth must be between 1 and 3.");
             }
 
-            var networkStructure = buildNetworkStructure(authorId, depth, collaborationType);
+            var networkStructure =
+                buildNetworkStructure(authorId, depth, collaborationType, yearFrom, yearTo);
 
             Map<Integer, PersonIndex> personMap =
                 fetchPersonDetails(networkStructure.getAllAuthorIds());
@@ -81,10 +84,12 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
     public Page<DocumentPublicationIndex> findPublicationsForCollaboration(Integer sourcePersonId,
                                                                            Integer targetPersonId,
                                                                            String collaborationType,
+                                                                           Integer yearFrom,
+                                                                           Integer yearTo,
                                                                            Pageable pageable) {
         var searchQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildCollaborationQuery(sourcePersonId, targetPersonId,
-                CollaborationType.valueOf(collaborationType)));
+                CollaborationType.valueOf(collaborationType), yearFrom, yearTo));
             return b;
         })))._toQuery();
 
@@ -93,17 +98,19 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
     }
 
     private NetworkStructure buildNetworkStructure(Integer authorId, int depth,
-                                                   CollaborationType collaborationType) {
+                                                   CollaborationType collaborationType,
+                                                   Integer yearFrom, Integer yearTo) {
         var structure = new NetworkStructure(authorId);
 
         structure.addAuthor(authorId, 0);
-        buildNetworkLevel(structure, authorId, 1, depth, collaborationType);
+        buildNetworkLevel(structure, authorId, 1, depth, collaborationType, yearFrom, yearTo);
 
         return structure;
     }
 
     private void buildNetworkLevel(NetworkStructure structure, Integer authorId, int currentDepth,
-                                   int maxDepth, CollaborationType collaborationType) {
+                                   int maxDepth, CollaborationType collaborationType,
+                                   Integer yearFrom, Integer yearTo) {
         if (currentDepth > maxDepth) {
             return;
         }
@@ -112,7 +119,12 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
             getQueryAndAggregationFields(collaborationType);
         List<Pair<Integer, Long>> collaborators =
             findTopCollaborators(authorId, queryAndAggregationFields.a,
-                queryAndAggregationFields.b);
+                queryAndAggregationFields.b, yearFrom, yearTo);
+
+        if (collaborationType.equals(CollaborationType.MENTORSHIP)) {
+            collaborators.addAll(findTopCollaborators(authorId, queryAndAggregationFields.b,
+                queryAndAggregationFields.a, yearFrom, yearTo));
+        }
 
         for (Pair<Integer, Long> collaborator : collaborators) {
             var collaboratorId = collaborator.a;
@@ -126,21 +138,30 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
             if (currentDepth < maxDepth) {
                 var collaboratorId = collaborator.a;
                 buildNetworkLevel(structure, collaboratorId, currentDepth + 1, maxDepth,
-                    collaborationType);
+                    collaborationType, yearFrom, yearTo);
             }
         }
     }
 
     private List<Pair<Integer, Long>> findTopCollaborators(Integer authorId, String queryField,
-                                                           String aggregationField) {
+                                                           String aggregationField,
+                                                           Integer yearFrom, Integer yearTo) {
         try {
             var response = elasticsearchClient.search(s -> s
                     .index("document_publication")
                     .size(0)
                     .query(q -> q
-                        .term(t -> t
-                            .field(queryField)
-                            .value(authorId)
+                        .bool(b -> b
+                            .must(m -> m.term(t -> t
+                                .field(queryField)
+                                .value(authorId)
+                            ))
+                            .must(m -> m.range(
+                                    r -> r.field("year")
+                                        .gte(JsonData.of(yearFrom))
+                                        .lte(JsonData.of(yearTo))
+                                )
+                            )
                         )
                     )
                     .aggregations("collaborators", a -> a
@@ -258,13 +279,14 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
             case MENTORSHIP -> new Pair<>("author_ids", "advisor_ids");
             case CO_MENTORSHIP -> new Pair<>("advisor_ids", "advisor_ids");
             case CO_EDITORSHIP -> new Pair<>("editor_ids", "editor_ids");
-            case CO_MEMBERSHIP_COMMISSION -> new Pair<>("author_ids", "board_member_ids");
+            case CO_MEMBERSHIP_COMMISSION -> new Pair<>("board_member_ids", "board_member_ids");
         };
     }
 
     private Query buildCollaborationQuery(Integer sourcePersonId,
                                           Integer targetPersonId,
-                                          CollaborationType collaborationType) {
+                                          CollaborationType collaborationType,
+                                          Integer yearFrom, Integer yearTo) {
         if (Objects.isNull(sourcePersonId) || Objects.isNull(targetPersonId)) {
             throw new IllegalArgumentException("Source and target parson IDs cannot be null.");
         }
@@ -273,6 +295,12 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
         return BoolQuery.of(b -> {
             b.must(q -> q.term(t -> t.field(sourceAndTargetFields.a).value(sourcePersonId)));
             b.must(q -> q.term(t -> t.field(sourceAndTargetFields.b).value(targetPersonId)));
+            b.must(m -> m.range(
+                    r -> r.field("year")
+                        .gte(JsonData.of(yearFrom))
+                        .lte(JsonData.of(yearTo))
+                )
+            );
 
             return b;
         })._toQuery();

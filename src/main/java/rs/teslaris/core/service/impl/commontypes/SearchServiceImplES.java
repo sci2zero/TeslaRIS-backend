@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
@@ -21,6 +22,7 @@ import rs.teslaris.core.util.functional.Pair;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class SearchServiceImplES<T> implements SearchService<T> {
 
     private final ElasticsearchOperations elasticsearchTemplate;
@@ -76,5 +78,22 @@ public class SearchServiceImplES<T> implements SearchService<T> {
             });
 
         return wordCloud;
+    }
+
+    @Override
+    public Long count(Query query, String indexName) {
+        try {
+            var countResponse = elasticsearchClient.count(c -> c
+                .index(indexName)
+                .query(query)
+            );
+
+            return countResponse.count();
+
+        } catch (IOException e) {
+            log.error("Failed to count documents in index {}. Reason: {}", indexName,
+                e.getMessage());
+            return 0L;
+        }
     }
 }

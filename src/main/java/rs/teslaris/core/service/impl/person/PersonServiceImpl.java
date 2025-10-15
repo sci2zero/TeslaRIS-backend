@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
 import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
+import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -133,6 +135,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final SearchFieldsLoader searchFieldsLoader;
 
     private final ElasticsearchClient elasticsearchClient;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final Pattern orcidRegexPattern =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
@@ -1436,6 +1440,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 index -> {
                     setPersonIndexEmploymentDetails(index, findOne(index.getDatabaseId()));
                     personIndexRepository.save(index);
+
+                    applicationEventPublisher.publishEvent(
+                        new PersonEmploymentOUHierarchyStructureChangedEvent(
+                            index.getDatabaseId()));
                 });
 
             pageNumber++;

@@ -116,7 +116,7 @@ public class BaseChartsDisplayConfigurationServiceTest {
         assertTrue(personSettings.getPublicationCountByYear().getDisplay());
         assertFalse(personSettings.getPublicationCountByYear().getSpanWholeRow());
         assertTrue(personSettings.getPublicationTypeByYear().getDisplay());
-        assertTrue(personSettings.getPublicationTypeByYear().getSpanWholeRow());
+        assertFalse(personSettings.getPublicationTypeByYear().getSpanWholeRow());
 
         var ouSettings = result.getOuChartDisplaySettings();
         assertNotNull(ouSettings);

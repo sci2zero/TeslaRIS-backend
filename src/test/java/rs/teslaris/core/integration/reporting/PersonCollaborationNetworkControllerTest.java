@@ -19,7 +19,7 @@ public class PersonCollaborationNetworkControllerTest extends BaseTest {
         throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/collaboration-network/{personId}?collaborationType={collaborationType}&depth=2",
+                        "http://localhost:8081/api/collaboration-network/{personId}?collaborationType={collaborationType}&depth=2&yearFrom=2020&yearTo=2024",
                         1, collaborationType)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
@@ -31,7 +31,7 @@ public class PersonCollaborationNetworkControllerTest extends BaseTest {
         throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/collaboration-network/works/{sourcePersonId}/{targetPersonId}?collaborationType={collaborationType}&page=0&size=10",
+                        "http://localhost:8081/api/collaboration-network/works/{sourcePersonId}/{targetPersonId}?collaborationType={collaborationType}&yearFrom=2020&yearTo=2024&page=0&size=10",
                         1, 2, collaborationType)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());

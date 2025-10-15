@@ -751,6 +751,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.getAllowedThesisTypes().addAll(organisationUnit.getAllowedThesisTypes());
 
         index.setIsClientInstitution(organisationUnit.getIsClientInstitution());
+
+        index.setEmployeeCount(involvementRepository.countActiveEmploymentsForInstitutions(
+            getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId())));
     }
 
     private void indexBelongsToSuperOURelation(OrganisationUnit organisationUnit,

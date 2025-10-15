@@ -67,11 +67,11 @@ public class BaseChartsDisplayConfigurationServiceImpl
         configuration
             .put("publicationCountByYear", new ChartDisplaySettings(true, false));
         configuration
-            .put("publicationTypeByYear", new ChartDisplaySettings(true, true));
+            .put("publicationTypeByYear", new ChartDisplaySettings(true, false));
         configuration
             .put("publicationCategoryByYear", new ChartDisplaySettings(true, true));
         configuration
-            .put("publicationTypeRatio", new ChartDisplaySettings(true, true));
+            .put("publicationTypeRatio", new ChartDisplaySettings(true, false));
         configuration
             .put("publicationCategoryRatio", new ChartDisplaySettings(true, true));
         configuration

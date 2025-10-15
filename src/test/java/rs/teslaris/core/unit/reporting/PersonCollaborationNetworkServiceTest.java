@@ -54,7 +54,8 @@ class PersonCollaborationNetworkServiceTest {
     @Test
     void shouldReturnEmptyNetworkWhenDepthIsInvalid() {
         var result =
-            collaborationService.findCollaborationNetwork(1, 0, CollaborationType.COAUTHORSHIP);
+            collaborationService.findCollaborationNetwork(1, 0, CollaborationType.COAUTHORSHIP,
+                2020, 2024);
         assertNotNull(result);
         assertTrue(result.nodes().isEmpty());
         assertTrue(result.links().isEmpty());
@@ -66,7 +67,8 @@ class PersonCollaborationNetworkServiceTest {
             .thenThrow(new IOException("ES failure"));
 
         var result =
-            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP);
+            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP,
+                2020, 2024);
 
         assertNotNull(result);
         assertTrue(result.nodes().isEmpty());
@@ -93,7 +95,8 @@ class PersonCollaborationNetworkServiceTest {
             .thenReturn(new PageImpl<>(List.of(person)));
 
         var result =
-            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP);
+            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP,
+                2020, 2024);
 
         assertNotNull(result.nodes());
         assertTrue(result.links().isEmpty());
@@ -123,7 +126,8 @@ class PersonCollaborationNetworkServiceTest {
             .thenReturn(new PageImpl<>(List.of(p1, p2)));
 
         var result =
-            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP);
+            collaborationService.findCollaborationNetwork(1, 1, CollaborationType.COAUTHORSHIP,
+                2020, 2024);
 
         assertNotNull(result.nodes());
         assertNotNull(result.links());
@@ -142,7 +146,7 @@ class PersonCollaborationNetworkServiceTest {
             .thenReturn(expectedPage);
 
         var result = collaborationService.findPublicationsForCollaboration(sourcePersonId,
-            targetPersonId, collaborationType, pageable);
+            targetPersonId, collaborationType, 2020, 2024, pageable);
 
         assertEquals(expectedPage, result);
         verify(searchService).runQuery(any(), eq(pageable), eq(DocumentPublicationIndex.class),
@@ -157,7 +161,7 @@ class PersonCollaborationNetworkServiceTest {
 
         assertThrows(IllegalArgumentException.class, () ->
             collaborationService.findPublicationsForCollaboration(null, targetPersonId,
-                collaborationType, pageable)
+                collaborationType, 2020, 2024, pageable)
         );
     }
 
@@ -169,7 +173,7 @@ class PersonCollaborationNetworkServiceTest {
 
         assertThrows(IllegalArgumentException.class, () ->
             collaborationService.findPublicationsForCollaboration(sourcePersonId, null,
-                collaborationType, pageable)
+                collaborationType, 2020, 2024, pageable)
         );
     }
 
@@ -181,7 +185,7 @@ class PersonCollaborationNetworkServiceTest {
 
         assertThrows(IllegalArgumentException.class, () ->
             collaborationService.findPublicationsForCollaboration(sourcePersonId,
-                targetPersonId, "INVALID_TYPE", pageable)
+                targetPersonId, "INVALID_TYPE", 2020, 2024, pageable)
         );
     }
 }

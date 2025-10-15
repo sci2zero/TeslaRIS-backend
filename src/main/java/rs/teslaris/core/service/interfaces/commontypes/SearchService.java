@@ -15,4 +15,6 @@ public interface SearchService<T> {
 
     List<Pair<String, Long>> runWordCloudSearch(Query query, String indexName,
                                                 boolean foreignLanguage);
+
+    Long count(Query query, String indexName);
 }

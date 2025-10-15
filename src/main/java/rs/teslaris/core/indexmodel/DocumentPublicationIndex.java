@@ -238,4 +238,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Long, name = "total_citations", store = true)
     private Long totalCitations;
+
+    @Field(type = FieldType.Boolean, name = "contains_files", store = true)
+    private Boolean containsFiles;
 }

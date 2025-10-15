@@ -5,6 +5,8 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
 import co.elastic.clients.elasticsearch._types.aggregations.FieldDateMath;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
 import java.io.IOException;
@@ -19,13 +21,21 @@ import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.service.interfaces.DocumentVisualizationDataService;
+import rs.teslaris.reporting.utility.QueryUtil;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 @Slf4j
 public class DocumentVisualizationDataServiceImpl implements DocumentVisualizationDataService {
@@ -33,6 +43,8 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
     private final ElasticsearchClient elasticsearchClient;
 
     private final DocumentPublicationService documentPublicationService;
+
+    private final SearchService<DocumentPublicationIndex> searchService;
 
 
     @Override
@@ -232,6 +244,52 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
                 statisticsType.name());
             return Collections.emptyMap();
         }
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> findPublicationsForTypeAndPeriod(
+        DocumentPublicationType type,
+        Integer yearFrom,
+        Integer yearTo,
+        Integer personId,
+        Integer institutionId,
+        Pageable pageable) {
+        var searchQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.must(buildPublicationMetadataQuery(type, yearFrom, yearTo, personId, institutionId));
+            return b;
+        })))._toQuery();
+
+        return searchService.runQuery(searchQuery, pageable, DocumentPublicationIndex.class,
+            "document_publication");
+    }
+
+    private Query buildPublicationMetadataQuery(DocumentPublicationType type, Integer yearFrom,
+                                                Integer yearTo, Integer personId,
+                                                Integer institutionId) {
+        if ((Objects.isNull(personId) || personId < 0) &&
+            (Objects.isNull(institutionId) || institutionId < 0)) {
+            throw new IllegalArgumentException("Both person and institution IDs cannot be null.");
+        }
+
+        return BoolQuery.of(b -> {
+            if (Objects.nonNull(personId) && personId > 0) {
+                b.must(q -> q.term(t -> t.field("author_ids").value(personId)));
+            } else {
+                var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(institutionId);
+                b.must(QueryUtil.organisationUnitMatchQuery(List.of(institutionId), searchFields));
+            }
+
+            b.must(q -> q.term(t -> t.field("type").value(type.name())));
+
+            b.must(m -> m.range(
+                    r -> r.field("year")
+                        .gte(JsonData.of(yearFrom))
+                        .lte(JsonData.of(yearTo))
+                )
+            );
+
+            return b;
+        })._toQuery();
     }
 
     private List<Integer> getAllMergedDocumentIds(Integer documentId) {

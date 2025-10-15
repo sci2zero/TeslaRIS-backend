@@ -366,6 +366,15 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         thesisJPAService.save(thesis);
+
+        var index = findDocumentPublicationIndexByDatabaseId(thesisId);
+        index.setContainsFiles(
+            !thesis.getFileItems().isEmpty() || !thesis.getProofs().isEmpty() ||
+                !thesis.getPreliminaryFiles().isEmpty() ||
+                !thesis.getPreliminarySupplements().isEmpty() ||
+                !thesis.getCommissionReports().isEmpty());
+        documentPublicationIndexRepository.save(index);
+
         return DocumentFileConverter.toDTO(documentFile);
     }
 

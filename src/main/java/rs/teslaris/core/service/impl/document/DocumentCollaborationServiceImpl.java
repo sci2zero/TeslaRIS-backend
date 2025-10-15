@@ -13,6 +13,8 @@ public class DocumentCollaborationServiceImpl implements DocumentCollaborationSe
     public Page<DocumentPublicationIndex> findPublicationsForCollaboration(Integer sourcePersonId,
                                                                            Integer targetPersonId,
                                                                            String collaborationType,
+                                                                           Integer yearFrom,
+                                                                           Integer yearTo,
                                                                            Pageable pageable) {
         // Concrete implementation is in reporting plugin
         return Page.empty();

@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.integration.BaseTest;
 
@@ -33,6 +34,32 @@ public class DocumentVisualizationDataControllerTest extends BaseTest {
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/visualization-data/document/monthly-statistics/{documentId}/{statisticsType}?startDate=2005-02-13&endDate=2007-07-15",
                         1, statisticsType)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(DocumentPublicationType.class)
+    public void testGetMonthlyStatisticsForDocumentAndPerson(
+        DocumentPublicationType documentPublicationType)
+        throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/visualization-data/document/publications?type={documentPublicationType}&personId=1&yearFrom=2005&yearTo=2007",
+                        documentPublicationType)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @EnumSource(DocumentPublicationType.class)
+    public void testGetMonthlyStatisticsForDocumentAndInstitution(
+        DocumentPublicationType documentPublicationType)
+        throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/visualization-data/document/publications?type={documentPublicationType}&institutionId=1&yearFrom=2005&yearTo=2007",
+                        documentPublicationType)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }

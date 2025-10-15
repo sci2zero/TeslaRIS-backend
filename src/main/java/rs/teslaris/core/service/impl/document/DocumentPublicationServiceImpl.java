@@ -31,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -367,10 +369,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         documentRepository.save(document);
 
+        var index = findDocumentPublicationIndexByDatabaseId(documentId);
+        index.setContainsFiles(
+            !document.getFileItems().isEmpty() || !document.getProofs().isEmpty());
         if (!isProof) {
-            indexDocumentFilesContent(document,
-                findDocumentPublicationIndexByDatabaseId(documentId));
+            indexDocumentFilesContent(document, index);
         }
+        documentPublicationIndexRepository.save(index);
 
         return DocumentFileConverter.toDTO(documentFile);
     }
@@ -399,10 +404,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.getProofs().stream()
                 .noneMatch(file -> file.getIsVerifiedData().equals(false)));
 
+        var index = findDocumentPublicationIndexByDatabaseId(documentId);
+        index.setContainsFiles(
+            !document.getFileItems().isEmpty() || !document.getProofs().isEmpty());
         if (!isProof) {
-            indexDocumentFilesContent(document,
-                findDocumentPublicationIndexByDatabaseId(documentId));
+            indexDocumentFilesContent(document, index);
         }
+        documentPublicationIndexRepository.save(index);
     }
 
     @Override
@@ -466,6 +474,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
         indexDescription(document, index);
         indexKeywords(document, index);
+
+        index.setContainsFiles(
+            !document.getFileItems().isEmpty() || !document.getProofs().isEmpty());
         indexDocumentFilesContent(document, index);
 
         if (Objects.nonNull(document.getInternalIdentifiers())) {
@@ -1724,5 +1735,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
             .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
                 !configuration.trustNewDocumentFiles());
+    }
+
+    @Async
+    @EventListener
+    protected void handlePersonEmploymentOUHierarchyStructureChangedEvent(
+        PersonEmploymentOUHierarchyStructureChangedEvent event) {
+        reindexEmploymentInformationForAllPersonPublications(event.getPersonId());
     }
 }

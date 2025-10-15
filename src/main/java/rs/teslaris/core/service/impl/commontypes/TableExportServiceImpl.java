@@ -30,12 +30,13 @@ import rs.teslaris.core.model.commontypes.ExportableEndpointType;
 import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
+import rs.teslaris.core.service.interfaces.document.DocumentAnalyticsService;
+import rs.teslaris.core.service.interfaces.document.DocumentCollaborationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
-import rs.teslaris.reporting.service.interfaces.PersonCollaborationNetworkService;
 
 @Service
 @Slf4j
@@ -57,7 +58,9 @@ public class TableExportServiceImpl implements TableExportService {
 
     private final CitationService citationService;
 
-    private final PersonCollaborationNetworkService personCollaborationNetworkService;
+    private final DocumentCollaborationService documentCollaborationService;
+
+    private final DocumentAnalyticsService documentAnalyticsService;
 
     @Value("${table-export.maximum-export-amount}")
     private Integer maximumExportAmount;
@@ -71,8 +74,9 @@ public class TableExportServiceImpl implements TableExportService {
         OrganisationUnitService organisationUnitService,
         PersonService personService,
         DocumentPublicationService documentPublicationService,
-        CitationService citationService,
-        PersonCollaborationNetworkService personCollaborationNetworkService) {
+        CitationService citationService, DocumentCollaborationService documentCollaborationService,
+        DocumentAnalyticsService documentAnalyticsService
+    ) {
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
         this.personIndexRepository = personIndexRepository;
         this.organisationUnitIndexRepository = organisationUnitIndexRepository;
@@ -80,7 +84,8 @@ public class TableExportServiceImpl implements TableExportService {
         this.personService = personService;
         this.documentPublicationService = documentPublicationService;
         this.citationService = citationService;
-        this.personCollaborationNetworkService = personCollaborationNetworkService;
+        this.documentCollaborationService = documentCollaborationService;
+        this.documentAnalyticsService = documentAnalyticsService;
     }
 
     @Override
@@ -284,10 +289,23 @@ public class TableExportServiceImpl implements TableExportService {
                         .filter(t -> !t.isBlank()).toList(), pageable,
                     Boolean.parseBoolean(endpointTokenParameters.getLast()));
             case COLLABORATION_PUBLICATIONS ->
-                (Page<T>) personCollaborationNetworkService.findPublicationsForCollaboration(
+                (Page<T>) documentCollaborationService.findPublicationsForCollaboration(
                     Integer.parseInt(endpointTokenParameters.getFirst()),
                     Integer.parseInt(endpointTokenParameters.get(1)),
-                    endpointTokenParameters.getLast(), pageable);
+                    endpointTokenParameters.getLast(),
+                    Integer.parseInt(endpointTokenParameters.get(2)),
+                    Integer.parseInt(endpointTokenParameters.get(3)),
+                    pageable
+                );
+            case VISUALIZATION_PUBLICATIONS ->
+                (Page<T>) documentAnalyticsService.findPublicationsForTypeAndPeriod(
+                    DocumentPublicationType.valueOf(endpointTokenParameters.getFirst()),
+                    Integer.parseInt(endpointTokenParameters.get(1)),
+                    Integer.parseInt(endpointTokenParameters.get(2)),
+                    Integer.parseInt(endpointTokenParameters.get(3)),
+                    Integer.parseInt(endpointTokenParameters.getLast()),
+                    pageable
+                );
         };
     }
 }

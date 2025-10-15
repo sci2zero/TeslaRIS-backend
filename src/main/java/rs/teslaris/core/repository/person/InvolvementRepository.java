@@ -15,7 +15,7 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
     @Query("SELECT e FROM Employment e " +
         "WHERE e.personInvolved.id = :personId " +
         "AND e.organisationUnit.id = :institutionId " +
-        "AND e.dateTo IS null")
+        "AND e.dateTo IS NULL")
     Optional<Employment> findActiveEmploymentForPersonAndInstitution(Integer institutionId,
                                                                      Integer personId);
 
@@ -39,12 +39,17 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
     @Query("SELECT e FROM Employment e LEFT JOIN FETCH e.organisationUnit " +
         "WHERE e.personInvolved.id = :personId " +
         "AND e.organisationUnit.id IN :institutionIds " +
-        "AND e.dateTo IS null")
+        "AND e.dateTo IS NULL")
     List<Employment> findActiveEmploymentsForPersonAndInstitutions(List<Integer> institutionIds,
                                                                    Integer personId);
 
     @Query("SELECT e FROM Employment e LEFT JOIN FETCH e.organisationUnit " +
         "WHERE e.organisationUnit.id IN :institutionIds " +
-        "AND e.dateTo IS null")
+        "AND e.dateTo IS NULL")
     List<Employment> findActiveEmploymentsForInstitutions(List<Integer> institutionIds);
+
+    @Query("SELECT COUNT(e) FROM Employment e LEFT JOIN e.organisationUnit " +
+        "WHERE e.organisationUnit.id IN :institutionIds " +
+        "AND e.dateTo IS NULL")
+    Integer countActiveEmploymentsForInstitutions(List<Integer> institutionIds);
 }

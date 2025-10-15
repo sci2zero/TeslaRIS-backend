@@ -7,10 +7,11 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.service.interfaces.document.DocumentAnalyticsService;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 
 @Service
-public interface DocumentVisualizationDataService {
+public interface DocumentVisualizationDataService extends DocumentAnalyticsService {
 
     List<StatisticsByCountry> getByCountryStatisticsForDocument(Integer documentId, LocalDate from,
                                                                 LocalDate to,

@@ -101,7 +101,7 @@ public class PersonLeaderboardServiceTest {
             var mockPublicationResponse = mock(SearchResponse.class);
             var mockAggs = mock(Map.class);
             when(mockPublicationResponse.aggregations()).thenReturn(mockAggs);
-            when(mockPublicationResponse.aggregations().get("by_person")).thenReturn(mockAgg);
+            when(mockAggs.get("by_person")).thenReturn(mockAgg);
 
             var mockDetailedPerson1 = new PersonIndex();
             mockDetailedPerson1.setDatabaseId(1);
@@ -119,6 +119,9 @@ public class PersonLeaderboardServiceTest {
             var mockDetailedPersonResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
             when(mockDetailedPersonResponse.hits().hits()).thenReturn(
                 Arrays.asList(mockDetailedHit1, mockDetailedHit2));
+            when(mockPublicationResponse.aggregations().get("by_all_persons")).thenReturn(
+                mockAgg);
+            when(mockAgg.filter().aggregations()).thenReturn(mockAggs);
 
             when(elasticsearchClient.search(
                 (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
@@ -208,8 +211,11 @@ public class PersonLeaderboardServiceTest {
             var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
             when(mockAgg.lterms().buckets().array()).thenReturn(List.of());
             when(mockPublicationResponse.aggregations()).thenReturn(mockAggs);
-            when(mockPublicationResponse.aggregations().get("by_person")).thenReturn(
+            when(mockAggs.get("by_person")).thenReturn(
                 mockAgg); // No aggregations
+            when(mockPublicationResponse.aggregations().get("by_all_persons")).thenReturn(
+                mockAgg);
+            when(mockAgg.filter().aggregations()).thenReturn(mockAggs);
 
             when(elasticsearchClient.search(
                 (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
