@@ -47,13 +47,13 @@ public class OrganisationUnitRequestDTO {
 
     private Set<ThesisType> allowedThesisTypes;
 
-    private boolean clientInstitution;
+    private boolean clientInstitutionCris;
 
-    private String institutionEmailDomain;
+    private String institutionEmailDomainCris;
 
-    private boolean validatingEmailDomain;
+    private boolean validatingEmailDomainCris;
 
-    private boolean allowingSubdomains;
+    private boolean allowingSubdomainsCris;
 
     private boolean legalEntity;
 }

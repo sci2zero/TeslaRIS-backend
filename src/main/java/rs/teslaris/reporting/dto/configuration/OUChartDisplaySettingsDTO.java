@@ -18,9 +18,17 @@ public class OUChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
 
     private ChartDisplaySettings citationCountSubUnitLeaderboard;
 
+    private ChartDisplaySettings citationCountDocumentLeaderboard;
+
     private ChartDisplaySettings assessmentPointPersonLeaderboard;
 
     private ChartDisplaySettings assessmentPointSubUnitLeaderboard;
+
+    private ChartDisplaySettings viewCountPersonLeaderboard;
+
+    private ChartDisplaySettings viewCountDocumentLeaderboard;
+
+    private ChartDisplaySettings downloadCountDocumentLeaderboard;
 
 
     public OUChartDisplaySettingsDTO(
@@ -30,6 +38,8 @@ public class OUChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
         ChartDisplaySettings publicationCategoryByYear,
         ChartDisplaySettings publicationTypeRatio,
         ChartDisplaySettings publicationCategoryRatio,
+        ChartDisplaySettings citationCountTotal,
+        ChartDisplaySettings citationCountByYear,
         ChartDisplaySettings viewCountTotal,
         ChartDisplaySettings viewCountByMonth,
         ChartDisplaySettings viewCountByCountry,
@@ -38,11 +48,16 @@ public class OUChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
         ChartDisplaySettings citationCountPersonLeaderboard,
         ChartDisplaySettings citationCountSubUnitLeaderboard,
         ChartDisplaySettings assessmentPointCountPersonLeaderboard,
-        ChartDisplaySettings assessmentPointCountSubUnitLeaderboard) {
+        ChartDisplaySettings assessmentPointCountSubUnitLeaderboard,
+        ChartDisplaySettings viewCountPersonLeaderboard,
+        ChartDisplaySettings viewCountDocumentLeaderboard,
+        ChartDisplaySettings downloadCountDocumentLeaderboard,
+        ChartDisplaySettings citationCountDocumentLeaderboard) {
 
         super(publicationCountTotal, publicationCountByYear, publicationTypeByYear,
             publicationCategoryByYear, publicationTypeRatio, publicationCategoryRatio,
-            viewCountTotal, viewCountByMonth, viewCountByCountry);
+            citationCountTotal, citationCountByYear, viewCountTotal, viewCountByMonth,
+            viewCountByCountry);
 
         this.publicationCountPersonLeaderboard = publicationCountPersonLeaderboard;
         this.publicationCountSubUnitLeaderboard = publicationCountSubUnitLeaderboard;
@@ -50,6 +65,10 @@ public class OUChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
         this.citationCountSubUnitLeaderboard = citationCountSubUnitLeaderboard;
         this.assessmentPointPersonLeaderboard = assessmentPointCountPersonLeaderboard;
         this.assessmentPointSubUnitLeaderboard = assessmentPointCountSubUnitLeaderboard;
+        this.viewCountPersonLeaderboard = viewCountPersonLeaderboard;
+        this.viewCountDocumentLeaderboard = viewCountDocumentLeaderboard;
+        this.downloadCountDocumentLeaderboard = downloadCountDocumentLeaderboard;
+        this.citationCountDocumentLeaderboard = citationCountDocumentLeaderboard;
     }
 
     public OUChartDisplaySettingsDTO(BaseChartDisplaySettingsDTO other) {
@@ -66,6 +85,10 @@ public class OUChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
                 new ChartDisplaySettings(other.getPublicationTypeRatio()) : null,
             other.getPublicationCategoryRatio() != null ?
                 new ChartDisplaySettings(other.getPublicationCategoryRatio()) : null,
+            other.getCitationCountTotal() != null ?
+                new ChartDisplaySettings(other.getCitationCountTotal()) : null,
+            other.getCitationCountByYear() != null ?
+                new ChartDisplaySettings(other.getCitationCountByYear()) : null,
             other.getViewCountTotal() != null ?
                 new ChartDisplaySettings(other.getViewCountTotal()) : null,
             other.getViewCountByMonth() != null ?
@@ -89,6 +112,10 @@ public class OUChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
                 new ChartDisplaySettings(other.getPublicationTypeRatio()) : null,
             other.getPublicationCategoryRatio() != null ?
                 new ChartDisplaySettings(other.getPublicationCategoryRatio()) : null,
+            other.getCitationCountTotal() != null ?
+                new ChartDisplaySettings(other.getCitationCountTotal()) : null,
+            other.getCitationCountByYear() != null ?
+                new ChartDisplaySettings(other.getCitationCountByYear()) : null,
             other.getViewCountTotal() != null ?
                 new ChartDisplaySettings(other.getViewCountTotal()) : null,
             other.getViewCountByMonth() != null ?
@@ -111,5 +138,17 @@ public class OUChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
         this.assessmentPointSubUnitLeaderboard =
             other.assessmentPointSubUnitLeaderboard != null ?
                 new ChartDisplaySettings(other.assessmentPointSubUnitLeaderboard) : null;
+        this.viewCountPersonLeaderboard =
+            other.viewCountPersonLeaderboard != null ?
+                new ChartDisplaySettings(other.viewCountPersonLeaderboard) : null;
+        this.viewCountDocumentLeaderboard =
+            other.viewCountDocumentLeaderboard != null ?
+                new ChartDisplaySettings(other.viewCountDocumentLeaderboard) : null;
+        this.downloadCountDocumentLeaderboard =
+            other.downloadCountDocumentLeaderboard != null ?
+                new ChartDisplaySettings(other.downloadCountDocumentLeaderboard) : null;
+        this.citationCountDocumentLeaderboard =
+            other.citationCountDocumentLeaderboard != null ?
+                new ChartDisplaySettings(other.citationCountDocumentLeaderboard) : null;
     }
 }

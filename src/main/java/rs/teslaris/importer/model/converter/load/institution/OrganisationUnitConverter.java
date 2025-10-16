@@ -61,8 +61,8 @@ public class OrganisationUnitConverter
                     ThesisType.UNDERGRADUATE_THESIS)));
         }
 
-        dto.setClientInstitution(
-            false); // explicitly set every single one to false, clients will be updated manually
+        dto.setClientInstitutionCris(
+            false); // explicitly set every single one to false, CRIS clients will be updated manually
 
         dto.setLocation(new GeoLocationDTO());
 

@@ -286,8 +286,8 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
         when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
-            setIsClientInstitution(true);
-            setValidateEmailDomain(false);
+            setIsClientInstitutionCris(true);
+            setValidateEmailDomainCris(false);
         }});
 
         // when
@@ -326,7 +326,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("johndoe@example.com", "password123", "",
@@ -381,7 +381,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("johndoe@example.com", "password123", "",
@@ -439,7 +439,7 @@ public class UserServiceTest {
             Set.of(
                 new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
                     "University", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("regadmin@example.com", "password123", "",
@@ -496,7 +496,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
@@ -1358,7 +1358,7 @@ public class UserServiceTest {
         when(personService.findOne(1)).thenReturn(person);
 
         var organisationUnit = new OrganisationUnit();
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(anyInt())).thenReturn(organisationUnit);
 
         var newUser = new User("oauthuser@example.com", "EncodedPassword", "",
@@ -1406,7 +1406,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("newperson@example.com", "EncodedPassword", "",

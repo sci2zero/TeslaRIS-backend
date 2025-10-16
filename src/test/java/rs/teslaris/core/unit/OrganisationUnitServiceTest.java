@@ -1233,9 +1233,9 @@ public class OrganisationUnitServiceTest {
         assertNull(index.getSuperOUNameOther());
         verify(organisationUnitIndexRepository).save(index);
 
-        assertFalse(subOU.getIsClientInstitution());
-        assertFalse(subOU.getValidateEmailDomain());
-        assertFalse(subOU.getAllowSubdomains());
+        assertFalse(subOU.getIsClientInstitutionCris());
+        assertFalse(subOU.getValidateEmailDomainCris());
+        assertFalse(subOU.getAllowSubdomainsCris());
         verify(spyService).save(subOU);
 
         verify(organisationUnitsRelationRepository).delete(relation);

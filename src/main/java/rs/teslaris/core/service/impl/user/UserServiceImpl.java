@@ -618,15 +618,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private void validateInstitutionClientStatus(Integer organisationUnitId, String email) {
         var specifiedOU = organisationUnitService.findOne(organisationUnitId);
-        if (!specifiedOU.getIsClientInstitution()) {
+        if (!specifiedOU.getIsClientInstitutionCris()) {
             throw new RegistrationException(
                 "Institution is not a client. Unable to register researchers.");
         }
 
-        if (Objects.nonNull(specifiedOU.getValidateEmailDomain()) &&
-            specifiedOU.getValidateEmailDomain()) {
-            validateEmailDomain(email, specifiedOU.getInstitutionEmailDomain(),
-                specifiedOU.getAllowSubdomains());
+        if (Objects.nonNull(specifiedOU.getValidateEmailDomainCris()) &&
+            specifiedOU.getValidateEmailDomainCris()) {
+            validateEmailDomain(email, specifiedOU.getInstitutionEmailDomainCris(),
+                specifiedOU.getAllowSubdomainsCris());
         }
     }
 

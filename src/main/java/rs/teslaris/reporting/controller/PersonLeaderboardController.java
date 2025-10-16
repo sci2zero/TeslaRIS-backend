@@ -1,5 +1,6 @@
 package rs.teslaris.reporting.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,5 +42,12 @@ public class PersonLeaderboardController {
         @RequestParam Integer yearTo) {
         return personLeaderboardService.getResearchersWithMostAssessmentPoints(institutionId,
             yearFrom, yearTo);
+    }
+
+    @GetMapping("/views")
+    public List<Pair<PersonIndex, Long>> getResearchersWithMostViews(
+        @RequestParam Integer institutionId, @RequestParam LocalDate from,
+        @RequestParam LocalDate to) {
+        return personLeaderboardService.getTopResearchersByViewCount(institutionId, from, to);
     }
 }

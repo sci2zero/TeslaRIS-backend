@@ -239,7 +239,7 @@ public class TestingDataInitializer {
             List.of(ThesisType.PHD.name(), ThesisType.PHD_ART_PROJECT.name(),
                 ThesisType.MASTER.name(), ThesisType.BACHELOR.name(),
                 ThesisType.BACHELOR_WITH_HONORS.name()));
-        dummyOU.setIsClientInstitution(true);
+        dummyOU.setIsClientInstitutionCris(true);
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
         userRepository.save(researcherUser);

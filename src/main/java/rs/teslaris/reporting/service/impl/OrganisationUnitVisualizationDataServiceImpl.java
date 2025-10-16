@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
@@ -39,6 +40,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     OrganisationUnitVisualizationDataService {
 
     private final ElasticsearchClient elasticsearchClient;
+
+    private final OrganisationUnitService organisationUnitService;
 
 
     @Override
@@ -400,6 +403,55 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 b -> b.key().stringValue(),
                 MultiBucketBase::docCount
             ));
+    }
+
+    @Override
+    public Map<Year, Long> getCitationsByYearForInstitution(Integer institutionId, Integer fromYear,
+                                                            Integer toYear) {
+        if (Objects.isNull(institutionId) || Objects.isNull(fromYear) || Objects.isNull(toYear)) {
+            return Collections.emptyMap();
+        }
+
+        var eligibleOUIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
+
+        try {
+            SearchResponse<Void> response = elasticsearchClient.search(s -> {
+                var search = s.index("person")
+                    .size(0)
+                    .query(q -> q
+                        .bool(b -> b
+                            .must(m -> m.terms(t -> t
+                                .field("employment_institutions_id_hierarchy")
+                                .terms(ts -> ts.value(
+                                    eligibleOUIds.stream().map(FieldValue::of).toList()
+                                )))
+                            )
+                        )
+                    );
+
+                for (int year = fromYear; year <= toYear; year++) {
+                    int currentYear = year;
+                    search.aggregations("year_" + currentYear,
+                        a -> a.sum(sum -> sum.field("citations_by_year." + currentYear)));
+                }
+
+                return search;
+            }, Void.class);
+
+            Map<Year, Long> result = new LinkedHashMap<>();
+            for (int year = fromYear; year <= toYear; year++) {
+                var agg = response.aggregations().get("year_" + year).sum();
+                long value = (agg != null && !Double.isNaN(agg.value())) ? (long) agg.value() : 0L;
+                result.put(Year.of(year), value);
+            }
+
+            return result;
+        } catch (IOException e) {
+            log.error("Error fetching citation counts by year for institution {}: {}",
+                institutionId, e.getMessage());
+            return Collections.emptyMap();
+        }
     }
 
     private Pair<Integer, Integer> findPublicationYearRange(Integer organisationUnitId,

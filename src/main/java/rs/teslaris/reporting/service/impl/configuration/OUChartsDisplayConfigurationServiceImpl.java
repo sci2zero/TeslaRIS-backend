@@ -72,6 +72,18 @@ public class OUChartsDisplayConfigurationServiceImpl
         trueConfiguration.setAssessmentPointSubUnitLeaderboard(
             createChartSetting(configurations, "assessmentPointCountSubUnitLeaderboard",
                 ChartsDisplayConfiguration::getOuChartDisplaySettings));
+        trueConfiguration.setViewCountPersonLeaderboard(
+            createChartSetting(configurations, "viewCountPersonLeaderboard",
+                ChartsDisplayConfiguration::getOuChartDisplaySettings));
+        trueConfiguration.setViewCountDocumentLeaderboard(
+            createChartSetting(configurations, "viewCountDocumentLeaderboard",
+                ChartsDisplayConfiguration::getOuChartDisplaySettings));
+        trueConfiguration.setDownloadCountDocumentLeaderboard(
+            createChartSetting(configurations, "downloadCountDocumentLeaderboard",
+                ChartsDisplayConfiguration::getOuChartDisplaySettings));
+        trueConfiguration.setDownloadCountDocumentLeaderboard(
+            createChartSetting(configurations, "citationCountDocumentLeaderboard",
+                ChartsDisplayConfiguration::getOuChartDisplaySettings));
 
         return trueConfiguration;
     }
@@ -106,6 +118,18 @@ public class OUChartsDisplayConfigurationServiceImpl
                 settings.getAssessmentPointPersonLeaderboard());
         configuration.getOuChartDisplaySettings()
             .put("assessmentPointCountSubUnitLeaderboard",
+                settings.getAssessmentPointSubUnitLeaderboard());
+        configuration.getOuChartDisplaySettings()
+            .put("viewCountPersonLeaderboard",
+                settings.getAssessmentPointSubUnitLeaderboard());
+        configuration.getOuChartDisplaySettings()
+            .put("viewCountDocumentLeaderboard",
+                settings.getAssessmentPointSubUnitLeaderboard());
+        configuration.getOuChartDisplaySettings()
+            .put("downloadCountDocumentLeaderboard",
+                settings.getAssessmentPointSubUnitLeaderboard());
+        configuration.getOuChartDisplaySettings()
+            .put("citationCountDocumentLeaderboard",
                 settings.getAssessmentPointSubUnitLeaderboard());
 
         save(configuration);

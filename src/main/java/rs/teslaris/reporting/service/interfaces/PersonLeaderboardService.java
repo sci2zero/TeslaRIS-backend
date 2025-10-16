@@ -1,5 +1,6 @@
 package rs.teslaris.reporting.service.interfaces;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -21,4 +22,7 @@ public interface PersonLeaderboardService {
         Integer institutionId,
         Integer fromYear,
         Integer toYear);
+
+    List<Pair<PersonIndex, Long>> getTopResearchersByViewCount(Integer institutionId,
+                                                               LocalDate from, LocalDate to);
 }

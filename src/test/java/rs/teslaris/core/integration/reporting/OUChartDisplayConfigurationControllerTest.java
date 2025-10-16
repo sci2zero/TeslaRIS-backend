@@ -31,13 +31,19 @@ public class OUChartDisplayConfigurationControllerTest extends BaseTest {
             new ChartDisplaySettings(true, true),
             new ChartDisplaySettings(true, false),
             new ChartDisplaySettings(true, false),
+            new ChartDisplaySettings(true, false),
+            new ChartDisplaySettings(true, false),
             new ChartDisplaySettings(true, true),
             new ChartDisplaySettings(true, true),
             new ChartDisplaySettings(true, true),
             new ChartDisplaySettings(true, true),
             new ChartDisplaySettings(true, true),
             new ChartDisplaySettings(true, true),
-            new ChartDisplaySettings(true, true)
+            new ChartDisplaySettings(true, true),
+            new ChartDisplaySettings(true, false),
+            new ChartDisplaySettings(true, true),
+            new ChartDisplaySettings(true, true),
+            new ChartDisplaySettings(true, false)
         );
     }
 

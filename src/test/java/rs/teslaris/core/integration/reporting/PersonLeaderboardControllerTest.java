@@ -37,4 +37,13 @@ public class PersonLeaderboardControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
+
+    @Test
+    public void testGetResearchersWithMostViews() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/leaderboard-data/person/views?institutionId=1&from=2000-03-15&to=2025-11-07")
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
 }

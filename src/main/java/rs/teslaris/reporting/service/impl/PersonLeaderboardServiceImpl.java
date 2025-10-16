@@ -9,6 +9,7 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -336,6 +337,78 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
         });
 
         return retVal;
+    }
+
+    @Override
+    public List<Pair<PersonIndex, Long>> getTopResearchersByViewCount(Integer institutionId, LocalDate from, LocalDate to) {
+        if (institutionId == null) {
+            return Collections.emptyList();
+        }
+
+        var eligiblePersonIds = getEligiblePersonIds(institutionId);
+        if (eligiblePersonIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        SearchResponse<Void> response;
+        try {
+            response = elasticsearchClient.search(s -> s
+                    .index("statistics")
+                    .size(0)
+                    .query(q -> q.bool(b -> b
+                        .must(m -> m.term(t -> t.field("type").value("VIEW")))
+                        .must(m -> m.term(t -> t.field("is_bot").value(false)))
+                        .must(m -> m.terms(t -> t.field("person_id").terms(ts -> ts
+                            .value(eligiblePersonIds.stream().map(FieldValue::of).toList()))))
+                        .must(m -> m.range(r -> r
+                            .field("timestamp")
+                            .gte(JsonData.of(from))
+                            .lte(JsonData.of(to))
+                        ))
+                    ))
+                    .aggregations("by_person", a -> a.terms(t -> t
+                                .field("person_id")
+                                .size(10)
+                                .order(List.of(NamedValue.of("view_count", SortOrder.Desc)))
+                            )
+                            .aggregations("view_count", sub -> sub.valueCount(v -> v.field("person_id")))
+                    ),
+                Void.class
+            );
+        } catch (IOException e) {
+            log.error("Error fetching top researchers by view count: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+
+        var buckets = response.aggregations()
+            .get("by_person")
+            .lterms()
+            .buckets()
+            .array();
+
+        var topPersonIds = buckets.stream()
+            .map(LongTermsBucket::key)
+            .map(Long::intValue)
+            .collect(Collectors.toSet());
+
+        var personMap = new HashMap<Integer, PersonIndex>();
+        topPersonIds.forEach(id ->
+            personIndexRepository.findByDatabaseId(id).ifPresent(p -> personMap.put(id, p))
+        );
+
+        return buckets.stream()
+            .map(bucket -> {
+                var viewCountAgg = bucket.aggregations().get("view_count").valueCount();
+                long viewCount = viewCountAgg == null || Double.isNaN(viewCountAgg.value())
+                    ? 0L
+                    : (long) viewCountAgg.value();
+                var person = personMap.get((int) bucket.key());
+                return person != null ? new Pair<>(person, viewCount) : null;
+            })
+            .filter(Objects::nonNull)
+            .sorted((a, b) -> Long.compare(b.b, a.b))
+            .limit(10)
+            .toList();
     }
 
     private List<Integer> getEligiblePersonIds(Integer institutionId) {

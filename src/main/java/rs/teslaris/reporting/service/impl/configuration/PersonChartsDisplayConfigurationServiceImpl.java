@@ -63,18 +63,9 @@ public class PersonChartsDisplayConfigurationServiceImpl
             addDefaultConfiguration(configurations);
         }
 
-        var trueConfiguration = new PersonChartDisplaySettingsDTO(
+        return new PersonChartDisplaySettingsDTO(
             deduceBaseConfigurationFormMultipleSources(configurations,
                 ChartsDisplayConfiguration::getPersonChartDisplaySettings));
-
-        trueConfiguration.setCitationCountTotal(
-            createChartSetting(configurations, "citationCountTotal",
-                ChartsDisplayConfiguration::getPersonChartDisplaySettings));
-        trueConfiguration.setCitationCountByYear(
-            createChartSetting(configurations, "citationCountByYear",
-                ChartsDisplayConfiguration::getPersonChartDisplaySettings));
-
-        return trueConfiguration;
     }
 
     @Override
@@ -91,11 +82,6 @@ public class PersonChartsDisplayConfigurationServiceImpl
         }
 
         setBaseConfigurationFields(configuration.getPersonChartDisplaySettings(), settings);
-
-        configuration.getPersonChartDisplaySettings()
-            .put("citationCountTotal", settings.getCitationCountTotal());
-        configuration.getPersonChartDisplaySettings()
-            .put("citationCountByYear", settings.getCitationCountByYear());
 
         save(configuration);
     }

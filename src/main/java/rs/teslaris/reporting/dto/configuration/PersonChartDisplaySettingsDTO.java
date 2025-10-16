@@ -10,11 +10,6 @@ import rs.teslaris.reporting.model.ChartDisplaySettings;
 @NoArgsConstructor
 public class PersonChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
 
-    private ChartDisplaySettings citationCountTotal;
-
-    private ChartDisplaySettings citationCountByYear;
-
-
     public PersonChartDisplaySettingsDTO(ChartDisplaySettings publicationCountTotal,
                                          ChartDisplaySettings publicationCountByYear,
                                          ChartDisplaySettings publicationTypeByYear,
@@ -28,9 +23,8 @@ public class PersonChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
                                          ChartDisplaySettings viewCountByCountry) {
         super(publicationCountTotal, publicationCountByYear, publicationTypeByYear,
             publicationCategoryByYear, publicationTypeRatio, publicationCategoryRatio,
-            viewCountTotal, viewCountByMonth, viewCountByCountry);
-        this.citationCountTotal = citationCountTotal;
-        this.citationCountByYear = citationCountByYear;
+            citationCountTotal, citationCountByYear, viewCountTotal, viewCountByMonth,
+            viewCountByCountry);
     }
 
     public PersonChartDisplaySettingsDTO(BaseChartDisplaySettingsDTO other) {
@@ -47,6 +41,10 @@ public class PersonChartDisplaySettingsDTO extends BaseChartDisplaySettingsDTO {
                 new ChartDisplaySettings(other.getPublicationTypeRatio()) : null,
             other.getPublicationCategoryRatio() != null ?
                 new ChartDisplaySettings(other.getPublicationCategoryRatio()) : null,
+            other.getCitationCountTotal() != null ?
+                new ChartDisplaySettings(other.getCitationCountTotal()) : null,
+            other.getCitationCountByYear() != null ?
+                new ChartDisplaySettings(other.getCitationCountByYear()) : null,
             other.getViewCountTotal() != null ?
                 new ChartDisplaySettings(other.getViewCountTotal()) : null,
             other.getViewCountByMonth() != null ?

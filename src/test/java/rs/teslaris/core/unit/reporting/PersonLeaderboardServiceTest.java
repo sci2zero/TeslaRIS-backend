@@ -3,21 +3,30 @@ package rs.teslaris.core.unit.reporting;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.LongTermsAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.SumAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.ValueCountAggregate;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.ObjectBuilder;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,6 +45,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.service.impl.PersonLeaderboardServiceImpl;
 import rs.teslaris.reporting.utility.QueryUtil;
@@ -673,5 +683,290 @@ public class PersonLeaderboardServiceTest {
             assertEquals(1, result.getFirst().leaderboardData().size());
             assertEquals(person1, result.getFirst().leaderboardData().getFirst().a);
         }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnTopResearchersByViewCount() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromDate = LocalDate.of(2023, 1, 1);
+        var toDate = LocalDate.of(2023, 12, 31);
+
+        var mockPerson1 = new PersonIndex();
+        mockPerson1.setDatabaseId(1);
+        var mockPerson2 = new PersonIndex();
+        mockPerson2.setDatabaseId(2);
+        var mockPerson3 = new PersonIndex();
+        mockPerson3.setDatabaseId(3);
+
+        var mockPersonHit1 = mock(Hit.class);
+        when(mockPersonHit1.source()).thenReturn(mockPerson1);
+        var mockPersonHit2 = mock(Hit.class);
+        when(mockPersonHit2.source()).thenReturn(mockPerson2);
+        var mockPersonHit3 = mock(Hit.class);
+        when(mockPersonHit3.source()).thenReturn(mockPerson3);
+
+        var mockPersonResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockPersonResponse.hits().hits()).thenReturn(
+            Arrays.asList(mockPersonHit1, mockPersonHit2, mockPersonHit3));
+
+        var mockBucket1 = mock(LongTermsBucket.class, RETURNS_DEEP_STUBS);
+        when(mockBucket1.key()).thenReturn(1L);
+        when(mockBucket1.aggregations().get("view_count").valueCount().value()).thenReturn(150.0);
+
+        var mockBucket2 = mock(LongTermsBucket.class, RETURNS_DEEP_STUBS);
+        when(mockBucket2.key()).thenReturn(2L);
+        when(mockBucket2.aggregations().get("view_count").valueCount().value()).thenReturn(100.0);
+
+        var mockBucket3 = mock(LongTermsBucket.class, RETURNS_DEEP_STUBS);
+        when(mockBucket3.key()).thenReturn(3L);
+        when(mockBucket3.aggregations().get("view_count").valueCount().value()).thenReturn(Double.NaN);
+
+        var buckets = Arrays.asList(mockBucket1, mockBucket2, mockBucket3);
+        var mockLongTerms = mock(LongTermsAggregate.class, RETURNS_DEEP_STUBS);
+        when(mockLongTerms.buckets().array()).thenReturn(buckets);
+
+        var mockAggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate.lterms()).thenReturn(mockLongTerms);
+
+        var mockAggregations = new HashMap<String, Aggregate>();
+        mockAggregations.put("by_person", mockAggregate);
+
+        var mockStatsResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockStatsResponse.aggregations()).thenReturn(mockAggregations);
+
+        var mockDetailedPerson1 = new PersonIndex();
+        mockDetailedPerson1.setDatabaseId(1);
+        mockDetailedPerson1.setName("John Doe");
+
+        var mockDetailedPerson2 = new PersonIndex();
+        mockDetailedPerson2.setDatabaseId(2);
+        mockDetailedPerson2.setName("Jane Smith");
+
+        when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(mockDetailedPerson1));
+        when(personIndexRepository.findByDatabaseId(2)).thenReturn(Optional.of(mockDetailedPerson2));
+        when(personIndexRepository.findByDatabaseId(3)).thenReturn(Optional.empty());
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(PersonIndex.class)
+        )).thenReturn(mockPersonResponse);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class)
+        )).thenReturn(mockStatsResponse);
+
+        // When
+        var result = service.getTopResearchersByViewCount(institutionId, fromDate, toDate);
+
+        // Then
+        assertEquals(2, result.size());
+        assertEquals("John Doe", result.get(0).a.getName());
+        assertEquals(150L, result.get(0).b);
+        assertEquals("Jane Smith", result.get(1).a.getName());
+        assertEquals(100L, result.get(1).b);
+
+        verify(personIndexRepository, times(3)).findByDatabaseId(anyInt());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListWhenInstitutionIdIsNull() {
+        // Given
+        Integer institutionId = null;
+        var fromDate = LocalDate.of(2023, 1, 1);
+        var toDate = LocalDate.of(2023, 12, 31);
+
+        // When
+        var result = service.getTopResearchersByViewCount(institutionId, fromDate, toDate);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(elasticsearchClient, personIndexRepository);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListWhenNoEligiblePersonIdsFound() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromDate = LocalDate.of(2023, 1, 1);
+        var toDate = LocalDate.of(2023, 12, 31);
+
+        var mockPersonResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockPersonResponse.hits().hits()).thenReturn(Collections.emptyList());
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(PersonIndex.class)
+        )).thenReturn(mockPersonResponse);
+
+        // When
+        var result = service.getTopResearchersByViewCount(institutionId, fromDate, toDate);
+
+        // Then
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListWhenPersonSearchThrowsIOException() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromDate = LocalDate.of(2023, 1, 1);
+        var toDate = LocalDate.of(2023, 12, 31);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(PersonIndex.class)
+        )).thenThrow(new IOException("Connection failed"));
+
+        // When
+        var result = service.getTopResearchersByViewCount(institutionId, fromDate, toDate);
+
+        // Then
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListWhenStatisticsSearchThrowsIOException() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromDate = LocalDate.of(2023, 1, 1);
+        var toDate = LocalDate.of(2023, 12, 31);
+
+        var mockPerson = new PersonIndex();
+        mockPerson.setDatabaseId(1);
+        var mockPersonHit = mock(Hit.class);
+        when(mockPersonHit.source()).thenReturn(mockPerson);
+
+        var mockPersonResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockPersonResponse.hits().hits()).thenReturn(List.of(mockPersonHit));
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(PersonIndex.class)
+        )).thenReturn(mockPersonResponse);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class)
+        )).thenThrow(new IOException("Statistics index unavailable"));
+
+        // When
+        var result = service.getTopResearchersByViewCount(institutionId, fromDate, toDate);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(personIndexRepository);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldHandleEmptyAggregationsGracefully() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromDate = LocalDate.of(2023, 1, 1);
+        var toDate = LocalDate.of(2023, 12, 31);
+
+        var mockPerson = new PersonIndex();
+        mockPerson.setDatabaseId(1);
+        var mockPersonHit = mock(Hit.class);
+        when(mockPersonHit.source()).thenReturn(mockPerson);
+
+        var mockPersonResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockPersonResponse.hits().hits()).thenReturn(List.of(mockPersonHit));
+
+        var mockAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAgg.lterms().buckets().array()).thenReturn(Collections.emptyList());
+
+        var mockStatsResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        var mockAggs = mock(Map.class);
+        when(mockStatsResponse.aggregations()).thenReturn(mockAggs);
+        when(mockAggs.get("by_person")).thenReturn(mockAgg);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(PersonIndex.class)
+        )).thenReturn(mockPersonResponse);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class)
+        )).thenReturn(mockStatsResponse);
+
+        // When
+        var result = service.getTopResearchersByViewCount(institutionId, fromDate, toDate);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(personIndexRepository, never()).findByDatabaseId(anyInt());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldLimitToTop10Researchers() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromDate = LocalDate.of(2023, 1, 1);
+        var toDate = LocalDate.of(2023, 12, 31);
+
+        List<Hit> personHits = new ArrayList<>();
+        for (int i = 1; i <= 12; i++) {
+            var mockPerson = new PersonIndex();
+            mockPerson.setDatabaseId(i);
+            var mockPersonHit = mock(Hit.class);
+            when(mockPersonHit.source()).thenReturn(mockPerson);
+            personHits.add(mockPersonHit);
+        }
+
+        var mockPersonResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockPersonResponse.hits().hits()).thenReturn(personHits);
+
+        List<LongTermsBucket> buckets = new ArrayList<>();
+        for (int i = 1; i <= 12; i++) {
+            var mockBucket = mock(LongTermsBucket.class, RETURNS_DEEP_STUBS);
+            when(mockBucket.key()).thenReturn((long) i);
+            when(mockBucket.aggregations().get("view_count").valueCount().value()).thenReturn((double) (100 - i));
+            buckets.add(mockBucket);
+
+            var mockPerson = new PersonIndex();
+            mockPerson.setDatabaseId(i);
+            mockPerson.setName("Researcher " + i);
+            when(personIndexRepository.findByDatabaseId(i)).thenReturn(Optional.of(mockPerson));
+        }
+
+        var mockLongTerms = mock(LongTermsAggregate.class, RETURNS_DEEP_STUBS);
+        when(mockLongTerms.buckets().array()).thenReturn(buckets);
+
+        var mockAggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate.lterms()).thenReturn(mockLongTerms);
+
+        var mockAggregations = new HashMap<String, Aggregate>();
+        mockAggregations.put("by_person", mockAggregate);
+
+        var mockStatsResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockStatsResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(PersonIndex.class)
+        )).thenReturn(mockPersonResponse);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class)
+        )).thenReturn(mockStatsResponse);
+
+        // When
+        var result = service.getTopResearchersByViewCount(institutionId, fromDate, toDate);
+
+        // Then
+        assertEquals(10, result.size());
+        assertTrue(result.get(0).b >= result.get(1).b);
+        assertTrue(result.get(1).b >= result.get(2).b);
     }
 }

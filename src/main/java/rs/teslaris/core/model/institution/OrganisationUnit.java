@@ -91,17 +91,17 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
     @Column(columnDefinition = "jsonb", name = "allowed_thesis_types")
     private Set<String> allowedThesisTypes = new HashSet<>();
 
-    @Column(name = "is_client_institution", nullable = false)
-    private Boolean isClientInstitution = false;
+    @Column(name = "is_client_institution_cris", nullable = false)
+    private Boolean isClientInstitutionCris = false;
 
-    @Column(name = "validate_email_domain", nullable = false)
-    private Boolean validateEmailDomain = false;
+    @Column(name = "validate_email_domain_cris", nullable = false)
+    private Boolean validateEmailDomainCris = false;
 
-    @Column(name = "allow_subdomains")
-    private Boolean allowSubdomains = false;
+    @Column(name = "allow_subdomains_cris")
+    private Boolean allowSubdomainsCris = false;
 
-    @Column(name = "institution_email_domain")
-    private String institutionEmailDomain;
+    @Column(name = "institution_email_domain_cris")
+    private String institutionEmailDomainCris;
 
     @Column(name = "legal_entity", nullable = false)
     private Boolean legalEntity = false;

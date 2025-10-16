@@ -24,6 +24,10 @@ public class BaseChartDisplaySettingsDTO {
 
     private ChartDisplaySettings publicationCategoryRatio;
 
+    private ChartDisplaySettings citationCountTotal;
+
+    private ChartDisplaySettings citationCountByYear;
+
     private ChartDisplaySettings viewCountTotal;
 
     private ChartDisplaySettings viewCountByMonth;

@@ -54,6 +54,10 @@ public class BaseChartsDisplayConfigurationServiceImpl
         configuration
             .put("publicationCategoryRatio", settings.getPublicationCategoryRatio());
         configuration
+            .put("citationCountTotal", settings.getPublicationTypeRatio());
+        configuration
+            .put("citationCountByYear", settings.getPublicationCategoryRatio());
+        configuration
             .put("viewCountTotal", settings.getViewCountTotal());
         configuration
             .put("viewCountByMonth", settings.getViewCountByMonth());
@@ -74,6 +78,10 @@ public class BaseChartsDisplayConfigurationServiceImpl
             .put("publicationTypeRatio", new ChartDisplaySettings(true, false));
         configuration
             .put("publicationCategoryRatio", new ChartDisplaySettings(true, true));
+        configuration
+            .put("citationCountTotal", new ChartDisplaySettings(true, false));
+        configuration
+            .put("citationCountByYear", new ChartDisplaySettings(true, false));
         configuration
             .put("viewCountTotal", new ChartDisplaySettings(true, false));
         configuration
@@ -96,14 +104,19 @@ public class BaseChartsDisplayConfigurationServiceImpl
             .put("assessmentPointCountPersonLeaderboard", new ChartDisplaySettings(true, false));
         configuration
             .put("assessmentPointCountSubUnitLeaderboard", new ChartDisplaySettings(true, false));
+        configuration
+            .put("viewCountPersonLeaderboard", new ChartDisplaySettings(true, true));
+        configuration
+            .put("viewCountDocumentLeaderboard", new ChartDisplaySettings(true, false));
+        configuration
+            .put("downloadCountDocumentLeaderboard", new ChartDisplaySettings(true, false));
+        configuration
+            .put("citationCountDocumentLeaderboard", new ChartDisplaySettings(true, false));
     }
 
     protected void setPersonConfigurationSpecificDefaultFields(
         Map<String, ChartDisplaySettings> configuration) {
-        configuration
-            .put("citationCountTotal", new ChartDisplaySettings(true, false));
-        configuration
-            .put("citationCountByYear", new ChartDisplaySettings(true, false));
+        // Empty for now, kept for easier maintenance and scaling
     }
 
     protected void setDocumentConfigurationSpecificDefaultFields(
@@ -150,6 +163,8 @@ public class BaseChartsDisplayConfigurationServiceImpl
             createChartSetting(configurations, "publicationCategoryByYear", settingsExtractor),
             createChartSetting(configurations, "publicationTypeRatio", settingsExtractor),
             createChartSetting(configurations, "publicationCategoryRatio", settingsExtractor),
+            createChartSetting(configurations, "citationCountTotal", settingsExtractor),
+            createChartSetting(configurations, "citationCountByYear", settingsExtractor),
             createChartSetting(configurations, "viewCountTotal", settingsExtractor),
             createChartSetting(configurations, "viewCountByMonth", settingsExtractor),
             createChartSetting(configurations, "viewCountByCountry", settingsExtractor)
@@ -201,6 +216,8 @@ public class BaseChartsDisplayConfigurationServiceImpl
             ouSettings.get("publicationCategoryByYear"),
             ouSettings.get("publicationTypeRatio"),
             ouSettings.get("publicationCategoryRatio"),
+            ouSettings.get("citationCountTotal"),
+            ouSettings.get("citationCountByYear"),
             ouSettings.get("viewCountTotal"),
             ouSettings.get("viewCountByMonth"),
             ouSettings.get("viewCountByCountry"),
@@ -209,7 +226,11 @@ public class BaseChartsDisplayConfigurationServiceImpl
             ouSettings.get("citationCountPersonLeaderboard"),
             ouSettings.get("citationCountSubUnitLeaderboard"),
             ouSettings.get("assessmentPointCountPersonLeaderboard"),
-            ouSettings.get("assessmentPointCountSubUnitLeaderboard")
+            ouSettings.get("assessmentPointCountSubUnitLeaderboard"),
+            ouSettings.get("viewCountPersonLeaderboard"),
+            ouSettings.get("viewCountDocumentLeaderboard"),
+            ouSettings.get("downloadCountDocumentLeaderboard"),
+            ouSettings.get("citationCountDocumentLeaderboard")
         ));
 
         var documentSettings = configuration.getDocumentChartDisplaySettings();

@@ -7,6 +7,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -17,6 +19,7 @@ import co.elastic.clients.elasticsearch._types.aggregations.DateHistogramBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.MaxAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.MinAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.SumAggregate;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.util.ObjectBuilder;
@@ -24,6 +27,8 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Year;
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +41,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.institution.OrganisationUnitOutputConfigurationDTO;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.service.impl.OrganisationUnitVisualizationDataServiceImpl;
 import rs.teslaris.reporting.utility.QueryUtil;
@@ -45,6 +51,9 @@ class OrganisationUnitVisualizationDataServiceTest {
 
     @Mock
     private ElasticsearchClient elasticsearchClient;
+
+    @Mock
+    private OrganisationUnitService organisationUnitService;
 
     @InjectMocks
     private OrganisationUnitVisualizationDataServiceImpl service;
@@ -518,6 +527,221 @@ class OrganisationUnitVisualizationDataServiceTest {
             // Then
             assertTrue(result.isEmpty());
         }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnCitationsByYearForInstitution() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromYear = 2020;
+        var toYear = 2023;
+
+        var eligibleOUIds = List.of(123, 456, 789);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(eligibleOUIds);
+
+        var mockAggregate2020 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate2020.sum()).thenReturn(mock(SumAggregate.class));
+        when(mockAggregate2020.sum().value()).thenReturn(150.0);
+
+        var mockAggregate2021 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate2021.sum()).thenReturn(mock(SumAggregate.class));
+        when(mockAggregate2021.sum().value()).thenReturn(200.0);
+
+        var mockAggregate2022 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate2022.sum()).thenReturn(mock(SumAggregate.class));
+        when(mockAggregate2022.sum().value()).thenReturn(180.0);
+
+        var mockAggregate2023 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate2023.sum()).thenReturn(mock(SumAggregate.class));
+        when(mockAggregate2023.sum().value()).thenReturn(Double.NaN);
+
+        var mockAggregations = new HashMap<String, Aggregate>();
+        mockAggregations.put("year_2020", mockAggregate2020);
+        mockAggregations.put("year_2021", mockAggregate2021);
+        mockAggregations.put("year_2022", mockAggregate2022);
+        mockAggregations.put("year_2023", mockAggregate2023);
+
+        var mockResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class)
+        )).thenReturn(mockResponse);
+
+        // When
+        var result = service.getCitationsByYearForInstitution(institutionId, fromYear, toYear);
+
+        // Then
+        assertEquals(4, result.size());
+        assertEquals(150L, result.get(Year.of(2020)));
+        assertEquals(200L, result.get(Year.of(2021)));
+        assertEquals(180L, result.get(Year.of(2022)));
+        assertEquals(0L, result.get(Year.of(2023)));
+        var years = new ArrayList<>(result.keySet());
+        assertEquals(Year.of(2020), years.get(0));
+        assertEquals(Year.of(2021), years.get(1));
+        assertEquals(Year.of(2022), years.get(2));
+        assertEquals(Year.of(2023), years.get(3));
+
+        verify(organisationUnitService).getOrganisationUnitIdsFromSubHierarchy(institutionId);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyMapWhenInstitutionIdIsNull() {
+        // Given
+        Integer institutionId = null;
+        var fromYear = 2020;
+        var toYear = 2023;
+
+        // When
+        var result = service.getCitationsByYearForInstitution(institutionId, fromYear, toYear);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(organisationUnitService, elasticsearchClient);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyMapWhenFromYearIsNull() {
+        // Given
+        var institutionId = 123;
+        Integer fromYear = null;
+        var toYear = 2023;
+
+        // When
+        var result = service.getCitationsByYearForInstitution(institutionId, fromYear, toYear);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(organisationUnitService, elasticsearchClient);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyMapWhenToYearIsNull() {
+        // Given
+        var institutionId = 123;
+        var fromYear = 2020;
+        Integer toYear = null;
+
+        // When
+        var result = service.getCitationsByYearForInstitution(institutionId, fromYear, toYear);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(organisationUnitService, elasticsearchClient);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyMapWhenElasticsearchThrowsIOException() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromYear = 2020;
+        var toYear = 2023;
+
+        var eligibleOUIds = List.of(123, 456);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(eligibleOUIds);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class)
+        )).thenThrow(new IOException("Connection failed"));
+
+        // When
+        var result = service.getCitationsByYearForInstitution(institutionId, fromYear, toYear);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(organisationUnitService).getOrganisationUnitIdsFromSubHierarchy(institutionId);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldHandleSingleYearRange() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromYear = 2023;
+        var toYear = 2023; // Single year
+
+        var eligibleOUIds = List.of(123, 456);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(eligibleOUIds);
+
+        var mockAggregate2023 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate2023.sum()).thenReturn(mock(SumAggregate.class));
+        when(mockAggregate2023.sum().value()).thenReturn(300.0);
+
+        var mockAggregations = new HashMap<String, Aggregate>();
+        mockAggregations.put("year_2023", mockAggregate2023);
+
+        var mockResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class)
+        )).thenReturn(mockResponse);
+
+        // When
+        var result = service.getCitationsByYearForInstitution(institutionId, fromYear, toYear);
+
+        // Then
+        assertEquals(1, result.size());
+        assertEquals(300L, result.get(Year.of(2023)));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldHandleZeroCitationsForAllYears() throws IOException {
+        // Given
+        var institutionId = 123;
+        var fromYear = 2020;
+        var toYear = 2022;
+
+        var eligibleOUIds = List.of(123, 456);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(eligibleOUIds);
+
+        var mockAggregate2020 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate2020.sum()).thenReturn(mock(SumAggregate.class));
+        when(mockAggregate2020.sum().value()).thenReturn(0.0);
+
+        var mockAggregate2021 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate2021.sum()).thenReturn(mock(SumAggregate.class));
+        when(mockAggregate2021.sum().value()).thenReturn(0.0);
+
+        var mockAggregate2022 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(mockAggregate2022.sum()).thenReturn(mock(SumAggregate.class));
+        when(mockAggregate2022.sum().value()).thenReturn(0.0);
+
+        var mockAggregations = new HashMap<String, Aggregate>();
+        mockAggregations.put("year_2020", mockAggregate2020);
+        mockAggregations.put("year_2021", mockAggregate2021);
+        mockAggregations.put("year_2022", mockAggregate2022);
+
+        var mockResponse = mock(SearchResponse.class, RETURNS_DEEP_STUBS);
+        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(Void.class)
+        )).thenReturn(mockResponse);
+
+        // When
+        var result = service.getCitationsByYearForInstitution(institutionId, fromYear, toYear);
+
+        // Then
+        assertEquals(3, result.size());
+        assertEquals(0L, result.get(Year.of(2020)));
+        assertEquals(0L, result.get(Year.of(2021)));
+        assertEquals(0L, result.get(Year.of(2022)));
     }
 
     private OrganisationUnitOutputConfigurationDTO mockOutputConfiguration() {

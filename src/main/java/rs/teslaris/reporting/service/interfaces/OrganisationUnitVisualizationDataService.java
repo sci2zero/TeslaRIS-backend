@@ -33,4 +33,7 @@ public interface OrganisationUnitVisualizationDataService {
 
     Map<Year, Long> getYearlyStatisticsCounts(Integer organisationUnitId, Integer startYear,
                                               Integer endYear);
+
+    Map<Year, Long> getCitationsByYearForInstitution(Integer institutionId, Integer fromYear,
+                                                     Integer toYear);
 }

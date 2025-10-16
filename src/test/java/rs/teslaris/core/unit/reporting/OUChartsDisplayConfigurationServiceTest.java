@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -233,7 +234,7 @@ class OUChartsDisplayConfigurationServiceTest {
         // Then
         verify(configurationRepository).save(argThat(config -> {
             var settings = config.getOuChartDisplaySettings();
-            return settings != null &&
+            return Objects.nonNull(settings) &&
                 settings.containsKey("publicationCountPersonLeaderboard") &&
                 settings.containsKey("publicationCountSubUnitLeaderboard") &&
                 settings.containsKey("citationCountPersonLeaderboard") &&
@@ -270,13 +271,19 @@ class OUChartsDisplayConfigurationServiceTest {
             new ChartDisplaySettings(true, true),
             new ChartDisplaySettings(true, false),
             new ChartDisplaySettings(false, true),
+            new ChartDisplaySettings(true, true),
+            new ChartDisplaySettings(true, true),
             // OU-specific settings
             new ChartDisplaySettings(true, false),  // publicationCountPersonLeaderboard
             new ChartDisplaySettings(false, true),  // publicationCountSubUnitLeaderboard
             new ChartDisplaySettings(true, true),   // citationCountPersonLeaderboard
             new ChartDisplaySettings(false, false), // citationCountSubUnitLeaderboard
             new ChartDisplaySettings(true, false),  // assessmentPointCountPersonLeaderboard
-            new ChartDisplaySettings(false, true)   // assessmentPointCountSubUnitLeaderboard
+            new ChartDisplaySettings(false, true),  // assessmentPointCountSubUnitLeaderboard
+            new ChartDisplaySettings(true, false),  // viewCountPersonLeaderboard
+            new ChartDisplaySettings(true, false),  // viewCountDocumentLeaderboard
+            new ChartDisplaySettings(true, true),   // downloadCountDocumentLeaderboard
+            new ChartDisplaySettings(true, false)   // citationCountDocumentLeaderboard
         );
     }
 }
