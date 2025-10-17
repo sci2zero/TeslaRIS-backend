@@ -42,28 +42,6 @@ databaseChangeLog:
         baseTableName: person_uris
         constraintName: fkqfg6dt36v8sx2m579gb2l1336
 - changeSet:
-    id: 1760710406682-1
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: allow_subdomains_cris
-            type: BOOLEAN
-        tableName: organisation_units
-- changeSet:
-    id: 1760710406682-2
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: is_client_institution_cris
-            type: BOOLEAN
-        tableName: organisation_units
-- changeSet:
     id: 1760710406682-3
     author: milospopovic (generated)
     changes:
@@ -83,18 +61,6 @@ databaseChangeLog:
             name: uris
             type: JSONB
         tableName: projects
-- changeSet:
-    id: 1760710406682-5
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: validate_email_domain_cris
-            type: BOOLEAN
-        tableName: organisation_units
 - changeSet:
     id: 1760710406682-6
     author: milospopovic (generated)
@@ -125,16 +91,6 @@ databaseChangeLog:
             name: uris
             type: JSONB
         tableName: conferences
-- changeSet:
-    id: 1760710406682-9
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: institution_email_domain_cris
-            type: VARCHAR(255)
-        tableName: organisation_units
 - changeSet:
     id: 1760710406682-10
     author: milospopovic (generated)
@@ -311,31 +267,44 @@ databaseChangeLog:
     - dropTable:
         tableName: theses_remark
 - changeSet:
-    id: 1760710406682-35
-    author: milospopovic (generated)
-    changes:
-    - dropColumn:
-        columnName: allow_subdomains
-        tableName: organisation_units
+      id: 1760710406682-1
+      author: milospopovic (generated)
+      changes:
+      - renameColumn:
+            columnDataType: BOOLEAN
+            newColumnName: allow_subdomains_cris
+            oldColumnName: allow_subdomains
+            tableName: organisation_units
 - changeSet:
-    id: 1760710406682-36
-    author: milospopovic (generated)
-    changes:
-    - dropColumn:
-        columnName: institution_email_domain
-        tableName: organisation_units
+      id: 1760710406682-2
+      author: milospopovic (generated)
+      changes:
+      - renameColumn:
+            columnDataType: BOOLEAN
+            newColumnName: is_client_institution_cris
+            oldColumnName: is_client_institution
+            tableName: organisation_units
+      - addNotNullConstraint:
+            columnName: is_client_institution_cris
+            tableName: organisation_units
 - changeSet:
-    id: 1760710406682-37
-    author: milospopovic (generated)
-    changes:
-    - dropColumn:
-        columnName: is_client_institution
-        tableName: organisation_units
+      id: 1760710406682-5
+      author: milospopacic (generated)
+      changes:
+      - renameColumn:
+            columnDataType: BOOLEAN
+            newColumnName: validate_email_domain_cris
+            oldColumnName: validate_email_domain
+            tableName: organisation_units
+      - addNotNullConstraint:
+            columnName: validate_email_domain_cris
+            tableName: organisation_units
 - changeSet:
-    id: 1760710406682-38
-    author: milospopovic (generated)
-    changes:
-    - dropColumn:
-        columnName: validate_email_domain
-        tableName: organisation_units
-
+      id: 1760710406682-9
+      author: milospopacic (generated)
+      changes:
+      - renameColumn:
+            columnDataType: VARCHAR(255)
+            newColumnName: institution_email_domain_cris
+            oldColumnName: institution_email_domain
+            tableName: organisation_units
