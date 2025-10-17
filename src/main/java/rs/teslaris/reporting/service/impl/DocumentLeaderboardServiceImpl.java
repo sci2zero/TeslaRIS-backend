@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.service.interfaces.DocumentLeaderboardService;
@@ -116,16 +117,19 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
 
     @Override
     public List<Pair<DocumentPublicationIndex, Long>> getTopPublicationsByStatisticCount(
-        Integer institutionId,
-        StatisticsType statisticsType,
-        LocalDate from,
-        LocalDate to) {
+        Integer institutionId, StatisticsType statisticsType, LocalDate from, LocalDate to,
+        Boolean onlyTheses, List<ThesisType> allowedThesisTypes) {
         if (Objects.isNull(institutionId)) {
             return Collections.emptyList();
         }
 
+        if (onlyTheses &&
+            !organisationUnitService.findOne(institutionId).getIsClientInstitutionDl()) {
+            return Collections.emptyList();
+        }
+
         var eligibleDocumentIds =
-            getEligibleDocumentIds(institutionId);
+            getEligibleDocumentIds(institutionId, onlyTheses, allowedThesisTypes);
         if (eligibleDocumentIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -193,7 +197,8 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
             .toList();
     }
 
-    private List<Integer> getEligibleDocumentIds(Integer institutionId) {
+    private List<Integer> getEligibleDocumentIds(Integer institutionId, Boolean onlyTheses,
+                                                 List<ThesisType> allowedThesisTypes) {
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(institutionId);
         var allMergedOrganisationUnitIds = QueryUtil.getAllMergedOrganisationUnitIds(institutionId);
 
@@ -203,12 +208,30 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
                     .index("document_publication")
                     .size(50000)
                     .query(q -> q
-                        .bool(b -> b
-                            .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                            .must(QueryUtil.organisationUnitMatchQuery(
-                                allMergedOrganisationUnitIds,
-                                searchFields))
-                            .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))))
+                        .bool(b -> {
+                                b.must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                    .must(QueryUtil.organisationUnitMatchQuery(allMergedOrganisationUnitIds,
+                                        searchFields))
+                                    .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))));
+
+                                if (onlyTheses) {
+                                    b.must(m -> m.term(t -> t.field("type").value("THESIS")));
+
+                                    if (Objects.nonNull(allowedThesisTypes) &&
+                                        !allowedThesisTypes.isEmpty()) {
+                                        b.must(m -> m.bool(bool -> bool
+                                            .should(sh -> sh.terms(t -> t.field("publication_type")
+                                                .terms(v -> v.value(allowedThesisTypes.stream()
+                                                    .map(ThesisType::name)
+                                                    .map(FieldValue::of)
+                                                    .toList()))))
+                                            .minimumShouldMatch("1")
+                                        ));
+                                    }
+                                }
+
+                                return b;
+                            }
                         )
                     )
                     .source(sc -> sc.filter(f -> f.includes("databaseId"))),

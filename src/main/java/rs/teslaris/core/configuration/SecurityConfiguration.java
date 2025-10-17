@@ -338,6 +338,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/book-series/linkset/{bookSeriesId}/{linksetFormat}").permitAll()
 
                 // VISUALIZATION & LEADERBOARD DATA
+                .requestMatchers(HttpMethod.GET, "/api/visualization-data/digital-library").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/leaderboard-data/digital-library/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/visualization-data/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/leaderboard-data/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/collaboration-network/**").permitAll()

@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.controller;
+package rs.teslaris.reporting.controller.leaderboards;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;

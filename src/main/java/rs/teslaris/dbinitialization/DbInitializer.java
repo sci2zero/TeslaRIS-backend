@@ -203,6 +203,7 @@ public class DbInitializer implements ApplicationRunner {
         var performExtraMigration = new Privilege("PERFORM_EXTRA_MIGRATION_OPERATIONS");
         var readRegistryBook = new Privilege("READ_REGISTRY_BOOK");
         var saveChartDisplayConfiguration = new Privilege("SAVE_CHART_DISPLAY_CONFIGURATION");
+        var readDigitalLibraryAnalytics = new Privilege("READ_DIGITAL_LIBRARY_ANALYTICS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -239,7 +240,7 @@ public class DbInitializer implements ApplicationRunner {
                 promotePreliminaryAttachments, scheduleDocumentHarvest, performOAIPMHHarvest,
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
-                saveChartDisplayConfiguration));
+                saveChartDisplayConfiguration, readDigitalLibraryAnalytics));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -274,7 +275,7 @@ public class DbInitializer implements ApplicationRunner {
                 validateUploadedFiles, archiveDocument, promotePreliminaryAttachments,
                 scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
-                performExtraMigration, saveChartDisplayConfiguration
+                performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -320,14 +321,16 @@ public class DbInitializer implements ApplicationRunner {
                 putThesisOnPublicReview, editDocumentFiles, archiveThesis,
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
                 validateMetadata, validateUploadedFiles, promotePreliminaryAttachments,
-                setDefaultContent, createUserBasic, deleteThesisAttachments, readRegistryBook
+                setDefaultContent, createUserBasic, deleteThesisAttachments, readRegistryBook,
+                readDigitalLibraryAnalytics
             )));
 
         var headOfLibraryAuthority =
             new Authority(UserRole.HEAD_OF_LIBRARY.toString(), new HashSet<>(List.of(
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
-                unarchiveThesis, performThesisReport, generateThesisLibraryBackup, readRegistryBook
+                unarchiveThesis, performThesisReport, generateThesisLibraryBackup, readRegistryBook,
+                readDigitalLibraryAnalytics
             )));
 
         var promotionRegistryAdministratorAuthority =

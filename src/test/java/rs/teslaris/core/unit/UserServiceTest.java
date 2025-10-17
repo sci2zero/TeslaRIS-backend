@@ -287,7 +287,7 @@ public class UserServiceTest {
             Optional.of(new UserAccountIndex()));
         when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
             setIsClientInstitutionCris(true);
-            setValidateEmailDomainCris(false);
+            getCrisConfig().setValidateEmailDomain(false);
         }});
 
         // when
@@ -439,7 +439,7 @@ public class UserServiceTest {
             Set.of(
                 new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
                     "University", 1)));
-        organisationUnit.setIsClientInstitutionCris(true);
+        organisationUnit.setIsClientInstitutionDl(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("regadmin@example.com", "password123", "",

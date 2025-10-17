@@ -58,4 +58,12 @@ public class OrganisationUnitDTO {
     private boolean allowingSubdomainsCris;
 
     private boolean isLegalEntity;
+
+    private boolean isClientInstitutionDl;
+
+    private String institutionEmailDomainDl;
+
+    private boolean validatingEmailDomainDl;
+
+    private boolean allowingSubdomainsDl;
 }

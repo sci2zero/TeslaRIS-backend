@@ -55,5 +55,13 @@ public class OrganisationUnitRequestDTO {
 
     private boolean allowingSubdomainsCris;
 
+    private boolean clientInstitutionDl;
+
+    private String institutionEmailDomainDl;
+
+    private boolean validatingEmailDomainDl;
+
+    private boolean allowingSubdomainsDl;
+
     private boolean legalEntity;
 }

@@ -23,6 +23,7 @@ import co.elastic.clients.util.ObjectBuilder;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.service.impl.DocumentLeaderboardServiceImpl;
@@ -62,10 +65,10 @@ public class DocumentLeaderboardServiceTest {
 
     private static Stream<Arguments> provideAggregationEdgeCases() {
         return Stream.of(
-            Arguments.of(Double.NaN, 0L),           // NaN should become 0
-            Arguments.of(0.0, 0L),                 // Zero value
-            Arguments.of(123.45, 123L),            // Double should be cast to long
-            Arguments.of(999999.99, 999999L)      // Large value
+            Arguments.of(Double.NaN, 0L, true),          // NaN should become 0
+            Arguments.of(0.0, 0L, false),                // Zero value
+            Arguments.of(123.45, 123L, true),            // Double should be cast to long
+            Arguments.of(999999.99, 999999L, false)      // Large value
         );
     }
 
@@ -271,7 +274,7 @@ public class DocumentLeaderboardServiceTest {
             // When
             var result =
                 documentLeaderboardService.getTopPublicationsByStatisticCount(institutionId,
-                    statisticsType, fromDate, toDate);
+                    statisticsType, fromDate, toDate, false, Collections.emptyList());
 
             // Then
             assertEquals(2, result.size());
@@ -283,13 +286,18 @@ public class DocumentLeaderboardServiceTest {
     @ParameterizedTest
     @MethodSource("provideAggregationEdgeCases")
     @SuppressWarnings("unchecked")
-    void shouldHandleAggregationEdgeCases(Double aggregationValue, long expectedCount)
+    void shouldHandleAggregationEdgeCases(Double aggregationValue, long expectedCount,
+                                          boolean onlyTheses)
         throws IOException {
         // Given
         var institutionId = 123;
         var statisticsType = StatisticsType.VIEW;
         var fromDate = LocalDate.of(2023, 1, 1);
         var toDate = LocalDate.of(2023, 12, 31);
+
+        when(organisationUnitService.findOne(any())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
 
         var mockDocument = new DocumentPublicationIndex();
         mockDocument.setDatabaseId(1);
@@ -342,7 +350,7 @@ public class DocumentLeaderboardServiceTest {
             // When
             var result =
                 documentLeaderboardService.getTopPublicationsByStatisticCount(institutionId,
-                    statisticsType, fromDate, toDate);
+                    statisticsType, fromDate, toDate, onlyTheses, List.of(ThesisType.PHD));
 
             // Then
             assertEquals(1, result.size());

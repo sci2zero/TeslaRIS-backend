@@ -9,7 +9,10 @@ import jakarta.persistence.Index;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -94,15 +97,47 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
     @Column(name = "is_client_institution_cris", nullable = false)
     private Boolean isClientInstitutionCris = false;
 
-    @Column(name = "validate_email_domain_cris", nullable = false)
-    private Boolean validateEmailDomainCris = false;
+    @Column(name = "is_client_institution_dl", nullable = false)
+    private Boolean isClientInstitutionDl = false;
 
-    @Column(name = "allow_subdomains_cris")
-    private Boolean allowSubdomainsCris = false;
-
-    @Column(name = "institution_email_domain_cris")
-    private String institutionEmailDomainCris;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "email_configurations")
+    private Map<String, EmailConfiguration> emailConfigurations = new HashMap<>();
 
     @Column(name = "legal_entity", nullable = false)
     private Boolean legalEntity = false;
+
+
+    public EmailConfiguration getCrisConfig() {
+        lazilyInitializeEmailConfiguration();
+
+        return emailConfigurations.get("cris");
+    }
+
+    public void setCrisConfig(EmailConfiguration config) {
+        lazilyInitializeEmailConfiguration();
+
+        emailConfigurations.put("cris", config);
+    }
+
+    public EmailConfiguration getDlConfig() {
+        lazilyInitializeEmailConfiguration();
+
+        return emailConfigurations.get("digital_library");
+    }
+
+    public void setDlConfig(EmailConfiguration config) {
+        lazilyInitializeEmailConfiguration();
+
+        emailConfigurations.put("digital_library", config);
+    }
+
+    private void lazilyInitializeEmailConfiguration() {
+        if (Objects.isNull(emailConfigurations)) {
+            this.emailConfigurations = new HashMap<>();
+        }
+
+        emailConfigurations.putIfAbsent("cris", new EmailConfiguration());
+        emailConfigurations.putIfAbsent("digital_library", new EmailConfiguration());
+    }
 }

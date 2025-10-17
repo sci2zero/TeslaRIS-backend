@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.controller;
+package rs.teslaris.reporting.controller.visualizations;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

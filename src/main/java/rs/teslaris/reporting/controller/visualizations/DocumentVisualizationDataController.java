@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.controller;
+package rs.teslaris.reporting.controller.visualizations;
 
 import java.time.LocalDate;
 import java.time.YearMonth;

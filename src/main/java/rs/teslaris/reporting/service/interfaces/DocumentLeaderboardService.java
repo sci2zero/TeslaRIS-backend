@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.util.functional.Pair;
 
 public interface DocumentLeaderboardService {
@@ -17,5 +18,7 @@ public interface DocumentLeaderboardService {
         Integer institutionId,
         StatisticsType statisticsType,
         LocalDate from,
-        LocalDate to);
+        LocalDate to,
+        Boolean onlyTheses,
+        List<ThesisType> allowedThesisTypes);
 }

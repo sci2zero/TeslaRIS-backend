@@ -340,7 +340,9 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
     }
 
     @Override
-    public List<Pair<PersonIndex, Long>> getTopResearchersByViewCount(Integer institutionId, LocalDate from, LocalDate to) {
+    public List<Pair<PersonIndex, Long>> getTopResearchersByViewCount(Integer institutionId,
+                                                                      LocalDate from,
+                                                                      LocalDate to) {
         if (institutionId == null) {
             return Collections.emptyList();
         }

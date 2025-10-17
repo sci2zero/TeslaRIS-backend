@@ -38,13 +38,31 @@ public class OrganisationUnitConverter {
         dto.setAllowedThesisTypes(
             organisationUnit.getAllowedThesisTypes().stream().map(ThesisType::valueOf).toList());
 
-        dto.setClientInstitutionCris(Objects.nonNull(organisationUnit.getIsClientInstitutionCris()) ?
-            organisationUnit.getIsClientInstitutionCris() : false);
-        dto.setValidatingEmailDomainCris(Objects.nonNull(organisationUnit.getValidateEmailDomainCris()) ?
-            organisationUnit.getValidateEmailDomainCris() : false);
-        dto.setAllowingSubdomainsCris(Objects.nonNull(organisationUnit.getAllowSubdomainsCris()) ?
-            organisationUnit.getAllowSubdomainsCris() : false);
-        dto.setInstitutionEmailDomainCris(organisationUnit.getInstitutionEmailDomainCris());
+        dto.setClientInstitutionCris(
+            Objects.nonNull(organisationUnit.getIsClientInstitutionCris()) ?
+                organisationUnit.getIsClientInstitutionCris() : false);
+        dto.setValidatingEmailDomainCris(
+            Objects.nonNull(organisationUnit.getCrisConfig()) ?
+                organisationUnit.getCrisConfig().getValidateEmailDomain() : false);
+        dto.setAllowingSubdomainsCris(
+            Objects.nonNull(organisationUnit.getCrisConfig()) ?
+                organisationUnit.getCrisConfig().getAllowSubdomains() : false);
+        dto.setInstitutionEmailDomainCris(
+            Objects.nonNull(organisationUnit.getCrisConfig()) ?
+                organisationUnit.getCrisConfig().getInstitutionEmailDomain() : "");
+
+        dto.setClientInstitutionDl(
+            Objects.nonNull(organisationUnit.getIsClientInstitutionDl()) ?
+                organisationUnit.getIsClientInstitutionDl() : false);
+        dto.setValidatingEmailDomainDl(
+            Objects.nonNull(organisationUnit.getDlConfig()) ?
+                organisationUnit.getDlConfig().getValidateEmailDomain() : false);
+        dto.setAllowingSubdomainsDl(
+            Objects.nonNull(organisationUnit.getDlConfig()) ?
+                organisationUnit.getDlConfig().getAllowSubdomains() : false);
+        dto.setInstitutionEmailDomainDl(
+            Objects.nonNull(organisationUnit.getDlConfig()) ?
+                organisationUnit.getDlConfig().getInstitutionEmailDomain() : "");
 
         dto.setLegalEntity(
             Objects.nonNull(organisationUnit.getLegalEntity()) ? organisationUnit.getLegalEntity() :
