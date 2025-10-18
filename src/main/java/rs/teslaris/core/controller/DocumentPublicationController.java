@@ -323,8 +323,9 @@ public class DocumentPublicationController {
     @GetMapping("/wordcloud/{documentId}")
     public List<Pair<String, Long>> getWordCloudForSingleDocument(@PathVariable Integer documentId,
                                                                   @RequestParam
-                                                                  String language) {
-        return documentPublicationService.getWordCloudForSingleDocument(documentId,
+                                                                  DocumentPublicationType documentType,
+                                                                  @RequestParam String language) {
+        return documentPublicationService.getWordCloudForSingleDocument(documentId, documentType,
             language.toUpperCase());
     }
 

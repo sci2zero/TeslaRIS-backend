@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.xml.bind.JAXBException;
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -95,6 +96,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConf
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @SpringBootTest
@@ -696,7 +698,8 @@ public class ThesisServiceTest {
         thesis.setFileItems(new HashSet<>());
 
         when(thesisJPAService.findOne(1)).thenReturn(thesis);
-        when(fileService.duplicateFile(any())).thenReturn(UUID.randomUUID() + ".pdf");
+        when(fileService.duplicateFile(any())).thenReturn(
+            new Pair<>(UUID.randomUUID() + ".png", new ByteArrayInputStream(new byte[] {})));
 
         // When
         thesisService.transferPreprintToOfficialPublication(1, 42);

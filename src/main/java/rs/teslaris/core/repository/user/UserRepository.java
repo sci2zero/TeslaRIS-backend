@@ -45,6 +45,16 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         """)
     List<Commission> findUserCommissionForOrganisationUnit(Integer organisationUnitId);
 
+    @Query("""
+            SELECT DISTINCT u.commission
+            FROM User u
+            JOIN u.organisationUnit ou
+            LEFT JOIN FETCH u.commission.relations rel
+            LEFT JOIN FETCH rel.targetCommissions
+            WHERE u.commission IS NOT NULL
+            AND ou.id IN :organisationUnitIds
+        """)
+    List<Commission> findUserCommissionForOrganisationUnits(List<Integer> organisationUnitIds);
 
     @Query("SELECT ou.id FROM User u JOIN u.organisationUnit ou WHERE u.commission.id = :commissionId")
     Integer findOUIdForCommission(Integer commissionId);

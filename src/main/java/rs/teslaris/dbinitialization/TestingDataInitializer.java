@@ -239,7 +239,8 @@ public class TestingDataInitializer {
             List.of(ThesisType.PHD.name(), ThesisType.PHD_ART_PROJECT.name(),
                 ThesisType.MASTER.name(), ThesisType.BACHELOR.name(),
                 ThesisType.BACHELOR_WITH_HONORS.name()));
-        dummyOU.setIsClientInstitution(true);
+        dummyOU.setIsClientInstitutionCris(true);
+        dummyOU.setIsClientInstitutionDl(true);
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
         userRepository.save(researcherUser);
@@ -258,6 +259,7 @@ public class TestingDataInitializer {
         dummyOU2.setLocation(new GeoLocation(19.8502021, 45.2454147, "NOWHERE"));
         dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
         dummyOU2.setScopusAfid("60068802");
+        dummyOU2.setIsClientInstitutionDl(true);
         organisationUnitRepository.save(dummyOU2);
 
         var conferenceEvent1 = new Conference();

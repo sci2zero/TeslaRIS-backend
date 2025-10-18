@@ -16,6 +16,7 @@ import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.person.PersonInternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
@@ -230,6 +231,34 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
             person.getId());
 
         return InvolvementConverter.toDTO(employment);
+    }
+
+    @Override
+    public void migrateInternalIdentifiers(PersonInternalIdentifierMigrationDTO dto) {
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(dto.institutionId());
+        involvementRepository.findActiveEmploymentsForInstitutions(institutionIds)
+            .forEach(employment -> {
+                if (Objects.isNull(employment.getPersonInvolved())) {
+                    return;
+                }
+
+                var migrated = false;
+                for (var oldId : employment.getPersonInvolved().getOldIds()) {
+                    if (dto.oldToInternalIdMapping().containsKey(oldId)) {
+                        employment.getPersonInvolved().getInternalIdentifiers()
+                            .add(String.valueOf(dto.oldToInternalIdMapping().get(oldId)));
+                        migrated = true;
+                        personService.save(employment.getPersonInvolved());
+                    }
+                }
+
+                if (!migrated) {
+                    employment.setDateTo(dto.defaultInvolvementEndDate());
+                }
+
+                save(employment);
+            });
     }
 
     private Person resolvePerson(EmploymentMigrationDTO request) {

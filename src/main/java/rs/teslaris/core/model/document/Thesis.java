@@ -93,9 +93,6 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<DocumentFile> commissionReports = new HashSet<>();
 
-    @Column(name = "is_archived")
-    private Boolean isArchived = false;
-
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> placeOfKeeping = new HashSet<>();
 

@@ -376,7 +376,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var involvement = personService.getLatestResearcherInvolvement(person);
 
         validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
-            registrationRequest.getEmail());
+            registrationRequest.getEmail(), true);
 
         var newUser = buildUser(
             registrationRequest.getEmail(),
@@ -402,7 +402,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var involvement = personService.getLatestResearcherInvolvement(person);
 
         validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
-            registrationRequest.getEmail());
+            registrationRequest.getEmail(), true);
 
         char[] generatedPassword = PasswordUtil.generatePassword(30);
         var newUser = buildUser(
@@ -554,7 +554,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         throws NoSuchAlgorithmException {
         validateEmailUniqueness(email);
 
-        validateInstitutionClientStatus(organisationUnitId, email);
+        var checkCrisConfig =
+            !List.of(UserRole.INSTITUTIONAL_LIBRARIAN.name(), UserRole.HEAD_OF_LIBRARY.name(),
+                UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name()).contains(authorityName);
+        validateInstitutionClientStatus(organisationUnitId, email, checkCrisConfig);
 
         var authority = authorityRepository.findByName(authorityName)
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
@@ -616,17 +619,22 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         return savedUser;
     }
 
-    private void validateInstitutionClientStatus(Integer organisationUnitId, String email) {
+    private void validateInstitutionClientStatus(Integer organisationUnitId, String email,
+                                                 boolean checkCrisConfig) {
         var specifiedOU = organisationUnitService.findOne(organisationUnitId);
-        if (!specifiedOU.getIsClientInstitution()) {
+        if ((checkCrisConfig && !specifiedOU.getIsClientInstitutionCris()) ||
+            (!checkCrisConfig && !specifiedOU.getIsClientInstitutionDl())) {
             throw new RegistrationException(
-                "Institution is not a client. Unable to register researchers.");
+                "Institution is not a client. Unable to perform registration.");
         }
 
-        if (Objects.nonNull(specifiedOU.getValidateEmailDomain()) &&
-            specifiedOU.getValidateEmailDomain()) {
-            validateEmailDomain(email, specifiedOU.getInstitutionEmailDomain(),
-                specifiedOU.getAllowSubdomains());
+        var configuration =
+            checkCrisConfig ? specifiedOU.getCrisConfig() : specifiedOU.getDlConfig();
+
+        if (Objects.nonNull(configuration.getValidateEmailDomain()) &&
+            configuration.getValidateEmailDomain()) {
+            validateEmailDomain(email, configuration.getInstitutionEmailDomain(),
+                configuration.getAllowSubdomains());
         }
     }
 
@@ -984,9 +992,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "adminPasswordReset.mailBodyEmployee",
-            new Object[] {new String(generatedPassword)},
+            new Object[] {systemName, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
 

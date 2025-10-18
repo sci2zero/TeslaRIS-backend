@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -160,6 +161,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
         var thesis = thesisService.getThesisById(thesisId);
         newEntry.setThesis(thesis);
+
+        if (Objects.nonNull(thesis.getOrganisationUnit())) {
+            dto.setPromotionInstitutionId(thesis.getOrganisationUnit().getId());
+        }
 
         setCommonFields(newEntry, dto, false);
         handlePromotionInfo(dto, newEntry);
@@ -609,8 +614,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                 "You don't have rights to view this institution's registry book.");
         }
 
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
         return registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
-                institutionId, from, to, authorName, authorTitle,
+                institutionIds, from, to, authorName, authorTitle,
                 SerbianTransliteration.toCyrillic(authorName),
                 SerbianTransliteration.toCyrillic(authorTitle), pageable)
             .map(RegistryBookEntryConverter::toDTO);
@@ -657,9 +664,13 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         Integer topLevelInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
 
         if (Objects.isNull(topLevelInstitutionId) || topLevelInstitutionId < 1) {
-            return userRepository.findAllRegistryAdmins().stream()
-                .map(admin -> userRepository.findOrganisationUnitIdForUser(admin.getId()))
-                .collect(Collectors.toList());
+            var result = new HashSet<Integer>();
+            userRepository.findAllRegistryAdmins()
+                .forEach(admin -> result.addAll(
+                    organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                        userRepository.findOrganisationUnitIdForUser(admin.getId()))));
+
+            return new ArrayList<>(result);
         } else {
             return organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
                 topLevelInstitutionId);
@@ -720,6 +731,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     if (Objects.nonNull(info.getContact())) {
                         dto.setContact(new ContactDTO(info.getContact().getContactEmail(),
                             info.getContact().getPhoneNumber()));
+                    } else {
+                        dto.setContact(new ContactDTO("", ""));
                     }
                 }
             });

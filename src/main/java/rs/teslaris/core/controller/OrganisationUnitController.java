@@ -130,12 +130,14 @@ public class OrganisationUnitController {
         @RequestParam(required = false) Boolean onlyReturnOnesWhichCanHarvest,
         @RequestParam(required = false) Boolean onlyIndependent,
         @RequestParam(required = false) ThesisType allowedThesisType,
-        @RequestParam(required = false) Boolean onlyClients,
+        @RequestParam(required = false) Boolean onlyCrisClients,
+        @RequestParam(required = false) Boolean onlyDlClients,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
             SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-            onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType, onlyClients);
+            onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType, onlyCrisClients,
+            onlyDlClients);
     }
 
     @GetMapping("/advanced-search")
@@ -144,7 +146,7 @@ public class OrganisationUnitController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         Pageable pageable) {
         return organisationUnitService.searchOrganisationUnits(tokens, pageable,
-            SearchRequestType.ADVANCED, null, null, null, null, null, null);
+            SearchRequestType.ADVANCED, null, null, null, null, null, null, null);
     }
 
     @PostMapping

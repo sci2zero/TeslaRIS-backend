@@ -224,7 +224,7 @@ public class PersonConverter {
 
         var instituion = new Pair<Integer, List<MultilingualContentDTO>>(null, null);
         person.getInvolvements().stream().filter(i -> Objects.nonNull(i.getOrganisationUnit()) &&
-                i.getOrganisationUnit().getIsClientInstitution() &&
+                i.getOrganisationUnit().getIsClientInstitutionCris() &&
                 List.of(InvolvementType.EMPLOYED_AT, InvolvementType.HIRED_BY)
                     .contains(i.getInvolvementType()) && Objects.isNull(i.getDateTo())).findAny()
             .ifPresent(currentInvolvement -> {
