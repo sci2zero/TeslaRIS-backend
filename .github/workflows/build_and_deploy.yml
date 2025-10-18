@@ -30,7 +30,7 @@ jobs:
     strategy:
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest] # CONTAINER SERVICE IS NOT SUPPORTED FOR MACOS AND WINDOWS
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [21] # If you change make sure taht this version is set as default in "Upload primary build artifact to teslaris.jar" step
     runs-on: ${{ matrix.os }}
 
@@ -47,7 +47,6 @@ jobs:
         image: docker.elastic.co/elasticsearch/elasticsearch:8.4.3
         options: >-
           --name "elasticsearch"
-          --privileged
         env:
           discovery.type: single-node
           ES_JAVA_OPTS: -Xms1g -Xmx1g
