@@ -1,6 +1,6 @@
 databaseChangeLog:
 - changeSet:
-    id: 1759948555412-1
+    id: 1760781385845-1
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -47,7 +47,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: affiliation_statements
 - changeSet:
-    id: 1759948555412-2
+    id: 1760781385845-2
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -108,7 +108,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: api_keys
 - changeSet:
-    id: 1759948555412-3
+    id: 1760781385845-3
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -149,7 +149,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: assessment_classifications
 - changeSet:
-    id: 1759948555412-4
+    id: 1760781385845-4
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -196,7 +196,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: assessment_measures
 - changeSet:
-    id: 1759948555412-5
+    id: 1760781385845-5
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -243,7 +243,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: assessment_rulebooks
 - changeSet:
-    id: 1759948555412-6
+    id: 1760781385845-6
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -283,7 +283,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: authorities
 - changeSet:
-    id: 1759948555412-7
+    id: 1760781385845-7
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -331,9 +331,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: book_series
 - changeSet:
-    id: 1759948555412-8
+    id: 1760781385845-8
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -368,7 +371,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: branding_information
 - changeSet:
-    id: 1759948555412-9
+    id: 1760781385845-9
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -418,7 +421,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: commission_relations
 - changeSet:
-    id: 1759948555412-10
+    id: 1760781385845-10
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -461,7 +464,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: commission_report
 - changeSet:
-    id: 1759948555412-11
+    id: 1760781385845-11
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -508,7 +511,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: commissions
 - changeSet:
-    id: 1759948555412-12
+    id: 1760781385845-12
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -571,9 +574,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: conferences
 - changeSet:
-    id: 1759948555412-13
+    id: 1760781385845-13
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -616,7 +622,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: countries
 - changeSet:
-    id: 1759948555412-14
+    id: 1760781385845-14
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -661,7 +667,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: currencies
 - changeSet:
-    id: 1759948555412-15
+    id: 1760781385845-15
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -744,9 +750,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: datasets
 - changeSet:
-    id: 1759948555412-16
+    id: 1760781385845-16
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -791,7 +800,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: declined_claims
 - changeSet:
-    id: 1759948555412-17
+    id: 1760781385845-17
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -834,7 +843,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: document_file_backup
 - changeSet:
-    id: 1759948555412-18
+    id: 1760781385845-18
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -926,7 +935,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: document_files
 - changeSet:
-    id: 1759948555412-19
+    id: 1760781385845-19
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -972,7 +981,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: documents_relations
 - changeSet:
-    id: 1759948555412-20
+    id: 1760781385845-20
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1031,7 +1040,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: educations
 - changeSet:
-    id: 1759948555412-21
+    id: 1760781385845-21
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1093,7 +1102,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: employments
 - changeSet:
-    id: 1759948555412-22
+    id: 1760781385845-22
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1167,9 +1176,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: encyclopedic_contributions
 - changeSet:
-    id: 1759948555412-23
+    id: 1760781385845-23
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1242,7 +1254,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: entity_assessment_classifications
 - changeSet:
-    id: 1759948555412-24
+    id: 1760781385845-24
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1330,7 +1342,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: entity_indicators
 - changeSet:
-    id: 1759948555412-25
+    id: 1760781385845-25
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1374,7 +1386,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: events_relation
 - changeSet:
-    id: 1759948555412-26
+    id: 1760781385845-26
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1414,7 +1426,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: expertise_or_skills
 - changeSet:
-    id: 1759948555412-27
+    id: 1760781385845-27
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1467,7 +1479,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: external_indicator_configuration
 - changeSet:
-    id: 1759948555412-28
+    id: 1760781385845-28
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1523,7 +1535,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: fundings
 - changeSet:
-    id: 1759948555412-29
+    id: 1760781385845-29
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1567,7 +1579,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: indicators
 - changeSet:
-    id: 1759948555412-30
+    id: 1760781385845-30
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1641,9 +1653,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: informative_attachments
 - changeSet:
-    id: 1759948555412-31
+    id: 1760781385845-31
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1683,7 +1698,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: institution_default_submission_content
 - changeSet:
-    id: 1759948555412-32
+    id: 1760781385845-32
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1742,7 +1757,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: involvements
 - changeSet:
-    id: 1759948555412-33
+    id: 1760781385845-33
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1842,9 +1857,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: journal_publications
 - changeSet:
-    id: 1759948555412-34
+    id: 1760781385845-34
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1892,9 +1910,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: journals
 - changeSet:
-    id: 1759948555412-35
+    id: 1760781385845-35
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1944,7 +1965,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: jwt_token_store
 - changeSet:
-    id: 1759948555412-36
+    id: 1760781385845-36
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -1989,7 +2010,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: language_tag
 - changeSet:
-    id: 1759948555412-37
+    id: 1760781385845-37
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2029,7 +2050,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: languages
 - changeSet:
-    id: 1759948555412-38
+    id: 1760781385845-38
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2078,7 +2099,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: loading_configurations
 - changeSet:
-    id: 1759948555412-39
+    id: 1760781385845-39
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2137,7 +2158,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: memberships
 - changeSet:
-    id: 1759948555412-40
+    id: 1760781385845-40
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2180,7 +2201,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: monetary_amounts
 - changeSet:
-    id: 1759948555412-41
+    id: 1760781385845-41
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2274,9 +2295,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: monograph_publications
 - changeSet:
-    id: 1759948555412-42
+    id: 1760781385845-42
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2383,9 +2407,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: monographs
 - changeSet:
-    id: 1759948555412-43
+    id: 1760781385845-43
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2435,7 +2462,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: multi_lingual_content
 - changeSet:
-    id: 1759948555412-44
+    id: 1760781385845-44
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2483,7 +2510,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: notification
 - changeSet:
-    id: 1759948555412-45
+    id: 1760781385845-45
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2531,7 +2558,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: oauth_codes
 - changeSet:
-    id: 1759948555412-46
+    id: 1760781385845-46
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2578,7 +2605,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: organisation_unit_import_source
 - changeSet:
-    id: 1759948555412-47
+    id: 1760781385845-47
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2628,7 +2655,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: organisation_unit_outputs
 - changeSet:
-    id: 1759948555412-48
+    id: 1760781385845-48
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2672,14 +2699,11 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: organisation_unit_trusts
 - changeSet:
-    id: 1759948555412-49
+    id: 1760781385845-49
     author: ivanmrsulja (generated)
     changes:
     - createTable:
         columns:
-        - column:
-            name: allow_subdomains
-            type: BOOLEAN
         - column:
             constraints:
               nullable: false
@@ -2704,7 +2728,12 @@ databaseChangeLog:
         - column:
             constraints:
               nullable: false
-            name: is_client_institution
+            name: is_client_institution_cris
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: is_client_institution_dl
             type: BOOLEAN
         - column:
             name: latitude
@@ -2723,11 +2752,6 @@ databaseChangeLog:
         - column:
             name: top_offset
             type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-            name: validate_email_domain
-            type: BOOLEAN
         - column:
             name: width
             type: INTEGER
@@ -2753,9 +2777,6 @@ databaseChangeLog:
             name: created_by
             type: VARCHAR(255)
         - column:
-            name: institution_email_domain
-            type: VARCHAR(255)
-        - column:
             constraints:
               nullable: false
             name: name_abbreviation
@@ -2779,7 +2800,13 @@ databaseChangeLog:
             name: updated_by
             type: VARCHAR(255)
         - column:
+            name: accounting_ids
+            type: JSONB
+        - column:
             name: allowed_thesis_types
+            type: JSONB
+        - column:
+            name: email_configurations
             type: JSONB
         - column:
             name: merged_ids
@@ -2787,9 +2814,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: organisation_units
 - changeSet:
-    id: 1759948555412-50
+    id: 1760781385845-50
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2846,7 +2876,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: organisation_units_relations
 - changeSet:
-    id: 1759948555412-51
+    id: 1760781385845-51
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2929,9 +2959,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: patents
 - changeSet:
-    id: 1759948555412-52
+    id: 1760781385845-52
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -2975,7 +3008,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: person_assessment_research_area
 - changeSet:
-    id: 1759948555412-53
+    id: 1760781385845-53
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3022,7 +3055,7 @@ databaseChangeLog:
             type: JSONB
         tableName: person_charts_display_configuration
 - changeSet:
-    id: 1759948555412-54
+    id: 1760781385845-54
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3073,7 +3106,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: person_contributions
 - changeSet:
-    id: 1759948555412-55
+    id: 1760781385845-55
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3155,7 +3188,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: person_document_contribution
 - changeSet:
-    id: 1759948555412-56
+    id: 1760781385845-56
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3216,7 +3249,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: person_event_contributions
 - changeSet:
-    id: 1759948555412-57
+    id: 1760781385845-57
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3283,7 +3316,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: person_journal_contributions
 - changeSet:
-    id: 1759948555412-58
+    id: 1760781385845-58
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3333,7 +3366,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: person_names
 - changeSet:
-    id: 1759948555412-59
+    id: 1760781385845-59
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3400,7 +3433,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: person_project_contribution
 - changeSet:
-    id: 1759948555412-60
+    id: 1760781385845-60
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3502,14 +3535,23 @@ databaseChangeLog:
             name: web_of_science_researcher_id
             type: VARCHAR(255)
         - column:
+            name: accounting_ids
+            type: JSONB
+        - column:
+            name: internal_identifiers
+            type: JSONB
+        - column:
             name: merged_ids
             type: JSONB
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: persons
 - changeSet:
-    id: 1759948555412-61
+    id: 1760781385845-61
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3547,7 +3589,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: privileges
 - changeSet:
-    id: 1759948555412-62
+    id: 1760781385845-62
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3588,7 +3630,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: prizes
 - changeSet:
-    id: 1759948555412-63
+    id: 1760781385845-63
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3686,9 +3728,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: proceedings
 - changeSet:
-    id: 1759948555412-64
+    id: 1760781385845-64
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3785,9 +3830,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: proceedings_publications
 - changeSet:
-    id: 1759948555412-65
+    id: 1760781385845-65
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3832,7 +3880,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: project_documents
 - changeSet:
-    id: 1759948555412-66
+    id: 1760781385845-66
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3888,7 +3936,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: project_relations
 - changeSet:
-    id: 1759948555412-67
+    id: 1760781385845-67
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3936,9 +3984,15 @@ databaseChangeLog:
         - column:
             name: updated_by
             type: VARCHAR(255)
+        - column:
+            name: project_statuses
+            type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: projects
 - changeSet:
-    id: 1759948555412-68
+    id: 1760781385845-68
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -3988,7 +4042,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: promotions
 - changeSet:
-    id: 1759948555412-69
+    id: 1760781385845-69
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4032,7 +4086,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: public_review_page_configuration
 - changeSet:
-    id: 1759948555412-70
+    id: 1760781385845-70
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4076,7 +4130,7 @@ databaseChangeLog:
             type: JSONB
         tableName: publishers
 - changeSet:
-    id: 1759948555412-71
+    id: 1760781385845-71
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4119,7 +4173,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: refresh_tokens
 - changeSet:
-    id: 1759948555412-72
+    id: 1760781385845-72
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4280,7 +4334,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: registry_book_entries
 - changeSet:
-    id: 1759948555412-73
+    id: 1760781385845-73
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4323,7 +4377,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: registry_book_report
 - changeSet:
-    id: 1759948555412-74
+    id: 1760781385845-74
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4364,7 +4418,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: research_area
 - changeSet:
-    id: 1759948555412-75
+    id: 1760781385845-75
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4414,7 +4468,7 @@ databaseChangeLog:
             type: JSONB
         tableName: scheduled_tasks
 - changeSet:
-    id: 1759948555412-76
+    id: 1760781385845-76
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4497,9 +4551,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: software
 - changeSet:
-    id: 1759948555412-77
+    id: 1760781385845-77
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4638,9 +4695,12 @@ databaseChangeLog:
         - column:
             name: old_ids
             type: JSONB
+        - column:
+            name: uris
+            type: JSONB
         tableName: theses
 - changeSet:
-    id: 1759948555412-78
+    id: 1760781385845-78
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4681,7 +4741,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: thesis_research_outputs
 - changeSet:
-    id: 1759948555412-79
+    id: 1760781385845-79
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4722,7 +4782,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: user_account_activations
 - changeSet:
-    id: 1759948555412-80
+    id: 1760781385845-80
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4766,7 +4826,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: user_email_update_requests
 - changeSet:
-    id: 1759948555412-81
+    id: 1760781385845-81
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4807,7 +4867,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: user_password_reset_requests
 - changeSet:
-    id: 1759948555412-82
+    id: 1760781385845-82
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4900,7 +4960,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: users
 - changeSet:
-    id: 1759948555412-83
+    id: 1760781385845-83
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4921,7 +4981,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: person_contribution_institutions
 - changeSet:
-    id: 1759948555412-84
+    id: 1760781385845-84
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4936,7 +4996,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: assessment_classification_applicable_types
 - changeSet:
-    id: 1759948555412-85
+    id: 1760781385845-85
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4951,22 +5011,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: indicator_applicable_types
 - changeSet:
-    id: 1759948555412-86
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: project_id
-            type: INTEGER
-        - column:
-            name: statuses
-            type: SMALLINT
-        tableName: project_statuses
-- changeSet:
-    id: 1759948555412-87
+    id: 1760781385845-86
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -4981,7 +5026,7 @@ databaseChangeLog:
             type: SMALLINT
         tableName: public_review_page_content_thesis_types
 - changeSet:
-    id: 1759948555412-88
+    id: 1760781385845-87
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5002,7 +5047,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: affiliation_statements_city
 - changeSet:
-    id: 1759948555412-89
+    id: 1760781385845-88
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5023,7 +5068,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: affiliation_statements_display_affiliation_statement
 - changeSet:
-    id: 1759948555412-90
+    id: 1760781385845-89
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5044,7 +5089,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: affiliation_statements_street_and_number
 - changeSet:
-    id: 1759948555412-91
+    id: 1760781385845-90
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5065,7 +5110,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: api_keys_name
 - changeSet:
-    id: 1759948555412-92
+    id: 1760781385845-91
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5086,7 +5131,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: assessment_classifications_title
 - changeSet:
-    id: 1759948555412-93
+    id: 1760781385845-92
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5107,7 +5152,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: assessment_measures_title
 - changeSet:
-    id: 1759948555412-94
+    id: 1760781385845-93
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5124,7 +5169,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: assessment_rulebooks_assessment_measures
 - changeSet:
-    id: 1759948555412-95
+    id: 1760781385845-94
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5145,7 +5190,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: assessment_rulebooks_description
 - changeSet:
-    id: 1759948555412-96
+    id: 1760781385845-95
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5166,7 +5211,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: assessment_rulebooks_name
 - changeSet:
-    id: 1759948555412-97
+    id: 1760781385845-96
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5187,7 +5232,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: branding_information_description
 - changeSet:
-    id: 1759948555412-98
+    id: 1760781385845-97
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5208,7 +5253,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: branding_information_title
 - changeSet:
-    id: 1759948555412-99
+    id: 1760781385845-98
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5229,7 +5274,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: commissions_description
 - changeSet:
-    id: 1759948555412-100
+    id: 1760781385845-99
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5250,7 +5295,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: countries_name
 - changeSet:
-    id: 1759948555412-101
+    id: 1760781385845-100
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5271,7 +5316,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: currencies_name
 - changeSet:
-    id: 1759948555412-102
+    id: 1760781385845-101
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5292,7 +5337,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: document_files_description
 - changeSet:
-    id: 1759948555412-103
+    id: 1760781385845-102
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5313,7 +5358,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: documents_description
 - changeSet:
-    id: 1759948555412-104
+    id: 1760781385845-103
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5334,7 +5379,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: documents_keywords
 - changeSet:
-    id: 1759948555412-105
+    id: 1760781385845-104
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5355,7 +5400,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: documents_remark
 - changeSet:
-    id: 1759948555412-106
+    id: 1760781385845-105
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5376,7 +5421,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: documents_sub_title
 - changeSet:
-    id: 1759948555412-107
+    id: 1760781385845-106
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5397,7 +5442,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: documents_title
 - changeSet:
-    id: 1759948555412-108
+    id: 1760781385845-107
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5418,7 +5463,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: educations_abbreviation_title
 - changeSet:
-    id: 1759948555412-109
+    id: 1760781385845-108
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5439,7 +5484,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: educations_thesis_title
 - changeSet:
-    id: 1759948555412-110
+    id: 1760781385845-109
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5460,7 +5505,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: educations_title
 - changeSet:
-    id: 1759948555412-111
+    id: 1760781385845-110
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5481,7 +5526,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: employments_role
 - changeSet:
-    id: 1759948555412-112
+    id: 1760781385845-111
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5502,7 +5547,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: entity_assessment_classifications_classification_reason
 - changeSet:
-    id: 1759948555412-113
+    id: 1760781385845-112
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5523,7 +5568,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: entity_indicators_proofs
 - changeSet:
-    id: 1759948555412-114
+    id: 1760781385845-113
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5544,7 +5589,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: events_description
 - changeSet:
-    id: 1759948555412-115
+    id: 1760781385845-114
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5565,7 +5610,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: events_keywords
 - changeSet:
-    id: 1759948555412-116
+    id: 1760781385845-115
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5586,7 +5631,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: events_name_abbreviation
 - changeSet:
-    id: 1759948555412-117
+    id: 1760781385845-116
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5607,7 +5652,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: events_name
 - changeSet:
-    id: 1759948555412-118
+    id: 1760781385845-117
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5628,7 +5673,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: events_place
 - changeSet:
-    id: 1759948555412-119
+    id: 1760781385845-118
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5649,7 +5694,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: expertise_or_skills_description
 - changeSet:
-    id: 1759948555412-120
+    id: 1760781385845-119
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5670,7 +5715,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: expertise_or_skills_name
 - changeSet:
-    id: 1759948555412-121
+    id: 1760781385845-120
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5691,7 +5736,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: expertise_or_skills_proofs
 - changeSet:
-    id: 1759948555412-122
+    id: 1760781385845-121
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5712,7 +5757,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: fundings_funding_agency
 - changeSet:
-    id: 1759948555412-123
+    id: 1760781385845-122
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5733,7 +5778,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: fundings_funding_call
 - changeSet:
-    id: 1759948555412-124
+    id: 1760781385845-123
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5754,7 +5799,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: fundings_funding_program
 - changeSet:
-    id: 1759948555412-125
+    id: 1760781385845-124
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5775,7 +5820,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: indicators_description
 - changeSet:
-    id: 1759948555412-126
+    id: 1760781385845-125
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5796,7 +5841,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: indicators_title
 - changeSet:
-    id: 1759948555412-127
+    id: 1760781385845-126
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5817,7 +5862,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: institution_default_submission_content_place_of_keep
 - changeSet:
-    id: 1759948555412-128
+    id: 1760781385845-127
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5838,7 +5883,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: institution_default_submission_content_type_of_title
 - changeSet:
-    id: 1759948555412-129
+    id: 1760781385845-128
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5859,7 +5904,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: involvements_affiliation_statement
 - changeSet:
-    id: 1759948555412-130
+    id: 1760781385845-129
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5880,7 +5925,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: involvements_proofs
 - changeSet:
-    id: 1759948555412-131
+    id: 1760781385845-130
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5901,7 +5946,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: languages_name
 - changeSet:
-    id: 1759948555412-132
+    id: 1760781385845-131
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5922,7 +5967,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: memberships_contribution_description
 - changeSet:
-    id: 1759948555412-133
+    id: 1760781385845-132
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5943,7 +5988,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: memberships_role
 - changeSet:
-    id: 1759948555412-134
+    id: 1760781385845-133
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5964,7 +6009,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: organisation_units_keyword
 - changeSet:
-    id: 1759948555412-135
+    id: 1760781385845-134
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -5985,7 +6030,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: organisation_units_name
 - changeSet:
-    id: 1759948555412-136
+    id: 1760781385845-135
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6006,7 +6051,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: organisation_units_relations_source_affiliation_statement
 - changeSet:
-    id: 1759948555412-137
+    id: 1760781385845-136
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6027,7 +6072,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: organisation_units_relations_target_affiliation_statement
 - changeSet:
-    id: 1759948555412-138
+    id: 1760781385845-137
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6048,7 +6093,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: organisation_units_relations_proofs
 - changeSet:
-    id: 1759948555412-139
+    id: 1760781385845-138
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6069,7 +6114,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: person_contributions_contribution_description
 - changeSet:
-    id: 1759948555412-140
+    id: 1760781385845-139
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6090,7 +6135,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: persons_biography
 - changeSet:
-    id: 1759948555412-141
+    id: 1760781385845-140
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6111,7 +6156,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: persons_city
 - changeSet:
-    id: 1759948555412-142
+    id: 1760781385845-141
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6132,7 +6177,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: persons_display_title
 - changeSet:
-    id: 1759948555412-143
+    id: 1760781385845-142
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6153,7 +6198,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: persons_keyword
 - changeSet:
-    id: 1759948555412-144
+    id: 1760781385845-143
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6174,7 +6219,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: persons_other_names
 - changeSet:
-    id: 1759948555412-145
+    id: 1760781385845-144
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6195,7 +6240,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: persons_research_areas
 - changeSet:
-    id: 1759948555412-146
+    id: 1760781385845-145
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6216,7 +6261,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: persons_street_and_number
 - changeSet:
-    id: 1759948555412-147
+    id: 1760781385845-146
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6237,7 +6282,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: prizes_description
 - changeSet:
-    id: 1759948555412-148
+    id: 1760781385845-147
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6258,7 +6303,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: prizes_proofs
 - changeSet:
-    id: 1759948555412-149
+    id: 1760781385845-148
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6279,7 +6324,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: prizes_title
 - changeSet:
-    id: 1759948555412-150
+    id: 1760781385845-149
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6300,7 +6345,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: proceedings_name_abbreviation
 - changeSet:
-    id: 1759948555412-151
+    id: 1760781385845-150
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6321,7 +6366,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: projects_description
 - changeSet:
-    id: 1759948555412-152
+    id: 1760781385845-151
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6342,7 +6387,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: projects_documents
 - changeSet:
-    id: 1759948555412-153
+    id: 1760781385845-152
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6363,7 +6408,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: projects_fundings
 - changeSet:
-    id: 1759948555412-154
+    id: 1760781385845-153
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6384,7 +6429,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: projects_keywords
 - changeSet:
-    id: 1759948555412-155
+    id: 1760781385845-154
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6405,7 +6450,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: projects_name_abbreviation
 - changeSet:
-    id: 1759948555412-156
+    id: 1760781385845-155
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6426,7 +6471,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: projects_name
 - changeSet:
-    id: 1759948555412-157
+    id: 1760781385845-156
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6447,7 +6492,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: promotions_description
 - changeSet:
-    id: 1759948555412-158
+    id: 1760781385845-157
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6468,7 +6513,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: public_review_page_configuration_content
 - changeSet:
-    id: 1759948555412-159
+    id: 1760781385845-158
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6489,7 +6534,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: publication_series_name_abbreviation
 - changeSet:
-    id: 1759948555412-160
+    id: 1760781385845-159
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6510,7 +6555,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: publication_series_subtitle
 - changeSet:
-    id: 1759948555412-161
+    id: 1760781385845-160
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6531,7 +6576,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: publication_series_title
 - changeSet:
-    id: 1759948555412-162
+    id: 1760781385845-161
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6552,7 +6597,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: publishers_name
 - changeSet:
-    id: 1759948555412-163
+    id: 1760781385845-162
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6573,7 +6618,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: publishers_place
 - changeSet:
-    id: 1759948555412-164
+    id: 1760781385845-163
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6594,7 +6639,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: research_area_description
 - changeSet:
-    id: 1759948555412-165
+    id: 1760781385845-164
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6615,7 +6660,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: research_area_name
 - changeSet:
-    id: 1759948555412-166
+    id: 1760781385845-165
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6636,7 +6681,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_alternate_title
 - changeSet:
-    id: 1759948555412-167
+    id: 1760781385845-166
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6657,7 +6702,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_extended_abstract
 - changeSet:
-    id: 1759948555412-168
+    id: 1760781385845-167
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6678,7 +6723,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_external_organisation_unit_name
 - changeSet:
-    id: 1759948555412-169
+    id: 1760781385845-168
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6699,28 +6744,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_place_of_keeping
 - changeSet:
-    id: 1759948555412-170
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: theses_remark_pkey
-            name: remark_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: theses_remark_pkey
-            name: thesis_id
-            type: INTEGER
-        tableName: theses_remark
-- changeSet:
-    id: 1759948555412-171
+    id: 1760781385845-169
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6741,7 +6765,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_scientific_area
 - changeSet:
-    id: 1759948555412-172
+    id: 1760781385845-170
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6762,7 +6786,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_scientific_sub_area
 - changeSet:
-    id: 1759948555412-173
+    id: 1760781385845-171
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -6783,7 +6807,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_type_of_title
 - changeSet:
-    id: 1759948555412-174
+    id: 1760781385845-172
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6793,7 +6817,7 @@ databaseChangeLog:
         indexName: idx_api_key_email
         tableName: api_keys
 - changeSet:
-    id: 1759948555412-175
+    id: 1760781385845-173
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6803,7 +6827,7 @@ databaseChangeLog:
         indexName: idx_api_key_lookup_hash
         tableName: api_keys
 - changeSet:
-    id: 1759948555412-176
+    id: 1760781385845-174
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -6811,7 +6835,7 @@ databaseChangeLog:
         constraintName: api_keys_value_key
         tableName: api_keys
 - changeSet:
-    id: 1759948555412-177
+    id: 1760781385845-175
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6821,7 +6845,7 @@ databaseChangeLog:
         indexName: idx_assessment_classification_code
         tableName: assessment_classifications
 - changeSet:
-    id: 1759948555412-178
+    id: 1760781385845-176
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6831,7 +6855,7 @@ databaseChangeLog:
         indexName: idx_assessment_measure_code
         tableName: assessment_measures
 - changeSet:
-    id: 1759948555412-179
+    id: 1760781385845-177
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -6839,7 +6863,7 @@ databaseChangeLog:
         constraintName: authorities_name_key
         tableName: authorities
 - changeSet:
-    id: 1759948555412-180
+    id: 1760781385845-178
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6849,7 +6873,7 @@ databaseChangeLog:
         indexName: idx_conference_conf_id
         tableName: conferences
 - changeSet:
-    id: 1759948555412-181
+    id: 1760781385845-179
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -6857,7 +6881,7 @@ databaseChangeLog:
         constraintName: countries_code_key
         tableName: countries
 - changeSet:
-    id: 1759948555412-182
+    id: 1760781385845-180
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6867,7 +6891,7 @@ databaseChangeLog:
         indexName: idx_doc_files_legacy_filename
         tableName: document_files
 - changeSet:
-    id: 1759948555412-183
+    id: 1760781385845-181
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6877,7 +6901,7 @@ databaseChangeLog:
         indexName: idx_doc_files_server_filename
         tableName: document_files
 - changeSet:
-    id: 1759948555412-184
+    id: 1760781385845-182
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6889,7 +6913,7 @@ databaseChangeLog:
         indexName: idx_doc_comm
         tableName: entity_assessment_classifications
 - changeSet:
-    id: 1759948555412-185
+    id: 1760781385845-183
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6903,7 +6927,7 @@ databaseChangeLog:
         indexName: idx_doc_comm_manual
         tableName: entity_assessment_classifications
 - changeSet:
-    id: 1759948555412-186
+    id: 1760781385845-184
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6917,7 +6941,7 @@ databaseChangeLog:
         indexName: idx_event_comm_year
         tableName: entity_assessment_classifications
 - changeSet:
-    id: 1759948555412-187
+    id: 1760781385845-185
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6933,7 +6957,7 @@ databaseChangeLog:
         indexName: idx_pub_series_category_year_comm
         tableName: entity_assessment_classifications
 - changeSet:
-    id: 1759948555412-188
+    id: 1760781385845-186
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6947,7 +6971,7 @@ databaseChangeLog:
         indexName: idx_pub_series_comm_year
         tableName: entity_assessment_classifications
 - changeSet:
-    id: 1759948555412-189
+    id: 1760781385845-187
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6963,7 +6987,7 @@ databaseChangeLog:
         indexName: idx_entity_type_category_source_fromdate
         tableName: entity_indicators
 - changeSet:
-    id: 1759948555412-190
+    id: 1760781385845-188
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6981,7 +7005,7 @@ databaseChangeLog:
         indexName: idx_entity_type_pubseries_source_date_category
         tableName: entity_indicators
 - changeSet:
-    id: 1759948555412-191
+    id: 1760781385845-189
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -6999,7 +7023,7 @@ databaseChangeLog:
         indexName: idx_entity_type_pubseries_source_from_to
         tableName: entity_indicators
 - changeSet:
-    id: 1759948555412-192
+    id: 1760781385845-190
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7015,7 +7039,7 @@ databaseChangeLog:
         indexName: idx_entity_type_pubseries_source_fromdate
         tableName: entity_indicators
 - changeSet:
-    id: 1759948555412-193
+    id: 1760781385845-191
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7023,7 +7047,7 @@ databaseChangeLog:
         constraintName: fundings_document_id_key
         tableName: fundings
 - changeSet:
-    id: 1759948555412-194
+    id: 1760781385845-192
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7031,7 +7055,7 @@ databaseChangeLog:
         constraintName: fundings_funding_number_key
         tableName: fundings
 - changeSet:
-    id: 1759948555412-195
+    id: 1760781385845-193
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7039,7 +7063,7 @@ databaseChangeLog:
         constraintName: indicators_code_key
         tableName: indicators
 - changeSet:
-    id: 1759948555412-196
+    id: 1760781385845-194
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7049,7 +7073,7 @@ databaseChangeLog:
         indexName: idx_involvement_org_unit_id
         tableName: involvements
 - changeSet:
-    id: 1759948555412-197
+    id: 1760781385845-195
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7059,7 +7083,7 @@ databaseChangeLog:
         indexName: idx_involvement_person_id
         tableName: involvements
 - changeSet:
-    id: 1759948555412-198
+    id: 1760781385845-196
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7069,7 +7093,7 @@ databaseChangeLog:
         indexName: idx_involvement_type
         tableName: involvements
 - changeSet:
-    id: 1759948555412-199
+    id: 1760781385845-197
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7081,7 +7105,7 @@ databaseChangeLog:
         indexName: idx_involvement_type_orgunit
         tableName: involvements
 - changeSet:
-    id: 1759948555412-200
+    id: 1760781385845-198
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7091,7 +7115,7 @@ databaseChangeLog:
         indexName: idx_jti
         tableName: jwt_token_store
 - changeSet:
-    id: 1759948555412-201
+    id: 1760781385845-199
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7101,7 +7125,7 @@ databaseChangeLog:
         indexName: idx_language_tag
         tableName: language_tag
 - changeSet:
-    id: 1759948555412-202
+    id: 1760781385845-200
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7109,7 +7133,7 @@ databaseChangeLog:
         constraintName: languages_language_code_key
         tableName: languages
 - changeSet:
-    id: 1759948555412-203
+    id: 1760781385845-201
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7119,7 +7143,7 @@ databaseChangeLog:
         indexName: idx_monograph_e_isbn
         tableName: monographs
 - changeSet:
-    id: 1759948555412-204
+    id: 1760781385845-202
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7129,7 +7153,7 @@ databaseChangeLog:
         indexName: idx_monograph_print_isbn
         tableName: monographs
 - changeSet:
-    id: 1759948555412-205
+    id: 1760781385845-203
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7137,7 +7161,7 @@ databaseChangeLog:
         constraintName: oauth_codes_code_key
         tableName: oauth_codes
 - changeSet:
-    id: 1759948555412-206
+    id: 1760781385845-204
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7147,7 +7171,7 @@ databaseChangeLog:
         indexName: idx_org_unit_scopus_afid
         tableName: organisation_units
 - changeSet:
-    id: 1759948555412-207
+    id: 1760781385845-205
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7159,7 +7183,7 @@ databaseChangeLog:
         indexName: idx_pdc_docid_contribtype
         tableName: person_document_contribution
 - changeSet:
-    id: 1759948555412-208
+    id: 1760781385845-206
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7169,7 +7193,7 @@ databaseChangeLog:
         indexName: idx_open_alex_id
         tableName: persons
 - changeSet:
-    id: 1759948555412-209
+    id: 1760781385845-207
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7179,7 +7203,7 @@ databaseChangeLog:
         indexName: idx_person_approve_status
         tableName: persons
 - changeSet:
-    id: 1759948555412-210
+    id: 1760781385845-208
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7189,7 +7213,7 @@ databaseChangeLog:
         indexName: idx_person_apvnt
         tableName: persons
 - changeSet:
-    id: 1759948555412-211
+    id: 1760781385845-209
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7199,7 +7223,7 @@ databaseChangeLog:
         indexName: idx_person_e_cris_id
         tableName: persons
 - changeSet:
-    id: 1759948555412-212
+    id: 1760781385845-210
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7209,7 +7233,7 @@ databaseChangeLog:
         indexName: idx_person_e_nauka_id
         tableName: persons
 - changeSet:
-    id: 1759948555412-213
+    id: 1760781385845-211
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7219,7 +7243,7 @@ databaseChangeLog:
         indexName: idx_person_orcid
         tableName: persons
 - changeSet:
-    id: 1759948555412-214
+    id: 1760781385845-212
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7229,7 +7253,7 @@ databaseChangeLog:
         indexName: idx_person_scopus_author_id
         tableName: persons
 - changeSet:
-    id: 1759948555412-215
+    id: 1760781385845-213
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7239,7 +7263,7 @@ databaseChangeLog:
         indexName: idx_wos_researcher_id
         tableName: persons
 - changeSet:
-    id: 1759948555412-216
+    id: 1760781385845-214
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7247,7 +7271,7 @@ databaseChangeLog:
         constraintName: persons_name_id_key
         tableName: persons
 - changeSet:
-    id: 1759948555412-217
+    id: 1760781385845-215
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7257,7 +7281,7 @@ databaseChangeLog:
         indexName: idx_proceedings_e_isbn
         tableName: proceedings
 - changeSet:
-    id: 1759948555412-218
+    id: 1760781385845-216
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7267,7 +7291,7 @@ databaseChangeLog:
         indexName: idx_proceedings_print_isbn
         tableName: proceedings
 - changeSet:
-    id: 1759948555412-219
+    id: 1760781385845-217
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7275,7 +7299,7 @@ databaseChangeLog:
         constraintName: registry_book_entries_attendance_identifier_key
         tableName: registry_book_entries
 - changeSet:
-    id: 1759948555412-220
+    id: 1760781385845-218
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7283,7 +7307,7 @@ databaseChangeLog:
         constraintName: registry_book_entries_author_name_id_key
         tableName: registry_book_entries
 - changeSet:
-    id: 1759948555412-221
+    id: 1760781385845-219
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7295,7 +7319,7 @@ databaseChangeLog:
         indexName: idx_thesis_research_output
         tableName: thesis_research_outputs
 - changeSet:
-    id: 1759948555412-222
+    id: 1760781385845-220
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7305,7 +7329,7 @@ databaseChangeLog:
         indexName: idx_user_account_activation_activation_token
         tableName: user_account_activations
 - changeSet:
-    id: 1759948555412-223
+    id: 1760781385845-221
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7313,7 +7337,7 @@ databaseChangeLog:
         constraintName: user_account_activations_user_id_key
         tableName: user_account_activations
 - changeSet:
-    id: 1759948555412-224
+    id: 1760781385845-222
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7323,7 +7347,7 @@ databaseChangeLog:
         indexName: idx_email_update_token
         tableName: user_email_update_requests
 - changeSet:
-    id: 1759948555412-225
+    id: 1760781385845-223
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7333,7 +7357,7 @@ databaseChangeLog:
         indexName: idx_password_reset_token
         tableName: user_password_reset_requests
 - changeSet:
-    id: 1759948555412-226
+    id: 1760781385845-224
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7341,7 +7365,7 @@ databaseChangeLog:
         constraintName: users_person_id_key
         tableName: users
 - changeSet:
-    id: 1759948555412-227
+    id: 1760781385845-225
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7349,7 +7373,7 @@ databaseChangeLog:
         constraintName: users_username_key
         tableName: users
 - changeSet:
-    id: 1759948555412-228
+    id: 1760781385845-226
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7359,7 +7383,7 @@ databaseChangeLog:
         indexName: idx_pci_instid
         tableName: person_contribution_institutions
 - changeSet:
-    id: 1759948555412-229
+    id: 1760781385845-227
     author: ivanmrsulja (generated)
     changes:
     - createIndex:
@@ -7369,7 +7393,7 @@ databaseChangeLog:
         indexName: idx_pci_pcid
         tableName: person_contribution_institutions
 - changeSet:
-    id: 1759948555412-230
+    id: 1760781385845-228
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7377,7 +7401,7 @@ databaseChangeLog:
         constraintName: affiliation_statements_city_city_id_key
         tableName: affiliation_statements_city
 - changeSet:
-    id: 1759948555412-231
+    id: 1760781385845-229
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7385,7 +7409,7 @@ databaseChangeLog:
         constraintName: affiliation_statements_displa_display_affiliation_statement_key
         tableName: affiliation_statements_display_affiliation_statement
 - changeSet:
-    id: 1759948555412-232
+    id: 1760781385845-230
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7393,7 +7417,7 @@ databaseChangeLog:
         constraintName: affiliation_statements_street_and_numb_street_and_number_id_key
         tableName: affiliation_statements_street_and_number
 - changeSet:
-    id: 1759948555412-233
+    id: 1760781385845-231
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7401,7 +7425,7 @@ databaseChangeLog:
         constraintName: api_keys_name_name_id_key
         tableName: api_keys_name
 - changeSet:
-    id: 1759948555412-234
+    id: 1760781385845-232
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7409,7 +7433,7 @@ databaseChangeLog:
         constraintName: assessment_classifications_title_title_id_key
         tableName: assessment_classifications_title
 - changeSet:
-    id: 1759948555412-235
+    id: 1760781385845-233
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7417,7 +7441,7 @@ databaseChangeLog:
         constraintName: assessment_measures_title_title_id_key
         tableName: assessment_measures_title
 - changeSet:
-    id: 1759948555412-236
+    id: 1760781385845-234
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7425,7 +7449,7 @@ databaseChangeLog:
         constraintName: assessment_rulebooks_assessment_meas_assessment_measures_id_key
         tableName: assessment_rulebooks_assessment_measures
 - changeSet:
-    id: 1759948555412-237
+    id: 1760781385845-235
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7433,7 +7457,7 @@ databaseChangeLog:
         constraintName: assessment_rulebooks_description_description_id_key
         tableName: assessment_rulebooks_description
 - changeSet:
-    id: 1759948555412-238
+    id: 1760781385845-236
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7441,7 +7465,7 @@ databaseChangeLog:
         constraintName: assessment_rulebooks_name_name_id_key
         tableName: assessment_rulebooks_name
 - changeSet:
-    id: 1759948555412-239
+    id: 1760781385845-237
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7449,7 +7473,7 @@ databaseChangeLog:
         constraintName: branding_information_description_description_id_key
         tableName: branding_information_description
 - changeSet:
-    id: 1759948555412-240
+    id: 1760781385845-238
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7457,7 +7481,7 @@ databaseChangeLog:
         constraintName: branding_information_title_title_id_key
         tableName: branding_information_title
 - changeSet:
-    id: 1759948555412-241
+    id: 1760781385845-239
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7465,7 +7489,7 @@ databaseChangeLog:
         constraintName: commissions_description_description_id_key
         tableName: commissions_description
 - changeSet:
-    id: 1759948555412-242
+    id: 1760781385845-240
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7473,7 +7497,7 @@ databaseChangeLog:
         constraintName: countries_name_name_id_key
         tableName: countries_name
 - changeSet:
-    id: 1759948555412-243
+    id: 1760781385845-241
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7481,7 +7505,7 @@ databaseChangeLog:
         constraintName: currencies_name_name_id_key
         tableName: currencies_name
 - changeSet:
-    id: 1759948555412-244
+    id: 1760781385845-242
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7489,7 +7513,7 @@ databaseChangeLog:
         constraintName: document_files_description_description_id_key
         tableName: document_files_description
 - changeSet:
-    id: 1759948555412-245
+    id: 1760781385845-243
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7497,7 +7521,7 @@ databaseChangeLog:
         constraintName: documents_description_description_id_key
         tableName: documents_description
 - changeSet:
-    id: 1759948555412-246
+    id: 1760781385845-244
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7505,7 +7529,7 @@ databaseChangeLog:
         constraintName: documents_keywords_keywords_id_key
         tableName: documents_keywords
 - changeSet:
-    id: 1759948555412-247
+    id: 1760781385845-245
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7513,7 +7537,7 @@ databaseChangeLog:
         constraintName: documents_remark_remark_id_key
         tableName: documents_remark
 - changeSet:
-    id: 1759948555412-248
+    id: 1760781385845-246
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7521,7 +7545,7 @@ databaseChangeLog:
         constraintName: documents_sub_title_sub_title_id_key
         tableName: documents_sub_title
 - changeSet:
-    id: 1759948555412-249
+    id: 1760781385845-247
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7529,7 +7553,7 @@ databaseChangeLog:
         constraintName: documents_title_title_id_key
         tableName: documents_title
 - changeSet:
-    id: 1759948555412-250
+    id: 1760781385845-248
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7537,7 +7561,7 @@ databaseChangeLog:
         constraintName: educations_abbreviation_title_abbreviation_title_id_key
         tableName: educations_abbreviation_title
 - changeSet:
-    id: 1759948555412-251
+    id: 1760781385845-249
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7545,7 +7569,7 @@ databaseChangeLog:
         constraintName: educations_thesis_title_thesis_title_id_key
         tableName: educations_thesis_title
 - changeSet:
-    id: 1759948555412-252
+    id: 1760781385845-250
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7553,7 +7577,7 @@ databaseChangeLog:
         constraintName: educations_title_title_id_key
         tableName: educations_title
 - changeSet:
-    id: 1759948555412-253
+    id: 1760781385845-251
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7561,7 +7585,7 @@ databaseChangeLog:
         constraintName: employments_role_role_id_key
         tableName: employments_role
 - changeSet:
-    id: 1759948555412-254
+    id: 1760781385845-252
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7569,7 +7593,7 @@ databaseChangeLog:
         constraintName: entity_assessment_classifications__classification_reason_id_key
         tableName: entity_assessment_classifications_classification_reason
 - changeSet:
-    id: 1759948555412-255
+    id: 1760781385845-253
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7577,7 +7601,7 @@ databaseChangeLog:
         constraintName: entity_indicators_proofs_proofs_id_key
         tableName: entity_indicators_proofs
 - changeSet:
-    id: 1759948555412-256
+    id: 1760781385845-254
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7585,7 +7609,7 @@ databaseChangeLog:
         constraintName: events_description_description_id_key
         tableName: events_description
 - changeSet:
-    id: 1759948555412-257
+    id: 1760781385845-255
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7593,7 +7617,7 @@ databaseChangeLog:
         constraintName: events_keywords_keywords_id_key
         tableName: events_keywords
 - changeSet:
-    id: 1759948555412-258
+    id: 1760781385845-256
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7601,7 +7625,7 @@ databaseChangeLog:
         constraintName: events_name_abbreviation_name_abbreviation_id_key
         tableName: events_name_abbreviation
 - changeSet:
-    id: 1759948555412-259
+    id: 1760781385845-257
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7609,7 +7633,7 @@ databaseChangeLog:
         constraintName: events_name_name_id_key
         tableName: events_name
 - changeSet:
-    id: 1759948555412-260
+    id: 1760781385845-258
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7617,7 +7641,7 @@ databaseChangeLog:
         constraintName: events_place_place_id_key
         tableName: events_place
 - changeSet:
-    id: 1759948555412-261
+    id: 1760781385845-259
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7625,7 +7649,7 @@ databaseChangeLog:
         constraintName: expertise_or_skills_description_description_id_key
         tableName: expertise_or_skills_description
 - changeSet:
-    id: 1759948555412-262
+    id: 1760781385845-260
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7633,7 +7657,7 @@ databaseChangeLog:
         constraintName: expertise_or_skills_name_name_id_key
         tableName: expertise_or_skills_name
 - changeSet:
-    id: 1759948555412-263
+    id: 1760781385845-261
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7641,7 +7665,7 @@ databaseChangeLog:
         constraintName: expertise_or_skills_proofs_proofs_id_key
         tableName: expertise_or_skills_proofs
 - changeSet:
-    id: 1759948555412-264
+    id: 1760781385845-262
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7649,7 +7673,7 @@ databaseChangeLog:
         constraintName: fundings_funding_agency_funding_agency_id_key
         tableName: fundings_funding_agency
 - changeSet:
-    id: 1759948555412-265
+    id: 1760781385845-263
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7657,7 +7681,7 @@ databaseChangeLog:
         constraintName: fundings_funding_call_funding_call_id_key
         tableName: fundings_funding_call
 - changeSet:
-    id: 1759948555412-266
+    id: 1760781385845-264
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7665,7 +7689,7 @@ databaseChangeLog:
         constraintName: fundings_funding_program_funding_program_id_key
         tableName: fundings_funding_program
 - changeSet:
-    id: 1759948555412-267
+    id: 1760781385845-265
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7673,7 +7697,7 @@ databaseChangeLog:
         constraintName: indicators_description_description_id_key
         tableName: indicators_description
 - changeSet:
-    id: 1759948555412-268
+    id: 1760781385845-266
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7681,7 +7705,7 @@ databaseChangeLog:
         constraintName: indicators_title_title_id_key
         tableName: indicators_title
 - changeSet:
-    id: 1759948555412-269
+    id: 1760781385845-267
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7689,7 +7713,7 @@ databaseChangeLog:
         constraintName: institution_default_submission_content_pla_place_of_keep_id_key
         tableName: institution_default_submission_content_place_of_keep
 - changeSet:
-    id: 1759948555412-270
+    id: 1760781385845-268
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7697,7 +7721,7 @@ databaseChangeLog:
         constraintName: institution_default_submission_content_typ_type_of_title_id_key
         tableName: institution_default_submission_content_type_of_title
 - changeSet:
-    id: 1759948555412-271
+    id: 1760781385845-269
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7705,7 +7729,7 @@ databaseChangeLog:
         constraintName: involvements_affiliation_statement_affiliation_statement_id_key
         tableName: involvements_affiliation_statement
 - changeSet:
-    id: 1759948555412-272
+    id: 1760781385845-270
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7713,7 +7737,7 @@ databaseChangeLog:
         constraintName: involvements_proofs_proofs_id_key
         tableName: involvements_proofs
 - changeSet:
-    id: 1759948555412-273
+    id: 1760781385845-271
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7721,7 +7745,7 @@ databaseChangeLog:
         constraintName: languages_name_name_id_key
         tableName: languages_name
 - changeSet:
-    id: 1759948555412-274
+    id: 1760781385845-272
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7729,7 +7753,7 @@ databaseChangeLog:
         constraintName: memberships_contribution_descri_contribution_description_id_key
         tableName: memberships_contribution_description
 - changeSet:
-    id: 1759948555412-275
+    id: 1760781385845-273
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7737,7 +7761,7 @@ databaseChangeLog:
         constraintName: memberships_role_role_id_key
         tableName: memberships_role
 - changeSet:
-    id: 1759948555412-276
+    id: 1760781385845-274
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7745,7 +7769,7 @@ databaseChangeLog:
         constraintName: organisation_units_keyword_keyword_id_key
         tableName: organisation_units_keyword
 - changeSet:
-    id: 1759948555412-277
+    id: 1760781385845-275
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7753,7 +7777,7 @@ databaseChangeLog:
         constraintName: organisation_units_name_name_id_key
         tableName: organisation_units_name
 - changeSet:
-    id: 1759948555412-278
+    id: 1760781385845-276
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7761,7 +7785,7 @@ databaseChangeLog:
         constraintName: organisation_units_relations__source_affiliation_statement__key
         tableName: organisation_units_relations_source_affiliation_statement
 - changeSet:
-    id: 1759948555412-279
+    id: 1760781385845-277
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7769,7 +7793,7 @@ databaseChangeLog:
         constraintName: organisation_units_relations__target_affiliation_statement__key
         tableName: organisation_units_relations_target_affiliation_statement
 - changeSet:
-    id: 1759948555412-280
+    id: 1760781385845-278
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7777,7 +7801,7 @@ databaseChangeLog:
         constraintName: organisation_units_relations_proofs_proofs_id_key
         tableName: organisation_units_relations_proofs
 - changeSet:
-    id: 1759948555412-281
+    id: 1760781385845-279
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7785,7 +7809,7 @@ databaseChangeLog:
         constraintName: person_contributions_contributi_contribution_description_id_key
         tableName: person_contributions_contribution_description
 - changeSet:
-    id: 1759948555412-282
+    id: 1760781385845-280
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7793,7 +7817,7 @@ databaseChangeLog:
         constraintName: persons_biography_biography_id_key
         tableName: persons_biography
 - changeSet:
-    id: 1759948555412-283
+    id: 1760781385845-281
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7801,7 +7825,7 @@ databaseChangeLog:
         constraintName: persons_city_city_id_key
         tableName: persons_city
 - changeSet:
-    id: 1759948555412-284
+    id: 1760781385845-282
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7809,7 +7833,7 @@ databaseChangeLog:
         constraintName: persons_display_title_display_title_id_key
         tableName: persons_display_title
 - changeSet:
-    id: 1759948555412-285
+    id: 1760781385845-283
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7817,7 +7841,7 @@ databaseChangeLog:
         constraintName: persons_keyword_keyword_id_key
         tableName: persons_keyword
 - changeSet:
-    id: 1759948555412-286
+    id: 1760781385845-284
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7825,7 +7849,7 @@ databaseChangeLog:
         constraintName: persons_other_names_other_names_id_key
         tableName: persons_other_names
 - changeSet:
-    id: 1759948555412-287
+    id: 1760781385845-285
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7833,7 +7857,7 @@ databaseChangeLog:
         constraintName: persons_research_areas_research_areas_id_key
         tableName: persons_research_areas
 - changeSet:
-    id: 1759948555412-288
+    id: 1760781385845-286
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7841,7 +7865,7 @@ databaseChangeLog:
         constraintName: persons_street_and_number_street_and_number_id_key
         tableName: persons_street_and_number
 - changeSet:
-    id: 1759948555412-289
+    id: 1760781385845-287
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7849,7 +7873,7 @@ databaseChangeLog:
         constraintName: prizes_description_description_id_key
         tableName: prizes_description
 - changeSet:
-    id: 1759948555412-290
+    id: 1760781385845-288
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7857,7 +7881,7 @@ databaseChangeLog:
         constraintName: prizes_proofs_proofs_id_key
         tableName: prizes_proofs
 - changeSet:
-    id: 1759948555412-291
+    id: 1760781385845-289
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7865,7 +7889,7 @@ databaseChangeLog:
         constraintName: prizes_title_title_id_key
         tableName: prizes_title
 - changeSet:
-    id: 1759948555412-292
+    id: 1760781385845-290
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7873,7 +7897,7 @@ databaseChangeLog:
         constraintName: proceedings_name_abbreviation_name_abbreviation_id_key
         tableName: proceedings_name_abbreviation
 - changeSet:
-    id: 1759948555412-293
+    id: 1760781385845-291
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7881,7 +7905,7 @@ databaseChangeLog:
         constraintName: projects_description_description_id_key
         tableName: projects_description
 - changeSet:
-    id: 1759948555412-294
+    id: 1760781385845-292
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7889,7 +7913,7 @@ databaseChangeLog:
         constraintName: projects_documents_documents_id_key
         tableName: projects_documents
 - changeSet:
-    id: 1759948555412-295
+    id: 1760781385845-293
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7897,7 +7921,7 @@ databaseChangeLog:
         constraintName: projects_fundings_fundings_id_key
         tableName: projects_fundings
 - changeSet:
-    id: 1759948555412-296
+    id: 1760781385845-294
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7905,7 +7929,7 @@ databaseChangeLog:
         constraintName: projects_keywords_keywords_id_key
         tableName: projects_keywords
 - changeSet:
-    id: 1759948555412-297
+    id: 1760781385845-295
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7913,7 +7937,7 @@ databaseChangeLog:
         constraintName: projects_name_abbreviation_name_abbreviation_id_key
         tableName: projects_name_abbreviation
 - changeSet:
-    id: 1759948555412-298
+    id: 1760781385845-296
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7921,7 +7945,7 @@ databaseChangeLog:
         constraintName: projects_name_name_id_key
         tableName: projects_name
 - changeSet:
-    id: 1759948555412-299
+    id: 1760781385845-297
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7929,7 +7953,7 @@ databaseChangeLog:
         constraintName: promotions_description_description_id_key
         tableName: promotions_description
 - changeSet:
-    id: 1759948555412-300
+    id: 1760781385845-298
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7937,7 +7961,7 @@ databaseChangeLog:
         constraintName: public_review_page_configuration_content_content_id_key
         tableName: public_review_page_configuration_content
 - changeSet:
-    id: 1759948555412-301
+    id: 1760781385845-299
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7945,7 +7969,7 @@ databaseChangeLog:
         constraintName: publication_series_name_abbreviation_name_abbreviation_id_key
         tableName: publication_series_name_abbreviation
 - changeSet:
-    id: 1759948555412-302
+    id: 1760781385845-300
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7953,7 +7977,7 @@ databaseChangeLog:
         constraintName: publication_series_subtitle_subtitle_id_key
         tableName: publication_series_subtitle
 - changeSet:
-    id: 1759948555412-303
+    id: 1760781385845-301
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7961,7 +7985,7 @@ databaseChangeLog:
         constraintName: publication_series_title_title_id_key
         tableName: publication_series_title
 - changeSet:
-    id: 1759948555412-304
+    id: 1760781385845-302
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7969,7 +7993,7 @@ databaseChangeLog:
         constraintName: publishers_name_name_id_key
         tableName: publishers_name
 - changeSet:
-    id: 1759948555412-305
+    id: 1760781385845-303
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7977,7 +8001,7 @@ databaseChangeLog:
         constraintName: publishers_place_place_id_key
         tableName: publishers_place
 - changeSet:
-    id: 1759948555412-306
+    id: 1760781385845-304
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7985,7 +8009,7 @@ databaseChangeLog:
         constraintName: research_area_description_description_id_key
         tableName: research_area_description
 - changeSet:
-    id: 1759948555412-307
+    id: 1760781385845-305
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -7993,7 +8017,7 @@ databaseChangeLog:
         constraintName: research_area_name_name_id_key
         tableName: research_area_name
 - changeSet:
-    id: 1759948555412-308
+    id: 1760781385845-306
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -8001,7 +8025,7 @@ databaseChangeLog:
         constraintName: theses_alternate_title_alternate_title_id_key
         tableName: theses_alternate_title
 - changeSet:
-    id: 1759948555412-309
+    id: 1760781385845-307
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -8009,7 +8033,7 @@ databaseChangeLog:
         constraintName: theses_extended_abstract_extended_abstract_id_key
         tableName: theses_extended_abstract
 - changeSet:
-    id: 1759948555412-310
+    id: 1760781385845-308
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -8017,7 +8041,7 @@ databaseChangeLog:
         constraintName: theses_external_organisation__external_organisation_unit_na_key
         tableName: theses_external_organisation_unit_name
 - changeSet:
-    id: 1759948555412-311
+    id: 1760781385845-309
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -8025,15 +8049,7 @@ databaseChangeLog:
         constraintName: theses_place_of_keeping_place_of_keeping_id_key
         tableName: theses_place_of_keeping
 - changeSet:
-    id: 1759948555412-312
-    author: ivanmrsulja (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: remark_id
-        constraintName: theses_remark_remark_id_key
-        tableName: theses_remark
-- changeSet:
-    id: 1759948555412-313
+    id: 1760781385845-310
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -8041,7 +8057,7 @@ databaseChangeLog:
         constraintName: theses_scientific_area_scientific_area_id_key
         tableName: theses_scientific_area
 - changeSet:
-    id: 1759948555412-314
+    id: 1760781385845-311
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -8049,7 +8065,7 @@ databaseChangeLog:
         constraintName: theses_scientific_sub_area_scientific_sub_area_id_key
         tableName: theses_scientific_sub_area
 - changeSet:
-    id: 1759948555412-315
+    id: 1760781385845-312
     author: ivanmrsulja (generated)
     changes:
     - addUniqueConstraint:
@@ -8057,7 +8073,7 @@ databaseChangeLog:
         constraintName: theses_type_of_title_type_of_title_id_key
         tableName: theses_type_of_title
 - changeSet:
-    id: 1759948555412-316
+    id: 1760781385845-313
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8070,7 +8086,7 @@ databaseChangeLog:
         sequenceName: affiliation_statements_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-317
+    id: 1760781385845-314
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8083,7 +8099,7 @@ databaseChangeLog:
         sequenceName: api_keys_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-318
+    id: 1760781385845-315
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8096,7 +8112,7 @@ databaseChangeLog:
         sequenceName: assessment_classifications_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-319
+    id: 1760781385845-316
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8109,7 +8125,7 @@ databaseChangeLog:
         sequenceName: assessment_measures_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-320
+    id: 1760781385845-317
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8122,7 +8138,7 @@ databaseChangeLog:
         sequenceName: assessment_rulebooks_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-321
+    id: 1760781385845-318
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8135,7 +8151,7 @@ databaseChangeLog:
         sequenceName: authorities_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-322
+    id: 1760781385845-319
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8148,7 +8164,7 @@ databaseChangeLog:
         sequenceName: branding_information_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-323
+    id: 1760781385845-320
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8161,7 +8177,7 @@ databaseChangeLog:
         sequenceName: commission_relations_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-324
+    id: 1760781385845-321
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8174,7 +8190,7 @@ databaseChangeLog:
         sequenceName: commission_report_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-325
+    id: 1760781385845-322
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8187,7 +8203,7 @@ databaseChangeLog:
         sequenceName: commissions_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-326
+    id: 1760781385845-323
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8200,7 +8216,7 @@ databaseChangeLog:
         sequenceName: countries_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-327
+    id: 1760781385845-324
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8213,7 +8229,7 @@ databaseChangeLog:
         sequenceName: currencies_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-328
+    id: 1760781385845-325
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8226,7 +8242,7 @@ databaseChangeLog:
         sequenceName: declined_claims_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-329
+    id: 1760781385845-326
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8239,7 +8255,7 @@ databaseChangeLog:
         sequenceName: document_file_backup_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-330
+    id: 1760781385845-327
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8252,7 +8268,7 @@ databaseChangeLog:
         sequenceName: document_files_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-331
+    id: 1760781385845-328
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8265,7 +8281,7 @@ databaseChangeLog:
         sequenceName: documents_relations_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-332
+    id: 1760781385845-329
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8278,7 +8294,7 @@ databaseChangeLog:
         sequenceName: documents_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-333
+    id: 1760781385845-330
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8291,7 +8307,7 @@ databaseChangeLog:
         sequenceName: entity_assessment_classifications_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-334
+    id: 1760781385845-331
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8304,7 +8320,7 @@ databaseChangeLog:
         sequenceName: entity_indicators_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-335
+    id: 1760781385845-332
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8317,7 +8333,7 @@ databaseChangeLog:
         sequenceName: events_relation_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-336
+    id: 1760781385845-333
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8330,7 +8346,7 @@ databaseChangeLog:
         sequenceName: events_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-337
+    id: 1760781385845-334
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8343,7 +8359,7 @@ databaseChangeLog:
         sequenceName: expertise_or_skills_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-338
+    id: 1760781385845-335
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8356,7 +8372,7 @@ databaseChangeLog:
         sequenceName: external_indicator_configuration_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-339
+    id: 1760781385845-336
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8369,7 +8385,7 @@ databaseChangeLog:
         sequenceName: fundings_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-340
+    id: 1760781385845-337
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8382,7 +8398,7 @@ databaseChangeLog:
         sequenceName: indicators_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-341
+    id: 1760781385845-338
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8395,7 +8411,7 @@ databaseChangeLog:
         sequenceName: institution_default_submission_content_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-342
+    id: 1760781385845-339
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8408,7 +8424,7 @@ databaseChangeLog:
         sequenceName: involvements_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-343
+    id: 1760781385845-340
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8421,7 +8437,7 @@ databaseChangeLog:
         sequenceName: jwt_token_store_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-344
+    id: 1760781385845-341
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8434,7 +8450,7 @@ databaseChangeLog:
         sequenceName: language_tag_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-345
+    id: 1760781385845-342
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8447,7 +8463,7 @@ databaseChangeLog:
         sequenceName: languages_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-346
+    id: 1760781385845-343
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8460,7 +8476,7 @@ databaseChangeLog:
         sequenceName: loading_configurations_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-347
+    id: 1760781385845-344
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8473,7 +8489,7 @@ databaseChangeLog:
         sequenceName: monetary_amounts_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-348
+    id: 1760781385845-345
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8486,7 +8502,7 @@ databaseChangeLog:
         sequenceName: multi_lingual_content_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-349
+    id: 1760781385845-346
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8499,7 +8515,7 @@ databaseChangeLog:
         sequenceName: notification_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-350
+    id: 1760781385845-347
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8512,7 +8528,7 @@ databaseChangeLog:
         sequenceName: oauth_codes_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-351
+    id: 1760781385845-348
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8525,7 +8541,7 @@ databaseChangeLog:
         sequenceName: organisation_unit_import_source_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-352
+    id: 1760781385845-349
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8538,7 +8554,7 @@ databaseChangeLog:
         sequenceName: organisation_unit_outputs_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-353
+    id: 1760781385845-350
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8551,7 +8567,7 @@ databaseChangeLog:
         sequenceName: organisation_unit_trusts_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-354
+    id: 1760781385845-351
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8564,7 +8580,7 @@ databaseChangeLog:
         sequenceName: organisation_units_relations_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-355
+    id: 1760781385845-352
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8577,7 +8593,7 @@ databaseChangeLog:
         sequenceName: organisation_units_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-356
+    id: 1760781385845-353
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8590,7 +8606,7 @@ databaseChangeLog:
         sequenceName: person_assessment_research_area_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-357
+    id: 1760781385845-354
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8603,7 +8619,7 @@ databaseChangeLog:
         sequenceName: person_charts_display_configuration_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-358
+    id: 1760781385845-355
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8616,7 +8632,7 @@ databaseChangeLog:
         sequenceName: person_contributions_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-359
+    id: 1760781385845-356
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8629,7 +8645,7 @@ databaseChangeLog:
         sequenceName: person_names_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-360
+    id: 1760781385845-357
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8642,7 +8658,7 @@ databaseChangeLog:
         sequenceName: persons_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-361
+    id: 1760781385845-358
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8655,7 +8671,7 @@ databaseChangeLog:
         sequenceName: privileges_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-362
+    id: 1760781385845-359
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8668,7 +8684,7 @@ databaseChangeLog:
         sequenceName: prizes_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-363
+    id: 1760781385845-360
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8681,7 +8697,7 @@ databaseChangeLog:
         sequenceName: project_documents_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-364
+    id: 1760781385845-361
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8694,7 +8710,7 @@ databaseChangeLog:
         sequenceName: project_relations_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-365
+    id: 1760781385845-362
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8707,7 +8723,7 @@ databaseChangeLog:
         sequenceName: projects_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-366
+    id: 1760781385845-363
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8720,7 +8736,7 @@ databaseChangeLog:
         sequenceName: promotions_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-367
+    id: 1760781385845-364
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8733,7 +8749,7 @@ databaseChangeLog:
         sequenceName: public_review_page_configuration_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-368
+    id: 1760781385845-365
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8746,7 +8762,7 @@ databaseChangeLog:
         sequenceName: publication_series_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-369
+    id: 1760781385845-366
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8759,7 +8775,7 @@ databaseChangeLog:
         sequenceName: publishers_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-370
+    id: 1760781385845-367
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8772,7 +8788,7 @@ databaseChangeLog:
         sequenceName: refresh_tokens_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-371
+    id: 1760781385845-368
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8785,7 +8801,7 @@ databaseChangeLog:
         sequenceName: registry_book_entries_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-372
+    id: 1760781385845-369
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8798,7 +8814,7 @@ databaseChangeLog:
         sequenceName: registry_book_report_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-373
+    id: 1760781385845-370
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8811,7 +8827,7 @@ databaseChangeLog:
         sequenceName: research_area_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-374
+    id: 1760781385845-371
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8824,7 +8840,7 @@ databaseChangeLog:
         sequenceName: scheduled_tasks_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-375
+    id: 1760781385845-372
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8837,7 +8853,7 @@ databaseChangeLog:
         sequenceName: thesis_research_outputs_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-376
+    id: 1760781385845-373
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8850,7 +8866,7 @@ databaseChangeLog:
         sequenceName: user_account_activations_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-377
+    id: 1760781385845-374
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8863,7 +8879,7 @@ databaseChangeLog:
         sequenceName: user_email_update_requests_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-378
+    id: 1760781385845-375
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8876,7 +8892,7 @@ databaseChangeLog:
         sequenceName: user_password_reset_requests_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-379
+    id: 1760781385845-376
     author: ivanmrsulja (generated)
     changes:
     - createSequence:
@@ -8889,7 +8905,7 @@ databaseChangeLog:
         sequenceName: users_seq
         startValue: 1
 - changeSet:
-    id: 1759948555412-380
+    id: 1760781385845-377
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -8910,7 +8926,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: authority_privileges
 - changeSet:
-    id: 1759948555412-381
+    id: 1760781385845-378
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -8931,7 +8947,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: commission_recognised_research_areas
 - changeSet:
-    id: 1759948555412-382
+    id: 1760781385845-379
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -8952,7 +8968,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: commission_relation_targets
 - changeSet:
-    id: 1759948555412-383
+    id: 1760781385845-380
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -8973,7 +8989,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: commission_sources
 - changeSet:
-    id: 1759948555412-384
+    id: 1760781385845-381
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -8994,7 +9010,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: commissions_documents_for_assessment
 - changeSet:
-    id: 1759948555412-385
+    id: 1760781385845-382
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9015,7 +9031,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: commissions_excluded_researchers
 - changeSet:
-    id: 1759948555412-386
+    id: 1760781385845-383
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9036,7 +9052,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: commissions_organisation_units_for_assessment
 - changeSet:
-    id: 1759948555412-387
+    id: 1760781385845-384
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9057,22 +9073,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: commissions_persons_for_assessment
 - changeSet:
-    id: 1759948555412-388
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_id
-            type: INTEGER
-        - column:
-            name: uris
-            type: VARCHAR(255)
-        tableName: document_uris
-- changeSet:
-    id: 1759948555412-389
+    id: 1760781385845-385
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9093,7 +9094,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: documents_file_items
 - changeSet:
-    id: 1759948555412-390
+    id: 1760781385845-386
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9114,22 +9115,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: documents_proofs
 - changeSet:
-    id: 1759948555412-391
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: event_id
-            type: INTEGER
-        - column:
-            name: uris
-            type: VARCHAR(255)
-        tableName: event_uris
-- changeSet:
-    id: 1759948555412-392
+    id: 1760781385845-387
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9148,7 +9134,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: language_knowledges
 - changeSet:
-    id: 1759948555412-393
+    id: 1760781385845-388
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9169,7 +9155,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: monographs_languages
 - changeSet:
-    id: 1759948555412-394
+    id: 1760781385845-389
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9195,37 +9181,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: notification_values_mapping
 - changeSet:
-    id: 1759948555412-395
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: organisation_unit_id
-            type: INTEGER
-        - column:
-            name: accounting_ids
-            type: VARCHAR(255)
-        tableName: organisation_unit_accounting_ids
-- changeSet:
-    id: 1759948555412-396
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: organisation_unit_id
-            type: INTEGER
-        - column:
-            name: uris
-            type: VARCHAR(255)
-        tableName: organisation_unit_uris
-- changeSet:
-    id: 1759948555412-397
+    id: 1760781385845-390
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9246,22 +9202,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: organisation_units_research_areas
 - changeSet:
-    id: 1759948555412-398
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: person_id
-            type: INTEGER
-        - column:
-            name: accounting_ids
-            type: VARCHAR(255)
-        tableName: person_accounting_ids
-- changeSet:
-    id: 1759948555412-399
+    id: 1760781385845-391
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9276,22 +9217,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: person_employment_hierarchy
 - changeSet:
-    id: 1759948555412-400
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: person_id
-            type: INTEGER
-        - column:
-            name: uris
-            type: VARCHAR(255)
-        tableName: person_uris
-- changeSet:
-    id: 1759948555412-401
+    id: 1760781385845-392
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9312,22 +9238,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: proceedings_languages
 - changeSet:
-    id: 1759948555412-402
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: project_id
-            type: INTEGER
-        - column:
-            name: uris
-            type: VARCHAR(255)
-        tableName: project_uris
-- changeSet:
-    id: 1759948555412-403
+    id: 1760781385845-393
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9348,22 +9259,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: publication_series_languages
 - changeSet:
-    id: 1759948555412-404
-    author: ivanmrsulja (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: publication_series_id
-            type: INTEGER
-        - column:
-            name: uris
-            type: VARCHAR(255)
-        tableName: publication_series_uris
-- changeSet:
-    id: 1759948555412-405
+    id: 1760781385845-394
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9384,7 +9280,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_commission_reports
 - changeSet:
-    id: 1759948555412-406
+    id: 1760781385845-395
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9405,7 +9301,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_preliminary_files
 - changeSet:
-    id: 1759948555412-407
+    id: 1760781385845-396
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9426,7 +9322,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: theses_preliminary_supplements
 - changeSet:
-    id: 1759948555412-408
+    id: 1760781385845-397
     author: ivanmrsulja (generated)
     changes:
     - createTable:
@@ -9441,7 +9337,7 @@ databaseChangeLog:
             type: INTEGER
         tableName: thesis_public_review_start_dates
 - changeSet:
-    id: 1759948555412-409
+    id: 1760781385845-398
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9456,7 +9352,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-410
+    id: 1760781385845-399
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9471,7 +9367,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-411
+    id: 1760781385845-400
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9486,7 +9382,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-412
+    id: 1760781385845-401
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9501,7 +9397,7 @@ databaseChangeLog:
         referencedTableName: language_tag
         validate: true
 - changeSet:
-    id: 1759948555412-413
+    id: 1760781385845-402
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9516,7 +9412,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-414
+    id: 1760781385845-403
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9531,7 +9427,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-415
+    id: 1760781385845-404
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9546,7 +9442,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-416
+    id: 1760781385845-405
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9561,7 +9457,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-417
+    id: 1760781385845-406
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9576,7 +9472,7 @@ databaseChangeLog:
         referencedTableName: language_tag
         validate: true
 - changeSet:
-    id: 1759948555412-418
+    id: 1760781385845-407
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9591,7 +9487,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-419
+    id: 1760781385845-408
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9606,7 +9502,7 @@ databaseChangeLog:
         referencedTableName: users
         validate: true
 - changeSet:
-    id: 1759948555412-420
+    id: 1760781385845-409
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9621,7 +9517,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-421
+    id: 1760781385845-410
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9636,7 +9532,7 @@ databaseChangeLog:
         referencedTableName: privileges
         validate: true
 - changeSet:
-    id: 1759948555412-422
+    id: 1760781385845-411
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9651,22 +9547,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-423
-    author: ivanmrsulja (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: person_id
-        baseTableName: person_accounting_ids
-        constraintName: fk2bv0expik1kbhi5jm7onsha5w
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: persons
-        validate: true
-- changeSet:
-    id: 1759948555412-424
+    id: 1760781385845-412
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9681,7 +9562,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-425
+    id: 1760781385845-413
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9696,7 +9577,7 @@ databaseChangeLog:
         referencedTableName: countries
         validate: true
 - changeSet:
-    id: 1759948555412-426
+    id: 1760781385845-414
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9711,7 +9592,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-427
+    id: 1760781385845-415
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9726,7 +9607,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-428
+    id: 1760781385845-416
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9741,7 +9622,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-429
+    id: 1760781385845-417
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9756,7 +9637,7 @@ databaseChangeLog:
         referencedTableName: monetary_amounts
         validate: true
 - changeSet:
-    id: 1759948555412-430
+    id: 1760781385845-418
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9771,7 +9652,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-431
+    id: 1760781385845-419
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9786,7 +9667,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-432
+    id: 1760781385845-420
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9801,7 +9682,7 @@ databaseChangeLog:
         referencedTableName: notification
         validate: true
 - changeSet:
-    id: 1759948555412-433
+    id: 1760781385845-421
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9816,7 +9697,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-434
+    id: 1760781385845-422
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9831,7 +9712,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-435
+    id: 1760781385845-423
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9846,7 +9727,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-436
+    id: 1760781385845-424
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9861,7 +9742,7 @@ databaseChangeLog:
         referencedTableName: indicators
         validate: true
 - changeSet:
-    id: 1759948555412-437
+    id: 1760781385845-425
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9876,7 +9757,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-438
+    id: 1760781385845-426
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9891,7 +9772,7 @@ databaseChangeLog:
         referencedTableName: fundings
         validate: true
 - changeSet:
-    id: 1759948555412-439
+    id: 1760781385845-427
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9906,7 +9787,7 @@ databaseChangeLog:
         referencedTableName: expertise_or_skills
         validate: true
 - changeSet:
-    id: 1759948555412-440
+    id: 1760781385845-428
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9921,22 +9802,7 @@ databaseChangeLog:
         referencedTableName: research_area
         validate: true
 - changeSet:
-    id: 1759948555412-441
-    author: ivanmrsulja (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: project_id
-        baseTableName: project_statuses
-        constraintName: fk4tqgq2iq3n77jlmb71dxa1wya
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: projects
-        validate: true
-- changeSet:
-    id: 1759948555412-442
+    id: 1760781385845-429
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9951,7 +9817,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-443
+    id: 1760781385845-430
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9966,7 +9832,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-444
+    id: 1760781385845-431
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9981,7 +9847,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-445
+    id: 1760781385845-432
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -9996,7 +9862,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-446
+    id: 1760781385845-433
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10011,7 +9877,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-447
+    id: 1760781385845-434
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10026,7 +9892,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-448
+    id: 1760781385845-435
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10041,7 +9907,7 @@ databaseChangeLog:
         referencedTableName: assessment_classifications
         validate: true
 - changeSet:
-    id: 1759948555412-449
+    id: 1760781385845-436
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10056,7 +9922,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-450
+    id: 1760781385845-437
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10071,7 +9937,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-451
+    id: 1760781385845-438
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10086,7 +9952,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-452
+    id: 1760781385845-439
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10101,7 +9967,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-453
+    id: 1760781385845-440
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10116,7 +9982,7 @@ databaseChangeLog:
         referencedTableName: countries
         validate: true
 - changeSet:
-    id: 1759948555412-454
+    id: 1760781385845-441
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10131,7 +9997,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-455
+    id: 1760781385845-442
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10146,7 +10012,7 @@ databaseChangeLog:
         referencedTableName: assessment_rulebooks
         validate: true
 - changeSet:
-    id: 1759948555412-456
+    id: 1760781385845-443
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10161,7 +10027,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-457
+    id: 1760781385845-444
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10176,7 +10042,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-458
+    id: 1760781385845-445
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10191,7 +10057,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-459
+    id: 1760781385845-446
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10206,7 +10072,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-460
+    id: 1760781385845-447
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10221,7 +10087,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-461
+    id: 1760781385845-448
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10236,7 +10102,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-462
+    id: 1760781385845-449
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10251,7 +10117,7 @@ databaseChangeLog:
         referencedTableName: fundings
         validate: true
 - changeSet:
-    id: 1759948555412-463
+    id: 1760781385845-450
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10266,7 +10132,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-464
+    id: 1760781385845-451
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10281,7 +10147,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-465
+    id: 1760781385845-452
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10296,7 +10162,7 @@ databaseChangeLog:
         referencedTableName: person_names
         validate: true
 - changeSet:
-    id: 1759948555412-466
+    id: 1760781385845-453
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10311,7 +10177,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-467
+    id: 1760781385845-454
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10326,7 +10192,7 @@ databaseChangeLog:
         referencedTableName: indicators
         validate: true
 - changeSet:
-    id: 1759948555412-468
+    id: 1760781385845-455
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10341,7 +10207,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-469
+    id: 1760781385845-456
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10356,7 +10222,7 @@ databaseChangeLog:
         referencedTableName: expertise_or_skills
         validate: true
 - changeSet:
-    id: 1759948555412-470
+    id: 1760781385845-457
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10371,7 +10237,7 @@ databaseChangeLog:
         referencedTableName: languages
         validate: true
 - changeSet:
-    id: 1759948555412-471
+    id: 1760781385845-458
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10386,7 +10252,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-472
+    id: 1760781385845-459
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10401,7 +10267,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-473
+    id: 1760781385845-460
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10416,7 +10282,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-474
+    id: 1760781385845-461
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10431,7 +10297,7 @@ databaseChangeLog:
         referencedTableName: users
         validate: true
 - changeSet:
-    id: 1759948555412-475
+    id: 1760781385845-462
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10446,7 +10312,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-476
+    id: 1760781385845-463
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10461,7 +10327,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-477
+    id: 1760781385845-464
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10476,7 +10342,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-478
+    id: 1760781385845-465
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10491,7 +10357,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-479
+    id: 1760781385845-466
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10506,7 +10372,7 @@ databaseChangeLog:
         referencedTableName: assessment_rulebooks
         validate: true
 - changeSet:
-    id: 1759948555412-480
+    id: 1760781385845-467
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10521,7 +10387,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-481
+    id: 1760781385845-468
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10536,7 +10402,7 @@ databaseChangeLog:
         referencedTableName: assessment_rulebooks
         validate: true
 - changeSet:
-    id: 1759948555412-482
+    id: 1760781385845-469
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10551,7 +10417,7 @@ databaseChangeLog:
         referencedTableName: organisation_units_relations
         validate: true
 - changeSet:
-    id: 1759948555412-483
+    id: 1760781385845-470
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10566,7 +10432,7 @@ databaseChangeLog:
         referencedTableName: currencies
         validate: true
 - changeSet:
-    id: 1759948555412-484
+    id: 1760781385845-471
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10581,7 +10447,7 @@ databaseChangeLog:
         referencedTableName: educations
         validate: true
 - changeSet:
-    id: 1759948555412-485
+    id: 1760781385845-472
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10596,7 +10462,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-486
+    id: 1760781385845-473
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10611,7 +10477,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-487
+    id: 1760781385845-474
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10626,7 +10492,7 @@ databaseChangeLog:
         referencedTableName: commission_relations
         validate: true
 - changeSet:
-    id: 1759948555412-488
+    id: 1760781385845-475
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10641,7 +10507,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-489
+    id: 1760781385845-476
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10656,7 +10522,7 @@ databaseChangeLog:
         referencedTableName: monographs
         validate: true
 - changeSet:
-    id: 1759948555412-490
+    id: 1760781385845-477
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10671,7 +10537,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-491
+    id: 1760781385845-478
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10686,7 +10552,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-492
+    id: 1760781385845-479
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10701,7 +10567,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-493
+    id: 1760781385845-480
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10716,7 +10582,7 @@ databaseChangeLog:
         referencedTableName: affiliation_statements
         validate: true
 - changeSet:
-    id: 1759948555412-494
+    id: 1760781385845-481
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10731,7 +10597,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-495
+    id: 1760781385845-482
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10746,7 +10612,7 @@ databaseChangeLog:
         referencedTableName: monographs
         validate: true
 - changeSet:
-    id: 1759948555412-496
+    id: 1760781385845-483
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10761,7 +10627,7 @@ databaseChangeLog:
         referencedTableName: assessment_classifications
         validate: true
 - changeSet:
-    id: 1759948555412-497
+    id: 1760781385845-484
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10776,7 +10642,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-498
+    id: 1760781385845-485
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10791,7 +10657,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-499
+    id: 1760781385845-486
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10806,7 +10672,7 @@ databaseChangeLog:
         referencedTableName: institution_default_submission_content
         validate: true
 - changeSet:
-    id: 1759948555412-500
+    id: 1760781385845-487
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10821,7 +10687,7 @@ databaseChangeLog:
         referencedTableName: language_tag
         validate: true
 - changeSet:
-    id: 1759948555412-501
+    id: 1760781385845-488
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10836,7 +10702,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-502
+    id: 1760781385845-489
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10851,7 +10717,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-503
+    id: 1760781385845-490
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10866,7 +10732,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-504
+    id: 1760781385845-491
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10881,7 +10747,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-505
+    id: 1760781385845-492
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10896,7 +10762,7 @@ databaseChangeLog:
         referencedTableName: countries
         validate: true
 - changeSet:
-    id: 1759948555412-506
+    id: 1760781385845-493
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10911,7 +10777,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-507
+    id: 1760781385845-494
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10926,7 +10792,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-508
+    id: 1760781385845-495
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10941,7 +10807,7 @@ databaseChangeLog:
         referencedTableName: affiliation_statements
         validate: true
 - changeSet:
-    id: 1759948555412-509
+    id: 1760781385845-496
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10956,7 +10822,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-510
+    id: 1760781385845-497
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10971,7 +10837,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-511
+    id: 1760781385845-498
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -10986,7 +10852,7 @@ databaseChangeLog:
         referencedTableName: affiliation_statements
         validate: true
 - changeSet:
-    id: 1759948555412-512
+    id: 1760781385845-499
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11001,7 +10867,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-513
+    id: 1760781385845-500
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11016,7 +10882,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-514
+    id: 1760781385845-501
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11031,7 +10897,7 @@ databaseChangeLog:
         referencedTableName: affiliation_statements
         validate: true
 - changeSet:
-    id: 1759948555412-515
+    id: 1760781385845-502
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11046,7 +10912,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-516
+    id: 1760781385845-503
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11061,7 +10927,7 @@ databaseChangeLog:
         referencedTableName: affiliation_statements
         validate: true
 - changeSet:
-    id: 1759948555412-517
+    id: 1760781385845-504
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11076,7 +10942,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-518
+    id: 1760781385845-505
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11091,7 +10957,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-519
+    id: 1760781385845-506
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11106,7 +10972,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-520
+    id: 1760781385845-507
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11121,7 +10987,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-521
+    id: 1760781385845-508
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11136,7 +11002,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-522
+    id: 1760781385845-509
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11151,7 +11017,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-523
+    id: 1760781385845-510
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11166,22 +11032,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-524
-    author: ivanmrsulja (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: organisation_unit_id
-        baseTableName: organisation_unit_uris
-        constraintName: fkaax6plr19xfxc42amhmfsft69
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: organisation_units
-        validate: true
-- changeSet:
-    id: 1759948555412-525
+    id: 1760781385845-511
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11196,7 +11047,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-526
+    id: 1760781385845-512
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11211,7 +11062,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-527
+    id: 1760781385845-513
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11226,7 +11077,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-528
+    id: 1760781385845-514
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11241,7 +11092,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-529
+    id: 1760781385845-515
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11256,7 +11107,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-530
+    id: 1760781385845-516
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11271,7 +11122,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-531
+    id: 1760781385845-517
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11286,7 +11137,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-532
+    id: 1760781385845-518
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11301,7 +11152,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-533
+    id: 1760781385845-519
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11316,7 +11167,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-534
+    id: 1760781385845-520
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11331,22 +11182,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-535
-    author: ivanmrsulja (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: project_id
-        baseTableName: project_uris
-        constraintName: fkb1ow0cl5hwrtbbgm86hbvlv9d
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: projects
-        validate: true
-- changeSet:
-    id: 1759948555412-536
+    id: 1760781385845-521
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11361,7 +11197,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-537
+    id: 1760781385845-522
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11376,7 +11212,7 @@ databaseChangeLog:
         referencedTableName: users
         validate: true
 - changeSet:
-    id: 1759948555412-538
+    id: 1760781385845-523
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11391,7 +11227,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-539
+    id: 1760781385845-524
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11406,7 +11242,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-540
+    id: 1760781385845-525
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11421,7 +11257,7 @@ databaseChangeLog:
         referencedTableName: language_tag
         validate: true
 - changeSet:
-    id: 1759948555412-541
+    id: 1760781385845-526
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11436,7 +11272,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-542
+    id: 1760781385845-527
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11451,7 +11287,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-543
+    id: 1760781385845-528
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11466,7 +11302,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-544
+    id: 1760781385845-529
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11481,7 +11317,7 @@ databaseChangeLog:
         referencedTableName: prizes
         validate: true
 - changeSet:
-    id: 1759948555412-545
+    id: 1760781385845-530
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11496,7 +11332,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-546
+    id: 1760781385845-531
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11511,7 +11347,7 @@ databaseChangeLog:
         referencedTableName: organisation_units_relations
         validate: true
 - changeSet:
-    id: 1759948555412-547
+    id: 1760781385845-532
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11526,7 +11362,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-548
+    id: 1760781385845-533
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11541,7 +11377,7 @@ databaseChangeLog:
         referencedTableName: expertise_or_skills
         validate: true
 - changeSet:
-    id: 1759948555412-549
+    id: 1760781385845-534
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11556,7 +11392,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-550
+    id: 1760781385845-535
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11571,7 +11407,7 @@ databaseChangeLog:
         referencedTableName: affiliation_statements
         validate: true
 - changeSet:
-    id: 1759948555412-551
+    id: 1760781385845-536
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11586,7 +11422,7 @@ databaseChangeLog:
         referencedTableName: users
         validate: true
 - changeSet:
-    id: 1759948555412-552
+    id: 1760781385845-537
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11601,7 +11437,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-553
+    id: 1760781385845-538
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11616,7 +11452,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-554
+    id: 1760781385845-539
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11631,7 +11467,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-555
+    id: 1760781385845-540
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11646,7 +11482,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-556
+    id: 1760781385845-541
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11661,7 +11497,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-557
+    id: 1760781385845-542
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11676,7 +11512,7 @@ databaseChangeLog:
         referencedTableName: languages
         validate: true
 - changeSet:
-    id: 1759948555412-558
+    id: 1760781385845-543
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11691,7 +11527,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-559
+    id: 1760781385845-544
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11706,7 +11542,7 @@ databaseChangeLog:
         referencedTableName: assessment_classifications
         validate: true
 - changeSet:
-    id: 1759948555412-560
+    id: 1760781385845-545
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11721,7 +11557,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-561
+    id: 1760781385845-546
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11736,7 +11572,7 @@ databaseChangeLog:
         referencedTableName: memberships
         validate: true
 - changeSet:
-    id: 1759948555412-562
+    id: 1760781385845-547
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11751,7 +11587,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-563
+    id: 1760781385845-548
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11766,7 +11602,7 @@ databaseChangeLog:
         referencedTableName: public_review_page_configuration
         validate: true
 - changeSet:
-    id: 1759948555412-564
+    id: 1760781385845-549
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11781,7 +11617,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-565
+    id: 1760781385845-550
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11796,7 +11632,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-566
+    id: 1760781385845-551
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11811,7 +11647,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-567
+    id: 1760781385845-552
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11826,7 +11662,7 @@ databaseChangeLog:
         referencedTableName: users
         validate: true
 - changeSet:
-    id: 1759948555412-568
+    id: 1760781385845-553
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11841,7 +11677,7 @@ databaseChangeLog:
         referencedTableName: assessment_measures
         validate: true
 - changeSet:
-    id: 1759948555412-569
+    id: 1760781385845-554
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11856,7 +11692,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-570
+    id: 1760781385845-555
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11871,7 +11707,7 @@ databaseChangeLog:
         referencedTableName: authorities
         validate: true
 - changeSet:
-    id: 1759948555412-571
+    id: 1760781385845-556
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11886,7 +11722,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-572
+    id: 1760781385845-557
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11901,7 +11737,7 @@ databaseChangeLog:
         referencedTableName: countries
         validate: true
 - changeSet:
-    id: 1759948555412-573
+    id: 1760781385845-558
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11916,7 +11752,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-574
+    id: 1760781385845-559
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11931,7 +11767,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-575
+    id: 1760781385845-560
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11946,7 +11782,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-576
+    id: 1760781385845-561
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11961,7 +11797,7 @@ databaseChangeLog:
         referencedTableName: promotions
         validate: true
 - changeSet:
-    id: 1759948555412-577
+    id: 1760781385845-562
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11976,7 +11812,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-578
+    id: 1760781385845-563
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -11991,7 +11827,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-579
+    id: 1760781385845-564
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12006,7 +11842,7 @@ databaseChangeLog:
         referencedTableName: language_tag
         validate: true
 - changeSet:
-    id: 1759948555412-580
+    id: 1760781385845-565
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12021,7 +11857,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-581
+    id: 1760781385845-566
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12036,7 +11872,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-582
+    id: 1760781385845-567
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12051,7 +11887,7 @@ databaseChangeLog:
         referencedTableName: expertise_or_skills
         validate: true
 - changeSet:
-    id: 1759948555412-583
+    id: 1760781385845-568
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12066,7 +11902,7 @@ databaseChangeLog:
         referencedTableName: entity_indicators
         validate: true
 - changeSet:
-    id: 1759948555412-584
+    id: 1760781385845-569
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12081,7 +11917,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-585
+    id: 1760781385845-570
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12096,7 +11932,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-586
+    id: 1760781385845-571
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12111,7 +11947,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-587
+    id: 1760781385845-572
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12126,7 +11962,7 @@ databaseChangeLog:
         referencedTableName: journals
         validate: true
 - changeSet:
-    id: 1759948555412-588
+    id: 1760781385845-573
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12141,7 +11977,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-589
+    id: 1760781385845-574
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12156,7 +11992,7 @@ databaseChangeLog:
         referencedTableName: branding_information
         validate: true
 - changeSet:
-    id: 1759948555412-590
+    id: 1760781385845-575
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12171,7 +12007,7 @@ databaseChangeLog:
         referencedTableName: countries
         validate: true
 - changeSet:
-    id: 1759948555412-591
+    id: 1760781385845-576
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12186,7 +12022,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-592
+    id: 1760781385845-577
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12201,7 +12037,7 @@ databaseChangeLog:
         referencedTableName: users
         validate: true
 - changeSet:
-    id: 1759948555412-593
+    id: 1760781385845-578
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12216,7 +12052,7 @@ databaseChangeLog:
         referencedTableName: proceedings
         validate: true
 - changeSet:
-    id: 1759948555412-594
+    id: 1760781385845-579
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12231,7 +12067,7 @@ databaseChangeLog:
         referencedTableName: person_names
         validate: true
 - changeSet:
-    id: 1759948555412-595
+    id: 1760781385845-580
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12246,7 +12082,7 @@ databaseChangeLog:
         referencedTableName: fundings
         validate: true
 - changeSet:
-    id: 1759948555412-596
+    id: 1760781385845-581
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12261,7 +12097,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-597
+    id: 1760781385845-582
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12276,7 +12112,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-598
+    id: 1760781385845-583
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12291,7 +12127,7 @@ databaseChangeLog:
         referencedTableName: prizes
         validate: true
 - changeSet:
-    id: 1759948555412-599
+    id: 1760781385845-584
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12306,7 +12142,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-600
+    id: 1760781385845-585
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12321,7 +12157,7 @@ databaseChangeLog:
         referencedTableName: affiliation_statements
         validate: true
 - changeSet:
-    id: 1759948555412-601
+    id: 1760781385845-586
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12336,7 +12172,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-602
+    id: 1760781385845-587
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12351,7 +12187,7 @@ databaseChangeLog:
         referencedTableName: api_keys
         validate: true
 - changeSet:
-    id: 1759948555412-603
+    id: 1760781385845-588
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12366,7 +12202,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-604
+    id: 1760781385845-589
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12381,7 +12217,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-605
+    id: 1760781385845-590
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12396,7 +12232,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-606
+    id: 1760781385845-591
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12411,7 +12247,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-607
+    id: 1760781385845-592
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12426,7 +12262,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-608
+    id: 1760781385845-593
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12441,7 +12277,7 @@ databaseChangeLog:
         referencedTableName: proceedings
         validate: true
 - changeSet:
-    id: 1759948555412-609
+    id: 1760781385845-594
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12456,7 +12292,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-610
+    id: 1760781385845-595
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12471,7 +12307,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-611
+    id: 1760781385845-596
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12486,7 +12322,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-612
+    id: 1760781385845-597
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12501,7 +12337,7 @@ databaseChangeLog:
         referencedTableName: indicators
         validate: true
 - changeSet:
-    id: 1759948555412-613
+    id: 1760781385845-598
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12516,7 +12352,7 @@ databaseChangeLog:
         referencedTableName: promotions
         validate: true
 - changeSet:
-    id: 1759948555412-614
+    id: 1760781385845-599
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12531,7 +12367,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-615
+    id: 1760781385845-600
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12546,7 +12382,7 @@ databaseChangeLog:
         referencedTableName: research_area
         validate: true
 - changeSet:
-    id: 1759948555412-616
+    id: 1760781385845-601
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12561,7 +12397,7 @@ databaseChangeLog:
         referencedTableName: currencies
         validate: true
 - changeSet:
-    id: 1759948555412-617
+    id: 1760781385845-602
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12576,7 +12412,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-618
+    id: 1760781385845-603
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12591,7 +12427,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-619
+    id: 1760781385845-604
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12606,7 +12442,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-620
+    id: 1760781385845-605
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12621,7 +12457,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-621
+    id: 1760781385845-606
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12636,7 +12472,7 @@ databaseChangeLog:
         referencedTableName: branding_information
         validate: true
 - changeSet:
-    id: 1759948555412-622
+    id: 1760781385845-607
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12651,7 +12487,7 @@ databaseChangeLog:
         referencedTableName: educations
         validate: true
 - changeSet:
-    id: 1759948555412-623
+    id: 1760781385845-608
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12666,7 +12502,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-624
+    id: 1760781385845-609
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12681,7 +12517,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-625
+    id: 1760781385845-610
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12696,7 +12532,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-626
+    id: 1760781385845-611
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12711,7 +12547,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-627
+    id: 1760781385845-612
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12726,7 +12562,7 @@ databaseChangeLog:
         referencedTableName: indicators
         validate: true
 - changeSet:
-    id: 1759948555412-628
+    id: 1760781385845-613
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12741,7 +12577,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-629
+    id: 1760781385845-614
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12756,7 +12592,7 @@ databaseChangeLog:
         referencedTableName: research_area
         validate: true
 - changeSet:
-    id: 1759948555412-630
+    id: 1760781385845-615
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12771,7 +12607,7 @@ databaseChangeLog:
         referencedTableName: affiliation_statements
         validate: true
 - changeSet:
-    id: 1759948555412-631
+    id: 1760781385845-616
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12786,7 +12622,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-632
+    id: 1760781385845-617
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12801,7 +12637,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-633
+    id: 1760781385845-618
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12816,7 +12652,7 @@ databaseChangeLog:
         referencedTableName: project_documents
         validate: true
 - changeSet:
-    id: 1759948555412-634
+    id: 1760781385845-619
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12831,7 +12667,7 @@ databaseChangeLog:
         referencedTableName: public_review_page_configuration
         validate: true
 - changeSet:
-    id: 1759948555412-635
+    id: 1760781385845-620
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12846,7 +12682,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-636
+    id: 1760781385845-621
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12861,7 +12697,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-637
+    id: 1760781385845-622
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12876,7 +12712,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-638
+    id: 1760781385845-623
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12891,7 +12727,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-639
+    id: 1760781385845-624
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12906,7 +12742,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-640
+    id: 1760781385845-625
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12921,7 +12757,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-641
+    id: 1760781385845-626
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12936,7 +12772,7 @@ databaseChangeLog:
         referencedTableName: research_area
         validate: true
 - changeSet:
-    id: 1759948555412-642
+    id: 1760781385845-627
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12951,7 +12787,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-643
+    id: 1760781385845-628
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12966,7 +12802,7 @@ databaseChangeLog:
         referencedTableName: countries
         validate: true
 - changeSet:
-    id: 1759948555412-644
+    id: 1760781385845-629
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12981,7 +12817,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-645
+    id: 1760781385845-630
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -12996,7 +12832,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-646
+    id: 1760781385845-631
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13011,7 +12847,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-647
+    id: 1760781385845-632
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13026,7 +12862,7 @@ databaseChangeLog:
         referencedTableName: memberships
         validate: true
 - changeSet:
-    id: 1759948555412-648
+    id: 1760781385845-633
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13041,7 +12877,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-649
+    id: 1760781385845-634
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13056,22 +12892,7 @@ databaseChangeLog:
         referencedTableName: users
         validate: true
 - changeSet:
-    id: 1759948555412-650
-    author: ivanmrsulja (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: organisation_unit_id
-        baseTableName: organisation_unit_accounting_ids
-        constraintName: fknrj81s4g91kt51rce36erloeu
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: organisation_units
-        validate: true
-- changeSet:
-    id: 1759948555412-651
+    id: 1760781385845-635
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13086,7 +12907,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-652
+    id: 1760781385845-636
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13101,7 +12922,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-653
+    id: 1760781385845-637
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13116,7 +12937,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-654
+    id: 1760781385845-638
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13131,7 +12952,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-655
+    id: 1760781385845-639
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13146,7 +12967,7 @@ databaseChangeLog:
         referencedTableName: languages
         validate: true
 - changeSet:
-    id: 1759948555412-656
+    id: 1760781385845-640
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13161,7 +12982,7 @@ databaseChangeLog:
         referencedTableName: person_names
         validate: true
 - changeSet:
-    id: 1759948555412-657
+    id: 1760781385845-641
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13176,7 +12997,7 @@ databaseChangeLog:
         referencedTableName: fundings
         validate: true
 - changeSet:
-    id: 1759948555412-658
+    id: 1760781385845-642
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13191,7 +13012,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-659
+    id: 1760781385845-643
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13206,7 +13027,7 @@ databaseChangeLog:
         referencedTableName: person_names
         validate: true
 - changeSet:
-    id: 1759948555412-660
+    id: 1760781385845-644
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13221,7 +13042,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-661
+    id: 1760781385845-645
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13236,7 +13057,7 @@ databaseChangeLog:
         referencedTableName: institution_default_submission_content
         validate: true
 - changeSet:
-    id: 1759948555412-662
+    id: 1760781385845-646
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13251,7 +13072,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-663
+    id: 1760781385845-647
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13266,7 +13087,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-664
+    id: 1760781385845-648
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13281,7 +13102,7 @@ databaseChangeLog:
         referencedTableName: organisation_units
         validate: true
 - changeSet:
-    id: 1759948555412-665
+    id: 1760781385845-649
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13296,7 +13117,7 @@ databaseChangeLog:
         referencedTableName: proceedings
         validate: true
 - changeSet:
-    id: 1759948555412-666
+    id: 1760781385845-650
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13311,7 +13132,7 @@ databaseChangeLog:
         referencedTableName: prizes
         validate: true
 - changeSet:
-    id: 1759948555412-667
+    id: 1760781385845-651
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13326,7 +13147,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-668
+    id: 1760781385845-652
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13341,7 +13162,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-669
+    id: 1760781385845-653
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13356,7 +13177,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-670
+    id: 1760781385845-654
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13371,7 +13192,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-671
+    id: 1760781385845-655
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13386,7 +13207,7 @@ databaseChangeLog:
         referencedTableName: entity_assessment_classifications
         validate: true
 - changeSet:
-    id: 1759948555412-672
+    id: 1760781385845-656
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13401,7 +13222,7 @@ databaseChangeLog:
         referencedTableName: research_area
         validate: true
 - changeSet:
-    id: 1759948555412-673
+    id: 1760781385845-657
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13416,7 +13237,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-674
+    id: 1760781385845-658
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13431,7 +13252,7 @@ databaseChangeLog:
         referencedTableName: organisation_units_relations
         validate: true
 - changeSet:
-    id: 1759948555412-675
+    id: 1760781385845-659
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13446,7 +13267,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-676
+    id: 1760781385845-660
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13461,7 +13282,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-677
+    id: 1760781385845-661
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13476,22 +13297,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-678
-    author: ivanmrsulja (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: person_id
-        baseTableName: person_uris
-        constraintName: fkqfg6dt36v8sx2m579gb2l1336
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: persons
-        validate: true
-- changeSet:
-    id: 1759948555412-679
+    id: 1760781385845-662
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13506,7 +13312,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-680
+    id: 1760781385845-663
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13521,7 +13327,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-681
+    id: 1760781385845-664
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13536,7 +13342,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-682
+    id: 1760781385845-665
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13551,7 +13357,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-683
+    id: 1760781385845-666
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13566,7 +13372,7 @@ databaseChangeLog:
         referencedTableName: language_tag
         validate: true
 - changeSet:
-    id: 1759948555412-684
+    id: 1760781385845-667
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13581,7 +13387,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-685
+    id: 1760781385845-668
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13596,7 +13402,7 @@ databaseChangeLog:
         referencedTableName: document_files
         validate: true
 - changeSet:
-    id: 1759948555412-686
+    id: 1760781385845-669
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13611,7 +13417,7 @@ databaseChangeLog:
         referencedTableName: commissions
         validate: true
 - changeSet:
-    id: 1759948555412-687
+    id: 1760781385845-670
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13626,7 +13432,7 @@ databaseChangeLog:
         referencedTableName: authorities
         validate: true
 - changeSet:
-    id: 1759948555412-688
+    id: 1760781385845-671
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13641,7 +13447,7 @@ databaseChangeLog:
         referencedTableName: assessment_rulebooks
         validate: true
 - changeSet:
-    id: 1759948555412-689
+    id: 1760781385845-672
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13656,7 +13462,7 @@ databaseChangeLog:
         referencedTableName: countries
         validate: true
 - changeSet:
-    id: 1759948555412-690
+    id: 1760781385845-673
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13671,7 +13477,7 @@ databaseChangeLog:
         referencedTableName: theses
         validate: true
 - changeSet:
-    id: 1759948555412-691
+    id: 1760781385845-674
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13686,7 +13492,7 @@ databaseChangeLog:
         referencedTableName: assessment_measures
         validate: true
 - changeSet:
-    id: 1759948555412-692
+    id: 1760781385845-675
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13701,7 +13507,7 @@ databaseChangeLog:
         referencedTableName: language_tag
         validate: true
 - changeSet:
-    id: 1759948555412-693
+    id: 1760781385845-676
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13716,7 +13522,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-694
+    id: 1760781385845-677
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13731,7 +13537,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-695
+    id: 1760781385845-678
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13746,7 +13552,7 @@ databaseChangeLog:
         referencedTableName: educations
         validate: true
 - changeSet:
-    id: 1759948555412-696
+    id: 1760781385845-679
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13761,7 +13567,7 @@ databaseChangeLog:
         referencedTableName: research_area
         validate: true
 - changeSet:
-    id: 1759948555412-697
+    id: 1760781385845-680
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13776,7 +13582,7 @@ databaseChangeLog:
         referencedTableName: projects
         validate: true
 - changeSet:
-    id: 1759948555412-698
+    id: 1760781385845-681
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13791,7 +13597,7 @@ databaseChangeLog:
         referencedTableName: persons
         validate: true
 - changeSet:
-    id: 1759948555412-699
+    id: 1760781385845-682
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13806,7 +13612,7 @@ databaseChangeLog:
         referencedTableName: multi_lingual_content
         validate: true
 - changeSet:
-    id: 1759948555412-700
+    id: 1760781385845-683
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13821,7 +13627,7 @@ databaseChangeLog:
         referencedTableName: employments
         validate: true
 - changeSet:
-    id: 1759948555412-701
+    id: 1760781385845-684
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
@@ -13836,7 +13642,7 @@ databaseChangeLog:
         referencedTableName: publishers
         validate: true
 - changeSet:
-    id: 1759948555412-702
+    id: 1760781385845-685
     author: ivanmrsulja (generated)
     changes:
     - addForeignKeyConstraint:
