@@ -9,7 +9,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.service.interfaces.GlobalLeaderboardService;
+import rs.teslaris.reporting.service.interfaces.leaderboards.GlobalLeaderboardService;
 
 @RestController
 @RequestMapping("/api/leaderboard-data/global")

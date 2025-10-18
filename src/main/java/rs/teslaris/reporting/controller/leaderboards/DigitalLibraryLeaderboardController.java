@@ -12,7 +12,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.service.interfaces.DocumentLeaderboardService;
+import rs.teslaris.reporting.service.interfaces.leaderboards.DocumentLeaderboardService;
 
 @RestController
 @RequestMapping("/api/leaderboard-data/digital-library")

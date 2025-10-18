@@ -45,7 +45,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.reporting.dto.YearlyCounts;
-import rs.teslaris.reporting.service.impl.PersonVisualizationDataServiceImpl;
+import rs.teslaris.reporting.service.impl.visualizations.PersonVisualizationDataServiceImpl;
 
 @SpringBootTest
 public class PersonVisualizationDataServiceTest {

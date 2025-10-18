@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.interfaces;
+package rs.teslaris.reporting.service.interfaces.leaderboards;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,4 +21,7 @@ public interface DocumentLeaderboardService {
         LocalDate to,
         Boolean onlyTheses,
         List<ThesisType> allowedThesisTypes);
+
+    List<Integer> getEligibleDocumentIds(Integer institutionId, Boolean onlyTheses,
+                                         List<ThesisType> allowedThesisTypes);
 }

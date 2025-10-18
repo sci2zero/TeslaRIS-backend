@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.interfaces;
+package rs.teslaris.reporting.service.interfaces.leaderboards;
 
 import java.time.LocalDate;
 import java.util.List;

@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.impl;
+package rs.teslaris.reporting.service.impl.leaderboards;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
@@ -24,7 +24,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.service.interfaces.DocumentLeaderboardService;
+import rs.teslaris.reporting.service.interfaces.leaderboards.DocumentLeaderboardService;
 import rs.teslaris.reporting.utility.QueryUtil;
 
 @Service
@@ -197,8 +197,9 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
             .toList();
     }
 
-    private List<Integer> getEligibleDocumentIds(Integer institutionId, Boolean onlyTheses,
-                                                 List<ThesisType> allowedThesisTypes) {
+    @Override
+    public List<Integer> getEligibleDocumentIds(Integer institutionId, Boolean onlyTheses,
+                                                List<ThesisType> allowedThesisTypes) {
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(institutionId);
         var allMergedOrganisationUnitIds = QueryUtil.getAllMergedOrganisationUnitIds(institutionId);
 
@@ -217,17 +218,7 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
                                 if (onlyTheses) {
                                     b.must(m -> m.term(t -> t.field("type").value("THESIS")));
 
-                                    if (Objects.nonNull(allowedThesisTypes) &&
-                                        !allowedThesisTypes.isEmpty()) {
-                                        b.must(m -> m.bool(bool -> bool
-                                            .should(sh -> sh.terms(t -> t.field("publication_type")
-                                                .terms(v -> v.value(allowedThesisTypes.stream()
-                                                    .map(ThesisType::name)
-                                                    .map(FieldValue::of)
-                                                    .toList()))))
-                                            .minimumShouldMatch("1")
-                                        ));
-                                    }
+                                    QueryUtil.applyAllowedThesisTypesFilter(b, allowedThesisTypes);
                                 }
 
                                 return b;

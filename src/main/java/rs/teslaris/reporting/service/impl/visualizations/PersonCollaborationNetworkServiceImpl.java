@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.impl;
+package rs.teslaris.reporting.service.impl.visualizations;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
@@ -28,7 +28,7 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CollaborationLink;
 import rs.teslaris.reporting.dto.CollaborationNetworkDTO;
 import rs.teslaris.reporting.dto.PersonNode;
-import rs.teslaris.reporting.service.interfaces.PersonCollaborationNetworkService;
+import rs.teslaris.reporting.service.interfaces.visualizations.PersonCollaborationNetworkService;
 import rs.teslaris.reporting.utility.CollaborationType;
 import rs.teslaris.reporting.utility.NetworkStructure;
 

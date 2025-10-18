@@ -47,7 +47,7 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
-import rs.teslaris.reporting.service.impl.DocumentVisualizationDataServiceImpl;
+import rs.teslaris.reporting.service.impl.visualizations.DocumentVisualizationDataServiceImpl;
 
 @SpringBootTest
 class DocumentVisualizationDataServiceTest {

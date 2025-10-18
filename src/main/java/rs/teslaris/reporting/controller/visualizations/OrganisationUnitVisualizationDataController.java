@@ -15,7 +15,7 @@ import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
-import rs.teslaris.reporting.service.interfaces.OrganisationUnitVisualizationDataService;
+import rs.teslaris.reporting.service.interfaces.visualizations.OrganisationUnitVisualizationDataService;
 
 @RestController
 @RequestMapping("/api/visualization-data/organisation-unit")

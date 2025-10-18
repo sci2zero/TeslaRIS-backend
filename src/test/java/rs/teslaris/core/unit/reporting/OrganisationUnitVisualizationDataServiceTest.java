@@ -42,7 +42,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.service.impl.OrganisationUnitVisualizationDataServiceImpl;
+import rs.teslaris.reporting.service.impl.visualizations.OrganisationUnitVisualizationDataServiceImpl;
 import rs.teslaris.reporting.utility.QueryUtil;
 
 @SpringBootTest

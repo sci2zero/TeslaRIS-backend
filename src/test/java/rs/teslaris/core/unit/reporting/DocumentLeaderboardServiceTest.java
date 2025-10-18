@@ -44,7 +44,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.service.impl.DocumentLeaderboardServiceImpl;
+import rs.teslaris.reporting.service.impl.leaderboards.DocumentLeaderboardServiceImpl;
 import rs.teslaris.reporting.utility.QueryUtil;
 
 @SpringBootTest

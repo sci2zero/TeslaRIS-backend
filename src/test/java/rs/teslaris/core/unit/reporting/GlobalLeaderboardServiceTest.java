@@ -31,7 +31,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
-import rs.teslaris.reporting.service.impl.GlobalLeaderboardServiceImpl;
+import rs.teslaris.reporting.service.impl.leaderboards.GlobalLeaderboardServiceImpl;
 
 @SpringBootTest
 class GlobalLeaderboardServiceTest {

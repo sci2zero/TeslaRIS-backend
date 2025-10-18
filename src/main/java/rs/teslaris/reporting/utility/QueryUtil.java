@@ -1,5 +1,7 @@
 package rs.teslaris.reporting.utility;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -99,5 +102,25 @@ public class QueryUtil {
         });
 
         return commissions;
+    }
+
+    public static void applyAllowedThesisTypesFilter(
+        BoolQuery.Builder boolBuilder,
+        List<ThesisType> allowedThesisTypes
+    ) {
+        if (Objects.nonNull(allowedThesisTypes) && !allowedThesisTypes.isEmpty()) {
+            boolBuilder.must(m -> m.bool(innerBool -> innerBool
+                .should(sh -> sh.terms(t -> t
+                    .field("publication_type")
+                    .terms(v -> v.value(
+                        allowedThesisTypes.stream()
+                            .map(ThesisType::name)
+                            .map(FieldValue::of)
+                            .toList()
+                    ))
+                ))
+                .minimumShouldMatch("1")
+            ));
+        }
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.reporting.dto.CollaborationNetworkDTO;
-import rs.teslaris.reporting.service.interfaces.PersonCollaborationNetworkService;
+import rs.teslaris.reporting.service.interfaces.visualizations.PersonCollaborationNetworkService;
 import rs.teslaris.reporting.utility.CollaborationType;
 
 @RestController

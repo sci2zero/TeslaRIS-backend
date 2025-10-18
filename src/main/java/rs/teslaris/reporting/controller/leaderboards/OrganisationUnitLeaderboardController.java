@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionAssessmentPointsOULeaderboard;
-import rs.teslaris.reporting.service.interfaces.OrganisationUnitLeaderboardService;
+import rs.teslaris.reporting.service.interfaces.leaderboards.OrganisationUnitLeaderboardService;
 
 @RestController
 @RequestMapping("/api/leaderboard-data/organisation-unit")

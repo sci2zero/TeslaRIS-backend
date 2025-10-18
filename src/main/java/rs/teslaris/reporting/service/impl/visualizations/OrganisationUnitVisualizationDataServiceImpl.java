@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.impl;
+package rs.teslaris.reporting.service.impl.visualizations;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
@@ -15,50 +15,41 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.indexrepository.PersonIndexRepository;
-import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.repository.person.InvolvementRepository;
-import rs.teslaris.core.repository.user.UserRepository;
-import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
-import rs.teslaris.reporting.service.interfaces.PersonVisualizationDataService;
+import rs.teslaris.reporting.service.interfaces.visualizations.OrganisationUnitVisualizationDataService;
+import rs.teslaris.reporting.utility.QueryUtil;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
-public class PersonVisualizationDataServiceImpl implements PersonVisualizationDataService {
+@Slf4j
+public class OrganisationUnitVisualizationDataServiceImpl implements
+    OrganisationUnitVisualizationDataService {
 
     private final ElasticsearchClient elasticsearchClient;
 
-    private final PersonService personService;
-
-    private final UserRepository userRepository;
-
-    private final InvolvementRepository involvementRepository;
-
-    private final PersonIndexRepository personIndexRepository;
+    private final OrganisationUnitService organisationUnitService;
 
 
     @Override
-    public List<YearlyCounts> getPublicationCountsForPerson(Integer personId, Integer startYear,
-                                                            Integer endYear) {
-        var yearRange = constructYearRange(startYear, endYear, personId);
+    public List<YearlyCounts> getPublicationCountsForOrganisationUnit(Integer organisationUnitId,
+                                                                      Integer startYear,
+                                                                      Integer endYear) {
+        var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var yearRange = constructYearRange(startYear, endYear, organisationUnitId, searchFields);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
@@ -66,10 +57,13 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
         var yearlyCounts = new ArrayList<YearlyCounts>();
         for (int i = yearRange.a; i <= yearRange.b; i++) {
             try {
-                yearlyCounts.add(
-                    new YearlyCounts(i, getPublicationCountsByTypeForAuthorAndYear(personId, i)));
+                var counts =
+                    getPublicationCountsByTypeForOUAndYear(organisationUnitId, i, searchFields);
+                if (Objects.nonNull(counts)) {
+                    yearlyCounts.add(new YearlyCounts(i, counts));
+                }
             } catch (IOException e) {
-                log.warn("Unable to fetch person publication counts for {}. Adding all zeros.", i);
+                log.warn("Unable to fetch OU publication counts for {}. Adding all zeros.", i);
             }
         }
 
@@ -77,17 +71,12 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     }
 
     @Override
-    public List<MCategoryCounts> getPersonPublicationsByMCategories(Integer personId,
-                                                                    Integer startYear,
-                                                                    Integer endYear) {
+    public List<MCategoryCounts> getOrganisationUnitPublicationsByMCategories(
+        Integer organisationUnitId, Integer startYear, Integer endYear) {
         var result = new ArrayList<MCategoryCounts>();
 
-        var commissions = new HashSet<Pair<Integer, Set<MultiLingualContent>>>();
-        involvementRepository.findActiveEmploymentInstitutionIds(personId)
-            .forEach(institutionId ->
-                commissions.addAll(
-                    userRepository.findUserCommissionForOrganisationUnit(institutionId).stream()
-                        .map(c -> new Pair<>(c.getId(), c.getDescription())).toList()));
+        var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var commissions = QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId);
 
         commissions.forEach(commission -> {
             SearchResponse<Void> response;
@@ -98,7 +87,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                         .query(q -> q
                             .bool(b -> b
                                 .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                                .must(m -> m.term(t -> t.field("author_ids").value(personId)))
+                                .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                                    searchFields))
                                 .must(m -> m.range(
                                     t -> t.field("year").gte(JsonData.of(startYear))
                                         .lte(JsonData.of(endYear))))
@@ -121,8 +111,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     Void.class
                 );
             } catch (IOException e) {
-                log.warn("Unable to fetch person M categories for IDs (P:{}; C:{}).", personId,
-                    commission.a);
+                log.warn("Unable to fetch OU M categories for IDs (OU:{}; C:{}).",
+                    organisationUnitId, commission.a);
                 return;
             }
 
@@ -149,20 +139,16 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     }
 
     @Override
-    public List<CommissionYearlyCounts> getMCategoryCountsForPerson(Integer personId,
-                                                                    Integer startYear,
-                                                                    Integer endYear) {
-        var yearRange = constructYearRange(startYear, endYear, personId);
+    public List<CommissionYearlyCounts> getMCategoryCountsForOrganisationUnit(
+        Integer organisationUnitId, Integer startYear, Integer endYear) {
+        var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
+
+        var yearRange = constructYearRange(startYear, endYear, organisationUnitId, searchFields);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
 
-        var commissions = new HashSet<Pair<Integer, Set<MultiLingualContent>>>();
-        involvementRepository.findActiveEmploymentInstitutionIds(personId)
-            .forEach(institutionId ->
-                commissions.addAll(
-                    userRepository.findUserCommissionForOrganisationUnit(institutionId).stream()
-                        .map(c -> new Pair<>(c.getId(), c.getDescription())).toList()));
+        var commissions = QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId);
 
         var commissionYearlyCounts = new ArrayList<CommissionYearlyCounts>();
         for (var commission : commissions) {
@@ -171,12 +157,11 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
             for (int i = yearRange.a; i <= yearRange.b; i++) {
                 try {
                     yearlyCounts.add(new YearlyCounts(i,
-                        getPublicationMCategoryCountsByTypeForAuthorAndCommissionAndYear(personId,
-                            commission.a, i)));
+                        getPublicationMCategoryCountsByTypeForOUAndCommissionAndYear(
+                            organisationUnitId, commission.a, i, searchFields)));
 
                 } catch (IOException e) {
-                    log.warn("Unable to fetch person M category counts for {}. Adding all zeros.",
-                        i);
+                    log.warn("Unable to fetch OU M category counts for {}. Adding all zeros.", i);
                 }
             }
 
@@ -189,9 +174,10 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     }
 
     @Override
-    public List<StatisticsByCountry> getByCountryStatisticsForPerson(Integer personId,
-                                                                     LocalDate from, LocalDate to) {
-        var allMergedPersonIds = getAllMergedPersonIds(personId);
+    public List<StatisticsByCountry> getByCountryStatisticsForOrganisationUnit(
+        Integer organisationUnitId, LocalDate from, LocalDate to) {
+        var allMergedOrganisationUnitIds =
+            QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId);
 
         SearchResponse<Void> response;
         try {
@@ -200,8 +186,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(m -> m.terms(t -> t.field("person_id").terms(
-                                v -> v.value(allMergedPersonIds.stream()
+                            .must(m -> m.terms(t -> t.field("organisation_unit_id").terms(
+                                v -> v.value(allMergedOrganisationUnitIds.stream()
                                     .map(FieldValue::of)
                                     .toList())
                             )))
@@ -225,7 +211,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                 Void.class
             );
         } catch (IOException e) {
-            log.warn("Unable to fetch person statistics for ID {}.", personId);
+            log.warn("Unable to fetch OU statistics for ID {}.", organisationUnitId);
             return Collections.emptyList();
         }
 
@@ -252,9 +238,10 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     }
 
     @Override
-    public Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer personId, LocalDate from,
-                                                           LocalDate to) {
-        var allMergedPersonIds = getAllMergedPersonIds(personId);
+    public Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer organisationUnitId,
+                                                           LocalDate from, LocalDate to) {
+        var allMergedOrganisationUnitIds =
+            QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId);
 
         try {
             SearchResponse<Void> response = elasticsearchClient.search(s -> s
@@ -262,8 +249,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(m -> m.terms(t -> t.field("person_id").terms(
-                                v -> v.value(allMergedPersonIds.stream()
+                            .must(m -> m.terms(t -> t.field("organisation_unit_id").terms(
+                                v -> v.value(allMergedOrganisationUnitIds.stream()
                                     .map(FieldValue::of)
                                     .toList())
                             )))
@@ -310,15 +297,18 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
 
             return results;
         } catch (IOException e) {
-            log.error("Error fetching monthly statistics for person {} and type VIEW", personId);
+            log.error("Error fetching monthly statistics for OU {} and type VIEW",
+                organisationUnitId);
             return Collections.emptyMap();
         }
     }
 
     @Override
-    public Map<Year, Long> getYearlyStatisticsCounts(Integer personId, Integer startYear,
+    public Map<Year, Long> getYearlyStatisticsCounts(Integer organisationUnitId, Integer startYear,
                                                      Integer endYear) {
-        var allMergedPersonIds = getAllMergedPersonIds(personId);
+        var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var allMergedOrganisationUnitIds =
+            QueryUtil.getAllMergedOrganisationUnitIds(organisationUnitId);
 
         try {
             LocalDate from = LocalDate.of(startYear, 1, 1);
@@ -329,11 +319,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     .size(0)
                     .query(q -> q
                         .bool(b -> b
-                            .must(m -> m.terms(t -> t.field("person_id").terms(
-                                v -> v.value(allMergedPersonIds.stream()
-                                    .map(FieldValue::of)
-                                    .toList())
-                            )))
+                            .must(QueryUtil.organisationUnitMatchQuery(allMergedOrganisationUnitIds,
+                                searchFields))
                             .must(m -> m.term(t -> t.field("is_bot").value(false)))
                             .must(m -> m.term(t -> t.field("type").value("VIEW")))
                             .must(m -> m.range(r -> r
@@ -376,37 +363,26 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
 
             return results;
         } catch (IOException e) {
-            log.error("Error fetching yearly statistics for person {} and type VIEW", personId);
+            log.error("Error fetching yearly statistics for OU {} and type VIEW",
+                organisationUnitId);
             return Collections.emptyMap();
         }
     }
 
-    @Override
-    public Map<Year, Long> getYearlyCitationCounts(Integer personId, Integer startYear,
-                                                   Integer endYear) {
-        var result = new TreeMap<Year, Long>();
-        personIndexRepository.findByDatabaseId(personId).ifPresent(personIndex -> {
-            personIndex.getCitationsByYear().forEach((key, value) -> {
-                if (key >= startYear && key <= endYear) {
-                    result.put(Year.of(key), Long.valueOf(value));
-                }
-            });
-        });
-
-        return result;
-    }
-
-    private Map<String, Long> getPublicationCountsByTypeForAuthorAndYear(Integer authorId,
-                                                                         Integer year)
-        throws IOException {
+    private Map<String, Long> getPublicationCountsByTypeForOUAndYear(
+        Integer organisationUnitId,
+        Integer year,
+        List<String> searchFields
+    ) throws IOException {
         SearchResponse<Void> response = elasticsearchClient.search(s -> s
                 .index("document_publication")
-                .size(0) // no hits, only aggregations
+                .size(0)
                 .query(q -> q
                     .bool(b -> b
                         .must(m -> m.term(t -> t.field("is_approved").value(true)))
                         .must(m -> m.term(t -> t.field("year").value(year)))
-                        .must(m -> m.term(t -> t.field("author_ids").value(authorId)))
+                        .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                            searchFields))
                         .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                     )
                 )
@@ -422,14 +398,95 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
             .buckets()
             .array()
             .stream()
+            .filter(b -> Objects.nonNull(b.key()))
             .collect(Collectors.toMap(
                 b -> b.key().stringValue(),
                 MultiBucketBase::docCount
             ));
     }
 
-    private Map<String, Long> getPublicationMCategoryCountsByTypeForAuthorAndCommissionAndYear(
-        Integer authorId, Integer commissionId, Integer year)
+    @Override
+    public Map<Year, Long> getCitationsByYearForInstitution(Integer institutionId, Integer fromYear,
+                                                            Integer toYear) {
+        if (Objects.isNull(institutionId) || Objects.isNull(fromYear) || Objects.isNull(toYear)) {
+            return Collections.emptyMap();
+        }
+
+        var eligibleOUIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
+
+        try {
+            SearchResponse<Void> response = elasticsearchClient.search(s -> {
+                var search = s.index("person")
+                    .size(0)
+                    .query(q -> q
+                        .bool(b -> b
+                            .must(m -> m.terms(t -> t
+                                .field("employment_institutions_id_hierarchy")
+                                .terms(ts -> ts.value(
+                                    eligibleOUIds.stream().map(FieldValue::of).toList()
+                                )))
+                            )
+                        )
+                    );
+
+                for (int year = fromYear; year <= toYear; year++) {
+                    int currentYear = year;
+                    search.aggregations("year_" + currentYear,
+                        a -> a.sum(sum -> sum.field("citations_by_year." + currentYear)));
+                }
+
+                return search;
+            }, Void.class);
+
+            Map<Year, Long> result = new LinkedHashMap<>();
+            for (int year = fromYear; year <= toYear; year++) {
+                var agg = response.aggregations().get("year_" + year).sum();
+                long value = (agg != null && !Double.isNaN(agg.value())) ? (long) agg.value() : 0L;
+                result.put(Year.of(year), value);
+            }
+
+            return result;
+        } catch (IOException e) {
+            log.error("Error fetching citation counts by year for institution {}: {}",
+                institutionId, e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    private Pair<Integer, Integer> findPublicationYearRange(Integer organisationUnitId,
+                                                            List<String> searchFields) {
+        SearchResponse<Void> response;
+        try {
+            response = elasticsearchClient.search(s -> s
+                    .index("document_publication")
+                    .size(0)
+                    .query(q -> q
+                        .bool(b -> b
+                            .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                            .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                                searchFields))
+                            .must(m -> m.range(t -> t.field("year").gt(JsonData.of(0))))
+                        )
+                    )
+                    .aggregations("earliestYear", a -> a.min(m -> m.field("year")))
+                    .aggregations("latestYear", a -> a.max(m -> m.field("year"))),
+                Void.class
+            );
+        } catch (IOException e) {
+            log.error("Error finding publication year range for OU with ID {}.",
+                organisationUnitId);
+            return new Pair<>(null, null);
+        }
+
+        double min = response.aggregations().get("earliestYear").min().value();
+        double max = response.aggregations().get("latestYear").max().value();
+
+        return new Pair<>((int) min, (int) max);
+    }
+
+    private Map<String, Long> getPublicationMCategoryCountsByTypeForOUAndCommissionAndYear(
+        Integer organisationUnitId, Integer commissionId, Integer year, List<String> searchFields)
         throws IOException {
         SearchResponse<Void> response = elasticsearchClient.search(s -> s
                 .index("document_publication")
@@ -438,7 +495,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     .bool(b -> b
                         .must(m -> m.term(t -> t.field("is_approved").value(true)))
                         .must(m -> m.term(t -> t.field("year").value(year)))
-                        .must(m -> m.term(t -> t.field("author_ids").value(authorId)))
+                        .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                            searchFields))
                         .must(m -> m.bool(sb -> sb
                             .should(sn -> sn.term(
                                 t -> t.field("commission_assessment_groups.a").value(commissionId)))
@@ -468,46 +526,11 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
             ));
     }
 
-    private Pair<Integer, Integer> findPublicationYearRange(Integer authorId) {
-        SearchResponse<Void> response;
-        try {
-            response = elasticsearchClient.search(s -> s
-                    .index("document_publication")
-                    .size(0)
-                    .query(q -> q
-                        .bool(b -> b
-                            .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                            .must(m -> m.term(t -> t.field("author_ids").value(authorId)))
-                            .must(m -> m.range(t -> t.field("year").gt(JsonData.of(0))))
-                        )
-                    )
-                    .aggregations("earliestYear", a -> a.min(m -> m.field("year")))
-                    .aggregations("latestYear", a -> a.max(m -> m.field("year"))),
-                Void.class
-            );
-        } catch (IOException e) {
-            log.error("Error finding publication year range for Person with ID {}.", authorId);
-            return new Pair<>(null, null);
-        }
-
-        double min = response.aggregations().get("earliestYear").min().value();
-        double max = response.aggregations().get("latestYear").max().value();
-
-        return new Pair<>((int) min, (int) max);
-    }
-
-    private List<Integer> getAllMergedPersonIds(Integer personId) {
-        var person = personService.findOne(personId);
-        var allMergedPersonIds = new ArrayList<>(person.getMergedIds());
-        allMergedPersonIds.add(personId);
-
-        return allMergedPersonIds;
-    }
-
     private Pair<Integer, Integer> constructYearRange(Integer startYear, Integer endYear,
-                                                      Integer personId) {
+                                                      Integer organisationUnitId,
+                                                      List<String> searchFields) {
         if (Objects.isNull(startYear) || Objects.isNull(endYear)) {
-            var yearRange = findPublicationYearRange(personId);
+            var yearRange = findPublicationYearRange(organisationUnitId, searchFields);
             return new Pair<>(yearRange.a, yearRange.b);
         }
 

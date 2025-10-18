@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionAssessmentPointsPersonLeaderboard;
-import rs.teslaris.reporting.service.interfaces.PersonLeaderboardService;
+import rs.teslaris.reporting.service.interfaces.leaderboards.PersonLeaderboardService;
 
 @RestController
 @RequestMapping("/api/leaderboard-data/person")

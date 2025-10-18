@@ -30,7 +30,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.service.impl.OrganisationUnitLeaderboardServiceImpl;
+import rs.teslaris.reporting.service.impl.leaderboards.OrganisationUnitLeaderboardServiceImpl;
 import rs.teslaris.reporting.utility.QueryUtil;
 
 @SpringBootTest

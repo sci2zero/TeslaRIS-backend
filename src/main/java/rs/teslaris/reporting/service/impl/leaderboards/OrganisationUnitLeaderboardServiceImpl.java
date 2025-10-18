@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.impl;
+package rs.teslaris.reporting.service.impl.leaderboards;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
@@ -25,7 +25,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionAssessmentPointsOULeaderboard;
-import rs.teslaris.reporting.service.interfaces.OrganisationUnitLeaderboardService;
+import rs.teslaris.reporting.service.interfaces.leaderboards.OrganisationUnitLeaderboardService;
 import rs.teslaris.reporting.utility.QueryUtil;
 
 @Service

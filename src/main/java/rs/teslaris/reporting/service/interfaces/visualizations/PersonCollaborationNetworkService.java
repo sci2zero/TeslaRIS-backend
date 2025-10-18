@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.interfaces;
+package rs.teslaris.reporting.service.interfaces.visualizations;
 
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.service.interfaces.document.DocumentCollaborationService;

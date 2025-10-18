@@ -32,7 +32,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
-import rs.teslaris.reporting.service.impl.PersonCollaborationNetworkServiceImpl;
+import rs.teslaris.reporting.service.impl.visualizations.PersonCollaborationNetworkServiceImpl;
 import rs.teslaris.reporting.utility.CollaborationType;
 
 @SpringBootTest

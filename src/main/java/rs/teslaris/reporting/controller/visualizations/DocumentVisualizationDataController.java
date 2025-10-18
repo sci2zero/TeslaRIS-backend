@@ -16,7 +16,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
-import rs.teslaris.reporting.service.interfaces.DocumentVisualizationDataService;
+import rs.teslaris.reporting.service.interfaces.visualizations.DocumentVisualizationDataService;
 
 @RestController
 @RequestMapping("/api/visualization-data/document")

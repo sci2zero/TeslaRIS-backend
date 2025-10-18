@@ -44,7 +44,7 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.service.impl.PersonLeaderboardServiceImpl;
+import rs.teslaris.reporting.service.impl.leaderboards.PersonLeaderboardServiceImpl;
 import rs.teslaris.reporting.utility.QueryUtil;
 
 @SpringBootTest

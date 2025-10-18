@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.impl;
+package rs.teslaris.reporting.service.impl.visualizations;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
@@ -31,7 +31,7 @@ import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
-import rs.teslaris.reporting.service.interfaces.DocumentVisualizationDataService;
+import rs.teslaris.reporting.service.interfaces.visualizations.DocumentVisualizationDataService;
 import rs.teslaris.reporting.utility.QueryUtil;
 
 @Service

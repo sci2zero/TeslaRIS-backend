@@ -1,4 +1,4 @@
-package rs.teslaris.reporting.service.impl;
+package rs.teslaris.reporting.service.impl.leaderboards;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
@@ -24,7 +24,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.util.functional.Pair;
-import rs.teslaris.reporting.service.interfaces.GlobalLeaderboardService;
+import rs.teslaris.reporting.service.interfaces.leaderboards.GlobalLeaderboardService;
 
 @Service
 @RequiredArgsConstructor
