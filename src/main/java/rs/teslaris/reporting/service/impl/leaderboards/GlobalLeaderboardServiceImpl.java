@@ -1,9 +1,11 @@
 package rs.teslaris.reporting.service.impl.leaderboards;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.NamedValue;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,19 +40,32 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
 
     @Override
     public List<Pair<PersonIndex, Long>> getPersonsWithMostCitations() {
+        var eligibleOUIds = getEligibleOrganisationUnitIds();
+        if (eligibleOUIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         return getTopCitations(
             "person",
             "by_person",
-            PersonIndex.class
+            PersonIndex.class,
+            "employment_institutions_id_hierarchy",
+            eligibleOUIds
         );
     }
 
     @Override
     public List<Pair<OrganisationUnitIndex, Long>> getInstitutionsWithMostCitations() {
+        var eligibleOUIds = getEligibleOrganisationUnitIds();
+        if (eligibleOUIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         return getTopCitations(
             "person",
             "by_org_unit",
-            organisationUnitIndexRepository::findOrganisationUnitIndexByDatabaseId
+            organisationUnitIndexRepository::findOrganisationUnitIndexByDatabaseId,
+            eligibleOUIds
         );
     }
 
@@ -59,20 +74,40 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
         return getTopCitations(
             "document_publication",
             "by_publication",
-            DocumentPublicationIndex.class
+            DocumentPublicationIndex.class,
+            "employment_institutions_id_hierarchy",
+            Collections.emptyList()
+            // no need to check OU belonging as every publication is relevant
         );
     }
 
     private <T> List<Pair<T, Long>> getTopCitations(
         String indexName,
         String aggName,
-        Class<T> clazz) {
+        Class<T> clazz,
+        String organisationUnitsRelationField,
+        List<Integer> eligibleOUIds) {
 
         SearchResponse<T> response;
         try {
             response = elasticsearchClient.search(s -> s
                     .index(indexName)
                     .size(0)
+                    .query(q -> q.bool(b -> {
+                            if (eligibleOUIds.isEmpty()) {
+                                return b;
+                            }
+
+                            b.must(m -> m.terms(t ->
+                                t.field(organisationUnitsRelationField).terms(
+                                    v -> v.value(eligibleOUIds.stream()
+                                        .map(FieldValue::of)
+                                        .toList())
+                                )));
+
+                            return b;
+                        }
+                    ))
                     .aggregations(aggName, a -> a
                         .terms(t -> t
                             .field("databaseId")
@@ -130,12 +165,28 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
     }
 
     private <T> List<Pair<T, Long>> getTopCitations(String indexName, String aggName,
-                                                    Function<Integer, Optional<T>> lookupFn) {
+                                                    Function<Integer, Optional<T>> lookupFn,
+                                                    List<Integer> eligibleOUIds) {
         SearchResponse<Void> response;
         try {
             response = elasticsearchClient.search(s -> s
                     .index(indexName)
                     .size(0)
+                    .query(q -> q.bool(b -> {
+                            if (eligibleOUIds.isEmpty()) {
+                                return b;
+                            }
+
+                            b.must(m -> m.terms(t ->
+                                t.field("employment_institutions_id_hierarchy").terms(
+                                    v -> v.value(eligibleOUIds.stream()
+                                        .map(FieldValue::of)
+                                        .toList())
+                                )));
+
+                            return b;
+                        }
+                    ))
                     .aggregations(aggName, a -> a
                         .terms(t -> t.field("employment_institutions_id_hierarchy")
                             .size(5))
@@ -187,5 +238,33 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
             .sorted((a, b) -> Long.compare(b.b, a.b))
             .limit(5)
             .toList();
+    }
+
+    private List<Integer> getEligibleOrganisationUnitIds() {
+        SearchResponse<OrganisationUnitIndex> ouIdResponse;
+        try {
+            ouIdResponse = elasticsearchClient.search(s -> s
+                    .index("organisation_unit")
+                    .size(10000)
+                    .query(q -> q
+                        .bool(b -> b
+                            .must(m -> m.term(
+                                t -> t.field("is_client_institution_cris").value(true)))
+                        )
+                    )
+                    .source(sc -> sc.filter(f -> f.includes("databaseId"))),
+                OrganisationUnitIndex.class
+            );
+
+            return ouIdResponse.hits().hits().stream()
+                .map(Hit::source)
+                .filter(Objects::nonNull)
+                .map(OrganisationUnitIndex::getDatabaseId)
+                .filter(id -> id > 0)
+                .toList();
+        } catch (IOException e) {
+            log.error("Error while fetching CRIS client OU IDs. Reason: {}", e.getMessage());
+            return Collections.emptyList();
+        }
     }
 }

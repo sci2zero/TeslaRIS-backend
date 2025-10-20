@@ -50,6 +50,22 @@ class GlobalLeaderboardServiceTest {
     @SuppressWarnings("unchecked")
     void shouldReturnPersonsWithMostCitations() throws IOException {
         // Given
+        var eligibleOU = new OrganisationUnitIndex();
+        eligibleOU.setDatabaseId(1);
+        var ouHit = mock(Hit.class);
+        when(ouHit.source()).thenReturn(eligibleOU);
+
+        var ouHitsMetadata = mock(HitsMetadata.class);
+        when(ouHitsMetadata.hits()).thenReturn(List.of(ouHit));
+
+        var ouSearchResponse = mock(SearchResponse.class);
+        when(ouSearchResponse.hits()).thenReturn(ouHitsMetadata);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(OrganisationUnitIndex.class)))
+            .thenReturn(ouSearchResponse);
+
         var bucket1 = mock(LongTermsBucket.class);
         when(bucket1.key()).thenReturn(1L);
 
@@ -59,10 +75,6 @@ class GlobalLeaderboardServiceTest {
         when(citationsAgg1.sum()).thenReturn(sumAgg1);
 
         var hit1 = mock(Hit.class);
-        var person1 = new PersonIndex();
-        person1.setDatabaseId(1);
-        person1.setName("Alice");
-
         var jsonData1 = mock(JsonData.class);
         when(jsonData1.to(Map.class)).thenReturn(Map.of(
             "databaseId", 1,
@@ -93,10 +105,6 @@ class GlobalLeaderboardServiceTest {
         when(citationsAgg2.sum()).thenReturn(sumAgg2);
 
         var hit2 = mock(Hit.class);
-        var person2 = new PersonIndex();
-        person2.setDatabaseId(2);
-        person2.setName("Bob");
-
         var jsonData2 = mock(JsonData.class);
         when(jsonData2.to(Map.class)).thenReturn(Map.of(
             "databaseId", 2,
@@ -126,7 +134,8 @@ class GlobalLeaderboardServiceTest {
 
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(PersonIndex.class))).thenReturn(response);
+            eq(PersonIndex.class)))
+            .thenReturn(response);
 
         // When
         var result = service.getPersonsWithMostCitations();
@@ -145,8 +154,25 @@ class GlobalLeaderboardServiceTest {
     @SuppressWarnings("unchecked")
     void shouldReturnInstitutionsWithMostCitations() throws IOException {
         // Given
+        var eligibleOU = new OrganisationUnitIndex();
+        eligibleOU.setDatabaseId(1);
+        var ouHit = mock(Hit.class);
+        when(ouHit.source()).thenReturn(eligibleOU);
+
+        var ouHitsMetadata = mock(HitsMetadata.class);
+        when(ouHitsMetadata.hits()).thenReturn(List.of(ouHit));
+
+        var ouSearchResponse = mock(SearchResponse.class);
+        when(ouSearchResponse.hits()).thenReturn(ouHitsMetadata);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
+            eq(OrganisationUnitIndex.class)))
+            .thenReturn(ouSearchResponse);
+
         var bucket1 = mock(LongTermsBucket.class);
         when(bucket1.key()).thenReturn(10L);
+
         var sumAgg1 = mock(SumAggregate.class);
         when(sumAgg1.value()).thenReturn(300.0);
         var agg1 = mock(Aggregate.class);
@@ -161,12 +187,12 @@ class GlobalLeaderboardServiceTest {
 
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(),
-            eq(Void.class))).thenReturn(response);
+            eq(Void.class)))
+            .thenReturn(response);
 
         var ou = new OrganisationUnitIndex();
         ou.setDatabaseId(10);
         ou.setNameSr("Test Institution");
-
         when(organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(10))
             .thenReturn(Optional.of(ou));
 

@@ -12,6 +12,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.reporting.ChartsDisplayConfigurationRepository;
 import rs.teslaris.reporting.dto.configuration.BaseChartDisplaySettingsDTO;
+import rs.teslaris.reporting.dto.configuration.DigitalLibraryChartDisplaySettingsDTO;
 import rs.teslaris.reporting.dto.configuration.DocumentChartDisplaySettingsDTO;
 import rs.teslaris.reporting.dto.configuration.FullChartDisplaySettingsDTO;
 import rs.teslaris.reporting.dto.configuration.OUChartDisplaySettingsDTO;
@@ -112,6 +113,34 @@ public class BaseChartsDisplayConfigurationServiceImpl
             .put("downloadCountDocumentLeaderboard", new ChartDisplaySettings(true, false));
         configuration
             .put("citationCountDocumentLeaderboard", new ChartDisplaySettings(true, false));
+    }
+
+    protected void setDigitalLibraryConfigurationSpecificDefaultFields(
+        Map<String, ChartDisplaySettings> configuration) {
+        configuration
+            .put("thesisCountTotal", new ChartDisplaySettings(true, false));
+        configuration
+            .put("thesisCountByYear", new ChartDisplaySettings(true, false));
+        configuration
+            .put("thesisTypeByYear", new ChartDisplaySettings(true, false));
+        configuration
+            .put("thesisTypeRatio", new ChartDisplaySettings(true, false));
+        configuration
+            .put("thesisViewCountTotal", new ChartDisplaySettings(true, false));
+        configuration
+            .put("thesisViewCountByMonth", new ChartDisplaySettings(true, false));
+        configuration
+            .put("thesisViewCountByCountry", new ChartDisplaySettings(true, true));
+        configuration
+            .put("thesisDownloadCountTotal", new ChartDisplaySettings(true, false));
+        configuration
+            .put("thesisDownloadCountByMonth", new ChartDisplaySettings(true, false));
+        configuration
+            .put("thesisDownloadCountByCountry", new ChartDisplaySettings(true, true));
+        configuration
+            .put("viewCountThesisLeaderboard", new ChartDisplaySettings(true, false));
+        configuration
+            .put("downloadCountThesisLeaderboard", new ChartDisplaySettings(true, false));
     }
 
     protected void setPersonConfigurationSpecificDefaultFields(
@@ -241,6 +270,22 @@ public class BaseChartsDisplayConfigurationServiceImpl
             documentSettings.get("downloadCountByMonth"),
             documentSettings.get("viewCountByCountry"),
             documentSettings.get("downloadCountByCountry")
+        ));
+
+        var digitalLibrarySettings = configuration.getDigitalLibraryChartDisplaySettings();
+        response.setDigitalLibraryChartDisplaySettings(new DigitalLibraryChartDisplaySettingsDTO(
+            digitalLibrarySettings.get("thesisCountTotal"),
+            digitalLibrarySettings.get("thesisCountByYear"),
+            digitalLibrarySettings.get("thesisTypeByYear"),
+            digitalLibrarySettings.get("thesisTypeRatio"),
+            digitalLibrarySettings.get("thesisViewCountTotal"),
+            digitalLibrarySettings.get("thesisViewCountByMonth"),
+            digitalLibrarySettings.get("thesisViewCountByCountry"),
+            digitalLibrarySettings.get("thesisDownloadCountTotal"),
+            digitalLibrarySettings.get("thesisDownloadCountByMonth"),
+            digitalLibrarySettings.get("thesisDownloadCountByCountry"),
+            digitalLibrarySettings.get("viewCountThesisLeaderboard"),
+            digitalLibrarySettings.get("downloadCountThesisLeaderboard")
         ));
 
         return response;

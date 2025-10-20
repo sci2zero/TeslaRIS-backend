@@ -318,7 +318,7 @@ class DocumentVisualizationDataServiceTest {
 
         // When
         var result = service.findPublicationsForTypeAndPeriod(
-            type, yearFrom, yearTo, personId, institutionId, pageable);
+            type, null, yearFrom, yearTo, personId, institutionId, pageable);
 
         // Then
         verify(searchService, times(1))
@@ -344,7 +344,7 @@ class DocumentVisualizationDataServiceTest {
 
         // When
         var result = service.findPublicationsForTypeAndPeriod(
-            type, yearFrom, yearTo, personId, institutionId, pageable);
+            type, null, yearFrom, yearTo, personId, institutionId, pageable);
 
         // Then
         verify(searchService, times(1))
@@ -366,7 +366,7 @@ class DocumentVisualizationDataServiceTest {
         // When / Then
         assertThrows(IllegalArgumentException.class, () ->
             service.findPublicationsForTypeAndPeriod(
-                type, yearFrom, yearTo, personId, institutionId, pageable)
+                type, null, yearFrom, yearTo, personId, institutionId, pageable)
         );
 
         verifyNoInteractions(searchService);

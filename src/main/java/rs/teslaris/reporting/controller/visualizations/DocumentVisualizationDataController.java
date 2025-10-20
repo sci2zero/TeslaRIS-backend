@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.service.interfaces.visualizations.DocumentVisualizationDataService;
 
@@ -51,8 +52,10 @@ public class DocumentVisualizationDataController {
         @RequestParam Integer yearTo,
         @RequestParam(required = false) Integer personId,
         @RequestParam(required = false) Integer institutionId,
+        @RequestParam(required = false) ThesisType subType,
         Pageable pageable) {
-        return documentVisualizationDataService.findPublicationsForTypeAndPeriod(type, yearFrom,
+        return documentVisualizationDataService.findPublicationsForTypeAndPeriod(type, subType,
+            yearFrom,
             yearTo, personId, institutionId, pageable);
     }
 }

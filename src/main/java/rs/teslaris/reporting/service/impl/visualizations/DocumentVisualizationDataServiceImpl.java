@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
@@ -249,13 +250,15 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
     @Override
     public Page<DocumentPublicationIndex> findPublicationsForTypeAndPeriod(
         DocumentPublicationType type,
+        ThesisType subType,
         Integer yearFrom,
         Integer yearTo,
         Integer personId,
         Integer institutionId,
         Pageable pageable) {
         var searchQuery = BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(buildPublicationMetadataQuery(type, yearFrom, yearTo, personId, institutionId));
+            b.must(buildPublicationMetadataQuery(type, subType, yearFrom, yearTo, personId,
+                institutionId));
             return b;
         })))._toQuery();
 
@@ -263,7 +266,8 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
             "document_publication");
     }
 
-    private Query buildPublicationMetadataQuery(DocumentPublicationType type, Integer yearFrom,
+    private Query buildPublicationMetadataQuery(DocumentPublicationType type, ThesisType subType,
+                                                Integer yearFrom,
                                                 Integer yearTo, Integer personId,
                                                 Integer institutionId) {
         if ((Objects.isNull(personId) || personId < 0) &&
@@ -280,6 +284,10 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
             }
 
             b.must(q -> q.term(t -> t.field("type").value(type.name())));
+
+            if (Objects.nonNull(subType)) {
+                b.must(q -> q.term(t -> t.field("publication_type").value(subType.name())));
+            }
 
             b.must(m -> m.range(
                     r -> r.field("year")

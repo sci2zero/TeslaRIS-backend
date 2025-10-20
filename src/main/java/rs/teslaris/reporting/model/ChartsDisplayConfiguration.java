@@ -40,4 +40,8 @@ public class ChartsDisplayConfiguration extends BaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "document_chart_display_settings")
     private Map<String, ChartDisplaySettings> documentChartDisplaySettings = new HashMap<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "digital_library_chart_display_settings")
+    private Map<String, ChartDisplaySettings> digitalLibraryChartDisplaySettings = new HashMap<>();
 }

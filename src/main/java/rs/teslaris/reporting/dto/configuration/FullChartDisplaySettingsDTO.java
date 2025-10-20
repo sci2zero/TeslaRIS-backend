@@ -16,4 +16,6 @@ public class FullChartDisplaySettingsDTO {
     private OUChartDisplaySettingsDTO ouChartDisplaySettings;
 
     private DocumentChartDisplaySettingsDTO documentChartDisplaySettings;
+
+    private DigitalLibraryChartDisplaySettingsDTO digitalLibraryChartDisplaySettings;
 }

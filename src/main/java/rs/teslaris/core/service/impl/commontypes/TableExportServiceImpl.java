@@ -27,6 +27,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ExportableEndpointType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -301,9 +302,11 @@ public class TableExportServiceImpl implements TableExportService {
             case VISUALIZATION_PUBLICATIONS ->
                 (Page<T>) documentAnalyticsService.findPublicationsForTypeAndPeriod(
                     DocumentPublicationType.valueOf(endpointTokenParameters.getFirst()),
-                    Integer.parseInt(endpointTokenParameters.get(1)),
+                    endpointTokenParameters.get(1).isBlank() ? null :
+                        ThesisType.valueOf(endpointTokenParameters.get(1)),
                     Integer.parseInt(endpointTokenParameters.get(2)),
                     Integer.parseInt(endpointTokenParameters.get(3)),
+                    Integer.parseInt(endpointTokenParameters.get(4)),
                     Integer.parseInt(endpointTokenParameters.getLast()),
                     pageable
                 );
