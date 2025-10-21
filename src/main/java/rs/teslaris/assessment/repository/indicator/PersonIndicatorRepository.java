@@ -21,7 +21,6 @@ public interface PersonIndicatorRepository extends JpaRepository<PersonIndicator
                                                                          AccessLevel accessLevel);
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT pi FROM PersonIndicator pi " +
         "WHERE pi.indicator.code = :code AND pi.person.id = :personId")
     Optional<PersonIndicator> findIndicatorForCodeAndPersonId(String code, Integer personId);

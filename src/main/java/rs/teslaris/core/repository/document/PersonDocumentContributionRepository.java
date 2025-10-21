@@ -12,7 +12,6 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 public interface PersonDocumentContributionRepository
     extends JpaRepository<PersonDocumentContribution, Integer> {
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT pdc FROM PersonDocumentContribution pdc " +
         "WHERE pdc.document.id = :documentId AND pdc.person IS null")
     List<PersonDocumentContribution> findUnmanagedContributionsForDocument(Integer documentId);

@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.TermsInclude;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.JsonData;
@@ -81,7 +82,7 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                                 .terms(ts -> ts.value(
                                     eligiblePersonIds.stream()
                                         .map(FieldValue::of)
-                                        .collect(Collectors.toList())
+                                        .toList()
                                 ))
                             )
                         )
@@ -89,6 +90,12 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                             .terms(t -> t
                                 .field("author_ids")
                                 .size(10)
+                                .include(TermsInclude.of(
+                                    i -> i.terms(eligiblePersonIds
+                                        .stream()
+                                        .map(Object::toString)
+                                        .toList()
+                                    )))
                             )
                         )
                     )

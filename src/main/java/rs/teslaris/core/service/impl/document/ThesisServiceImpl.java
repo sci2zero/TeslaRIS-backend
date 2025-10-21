@@ -343,7 +343,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
 
-        checkIfAvailableForEditing(thesis);
+        if (!SessionUtil.isUserLoggedInAndAdmin()) {
+            checkIfAvailableForEditing(thesis);
+        }
 
         document.setResourceType(attachmentType.getResourceType());
         var documentFile = documentFileService.saveNewPreliminaryDocument(document);

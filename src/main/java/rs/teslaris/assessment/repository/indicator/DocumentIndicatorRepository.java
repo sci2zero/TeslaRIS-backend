@@ -21,7 +21,6 @@ public interface DocumentIndicatorRepository extends JpaRepository<DocumentIndic
                                                                              AccessLevel accessLevel);
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT di FROM DocumentIndicator di " +
         "WHERE di.indicator.code = :code AND di.document.id = :documentId")
     Optional<DocumentIndicator> findIndicatorForCodeAndDocumentId(String code, Integer documentId);

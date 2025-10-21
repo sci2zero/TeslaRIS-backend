@@ -24,7 +24,6 @@ public interface OrganisationUnitIndicatorRepository
         AccessLevel accessLevel);
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT oui FROM OrganisationUnitIndicator oui " +
         "WHERE oui.indicator.code = :code AND oui.organisationUnit.id = :organisationUnitId")
     Optional<OrganisationUnitIndicator> findIndicatorForCodeAndOrganisationUnitId(String code,

@@ -105,7 +105,6 @@ public interface PublicationSeriesIndicatorRepository extends
         String indicatorCode);
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT psi FROM PublicationSeriesIndicator psi JOIN FETCH psi.indicator " +
         "WHERE psi.publicationSeries.id = :publicationSeriesId AND " +
         "psi.indicator.code = :code")

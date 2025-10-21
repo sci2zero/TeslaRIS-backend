@@ -27,7 +27,6 @@ public interface EventIndicatorRepository extends JpaRepository<EventIndicator, 
     Page<EventIndicator> findIndicatorsForEvent(Integer eventId, Pageable pageable);
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT ei FROM EventIndicator ei WHERE " +
         "ei.event.id = :eventId AND " +
         "ei.indicator.code = :code")
