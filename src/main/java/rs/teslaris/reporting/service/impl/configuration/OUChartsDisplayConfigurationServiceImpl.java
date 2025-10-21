@@ -81,7 +81,7 @@ public class OUChartsDisplayConfigurationServiceImpl
         trueConfiguration.setDownloadCountDocumentLeaderboard(
             createChartSetting(configurations, "downloadCountDocumentLeaderboard",
                 ChartsDisplayConfiguration::getOuChartDisplaySettings));
-        trueConfiguration.setDownloadCountDocumentLeaderboard(
+        trueConfiguration.setCitationCountDocumentLeaderboard(
             createChartSetting(configurations, "citationCountDocumentLeaderboard",
                 ChartsDisplayConfiguration::getOuChartDisplaySettings));
 

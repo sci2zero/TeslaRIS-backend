@@ -20,6 +20,7 @@ import java.util.function.IntPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -731,7 +732,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @EventListener
     protected void handleManualIndicatorHarvest(HarvestExternalIndicatorsEvent ignored) {
         performIndicatorHarvest();
     }
