@@ -30,9 +30,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
@@ -63,7 +62,6 @@ import rs.teslaris.core.util.session.ScopusAuthenticationHelper;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHarvestService {
 
     private final RestTemplateProvider restTemplateProvider;
@@ -89,15 +87,21 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     private final ScopusAuthenticationHelper scopusAuthenticationHelper;
 
     private final PersonIndexRepository personIndexRepository;
+
     private final Lock harvestLock = new ReentrantLock();
+
     private Map<String, String> externalIndicatorMapping;
+
     private Map<String, Integer> harvestPeriodOffsets;
+
     private Map<String, Integer> rateLimits;
+
     @Value("${harvest-external-indicators.allowed}")
     private Boolean harvestAllowed;
 
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void performOUIndicatorDeduction() {
         refreshConfiguration();
 
@@ -504,6 +508,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void persistPersonCitationIndicators(Person person, Map<String, Integer> counts,
                                                  Integer totalOutputCount,
                                                  List<Integer> citations,

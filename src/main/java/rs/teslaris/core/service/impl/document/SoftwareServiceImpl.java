@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.SoftwareConverter;
 import rs.teslaris.core.dto.document.SoftwareDTO;
@@ -37,6 +38,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
+@Transactional
 public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implements SoftwareService {
 
     private final SoftwareJPAServiceImpl softwareJPAService;
@@ -187,6 +189,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                 software.getId()).orElse(new DocumentPublicationIndex()));
     }
 
+    @Transactional
     private void indexSoftware(Software software, DocumentPublicationIndex index) {
         indexCommonFields(software, index);
 

@@ -34,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,8 +42,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
 import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
@@ -102,7 +101,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 @Slf4j
 public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonService {
@@ -150,11 +148,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
 
     @Override
+    @Transactional
     protected JpaRepository<Person, Integer> getEntityRepository() {
         return personRepository;
     }
 
     @Override
+    @Transactional
     @Deprecated(forRemoval = true)
     public Person findPersonById(Integer id) {
         return personRepository.findById(id)
@@ -162,6 +162,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     @Nullable
     public PersonResponseDTO readPersonByScopusId(String scopusAuthorId) {
         var personOptional = personRepository.findPersonByScopusAuthorId(scopusAuthorId);
@@ -170,6 +171,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     @Nullable
     public Optional<User> findUserByIdentifier(String identifier) {
         if (Objects.isNull(identifier) || identifier.isBlank()) {
@@ -180,6 +182,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     @Nullable
     public Person findPersonByOldId(Integer oldId) {
         return personRepository.findPersonByOldIdsContains(oldId).orElse(null);
@@ -535,6 +538,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public void approvePerson(Integer personId, Boolean approve) {
         var personToBeApproved = findOne(personId);
 
@@ -551,6 +555,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public void deletePerson(Integer personId) {
         if (personRepository.hasContribution(personId) ||
             personRepository.isBoundToUser(personId)) {
@@ -607,6 +612,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public void removePersonProfileImage(Integer personId) {
         var person = findOne(personId);
 
@@ -624,6 +630,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public String setPersonProfileImage(Integer personId, ProfilePhotoOrLogoDTO profilePhotoDTO)
         throws IOException {
         if (ImageUtil.isMIMETypeInvalid(profilePhotoDTO.getFile(), false)) {
@@ -774,6 +781,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     @Async("reindexExecutor")
     public CompletableFuture<Void> reindexPersons() {
         personIndexRepository.deleteAll();
@@ -822,6 +830,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public void indexPerson(Person savedPerson) {
         var personIndex = getPersonIndexForId(savedPerson.getId());
 
@@ -833,16 +842,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public Integer getPersonIdForUserId(Integer userId) {
         return personRepository.findPersonIdForUserId(userId).orElse(null);
     }
 
     @Override
+    @Transactional
     public List<Integer> findInstitutionIdsForPerson(Integer personId) {
         return personRepository.findInstitutionIdsForPerson(personId);
     }
 
     @Override
+    @Transactional
     public boolean isPersonBoundToAUser(Integer personId) {
         return personRepository.isBoundToUser(personId);
     }
@@ -1030,6 +1042,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public Page<PersonIndex> findAllIndex(Pageable pageable) {
         var page = personIndexRepository.findAll(pageable);
 
@@ -1039,11 +1052,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public Long getResearcherCount() {
         return personIndexRepository.count();
     }
 
     @Override
+    @Transactional
     public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable
                                                                pageable,
                                                            boolean strict, Integer institutionId,
@@ -1059,6 +1074,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public Page<PersonIndex> findPeopleForOrganisationUnit(Integer employmentInstitutionId,
                                                            List<String> tokens,
                                                            Pageable pageable, Boolean fetchAlumni) {
@@ -1096,6 +1112,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public Page<PersonIndex> advancedSearch(List<String> tokens,
                                             Pageable pageable) {
         var query = expressionTransformer.parseAdvancedQuery(tokens);
@@ -1107,6 +1124,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     @Nullable
     public PersonIndex findPersonByImportIdentifier(String identifier) {
         if (Objects.isNull(identifier) || identifier.isBlank()) {
@@ -1300,6 +1318,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public boolean isIdentifierInUse(String identifier, Integer personId) {
         return personRepository.existsByOrcid(identifier, personId) ||
             personRepository.existsByScopusAuthorId(identifier, personId) ||
@@ -1310,6 +1329,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields) {
         return searchFieldsLoader.getSearchFields("personSearchFieldConfiguration.json",
@@ -1317,6 +1337,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public Person findPersonByAccountingId(String accountingId) {
         return personRepository.findApprovedPersonByAccountingId(accountingId).orElseThrow(
             () -> new NotFoundException(
@@ -1324,17 +1345,20 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public Page<Person> findPersonsByLRUHarvest(Pageable pageable) {
         return personRepository.findPersonsByLRUHarvest(pageable);
     }
 
     @Override
+    @Transactional
     public Person findRaw(Integer personId) {
         return personRepository.findRaw(personId)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
     }
 
     @Override
+    @Transactional
     public void addOldId(Integer id, Integer oldId) {
         var person = findOne(id);
         person.getOldIds().add(oldId);
@@ -1342,6 +1366,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public Optional<Person> findPersonByIdentifier(String identifier) {
         if (Objects.isNull(identifier) || identifier.isBlank()) {
             return Optional.empty();
@@ -1351,6 +1376,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional
     public List<Pair<String, Integer>> getTopCoauthorsForPerson(Integer personId) {
         if (Objects.isNull(personId)) {
             return List.of();
@@ -1417,17 +1443,18 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @EventListener
     protected void handleOUSignificantChange(OrganisationUnitSignificantChangeEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @EventListener
     protected void handleOUDeletion(OrganisationUnitDeletedEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }
 
+    @Transactional
     private void reindexInstitutionEmployeesEmployments(Integer organisationUnitId) {
         int pageNumber = 0;
         int chunkSize = 500;

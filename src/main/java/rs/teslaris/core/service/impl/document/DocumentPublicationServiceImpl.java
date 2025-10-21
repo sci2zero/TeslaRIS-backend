@@ -31,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,8 +41,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
@@ -104,7 +103,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Primary
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     implements DocumentPublicationService {
@@ -151,16 +149,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
 
     @Override
+    @Transactional
     protected JpaRepository<Document, Integer> getEntityRepository() {
         return documentRepository;
     }
 
     @Override
+    @Transactional
     public DocumentDTO readDocumentPublication(Integer documentId) {
         return DocumentPublicationConverter.toDTO(findOne(documentId));
     }
 
     @Override
+    @Transactional
     public String readBibliographicMetadataById(Integer documentId, BibliographicFormat format) {
         var document = findOne(documentId);
 
@@ -178,6 +179,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     @Deprecated(forRemoval = true)
     public Document findDocumentById(Integer documentId) {
         return documentRepository.findById(documentId)
@@ -185,6 +187,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     @Nullable
     public Document findDocumentByOldId(Integer documentOldId) {
         var documentId = documentRepository.findDocumentByOldIdsContains(documentOldId);
@@ -192,6 +195,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
                                                                      List<Integer> ignore,
                                                                      List<String> tokens,
@@ -238,6 +242,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public List<Integer> getResearchOutputIdsForDocument(Integer documentId) {
         return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                 documentId).orElseThrow(
@@ -246,12 +251,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findPublicationsForPublisher(Integer publisherId,
                                                                        Pageable pageable) {
         return documentPublicationIndexRepository.findByPublisherId(publisherId, pageable);
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
         Integer organisationUnitId, List<String> tokens, List<DocumentPublicationType> allowedTypes,
         Pageable pageable) {
@@ -326,6 +333,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Long getPublicationCount() {
         if (SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.countPublications();
@@ -335,6 +343,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved) {
         var documentToUpdate = findOne(documentId);
 
@@ -415,6 +424,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void deleteDocumentPublication(Integer documentId) {
         var document = findOne(documentId);
         documentRepository.delete(document);
@@ -427,6 +437,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public List<Integer> getContributorIds(Integer publicationId) {
         return findOne(publicationId).getContributors().stream().map(contribution -> {
                 if (Objects.nonNull(contribution.getPerson())) {
@@ -438,6 +449,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
         var oldYear = index.getYear();
         var oldAuthors = index.getAuthorIds().stream().sorted().toList();
@@ -459,6 +471,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
     }
 
+    @Transactional
     private void setBasicMetadata(Document document, DocumentPublicationIndex index) {
         index.setLastEdited(Objects.nonNull(document.getLastModification())
             ? document.getLastModification()
@@ -662,6 +675,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void reindexDocumentVolatileInformation(Integer documentId) {
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
             .ifPresent(documentIndex -> {
@@ -671,6 +685,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId) {
         var fallbackDocument = new DocumentPublicationIndex();
         fallbackDocument.setDatabaseId(documentId);
@@ -679,6 +694,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void archiveDocument(Integer documentId) {
         var document = findOne(documentId);
 
@@ -696,6 +712,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void unarchiveDocument(Integer documentId) {
         var document = findOne(documentId);
         document.setIsArchived(false);
@@ -704,7 +721,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    @Async
+    @Transactional
     public synchronized void reindexEmploymentInformationForAllPersonPublications(
         Integer personId) {
         int pageNumber = 0;
@@ -742,6 +759,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void deleteNonManagedDocuments() {
         int pageSize = 100;
         int page = 0;
@@ -769,6 +787,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void updateDocumentIdentifiers(Integer documentId,
                                           DocumentIdentifierUpdateDTO requestDTO) {
         var document = findOne(documentId);
@@ -988,6 +1007,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
             documentRepository.existsByScopusId(identifier, documentPublicationId) ||
@@ -996,17 +1016,20 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public boolean isDoiInUse(String doi) {
         return documentRepository.existsByDoi(doi, null);
     }
 
     @Override
+    @Transactional
     public Pair<Long, Long> getDocumentCountsBelongingToInstitution(Integer institutionId) {
         return new Pair<>(documentPublicationIndexRepository.countAssessable(),
             documentPublicationIndexRepository.countAssessableByOrganisationUnitIds(institutionId));
     }
 
     @Override
+    @Transactional
     public Pair<Long, Long> getAssessedDocumentCountsForCommission(Integer institutionId,
                                                                    Integer commissionId) {
         return new Pair<>(documentPublicationIndexRepository.countByAssessedBy(commissionId),
@@ -1015,6 +1038,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields) {
         return searchFieldsLoader.getSearchFields("documentSearchFieldConfiguration.json",
@@ -1022,6 +1046,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
                                                                   DocumentPublicationType documentType,
                                                                   String language) {
@@ -1049,6 +1074,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
                                                              String scopusId,
                                                              String webOfScienceId) {
@@ -1113,6 +1139,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                                      Pageable pageable,
                                                                      SearchRequestType type,
@@ -1136,6 +1163,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles,
                                                                  String doi,
                                                                  String scopusId,
@@ -1151,6 +1179,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
                                                                      Integer personId,
                                                                      Pageable pageable) {
@@ -1161,6 +1190,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void massAssignContributionInstitution(Integer organisationUnitId, Integer personId,
                                                   List<Integer> documentIds, Boolean deleteOthers) {
         documentIds.forEach(documentId -> {
@@ -1182,11 +1212,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void deleteIndexes() {
         documentPublicationIndexRepository.deleteAll();
     }
 
     @Override
+    @Transactional
     public void reorderDocumentContributions(Integer documentId, Integer contributionId,
                                              Integer oldContributionOrderNumber,
                                              Integer newContributionOrderNumber) {
@@ -1217,6 +1249,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void unbindResearcherFromContribution(Integer personId, Integer documentId) {
         var contribution =
             personContributionService.findContributionForResearcherAndDocument(personId,
@@ -1317,6 +1350,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void unbindInstitutionResearchersFromDocument(Integer institutionId,
                                                          Integer documentId) {
         var allPossibleInstitutions =
@@ -1739,7 +1773,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @EventListener
     protected void handlePersonEmploymentOUHierarchyStructureChangedEvent(
         PersonEmploymentOUHierarchyStructureChangedEvent event) {
         reindexEmploymentInformationForAllPersonPublications(event.getPersonId());

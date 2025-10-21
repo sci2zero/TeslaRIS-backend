@@ -760,6 +760,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.getAllowedThesisTypes().clear();
         index.getAllowedThesisTypes().addAll(organisationUnit.getAllowedThesisTypes());
 
+        index.setIsLegalEntity(organisationUnit.getLegalEntity());
         index.setIsClientInstitutionCris(organisationUnit.getIsClientInstitutionCris());
         index.setIsClientInstitutionDl(organisationUnit.getIsClientInstitutionDl());
 

@@ -241,6 +241,7 @@ public class TestingDataInitializer {
                 ThesisType.BACHELOR_WITH_HONORS.name()));
         dummyOU.setIsClientInstitutionCris(true);
         dummyOU.setIsClientInstitutionDl(true);
+        dummyOU.setLegalEntity(true);
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
         userRepository.save(researcherUser);
@@ -260,6 +261,7 @@ public class TestingDataInitializer {
         dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
         dummyOU2.setScopusAfid("60068802");
         dummyOU2.setIsClientInstitutionDl(true);
+        dummyOU2.setLegalEntity(true);
         organisationUnitRepository.save(dummyOU2);
 
         var conferenceEvent1 = new Conference();

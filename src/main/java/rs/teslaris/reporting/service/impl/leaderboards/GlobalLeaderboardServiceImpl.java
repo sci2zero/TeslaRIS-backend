@@ -40,7 +40,7 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
 
     @Override
     public List<Pair<PersonIndex, Long>> getPersonsWithMostCitations() {
-        var eligibleOUIds = getEligibleOrganisationUnitIds();
+        var eligibleOUIds = getEligibleOrganisationUnitIds(false);
         if (eligibleOUIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -56,7 +56,7 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
 
     @Override
     public List<Pair<OrganisationUnitIndex, Long>> getInstitutionsWithMostCitations() {
-        var eligibleOUIds = getEligibleOrganisationUnitIds();
+        var eligibleOUIds = getEligibleOrganisationUnitIds(true);
         if (eligibleOUIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -188,11 +188,17 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
                         }
                     ))
                     .aggregations(aggName, a -> a
-                        .terms(t -> t.field("employment_institutions_id_hierarchy")
-                            .size(5))
+                        .terms(t -> t
+                            .field("employment_institutions_id_hierarchy")
+                            .size(5)
+                            .include(i -> i.terms(eligibleOUIds.stream()
+                                .map(Object::toString)
+                                .toList()
+                            ))
+                        )
                         .aggregations("total_citations",
-                            sum -> sum
-                                .sum(v -> v.field("total_citations"))))
+                            sum -> sum.sum(v -> v.field("total_citations")))
+                    )
                 , Void.class);
         } catch (IOException e) {
             log.error("Error while fetching {} citation count leaderboard. Reason: {}", indexName,
@@ -240,16 +246,23 @@ public class GlobalLeaderboardServiceImpl implements GlobalLeaderboardService {
             .toList();
     }
 
-    private List<Integer> getEligibleOrganisationUnitIds() {
+    private List<Integer> getEligibleOrganisationUnitIds(boolean onlyLegalEntities) {
         SearchResponse<OrganisationUnitIndex> ouIdResponse;
         try {
             ouIdResponse = elasticsearchClient.search(s -> s
                     .index("organisation_unit")
                     .size(10000)
                     .query(q -> q
-                        .bool(b -> b
-                            .must(m -> m.term(
-                                t -> t.field("is_client_institution_cris").value(true)))
+                        .bool(b -> {
+                                b.must(m -> m.term(
+                                    t -> t.field("is_client_institution_cris").value(true)));
+
+                                if (onlyLegalEntities) {
+                                    b.must(m -> m.term(t -> t.field("is_legal_entity").value(true)));
+                                }
+
+                                return b;
+                            }
                         )
                     )
                     .source(sc -> sc.filter(f -> f.includes("databaseId"))),

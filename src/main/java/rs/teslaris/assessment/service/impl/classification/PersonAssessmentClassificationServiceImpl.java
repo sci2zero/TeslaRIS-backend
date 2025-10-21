@@ -15,14 +15,13 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
 import rs.teslaris.assessment.dto.ResearcherAssessmentResponseDTO;
@@ -66,7 +65,6 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 
 @Service
-@Transactional
 @Slf4j
 @Traceable
 public class PersonAssessmentClassificationServiceImpl
@@ -134,6 +132,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForPerson(
         Integer personId) {
         return personAssessmentClassificationRepository.findAssessmentClassificationsForPerson(
@@ -143,6 +142,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public List<EnrichedResearcherAssessmentResponseDTO> assessResearchers(Integer commissionId,
                                                                            List<Integer> researcherIds,
                                                                            Integer startYear,
@@ -228,6 +228,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
                                                                         LocalDate startDate,
                                                                         LocalDate endDate) {
@@ -265,6 +266,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public synchronized void reindexPublicationPointsForAllResearchers() {
         int pageNumber = 0;
         int chunkSize = 1000;
@@ -281,6 +283,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public void reindexPublicationPointsForResearcher(PersonIndex index) {
         var assessmentMeasures = loadAssessmentMeasures();
         var commissionResearchAreas = resolveCommissionResearchAreas(index);
@@ -583,7 +586,7 @@ public class PersonAssessmentClassificationServiceImpl
         }
     }
 
-    public Query findAllPersonsByFilters(
+    private Query findAllPersonsByFilters(
         List<Integer> researcherIds,
         List<Integer> organisationUnitIds) {
 
@@ -630,7 +633,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @EventListener
     protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
         if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
             return;
@@ -641,7 +644,7 @@ public class PersonAssessmentClassificationServiceImpl
                 .ifPresent(this::reindexPublicationPointsForResearcher));
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    @EventListener
     protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
         reindexPublicationPointsForAllResearchers();
     }

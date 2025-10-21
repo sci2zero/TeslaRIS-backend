@@ -7,10 +7,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
@@ -37,7 +39,6 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
-import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -65,7 +66,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
     private final EmploymentRepository employmentRepository;
 
-    private final DocumentPublicationService documentPublicationService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     @Override
@@ -198,7 +199,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         var savedEmployment = involvementRepository.save(newEmployment);
 
-        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(personId);
+        applicationEventPublisher.publishEvent(
+            new PersonEmploymentOUHierarchyStructureChangedEvent(personId));
 
         return savedEmployment;
     }
@@ -227,8 +229,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         // TODO: This is an administrative task that we run once a year, maybe a better solution
         //  for this is to run reindexing task after migration, to avoid so many index updates
         //  with each new insert.
-        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
-            person.getId());
+        applicationEventPublisher.publishEvent(
+            new PersonEmploymentOUHierarchyStructureChangedEvent(person.getId()));
 
         return InvolvementConverter.toDTO(employment);
     }
@@ -430,8 +432,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
             employmentToUpdate.getPersonInvolved().getId());
         personService.indexPerson(employmentToUpdate.getPersonInvolved());
 
-        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
-            employmentToUpdate.getPersonInvolved().getId());
+        applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
+            employmentToUpdate.getPersonInvolved().getId()));
     }
 
     @Override
@@ -446,8 +448,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
 
         if (involvementToDelete instanceof Employment) {
-            documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
-                involvementToDelete.getPersonInvolved().getId());
+            applicationEventPublisher.publishEvent(
+                new PersonEmploymentOUHierarchyStructureChangedEvent(
+                    involvementToDelete.getPersonInvolved().getId()));
         }
 
         person.removeInvolvement(involvementToDelete);
@@ -469,8 +472,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         employmentRepository.save(employment.get());
         personService.indexPerson(employment.get().getPersonInvolved());
 
-        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
-            employment.get().getPersonInvolved().getId());
+        applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
+            employment.get().getPersonInvolved().getId()));
     }
 
     @Override

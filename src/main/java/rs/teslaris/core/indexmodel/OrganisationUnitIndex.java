@@ -86,6 +86,9 @@ public class OrganisationUnitIndex {
     @Field(type = FieldType.Boolean, store = true, name = "is_client_institution_cris")
     private Boolean isClientInstitutionCris = false;
 
+    @Field(type = FieldType.Boolean, store = true, name = "is_legal_entity")
+    private Boolean isLegalEntity = false;
+
     @Field(type = FieldType.Boolean, store = true, name = "is_client_institution_dl")
     private Boolean isClientInstitutionDl = false;
 

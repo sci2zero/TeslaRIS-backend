@@ -58,7 +58,9 @@ public class DissertationConverter extends DocumentConverter
         try {
             setCommonThesisFields(record, dto, languageTagService, languageService,
                 organisationUnitService);
-        } catch (NotFoundException ignored) {
+        } catch (NotFoundException e) {
+            log.warn("Dissertation with ID {} could not be migrated. Reason: {}", record.getOldId(),
+                e.getMessage());
             return null;
         }
 
