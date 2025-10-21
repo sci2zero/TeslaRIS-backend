@@ -403,11 +403,15 @@ public class DbInitializer implements ApplicationRunner {
         slovenianLanguage.setLanguageCode(LanguageAbbreviations.SLOVENIAN);
         slovenianLanguage.setName(
             new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Slovenački", 1))));
+        var hungarianLanguage = new Language();
+        hungarianLanguage.setLanguageCode(LanguageAbbreviations.HUNGARIAN);
+        hungarianLanguage.setName(
+            new HashSet<>(List.of(new MultiLingualContent(serbianTag, "Mađarski", 1))));
 
         languageRepository.saveAll(
             List.of(serbianLanguage, englishLanguage, yuLanguage, germanLanguage, frenchLanguage,
                 spanishLanguage, russianLanguage, croatianLanguage, italianLanguage,
-                slovenianLanguage));
+                slovenianLanguage, hungarianLanguage));
 
         // ADMIN USER
         var adminUser =

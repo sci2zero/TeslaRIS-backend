@@ -34,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +41,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
 import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
@@ -1416,13 +1417,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
     protected void handleOUSignificantChange(OrganisationUnitSignificantChangeEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
     protected void handleOUDeletion(OrganisationUnitDeletedEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }

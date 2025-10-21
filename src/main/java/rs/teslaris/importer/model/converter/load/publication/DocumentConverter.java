@@ -160,9 +160,14 @@ public class DocumentConverter {
                         .getId());
             }
 
-            dto.setLanguageId(
-                languageService.findLanguageByCode(
-                    record.getLanguage().substring(0, 2).toUpperCase()).getId());
+            try {
+                dto.setLanguageId(
+                    languageService.findLanguageByCode(
+                        record.getLanguage().substring(0, 2).toUpperCase()).getId());
+            } catch (NotFoundException ignored) {
+                dto.setLanguageId(
+                    languageService.findLanguageByCode(LanguageAbbreviations.ENGLISH).getId());
+            }
         }
 
         if (Objects.isNull(record.getInstitutions()) || record.getInstitutions().isEmpty()) {

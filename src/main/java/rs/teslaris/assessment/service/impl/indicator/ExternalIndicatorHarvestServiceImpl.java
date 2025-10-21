@@ -20,7 +20,6 @@ import java.util.function.IntPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +30,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
@@ -729,8 +730,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         });
     }
 
-    @EventListener
     @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
     protected void handleManualIndicatorHarvest(HarvestExternalIndicatorsEvent ignored) {
         performIndicatorHarvest();
     }

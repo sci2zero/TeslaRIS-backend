@@ -15,13 +15,14 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
 import rs.teslaris.assessment.dto.ResearcherAssessmentResponseDTO;
@@ -629,7 +630,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
     protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
         if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
             return;
@@ -640,7 +641,7 @@ public class PersonAssessmentClassificationServiceImpl
                 .ifPresent(this::reindexPublicationPointsForResearcher));
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
     protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
         reindexPublicationPointsForAllResearchers();
     }

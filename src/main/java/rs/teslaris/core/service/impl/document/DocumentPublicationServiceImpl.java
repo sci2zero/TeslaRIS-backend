@@ -31,7 +31,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +40,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
@@ -1738,7 +1739,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
     protected void handlePersonEmploymentOUHierarchyStructureChangedEvent(
         PersonEmploymentOUHierarchyStructureChangedEvent event) {
         reindexEmploymentInformationForAllPersonPublications(event.getPersonId());
