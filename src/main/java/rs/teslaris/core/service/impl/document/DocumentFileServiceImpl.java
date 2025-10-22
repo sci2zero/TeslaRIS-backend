@@ -430,20 +430,25 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     private String detectMimeType(MultipartFile file) {
-        var contentAnalyzer = new Tika();
+        var originalFilename = FilenameUtils.normalize(
+            Objects.requireNonNullElse(file.getOriginalFilename(), ""));
 
         String trueMimeType;
         String specifiedMimeType;
 
         try {
+            var originalFilenamePath = Path.of(originalFilename);
+            if (SessionUtil.isUserLoggedInAndAdmin()) {
+                return Files.probeContentType(originalFilenamePath);
+            }
+
+            var contentAnalyzer = new Tika();
             trueMimeType = contentAnalyzer.detect(file.getInputStream());
 
-            var originalFilename = FilenameUtils.normalize(
-                Objects.requireNonNullElse(file.getOriginalFilename(), ""));
             if (originalFilename.isEmpty()) {
                 throw new StorageException("File does not have a valid name.");
             }
-            specifiedMimeType = Files.probeContentType(Path.of(originalFilename));
+            specifiedMimeType = Files.probeContentType(originalFilenamePath);
 
         } catch (IOException e) {
             throw new StorageException("Failed to detect MIME type for file.");

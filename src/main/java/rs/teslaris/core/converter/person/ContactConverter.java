@@ -1,7 +1,6 @@
 package rs.teslaris.core.converter.person;
 
 import java.util.Objects;
-import org.springframework.security.core.context.SecurityContextHolder;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.util.session.SessionUtil;
