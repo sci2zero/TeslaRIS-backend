@@ -1439,6 +1439,21 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 personIndex.setBirthdate("");
                 personIndex.setBirthdateSortable("");
             });
+        } else if (!SessionUtil.isUserLoggedInAndAdmin()){
+            var userId = SessionUtil.getLoggedInUser().getId();
+            if (Objects.isNull(userId)) {
+                userId = 0;
+            }
+
+            var finalUserId = userId;
+            page.forEach(personIndex -> {
+                if (!finalUserId.equals(personIndex.getUserId()) &&
+                    personIndex.getBirthdate().length() > 4) {
+                    personIndex.setBirthdate(personIndex.getBirthdate().substring(0, 4));
+                    personIndex.setBirthdateSortable(
+                        personIndex.getBirthdateSortable().substring(0, 4));
+                }
+            });
         }
     }
 

@@ -72,7 +72,7 @@ public class PersonConverter {
             expertisesOrSkills, prizes, Objects.nonNull(person.getProfilePhoto()) ?
             person.getProfilePhoto().getImageServerName() : null);
 
-        filterSensitiveData(personResponse);
+        filterSensitiveData(personResponse, person);
 
         return personResponse;
     }
@@ -251,7 +251,7 @@ public class PersonConverter {
             keyword, person.getApproveStatus(), userDTO, instituion.b, instituion.a);
     }
 
-    private static void filterSensitiveData(PersonResponseDTO personResponse) {
+    private static void filterSensitiveData(PersonResponseDTO personResponse, Person person) {
         if (!SessionUtil.isUserLoggedIn()) {
             personResponse.getPersonalInfo().getContact().setPhoneNumber("");
             personResponse.getPersonalInfo().getContact().setContactEmail("");
@@ -261,6 +261,18 @@ public class PersonConverter {
             personResponse.getPersonalInfo().getPostalAddress().setCity(new ArrayList<>());
             personResponse.getPersonalInfo().getPostalAddress()
                 .setStreetAndNumber(new ArrayList<>());
+        } else if (!SessionUtil.isUserLoggedInAndAdmin()) {
+            var userId = SessionUtil.getLoggedInUser().getId();
+            if (Objects.isNull(userId)) {
+                userId = 0;
+            }
+
+            if ((Objects.isNull(person.getUser()) || !userId.equals(person.getUser().getId())) &&
+                Objects.nonNull(personResponse.getPersonalInfo().getLocalBirthDate())) {
+                personResponse.getPersonalInfo().setLocalBirthDate(
+                    LocalDate.of(personResponse.getPersonalInfo().getLocalBirthDate().getYear(), 1,
+                        1));
+            }
         }
     }
 }
