@@ -89,7 +89,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private final SearchService<DocumentFileIndex> searchService;
 
     private final ExpressionTransformer expressionTransformer;
+
     private final Tika tika = new Tika();
+
     @Value("${document_file.approved_by_default}")
     private Boolean documentFileApprovedByDefault;
 
@@ -594,6 +596,10 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private boolean isPdfFile(MultipartFile multipartFile) {
         try {
             var isSpecifiedPDF = Objects.equals(multipartFile.getContentType(), "application/pdf");
+            if (SessionUtil.isUserLoggedInAndAdmin()) {
+                return isSpecifiedPDF;
+            }
+
             var detectedType = tika.detect(multipartFile.getInputStream());
 
             if (isSpecifiedPDF && !detectedType.equals("application/pdf")) {
