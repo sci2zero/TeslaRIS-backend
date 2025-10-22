@@ -83,7 +83,8 @@ public class FileController {
         @PathVariable String filename,
         @RequestParam(value = "inline", defaultValue = "false") Boolean inline,
         @RequestHeader(value = "Authorization", required = false) String bearerToken,
-        @CookieValue("jwt-security-fingerprint") String fingerprintCookie) throws IOException {
+        @CookieValue(value = "jwt-security-fingerprint", required = false) String fingerprintCookie)
+        throws IOException {
 
         var file = fileService.loadAsResource(filename);
         var documentFile = documentFileService.getDocumentByServerFilename(filename);
@@ -95,7 +96,12 @@ public class FileController {
             Hibernate.getClass(documentFile.getDocument()).equals(Thesis.class);
 
         if (isThesisDocument && ((Thesis) documentFile.getDocument()).getIsOnPublicReview()) {
-            return serveFile(filename, documentFile, file, inline);
+            if (!documentFile.getResourceType().equals(ResourceType.STATEMENT)) {
+                return serveFile(filename, documentFile, file, inline);
+            }
+
+            return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
+                "loginToViewDocumentMessage");
         }
 
         if (!isOpenAccess && !authenticatedUser) {
@@ -307,7 +313,7 @@ public class FileController {
     }
 
     private boolean isAuthenticatedUser(String bearerToken, String fingerprintCookie) {
-        if (Objects.isNull(bearerToken)) {
+        if (Objects.isNull(bearerToken) || Objects.isNull(fingerprintCookie)) {
             return false;
         }
 
