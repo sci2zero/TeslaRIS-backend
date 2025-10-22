@@ -33,6 +33,7 @@ public class FileServiceMinioImpl implements FileService {
     @Value("${spring.minio.bucket}")
     private String bucketName;
 
+
     @Override
     public String store(MultipartFile file, String serverFilename) {
         if (file.isEmpty()) {
@@ -60,7 +61,8 @@ public class FileServiceMinioImpl implements FileService {
                 .build();
             minioClient.putObject(args);
         } catch (Exception e) {
-            throw new StorageException("Error while storing file in Minio.");
+            throw new StorageException(
+                "Error while storing file in Minio. Reason: " + e.getMessage());
         }
 
         return serverFilename + "." + extension;
@@ -75,7 +77,9 @@ public class FileServiceMinioImpl implements FileService {
                 .build();
             minioClient.removeObject(args);
         } catch (Exception e) {
-            throw new StorageException("Error while deleting " + serverFilename + " from Minio.");
+            throw new StorageException(
+                "Error while deleting " + serverFilename + " from Minio. Reason: " +
+                    e.getMessage());
         }
     }
 
