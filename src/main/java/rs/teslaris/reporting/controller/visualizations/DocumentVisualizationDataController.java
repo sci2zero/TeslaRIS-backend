@@ -47,7 +47,7 @@ public class DocumentVisualizationDataController {
 
     @GetMapping("/publications")
     public Page<DocumentPublicationIndex> getPublicationsForTypeAndPeriod(
-        @RequestParam DocumentPublicationType type,
+        @RequestParam(required = false) DocumentPublicationType type,
         @RequestParam Integer yearFrom,
         @RequestParam Integer yearTo,
         @RequestParam(required = false) Integer personId,

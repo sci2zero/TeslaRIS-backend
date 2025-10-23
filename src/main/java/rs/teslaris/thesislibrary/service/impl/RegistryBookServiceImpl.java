@@ -29,6 +29,7 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Thesis;
@@ -49,6 +50,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.search.SearchRequestType;
 import rs.teslaris.thesislibrary.converter.RegistryBookEntryConverter;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
 import rs.teslaris.thesislibrary.dto.InstitutionCountsReportDTO;
@@ -663,18 +665,21 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     private List<Integer> getInstitutionIdsForUser(Integer userId) {
         Integer topLevelInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
 
-        if (Objects.isNull(topLevelInstitutionId) || topLevelInstitutionId < 1) {
-            var result = new HashSet<Integer>();
-            userRepository.findAllRegistryAdmins()
-                .forEach(admin -> result.addAll(
-                    organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                        userRepository.findOrganisationUnitIdForUser(admin.getId()))));
-
-            return new ArrayList<>(result);
-        } else {
-            return organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                topLevelInstitutionId);
+        if (Objects.nonNull(topLevelInstitutionId) && topLevelInstitutionId < 1) {
+            topLevelInstitutionId = null;
         }
+
+        var result = new HashSet<>(
+            organisationUnitService.searchOrganisationUnits(new ArrayList<>(List.of("*")),
+                    Pageable.unpaged(), SearchRequestType.SIMPLE, null, topLevelInstitutionId,
+                    null, null, null,
+                    null, null, true)
+                .getContent().stream()
+                .filter(OrganisationUnitIndex::getIsLegalEntity)
+                .map(OrganisationUnitIndex::getDatabaseId)
+                .toList());
+
+        return new ArrayList<>(result);
     }
 
     private Map<Integer, Pair<Integer, Integer>> getCountsForInstitutions(

@@ -9,6 +9,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -83,7 +84,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
     implements OrganisationUnitService {
@@ -126,16 +126,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
 
     @Override
+    @Transactional
     protected JpaRepository<OrganisationUnit, Integer> getEntityRepository() {
         return organisationUnitRepository;
     }
 
     @Override
+    @Transactional
     public OrganisationUnit findOrganisationUnitById(Integer id) {
         return findOne(id);
     }
 
     @Override
+    @Transactional
     public OrganisationUnitDTO readOrganisationUnitById(Integer id) {
         OrganisationUnit ou;
         try {
@@ -154,6 +157,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     @Nullable
     public OrganisationUnitIndex findOrganisationUnitByImportId(String importId) {
         if (Objects.isNull(importId) || importId.isBlank()) {
@@ -165,12 +169,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     @Nullable
     public OrganisationUnit findOrganisationUnitByOldId(Integer oldId) {
         return organisationUnitRepository.findOrganisationUnitByOldIdsContains(oldId).orElse(null);
     }
 
     @Override
+    @Transactional
     public OrganisationUnitDTO readOrganisationUnitForOldId(Integer oldId) {
         var ouToReturn = findOrganisationUnitByOldId(oldId);
 
@@ -182,6 +188,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit findOne(Integer id) {
         return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id)
             .orElseThrow(
@@ -196,6 +203,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens,
                                                                Pageable pageable,
                                                                SearchRequestType type,
@@ -205,12 +213,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                                Boolean onlyIndependent,
                                                                ThesisType allowedThesisType,
                                                                Boolean onlyClientInstitutionsCris,
-                                                               Boolean onlyClientInstitutionsDl) {
+                                                               Boolean onlyClientInstitutionsDl,
+                                                               Boolean registryBookRelevant) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId,
                     onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType,
-                    onlyClientInstitutionsCris, onlyClientInstitutionsDl),
+                    onlyClientInstitutionsCris, onlyClientInstitutionsDl, registryBookRelevant),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -225,7 +234,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                          Boolean onlyReturnOnesWhichCanHarvest,
                                          Boolean onlyIndependent, ThesisType allowedThesisType,
                                          Boolean onlyClientInstitutionsCris,
-                                         Boolean onlyClientInstitutionsDl) {
+                                         Boolean onlyClientInstitutionsDl,
+                                         Boolean registryBookRelevant) {
         StringUtil.removeNotableStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -242,6 +252,20 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             if (Objects.nonNull(allowedThesisType)) {
                 b.must(sb -> sb.term(
                     m -> m.field("allowed_thesis_types").value(allowedThesisType.name())));
+            }
+
+            if (Objects.nonNull(registryBookRelevant) && registryBookRelevant) {
+                b.must(sb -> sb.bool(bb -> {
+                    List<Query> shouldQueries = Arrays.stream(ThesisType.values())
+                        .map(type -> Query.of(sq -> sq.term(t -> t
+                            .field("allowed_thesis_types")
+                            .value(type.name()))))
+                        .toList();
+
+                    bb.should(shouldQueries);
+                    bb.minimumShouldMatch("1");
+                    return bb;
+                }));
             }
 
             if (Objects.nonNull(onlyClientInstitutionsCris) && onlyClientInstitutionsCris) {
@@ -348,11 +372,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id) {
         return organisationUnitsRelationJPAService.findOne(id);
     }
 
     @Override
+    @Transactional
     public List<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
         Integer sourceId) {
         return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(sourceId)
@@ -361,12 +387,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     @Nullable
     public OrganisationUnitsRelation getSuperOrganisationUnitRelation(Integer organisationUnitId) {
         return organisationUnitsRelationRepository.getSuperOU(organisationUnitId).orElse(null);
     }
 
     @Override
+    @Transactional
     public RelationGraphDataDTO getOrganisationUnitsRelationsChain(
         Integer leafId) {
         var nodes = new ArrayList<OrganisationUnitDTO>();
@@ -413,6 +441,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId) {
         var ouSubUnits =
             organisationUnitsRelationRepository.getSubOUsRecursive(currentOUNodeId);
@@ -422,11 +451,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId) {
         return organisationUnitsRelationRepository.getSuperOUsRecursive(sourceOUId);
     }
 
     @Override
+    @Transactional
     public Page<OrganisationUnitIndex> getOUSubUnits(Integer organisationUnitId,
                                                      Pageable pageable) {
         return organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
@@ -434,16 +465,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit getReferenceToOrganisationUnitById(Integer id) {
         return id == null ? null : organisationUnitRepository.getReferenceById(id);
     }
 
     @Override
+    @Transactional
     public Long getOrganisationUnitsCount() {
         return organisationUnitIndexRepository.count();
     }
 
     @Override
+    @Transactional
     public OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index) {
 
@@ -467,6 +501,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit editOrganisationUnit(Integer organisationUnitId,
                                                  OrganisationUnitRequestDTO organisationUnitDTORequest) {
 
@@ -615,12 +650,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public boolean isIdentifierInUse(String identifier, Integer organisationUnitId) {
         return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId) ||
             organisationUnitRepository.existsByOpenAlexId(identifier, organisationUnitId);
     }
 
     @Override
+    @Transactional
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields) {
         return searchFieldsLoader.getSearchFields("organisationUnitSearchFieldConfiguration.json",
@@ -628,6 +665,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit findOrganisationUnitByAccountingId(String accountingId) {
         return organisationUnitRepository.findApprovedOrganisationUnitByAccountingId(accountingId)
             .orElseThrow(
@@ -636,6 +674,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
         throws IOException {
         if (ImageUtil.isMIMETypeInvalid(logoDTO.getFile(), true)) {
@@ -670,6 +709,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void removeOrganisationUnitLogo(Integer organisationUnitId) {
         var organisationUnit = findOne(organisationUnitId);
 
@@ -688,6 +728,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                       Integer organisationUnitId) {
         organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(organisationUnitId)
@@ -697,6 +738,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void indexOrganisationUnit(OrganisationUnit organisationUnit) {
         indexOrganisationUnit(organisationUnit,
             organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
@@ -704,6 +746,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit findRaw(Integer organisationUnitId) {
         return organisationUnitRepository.findRaw(organisationUnitId).orElseThrow(
             () -> new NotFoundException("Organisation Unit with given ID does not exist."));
@@ -828,6 +871,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void deleteOrganisationUnit(Integer organisationUnitId) {
         if (organisationUnitRepository.hasEmployees(organisationUnitId) ||
             organisationUnitRepository.hasThesis(organisationUnitId) ||
@@ -848,6 +892,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void forceDeleteOrganisationUnit(Integer organisationUnitId) {
         organisationUnitRepository.deleteInvolvementsForOrganisationUnit(organisationUnitId);
         organisationUnitRepository.deleteRelationsForOrganisationUnit(organisationUnitId);
@@ -900,6 +945,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO relationDTO) {
         if (Objects.equals(relationDTO.getSourceOrganisationUnitId(),
@@ -933,6 +979,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnitsRelationDTO addSubOrganisationUnit(Integer sourceId, Integer targetId) {
         if (organisationUnitsRelationRepository.getSuperOU(targetId).isPresent()) {
             throw new OrganisationUnitReferenceConstraintViolationException(
@@ -987,6 +1034,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void editOrganisationUnitsRelation(OrganisationUnitsRelationDTO relationDTO,
                                               Integer id) {
         var relationToUpdate = findOrganisationUnitsRelationById(id);
@@ -1004,6 +1052,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void deleteOrganisationUnitsRelation(Integer id) {
         var relationToDelete = findOrganisationUnitsRelationById(id);
         organisationUnitsRelationJPAService.delete(id);
@@ -1013,6 +1062,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void deleteOrganisationUnitsRelation(Integer sourceOrganisationUnitId,
                                                 Integer targetOrganisationUnitId) {
         var relations =
@@ -1053,6 +1103,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void approveRelation(Integer relationId, Boolean approve) {
         var relationToApprove = findOrganisationUnitsRelationById(relationId);
         if (relationToApprove.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
@@ -1097,6 +1148,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void addRelationProofs(List<DocumentFileDTO> proofs, Integer relationId) {
         var relation = findOrganisationUnitsRelationById(relationId);
         proofs.forEach(proof -> {
@@ -1107,6 +1159,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void deleteRelationProof(Integer relationId, Integer proofId) {
         var documentFile = documentFileService.findDocumentFileById(proofId);
         documentFileService.delete(proofId);
@@ -1114,6 +1167,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer sourceOrganisationUnitId,
                                                              Integer targetOrganisationUnit) {
         List<OrganisationUnitsRelation> relationsToCheck =
@@ -1137,6 +1191,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId) {
         return organisationUnitRepository.checkIfInstitutionalAdminsExist(organisationUnitId);
     }

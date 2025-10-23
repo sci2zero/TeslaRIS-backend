@@ -1448,6 +1448,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             var finalUserId = userId;
             page.forEach(personIndex -> {
                 if (!finalUserId.equals(personIndex.getUserId()) &&
+                    Objects.nonNull(personIndex.getBirthdate()) &&
                     personIndex.getBirthdate().length() > 4) {
                     personIndex.setBirthdate(personIndex.getBirthdate().substring(0, 4));
                     personIndex.setBirthdateSortable(

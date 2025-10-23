@@ -268,13 +268,13 @@ public class TableExportServiceImpl implements TableExportService {
                         .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
                     SearchRequestType.SIMPLE, null,
                     Integer.parseInt(endpointTokenParameters.getLast()), null, null, null, null,
-                    null);
+                    null, null);
             case ORGANISATION_UNIT_SEARCH_ADVANCED ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     Arrays.stream(endpointTokenParameters.getFirst().replace("&tokens=", "tokens=")
                             .split("tokens="))
                         .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
-                    SearchRequestType.ADVANCED, null, null, null, null, null, null, null);
+                    SearchRequestType.ADVANCED, null, null, null, null, null, null, null, null);
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
                 Integer.parseInt(endpointTokenParameters.getFirst()), null,
                 Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
@@ -301,7 +301,8 @@ public class TableExportServiceImpl implements TableExportService {
                 );
             case VISUALIZATION_PUBLICATIONS ->
                 (Page<T>) documentAnalyticsService.findPublicationsForTypeAndPeriod(
-                    DocumentPublicationType.valueOf(endpointTokenParameters.getFirst()),
+                    endpointTokenParameters.getFirst().isBlank() ? null :
+                        DocumentPublicationType.valueOf(endpointTokenParameters.getFirst()),
                     endpointTokenParameters.get(1).isBlank() ? null :
                         ThesisType.valueOf(endpointTokenParameters.get(1)),
                     Integer.parseInt(endpointTokenParameters.get(2)),

@@ -283,7 +283,9 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
                 b.must(QueryUtil.organisationUnitMatchQuery(List.of(institutionId), searchFields));
             }
 
-            b.must(q -> q.term(t -> t.field("type").value(type.name())));
+            if (Objects.nonNull(type)) {
+                b.must(q -> q.term(t -> t.field("type").value(type.name())));
+            }
 
             if (Objects.nonNull(subType)) {
                 b.must(q -> q.term(t -> t.field("publication_type").value(subType.name())));

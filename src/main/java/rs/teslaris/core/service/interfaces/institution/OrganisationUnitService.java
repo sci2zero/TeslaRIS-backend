@@ -50,7 +50,8 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                         Boolean onlyIndependent,
                                                         ThesisType allowedThesisType,
                                                         Boolean onlyClientInstitutionsCris,
-                                                        Boolean onlyClientInstitutionsDl);
+                                                        Boolean onlyClientInstitutionsDl,
+                                                        Boolean registryBookRelevant);
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
