@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
@@ -202,8 +203,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     )
                     .aggregations("by_country", a -> a
                         .terms(t -> t.field("country_code")
-                            .size(
-                                195)) // 195 countries exist at the moment, we can lower this if need be
+                            .size(QueryUtil.NUMBER_OF_WORLD_COUNTRIES))
                         .aggregations("country_name", sub -> sub
                             .terms(t -> t.field("country_name").size(1))
                         )
@@ -387,7 +387,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     )
                 )
                 .aggregations("by_type", a -> a
-                    .terms(t -> t.field("type").size(9)) // for 9 document types
+                    .terms(t -> t.field("type")
+                        .size(DocumentPublicationType.values().length))
                 ),
             Void.class
         );

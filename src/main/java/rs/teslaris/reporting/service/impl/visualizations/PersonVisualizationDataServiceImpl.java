@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -38,6 +39,7 @@ import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 import rs.teslaris.reporting.service.interfaces.visualizations.PersonVisualizationDataService;
+import rs.teslaris.reporting.utility.QueryUtil;
 
 @Slf4j
 @Service
@@ -216,8 +218,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     )
                     .aggregations("by_country", a -> a
                         .terms(t -> t.field("country_code")
-                            .size(
-                                195)) // 195 countries exist at the moment, we can lower this if need be
+                            .size(QueryUtil.NUMBER_OF_WORLD_COUNTRIES))
                         .aggregations("country_name", sub -> sub
                             .terms(t -> t.field("country_name").size(1))
                         )
@@ -411,7 +412,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     )
                 )
                 .aggregations("by_type", a -> a
-                    .terms(t -> t.field("type").size(9)) // for 9 document types
+                    .terms(t -> t.field("type")
+                        .size(DocumentPublicationType.values().length))
                 ),
             Void.class
         );

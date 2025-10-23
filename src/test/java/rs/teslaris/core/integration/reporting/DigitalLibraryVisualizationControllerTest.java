@@ -46,4 +46,20 @@ public class DigitalLibraryVisualizationControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
     }
+
+    @ParameterizedTest
+    @EnumSource(StatisticsType.class)
+    @WithMockUser(username = "test.librarian@test.com", password = "testLibrarian")
+    public void testGetStatisticsByCountryForOrganisationUnit(StatisticsType statisticsType)
+        throws Exception {
+        String jwtToken = authenticateLibrarianAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/visualization-data/digital-library/statistics/{organisationUnitId}?from=2000-01-01&to=2025-01-02&statisticsType={statisticsType}",
+                        1, statisticsType)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
 }

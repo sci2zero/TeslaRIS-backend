@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -35,6 +36,8 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.reporting.service.impl.visualizations.DigitalLibraryVisualizationDataServiceImpl;
 import rs.teslaris.reporting.service.interfaces.leaderboards.DocumentLeaderboardService;
 
@@ -46,6 +49,9 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
     @Mock
     private DocumentLeaderboardService documentLeaderboardService;
+
+    @Mock
+    private OrganisationUnitService organisationUnitService;
 
     @InjectMocks
     private DigitalLibraryVisualizationDataServiceImpl service;
@@ -89,6 +95,10 @@ public class DigitalLibraryVisualizationDataServiceTest {
         var mockYearlyResponse = mock(SearchResponse.class);
         when(mockYearlyResponse.aggregations()).thenReturn(mockAggregations);
 
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
+
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
             .thenReturn(mockRangeResponse);
@@ -127,6 +137,10 @@ public class DigitalLibraryVisualizationDataServiceTest {
         var mockRangeResponse = mock(SearchResponse.class);
         when(mockRangeResponse.aggregations()).thenReturn(mockAggregations);
 
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
+
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
             .thenReturn(mockRangeResponse);
@@ -159,6 +173,10 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var mockYearlyResponse = mock(SearchResponse.class);
         when(mockYearlyResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
 
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
@@ -213,6 +231,10 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var mockYearlyResponse = mock(SearchResponse.class);
         when(mockYearlyResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
 
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
@@ -270,6 +292,10 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var mockResponse = mock(SearchResponse.class);
         when(mockResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
 
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
@@ -353,6 +379,10 @@ public class DigitalLibraryVisualizationDataServiceTest {
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
             .thenReturn(mockResponse);
 
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
+
         // When
         var result =
             service.getMonthlyStatisticsCounts(organisationUnitId, from, to, statisticsType,
@@ -380,6 +410,10 @@ public class DigitalLibraryVisualizationDataServiceTest {
             allowedThesisTypes))
             .thenReturn(eligibleDocumentIds);
 
+        when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
+
         when(elasticsearchClient.search(
             (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
             .thenThrow(new IOException("Elasticsearch connection failed"));
@@ -388,6 +422,264 @@ public class DigitalLibraryVisualizationDataServiceTest {
         var result =
             service.getMonthlyStatisticsCounts(organisationUnitId, from, to, statisticsType,
                 allowedThesisTypes);
+
+        // Then
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnByCountryStatisticsForDigitalLibrary() throws IOException {
+        // Given
+        var organisationUnitId = 123;
+        var from = LocalDate.of(2023, 1, 1);
+        var to = LocalDate.of(2023, 12, 31);
+        var statisticsType = StatisticsType.VIEW;
+        var allowedThesisTypes = List.of(ThesisType.MASTER, ThesisType.PHD);
+
+        var eligibleDocumentIds = List.of(1, 2, 3, 4);
+        when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
+            allowedThesisTypes))
+            .thenReturn(eligibleDocumentIds);
+
+        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+            new OrganisationUnit() {{
+                setIsClientInstitutionDl(true);
+            }});
+
+        var serbiaNameBucket = mock(StringTermsBucket.class);
+        when(serbiaNameBucket.key()).thenReturn(FieldValue.of("Serbia"));
+
+        var usaNameBucket = mock(StringTermsBucket.class);
+        when(usaNameBucket.key()).thenReturn(FieldValue.of("United States"));
+
+        var germanyNameBucket = mock(StringTermsBucket.class);
+        when(germanyNameBucket.key()).thenReturn(FieldValue.of("Germany"));
+
+        var serbiaNameAggregate = mockAggregateWithBuckets(List.of(serbiaNameBucket));
+        var usaNameAggregate = mockAggregateWithBuckets(List.of(usaNameBucket));
+        var germanyNameAggregate = mockAggregateWithBuckets(List.of(germanyNameBucket));
+
+        var serbiaBucket = mock(StringTermsBucket.class);
+        when(serbiaBucket.key()).thenReturn(FieldValue.of("RS"));
+        when(serbiaBucket.docCount()).thenReturn(150L);
+        when(serbiaBucket.aggregations()).thenReturn(Map.of("country_name", serbiaNameAggregate));
+
+        var usaBucket = mock(StringTermsBucket.class);
+        when(usaBucket.key()).thenReturn(FieldValue.of("US"));
+        when(usaBucket.docCount()).thenReturn(75L);
+        when(usaBucket.aggregations()).thenReturn(Map.of("country_name", usaNameAggregate));
+
+        var germanyBucket = mock(StringTermsBucket.class);
+        when(germanyBucket.key()).thenReturn(FieldValue.of("DE"));
+        when(germanyBucket.docCount()).thenReturn(50L);
+        when(germanyBucket.aggregations()).thenReturn(Map.of("country_name", germanyNameAggregate));
+
+        var countryAggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(countryAggregate.sterms().buckets().array()).thenReturn(
+            List.of(serbiaBucket, usaBucket, germanyBucket));
+
+        Map<String, Aggregate> mockAggregations = Map.of("by_country", countryAggregate);
+
+        var mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
+            .thenReturn(mockResponse);
+
+        // When
+        var result = service.getByCountryStatisticsForDigitalLibrary(
+            organisationUnitId, from, to, statisticsType, allowedThesisTypes);
+
+        // Then
+        assertEquals(3, result.size());
+    }
+
+    private Aggregate mockAggregateWithBuckets(List<StringTermsBucket> buckets) {
+        var aggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(aggregate.sterms().buckets().array()).thenReturn(buckets);
+        return aggregate;
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListWhenNoEligibleDocuments() throws IOException {
+        // Given
+        var organisationUnitId = 456;
+        var from = LocalDate.of(2023, 1, 1);
+        var to = LocalDate.of(2023, 12, 31);
+        var statisticsType = StatisticsType.DOWNLOAD;
+        var allowedThesisTypes = List.of(ThesisType.MASTER);
+
+        when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
+            allowedThesisTypes))
+            .thenReturn(Collections.emptyList());
+
+        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+            new OrganisationUnit() {{
+                setIsClientInstitutionDl(true);
+            }});
+
+        // When
+        var result = service.getByCountryStatisticsForDigitalLibrary(
+            organisationUnitId, from, to, statisticsType, allowedThesisTypes);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(elasticsearchClient, never()).search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListWhenInstitutionNotDigitalLibrary() throws IOException {
+        // Given
+        var organisationUnitId = 789;
+        var from = LocalDate.of(2023, 1, 1);
+        var to = LocalDate.of(2023, 12, 31);
+        var statisticsType = StatisticsType.VIEW;
+        var allowedThesisTypes = List.of(ThesisType.PHD);
+
+        var eligibleDocumentIds = List.of(5, 6, 7);
+        when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
+            allowedThesisTypes))
+            .thenReturn(eligibleDocumentIds);
+
+        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+            new OrganisationUnit() {{
+                setIsClientInstitutionDl(false);
+            }});
+
+        // When
+        var result = service.getByCountryStatisticsForDigitalLibrary(
+            organisationUnitId, from, to, statisticsType, allowedThesisTypes);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(elasticsearchClient, never()).search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldHandleEmptyCountryBuckets() throws IOException {
+        // Given
+        var organisationUnitId = 111;
+        var from = LocalDate.of(2023, 1, 1);
+        var to = LocalDate.of(2023, 12, 31);
+        var statisticsType = StatisticsType.DOWNLOAD;
+        var allowedThesisTypes = List.of(ThesisType.MASTER, ThesisType.PHD);
+
+        var eligibleDocumentIds = List.of(8, 9);
+        when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
+            allowedThesisTypes))
+            .thenReturn(eligibleDocumentIds);
+
+        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+            new OrganisationUnit() {{
+                setIsClientInstitutionDl(true);
+            }});
+
+        var countryAggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(countryAggregate.sterms().buckets().array()).thenReturn(Collections.emptyList());
+
+        Map<String, Aggregate> mockAggregations = Map.of("by_country", countryAggregate);
+
+        var mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
+            .thenReturn(mockResponse);
+
+        // When
+        var result = service.getByCountryStatisticsForDigitalLibrary(
+            organisationUnitId, from, to, statisticsType, allowedThesisTypes);
+
+        // Then
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldUseCountryCodeAsFallbackWhenCountryNameMissing() throws IOException {
+        // Given
+        var organisationUnitId = 222;
+        var from = LocalDate.of(2023, 1, 1);
+        var to = LocalDate.of(2023, 12, 31);
+        var statisticsType = StatisticsType.VIEW;
+        var allowedThesisTypes = List.of(ThesisType.MASTER);
+
+        var eligibleDocumentIds = List.of(10);
+        when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
+            allowedThesisTypes))
+            .thenReturn(eligibleDocumentIds);
+
+        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+            new OrganisationUnit() {{
+                setIsClientInstitutionDl(true);
+            }});
+
+        var franceBucket = mock(StringTermsBucket.class);
+        when(franceBucket.key()).thenReturn(FieldValue.of("FR"));
+        when(franceBucket.docCount()).thenReturn(25L);
+
+        var aggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(aggregate.sterms().buckets().array()).thenReturn(Collections.emptyList());
+        when(franceBucket.aggregations()).thenReturn(Map.of("country_name",
+            aggregate));
+
+        var countryAggregate = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+        when(countryAggregate.sterms().buckets().array()).thenReturn(List.of(franceBucket));
+
+        Map<String, Aggregate> mockAggregations = Map.of("by_country", countryAggregate);
+
+        var mockResponse = mock(SearchResponse.class);
+        when(mockResponse.aggregations()).thenReturn(mockAggregations);
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
+            .thenReturn(mockResponse);
+
+        // When
+        var result = service.getByCountryStatisticsForDigitalLibrary(
+            organisationUnitId, from, to, statisticsType, allowedThesisTypes);
+
+        // Then
+        assertEquals(1, result.size());
+        var franceStats = result.getFirst();
+        assertEquals("FR", franceStats.countryCode());
+        assertEquals("FR", franceStats.countryName());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnEmptyListOnIOException() throws IOException {
+        // Given
+        var organisationUnitId = 333;
+        var from = LocalDate.of(2023, 1, 1);
+        var to = LocalDate.of(2023, 12, 31);
+        var statisticsType = StatisticsType.DOWNLOAD;
+        var allowedThesisTypes = List.of(ThesisType.PHD);
+
+        var eligibleDocumentIds = List.of(11, 12);
+        when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
+            allowedThesisTypes))
+            .thenReturn(eligibleDocumentIds);
+
+        when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
+            new OrganisationUnit() {{
+                setIsClientInstitutionDl(true);
+            }});
+
+        when(elasticsearchClient.search(
+            (Function<SearchRequest.Builder, ObjectBuilder<SearchRequest>>) any(), eq(Void.class)))
+            .thenThrow(new IOException("Elasticsearch connection failed"));
+
+        // When
+        var result = service.getByCountryStatisticsForDigitalLibrary(
+            organisationUnitId, from, to, statisticsType, allowedThesisTypes);
 
         // Then
         assertTrue(result.isEmpty());

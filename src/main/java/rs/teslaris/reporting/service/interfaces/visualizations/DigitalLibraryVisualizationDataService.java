@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 
 @Service
@@ -22,4 +23,8 @@ public interface DigitalLibraryVisualizationDataService {
     Map<YearMonth, Long> getMonthlyStatisticsCounts(Integer organisationUnitId, LocalDate from,
                                                     LocalDate to, StatisticsType statisticsType,
                                                     List<ThesisType> allowedThesisTypes);
+
+    List<StatisticsByCountry> getByCountryStatisticsForDigitalLibrary(
+        Integer organisationUnitId, LocalDate from, LocalDate to, StatisticsType statisticsType,
+        List<ThesisType> allowedThesisTypes);
 }

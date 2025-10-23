@@ -77,8 +77,7 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
                     )
                     .aggregations("by_country", a -> a
                         .terms(t -> t.field("country_code")
-                            .size(
-                                195)) // 195 countries exist at the moment, we can lower this if need be
+                            .size(QueryUtil.NUMBER_OF_WORLD_COUNTRIES))
                         .aggregations("country_name", sub -> sub
                             .terms(t -> t.field("country_name").size(1))
                         )

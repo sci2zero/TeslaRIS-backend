@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
 import co.elastic.clients.elasticsearch._types.aggregations.FieldDateMath;
 import co.elastic.clients.elasticsearch._types.aggregations.MultiBucketBase;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
 import java.io.IOException;
@@ -22,7 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 import rs.teslaris.reporting.service.interfaces.leaderboards.DocumentLeaderboardService;
 import rs.teslaris.reporting.service.interfaces.visualizations.DigitalLibraryVisualizationDataService;
@@ -39,6 +42,8 @@ public class DigitalLibraryVisualizationDataServiceImpl
 
     private final DocumentLeaderboardService documentLeaderboardService;
 
+    private final OrganisationUnitService organisationUnitService;
+
 
     @Override
     public List<YearlyCounts> getThesisCountsForOrganisationUnit(Integer organisationUnitId,
@@ -48,7 +53,8 @@ public class DigitalLibraryVisualizationDataServiceImpl
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
         var yearRange = constructYearRange(startYear, endYear, organisationUnitId, searchFields,
             allowedThesisTypes);
-        if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
+        if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b) ||
+            !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
             return Collections.emptyList();
         }
 
@@ -77,7 +83,8 @@ public class DigitalLibraryVisualizationDataServiceImpl
         var eligibleDocumentIds =
             documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
                 allowedThesisTypes);
-        if (eligibleDocumentIds.isEmpty()) {
+        if (eligibleDocumentIds.isEmpty() ||
+            !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
             return Collections.emptyMap();
         }
 
@@ -136,6 +143,76 @@ public class DigitalLibraryVisualizationDataServiceImpl
                 organisationUnitId, statisticsType.name(), e.getMessage());
             return Collections.emptyMap();
         }
+    }
+
+    @Override
+    public List<StatisticsByCountry> getByCountryStatisticsForDigitalLibrary(
+        Integer organisationUnitId, LocalDate from, LocalDate to, StatisticsType statisticsType,
+        List<ThesisType> allowedThesisTypes) {
+        var eligibleDocumentIds =
+            documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
+                allowedThesisTypes);
+        if (eligibleDocumentIds.isEmpty() ||
+            !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
+            return Collections.emptyList();
+        }
+
+        SearchResponse<Void> response;
+        try {
+            response = elasticsearchClient.search(s -> s
+                    .index("statistics")
+                    .size(0)
+                    .query(q -> q
+                        .bool(b -> b
+                            .must(m -> m.terms(t -> t.field("document_id").terms(
+                                v -> v.value(eligibleDocumentIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList())
+                            )))
+                            .must(m -> m.term(t -> t.field("is_bot").value(false)))
+                            .must(m -> m.term(t -> t.field("type").value(statisticsType.name())))
+                            .must(m -> m.range(r -> r
+                                .field("timestamp")
+                                .gte(JsonData.of(from))
+                                .lte(JsonData.of(to))
+                            ))
+                        )
+                    )
+                    .aggregations("by_country", a -> a
+                        .terms(t -> t.field("country_code")
+                            .size(QueryUtil.NUMBER_OF_WORLD_COUNTRIES))
+                        .aggregations("country_name", sub -> sub
+                            .terms(t -> t.field("country_name").size(1))
+                        )
+                    ),
+                Void.class
+            );
+        } catch (IOException e) {
+            log.warn("Unable to fetch DL {} statistics for institution {}.", statisticsType,
+                organisationUnitId);
+            return Collections.emptyList();
+        }
+
+        List<StatisticsByCountry> result = new ArrayList<>();
+
+        response.aggregations()
+            .get("by_country").sterms().buckets().array()
+            .forEach(bucket -> {
+                String countryCode = bucket.key().stringValue();
+                long views = bucket.docCount();
+
+                String countryName = bucket.aggregations()
+                    .get("country_name").sterms().buckets().array()
+                    .stream()
+                    .findFirst()
+                    .map(StringTermsBucket::key)
+                    .map(FieldValue::stringValue)
+                    .orElse(countryCode); // fallback, should never happen
+
+                result.add(new StatisticsByCountry(countryCode, countryName, views));
+            });
+
+        return result;
     }
 
     private Pair<Integer, Integer> constructYearRange(Integer startYear, Integer endYear,

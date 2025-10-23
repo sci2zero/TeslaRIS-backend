@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.commontypes.ReindexRequestDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
 import rs.teslaris.thesislibrary.dto.PreviousTitleInformationDTO;
@@ -283,6 +286,18 @@ public class RegistryBookControllerTest extends BaseTest {
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testGetCountReport() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
+
+        var request =
+            new ReindexRequestDTO(List.of(EntityType.ORGANISATION_UNIT, EntityType.PUBLICATION));
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/reindex?reharvestCitationIndicators=false")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_REINDEX3"))
+            .andExpect(status().isOk());
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(

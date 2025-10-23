@@ -22,12 +22,12 @@ import rs.teslaris.core.util.functional.Pair;
 @Component
 public class QueryUtil {
 
+    public static final int NUMBER_OF_WORLD_COUNTRIES = 195;
     private static OrganisationUnitOutputConfigurationService
         organisationUnitOutputConfigurationService;
-
     private static OrganisationUnitService organisationUnitService;
-
     private static UserService userService;
+    // 195 countries exist at the moment, we can change this if need be
 
 
     @Autowired

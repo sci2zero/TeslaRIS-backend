@@ -119,7 +119,8 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
     public List<Pair<DocumentPublicationIndex, Long>> getTopPublicationsByStatisticCount(
         Integer institutionId, StatisticsType statisticsType, LocalDate from, LocalDate to,
         Boolean onlyTheses, List<ThesisType> allowedThesisTypes) {
-        if (Objects.isNull(institutionId)) {
+        if (Objects.isNull(institutionId) ||
+            !organisationUnitService.findOne(institutionId).getIsClientInstitutionDl()) {
             return Collections.emptyList();
         }
 

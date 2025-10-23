@@ -1229,7 +1229,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         if (!organisationUnit.getIsClientInstitutionCris().equals(dto.isClientInstitutionCris())) {
             organisationUnit.setIsClientInstitutionCris(dto.isClientInstitutionCris());
             updateSubOrganisationUnits(organisationUnit.getId(),
-                (subOU, subOUIndex) -> updateCrisConfigForSubUnit(subOU, subOUIndex, dto));
+                (subOU, subOUIndex) -> updateCrisConfigForSubUnit(subOU, subOUIndex, dto),
+                false);
         }
     }
 
@@ -1238,19 +1239,31 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         if (!organisationUnit.getIsClientInstitutionDl().equals(dto.isClientInstitutionDl())) {
             organisationUnit.setIsClientInstitutionDl(dto.isClientInstitutionDl());
             updateSubOrganisationUnits(organisationUnit.getId(),
-                (subOU, subOUIndex) -> updateDlConfigForSubUnit(subOU, subOUIndex, dto));
+                (subOU, subOUIndex) -> updateDlConfigForSubUnit(subOU, subOUIndex, dto),
+                true);
         }
     }
 
     private void updateSubOrganisationUnits(Integer organisationUnitId,
-                                            BiConsumer<OrganisationUnit, OrganisationUnitIndex> updateAction) {
+                                            BiConsumer<OrganisationUnit, OrganisationUnitIndex> updateAction,
+                                            Boolean onlyOnesThatHaveLibrary) {
         getOrganisationUnitIdsFromSubHierarchy(organisationUnitId).stream()
             .filter(Objects::nonNull)
             .forEach(subUnitId -> {
-                var subOU = findOne(subUnitId);
                 var subOUIndex = organisationUnitIndexRepository
                     .findOrganisationUnitIndexByDatabaseId(subUnitId).orElse(null);
 
+                if (Objects.isNull(subOUIndex)) {
+                    return;
+                }
+
+                if (onlyOnesThatHaveLibrary && (
+                    Objects.isNull(subOUIndex.getAllowedThesisTypes()) ||
+                        subOUIndex.getAllowedThesisTypes().isEmpty())) {
+                    return;
+                }
+
+                var subOU = findOne(subUnitId);
                 updateAction.accept(subOU, subOUIndex);
             });
     }

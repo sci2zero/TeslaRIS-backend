@@ -621,6 +621,7 @@ class RegistryBookServiceTest {
             any(), any(), any(), any(), any(), any()))
             .thenReturn(new PageImpl<>(List.of(new OrganisationUnitIndex() {{
                 setDatabaseId(institutionId);
+                setIsLegalEntity(true);
             }})));
         when(registryBookEntryRepository.getRegistryBookCountForInstitutionAndPeriodNewPromotion(
             institutionId, from, to))
@@ -641,7 +642,8 @@ class RegistryBookServiceTest {
         assertNotNull(dto.institutionName());
 
         verify(userRepository).findOrganisationUnitIdForUser(userId);
-        verify(organisationUnitService).getOrganisationUnitIdsFromSubHierarchy(institutionId);
+        verify(organisationUnitService).searchOrganisationUnits(any(), any(), any(), any(), any(),
+            any(), any(), any(), any(), any(), any());
         verify(registryBookEntryRepository).getRegistryBookCountForInstitutionAndPeriodNewPromotion(
             institutionId, from, to);
         verify(registryBookEntryRepository).getRegistryBookCountForInstitutionAndPeriodOldPromotion(

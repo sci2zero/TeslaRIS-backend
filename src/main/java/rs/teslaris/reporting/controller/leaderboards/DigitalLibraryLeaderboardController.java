@@ -3,7 +3,6 @@ package rs.teslaris.reporting.controller.leaderboards;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,7 +22,6 @@ public class DigitalLibraryLeaderboardController {
 
 
     @GetMapping("/statistics")
-    @PreAuthorize("hasAuthority('READ_DIGITAL_LIBRARY_ANALYTICS')")
     public List<Pair<DocumentPublicationIndex, Long>> getThesesWithMostStatisticsCount(
         @RequestParam Integer institutionId, @RequestParam LocalDate from,
         @RequestParam LocalDate to, @RequestParam StatisticsType statisticsType,
