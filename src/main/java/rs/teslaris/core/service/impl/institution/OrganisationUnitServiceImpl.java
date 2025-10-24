@@ -9,6 +9,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -73,6 +74,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -83,7 +85,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
     implements OrganisationUnitService {
@@ -126,16 +127,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
 
     @Override
+    @Transactional
     protected JpaRepository<OrganisationUnit, Integer> getEntityRepository() {
         return organisationUnitRepository;
     }
 
     @Override
+    @Transactional
     public OrganisationUnit findOrganisationUnitById(Integer id) {
         return findOne(id);
     }
 
     @Override
+    @Transactional
     public OrganisationUnitDTO readOrganisationUnitById(Integer id) {
         OrganisationUnit ou;
         try {
@@ -154,6 +158,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     @Nullable
     public OrganisationUnitIndex findOrganisationUnitByImportId(String importId) {
         if (Objects.isNull(importId) || importId.isBlank()) {
@@ -165,12 +170,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     @Nullable
     public OrganisationUnit findOrganisationUnitByOldId(Integer oldId) {
         return organisationUnitRepository.findOrganisationUnitByOldIdsContains(oldId).orElse(null);
     }
 
     @Override
+    @Transactional
     public OrganisationUnitDTO readOrganisationUnitForOldId(Integer oldId) {
         var ouToReturn = findOrganisationUnitByOldId(oldId);
 
@@ -182,6 +189,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit findOne(Integer id) {
         return organisationUnitRepository.findByIdWithLangDataAndResearchArea(id)
             .orElseThrow(
@@ -196,6 +204,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public Page<OrganisationUnitIndex> searchOrganisationUnits(List<String> tokens,
                                                                Pageable pageable,
                                                                SearchRequestType type,
@@ -204,12 +213,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                                                Boolean onlyReturnOnesWhichCanHarvest,
                                                                Boolean onlyIndependent,
                                                                ThesisType allowedThesisType,
-                                                               Boolean onlyClientInstitutions) {
+                                                               Boolean onlyClientInstitutionsCris,
+                                                               Boolean onlyClientInstitutionsDl,
+                                                               Boolean registryBookRelevant) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, personId, topLevelInstitutionId,
                     onlyReturnOnesWhichCanHarvest, onlyIndependent, allowedThesisType,
-                    onlyClientInstitutions),
+                    onlyClientInstitutionsCris, onlyClientInstitutionsDl, registryBookRelevant),
                 pageable,
                 OrganisationUnitIndex.class, "organisation_unit");
         }
@@ -223,7 +234,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                          Integer topLevelInstitutionId,
                                          Boolean onlyReturnOnesWhichCanHarvest,
                                          Boolean onlyIndependent, ThesisType allowedThesisType,
-                                         Boolean onlyClientInstitutions) {
+                                         Boolean onlyClientInstitutionsCris,
+                                         Boolean onlyClientInstitutionsDl,
+                                         Boolean registryBookRelevant) {
         StringUtil.removeNotableStopwords(tokens);
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
@@ -242,9 +255,28 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     m -> m.field("allowed_thesis_types").value(allowedThesisType.name())));
             }
 
-            if (Objects.nonNull(onlyClientInstitutions) && onlyClientInstitutions) {
+            if (Objects.nonNull(registryBookRelevant) && registryBookRelevant) {
+                b.must(sb -> sb.bool(bb -> {
+                    List<Query> shouldQueries = Arrays.stream(ThesisType.values())
+                        .map(type -> Query.of(sq -> sq.term(t -> t
+                            .field("allowed_thesis_types")
+                            .value(type.name()))))
+                        .toList();
+
+                    bb.should(shouldQueries);
+                    bb.minimumShouldMatch("1");
+                    return bb;
+                }));
+            }
+
+            if (Objects.nonNull(onlyClientInstitutionsCris) && onlyClientInstitutionsCris) {
                 b.must(sb -> sb.term(
-                    m -> m.field("is_client_institution").value(true)));
+                    m -> m.field("is_client_institution_cris").value(true)));
+            }
+
+            if (Objects.nonNull(onlyClientInstitutionsDl) && onlyClientInstitutionsDl) {
+                b.must(sb -> sb.term(
+                    m -> m.field("is_client_institution_dl").value(true)));
             }
 
             tokens.forEach(token -> {
@@ -341,11 +373,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id) {
         return organisationUnitsRelationJPAService.findOne(id);
     }
 
     @Override
+    @Transactional
     public List<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
         Integer sourceId) {
         return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(sourceId)
@@ -354,12 +388,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     @Nullable
     public OrganisationUnitsRelation getSuperOrganisationUnitRelation(Integer organisationUnitId) {
         return organisationUnitsRelationRepository.getSuperOU(organisationUnitId).orElse(null);
     }
 
     @Override
+    @Transactional
     public RelationGraphDataDTO getOrganisationUnitsRelationsChain(
         Integer leafId) {
         var nodes = new ArrayList<OrganisationUnitDTO>();
@@ -406,6 +442,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public List<Integer> getOrganisationUnitIdsFromSubHierarchy(Integer currentOUNodeId) {
         var ouSubUnits =
             organisationUnitsRelationRepository.getSubOUsRecursive(currentOUNodeId);
@@ -415,11 +452,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public List<Integer> getSuperOUsHierarchyRecursive(Integer sourceOUId) {
         return organisationUnitsRelationRepository.getSuperOUsRecursive(sourceOUId);
     }
 
     @Override
+    @Transactional
     public Page<OrganisationUnitIndex> getOUSubUnits(Integer organisationUnitId,
                                                      Pageable pageable) {
         return organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
@@ -427,16 +466,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit getReferenceToOrganisationUnitById(Integer id) {
         return id == null ? null : organisationUnitRepository.getReferenceById(id);
     }
 
     @Override
+    @Transactional
     public Long getOrganisationUnitsCount() {
         return organisationUnitIndexRepository.count();
     }
 
     @Override
+    @Transactional
     public OrganisationUnitDTO createOrganisationUnit(
         OrganisationUnitRequestDTO organisationUnitRequestDTO, Boolean index) {
 
@@ -460,6 +502,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit editOrganisationUnit(Integer organisationUnitId,
                                                  OrganisationUnitRequestDTO organisationUnitDTORequest) {
 
@@ -558,59 +601,64 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         if (Objects.nonNull(organisationUnitDTO.getAllowedThesisTypes())) {
+            if (Objects.isNull(organisationUnit.getAllowedThesisTypes()) ||
+                organisationUnit.getAllowedThesisTypes().isEmpty()) {
+                for (var superInstitutionId : getSuperOUsHierarchyRecursive(
+                    organisationUnit.getId())) {
+                    var superOU = findOne(superInstitutionId);
+
+                    if (superOU.getIsClientInstitutionDl()) {
+                        organisationUnit.setIsClientInstitutionDl(true);
+                        break;
+                    }
+                }
+            }
+
             organisationUnit.setAllowedThesisTypes(
                 organisationUnitDTO.getAllowedThesisTypes().stream().map(Enum::name)
                     .collect(Collectors.toSet()));
         }
 
-        if (SessionUtil.isUserLoggedIn() && Objects.requireNonNull(
-                SessionUtil.getLoggedInUser()).getAuthority().getName()
-            .equals(UserRole.ADMIN.name())) {
+        if (SessionUtil.isUserLoggedIn() && isAdminUser()) {
             organisationUnit.setLegalEntity(organisationUnitDTO.isLegalEntity());
 
-            if (!organisationUnit.getIsClientInstitution()
-                .equals(organisationUnitDTO.isClientInstitution())) {
-                organisationUnit.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
-
-                getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId()).forEach(
-                    organisationUnitId -> {
-                        var subOU = findOne(organisationUnitId);
-                        subOU.setIsClientInstitution(organisationUnitDTO.isClientInstitution());
-                        subOU.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
-                        subOU.setAllowSubdomains(organisationUnitDTO.isAllowingSubdomains());
-                        subOU.setInstitutionEmailDomain(
-                            organisationUnitDTO.getInstitutionEmailDomain());
-                        save(subOU);
-
-                        organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                            organisationUnitId).ifPresent(subOUIndex -> {
-                            subOUIndex.setIsClientInstitution(subOU.getIsClientInstitution());
-                            organisationUnitIndexRepository.save(subOUIndex);
-                        });
-                    });
-            }
+            updateCrisConfiguration(organisationUnit, organisationUnitDTO);
+            updateDlConfiguration(organisationUnit, organisationUnitDTO);
         }
 
-        organisationUnit.setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomain());
-        organisationUnit.setAllowSubdomains(organisationUnitDTO.isAllowingSubdomains());
+        organisationUnit.getCrisConfig()
+            .setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomainCris());
+        organisationUnit.getCrisConfig()
+            .setAllowSubdomains(organisationUnitDTO.isAllowingSubdomainsCris());
 
-        if (organisationUnit.getValidateEmailDomain() &&
-            (Objects.isNull(organisationUnitDTO.getInstitutionEmailDomain()) ||
-                organisationUnitDTO.getInstitutionEmailDomain().isBlank())) {
+        organisationUnit.getDlConfig()
+            .setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomainDl());
+        organisationUnit.getDlConfig()
+            .setAllowSubdomains(organisationUnitDTO.isAllowingSubdomainsDl());
+
+        if ((organisationUnit.getCrisConfig().getValidateEmailDomain() &&
+            !StringUtil.valueExists(organisationUnitDTO.getInstitutionEmailDomainCris()) ||
+            organisationUnit.getDlConfig().getValidateEmailDomain() &&
+                !StringUtil.valueExists(organisationUnitDTO.getInstitutionEmailDomainDl()))) {
             throw new IllegalArgumentException(
                 "You have to specify the domain when domain validation is specified.");
         }
 
-        organisationUnit.setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomain());
+        organisationUnit.getCrisConfig()
+            .setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomainCris());
+        organisationUnit.getDlConfig()
+            .setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomainDl());
     }
 
     @Override
+    @Transactional
     public boolean isIdentifierInUse(String identifier, Integer organisationUnitId) {
         return organisationUnitRepository.existsByScopusAfid(identifier, organisationUnitId) ||
             organisationUnitRepository.existsByOpenAlexId(identifier, organisationUnitId);
     }
 
     @Override
+    @Transactional
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields) {
         return searchFieldsLoader.getSearchFields("organisationUnitSearchFieldConfiguration.json",
@@ -618,6 +666,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit findOrganisationUnitByAccountingId(String accountingId) {
         return organisationUnitRepository.findApprovedOrganisationUnitByAccountingId(accountingId)
             .orElseThrow(
@@ -626,6 +675,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public String setOrganisationUnitLogo(Integer organisationUnitId, ProfilePhotoOrLogoDTO logoDTO)
         throws IOException {
         if (ImageUtil.isMIMETypeInvalid(logoDTO.getFile(), true)) {
@@ -660,6 +710,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void removeOrganisationUnitLogo(Integer organisationUnitId) {
         var organisationUnit = findOne(organisationUnitId);
 
@@ -678,6 +729,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void indexOrganisationUnit(OrganisationUnit organisationUnit,
                                       Integer organisationUnitId) {
         organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(organisationUnitId)
@@ -687,6 +739,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void indexOrganisationUnit(OrganisationUnit organisationUnit) {
         indexOrganisationUnit(organisationUnit,
             organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
@@ -694,6 +747,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnit findRaw(Integer organisationUnitId) {
         return organisationUnitRepository.findRaw(organisationUnitId).orElseThrow(
             () -> new NotFoundException("Organisation Unit with given ID does not exist."));
@@ -750,7 +804,12 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         index.getAllowedThesisTypes().clear();
         index.getAllowedThesisTypes().addAll(organisationUnit.getAllowedThesisTypes());
 
-        index.setIsClientInstitution(organisationUnit.getIsClientInstitution());
+        index.setIsLegalEntity(organisationUnit.getLegalEntity());
+        index.setIsClientInstitutionCris(organisationUnit.getIsClientInstitutionCris());
+        index.setIsClientInstitutionDl(organisationUnit.getIsClientInstitutionDl());
+
+        index.setEmployeeCount(involvementRepository.countActiveEmploymentsForInstitutions(
+            getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId())));
     }
 
     private void indexBelongsToSuperOURelation(OrganisationUnit organisationUnit,
@@ -813,6 +872,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void deleteOrganisationUnit(Integer organisationUnitId) {
         if (organisationUnitRepository.hasEmployees(organisationUnitId) ||
             organisationUnitRepository.hasThesis(organisationUnitId) ||
@@ -833,6 +893,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void forceDeleteOrganisationUnit(Integer organisationUnitId) {
         organisationUnitRepository.deleteInvolvementsForOrganisationUnit(organisationUnitId);
         organisationUnitRepository.deleteRelationsForOrganisationUnit(organisationUnitId);
@@ -885,6 +946,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public OrganisationUnitsRelation createOrganisationUnitsRelation(
         OrganisationUnitsRelationDTO relationDTO) {
         if (Objects.equals(relationDTO.getSourceOrganisationUnitId(),
@@ -910,10 +972,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         var savedRelation = organisationUnitsRelationJPAService.save(newRelation);
         updateIndex(savedRelation);
 
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(
+                savedRelation.getSourceOrganisationUnit().getId()));
+
         return savedRelation;
     }
 
     @Override
+    @Transactional
     public OrganisationUnitsRelationDTO addSubOrganisationUnit(Integer sourceId, Integer targetId) {
         if (organisationUnitsRelationRepository.getSuperOU(targetId).isPresent()) {
             throw new OrganisationUnitReferenceConstraintViolationException(
@@ -939,22 +1006,36 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         updateIndex(savedRelation);
 
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(
+                savedRelation.getSourceOrganisationUnit().getId()));
+
         return creationDTO;
     }
 
     private void updateIndex(OrganisationUnitsRelation savedRelation) {
-        var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-            savedRelation.getSourceOrganisationUnit().getId());
+        var subOU = savedRelation.getSourceOrganisationUnit();
+        var index =
+            organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(subOU.getId());
+
         index.ifPresent(organisationUnitIndex -> {
             indexBelongsToSuperOURelation(savedRelation.getSourceOrganisationUnit(),
                 organisationUnitIndex);
-            organisationUnitIndex.setIsClientInstitution(
-                savedRelation.getTargetOrganisationUnit().getIsClientInstitution());
+            organisationUnitIndex.setIsClientInstitutionCris(
+                savedRelation.getTargetOrganisationUnit().getIsClientInstitutionCris());
+
+            if (Objects.nonNull(subOU.getAllowedThesisTypes()) &&
+                !subOU.getAllowedThesisTypes().isEmpty()) {
+                organisationUnitIndex.setIsClientInstitutionDl(
+                    savedRelation.getTargetOrganisationUnit().getIsClientInstitutionDl());
+            }
+
             organisationUnitIndexRepository.save(organisationUnitIndex);
         });
     }
 
     @Override
+    @Transactional
     public void editOrganisationUnitsRelation(OrganisationUnitsRelationDTO relationDTO,
                                               Integer id) {
         var relationToUpdate = findOrganisationUnitsRelationById(id);
@@ -965,9 +1046,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         setCommonOURelationFields(relationToUpdate, relationDTO);
 
         organisationUnitsRelationJPAService.save(relationToUpdate);
+
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(
+                relationToUpdate.getSourceOrganisationUnit().getId()));
     }
 
     @Override
+    @Transactional
     public void deleteOrganisationUnitsRelation(Integer id) {
         var relationToDelete = findOrganisationUnitsRelationById(id);
         organisationUnitsRelationJPAService.delete(id);
@@ -977,6 +1063,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void deleteOrganisationUnitsRelation(Integer sourceOrganisationUnitId,
                                                 Integer targetOrganisationUnitId) {
         var relations =
@@ -1009,14 +1096,15 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         getOrganisationUnitIdsFromSubHierarchy(organisationUnit.getId()).forEach(
             organisationUnitId -> {
                 var subOU = findOne(organisationUnitId);
-                subOU.setIsClientInstitution(false);
-                subOU.setValidateEmailDomain(false);
-                subOU.setAllowSubdomains(false);
+                subOU.setIsClientInstitutionCris(false);
+                subOU.getCrisConfig().setValidateEmailDomain(false);
+                subOU.getCrisConfig().setAllowSubdomains(false);
                 save(subOU);
             });
     }
 
     @Override
+    @Transactional
     public void approveRelation(Integer relationId, Boolean approve) {
         var relationToApprove = findOrganisationUnitsRelationById(relationId);
         if (relationToApprove.getApproveStatus().equals(ApproveStatus.REQUESTED)) {
@@ -1042,24 +1130,26 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         relation.setTargetOrganisationUnit(
             findOrganisationUnitById(relationDTO.getTargetOrganisationUnitId()));
 
-        if (relation.getTargetOrganisationUnit().getIsClientInstitution() &&
-            !relation.getSourceOrganisationUnit().getIsClientInstitution()) {
+        if (relation.getTargetOrganisationUnit().getIsClientInstitutionCris() &&
+            !relation.getSourceOrganisationUnit().getIsClientInstitutionCris()) {
             getOrganisationUnitIdsFromSubHierarchy(
                 relation.getTargetOrganisationUnit().getId()).forEach(
                 organisationUnitId -> {
                     var subOU = findOne(organisationUnitId);
-                    subOU.setIsClientInstitution(
-                        relation.getTargetOrganisationUnit().getIsClientInstitution());
-                    subOU.setValidateEmailDomain(
-                        relation.getTargetOrganisationUnit().getValidateEmailDomain());
-                    subOU.setAllowSubdomains(
-                        relation.getTargetOrganisationUnit().getAllowSubdomains());
+                    subOU.setIsClientInstitutionCris(
+                        relation.getTargetOrganisationUnit().getIsClientInstitutionCris());
+                    subOU.getCrisConfig().setValidateEmailDomain(
+                        relation.getTargetOrganisationUnit().getCrisConfig()
+                            .getValidateEmailDomain());
+                    subOU.getCrisConfig().setAllowSubdomains(
+                        relation.getTargetOrganisationUnit().getCrisConfig().getAllowSubdomains());
                     save(subOU);
                 });
         }
     }
 
     @Override
+    @Transactional
     public void addRelationProofs(List<DocumentFileDTO> proofs, Integer relationId) {
         var relation = findOrganisationUnitsRelationById(relationId);
         proofs.forEach(proof -> {
@@ -1070,6 +1160,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public void deleteRelationProof(Integer relationId, Integer proofId) {
         var documentFile = documentFileService.findDocumentFileById(proofId);
         documentFileService.delete(proofId);
@@ -1077,6 +1168,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public boolean recursiveCheckIfOrganisationUnitBelongsTo(Integer sourceOrganisationUnitId,
                                                              Integer targetOrganisationUnit) {
         List<OrganisationUnitsRelation> relationsToCheck =
@@ -1100,6 +1192,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
+    @Transactional
     public boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId) {
         return organisationUnitRepository.checkIfInstitutionalAdminsExist(organisationUnitId);
     }
@@ -1125,5 +1218,118 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             hasNextPage = chunk.size() == chunkSize;
         }
         return null;
+    }
+
+    private boolean isAdminUser() {
+        return Objects.requireNonNull(SessionUtil.getLoggedInUser())
+            .getAuthority().getName().equals(UserRole.ADMIN.name());
+    }
+
+    private void updateCrisConfiguration(OrganisationUnit organisationUnit,
+                                         OrganisationUnitRequestDTO dto) {
+        if (!organisationUnit.getIsClientInstitutionCris().equals(dto.isClientInstitutionCris())) {
+            organisationUnit.setIsClientInstitutionCris(dto.isClientInstitutionCris());
+            collectUpdatableSubOrganisationUnits(organisationUnit.getId(), false)
+                .forEach(ouAndIndex ->
+                    updateCrisConfigForSubUnit(ouAndIndex.b, ouAndIndex.a, dto));
+        }
+    }
+
+    private void updateDlConfiguration(OrganisationUnit organisationUnit,
+                                       OrganisationUnitRequestDTO dto) {
+        if (!organisationUnit.getIsClientInstitutionDl().equals(dto.isClientInstitutionDl())) {
+            organisationUnit.setIsClientInstitutionDl(dto.isClientInstitutionDl());
+            collectUpdatableSubOrganisationUnits(organisationUnit.getId(), true)
+                .forEach(ouAndIndex ->
+                    updateDlConfigForSubUnit(ouAndIndex.b, ouAndIndex.a, dto));
+        }
+    }
+
+    public List<Pair<OrganisationUnitIndex, OrganisationUnit>> collectUpdatableSubOrganisationUnits(
+        Integer rootOuId,
+        boolean onlyOnesThatHaveLibrary
+    ) {
+        Set<Integer> visited = new HashSet<>();
+        List<OrganisationUnitIndex> collectedIndexes = new ArrayList<>();
+
+        collectIndexesRecursive(rootOuId, onlyOnesThatHaveLibrary, visited, collectedIndexes);
+
+        List<Integer> dbIds = collectedIndexes.stream()
+            .map(OrganisationUnitIndex::getDatabaseId)
+            .toList();
+
+        var ouById = organisationUnitRepository.findAllById(dbIds)
+            .stream()
+            .collect(Collectors.toMap(OrganisationUnit::getId, ou -> ou));
+
+        return collectedIndexes.stream()
+            .map(idx -> new Pair<>(idx, ouById.get(idx.getDatabaseId())))
+            .toList();
+    }
+
+    private void collectIndexesRecursive(
+        Integer organisationUnitId,
+        boolean onlyOnesThatHaveLibrary,
+        Set<Integer> visited,
+        List<OrganisationUnitIndex> result
+    ) {
+        if (!visited.add(organisationUnitId)) {
+            return;
+        }
+
+        var subIndexes =
+            organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
+                organisationUnitId,
+                Pageable.unpaged()
+            ).getContent();
+
+        for (OrganisationUnitIndex subIndex : subIndexes) {
+
+            if (onlyOnesThatHaveLibrary &&
+                (Objects.isNull(subIndex.getAllowedThesisTypes()) ||
+                    subIndex.getAllowedThesisTypes().isEmpty())) {
+                continue;
+            }
+
+            result.add(subIndex);
+
+            collectIndexesRecursive(subIndex.getDatabaseId(), onlyOnesThatHaveLibrary, visited,
+                result);
+        }
+    }
+
+    private void updateCrisConfigForSubUnit(OrganisationUnit subOU,
+                                            OrganisationUnitIndex subOUIndex,
+                                            OrganisationUnitRequestDTO dto) {
+        subOU.setIsClientInstitutionCris(dto.isClientInstitutionCris());
+        subOU.getCrisConfig().setValidateEmailDomain(dto.isValidatingEmailDomainCris());
+        subOU.getCrisConfig().setAllowSubdomains(dto.isAllowingSubdomainsCris());
+        subOU.getCrisConfig().setInstitutionEmailDomain(dto.getInstitutionEmailDomainCris());
+        save(subOU);
+
+        if (Objects.nonNull(subOUIndex)) {
+            subOUIndex.setIsClientInstitutionCris(subOU.getIsClientInstitutionCris());
+            organisationUnitIndexRepository.save(subOUIndex);
+        }
+    }
+
+    private void updateDlConfigForSubUnit(OrganisationUnit subOU,
+                                          OrganisationUnitIndex subOUIndex,
+                                          OrganisationUnitRequestDTO dto) {
+        if (Objects.isNull(subOU.getAllowedThesisTypes()) ||
+            subOU.getAllowedThesisTypes().isEmpty()) {
+            return;
+        }
+
+        subOU.setIsClientInstitutionDl(dto.isClientInstitutionDl());
+        subOU.getDlConfig().setValidateEmailDomain(dto.isValidatingEmailDomainDl());
+        subOU.getDlConfig().setAllowSubdomains(dto.isAllowingSubdomainsDl());
+        subOU.getDlConfig().setInstitutionEmailDomain(dto.getInstitutionEmailDomainDl());
+        save(subOU);
+
+        if (Objects.nonNull(subOUIndex)) {
+            subOUIndex.setIsClientInstitutionDl(subOU.getIsClientInstitutionDl());
+            organisationUnitIndexRepository.save(subOUIndex);
+        }
     }
 }

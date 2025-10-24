@@ -120,4 +120,6 @@ public interface PersonService extends JPAService<Person> {
     Optional<Person> findPersonByIdentifier(String identifier);
 
     List<Pair<String, Integer>> getTopCoauthorsForPerson(Integer personId);
+
+    String getPersonProfileImageServerFilename(Integer personId);
 }

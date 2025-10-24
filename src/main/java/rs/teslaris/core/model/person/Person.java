@@ -120,11 +120,16 @@ public class Person extends BaseEntity implements Mergeable {
     @Column(name = "institution_id")
     private Set<Integer> employmentInstitutionsIdHierarchy = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "accounting_ids")
     private Set<String> accountingIds = new HashSet<>();
 
     @Column(name = "date_of_last_indicator_harvest")
     private LocalDate dateOfLastIndicatorHarvest;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "internal_identifiers")
+    private Set<String> internalIdentifiers = new HashSet<>();
 
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {

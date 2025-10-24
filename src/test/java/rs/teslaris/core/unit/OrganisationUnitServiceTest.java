@@ -610,7 +610,7 @@ public class OrganisationUnitServiceTest {
         var result =
             organisationUnitService.searchOrganisationUnits(new ArrayList<>(tokens), pageable,
                 SearchRequestType.SIMPLE, personId, topLevelInstitutionId,
-                onlyReturnOnesWhichCanHarvest, null, null, null);
+                onlyReturnOnesWhichCanHarvest, null, null, null, null, null);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);
@@ -1233,9 +1233,9 @@ public class OrganisationUnitServiceTest {
         assertNull(index.getSuperOUNameOther());
         verify(organisationUnitIndexRepository).save(index);
 
-        assertFalse(subOU.getIsClientInstitution());
-        assertFalse(subOU.getValidateEmailDomain());
-        assertFalse(subOU.getAllowSubdomains());
+        assertFalse(subOU.getIsClientInstitutionCris());
+        assertFalse(subOU.getCrisConfig().getValidateEmailDomain());
+        assertFalse(subOU.getCrisConfig().getAllowSubdomains());
         verify(spyService).save(subOU);
 
         verify(organisationUnitsRelationRepository).delete(relation);

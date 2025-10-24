@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
@@ -50,6 +52,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
+@Transactional
 public class MonographServiceImpl extends DocumentPublicationServiceImpl implements
     MonographService {
 
@@ -79,6 +82,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 DocumentRepository documentRepository,
                                 DocumentFileService documentFileService,
                                 CitationService citationService,
+                                ApplicationEventPublisher applicationEventPublisher,
                                 PersonContributionService personContributionService,
                                 ExpressionTransformer expressionTransformer,
                                 EventService eventService,
@@ -96,9 +100,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
         this.journalService = journalService;

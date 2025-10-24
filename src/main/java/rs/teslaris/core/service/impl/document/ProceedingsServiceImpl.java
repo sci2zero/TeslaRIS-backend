@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +76,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentRepository documentRepository,
                                   DocumentFileService documentFileService,
                                   CitationService citationService,
+                                  ApplicationEventPublisher applicationEventPublisher,
                                   PersonContributionService personContributionService,
                                   ExpressionTransformer expressionTransformer,
                                   EventService eventService,
@@ -92,9 +94,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageTagService = languageTagService;
@@ -178,13 +181,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void deleteProceedings(Integer proceedingsId) {
         var proceedingsToDelete = findProceedingsById(proceedingsId);
 
-        if (proceedingsRepository.hasPublications(proceedingsId)) {
+        if (proceedingsRepository.hasPublications(proceedingsToDelete.getId())) {
             throw new ProceedingsReferenceConstraintViolationException("proceedingsInUse");
         }
 
 //        TODO: Should we delete files if we have soft delete
 //        deleteProofsAndFileItems(proceedingsToDelete);
-        proceedingsJPAService.delete(proceedingsId);
+        proceedingsJPAService.delete(proceedingsToDelete.getId());
 
         documentPublicationIndexRepository.delete(
             findDocumentPublicationIndexByDatabaseId(proceedingsId));

@@ -2,7 +2,6 @@ package rs.teslaris.thesislibrary.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -54,15 +53,6 @@ public class RegistryBookEntryEditCheckAspect {
                         userService.getUserOrganisationUnitId(userId))
                     .contains(registryBookService.findOne(registryBookEntryId)
                         .getDissertationInformation().getOrganisationUnit().getId())) {
-
-                    // TODO: Remove this
-                    var subunits = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                        userService.getUserOrganisationUnitId(userId));
-                    log.warn("REGISTRY BOOK ENTRY EDIT CHECK -> SUBUNITS: [{}] -> PROMOTION_OU: {}",
-                        subunits.stream().map(String::valueOf).collect(Collectors.joining(",")),
-                        registryBookService.findOne(registryBookEntryId)
-                            .getDissertationInformation().getOrganisationUnit().getId());
-
                     throw new CantEditException(
                         "Unauthorised to edit or use this registry book entry.");
                 }

@@ -30,7 +30,7 @@ import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingService;
 
 @RestController
-@RequestMapping("/api/thesis-library/report/")
+@RequestMapping("/api/thesis-library/report")
 @RequiredArgsConstructor
 @Traceable
 public class ThesisLibraryReportingController {

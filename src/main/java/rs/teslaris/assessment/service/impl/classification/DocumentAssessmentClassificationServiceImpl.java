@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -44,10 +45,12 @@ import rs.teslaris.assessment.service.impl.cruddelegate.DocumentClassificationJP
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.DocumentAssessmentClassificationService;
+import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -80,6 +83,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.QuadConsumer;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
 @Service
@@ -118,12 +122,14 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final NotificationService notificationService;
 
+    private final PersonAssessmentClassificationService personAssessmentClassificationService;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
-        ConferenceService conferenceService,
+        ConferenceService conferenceService, ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
@@ -135,9 +141,10 @@ public class DocumentAssessmentClassificationServiceImpl
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository,
         DocumentClassificationJPAServiceImpl documentClassificationJPAService,
-        NotificationService notificationService) {
+        NotificationService notificationService,
+        PersonAssessmentClassificationService personAssessmentClassificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, entityAssessmentClassificationRepository);
+            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -153,6 +160,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.eventIndexRepository = eventIndexRepository;
         this.documentClassificationJPAService = documentClassificationJPAService;
         this.notificationService = notificationService;
+        this.personAssessmentClassificationService = personAssessmentClassificationService;
     }
 
     @Override
@@ -192,11 +200,15 @@ public class DocumentAssessmentClassificationServiceImpl
             Integer.parseInt(document.getDocumentDate().split("-")[0]));
         newDocumentClassification.setDocument(document);
 
-        var savedDocument =
+        var savedDocumentClassification =
             documentAssessmentClassificationRepository.save(newDocumentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(document.getId());
 
-        return EntityAssessmentClassificationConverter.toDTO(savedDocument);
+        applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
+            document.getContributors().stream().filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId()).toList()));
+
+        return EntityAssessmentClassificationConverter.toDTO(savedDocumentClassification);
     }
 
     private void checkIfDocumentIsAThesis(Document document) {
@@ -216,6 +228,10 @@ public class DocumentAssessmentClassificationServiceImpl
         save(documentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(
             documentClassification.getDocument().getId());
+        applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
+            documentClassification.getDocument().getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson())).map(c -> c.getPerson().getId())
+                .toList()));
     }
 
     @Override
@@ -340,6 +356,8 @@ public class DocumentAssessmentClassificationServiceImpl
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
+
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
     }
 
     private void assessJournalPublication(DocumentPublicationIndex journalPublicationIndex,
@@ -373,9 +391,14 @@ public class DocumentAssessmentClassificationServiceImpl
                             new Pair<>(manualClassification.get().getAssessmentClassification(),
                                 manualClassification.get().getClassificationReason()));
                     } else if (!classificationList.isEmpty()) {
-                        classifications.add(
-                            new Pair<>(classificationList.getFirst().getAssessmentClassification(),
-                                classificationList.getFirst().getClassificationReason()));
+                        ClassificationPriorityMapping.getBestJournalClassification(
+                            classificationList.stream()
+                                .map(EntityAssessmentClassification::getAssessmentClassification)
+                                .toList()).ifPresent(bestClassification ->
+                            classifications.add(
+                                new Pair<>(bestClassification,
+                                    classificationList.getFirst().getClassificationReason()))
+                        );
                     } else {
                         handleRelationAssessments(commission,
                             (targetCommissionId) -> {
@@ -473,9 +496,14 @@ public class DocumentAssessmentClassificationServiceImpl
                         new Pair<>(manualClassification.get().getAssessmentClassification(),
                             manualClassification.get().getClassificationReason()));
                 } else if (!classificationList.isEmpty()) {
-                    classifications.add(
-                        new Pair<>(classificationList.getFirst().getAssessmentClassification(),
-                            classificationList.getFirst().getClassificationReason()));
+                    ClassificationPriorityMapping.getBestJournalClassification(
+                        classificationList.stream()
+                            .map(EntityAssessmentClassification::getAssessmentClassification)
+                            .toList()).ifPresent(bestClassification ->
+                        classifications.add(
+                            new Pair<>(bestClassification,
+                                classificationList.getFirst().getClassificationReason()))
+                    );
                 } else {
                     handleRelationAssessments(commission,
                         (targetCommissionId) -> {
@@ -798,6 +826,22 @@ public class DocumentAssessmentClassificationServiceImpl
                 if (!documentIndex.getAssessedBy().contains(commission.getId())) {
                     documentIndex.getAssessedBy().add(commission.getId());
                 }
+
+                var assessmentTriple = new Triple<>(commission.getId(),
+                    documentClassification.getAssessmentClassification().getCode(), false);
+
+                if (!documentIndex.getCommissionAssessments().contains(assessmentTriple)) {
+                    documentIndex.getCommissionAssessments().add(assessmentTriple);
+                }
+
+                assessmentTriple = new Triple<>(commission.getId(),
+                    documentClassification.getAssessmentClassification().getCode().substring(0, 2) +
+                        "0", false);
+
+                if (!documentIndex.getCommissionAssessmentGroups().contains(assessmentTriple)) {
+                    documentIndex.getCommissionAssessmentGroups().add(assessmentTriple);
+                }
+
                 documentPublicationIndexRepository.save(documentIndex);
             });
     }

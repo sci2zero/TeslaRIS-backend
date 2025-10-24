@@ -3,8 +3,10 @@ package rs.teslaris.core.service.impl.document;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.SoftwareConverter;
 import rs.teslaris.core.dto.document.SoftwareDTO;
@@ -36,6 +38,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
+@Transactional
 public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implements SoftwareService {
 
     private final SoftwareJPAServiceImpl softwareJPAService;
@@ -51,6 +54,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                DocumentRepository documentRepository,
                                DocumentFileService documentFileService,
                                CitationService citationService,
+                               ApplicationEventPublisher applicationEventPublisher,
                                PersonContributionService personContributionService,
                                ExpressionTransformer expressionTransformer,
                                EventService eventService,
@@ -63,9 +67,10 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }
@@ -152,6 +157,9 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
         softwareJPAService.delete(softwareId);
         this.delete(softwareId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(softwareId));
     }
 
     @Override
@@ -181,6 +189,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                 software.getId()).orElse(new DocumentPublicationIndex()));
     }
 
+    @Transactional
     private void indexSoftware(Software software, DocumentPublicationIndex index) {
         indexCommonFields(software, index);
 

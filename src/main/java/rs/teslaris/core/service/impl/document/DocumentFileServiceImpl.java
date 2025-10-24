@@ -6,6 +6,7 @@ import io.minio.GetObjectResponse;
 import jakarta.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -88,7 +89,9 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private final SearchService<DocumentFileIndex> searchService;
 
     private final ExpressionTransformer expressionTransformer;
+
     private final Tika tika = new Tika();
+
     @Value("${document_file.approved_by_default}")
     private Boolean documentFileApprovedByDefault;
 
@@ -292,7 +295,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
 
         if (Objects.nonNull(documentFileToEdit.getDocument()) &&
-            documentFileToEdit.getDocument().getIsArchived()) {
+            documentFileToEdit.getDocument().getIsArchived() &&
+            !SessionUtil.isUserLoggedInAndAdmin()) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 
@@ -428,20 +432,25 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     private String detectMimeType(MultipartFile file) {
-        var contentAnalyzer = new Tika();
+        var originalFilename = FilenameUtils.normalize(
+            Objects.requireNonNullElse(file.getOriginalFilename(), ""));
 
         String trueMimeType;
         String specifiedMimeType;
 
         try {
+            var originalFilenamePath = Path.of(originalFilename);
+            if (SessionUtil.isUserLoggedInAndAdmin()) {
+                return Files.probeContentType(originalFilenamePath);
+            }
+
+            var contentAnalyzer = new Tika();
             trueMimeType = contentAnalyzer.detect(file.getInputStream());
 
-            var originalFilename = FilenameUtils.normalize(
-                Objects.requireNonNullElse(file.getOriginalFilename(), ""));
             if (originalFilename.isEmpty()) {
                 throw new StorageException("File does not have a valid name.");
             }
-            specifiedMimeType = Files.probeContentType(Path.of(originalFilename));
+            specifiedMimeType = Files.probeContentType(originalFilenamePath);
 
         } catch (IOException e) {
             throw new StorageException("Failed to detect MIME type for file.");
@@ -467,9 +476,33 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             return;
         }
 
-        var documentContent = extractDocumentContent(multipartPdfFile);
-        var documentTitle = Objects.nonNull(documentFile.getId()) ? documentFile.getFilename() :
-            extractDocumentTitle(multipartPdfFile);
+        try (var inputStream = multipartPdfFile.getInputStream()) {
+            var documentContent = extractDocumentContent(inputStream);
+            var documentTitle = Objects.nonNull(documentFile.getId()) ? documentFile.getFilename() :
+                extractDocumentTitle(multipartPdfFile);
+
+            var contentLanguageDetected = detectLanguage(documentContent);
+            var titleLanguageDetected = detectLanguage(documentTitle);
+
+            saveDocumentIndex(documentContent, documentTitle, contentLanguageDetected,
+                titleLanguageDetected, documentFile, serverFilename, documentIndex);
+        } catch (IOException e) {
+            throw new LoadingException("Error while trying to index PDF file content.");
+        }
+
+        documentFileIndexRepository.save(documentIndex);
+    }
+
+    @Override
+    public void parseAndIndexPdfDocument(DocumentFile documentFile, InputStream inputStream,
+                                         String documentTitle, String serverFilename,
+                                         DocumentFileIndex documentIndex) {
+        // only called for duplicated files, no danger from any kind of injection/spoofing
+        if (!serverFilename.endsWith(".pdf")) {
+            return;
+        }
+
+        var documentContent = extractDocumentContent(inputStream);
 
         var contentLanguageDetected = detectLanguage(documentContent);
         var titleLanguageDetected = detectLanguage(documentTitle);
@@ -563,6 +596,10 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private boolean isPdfFile(MultipartFile multipartFile) {
         try {
             var isSpecifiedPDF = Objects.equals(multipartFile.getContentType(), "application/pdf");
+            if (SessionUtil.isUserLoggedInAndAdmin()) {
+                return isSpecifiedPDF;
+            }
+
             var detectedType = tika.detect(multipartFile.getInputStream());
 
             if (isSpecifiedPDF && !detectedType.equals("application/pdf")) {
@@ -575,9 +612,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         }
     }
 
-    private String extractDocumentContent(MultipartFile multipartPdfFile) {
-        try (var inputStream = multipartPdfFile.getInputStream();
-             var pdDocument = Loader.loadPDF(inputStream.readAllBytes())) {
+    private String extractDocumentContent(InputStream inputStream) {
+        try (var pdDocument = Loader.loadPDF(inputStream.readAllBytes())) {
             var textStripper = new PDFTextStripper();
             return textStripper.getText(pdDocument);
         } catch (IOException e) {

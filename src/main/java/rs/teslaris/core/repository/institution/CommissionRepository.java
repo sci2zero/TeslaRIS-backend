@@ -53,6 +53,17 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
         "WHERE eac.document.id = :documentId")
     List<Integer> findCommissionsThatAssessedDocument(Integer documentId);
 
+    @Query("""
+            SELECT NEW rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo(
+                eac.commission.id, eac.assessmentClassification.code, eac.manual
+            )
+            FROM DocumentAssessmentClassification eac
+            WHERE eac.document.id = :documentId
+              AND eac.commission.id IN :commissionIds
+        """)
+    List<AssessmentClassificationBasicInfo> findAssessmentClassificationBasicInfoForDocumentAndCommissions(
+        Integer documentId, List<Integer> commissionIds);
+
     @Modifying
     @Query("UPDATE Commission c SET c.isDefault = false WHERE c.id != :commissionId")
     void setOthersAsNonDefault(Integer commissionId);

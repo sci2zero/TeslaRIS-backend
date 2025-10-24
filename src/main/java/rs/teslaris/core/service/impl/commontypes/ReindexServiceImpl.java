@@ -6,9 +6,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
+import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -72,9 +75,12 @@ public class ReindexServiceImpl implements ReindexService {
 
     private final ThesisService thesisService;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
     @Override
-    public void reindexDatabase(List<EntityType> indexesToRepopulate) {
+    public void reindexDatabase(List<EntityType> indexesToRepopulate,
+                                Boolean reharvestCitationIndicators) {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         if (indexesToRepopulate.contains(EntityType.USER_ACCOUNT)) {
@@ -115,6 +121,15 @@ public class ReindexServiceImpl implements ReindexService {
 
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            if (indexesToRepopulate.contains(EntityType.PUBLICATION) ||
+                indexesToRepopulate.contains(EntityType.PERSON)) {
+                applicationEventPublisher.publishEvent(new AllResearcherPointsReindexingEvent());
+
+                if (reharvestCitationIndicators) {
+                    applicationEventPublisher.publishEvent(new HarvestExternalIndicatorsEvent());
+                }
+            }
         } catch (CompletionException e) {
             log.error("Error during parallel reindexing. Reason: ", e);
         }
