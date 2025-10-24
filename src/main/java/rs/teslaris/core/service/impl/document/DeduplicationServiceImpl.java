@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.ScriptQuery;
 import java.util.Arrays;
 import java.util.List;
@@ -188,6 +189,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
             );
 
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        } catch (Exception e) {
+            log.warn("Deduplication encountered an error. Reason: {}", e.getMessage());
         } finally {
             deduplicationLock = false;
             log.info("All deduplication processes completed. Total duplicates found: {}.",
@@ -434,42 +437,50 @@ public class DeduplicationServiceImpl implements DeduplicationService {
             (pageNumber) -> personIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE))
                 .getContent(),
             personSearchService,
-            item -> {
-                var tokens = Arrays.stream(item.getName().trim().split("; "))
-                    .flatMap(name -> Arrays.stream(name.split(" ")))
-                    .map(namePart -> namePart.replace("(", "").replace(")", ""))
-                    .toList();
+            item -> BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+                b.should(sh -> sh.bool(outerBool -> {
+                    var variantQueries = Arrays.stream(item.getName().trim().split("; "))
+                        .map(nameVariant -> {
+                            var tokens = Arrays.stream(nameVariant.split(" "))
+                                .map(namePart -> namePart.replace("(", "").replace(")", ""))
+                                .filter(token -> !token.isBlank())
+                                .toList();
 
-                return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-                    b.must(bq -> {
-                        bq.bool(eq -> {
-                            tokens.forEach(
-                                token -> {
-                                    if (token.trim().isEmpty()) {
-                                        return;
-                                    }
-
-                                    eq.should(
-                                        sb -> sb.matchPhrase(m -> m.field("name").query(token)));
-                                }
-                            );
-
-                            if (Objects.nonNull(item.getBirthdate()) &&
-                                !item.getBirthdate().isBlank()) {
-                                eq.must(sb -> sb.match(
-                                    m -> m.field("birthdate").query(item.getBirthdate())));
+                            if (tokens.isEmpty()) {
+                                return null;
                             }
 
-                            return eq.minimumShouldMatch(String.valueOf(Math.ceil(
-                                0.7 * tokens.stream().filter(String::isBlank).toList().size())));
-                        });
-                        return bq;
-                    });
-                    b.mustNot(sb -> sb.match(
-                        m -> m.field("databaseId").query(item.getDatabaseId())));
-                    return b;
-                })));
-            },
+                            return Query.of(qv -> qv.bool(ib -> {
+                                tokens.forEach(token ->
+                                    ib.should(
+                                        sb -> sb.matchPhrase(m -> m.field("name").query(token)))
+                                );
+
+                                if (item.getBirthdate() != null && !item.getBirthdate().isBlank()) {
+                                    ib.must(sb -> sb.match(
+                                        m -> m.field("birthdate").query(item.getBirthdate())));
+                                }
+
+                                return ib.minimumShouldMatch(
+                                    String.valueOf(
+                                        (int) Math.max(1, Math.ceil(0.7 * tokens.size()))
+                                    )
+                                );
+                            }));
+                        })
+                        .filter(Objects::nonNull)
+                        .toList();
+
+                    variantQueries.forEach(qv -> outerBool.should(dq -> dq
+                        .bool(qv.bool())
+                    ));
+
+                    return outerBool.minimumShouldMatch("1");
+                }));
+
+                b.mustNot(sb -> sb.match(m -> m.field("databaseId").query(item.getDatabaseId())));
+                return b;
+            }))),
             PersonIndex::getDatabaseId,
             PersonIndex::getName,
             PersonIndex::getName,
