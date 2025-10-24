@@ -11,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.integration.BaseTest;
-import rs.teslaris.reporting.dto.configuration.DigitalLibraryChartDisplaySettingsDTO;
 import rs.teslaris.reporting.dto.configuration.DocumentChartDisplaySettingsDTO;
 import rs.teslaris.reporting.dto.configuration.FullChartDisplaySettingsDTO;
 import rs.teslaris.reporting.dto.configuration.OUChartDisplaySettingsDTO;
@@ -71,20 +70,7 @@ public class BaseChartDisplayConfigurationControllerTest extends BaseTest {
                 new ChartDisplaySettings(true, true),
                 new ChartDisplaySettings(true, true)
             ),
-            new DigitalLibraryChartDisplaySettingsDTO(
-                new ChartDisplaySettings(true, false),
-                new ChartDisplaySettings(true, false),
-                new ChartDisplaySettings(true, false),
-                new ChartDisplaySettings(true, false),
-                new ChartDisplaySettings(true, true),
-                new ChartDisplaySettings(true, true),
-                new ChartDisplaySettings(true, false),
-                new ChartDisplaySettings(true, false),
-                new ChartDisplaySettings(true, false),
-                new ChartDisplaySettings(true, false),
-                new ChartDisplaySettings(true, true),
-                new ChartDisplaySettings(true, true)
-            )
+            null // will be used like this in production
         );
     }
 

@@ -162,6 +162,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
     @Scheduled(cron = "${deduplication.schedule}")
     protected synchronized void performAllScheduledDeduplicationProcesses() {
         if (!deduplicationAllowed) {
+            log.info("Deduplication not allowed. Aborting.");
             return;
         }
 
