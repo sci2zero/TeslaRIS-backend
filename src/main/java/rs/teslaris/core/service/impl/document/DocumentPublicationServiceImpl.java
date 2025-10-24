@@ -604,7 +604,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 .toList());
         }
 
-
         switch (contribution.getContributionType()) {
             case AUTHOR ->
                 handleAuthorContribution(contribution, index, contributorName, personExists);

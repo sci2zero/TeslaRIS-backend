@@ -31,6 +31,7 @@ import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.service.interfaces.visualizations.DocumentVisualizationDataService;
 import rs.teslaris.reporting.utility.QueryUtil;
@@ -46,6 +47,8 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
     private final DocumentPublicationService documentPublicationService;
 
     private final SearchService<DocumentPublicationIndex> searchService;
+
+    private final OrganisationUnitService organisationUnitService;
 
 
     @Override
@@ -279,7 +282,9 @@ public class DocumentVisualizationDataServiceImpl implements DocumentVisualizati
                 b.must(q -> q.term(t -> t.field("author_ids").value(personId)));
             } else {
                 var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(institutionId);
-                b.must(QueryUtil.organisationUnitMatchQuery(List.of(institutionId), searchFields));
+                b.must(QueryUtil.organisationUnitMatchQuery(
+                    organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId),
+                    searchFields));
             }
 
             if (Objects.nonNull(type)) {

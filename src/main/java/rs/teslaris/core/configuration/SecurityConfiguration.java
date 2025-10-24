@@ -214,6 +214,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/file/logo/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/file/image/{personId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/file/raw-image/{personId}").permitAll()
 
                 // ERROR
                 .requestMatchers("/error").permitAll()

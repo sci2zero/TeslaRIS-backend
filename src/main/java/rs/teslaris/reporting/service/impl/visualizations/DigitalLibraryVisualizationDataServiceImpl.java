@@ -51,7 +51,10 @@ public class DigitalLibraryVisualizationDataServiceImpl
                                                                  Integer endYear,
                                                                  List<ThesisType> allowedThesisTypes) {
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
-        var yearRange = constructYearRange(startYear, endYear, organisationUnitId, searchFields,
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
+        var yearRange = constructYearRange(startYear, endYear, institutionIds, searchFields,
             allowedThesisTypes);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b) ||
             !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
@@ -62,7 +65,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
         for (int i = yearRange.a; i <= yearRange.b; i++) {
             try {
                 var counts =
-                    getThesisCountsByTypeForOUAndYearAndAllowedTypes(organisationUnitId, i,
+                    getThesisCountsByTypeForOUAndYearAndAllowedTypes(institutionIds, i,
                         searchFields, allowedThesisTypes);
                 if (Objects.nonNull(counts)) {
                     yearlyCounts.add(new YearlyCounts(i, counts));
@@ -216,19 +219,19 @@ public class DigitalLibraryVisualizationDataServiceImpl
     }
 
     private Pair<Integer, Integer> constructYearRange(Integer startYear, Integer endYear,
-                                                      Integer organisationUnitId,
+                                                      List<Integer> organisationUnitIds,
                                                       List<String> searchFields,
                                                       List<ThesisType> allowedThesisTypes) {
         if (Objects.isNull(startYear) || Objects.isNull(endYear)) {
             var yearRange =
-                findPublicationYearRange(organisationUnitId, searchFields, allowedThesisTypes);
+                findPublicationYearRange(organisationUnitIds, searchFields, allowedThesisTypes);
             return new Pair<>(yearRange.a, yearRange.b);
         }
 
         return new Pair<>(startYear, endYear);
     }
 
-    private Pair<Integer, Integer> findPublicationYearRange(Integer organisationUnitId,
+    private Pair<Integer, Integer> findPublicationYearRange(List<Integer> organisationUnitIds,
                                                             List<String> searchFields,
                                                             List<ThesisType> allowedThesisTypes) {
         SearchResponse<Void> response;
@@ -240,7 +243,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
                         .bool(b -> {
                                 b.must(m -> m.term(t -> t.field("is_approved").value(true)))
                                     .must(m -> m.term(t -> t.field("type").value("THESIS")))
-                                    .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                                    .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                                         searchFields))
                                     .must(m -> m.range(t -> t.field("year").gt(JsonData.of(0))));
 
@@ -256,7 +259,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
             );
         } catch (IOException e) {
             log.error("Error finding publication year range for thesis from OU with ID {}.",
-                organisationUnitId);
+                organisationUnitIds);
             return new Pair<>(null, null);
         }
 
@@ -267,7 +270,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
     }
 
     private Map<String, Long> getThesisCountsByTypeForOUAndYearAndAllowedTypes(
-        Integer organisationUnitId,
+        List<Integer> organisationUnitIds,
         Integer year,
         List<String> searchFields,
         List<ThesisType> allowedThesisTypes
@@ -279,7 +282,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
                     .bool(b -> {
                             b.must(m -> m.term(t -> t.field("is_approved").value(true)))
                                 .must(m -> m.term(t -> t.field("year").value(year)))
-                                .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                                .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                                     searchFields))
                                 .must(m -> m.term(t -> t.field("type").value("THESIS")));
 

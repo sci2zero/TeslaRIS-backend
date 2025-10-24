@@ -50,7 +50,10 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                                                                       Integer startYear,
                                                                       Integer endYear) {
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
-        var yearRange = constructYearRange(startYear, endYear, organisationUnitId, searchFields);
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
+        var yearRange = constructYearRange(startYear, endYear, institutionIds, searchFields);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
@@ -59,7 +62,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         for (int i = yearRange.a; i <= yearRange.b; i++) {
             try {
                 var counts =
-                    getPublicationCountsByTypeForOUAndYear(organisationUnitId, i, searchFields);
+                    getPublicationCountsByTypeForOUAndYear(institutionIds, i, searchFields);
                 if (Objects.nonNull(counts)) {
                     yearlyCounts.add(new YearlyCounts(i, counts));
                 }
@@ -79,6 +82,9 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
         var commissions = QueryUtil.fetchCommissionsForOrganisationUnit(organisationUnitId);
 
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
+
         commissions.forEach(commission -> {
             SearchResponse<Void> response;
             try {
@@ -88,7 +94,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                         .query(q -> q
                             .bool(b -> b
                                 .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                                .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                                .must(QueryUtil.organisationUnitMatchQuery(institutionIds,
                                     searchFields))
                                 .must(m -> m.range(
                                     t -> t.field("year").gte(JsonData.of(startYear))
@@ -143,8 +149,10 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     public List<CommissionYearlyCounts> getMCategoryCountsForOrganisationUnit(
         Integer organisationUnitId, Integer startYear, Integer endYear) {
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(organisationUnitId);
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
-        var yearRange = constructYearRange(startYear, endYear, organisationUnitId, searchFields);
+        var yearRange = constructYearRange(startYear, endYear, institutionIds, searchFields);
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
@@ -159,7 +167,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                 try {
                     yearlyCounts.add(new YearlyCounts(i,
                         getPublicationMCategoryCountsByTypeForOUAndCommissionAndYear(
-                            organisationUnitId, commission.a, i, searchFields)));
+                            institutionIds, commission.a, i, searchFields)));
 
                 } catch (IOException e) {
                     log.warn("Unable to fetch OU M category counts for {}. Adding all zeros.", i);
@@ -370,7 +378,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     }
 
     private Map<String, Long> getPublicationCountsByTypeForOUAndYear(
-        Integer organisationUnitId,
+        List<Integer> organisationUnitIds,
         Integer year,
         List<String> searchFields
     ) throws IOException {
@@ -381,7 +389,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .bool(b -> b
                         .must(m -> m.term(t -> t.field("is_approved").value(true)))
                         .must(m -> m.term(t -> t.field("year").value(year)))
-                        .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                        .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                             searchFields))
                         .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                     )
@@ -455,7 +463,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
         }
     }
 
-    private Pair<Integer, Integer> findPublicationYearRange(Integer organisationUnitId,
+    private Pair<Integer, Integer> findPublicationYearRange(List<Integer> organisationUnitIds,
                                                             List<String> searchFields) {
         SearchResponse<Void> response;
         try {
@@ -465,7 +473,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .query(q -> q
                         .bool(b -> b
                             .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                            .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                            .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                                 searchFields))
                             .must(m -> m.range(t -> t.field("year").gt(JsonData.of(0))))
                         )
@@ -476,7 +484,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
             );
         } catch (IOException e) {
             log.error("Error finding publication year range for OU with ID {}.",
-                organisationUnitId);
+                organisationUnitIds);
             return new Pair<>(null, null);
         }
 
@@ -487,7 +495,8 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     }
 
     private Map<String, Long> getPublicationMCategoryCountsByTypeForOUAndCommissionAndYear(
-        Integer organisationUnitId, Integer commissionId, Integer year, List<String> searchFields)
+        List<Integer> organisationUnitIds, Integer commissionId, Integer year,
+        List<String> searchFields)
         throws IOException {
         SearchResponse<Void> response = elasticsearchClient.search(s -> s
                 .index("document_publication")
@@ -496,7 +505,7 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
                     .bool(b -> b
                         .must(m -> m.term(t -> t.field("is_approved").value(true)))
                         .must(m -> m.term(t -> t.field("year").value(year)))
-                        .must(QueryUtil.organisationUnitMatchQuery(List.of(organisationUnitId),
+                        .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                             searchFields))
                         .must(m -> m.bool(sb -> sb
                             .should(sn -> sn.term(
@@ -528,10 +537,10 @@ public class OrganisationUnitVisualizationDataServiceImpl implements
     }
 
     private Pair<Integer, Integer> constructYearRange(Integer startYear, Integer endYear,
-                                                      Integer organisationUnitId,
+                                                      List<Integer> organisationUnitIds,
                                                       List<String> searchFields) {
         if (Objects.isNull(startYear) || Objects.isNull(endYear)) {
-            var yearRange = findPublicationYearRange(organisationUnitId, searchFields);
+            var yearRange = findPublicationYearRange(organisationUnitIds, searchFields);
             return new Pair<>(yearRange.a, yearRange.b);
         }
 

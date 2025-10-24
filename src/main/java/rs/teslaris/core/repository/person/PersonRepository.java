@@ -119,4 +119,11 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query(value = "SELECT * FROM persons p WHERE p.id = :personId", nativeQuery = true)
     Optional<Person> findRaw(Integer personId);
+
+    @Query("SELECT p.profilePhoto.imageServerName " +
+        "FROM Person p " +
+        "WHERE p.id IN :personId " +
+        "AND p.profilePhoto IS NOT NULL " +
+        "AND p.profilePhoto.imageServerName IS NOT NULL")
+    Optional<String> findProfileImageByPersonId(Integer personId);
 }

@@ -47,6 +47,7 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.reporting.service.impl.visualizations.DocumentVisualizationDataServiceImpl;
 
 @SpringBootTest
@@ -60,6 +61,9 @@ class DocumentVisualizationDataServiceTest {
 
     @Mock
     private SearchService<DocumentPublicationIndex> searchService;
+
+    @Mock
+    private OrganisationUnitService organisationUnitService;
 
     @InjectMocks
     private DocumentVisualizationDataServiceImpl service;
@@ -338,6 +342,8 @@ class DocumentVisualizationDataServiceTest {
         var pageable = PageRequest.of(0, 5);
         var expectedPage = new PageImpl<>(List.of(new DocumentPublicationIndex()));
 
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+            institutionId)).thenReturn(List.of(institutionId));
         when(searchService.runQuery(any(Query.class), eq(pageable),
             eq(DocumentPublicationIndex.class), eq("document_publication")))
             .thenReturn(expectedPage);

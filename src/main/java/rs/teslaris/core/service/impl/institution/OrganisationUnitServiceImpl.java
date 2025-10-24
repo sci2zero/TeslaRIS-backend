@@ -74,6 +74,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -1228,9 +1229,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                          OrganisationUnitRequestDTO dto) {
         if (!organisationUnit.getIsClientInstitutionCris().equals(dto.isClientInstitutionCris())) {
             organisationUnit.setIsClientInstitutionCris(dto.isClientInstitutionCris());
-            updateSubOrganisationUnits(organisationUnit.getId(),
-                (subOU, subOUIndex) -> updateCrisConfigForSubUnit(subOU, subOUIndex, dto),
-                false);
+            collectUpdatableSubOrganisationUnits(organisationUnit.getId(), false)
+                .forEach(ouAndIndex ->
+                    updateCrisConfigForSubUnit(ouAndIndex.b, ouAndIndex.a, dto));
         }
     }
 
@@ -1238,34 +1239,63 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                        OrganisationUnitRequestDTO dto) {
         if (!organisationUnit.getIsClientInstitutionDl().equals(dto.isClientInstitutionDl())) {
             organisationUnit.setIsClientInstitutionDl(dto.isClientInstitutionDl());
-            updateSubOrganisationUnits(organisationUnit.getId(),
-                (subOU, subOUIndex) -> updateDlConfigForSubUnit(subOU, subOUIndex, dto),
-                true);
+            collectUpdatableSubOrganisationUnits(organisationUnit.getId(), true)
+                .forEach(ouAndIndex ->
+                    updateDlConfigForSubUnit(ouAndIndex.b, ouAndIndex.a, dto));
         }
     }
 
-    private void updateSubOrganisationUnits(Integer organisationUnitId,
-                                            BiConsumer<OrganisationUnit, OrganisationUnitIndex> updateAction,
-                                            Boolean onlyOnesThatHaveLibrary) {
-        getOrganisationUnitIdsFromSubHierarchy(organisationUnitId).stream()
-            .filter(Objects::nonNull)
-            .forEach(subUnitId -> {
-                var subOUIndex = organisationUnitIndexRepository
-                    .findOrganisationUnitIndexByDatabaseId(subUnitId).orElse(null);
+    public List<Pair<OrganisationUnitIndex, OrganisationUnit>> collectUpdatableSubOrganisationUnits(
+        Integer rootOuId,
+        boolean onlyOnesThatHaveLibrary
+    ) {
+        Set<Integer> visited = new HashSet<>();
+        List<OrganisationUnitIndex> collectedIndexes = new ArrayList<>();
 
-                if (Objects.isNull(subOUIndex)) {
-                    return;
-                }
+        collectIndexesRecursive(rootOuId, onlyOnesThatHaveLibrary, visited, collectedIndexes);
 
-                if (onlyOnesThatHaveLibrary && (
-                    Objects.isNull(subOUIndex.getAllowedThesisTypes()) ||
-                        subOUIndex.getAllowedThesisTypes().isEmpty())) {
-                    return;
-                }
+        List<Integer> dbIds = collectedIndexes.stream()
+            .map(OrganisationUnitIndex::getDatabaseId)
+            .toList();
 
-                var subOU = findOne(subUnitId);
-                updateAction.accept(subOU, subOUIndex);
-            });
+        var ouById = organisationUnitRepository.findAllById(dbIds)
+            .stream()
+            .collect(Collectors.toMap(OrganisationUnit::getId, ou -> ou));
+
+        return collectedIndexes.stream()
+            .map(idx -> new Pair<>(idx, ouById.get(idx.getDatabaseId())))
+            .toList();
+    }
+
+    private void collectIndexesRecursive(
+        Integer organisationUnitId,
+        boolean onlyOnesThatHaveLibrary,
+        Set<Integer> visited,
+        List<OrganisationUnitIndex> result
+    ) {
+        if (!visited.add(organisationUnitId)) {
+            return;
+        }
+
+        var subIndexes =
+            organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
+                organisationUnitId,
+                Pageable.unpaged()
+            ).getContent();
+
+        for (OrganisationUnitIndex subIndex : subIndexes) {
+
+            if (onlyOnesThatHaveLibrary &&
+                (Objects.isNull(subIndex.getAllowedThesisTypes()) ||
+                    subIndex.getAllowedThesisTypes().isEmpty())) {
+                continue;
+            }
+
+            result.add(subIndex);
+
+            collectIndexesRecursive(subIndex.getDatabaseId(), onlyOnesThatHaveLibrary, visited,
+                result);
+        }
     }
 
     private void updateCrisConfigForSubUnit(OrganisationUnit subOU,

@@ -1391,6 +1391,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return response;
     }
 
+    @Override
+    public String getPersonProfileImageServerFilename(Integer personId) {
+        return personRepository.findProfileImageByPersonId(personId).orElse(null);
+    }
+
     public List<Integer> findTopCoauthors(Integer authorId) {
         try {
             var response = elasticsearchClient.search(s -> s

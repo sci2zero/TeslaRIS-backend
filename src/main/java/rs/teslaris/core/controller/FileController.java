@@ -22,6 +22,7 @@ import org.hibernate.Hibernate;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -252,6 +253,35 @@ public class FileController {
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .body(fullSize ? new InputStreamResource(fileService.loadAsResource(filename)) :
                 new ByteArrayResource(outputStream.toByteArray()));
+    }
+
+    @GetMapping("/raw-image/{personId}")
+    public ResponseEntity<InputStreamResource> serveImageFileRaw(@PathVariable Integer personId) {
+        try {
+            var filename = personService.getPersonProfileImageServerFilename(personId);
+            var file = fileService.loadAsResource(filename);
+
+            var resource = new InputStreamResource(file);
+
+            var contentType = file.headers().get("Content-Type");
+            if (Objects.isNull(contentType)) {
+                contentType = Files.probeContentType(Path.of(filename));
+            }
+            if (Objects.isNull(contentType)) {
+                contentType = "application/octet-stream";
+            }
+
+            return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(Long.parseLong(
+                    Objects.requireNonNullElse(file.headers().get("Content-Length"), "0")))
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
+                .header(HttpHeaders.ETAG, file.headers().get("ETag"))
+                .body(resource);
+
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/logo/{organisationUnitId}")
