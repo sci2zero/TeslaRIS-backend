@@ -394,14 +394,20 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                     file.getResourceType().equals(ResourceType.SUPPLEMENT)).findFirst();
         }
 
-        if (documentFile.isPresent() &&
-            documentFile.get().getResourceType().equals(ResourceType.PREPRINT) &&
-            thesis.getFileItems().stream()
-                .anyMatch(f -> f.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION))) {
+        var finalDocumentFile = documentFile;
+        if (
+            documentFile.isPresent() &&
+                ((documentFile.get().getResourceType().equals(ResourceType.PREPRINT) &&
+                    thesis.getFileItems().stream()
+                        .anyMatch(
+                            f -> f.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION))) ||
+                    thesis.getFileItems().stream().anyMatch(f -> f.getFilename().equals(
+                        finalDocumentFile.get().getFilename())))
+        ) {
             throw new ThesisException("Thesis already has an official file version uploaded.");
         }
 
-        documentFile.ifPresent(file -> {
+        finalDocumentFile.ifPresent(file -> {
             var officialPublication = new DocumentFile();
             officialPublication.setDocument(file.getDocument());
             officialPublication.setFilename(file.getFilename());
