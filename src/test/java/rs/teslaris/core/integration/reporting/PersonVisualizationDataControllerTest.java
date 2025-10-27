@@ -70,4 +70,14 @@ public class PersonVisualizationDataControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
+
+    @Test
+    public void testGetFeaturedInformationForPerson() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/visualization-data/person/featured/{personId}",
+                        1)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
 }

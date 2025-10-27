@@ -163,9 +163,9 @@ public class ThesisController {
     @PreAuthorize("hasAuthority('PROMOTE_PRELIMINARY_ATTACHMENTS')")
     @PublicationEditCheck("THESIS")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void movePreprintAttachmentToOfficialPublication(@PathVariable Integer documentId,
-                                                            @PathVariable Integer documentFileId) {
-        thesisService.transferPreprintToOfficialPublication(documentId, documentFileId);
+    public void movePreliminaryAttachmentToOfficial(@PathVariable Integer documentId,
+                                                    @PathVariable Integer documentFileId) {
+        thesisService.transferPreliminaryFileToOfficial(documentId, documentFileId);
     }
 
     @GetMapping("/library-formats/{documentId}")

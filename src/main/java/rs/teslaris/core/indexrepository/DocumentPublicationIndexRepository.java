@@ -319,4 +319,18 @@ public interface DocumentPublicationIndexRepository extends
         }
         """)
     long countApprovedPublications();
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "author_ids": ?0 } }
+            ],
+            "must_not": [
+              { "term": { "type": "PROCEEDINGS" } }
+            ]
+          }
+        }
+        """)
+    long countAuthorPublications(Integer authorId);
 }

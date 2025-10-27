@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
+import rs.teslaris.reporting.dto.PersonFeaturedInformationDTO;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 import rs.teslaris.reporting.service.interfaces.visualizations.PersonVisualizationDataService;
@@ -64,5 +65,11 @@ public class PersonVisualizationDataController {
                                                        @RequestParam Integer from,
                                                        @RequestParam Integer to) {
         return personChartService.getYearlyCitationCounts(personId, from, to);
+    }
+
+    @GetMapping("/featured/{personId}")
+    public PersonFeaturedInformationDTO getFeaturedInformationForPerson(
+        @PathVariable Integer personId) {
+        return personChartService.getPersonFeaturedInformation(personId);
     }
 }

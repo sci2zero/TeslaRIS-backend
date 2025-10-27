@@ -295,7 +295,7 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     return;
                 }
 
-                var termsAgg = publicationResponse.aggregations().get("by_person").lterms();
+                var termsAgg = publicationResponse.aggregations().get("by_person").sterms();
                 if (Objects.isNull(termsAgg)) {
                     return;
                 }
@@ -307,11 +307,18 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
 
                 var personPoints = buckets.stream()
                     .map(bucket -> {
-                        var personId = (int) bucket.key();
+                        int personId;
+                        try {
+                            personId = Integer.parseInt(bucket.key().stringValue());
+                        } catch (NumberFormatException ignored) {
+                            personId = 0;
+                        }
+
                         double totalPoints =
                             bucket.aggregations().get("total_points").sum().value();
                         return new Pair<>(personId, totalPoints);
                     })
+                    .filter(p -> p.a > 0)
                     .sorted((p1, p2) -> Double.compare(p2.b, p1.b))
                     .toList();
 

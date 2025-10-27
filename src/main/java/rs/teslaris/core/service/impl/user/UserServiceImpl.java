@@ -813,9 +813,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 Locale.forLanguageTag(
                     user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
+
+            var systemName = getSystemName(language);
             String emailBody = messageSource.getMessage(
                 "resetPassword.mailBody",
-                new Object[] {resetLink},
+                new Object[] {systemName, resetLink},
                 Locale.forLanguageTag(
                     user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );

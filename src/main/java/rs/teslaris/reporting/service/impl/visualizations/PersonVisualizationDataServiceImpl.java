@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -36,6 +37,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
+import rs.teslaris.reporting.dto.PersonFeaturedInformationDTO;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 import rs.teslaris.reporting.service.interfaces.visualizations.PersonVisualizationDataService;
@@ -55,6 +57,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     private final InvolvementRepository involvementRepository;
 
     private final PersonIndexRepository personIndexRepository;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
 
     @Override
@@ -395,6 +399,37 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
         });
 
         return result;
+    }
+
+    @Override
+    public PersonFeaturedInformationDTO getPersonFeaturedInformation(Integer personId) {
+        var personIndex = personIndexRepository.findByDatabaseId(personId).orElse(null);
+
+        if (Objects.isNull(personIndex)) {
+            return new PersonFeaturedInformationDTO(0L, 0L, 0, 0);
+        }
+
+        var publicationCount = documentPublicationIndexRepository.countAuthorPublications(personId);
+
+        var citationTrend = 0;
+        if (Objects.nonNull(personIndex.getCitationsByYear())) {
+            var lastYear = LocalDate.now().getYear() - 1;
+            var citationsUntilCurrentYear = personIndex.getCitationsByYear().entrySet()
+                .stream()
+                .filter(entry -> entry.getKey() <= lastYear)
+                .mapToLong(Map.Entry::getValue)
+                .sum();
+
+            citationTrend =
+                Math.toIntExact(personIndex.getTotalCitations() - citationsUntilCurrentYear);
+        }
+
+        return new PersonFeaturedInformationDTO(
+            publicationCount,
+            personIndex.getTotalCitations(),
+            citationTrend,
+            personIndex.getHIndex()
+        );
     }
 
     private Map<String, Long> getPublicationCountsByTypeForAuthorAndYear(Integer authorId,

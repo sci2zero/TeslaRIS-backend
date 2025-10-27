@@ -927,6 +927,8 @@ public class UserServiceTest {
             new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         // When
         userService.initiatePasswordResetProcess(forgotPasswordRequest);

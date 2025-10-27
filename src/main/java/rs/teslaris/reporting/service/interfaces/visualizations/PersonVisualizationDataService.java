@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
+import rs.teslaris.reporting.dto.PersonFeaturedInformationDTO;
 import rs.teslaris.reporting.dto.StatisticsByCountry;
 import rs.teslaris.reporting.dto.YearlyCounts;
 
@@ -33,4 +34,6 @@ public interface PersonVisualizationDataService {
     Map<Year, Long> getYearlyStatisticsCounts(Integer personId, Integer startYear, Integer endYear);
 
     Map<Year, Long> getYearlyCitationCounts(Integer personId, Integer startYear, Integer endYear);
+
+    PersonFeaturedInformationDTO getPersonFeaturedInformation(Integer personId);
 }

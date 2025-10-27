@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -36,8 +37,10 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.person.Person;
@@ -64,6 +67,9 @@ public class PersonVisualizationDataServiceTest {
 
     @Mock
     private PersonIndexRepository personIndexRepository;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @InjectMocks
     private PersonVisualizationDataServiceImpl service;
@@ -447,5 +453,99 @@ public class PersonVisualizationDataServiceTest {
         assertEquals(2L, result.get(Year.of(2015)));
         assertEquals(8L, result.get(Year.of(2016)));
         assertEquals(12L, result.get(Year.of(2017)));
+    }
+
+    @Test
+    void shouldReturnFeaturedInformationWhenPersonExists() {
+        // Given
+        var personId = 1;
+        var personIndex = new PersonIndex();
+        personIndex.setDatabaseId(personId);
+        personIndex.setTotalCitations(55L);
+        personIndex.setHIndex(12);
+
+        var citationsByYear = Map.of(2024, 25, 2023, 30);
+        personIndex.setCitationsByYear(citationsByYear);
+
+        when(personIndexRepository.findByDatabaseId(personId)).thenReturn(Optional.of(personIndex));
+        when(documentPublicationIndexRepository.countAuthorPublications(personId)).thenReturn(50L);
+
+        var date = LocalDate.of(2024, 1, 1);
+        try (MockedStatic<LocalDate> mockedStatic = mockStatic(LocalDate.class)) {
+            mockedStatic.when(LocalDate::now).thenReturn(date);
+
+            // When
+            var result = service.getPersonFeaturedInformation(personId);
+
+            // Then
+            assertEquals(50L, result.publicationCount());
+            assertEquals(55L, result.currentCitationCount());
+            assertEquals(25, result.currentCitationTrend());
+            assertEquals(12, result.hIndex());
+        }
+    }
+
+    @Test
+    void shouldReturnDefaultValuesWhenPersonNotFound() {
+        // Given
+        var personId = 999;
+        when(personIndexRepository.findByDatabaseId(personId)).thenReturn(Optional.empty());
+
+        // When
+        var result = service.getPersonFeaturedInformation(personId);
+
+        // Then
+        assertEquals(0L, result.publicationCount());
+        assertEquals(0L, result.currentCitationCount());
+        assertEquals(0, result.currentCitationTrend());
+        assertEquals(0, result.hIndex());
+    }
+
+    @Test
+    void shouldReturnZeroCitationTrendWhenCitationsByYearIsNull() {
+        // Given
+        var personId = 2;
+        var personIndex = new PersonIndex();
+        personIndex.setDatabaseId(personId);
+        personIndex.setTotalCitations(75L);
+        personIndex.setHIndex(8);
+        personIndex.setCitationsByYear(null);
+
+        when(personIndexRepository.findByDatabaseId(personId)).thenReturn(Optional.of(personIndex));
+        when(documentPublicationIndexRepository.countAuthorPublications(personId)).thenReturn(20L);
+
+        // When
+        var result = service.getPersonFeaturedInformation(personId);
+
+        // Then
+        assertEquals(20L, result.publicationCount());
+        assertEquals(75L, result.currentCitationCount());
+        assertEquals(0, result.currentCitationTrend());
+        assertEquals(8, result.hIndex());
+    }
+
+    @Test
+    void shouldReturnZeroCitationTrendWhenCurrentYearNotInCitationsByYear() {
+        // Given
+        var personId = 3;
+        var personIndex = new PersonIndex();
+        personIndex.setDatabaseId(personId);
+        personIndex.setTotalCitations(200L);
+        personIndex.setHIndex(15);
+
+        var citationsByYear = Map.of(2022, 40, 2021, 35);
+        personIndex.setCitationsByYear(citationsByYear);
+
+        when(personIndexRepository.findByDatabaseId(personId)).thenReturn(Optional.of(personIndex));
+        when(documentPublicationIndexRepository.countAuthorPublications(personId)).thenReturn(35L);
+
+        // When
+        var result = service.getPersonFeaturedInformation(personId);
+
+        // Then
+        assertEquals(35L, result.publicationCount());
+        assertEquals(200L, result.currentCitationCount());
+        assertEquals(125, result.currentCitationTrend());
+        assertEquals(15, result.hIndex());
     }
 }

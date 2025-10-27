@@ -381,16 +381,27 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
-    public void transferPreprintToOfficialPublication(Integer thesisId, Integer documentFileId) {
+    public void transferPreliminaryFileToOfficial(Integer thesisId, Integer documentFileId) {
         var thesis = thesisJPAService.findOne(thesisId);
 
-        if (thesis.getFileItems().stream()
-            .anyMatch(f -> f.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION))) {
+        var documentFile = thesis.getPreliminaryFiles().stream().filter(
+            file -> file.getId().equals(documentFileId) &&
+                file.getResourceType().equals(ResourceType.PREPRINT)).findFirst();
+
+        if (documentFile.isEmpty()) {
+            documentFile = thesis.getPreliminarySupplements().stream().filter(
+                file -> file.getId().equals(documentFileId) &&
+                    file.getResourceType().equals(ResourceType.SUPPLEMENT)).findFirst();
+        }
+
+        if (documentFile.isPresent() &&
+            documentFile.get().getResourceType().equals(ResourceType.PREPRINT) &&
+            thesis.getFileItems().stream()
+                .anyMatch(f -> f.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION))) {
             throw new ThesisException("Thesis already has an official file version uploaded.");
         }
 
-        thesis.getPreliminaryFiles().stream().filter(file -> file.getId().equals(documentFileId) &&
-            file.getResourceType().equals(ResourceType.PREPRINT)).findFirst().ifPresent(file -> {
+        documentFile.ifPresent(file -> {
             var officialPublication = new DocumentFile();
             officialPublication.setDocument(file.getDocument());
             officialPublication.setFilename(file.getFilename());
@@ -399,7 +410,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             officialPublication.setAccessRights(file.getAccessRights());
             officialPublication.setLicense(file.getLicense());
             officialPublication.setApproveStatus(file.getApproveStatus());
-            officialPublication.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+
+            if (file.getResourceType().equals(ResourceType.PREPRINT)) {
+                officialPublication.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+            } else {
+                officialPublication.setResourceType(ResourceType.SUPPLEMENT);
+            }
 
             var description = new HashSet<>();
             file.getDescription().forEach(multiLingualContent -> description.add(
@@ -838,7 +854,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         var latestPossibleStartDate = LocalDate.now().minusDays(publicReviewLengthDays);
         var thesesByInstitution =
-            new ConcurrentHashMap<Integer, List<Triple<String, Set<MultiLingualContent>, String>>>();
+            new ConcurrentHashMap<Integer, List<Triple<String, Set<MultiLingualContent>, LocalDate>>>();
 
         thesesOnPublicReview.stream()
             .filter(thesis -> isPublicReviewExpired(thesis, latestPossibleStartDate))
@@ -858,11 +874,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                     .orElse(LocalDate.now());
 
                 thesesByInstitution.get(institutionId).add(
-                    new Triple<>(authorName, thesis.getTitle(),
-                        dtFormatter.format(latestReviewDate)));
+                    new Triple<>(authorName, thesis.getTitle(), latestReviewDate));
             });
 
-        notifyLibrarians(thesesByInstitution);
+        notifyLibrarians(thesesByInstitution, publicReviewLengthDays);
     }
 
     private boolean isPublicReviewExpired(Thesis thesis, LocalDate cutoffDate) {
@@ -894,7 +909,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     private void notifyLibrarians(
-        Map<Integer, List<Triple<String, Set<MultiLingualContent>, String>>> thesesByInstitution) {
+        Map<Integer, List<Triple<String, Set<MultiLingualContent>, LocalDate>>> thesesByInstitution,
+        Integer publicReviewLengthDays) {
         userService.findAllInstitutionalLibrarianUsers().forEach(librarianUser -> {
             var thesesList = new StringBuilder();
             var preferredLocale = librarianUser.getPreferredUILanguage().getLanguageTag();
@@ -912,8 +928,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                             .append(" - ")
                             .append(StringEscapeUtils.escapeHtml4(
                                 getLocalisedContentString(content.b, preferredLocale)))
-                            .append(" (").append(content.c).append(" - ")
-                            .append(dtFormatter.format(LocalDate.now()))
+                            .append(" (").append(dtFormatter.format(content.c)).append(" - ")
+                            .append(dtFormatter.format(content.c.plusDays(publicReviewLengthDays)))
                             .append(")<br/>"));
                 }
             }

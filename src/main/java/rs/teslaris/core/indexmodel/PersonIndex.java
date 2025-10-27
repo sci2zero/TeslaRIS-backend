@@ -94,4 +94,7 @@ public class PersonIndex {
 
     @Field(type = FieldType.Object, name = "citations_by_year")
     private Map<Integer, Integer> citationsByYear = new HashMap<>();
+
+    @Field(type = FieldType.Integer, name = "h_index")
+    private Integer hIndex = 0;
 }

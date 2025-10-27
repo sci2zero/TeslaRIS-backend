@@ -574,10 +574,6 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             personIndicatorRepository.save(newCitationCountIndicator);
         });
 
-        if (shouldUpdateIndex) {
-            personIndexRepository.save(index.get());
-        }
-
         var hIndex = calculateHIndex(citations);
         if (Objects.nonNull(hIndexIndicator) && hIndex > 0) {
             personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
@@ -590,6 +586,14 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             newHIndexIndicator.setIndicator(hIndexIndicator);
             newHIndexIndicator.setToDate(LocalDate.now());
             personIndicatorRepository.save(newHIndexIndicator);
+
+            if (shouldUpdateIndex) {
+                index.get().setHIndex(hIndex);
+            }
+        }
+
+        if (shouldUpdateIndex) {
+            personIndexRepository.save(index.get());
         }
 
         if (Objects.nonNull(totalOutputIndicator)) {

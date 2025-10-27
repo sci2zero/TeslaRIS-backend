@@ -51,7 +51,7 @@ public interface ThesisService {
 
     String getSingleLibraryReferenceFormat(Integer thesisId, LibraryFormat libraryFormat);
 
-    void transferPreprintToOfficialPublication(Integer thesisId, Integer documentFileId);
+    void transferPreliminaryFileToOfficial(Integer thesisId, Integer documentFileId);
 
     void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
                                       Integer publicReviewLengthDays, Integer userId,

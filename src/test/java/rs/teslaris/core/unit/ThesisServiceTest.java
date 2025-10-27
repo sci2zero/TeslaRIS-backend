@@ -702,7 +702,7 @@ public class ThesisServiceTest {
             new Pair<>(UUID.randomUUID() + ".png", new ByteArrayInputStream(new byte[] {})));
 
         // When
-        thesisService.transferPreprintToOfficialPublication(1, 42);
+        thesisService.transferPreliminaryFileToOfficial(1, 42);
 
         // Then
         assertFalse(thesis.getPreliminaryFiles().isEmpty());
@@ -721,13 +721,17 @@ public class ThesisServiceTest {
 
         var thesis = new Thesis();
         thesis.setId(1);
+        thesis.setPreliminaryFiles(new HashSet<>(List.of(new DocumentFile() {{
+            setId(123);
+            setResourceType(ResourceType.PREPRINT);
+        }})));
         thesis.setFileItems(new HashSet<>(List.of(officialFile)));
 
         when(thesisJPAService.findOne(1)).thenReturn(thesis);
 
         // When / Then
         assertThrows(ThesisException.class,
-            () -> thesisService.transferPreprintToOfficialPublication(1, 123));
+            () -> thesisService.transferPreliminaryFileToOfficial(1, 123));
     }
 
     @Test
