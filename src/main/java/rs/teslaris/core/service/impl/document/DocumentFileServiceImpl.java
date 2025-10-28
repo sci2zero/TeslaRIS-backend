@@ -567,7 +567,14 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Override
     @Nullable
     public Integer findDocumentIdForFilename(String filename) {
-        return documentFileRepository.getDocumentIdByFilename(filename);
+        var id = documentFileRepository.getDocumentIdByFilename(filename);
+
+        // Try preliminary files if not in file items
+        if (Objects.isNull(id)) {
+            id = documentFileRepository.getThesisIdByFilename(filename);
+        }
+
+        return id;
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
@@ -595,7 +602,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     private boolean isPdfFile(MultipartFile multipartFile) {
         try {
-            var isSpecifiedPDF = Objects.equals(multipartFile.getContentType(), "application/pdf");
+            var isSpecifiedPDF =
+                Objects.equals(multipartFile.getContentType(), "application/pdf");
             if (SessionUtil.isUserLoggedInAndAdmin()) {
                 return isSpecifiedPDF;
             }

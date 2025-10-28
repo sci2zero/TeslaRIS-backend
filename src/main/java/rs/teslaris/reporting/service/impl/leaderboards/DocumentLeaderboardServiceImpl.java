@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -202,17 +203,28 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
     public List<Integer> getEligibleDocumentIds(Integer institutionId, Boolean onlyTheses,
                                                 List<ThesisType> allowedThesisTypes) {
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(institutionId);
-        var allMergedOrganisationUnitIds = QueryUtil.getAllMergedOrganisationUnitIds(institutionId);
+
+        var allMergedOrganisationUnitIds = new HashSet<Integer>();
+        if (onlyTheses) {
+            allMergedOrganisationUnitIds.add(institutionId);
+            organisationUnitService.collectUpdatableSubOrganisationUnits(institutionId, true)
+                .forEach(institutionPair -> allMergedOrganisationUnitIds.addAll(
+                    institutionPair.b.getMergedIds()));
+        } else {
+            allMergedOrganisationUnitIds.addAll(
+                QueryUtil.getAllMergedOrganisationUnitIds(institutionId));
+        }
 
         SearchResponse<DocumentPublicationIndex> documentIdResponse;
         try {
             documentIdResponse = elasticsearchClient.search(s -> s
                     .index("document_publication")
-                    .size(50000)
+                    .size(onlyTheses ? 15000 : 50000)
                     .query(q -> q
                         .bool(b -> {
                                 b.must(m -> m.term(t -> t.field("is_approved").value(true)))
-                                    .must(QueryUtil.organisationUnitMatchQuery(allMergedOrganisationUnitIds,
+                                    .must(QueryUtil.organisationUnitMatchQuery(
+                                        allMergedOrganisationUnitIds.stream().toList(),
                                         searchFields))
                                     .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))));
 

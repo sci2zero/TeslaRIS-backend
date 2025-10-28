@@ -1276,6 +1276,215 @@ public class OrganisationUnitServiceTest {
         verify(organisationUnitsRelationRepository).delete(relation);
     }
 
+    @Test
+    void shouldCollectAllSubOrganisationUnitsWhenOnlyOnesThatHaveLibraryIsFalse() {
+        // Given
+        var rootOuId = 1;
+        var onlyOnesThatHaveLibrary = false;
+
+        var subOu1 = new OrganisationUnitIndex();
+        subOu1.setDatabaseId(2);
+        subOu1.setAllowedThesisTypes(Set.of("MASTER"));
+
+        var subOu2 = new OrganisationUnitIndex();
+        subOu2.setDatabaseId(3);
+        subOu2.setAllowedThesisTypes(Collections.emptySet());
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(1),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(subOu1, subOu2)));
+
+        var subSubOu = new OrganisationUnitIndex();
+        subSubOu.setDatabaseId(4);
+        subSubOu.setAllowedThesisTypes(Set.of("PHD"));
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(2),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(subSubOu)));
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(3),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Collections.emptyList()));
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(4),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        var ou2 = new OrganisationUnit();
+        ou2.setId(2);
+        var ou3 = new OrganisationUnit();
+        ou3.setId(3);
+        var ou4 = new OrganisationUnit();
+        ou4.setId(4);
+
+        when(organisationUnitRepository.findAllById(List.of(2, 3, 4)))
+            .thenReturn(List.of(ou2, ou3, ou4));
+
+        // When
+        var result =
+            organisationUnitService.collectUpdatableSubOrganisationUnits(rootOuId,
+                onlyOnesThatHaveLibrary);
+
+        // Then
+        assertEquals(3, result.size());
+
+        assertTrue(result.stream().anyMatch(pair -> pair.a.getDatabaseId().equals(2)));
+        assertTrue(result.stream().anyMatch(pair -> pair.a.getDatabaseId().equals(3)));
+        assertTrue(result.stream().anyMatch(pair -> pair.a.getDatabaseId().equals(4)));
+    }
+
+    @Test
+    void shouldCollectOnlySubOrganisationUnitsWithLibrariesWhenOnlyOnesThatHaveLibraryIsTrue() {
+        // Given
+        var rootOuId = 1;
+        var onlyOnesThatHaveLibrary = true;
+
+        var ouWithLibrary = new OrganisationUnitIndex();
+        ouWithLibrary.setDatabaseId(2);
+        ouWithLibrary.setAllowedThesisTypes(Set.of("MASTER", "PHD"));
+
+        var ouWithoutLibrary = new OrganisationUnitIndex();
+        ouWithoutLibrary.setDatabaseId(3);
+        ouWithoutLibrary.setAllowedThesisTypes(null); // No library
+
+        var ouWithEmptyLibrary = new OrganisationUnitIndex();
+        ouWithEmptyLibrary.setDatabaseId(4);
+        ouWithEmptyLibrary.setAllowedThesisTypes(Collections.emptySet());
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(1),
+            any(Pageable.class)))
+            .thenReturn(
+                new PageImpl<>(List.of(ouWithLibrary, ouWithoutLibrary, ouWithEmptyLibrary)));
+
+        var subOuWithLibrary = new OrganisationUnitIndex();
+        subOuWithLibrary.setDatabaseId(5);
+        subOuWithLibrary.setAllowedThesisTypes(Set.of("BACHELOR"));
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(2),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(subOuWithLibrary)));
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(3),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Collections.emptyList()));
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(4),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Collections.emptyList()));
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(5),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        var ou2 = new OrganisationUnit();
+        ou2.setId(2);
+        var ou5 = new OrganisationUnit();
+        ou5.setId(5);
+
+        when(organisationUnitRepository.findAllById(List.of(2, 5)))
+            .thenReturn(List.of(ou2, ou5));
+
+        // When
+        var result =
+            organisationUnitService.collectUpdatableSubOrganisationUnits(rootOuId,
+                onlyOnesThatHaveLibrary);
+
+        // Then
+        assertEquals(2, result.size());
+
+        assertTrue(result.stream().anyMatch(pair -> pair.a.getDatabaseId().equals(2)));
+        assertTrue(result.stream().anyMatch(pair -> pair.a.getDatabaseId().equals(5)));
+
+        assertFalse(result.stream().anyMatch(pair -> pair.a.getDatabaseId().equals(3)));
+        assertFalse(result.stream().anyMatch(pair -> pair.a.getDatabaseId().equals(4)));
+    }
+
+    @Test
+    void shouldHandleCircularReferencesWithoutInfiniteRecursion() {
+        // Given
+        var rootOuId = 1;
+        var onlyOnesThatHaveLibrary = false;
+
+        var ou2 = new OrganisationUnitIndex();
+        ou2.setDatabaseId(2);
+        ou2.setAllowedThesisTypes(Set.of("MASTER"));
+
+        var ou1Again = new OrganisationUnitIndex();
+        ou1Again.setDatabaseId(1);
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(1),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(ou2)));
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(2),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(ou1Again)));
+
+        var ou2Entity = new OrganisationUnit();
+        ou2Entity.setId(2);
+
+        when(organisationUnitRepository.findAllById(List.of(2)))
+            .thenReturn(List.of(ou2Entity));
+
+        // When
+        var result =
+            organisationUnitService.collectUpdatableSubOrganisationUnits(rootOuId,
+                onlyOnesThatHaveLibrary);
+
+        // Then
+        assertEquals(2, result.size()); // not stuck in infinite loop
+        assertEquals(2, result.getFirst().a.getDatabaseId());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenRootHasNoSubOrganisationUnits() {
+        // Given
+        var rootOuId = 1;
+        var onlyOnesThatHaveLibrary = false;
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(1),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        when(organisationUnitRepository.findAllById(any()))
+            .thenReturn(Collections.emptyList());
+
+        // When
+        var result =
+            organisationUnitService.collectUpdatableSubOrganisationUnits(rootOuId,
+                onlyOnesThatHaveLibrary);
+
+        // Then
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldHandleNullAllowedThesisTypesWhenFilteringByLibrary() {
+        // Given
+        var rootOuId = 1;
+        var onlyOnesThatHaveLibrary = true;
+
+        var ouWithNullThesisTypes = new OrganisationUnitIndex();
+        ouWithNullThesisTypes.setDatabaseId(2);
+        ouWithNullThesisTypes.setAllowedThesisTypes(null);
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(1),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(ouWithNullThesisTypes)));
+
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(eq(2),
+            any(Pageable.class)))
+            .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        when(organisationUnitRepository.findAllById(any()))
+            .thenReturn(Collections.emptyList());
+
+        // When
+        var result =
+            organisationUnitService.collectUpdatableSubOrganisationUnits(rootOuId,
+                onlyOnesThatHaveLibrary);
+
+        // Then
+        assertTrue(result.isEmpty());
+    }
+
     private MultipartFile createMockMultipartFile() {
         return new MockMultipartFile("file", "test.jpg", "image/jpeg", new byte[] {1, 2, 3});
     }

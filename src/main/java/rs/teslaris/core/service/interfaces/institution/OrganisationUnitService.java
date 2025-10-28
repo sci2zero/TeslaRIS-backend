@@ -20,6 +20,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 
@@ -123,4 +124,7 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     OrganisationUnit findRaw(Integer organisationUnitId);
 
     OrganisationUnitsRelation getSuperOrganisationUnitRelation(Integer organisationUnitId);
+
+    List<Pair<OrganisationUnitIndex, OrganisationUnit>> collectUpdatableSubOrganisationUnits(
+        Integer rootOuId, boolean onlyOnesThatHaveLibrary);
 }

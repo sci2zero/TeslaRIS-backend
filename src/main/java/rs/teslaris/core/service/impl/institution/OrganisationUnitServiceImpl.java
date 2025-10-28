@@ -1245,6 +1245,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
     }
 
+    @Override
     public List<Pair<OrganisationUnitIndex, OrganisationUnit>> collectUpdatableSubOrganisationUnits(
         Integer rootOuId,
         boolean onlyOnesThatHaveLibrary

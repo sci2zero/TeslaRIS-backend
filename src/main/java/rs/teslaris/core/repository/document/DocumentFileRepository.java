@@ -22,6 +22,11 @@ public interface DocumentFileRepository extends JpaRepository<DocumentFile, Inte
         "WHERE df.serverFilename = :filename")
     Integer getDocumentIdByFilename(String filename);
 
+    @Query("SELECT t.id FROM Thesis t " +
+        "JOIN t.preliminaryFiles pf " +
+        "WHERE pf.serverFilename = :filename")
+    Integer getThesisIdByFilename(String filename);
+
     Optional<DocumentFile> findDocumentFileByLegacyFilename(String legacyFilename);
 
     @Query("SELECT df FROM DocumentFile df WHERE " +
