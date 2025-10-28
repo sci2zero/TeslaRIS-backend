@@ -31,6 +31,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -64,7 +65,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     @Override
     public List<YearlyCounts> getPublicationCountsForPerson(Integer personId, Integer startYear,
                                                             Integer endYear) {
-        var yearRange = constructYearRange(startYear, endYear, personId);
+        var yearRange = constructYearRange(startYear, endYear, personId, List.of("author_ids"));
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
@@ -158,7 +159,7 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     public List<CommissionYearlyCounts> getMCategoryCountsForPerson(Integer personId,
                                                                     Integer startYear,
                                                                     Integer endYear) {
-        var yearRange = constructYearRange(startYear, endYear, personId);
+        var yearRange = constructYearRange(startYear, endYear, personId, List.of("author_ids"));
         if (Objects.isNull(yearRange.a) || Objects.isNull(yearRange.b)) {
             return Collections.emptyList();
         }
@@ -432,6 +433,17 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
         );
     }
 
+    @Override
+    public Pair<Integer, Integer> getContributionYearRange(Integer personId,
+                                                           Set<DocumentContributionType> contributionTypes) {
+        var contributionFields =
+            Objects.nonNull(contributionTypes) ?
+                contributionTypes.stream().map(this::getIndexFieldForContributionType).toList() :
+                List.of("author_ids");
+
+        return findContributionYearRange(personId, contributionFields);
+    }
+
     private Map<String, Long> getPublicationCountsByTypeForAuthorAndYear(Integer authorId,
                                                                          Integer year)
         throws IOException {
@@ -505,7 +517,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
             ));
     }
 
-    private Pair<Integer, Integer> findPublicationYearRange(Integer authorId) {
+    private Pair<Integer, Integer> findContributionYearRange(Integer authorId,
+                                                             List<String> contributionFields) {
         SearchResponse<Void> response;
         try {
             response = elasticsearchClient.search(s -> s
@@ -514,7 +527,13 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                     .query(q -> q
                         .bool(b -> b
                             .must(m -> m.term(t -> t.field("is_approved").value(true)))
-                            .must(m -> m.term(t -> t.field("author_ids").value(authorId)))
+                            .must(m -> m.bool(sb -> {
+                                for (String field : contributionFields) {
+                                    sb.should(sc -> sc.term(t -> t.field(field).value(authorId)));
+                                }
+
+                                return sb.minimumShouldMatch("1");
+                            }))
                             .must(m -> m.range(t -> t.field("year").gt(JsonData.of(0))))
                         )
                     )
@@ -542,12 +561,27 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     }
 
     private Pair<Integer, Integer> constructYearRange(Integer startYear, Integer endYear,
-                                                      Integer personId) {
+                                                      Integer personId,
+                                                      List<String> contributionFields) {
         if (Objects.isNull(startYear) || Objects.isNull(endYear)) {
-            var yearRange = findPublicationYearRange(personId);
+            var yearRange = findContributionYearRange(personId, contributionFields);
             return new Pair<>(yearRange.a, yearRange.b);
         }
 
         return new Pair<>(startYear, endYear);
+    }
+
+    private String getIndexFieldForContributionType(DocumentContributionType contributionType) {
+        if (Objects.isNull(contributionType)) {
+            return "author_ids";
+        }
+
+        return switch (contributionType) {
+            case AUTHOR -> "author_ids";
+            case EDITOR -> "editor_ids";
+            case REVIEWER -> "reviewer_ids";
+            case ADVISOR -> "advisor_ids";
+            case BOARD_MEMBER -> "board_member_ids";
+        };
     }
 }

@@ -5,7 +5,10 @@ import java.time.Year;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.PersonFeaturedInformationDTO;
@@ -36,4 +39,7 @@ public interface PersonVisualizationDataService {
     Map<Year, Long> getYearlyCitationCounts(Integer personId, Integer startYear, Integer endYear);
 
     PersonFeaturedInformationDTO getPersonFeaturedInformation(Integer personId);
+
+    Pair<Integer, Integer> getContributionYearRange(Integer personId,
+                                                    Set<DocumentContributionType> contributionTypes);
 }

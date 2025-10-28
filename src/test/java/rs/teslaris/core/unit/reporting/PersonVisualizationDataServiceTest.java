@@ -2,6 +2,7 @@ package rs.teslaris.core.unit.reporting;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -16,6 +17,8 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.DateHistogramBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.MaxAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.MinAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -42,6 +45,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -547,5 +551,162 @@ public class PersonVisualizationDataServiceTest {
         assertEquals(200L, result.currentCitationCount());
         assertEquals(125, result.currentCitationTrend());
         assertEquals(15, result.hIndex());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnYearRangeWhenPersonHasContributions() throws IOException {
+        // Given
+        var personId = 1;
+        var contributionTypes = Set.of(DocumentContributionType.AUTHOR);
+
+        var mockResponse = mock(SearchResponse.class);
+        var minAggregate = mock(MinAggregate.class);
+        var maxAggregate = mock(MaxAggregate.class);
+        var minAgg = mock(Aggregate.class);
+        var maxAgg = mock(Aggregate.class);
+
+        when(minAggregate.value()).thenReturn(2010.0);
+        when(maxAggregate.value()).thenReturn(2023.0);
+        when(minAgg.min()).thenReturn(minAggregate);
+        when(maxAgg.max()).thenReturn(maxAggregate);
+
+        var aggregations = mock(HashMap.class);
+        when(aggregations.get("earliestYear")).thenReturn(minAgg);
+        when(aggregations.get("latestYear")).thenReturn(maxAgg);
+
+        when(mockResponse.aggregations()).thenReturn(aggregations);
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse);
+
+        // When
+        var result = service.getContributionYearRange(personId, contributionTypes);
+
+        // Then
+        assertEquals(2010, result.a);
+        assertEquals(2023, result.b);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnAuthorFieldWhenContributionTypesIsNull() throws IOException {
+        // Given
+        var personId = 2;
+
+        var mockResponse = mock(SearchResponse.class);
+        var minAggregate = mock(MinAggregate.class);
+        var maxAggregate = mock(MaxAggregate.class);
+        var minAgg = mock(Aggregate.class);
+        var maxAgg = mock(Aggregate.class);
+
+        when(minAggregate.value()).thenReturn(2015.0);
+        when(maxAggregate.value()).thenReturn(2022.0);
+        when(minAgg.min()).thenReturn(minAggregate);
+        when(maxAgg.max()).thenReturn(maxAggregate);
+
+        var aggregations = mock(HashMap.class);
+        when(aggregations.get("earliestYear")).thenReturn(minAgg);
+        when(aggregations.get("latestYear")).thenReturn(maxAgg);
+
+        when(mockResponse.aggregations()).thenReturn(aggregations);
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse);
+
+        // When
+        var result = service.getContributionYearRange(personId, null);
+
+        // Then
+        assertEquals(2015, result.a);
+        assertEquals(2022, result.b);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnNullWhenSearchThrowsIOException() throws IOException {
+        // Given
+        var personId = 3;
+        var contributionTypes = Set.of(DocumentContributionType.EDITOR);
+
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenThrow(
+            new IOException("Connection failed"));
+
+        // When
+        var result = service.getContributionYearRange(personId, contributionTypes);
+
+        // Then
+        assertNull(result.a);
+        assertNull(result.b);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnYearRangeForMultipleContributionTypes() throws IOException {
+        // Given
+        Integer personId = 4;
+        Set<DocumentContributionType> contributionTypes = Set.of(
+            DocumentContributionType.AUTHOR,
+            DocumentContributionType.EDITOR,
+            DocumentContributionType.REVIEWER
+        );
+
+        var mockResponse = mock(SearchResponse.class);
+        var minAggregate = mock(MinAggregate.class);
+        var maxAggregate = mock(MaxAggregate.class);
+        var minAgg = mock(Aggregate.class);
+        var maxAgg = mock(Aggregate.class);
+
+        when(minAggregate.value()).thenReturn(2005.0);
+        when(maxAggregate.value()).thenReturn(2024.0);
+        when(minAgg.min()).thenReturn(minAggregate);
+        when(maxAgg.max()).thenReturn(maxAggregate);
+
+        var aggregations = mock(HashMap.class);
+        when(aggregations.get("earliestYear")).thenReturn(minAgg);
+        when(aggregations.get("latestYear")).thenReturn(maxAgg);
+
+        when(mockResponse.aggregations()).thenReturn(aggregations);
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse);
+
+        // When
+        var result = service.getContributionYearRange(personId, contributionTypes);
+
+        // Then
+        assertEquals(2005, result.a);
+        assertEquals(2024, result.b);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnNullWhenNoContributionsFound() throws IOException {
+        // Given
+        var personId = 5;
+        var contributionTypes = Set.of(DocumentContributionType.ADVISOR);
+
+        var mockResponse = mock(SearchResponse.class);
+        var minAggregate = mock(MinAggregate.class);
+        var maxAggregate = mock(MaxAggregate.class);
+        var minAgg = mock(Aggregate.class);
+        var maxAgg = mock(Aggregate.class);
+
+        when(minAggregate.value()).thenReturn(Double.POSITIVE_INFINITY);
+        when(maxAggregate.value()).thenReturn(Double.NEGATIVE_INFINITY);
+        when(minAgg.min()).thenReturn(minAggregate);
+        when(maxAgg.max()).thenReturn(maxAggregate);
+
+        var aggregations = mock(HashMap.class);
+        when(aggregations.get("earliestYear")).thenReturn(minAgg);
+        when(aggregations.get("latestYear")).thenReturn(maxAgg);
+
+        when(mockResponse.aggregations()).thenReturn(aggregations);
+        when(elasticsearchClient.search(any(Function.class), eq(Void.class))).thenReturn(
+            mockResponse);
+
+        // When
+        var result = service.getContributionYearRange(personId, contributionTypes);
+
+        // Then
+        assertEquals(Integer.MAX_VALUE, result.a);
+        assertEquals(Integer.MIN_VALUE, result.b);
     }
 }

@@ -5,12 +5,15 @@ import java.time.Year;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.reporting.dto.CommissionYearlyCounts;
 import rs.teslaris.reporting.dto.MCategoryCounts;
 import rs.teslaris.reporting.dto.PersonFeaturedInformationDTO;
@@ -71,5 +74,12 @@ public class PersonVisualizationDataController {
     public PersonFeaturedInformationDTO getFeaturedInformationForPerson(
         @PathVariable Integer personId) {
         return personChartService.getPersonFeaturedInformation(personId);
+    }
+
+    @GetMapping("/year-range/{personId}")
+    public Pair<Integer, Integer> getContributionYearRange(
+        @PathVariable Integer personId,
+        @RequestParam(required = false) Set<DocumentContributionType> contributionTypes) {
+        return personChartService.getContributionYearRange(personId, contributionTypes);
     }
 }
