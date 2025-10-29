@@ -147,6 +147,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
 
+    @Value("${migration-mode.enabled}")
+    private Boolean migrationModeEnabled;
+
 
     @Override
     @Transactional
@@ -361,7 +364,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                    Boolean isProof) {
         var document = findOne(documentId);
 
-        if (document.getIsArchived() && !SessionUtil.isUserLoggedInAndAdmin()) {
+        if (document.getIsArchived() &&
+            !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 
@@ -395,7 +399,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void deleteDocumentFile(Integer documentId, Integer documentFileId) {
         var document = findOne(documentId);
 
-        if (document.getIsArchived() && !SessionUtil.isUserLoggedInAndAdmin()) {
+        if (document.getIsArchived() &&
+            !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 

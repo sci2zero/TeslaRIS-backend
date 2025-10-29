@@ -1338,10 +1338,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional
+    @Nullable
     public Person findPersonByAccountingId(String accountingId) {
-        return personRepository.findApprovedPersonByAccountingId(accountingId).orElseThrow(
-            () -> new NotFoundException(
-                "Person with accounting ID " + accountingId + " does not exist"));
+        return personRepository.findApprovedPersonByAccountingId(accountingId).orElse(null);
     }
 
     @Override

@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -50,6 +51,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.SearchRequestType;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -246,7 +248,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public void migrateEmployment(List<ExtraEmploymentMigrationDTO> request) {
         request.forEach(migration -> {
             var ouResults = organisationUnitService.searchOrganisationUnits(
-                Arrays.stream(migration.organisationUnitName().split(" ")).toList(),
+                new ArrayList<>(
+                    Arrays.stream(migration.organisationUnitName().split(" ")).toList()),
                 PageRequest.of(0, 1),
                 SearchRequestType.SIMPLE,
                 null, null, null,
@@ -254,14 +257,14 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                 null, null).getContent();
 
             if (ouResults.isEmpty()) {
+                log.warn("Unable to find OU with name {} when migrating employments.",
+                    migration.organisationUnitName());
                 return;
             }
 
-            Person person;
-            try {
-                person = personService.findPersonByAccountingId(
-                    String.valueOf(migration.personAccountingId()));
-            } catch (NotFoundException ignored) {
+            var person = personService.findPersonByAccountingId(
+                String.valueOf(migration.personAccountingId()));
+            if (Objects.isNull(person)) {
                 var newPerson = new BasicPersonDTO();
                 newPerson.setPersonName(migration.personName());
                 newPerson.setOrganisationUnitId(ouResults.getFirst().getDatabaseId());

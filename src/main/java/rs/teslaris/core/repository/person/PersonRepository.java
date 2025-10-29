@@ -106,8 +106,8 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "(i.involvementType = 4 OR i.involvementType = 5)")
     List<Integer> findInstitutionIdsForPerson(Integer personId);
 
-    @Query(value = "SELECT * FROM person p " +
-        "WHERE p.accounting_ids @> :accountingId " +
+    @Query(value = "SELECT * FROM persons p " +
+        "WHERE p.accounting_ids @> to_jsonb(?1) " +
         "AND p.approve_status = 1",
         nativeQuery = true)
     Optional<Person> findApprovedPersonByAccountingId(String accountingId);

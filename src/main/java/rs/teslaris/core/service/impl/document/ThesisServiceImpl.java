@@ -146,6 +146,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Value("${thesis.check-public-review-end.enable-fallback}")
     private Boolean fallbackPublicReviewCheckEnabled;
 
+    @Value("${migration-mode.enabled}")
+    private Boolean migrationModeEnabled;
+
 
     @Autowired
     public ThesisServiceImpl(MultilingualContentService multilingualContentService,
@@ -343,7 +346,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
 
-        if (!SessionUtil.isUserLoggedInAndAdmin()) {
+        if (!(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
             checkIfAvailableForEditing(thesis);
         }
 

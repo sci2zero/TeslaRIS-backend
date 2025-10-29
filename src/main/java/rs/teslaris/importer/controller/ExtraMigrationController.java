@@ -2,6 +2,7 @@ package rs.teslaris.importer.controller;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
+import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -71,8 +73,16 @@ public class ExtraMigrationController {
     @PostMapping("/migrate-employment")
     @PreAuthorize("hasAuthority('PERFORM_EXTRA_MIGRATION_OPERATIONS')")
     @ResponseStatus(HttpStatus.CREATED)
-    public EmploymentDTO migrateEmployment(
+    public EmploymentDTO migrateEmploymentOld(
         @Valid @RequestBody EmploymentMigrationDTO employmentMigrationDTO) {
         return involvementService.migrateEmployment(employmentMigrationDTO);
+    }
+
+    @PostMapping("/migrate-employment/new")
+    @PreAuthorize("hasAuthority('PERFORM_EXTRA_MIGRATION_OPERATIONS')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void migrateEmploymentNew(
+        @Valid @RequestBody List<ExtraEmploymentMigrationDTO> employmentMigrationDTO) {
+        involvementService.migrateEmployment(employmentMigrationDTO);
     }
 }

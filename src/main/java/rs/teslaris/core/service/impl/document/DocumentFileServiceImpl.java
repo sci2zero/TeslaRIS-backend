@@ -95,6 +95,10 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Value("${document_file.approved_by_default}")
     private Boolean documentFileApprovedByDefault;
 
+    @Value("${migration-mode.enabled}")
+    private Boolean migrationModeEnabled;
+
+
     @Override
     protected JpaRepository<DocumentFile, Integer> getEntityRepository() {
         return documentFileRepository;
@@ -296,7 +300,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         if (Objects.nonNull(documentFileToEdit.getDocument()) &&
             documentFileToEdit.getDocument().getIsArchived() &&
-            !SessionUtil.isUserLoggedInAndAdmin()) {
+            !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 
@@ -440,7 +444,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         try {
             var originalFilenamePath = Path.of(originalFilename);
-            if (SessionUtil.isUserLoggedInAndAdmin()) {
+            if (migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin()) {
                 return Files.probeContentType(originalFilenamePath);
             }
 
@@ -604,7 +608,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         try {
             var isSpecifiedPDF =
                 Objects.equals(multipartFile.getContentType(), "application/pdf");
-            if (SessionUtil.isUserLoggedInAndAdmin()) {
+            if (migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin()) {
                 return isSpecifiedPDF;
             }
 

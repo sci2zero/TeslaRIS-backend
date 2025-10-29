@@ -899,8 +899,7 @@ public class InvolvementServiceTest {
             any(), any(), any(), any(), any(), any()))
             .thenReturn(new PageImpl<>(searchResults));
 
-        when(personService.findPersonByAccountingId("12345"))
-            .thenThrow(new NotFoundException("Person not found"));
+        when(personService.findPersonByAccountingId("12345")).thenReturn(null);
 
         var newPerson = new Person();
         newPerson.setId(100);

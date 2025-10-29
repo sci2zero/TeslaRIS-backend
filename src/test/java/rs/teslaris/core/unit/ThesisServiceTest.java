@@ -178,6 +178,7 @@ public class ThesisServiceTest {
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(thesisService, "documentApprovedByDefault", true);
+        ReflectionTestUtils.setField(thesisService, "migrationModeEnabled", true);
     }
 
     @Test
