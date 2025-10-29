@@ -950,7 +950,7 @@ public class InvolvementServiceTest {
 
         var existingPerson = new Person();
         existingPerson.setId(100);
-        existingPerson.setInvolvements(new HashSet<>(Set.of(new Employment(){{
+        existingPerson.setInvolvements(new HashSet<>(Set.of(new Employment() {{
             setInvolvementType(InvolvementType.EMPLOYED_AT);
         }})));
 

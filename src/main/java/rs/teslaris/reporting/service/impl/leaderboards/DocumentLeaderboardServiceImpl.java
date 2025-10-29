@@ -102,7 +102,8 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
             return publicationResponse.hits().hits().stream()
                 .map(hit -> {
                     var publication = hit.source();
-                    var databaseId = Objects.nonNull(publication) ? publication.getDatabaseId() : null;
+                    var databaseId =
+                        Objects.nonNull(publication) ? publication.getDatabaseId() : null;
                     Long citationCount = citationCountsByDatabaseId.getOrDefault(databaseId, 0L);
                     return new Pair<>(publication, citationCount);
                 })
