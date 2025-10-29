@@ -4,10 +4,11 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
-import rs.teslaris.core.dto.person.PersonInternalIdentifierMigrationDTO;
+import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
+import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.person.Education;
@@ -30,6 +31,8 @@ public interface InvolvementService extends JPAService<Involvement> {
     Employment addEmployment(Integer personId, EmploymentDTO employment);
 
     EmploymentDTO migrateEmployment(EmploymentMigrationDTO employmentMigrationRequest);
+
+    void migrateEmployment(List<ExtraEmploymentMigrationDTO> request);
 
     List<EmploymentDTO> getDirectAndIndirectEmploymentsForPerson(Integer personId);
 
@@ -54,5 +57,5 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     EmploymentTitle getCurrentEmploymentTitle(Integer personId);
 
-    void migrateInternalIdentifiers(PersonInternalIdentifierMigrationDTO dto);
+    void migrateEmployeeInternalIdentifiers(InternalIdentifierMigrationDTO dto);
 }

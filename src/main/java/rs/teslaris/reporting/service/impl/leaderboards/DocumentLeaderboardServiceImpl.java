@@ -102,7 +102,7 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
             return publicationResponse.hits().hits().stream()
                 .map(hit -> {
                     var publication = hit.source();
-                    var databaseId = publication != null ? publication.getDatabaseId() : null;
+                    var databaseId = Objects.nonNull(publication) ? publication.getDatabaseId() : null;
                     Long citationCount = citationCountsByDatabaseId.getOrDefault(databaseId, 0L);
                     return new Pair<>(publication, citationCount);
                 })
@@ -131,7 +131,8 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
         }
 
         var eligibleDocumentIds =
-            getEligibleDocumentIds(institutionId, onlyTheses, allowedThesisTypes);
+            getEligibleDocumentIds(institutionId, onlyTheses, allowedThesisTypes, from.getYear(),
+                to.getYear());
         if (eligibleDocumentIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -201,7 +202,8 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
 
     @Override
     public List<Integer> getEligibleDocumentIds(Integer institutionId, Boolean onlyTheses,
-                                                List<ThesisType> allowedThesisTypes) {
+                                                List<ThesisType> allowedThesisTypes,
+                                                Integer from, Integer to) {
         var searchFields = QueryUtil.getOrganisationUnitOutputSearchFields(institutionId);
 
         var allMergedOrganisationUnitIds = new HashSet<Integer>();
@@ -219,13 +221,16 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
         try {
             documentIdResponse = elasticsearchClient.search(s -> s
                     .index("document_publication")
-                    .size(onlyTheses ? 15000 : 50000)
+                    .size(onlyTheses ? 5000 : 50000)
                     .query(q -> q
                         .bool(b -> {
                                 b.must(m -> m.term(t -> t.field("is_approved").value(true)))
                                     .must(QueryUtil.organisationUnitMatchQuery(
                                         allMergedOrganisationUnitIds.stream().toList(),
                                         searchFields))
+                                    .must(m -> m.range(
+                                        r -> r.field("year").gte(JsonData.of(from))
+                                            .lte(JsonData.of(to))))
                                     .must(m -> m.range(r -> r.field("databaseId").gt(JsonData.of(0))));
 
                                 if (onlyTheses) {

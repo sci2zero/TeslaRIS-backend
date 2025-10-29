@@ -174,11 +174,4 @@ public class InvolvementController {
     public EmploymentTitle getCurrentEmploymentTitle(@PathVariable Integer personId) {
         return involvementService.getCurrentEmploymentTitle(personId);
     }
-
-    @PostMapping("/migrate-employment")
-    @ResponseStatus(HttpStatus.CREATED)
-    public EmploymentDTO migrateEmployment(
-        @Valid @RequestBody EmploymentMigrationDTO employmentMigrationDTO) {
-        return involvementService.migrateEmployment(employmentMigrationDTO);
-    }
 }

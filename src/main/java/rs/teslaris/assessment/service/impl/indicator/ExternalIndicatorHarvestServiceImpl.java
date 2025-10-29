@@ -117,6 +117,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                 EntityIndicatorSource.SCOPUS
             );
 
+        var indicatorsToSave = new ArrayList<OrganisationUnitIndicator>();
         FunctionalUtil.forEachChunked(
             PageRequest.of(0, 50),
             organisationUnitIndexRepository::findAll,
@@ -153,12 +154,12 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         organisationUnitService.findOne(institution.getDatabaseId());
 
                     if (Objects.nonNull(totalCitationsIndicator) && totalCitationCount.get() > 0) {
-                        organisationUnitIndicatorRepository.findIndicatorForCodeAndSourceAndOrganisationUnitId(
-                            totalCitationsIndicator.getCode(), entityIndicatorSource,
-                            institution.getDatabaseId()
-                        ).ifPresent(organisationUnitIndicatorRepository::delete);
+                        var newTotalCitationsIndicator =
+                            organisationUnitIndicatorRepository.findIndicatorForCodeAndSourceAndOrganisationUnitId(
+                                    totalCitationsIndicator.getCode(), entityIndicatorSource,
+                                    institution.getDatabaseId())
+                                .orElse(new OrganisationUnitIndicator());
 
-                        var newTotalCitationsIndicator = new OrganisationUnitIndicator();
                         newTotalCitationsIndicator.setOrganisationUnit(organisationUnit);
                         newTotalCitationsIndicator.setNumericValue(
                             totalCitationCount.doubleValue());
@@ -166,16 +167,16 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         newTotalCitationsIndicator.setIndicator(totalCitationsIndicator);
                         newTotalCitationsIndicator.setToDate(LocalDate.now());
 
-                        organisationUnitIndicatorRepository.save(newTotalCitationsIndicator);
+                        indicatorsToSave.add(newTotalCitationsIndicator);
                     }
 
                     if (Objects.nonNull(totalOutputIndicator) && totalPublicationsCount.get() > 0) {
-                        organisationUnitIndicatorRepository.findIndicatorForCodeAndSourceAndOrganisationUnitId(
-                            totalOutputIndicator.getCode(), entityIndicatorSource,
-                            institution.getDatabaseId()
-                        ).ifPresent(organisationUnitIndicatorRepository::delete);
+                        var newTotalOutputIndicator =
+                            organisationUnitIndicatorRepository.findIndicatorForCodeAndSourceAndOrganisationUnitId(
+                                    totalOutputIndicator.getCode(), entityIndicatorSource,
+                                    institution.getDatabaseId())
+                                .orElse(new OrganisationUnitIndicator());
 
-                        var newTotalOutputIndicator = new OrganisationUnitIndicator();
                         newTotalOutputIndicator.setOrganisationUnit(organisationUnit);
                         newTotalOutputIndicator.setNumericValue(
                             totalPublicationsCount.doubleValue());
@@ -183,11 +184,13 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                         newTotalOutputIndicator.setIndicator(totalOutputIndicator);
                         newTotalOutputIndicator.setToDate(LocalDate.now());
 
-                        organisationUnitIndicatorRepository.save(newTotalOutputIndicator);
+                        indicatorsToSave.add(newTotalOutputIndicator);
                     }
                 });
             })
         );
+
+        organisationUnitIndicatorRepository.saveAll(indicatorsToSave);
     }
 
     @Override
@@ -278,6 +281,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+        var documentIndicators = new ArrayList<DocumentIndicator>();
         try {
             HashMap<String, Integer> personAggregatedCounts = new HashMap<>();
             List<Integer> allCitationCounts = new ArrayList<>();
@@ -317,12 +321,12 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                     return;
                                 }
 
-                                documentIndicatorRepository.findIndicatorForCodeAndSourceDocumentId(
-                                        totalCitationsIndicator.getCode(),
-                                        EntityIndicatorSource.OPEN_ALEX, document.getId())
-                                    .ifPresent(documentIndicatorRepository::delete);
+                                var newCitationCountIndicator =
+                                    documentIndicatorRepository.findIndicatorForCodeAndSourceDocumentId(
+                                            totalCitationsIndicator.getCode(),
+                                            EntityIndicatorSource.OPEN_ALEX, document.getId())
+                                        .orElse(new DocumentIndicator());
 
-                                var newCitationCountIndicator = new DocumentIndicator();
                                 newCitationCountIndicator.setDocument(document);
                                 newCitationCountIndicator.setNumericValue(
                                     (double) citationCount.citationCount);
@@ -330,7 +334,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                 newCitationCountIndicator.setSource(
                                     EntityIndicatorSource.OPEN_ALEX);
                                 newCitationCountIndicator.setToDate(LocalDate.now());
-                                documentIndicatorRepository.save(newCitationCountIndicator);
+                                documentIndicators.add(newCitationCountIndicator);
                             });
                     });
                 }
@@ -342,6 +346,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                 allCitationCounts, totalCitationsIndicator, yearlyCitationsIndicator,
                 totalOutputIndicator, hIndexIndicator, EntityIndicatorSource.OPEN_ALEX);
 
+            documentIndicatorRepository.saveAll(documentIndicators);
         } catch (HttpClientErrorException e) {
             log.error("HTTP error fetching OpenAlex works: {}", e.getMessage());
         } catch (JsonProcessingException e) {
@@ -438,6 +443,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var endYear = LocalDate.now().getYear();
             var startYear = endYear - harvestPeriodOffset;
 
+            var documentIndicators = new ArrayList<DocumentIndicator>();
+
             ResponseEntity<String> responseEntity;
             try {
                 var cursor = "*";
@@ -470,12 +477,12 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                     return;
                                 }
 
-                                documentIndicatorRepository.findIndicatorForCodeAndSourceDocumentId(
-                                        totalCitationsIndicator.getCode(), EntityIndicatorSource.SCOPUS,
-                                        document.getId())
-                                    .ifPresent(documentIndicatorRepository::delete);
+                                var newCitationCountIndicator =
+                                    documentIndicatorRepository.findIndicatorForCodeAndSourceDocumentId(
+                                        totalCitationsIndicator.getCode(),
+                                        EntityIndicatorSource.SCOPUS,
+                                        document.getId()).orElse(new DocumentIndicator());
 
-                                var newCitationCountIndicator = new DocumentIndicator();
                                 newCitationCountIndicator.setDocument(document);
                                 newCitationCountIndicator.setNumericValue(
                                     (double) citationCount.citationCount);
@@ -483,7 +490,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                 newCitationCountIndicator.setSource(
                                     EntityIndicatorSource.SCOPUS);
                                 newCitationCountIndicator.setToDate(LocalDate.now());
-                                documentIndicatorRepository.save(newCitationCountIndicator);
+                                documentIndicators.add(newCitationCountIndicator);
                             });
                     });
 
@@ -498,6 +505,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                     yearlyCitationsIndicator, totalOutputIndicator, hIndexIndicator,
                     EntityIndicatorSource.SCOPUS);
 
+                documentIndicatorRepository.saveAll(documentIndicators);
             } catch (HttpClientErrorException e) {
                 log.error("Exception occurred during document fetching: {}", e.getMessage());
             } catch (JsonProcessingException e) {
@@ -523,24 +531,24 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
         var shouldUpdateIndex = source.equals(EntityIndicatorSource.OPEN_ALEX);
 
+        var personIndicators = new ArrayList<PersonIndicator>();
+
         counts.forEach((key, value) -> {
             if (value == 0) {
                 return;
             }
 
-            var newCitationCountIndicator = new PersonIndicator();
-            newCitationCountIndicator.setPerson(person);
-            newCitationCountIndicator.setNumericValue((double) value);
-            newCitationCountIndicator.setSource(source);
+            PersonIndicator newCitationCountIndicator;
 
             if (key.equals("TOTAL")) {
                 if (Objects.isNull(totalIndicator)) {
                     return;
                 }
 
-                personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
-                        totalIndicator.getCode(), source, null, person.getId())
-                    .ifPresent(personIndicatorRepository::delete);
+                newCitationCountIndicator =
+                    personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
+                            totalIndicator.getCode(), source, null, person.getId())
+                        .orElse(new PersonIndicator());
                 newCitationCountIndicator.setIndicator(totalIndicator);
                 newCitationCountIndicator.setToDate(LocalDate.now());
 
@@ -555,10 +563,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                 int year = Integer.parseInt(key);
                 var fromDate = LocalDate.of(year, 1, 1);
 
-                personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
-                        yearlyIndicator.getCode(), source, year,
-                        person.getId())
-                    .ifPresent(personIndicatorRepository::delete);
+                newCitationCountIndicator =
+                    personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
+                            yearlyIndicator.getCode(), source, year, person.getId())
+                        .orElse(new PersonIndicator());
 
                 newCitationCountIndicator.setIndicator(yearlyIndicator);
                 newCitationCountIndicator.setFromDate(fromDate);
@@ -571,21 +579,26 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                 }
             }
 
-            personIndicatorRepository.save(newCitationCountIndicator);
+            newCitationCountIndicator.setPerson(person);
+            newCitationCountIndicator.setNumericValue((double) value);
+            newCitationCountIndicator.setSource(source);
+
+            personIndicators.add(newCitationCountIndicator);
         });
 
         var hIndex = calculateHIndex(citations);
         if (Objects.nonNull(hIndexIndicator) && hIndex > 0) {
-            personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
-                    hIndexIndicator.getCode(), source, null, person.getId())
-                .ifPresent(personIndicatorRepository::delete);
-            var newHIndexIndicator = new PersonIndicator();
+            var newHIndexIndicator =
+                personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
+                        hIndexIndicator.getCode(), source, null, person.getId())
+                    .orElse(new PersonIndicator());
+
             newHIndexIndicator.setPerson(person);
             newHIndexIndicator.setNumericValue((double) hIndex);
             newHIndexIndicator.setSource(source);
             newHIndexIndicator.setIndicator(hIndexIndicator);
             newHIndexIndicator.setToDate(LocalDate.now());
-            personIndicatorRepository.save(newHIndexIndicator);
+            personIndicators.add(newHIndexIndicator);
 
             if (shouldUpdateIndex) {
                 index.get().setHIndex(hIndex);
@@ -597,17 +610,20 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
 
         if (Objects.nonNull(totalOutputIndicator)) {
-            personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
-                    totalOutputIndicator.getCode(), source, null, person.getId())
-                .ifPresent(personIndicatorRepository::delete);
-            var newTotalOutputIndicator = new PersonIndicator();
+            var newTotalOutputIndicator =
+                personIndicatorRepository.findIndicatorForCodeAndSourceAndFromDateAndPersonId(
+                        totalOutputIndicator.getCode(), source, null, person.getId())
+                    .orElse(new PersonIndicator());
+
             newTotalOutputIndicator.setPerson(person);
             newTotalOutputIndicator.setNumericValue((double) totalOutputCount);
             newTotalOutputIndicator.setSource(source);
             newTotalOutputIndicator.setIndicator(totalOutputIndicator);
             newTotalOutputIndicator.setToDate(LocalDate.now());
-            personIndicatorRepository.save(newTotalOutputIndicator);
+            personIndicators.add(newTotalOutputIndicator);
         }
+
+        personIndicatorRepository.saveAll(personIndicators);
     }
 
     private int calculateHIndex(List<Integer> citations) {

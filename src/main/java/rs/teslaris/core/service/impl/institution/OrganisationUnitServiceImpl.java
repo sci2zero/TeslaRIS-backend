@@ -46,6 +46,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
+import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
@@ -1266,6 +1267,19 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         return collectedIndexes.stream()
             .map(idx -> new Pair<>(idx, ouById.get(idx.getDatabaseId())))
             .toList();
+    }
+
+    @Override
+    public void migrateInstitutionInternalIdentifiers(InternalIdentifierMigrationDTO dto) {
+        var institutionsToSave = new ArrayList<OrganisationUnit>();
+        dto.oldToInternalIdMapping().forEach((key, value) ->
+            organisationUnitRepository.findOrganisationUnitByOldIdsContains(key)
+                .ifPresent(institution -> {
+                    institution.getAccountingIds().add(String.valueOf(value));
+                    institutionsToSave.add(institution);
+                }));
+
+        saveAll(institutionsToSave);
     }
 
     private void collectIndexesRecursive(

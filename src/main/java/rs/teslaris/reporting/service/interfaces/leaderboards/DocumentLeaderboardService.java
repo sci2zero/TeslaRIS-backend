@@ -23,5 +23,6 @@ public interface DocumentLeaderboardService {
         List<ThesisType> allowedThesisTypes);
 
     List<Integer> getEligibleDocumentIds(Integer institutionId, Boolean onlyTheses,
-                                         List<ThesisType> allowedThesisTypes);
+                                         List<ThesisType> allowedThesisTypes,
+                                         Integer from, Integer to);
 }

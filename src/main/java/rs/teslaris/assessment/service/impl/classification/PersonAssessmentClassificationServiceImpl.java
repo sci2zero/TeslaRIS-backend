@@ -328,7 +328,7 @@ public class PersonAssessmentClassificationServiceImpl
                     PageRequest.of(pageNumber, chunkSize))
                 .getContent();
 
-            publications.parallelStream().forEach(
+            publications.forEach(
                 publication -> updatePublicationAssessments(
                     publication, index, commissionResearchAreas, assessmentMeasures));
 

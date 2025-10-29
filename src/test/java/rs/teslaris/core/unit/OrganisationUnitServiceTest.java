@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,6 +59,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -1483,6 +1485,121 @@ public class OrganisationUnitServiceTest {
 
         // Then
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldMigrateInternalIdentifiersWhenOldIdsExist() {
+        // Given
+        var migrationDTO = new InternalIdentifierMigrationDTO(
+            Map.of(1, 1001, 2, 1002, 3, 1003), null, null, true
+        );
+
+        var institution1 = new OrganisationUnit();
+        institution1.setId(1);
+        institution1.setOldIds(Set.of(1, 5));
+        institution1.setAccountingIds(new HashSet<>());
+
+        var institution2 = new OrganisationUnit();
+        institution2.setId(2);
+        institution2.setOldIds(Set.of(2));
+        institution2.setAccountingIds(new HashSet<>());
+
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(1))
+            .thenReturn(Optional.of(institution1));
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(2))
+            .thenReturn(Optional.of(institution2));
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(3))
+            .thenReturn(Optional.empty());
+
+        when(organisationUnitRepository.saveAll(any())).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        organisationUnitService.migrateInstitutionInternalIdentifiers(migrationDTO);
+
+        // Then
+        assertEquals(Set.of("1001"), institution1.getAccountingIds());
+        assertEquals(Set.of("1002"), institution2.getAccountingIds());
+
+        verify(organisationUnitRepository).saveAll(any());
+    }
+
+    @Test
+    void shouldNotSaveAnyInstitutionsWhenNoOldIdsMatch() {
+        // Given
+        var migrationDTO = new InternalIdentifierMigrationDTO(
+            Map.of(1, 1001, 2, 1002), null, null, true
+        );
+
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(1))
+            .thenReturn(Optional.empty());
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(2))
+            .thenReturn(Optional.empty());
+
+        // When
+        organisationUnitService.migrateInstitutionInternalIdentifiers(migrationDTO);
+
+        // Then
+        verify(organisationUnitRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldAddIdentifierToExistingAccountingIds() {
+        // Given
+        var migrationDTO = new InternalIdentifierMigrationDTO(Map.of(1, 1001), null, null, true);
+
+        var institution = new OrganisationUnit();
+        institution.setId(1);
+        institution.setOldIds(Set.of(1));
+        institution.setAccountingIds(new HashSet<>(Set.of("existing_id_1", "existing_id_2")));
+
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(1))
+            .thenReturn(Optional.of(institution));
+        when(organisationUnitRepository.saveAll(any())).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        organisationUnitService.migrateInstitutionInternalIdentifiers(migrationDTO);
+
+        // Then
+        assertEquals(Set.of("existing_id_1", "existing_id_2", "1001"),
+            institution.getAccountingIds());
+        verify(organisationUnitRepository).saveAll(List.of(institution));
+    }
+
+    @Test
+    void shouldHandleEmptyMapping() {
+        // Given
+        var migrationDTO = new InternalIdentifierMigrationDTO(Map.of(), null, null, true);
+
+        // When
+        organisationUnitService.migrateInstitutionInternalIdentifiers(migrationDTO);
+
+        // Then
+        verify(organisationUnitRepository, never()).findOrganisationUnitByOldIdsContains(any());
+    }
+
+    @Test
+    void shouldConvertIntegerIdentifierToString() {
+        // Given
+        var migrationDTO = new InternalIdentifierMigrationDTO(Map.of(1, 999), null, null, true);
+
+        var institution = new OrganisationUnit();
+        institution.setId(1);
+        institution.setOldIds(Set.of(1));
+        institution.setAccountingIds(new HashSet<>());
+
+        when(organisationUnitRepository.findOrganisationUnitByOldIdsContains(1))
+            .thenReturn(Optional.of(institution));
+        when(organisationUnitRepository.saveAll(any())).thenAnswer(
+            invocation -> invocation.getArgument(0));
+
+        // When
+        organisationUnitService.migrateInstitutionInternalIdentifiers(migrationDTO);
+
+        // Then
+        assertEquals(Set.of("999"), institution.getAccountingIds());
+        assertTrue(institution.getAccountingIds().contains("999"));
     }
 
     private MultipartFile createMockMultipartFile() {

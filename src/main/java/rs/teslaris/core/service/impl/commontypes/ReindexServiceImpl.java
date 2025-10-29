@@ -125,10 +125,10 @@ public class ReindexServiceImpl implements ReindexService {
             if (indexesToRepopulate.contains(EntityType.PUBLICATION) ||
                 indexesToRepopulate.contains(EntityType.PERSON)) {
                 applicationEventPublisher.publishEvent(new AllResearcherPointsReindexingEvent());
+            }
 
-                if (reharvestCitationIndicators) {
-                    applicationEventPublisher.publishEvent(new HarvestExternalIndicatorsEvent());
-                }
+            if (reharvestCitationIndicators) {
+                applicationEventPublisher.publishEvent(new HarvestExternalIndicatorsEvent());
             }
         } catch (CompletionException e) {
             log.error("Error during parallel reindexing. Reason: ", e);

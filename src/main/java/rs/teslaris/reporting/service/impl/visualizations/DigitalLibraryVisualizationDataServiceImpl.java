@@ -85,7 +85,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
                                                            List<ThesisType> allowedThesisTypes) {
         var eligibleDocumentIds =
             documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-                allowedThesisTypes);
+                allowedThesisTypes, from.getYear(), to.getYear());
         if (eligibleDocumentIds.isEmpty() ||
             !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
             return Collections.emptyMap();
@@ -154,7 +154,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
         List<ThesisType> allowedThesisTypes) {
         var eligibleDocumentIds =
             documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-                allowedThesisTypes);
+                allowedThesisTypes, from.getYear(), to.getYear());
         if (eligibleDocumentIds.isEmpty() ||
             !organisationUnitService.findOne(organisationUnitId).getIsClientInstitutionDl()) {
             return Collections.emptyList();

@@ -30,7 +30,7 @@ public interface PersonIndicatorRepository extends JpaRepository<PersonIndicator
               AND pi.person.id = :personId
               AND (
                    (:fromYear IS NULL AND pi.fromDate IS NULL)
-                   OR (:fromYear IS NOT NULL AND extract(year from pi.fromDate) = :fromYear)
+                   OR (:fromYear IS NOT NULL AND EXTRACT(year from pi.fromDate) = :fromYear)
               )
         """)
     Optional<PersonIndicator> findIndicatorForCodeAndSourceAndFromDateAndPersonId(String code,

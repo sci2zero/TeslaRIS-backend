@@ -268,7 +268,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var eligibleDocumentIds = List.of(1, 2, 3);
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(eligibleDocumentIds);
 
         Map<String, Aggregate> mockAggregations = new HashMap<>();
@@ -324,7 +324,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
         var allowedThesisTypes = List.of(ThesisType.MASTER);
 
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(Collections.emptyList());
 
         // When
@@ -350,7 +350,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var eligibleDocumentIds = List.of(4, 5);
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(eligibleDocumentIds);
 
         Map<String, Aggregate> mockAggregations = new HashMap<>();
@@ -407,7 +407,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var eligibleDocumentIds = List.of(6, 7);
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(eligibleDocumentIds);
 
         when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
@@ -439,7 +439,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var eligibleDocumentIds = List.of(1, 2, 3, 4);
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(eligibleDocumentIds);
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
@@ -513,7 +513,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
         var allowedThesisTypes = List.of(ThesisType.MASTER);
 
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(Collections.emptyList());
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
@@ -543,7 +543,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var eligibleDocumentIds = List.of(5, 6, 7);
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(eligibleDocumentIds);
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
@@ -573,7 +573,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var eligibleDocumentIds = List.of(8, 9);
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(eligibleDocumentIds);
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
@@ -613,7 +613,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var eligibleDocumentIds = List.of(10);
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(eligibleDocumentIds);
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(
@@ -665,7 +665,7 @@ public class DigitalLibraryVisualizationDataServiceTest {
 
         var eligibleDocumentIds = List.of(11, 12);
         when(documentLeaderboardService.getEligibleDocumentIds(organisationUnitId, true,
-            allowedThesisTypes))
+            allowedThesisTypes, 2023, 2023))
             .thenReturn(eligibleDocumentIds);
 
         when(organisationUnitService.findOne(organisationUnitId)).thenReturn(

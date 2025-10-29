@@ -14,6 +14,7 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
+import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ThesisType;
@@ -127,4 +128,6 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
 
     List<Pair<OrganisationUnitIndex, OrganisationUnit>> collectUpdatableSubOrganisationUnits(
         Integer rootOuId, boolean onlyOnesThatHaveLibrary);
+
+    void migrateInstitutionInternalIdentifiers(InternalIdentifierMigrationDTO dto);
 }
