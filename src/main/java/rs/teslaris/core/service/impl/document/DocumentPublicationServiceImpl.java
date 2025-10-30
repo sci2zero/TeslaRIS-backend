@@ -454,7 +454,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
         var oldYear = index.getYear();
         var oldAuthors = index.getAuthorIds().stream().sorted().toList();

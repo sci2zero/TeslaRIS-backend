@@ -98,7 +98,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @Service
-@Transactional
 @Slf4j
 @Traceable
 public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements ThesisService {
@@ -199,11 +198,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public Thesis getThesisById(Integer thesisId) {
         return thesisJPAService.findOne(thesisId);
     }
 
     @Override
+    @Transactional
     public ThesisResponseDTO readThesisById(Integer thesisId) {
         Thesis thesis;
         try {
@@ -223,6 +224,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public ThesisResponseDTO readThesisByOldId(Integer oldId) {
         var thesis = thesisRepository.findThesisByOldIdsContains(oldId);
         if (thesis.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
@@ -234,6 +236,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public Thesis createThesis(ThesisDTO thesisDTO, Boolean index) {
         var newThesis = new Thesis();
 
@@ -271,6 +274,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
@@ -306,6 +310,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void deleteThesis(Integer thesisId) {
         var thesisToDelete = thesisJPAService.findOne(thesisId);
         checkIfAvailableForEditing(thesisToDelete);
@@ -316,6 +321,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexTheses() {
         // Super service does the initial deletion
 
@@ -336,6 +342,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexThesis(Thesis thesis) {
         indexThesis(thesis,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -343,6 +350,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO addThesisAttachment(Integer thesisId, DocumentFileDTO document,
                                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
@@ -385,6 +393,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void transferPreliminaryFileToOfficial(Integer thesisId, Integer documentFileId) {
         var thesis = thesisJPAService.findOne(thesisId);
 
@@ -452,6 +461,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
                                              Integer publicReviewLengthDays, Integer userId,
                                              RecurrenceType recurrence) {
@@ -473,6 +483,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void deleteThesisAttachment(Integer thesisId, Integer documentFileId,
                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
@@ -507,6 +518,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void putOnPublicReview(Integer thesisId, Boolean continueLastReview) {
         var thesis = thesisJPAService.findOne(thesisId);
         validateThesisForPublicReview(thesis);
@@ -557,6 +569,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void removeFromPublicReview(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
 
@@ -581,6 +594,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void archiveThesis(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
 
@@ -594,6 +608,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void unarchiveThesis(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
         thesis.setIsArchived(false);
@@ -602,6 +617,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
         try {
@@ -617,6 +633,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public String getSingleLibraryReferenceFormat(Integer thesisId, LibraryFormat libraryFormat) {
         var thesis = thesisJPAService.findOne(thesisId);
         try {
