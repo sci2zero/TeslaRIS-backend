@@ -422,7 +422,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                 .sum();
 
             citationTrend =
-                Math.toIntExact(personIndex.getTotalCitations() - citationsUntilCurrentYear);
+                Math.toIntExact(Objects.requireNonNullElse(personIndex.getTotalCitations(), 0L) -
+                    citationsUntilCurrentYear);
         }
 
         return new PersonFeaturedInformationDTO(
