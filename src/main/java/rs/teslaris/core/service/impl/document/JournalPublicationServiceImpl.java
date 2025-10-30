@@ -97,7 +97,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         try {
             publication = findJournalPublicationById(publicationId);
         } catch (NotFoundException e) {
-            log.info("Trying to read non-existent JOURNAL_PUBLICATION with ID {}. Clearing index.", publicationId);
+            log.info("Trying to read non-existent JOURNAL_PUBLICATION with ID {}. Clearing index.",
+                publicationId);
             this.clearIndexWhenFailedRead(publicationId,
                 DocumentPublicationType.JOURNAL_PUBLICATION);
             throw e;

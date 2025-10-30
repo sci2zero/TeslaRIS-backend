@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.service.interfaces.indicator.ExternalIndicatorHarvestService;
+import rs.teslaris.core.annotation.OrgUnitEditCheck;
+import rs.teslaris.core.annotation.PersonEditCheck;
 
 @RestController
 @RequestMapping("/api/external-indicator")
@@ -17,15 +19,17 @@ public class ExternalIndicatorHarvestController {
 
 
     @PostMapping("/harvest-person/{personId}")
+    @PersonEditCheck
     @PreAuthorize("hasAuthority('EDIT_EXT_INDICATOR_CONFIGURATION')")
     public void harvestExternalIndicatorsForPerson(@PathVariable Integer personId) {
         externalIndicatorHarvestService.performIndicatorHavestForSinglePerson(personId);
     }
 
-    @PostMapping("/deduce-institution/{institutionId}")
+    @PostMapping("/deduce-institution/{organisationUnitId}")
+    @OrgUnitEditCheck
     @PreAuthorize("hasAuthority('EDIT_EXT_INDICATOR_CONFIGURATION')")
-    public void deduceExternalIndicatorsForInstitution(@PathVariable Integer institutionId) {
+    public void deduceExternalIndicatorsForInstitution(@PathVariable Integer organisationUnitId) {
         externalIndicatorHarvestService.performIndicatorDeductionForSingleInstitution(
-            institutionId);
+            organisationUnitId);
     }
 }

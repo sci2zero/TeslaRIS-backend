@@ -139,7 +139,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         try {
             monograph = monographJPAService.findOne(monographId);
         } catch (NotFoundException e) {
-            log.info("Trying to read non-existent MONOGRAPH with ID {}. Clearing index.", monographId);
+            log.info("Trying to read non-existent MONOGRAPH with ID {}. Clearing index.",
+                monographId);
             this.clearIndexWhenFailedRead(monographId, DocumentPublicationType.MONOGRAPH);
             throw e;
         }

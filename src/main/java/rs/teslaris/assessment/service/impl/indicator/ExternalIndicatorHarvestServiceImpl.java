@@ -102,7 +102,6 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void performOUIndicatorDeduction() {
         var context = prepareInstitutionIndicatorDeductionContext();
 
@@ -123,6 +122,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Override
+    @Async
     public void performIndicatorHavestForSinglePerson(Integer personId) {
         var person = personService.findOne(personId);
         var harvestContext = preparePersonIndicatorHarvestContext();
@@ -131,8 +131,21 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Override
+    @Async
     public void performIndicatorDeductionForSingleInstitution(Integer organisationUnitId) {
+        organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
+            organisationUnitId).ifPresent(institution -> {
+            var context = prepareInstitutionIndicatorDeductionContext();
 
+            var indicatorsToSave = new ArrayList<OrganisationUnitIndicator>();
+
+            performInstitutionDeduction(
+                context.sources, institution,
+                context.totalCitationsIndicator, context.totalOutputIndicator,
+                indicatorsToSave);
+
+            organisationUnitIndicatorRepository.saveAll(indicatorsToSave);
+        });
     }
 
     @Override
@@ -245,6 +258,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void performInstitutionDeduction(List<EntityIndicatorSource> entityIndicatorSources,
                                              OrganisationUnitIndex institution,
                                              Indicator totalCitationsIndicator,

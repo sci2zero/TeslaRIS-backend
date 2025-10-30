@@ -88,7 +88,8 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         try {
             software = softwareJPAService.findOne(softwareId);
         } catch (NotFoundException e) {
-            log.info("Trying to read non-existent SOFTWARE with ID {}. Clearing index.", softwareId);
+            log.info("Trying to read non-existent SOFTWARE with ID {}. Clearing index.",
+                softwareId);
             this.clearIndexWhenFailedRead(softwareId, DocumentPublicationType.SOFTWARE);
             throw e;
         }

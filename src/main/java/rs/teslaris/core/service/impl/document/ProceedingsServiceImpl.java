@@ -116,7 +116,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         try {
             proceedings = findProceedingsById(proceedingsId);
         } catch (NotFoundException e) {
-            log.info("Trying to read non-existent PROCEEDINGS with ID {}. Clearing index.", proceedingsId);
+            log.info("Trying to read non-existent PROCEEDINGS with ID {}. Clearing index.",
+                proceedingsId);
             this.clearIndexWhenFailedRead(proceedingsId, DocumentPublicationType.PROCEEDINGS);
             throw e;
         }
