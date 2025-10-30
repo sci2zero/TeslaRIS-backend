@@ -137,7 +137,7 @@ public class ScheduledTasksRestorer {
                     EntityType::name).toList(), "-") +
                 "-" + UUID.randomUUID(),
             timeToRun,
-            () -> reindexService.reindexDatabase(indexesToRepopulate, reharvestCitationIndicators),
+            () -> reindexService.reindexDatabase(indexesToRepopulate, reharvestCitationIndicators, null),
             userId, RecurrenceType.ONCE);
 
         taskManagerService.saveTaskMetadata(

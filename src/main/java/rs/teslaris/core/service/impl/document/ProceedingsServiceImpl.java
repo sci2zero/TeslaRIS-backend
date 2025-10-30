@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +49,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Transactional
 @Traceable
+@Slf4j
 public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsService {
 
@@ -114,6 +116,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         try {
             proceedings = findProceedingsById(proceedingsId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent PROCEEDINGS with ID {}. Clearing index.", proceedingsId);
             this.clearIndexWhenFailedRead(proceedingsId, DocumentPublicationType.PROCEEDINGS);
             throw e;
         }

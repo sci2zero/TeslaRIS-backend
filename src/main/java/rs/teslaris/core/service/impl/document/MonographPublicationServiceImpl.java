@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -42,6 +43,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Transactional
 @Traceable
+@Slf4j
 public class MonographPublicationServiceImpl extends DocumentPublicationServiceImpl implements
     MonographPublicationService {
 
@@ -90,6 +92,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         try {
             monographPublication = monographPublicationJPAService.findOne(monographPublicationId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent MONOGRAPH_PUBLICATION with ID {}. Clearing index.", monographPublicationId);
             this.clearIndexWhenFailedRead(monographPublicationId,
                 DocumentPublicationType.MONOGRAPH_PUBLICATION);
             throw e;

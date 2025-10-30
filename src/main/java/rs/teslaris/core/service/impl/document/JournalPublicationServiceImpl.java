@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -43,6 +44,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Transactional
 @Traceable
+@Slf4j
 public class JournalPublicationServiceImpl extends DocumentPublicationServiceImpl
     implements JournalPublicationService {
 
@@ -95,6 +97,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         try {
             publication = findJournalPublicationById(publicationId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent JOURNAL_PUBLICATION with ID {}. Clearing index.", publicationId);
             this.clearIndexWhenFailedRead(publicationId,
                 DocumentPublicationType.JOURNAL_PUBLICATION);
             throw e;

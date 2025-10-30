@@ -204,7 +204,7 @@ public class TestingDataInitializer {
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666"), new HashSet<>(), new HashSet<>());
         var person1 = new Person();
-//        person1.getOldIds().add(3);
+        person1.getOldIds().add(3);
         person1.setName(
             new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         person1.setApproveStatus(ApproveStatus.APPROVED);
@@ -225,7 +225,7 @@ public class TestingDataInitializer {
 
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
-//        dummyOU.getOldIds().add(2);
+        dummyOU.getOldIds().add(2);
         dummyOU.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
@@ -1006,7 +1006,7 @@ public class TestingDataInitializer {
         thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
         thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
         thesis6.setPublicReviewCompleted(true);
-//        thesis6.getOldIds().add(998);
+        thesis6.getOldIds().add(998);
 
         var thesisContribution4 = new PersonDocumentContribution();
         thesisContribution4.setPerson(person3);

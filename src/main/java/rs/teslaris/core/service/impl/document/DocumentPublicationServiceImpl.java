@@ -815,6 +815,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         save(document);
     }
 
+    @Override
+    public void deleteIndexesByType(DocumentPublicationType type) {
+        documentPublicationIndexRepository.deleteByType(type.name());
+    }
+
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
         index.setFullTextSr("");
         index.setFullTextOther("");

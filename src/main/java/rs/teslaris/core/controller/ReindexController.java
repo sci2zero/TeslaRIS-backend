@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ReindexRequestDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
@@ -57,7 +58,7 @@ public class ReindexController {
                 "-" + UUID.randomUUID(),
             timestamp,
             () -> reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate(),
-                reharvestCitationIndicators),
+                reharvestCitationIndicators, null),
             tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
 
         taskManagerService.saveTaskMetadata(
@@ -73,8 +74,10 @@ public class ReindexController {
     @PreAuthorize("hasAuthority('REINDEX_DATABASE')")
     @Idempotent
     public void reindexDatabase(@RequestBody ReindexRequestDTO reindexRequest,
-                                @RequestParam Boolean reharvestCitationIndicators) {
+                                @RequestParam Boolean reharvestCitationIndicators,
+                                @RequestParam(required = false)
+                                DocumentPublicationType concreteTypeToReindex) {
         reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate(),
-            reharvestCitationIndicators);
+            reharvestCitationIndicators, concreteTypeToReindex);
     }
 }

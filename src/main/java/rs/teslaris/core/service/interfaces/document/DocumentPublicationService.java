@@ -124,4 +124,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
     void deleteNonManagedDocuments();
 
     void updateDocumentIdentifiers(Integer documentId, DocumentIdentifierUpdateDTO requestDTO);
+
+    void deleteIndexesByType(DocumentPublicationType type);
 }

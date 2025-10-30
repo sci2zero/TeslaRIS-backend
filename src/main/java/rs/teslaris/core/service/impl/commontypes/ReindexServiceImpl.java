@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
 import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -80,7 +82,8 @@ public class ReindexServiceImpl implements ReindexService {
 
     @Override
     public void reindexDatabase(List<EntityType> indexesToRepopulate,
-                                Boolean reharvestCitationIndicators) {
+                                Boolean reharvestCitationIndicators,
+                                DocumentPublicationType concreteTypeToReindex) {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         if (indexesToRepopulate.contains(EntityType.USER_ACCOUNT)) {
@@ -116,7 +119,11 @@ public class ReindexServiceImpl implements ReindexService {
         }
 
         if (indexesToRepopulate.contains(EntityType.PUBLICATION)) {
-            futures.add(reindexPublications());
+            if (Objects.nonNull(concreteTypeToReindex)) {
+                futures.add(reindexConcretePublicationType(concreteTypeToReindex));
+            } else {
+                futures.add(reindexPublications());
+            }
         }
 
         try {
@@ -148,6 +155,27 @@ public class ReindexServiceImpl implements ReindexService {
         monographPublicationService.reindexMonographPublications();
         proceedingsService.reindexProceedings();
         thesisService.reindexTheses();
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("reindexExecutor")
+    public CompletableFuture<Void> reindexConcretePublicationType(DocumentPublicationType type) {
+        documentPublicationService.deleteIndexesByType(type);
+
+        switch (type) {
+            case JOURNAL_PUBLICATION -> journalPublicationService.reindexJournalPublications();
+            case PROCEEDINGS -> proceedingsService.reindexProceedings();
+            case PROCEEDINGS_PUBLICATION ->
+                proceedingsPublicationService.reindexProceedingsPublications();
+            case MONOGRAPH -> monographService.reindexMonographs();
+            case PATENT -> patentService.reindexPatents();
+            case SOFTWARE -> softwareService.reindexSoftware();
+            case DATASET -> datasetService.reindexDatasets();
+            case MONOGRAPH_PUBLICATION ->
+                monographPublicationService.reindexMonographPublications();
+            case THESIS -> thesisService.reindexTheses();
+        }
 
         return CompletableFuture.completedFuture(null);
     }

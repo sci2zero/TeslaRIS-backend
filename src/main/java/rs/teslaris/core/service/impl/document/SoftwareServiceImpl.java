@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Traceable
 @Transactional
+@Slf4j
 public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implements SoftwareService {
 
     private final SoftwareJPAServiceImpl softwareJPAService;
@@ -86,6 +88,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
         try {
             software = softwareJPAService.findOne(softwareId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent SOFTWARE with ID {}. Clearing index.", softwareId);
             this.clearIndexWhenFailedRead(softwareId, DocumentPublicationType.SOFTWARE);
             throw e;
         }

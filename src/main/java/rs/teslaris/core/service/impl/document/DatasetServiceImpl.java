@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Traceable
 @Transactional
+@Slf4j
 public class DatasetServiceImpl extends DocumentPublicationServiceImpl implements DatasetService {
 
     private final DatasetJPAServiceImpl datasetJPAService;
@@ -86,6 +88,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         try {
             dataset = datasetJPAService.findOne(datasetId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent DATASET with ID {}. Clearing index.", datasetId);
             this.clearIndexWhenFailedRead(datasetId, DocumentPublicationType.DATASET);
             throw e;
         }

@@ -148,7 +148,7 @@ public class ReindexServiceTest {
             CompletableFuture.completedFuture(null));
 
         // When
-        reindexService.reindexDatabase(indexesToRepopulate, indexType.b);
+        reindexService.reindexDatabase(indexesToRepopulate, indexType.b, null);
 
         // Then
         verify(userService,

@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Transactional
 @Traceable
+@Slf4j
 public class PatentServiceImpl extends DocumentPublicationServiceImpl implements PatentService {
 
     private final PatentJPAServiceImpl patentJPAService;
@@ -85,6 +87,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         try {
             patent = patentJPAService.findOne(patentId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent PATENT with ID {}. Clearing index.", patentId);
             this.clearIndexWhenFailedRead(patentId, DocumentPublicationType.PATENT);
             throw e;
         }

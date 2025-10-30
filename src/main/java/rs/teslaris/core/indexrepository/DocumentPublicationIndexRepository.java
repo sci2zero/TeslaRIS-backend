@@ -333,4 +333,6 @@ public interface DocumentPublicationIndexRepository extends
         }
         """)
     long countAuthorPublications(Integer authorId);
+
+    void deleteByType(String type);
 }

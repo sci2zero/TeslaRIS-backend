@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -53,6 +54,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Traceable
 @Transactional
+@Slf4j
 public class MonographServiceImpl extends DocumentPublicationServiceImpl implements
     MonographService {
 
@@ -137,6 +139,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         try {
             monograph = monographJPAService.findOne(monographId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent MONOGRAPH with ID {}. Clearing index.", monographId);
             this.clearIndexWhenFailedRead(monographId, DocumentPublicationType.MONOGRAPH);
             throw e;
         }
