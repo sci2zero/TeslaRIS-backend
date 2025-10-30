@@ -334,7 +334,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             List<Thesis> chunk =
                 thesisJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((thesis) -> indexThesis(thesis, new DocumentPublicationIndex()));
+            chunk.forEach(thesis -> {
+                try {
+                    indexThesis(thesis, new DocumentPublicationIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping thesis {} due to indexing error: {}", thesis.getId(), e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
