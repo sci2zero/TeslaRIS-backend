@@ -126,4 +126,15 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "AND p.profilePhoto IS NOT NULL " +
         "AND p.profilePhoto.imageServerName IS NOT NULL")
     Optional<String> findProfileImageByPersonId(Integer personId);
+
+    @Query("""
+        SELECT DISTINCT p
+        FROM Person p
+        LEFT JOIN FETCH p.employmentInstitutionsIdHierarchy eih
+        LEFT JOIN FETCH p.involvements i
+        LEFT JOIN FETCH i.organisationUnit
+        WHERE p.id = :personId
+        """)
+    Optional<Person> findOneWithInvolvements(Integer personId);
+
 }

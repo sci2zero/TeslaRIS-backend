@@ -39,7 +39,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
-@Transactional
 @Slf4j
 public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implements SoftwareService {
 
@@ -78,11 +77,13 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional
     public Software findSoftwareById(Integer softwareId) {
         return softwareJPAService.findOne(softwareId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SoftwareDTO readSoftwareById(Integer softwareId) {
         Software software;
         try {
@@ -103,6 +104,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional
     public Software createSoftware(SoftwareDTO softwareDTO, Boolean index) {
         var newSoftware = new Software();
 
@@ -122,6 +124,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional
     public void editSoftware(Integer softwareId, SoftwareDTO softwareDTO) {
         var softwareToUpdate = softwareJPAService.findOne(softwareId);
 
@@ -154,6 +157,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional
     public void deleteSoftware(Integer softwareId) {
         var softwareToDelete = softwareJPAService.findOne(softwareId);
 
@@ -167,6 +171,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexSoftware() {
         // Super service does the initial deletion
 
@@ -187,13 +192,13 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexSoftware(Software software) {
         indexSoftware(software,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                 software.getId()).orElse(new DocumentPublicationIndex()));
     }
 
-    @Transactional
     private void indexSoftware(Software software, DocumentPublicationIndex index) {
         indexCommonFields(software, index);
 

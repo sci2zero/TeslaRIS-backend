@@ -39,7 +39,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
-@Transactional
 @Slf4j
 public class DatasetServiceImpl extends DocumentPublicationServiceImpl implements DatasetService {
 
@@ -78,11 +77,13 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional
     public Dataset findDatasetById(Integer datasetId) {
         return datasetJPAService.findOne(datasetId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DatasetDTO readDatasetById(Integer datasetId) {
         Dataset dataset;
         try {
@@ -102,6 +103,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional
     public Dataset createDataset(DatasetDTO datasetDTO, Boolean index) {
         var newDataset = new Dataset();
 
@@ -121,6 +123,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional
     public void editDataset(Integer datasetId, DatasetDTO datasetDTO) {
         var datasetToUpdate = datasetJPAService.findOne(datasetId);
 
@@ -152,6 +155,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional
     public void deleteDataset(Integer datasetId) {
         var datasetToDelete = datasetJPAService.findOne(datasetId);
 
@@ -165,6 +169,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexDatasets() {
         // Super service does the initial deletion
 
@@ -185,6 +190,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexDataset(Dataset dataset) {
         indexDataset(dataset,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

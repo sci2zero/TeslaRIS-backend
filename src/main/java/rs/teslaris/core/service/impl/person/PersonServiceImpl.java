@@ -148,7 +148,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
 
     @Override
-    @Transactional
     protected JpaRepository<Person, Integer> getEntityRepository() {
         return personRepository;
     }
@@ -189,7 +188,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public PersonResponseDTO readPersonWithBasicInfo(Integer id) {
         var person = personRepository.findApprovedPersonById(id);
 
@@ -202,7 +201,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public PersonResponseDTO readPersonWithBasicInfoForOldId(Integer oldId) {
         var personToReturn = findPersonByOldId(oldId);
 
@@ -214,7 +213,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public PersonUserResponseDTO readPersonWithUser(Integer id) {
         var person = personRepository.findApprovedPersonByIdWithUser(id)
             .orElseThrow(() -> new NotFoundException("Person with given ID does not exist."));
@@ -781,10 +780,17 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    @Transactional
     @Async("reindexExecutor")
+    @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexPersons() {
         personIndexRepository.deleteAll();
+
+        performBulkReindex();
+
+        return null;
+    }
+
+    public void performBulkReindex() {
         int pageNumber = 0;
         int chunkSize = 50;
         boolean hasNextPage = true;
@@ -798,7 +804,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
-        return null;
     }
 
     @Transactional
@@ -923,6 +928,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
+        if (Objects.isNull(savedPerson)) {
+            return;
+        }
+
         personIndex.getEmploymentInstitutionsId().clear();
         personIndex.getEmploymentInstitutionsIdHierarchy().clear();
         personIndex.setEmploymentsSr("");
@@ -1474,7 +1483,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }
 
-    @Transactional
     private void reindexInstitutionEmployeesEmployments(Integer organisationUnitId) {
         int pageNumber = 0;
         int chunkSize = 500;
@@ -1486,7 +1494,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             chunk.forEach(
                 index -> {
-                    setPersonIndexEmploymentDetails(index, findOne(index.getDatabaseId()));
+                    setPersonIndexEmploymentDetails(index,
+                        personRepository.findOneWithInvolvements(index.getDatabaseId())
+                            .orElse(null));
                     personIndexRepository.save(index);
 
                     applicationEventPublisher.publishEvent(

@@ -47,7 +47,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Traceable
 @Slf4j
 public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
@@ -111,6 +110,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProceedingsResponseDTO readProceedingsById(Integer proceedingsId) {
         Proceedings proceedings;
         try {
@@ -131,23 +131,27 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional
     public List<ProceedingsResponseDTO> readProceedingsForEventId(Integer eventId) {
         return proceedingsRepository.findProceedingsForEventId(eventId).stream()
             .map(ProceedingsConverter::toDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public Proceedings findProceedingsById(Integer proceedingsId) {
         return proceedingsJPAService.findOne(proceedingsId);
     }
 
     @Override
+    @Transactional
     public Proceedings findRaw(Integer proceedingsId) {
         return proceedingsRepository.findRaw(proceedingsId)
             .orElseThrow(() -> new NotFoundException("Proceedings with given ID does not exist."));
     }
 
     @Override
+    @Transactional
     public Proceedings createProceedings(ProceedingsDTO proceedingsDTO, boolean index) {
         var proceedings = new Proceedings();
 
@@ -164,6 +168,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
 
@@ -182,6 +187,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional
     public void deleteProceedings(Integer proceedingsId) {
         var proceedingsToDelete = findProceedingsById(proceedingsId);
 
@@ -198,6 +204,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional
     public void forceDeleteProceedings(Integer proceedingsId) {
         proceedingsRepository.deleteAllPublicationsInProceedings(proceedingsId);
 
@@ -211,6 +218,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
         indexCommonFields(proceedings, index);
 
@@ -238,6 +246,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional
     public void indexProceedings(Proceedings proceedings) {
         indexProceedings(proceedings,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -245,6 +254,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexProceedings() {
         // Super service does the initial deletion
 
@@ -335,6 +345,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional
     public boolean isIdentifierInUse(String identifier, Integer proceedingsId) {
         return proceedingsRepository.existsByeISBN(identifier, proceedingsId) ||
             proceedingsRepository.existsByPrintISBN(identifier, proceedingsId) ||
@@ -342,6 +353,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional
     public Proceedings findProceedingsByIsbn(String eIsbn, String printIsbn) {
         boolean isEisbnBlank = (Objects.isNull(eIsbn) || eIsbn.isBlank());
         boolean isPrintIsbnBlank = (Objects.isNull(printIsbn) || printIsbn.isBlank());
@@ -365,6 +377,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     }
 
     @Override
+    @Transactional
     public void addOldId(Integer id, Integer oldId) {
         var proceedings = findOne(id);
         proceedings.getOldIds().add(oldId);

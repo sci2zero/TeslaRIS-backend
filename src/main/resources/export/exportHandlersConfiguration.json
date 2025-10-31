@@ -8,6 +8,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -94,6 +95,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -118,6 +120,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -142,6 +145,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -166,6 +170,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -190,6 +195,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -214,6 +220,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -238,6 +245,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -263,6 +271,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -288,6 +297,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -313,6 +323,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -338,6 +349,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -363,6 +375,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -387,6 +400,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -428,6 +442,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -469,6 +484,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -555,6 +571,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -641,6 +658,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",

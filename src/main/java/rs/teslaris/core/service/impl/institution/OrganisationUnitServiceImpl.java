@@ -128,7 +128,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
 
     @Override
-    @Transactional
     protected JpaRepository<OrganisationUnit, Integer> getEntityRepository() {
         return organisationUnitRepository;
     }
@@ -140,7 +139,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public OrganisationUnitDTO readOrganisationUnitById(Integer id) {
         OrganisationUnit ou;
         try {
@@ -178,7 +177,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public OrganisationUnitDTO readOrganisationUnitForOldId(Integer oldId) {
         var ouToReturn = findOrganisationUnitByOldId(oldId);
 
@@ -1203,6 +1202,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexOrganisationUnits() {
         organisationUnitIndexRepository.deleteAll();
+
+        performBulkReindex();
+
+        return null;
+    }
+
+    public void performBulkReindex() {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -1218,7 +1224,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
-        return null;
     }
 
     private boolean isAdminUser() {

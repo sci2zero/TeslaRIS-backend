@@ -204,7 +204,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ThesisResponseDTO readThesisById(Integer thesisId) {
         Thesis thesis;
         try {
@@ -338,7 +338,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 try {
                     indexThesis(thesis, new DocumentPublicationIndex());
                 } catch (Exception e) {
-                    log.warn("Skipping thesis {} due to indexing error: {}", thesis.getId(), e.getMessage());
+                    log.warn("Skipping THESIS {} due to indexing error: {}", thesis.getId(),
+                        e.getMessage());
                 }
             });
 
@@ -944,9 +945,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     private void notifyLibrarians(
         Map<Integer, List<Triple<String, Set<MultiLingualContent>, LocalDate>>> thesesByInstitution,
         Integer publicReviewLengthDays) {
-        userService.findAllInstitutionalLibrarianUsers().forEach(librarianUser -> {
+        userService.findAllLibrarianUsers().forEach(librarianUser -> {
             var thesesList = new StringBuilder();
             var preferredLocale = librarianUser.getPreferredUILanguage().getLanguageTag();
+
+            if (Objects.isNull(librarianUser.getOrganisationUnit())) {
+                log.error("{} user with ID {} and email {} does not have an OU bound to him!",
+                    librarianUser.getAuthority().getName(), librarianUser.getId(),
+                    librarianUser.getEmail());
+                return;
+            }
 
             for (var institutionId : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
                 librarianUser.getOrganisationUnit().getId())) {

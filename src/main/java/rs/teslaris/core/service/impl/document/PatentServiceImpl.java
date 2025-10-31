@@ -38,7 +38,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Traceable
 @Slf4j
 public class PatentServiceImpl extends DocumentPublicationServiceImpl implements PatentService {
@@ -77,11 +76,13 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public Patent findPatentById(Integer patentId) {
         return patentJPAService.findOne(patentId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PatentDTO readPatentById(Integer patentId) {
         Patent patent;
         try {
@@ -101,6 +102,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public Patent createPatent(PatentDTO patentDTO, Boolean index) {
         var newPatent = new Patent();
 
@@ -120,6 +122,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void editPatent(Integer patentId, PatentDTO patentDTO) {
         var patentToUpdate = patentJPAService.findOne(patentId);
 
@@ -151,6 +154,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void deletePatent(Integer patentId) {
         var patentToDelete = patentJPAService.findOne(patentId);
 
@@ -185,6 +189,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexPatent(Patent patent) {
         indexPatent(patent,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

@@ -29,11 +29,11 @@ public class ExportConverterBase {
     // Inherited classes should include
     // these static methods:
     // static T toCommonExportModel(D modelEntity)
-    // static R toOpenaireModel(T commonExportEntity);
-    // static D toDCModel(T commonExportEntity);
-    // static E toETDMSModel(T commonExportEntity); // where applicable
-    // static S toDIMSModel(T commonExportEntity); // where applicable
-    // static M toMARC21Model(T commonExportEntity); // where applicable
+    // static R toOpenaireModel(T commonExportEntity, boolean supportLegacyIdentifiers);
+    // static D toDCModel(T commonExportEntity, boolean supportLegacyIdentifiers);
+    // static E toETDMSModel(T commonExportEntity, boolean supportLegacyIdentifiers); // where applicable
+    // static S toDIMSModel(T commonExportEntity, boolean supportLegacyIdentifiers); // where applicable
+    // static M toMARC21Model(T commonExportEntity, boolean supportLegacyIdentifiers); // where applicable
 
     protected static String repositoryName;
 

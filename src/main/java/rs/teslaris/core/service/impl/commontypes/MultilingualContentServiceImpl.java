@@ -40,6 +40,8 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
         }).collect(Collectors.toSet());
     }
 
+    @Override
+    @Transactional
     public Set<MultiLingualContent> getMultilingualContentAndSetDefaultsIfNonExistent(
         List<MultilingualContentDTO> multilingualContentDTOs) {
 
@@ -100,6 +102,7 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void buildLanguageStrings(StringBuilder serbianBuilder,
                                      StringBuilder otherLanguagesBuilder,
                                      Set<MultiLingualContent> contentList,
@@ -109,6 +112,7 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void buildLanguageStringsFromHTMLMC(StringBuilder serbianBuilder,
                                                StringBuilder otherLanguagesBuilder,
                                                Set<MultiLingualContent> contentList,

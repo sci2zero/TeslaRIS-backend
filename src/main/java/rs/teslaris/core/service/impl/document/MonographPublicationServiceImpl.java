@@ -41,7 +41,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Traceable
 @Slf4j
 public class MonographPublicationServiceImpl extends DocumentPublicationServiceImpl implements
@@ -82,11 +81,13 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional
     public MonographPublication findMonographPublicationById(Integer monographPublicationId) {
         return monographPublicationJPAService.findOne(monographPublicationId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MonographPublicationDTO readMonographPublicationById(Integer monographPublicationId) {
         MonographPublication monographPublication;
         try {
@@ -110,6 +111,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional
     public MonographPublication createMonographPublication(
         MonographPublicationDTO monographPublicationDTO, Boolean index) {
         var newMonographPublication = new MonographPublication();
@@ -134,6 +136,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional
     public List<DocumentPublicationIndex> findAuthorsPublicationsForMonograph(Integer monographId,
                                                                               Integer authorId) {
         return documentPublicationIndexRepository.findByTypeAndMonographIdAndAuthorIds(
@@ -141,6 +144,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findAllPublicationsForMonograph(Integer monographId,
                                                                           Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
@@ -153,6 +157,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional
     public void editMonographPublication(Integer monographPublicationId,
                                          MonographPublicationDTO monographPublicationDTO) {
         var monographPublicationToUpdate =
@@ -171,6 +176,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional
     public void deleteMonographPublication(Integer monographPublicationId) {
         var publicationToDelete = monographPublicationJPAService.findOne(monographPublicationId);
 
@@ -181,6 +187,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexMonographPublications() {
         // Super service does the initial deletion
 
@@ -222,6 +229,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexMonographPublication(MonographPublication monographPublication,
                                           DocumentPublicationIndex index) {
         indexCommonFields(monographPublication, index);
@@ -240,6 +248,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     }
 
     @Override
+    @Transactional
     public void indexMonographPublication(MonographPublication monographPublication) {
         indexMonographPublication(monographPublication,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

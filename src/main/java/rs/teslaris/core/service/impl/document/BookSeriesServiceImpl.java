@@ -37,7 +37,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
-@Transactional
 @Traceable
 public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     implements BookSeriesService {
@@ -74,6 +73,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<BookSeriesResponseDTO> readAllBookSeries(Pageable pageable) {
         return bookSeriesJPAService.findAll(pageable).map(PublicationSeriesConverter::toDTO);
     }
@@ -94,6 +94,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BookSeriesResponseDTO readBookSeries(Integer bookSeriesId) {
         BookSeries bookSeries;
         try {
@@ -108,17 +109,20 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    @Transactional
     public BookSeries findBookSeriesById(Integer bookSeriesId) {
         return bookSeriesJPAService.findOne(bookSeriesId);
     }
 
     @Override
+    @Transactional
     public BookSeries findRaw(Integer bookSeriesId) {
         return bookSeriesRepository.findRaw(bookSeriesId)
             .orElseThrow(() -> new NotFoundException("Book Series with given ID does not exist."));
     }
 
     @Override
+    @Transactional
     public BookSeries createBookSeries(BookSeriesDTO bookSeriesDTO, Boolean index) {
         var bookSeries = new BookSeries();
 
@@ -135,6 +139,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    @Transactional
     public void updateBookSeries(Integer bookSeriesId, BookSeriesDTO bookSeriesDTO) {
         var bookSeriesToUpdate = bookSeriesJPAService.findOne(bookSeriesId);
         bookSeriesToUpdate.getLanguages().clear();
@@ -151,6 +156,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    @Transactional
     public void deleteBookSeries(Integer bookSeriesId) {
         if (publicationSeriesRepository.hasProceedings(bookSeriesId)) {
             throw new BookSeriesReferenceConstraintViolationException(
@@ -163,6 +169,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     @Override
+    @Transactional
     public void forceDeleteBookSeries(Integer bookSeriesId) {
         publicationSeriesRepository.unbindProceedings(bookSeriesId);
 
@@ -180,6 +187,13 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexBookSeries() {
         bookSeriesIndexRepository.deleteAll();
+
+        performBulkReindex();
+
+        return null;
+    }
+
+    public void performBulkReindex() {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -194,21 +208,23 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
-        return null;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexBookSeries(BookSeries bookSeries) {
         indexBookSeries(bookSeries, bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(
             bookSeries.getId()).orElse(new BookSeriesIndex()));
     }
 
     @Override
+    @Transactional
     public void save(BookSeries bookSeries) {
         bookSeriesJPAService.save(bookSeries);
     }
 
     @Override
+    @Transactional
     @Nullable
     public BookSeriesIndex readBookSeriesByIssn(String eIssn, String printIssn) {
         boolean isEissnBlank = (Objects.isNull(eIssn) || eIssn.isBlank());

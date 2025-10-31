@@ -44,7 +44,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Traceable
 public class ProceedingsPublicationServiceImpl extends DocumentPublicationServiceImpl
     implements ProceedingsPublicationService {
@@ -92,11 +91,13 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional
     public ProceedingsPublication findProceedingsPublicationById(Integer publicationId) {
         return proceedingPublicationJPAService.findOne(publicationId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProceedingsPublicationDTO readProceedingsPublicationById(Integer publicationId) {
         ProceedingsPublication publication;
         try {
@@ -116,6 +117,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional
     public List<ProceedingsPublicationResponseDTO> findAuthorsProceedingsForEvent(Integer eventId,
                                                                                   Integer authorId) {
         var proceedingsPublications =
@@ -136,6 +138,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findPublicationsInProceedings(Integer proceedingsId,
                                                                         Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
@@ -148,6 +151,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional
     public ProceedingsPublication createProceedingsPublication(
         ProceedingsPublicationDTO proceedingsPublicationDTO, Boolean index) {
         var publication = new ProceedingsPublication();
@@ -169,6 +173,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional
     public void editProceedingsPublication(Integer publicationId,
                                            ProceedingsPublicationDTO publicationDTO) {
         var publicationToUpdate =
@@ -197,6 +202,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional
     public void deleteProceedingsPublication(Integer proceedingsPublicationId) {
 //        var publicationToDelete =
 //            (ProceedingsPublication) findDocumentById(proceedingsPublicationId);
@@ -211,6 +217,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexProceedingsPublication(ProceedingsPublication publication,
                                             DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
@@ -232,6 +239,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexProceedingsPublication(ProceedingsPublication publication) {
         indexProceedingsPublication(publication,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -239,6 +247,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId,
                                                                   Pageable pageable) {
         return documentPublicationIndexRepository.findByTypeAndEventId(
@@ -260,8 +269,9 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                 proceedingPublicationJPAService.findAll(PageRequest.of(pageNumber, chunkSize))
                     .getContent();
 
-            chunk.forEach((journalPublication) -> indexProceedingsPublication(journalPublication,
-                new DocumentPublicationIndex()));
+            chunk.forEach(
+                (proceedingsPublication) -> indexProceedingsPublication(proceedingsPublication,
+                    new DocumentPublicationIndex()));
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

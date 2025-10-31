@@ -103,10 +103,11 @@ public class ExportPersonConverter extends ExportConverterBase {
     }
 
     public static rs.teslaris.core.model.oaipmh.person.Person toOpenaireModel(
-        ExportPerson exportPerson) {
+        ExportPerson exportPerson, boolean supportLegacyIdentifiers) {
         var openairePerson = new rs.teslaris.core.model.oaipmh.person.Person();
 
-        if (Objects.nonNull(exportPerson.getOldIds()) && !exportPerson.getOldIds().isEmpty()) {
+        if (supportLegacyIdentifiers && Objects.nonNull(exportPerson.getOldIds()) &&
+            !exportPerson.getOldIds().isEmpty()) {
             openairePerson.setOldId("Persons/" + legacyIdentifierPrefix +
                 exportPerson.getOldIds().stream().findFirst().get());
         } else {
@@ -132,18 +133,28 @@ public class ExportPersonConverter extends ExportConverterBase {
             openairePerson.setAffiliation(new Affiliation(new ArrayList<>(), null));
             exportPerson.getEmploymentInstitutions().forEach(employmentInstitution -> {
                 openairePerson.getAffiliation().getOrgUnits()
-                    .add(ExportOrganisationUnitConverter.toOpenaireModel(employmentInstitution));
+                    .add(ExportOrganisationUnitConverter.toOpenaireModel(employmentInstitution,
+                        supportLegacyIdentifiers));
             });
         }
 
         return openairePerson;
     }
 
-    public static DC toDCModel(ExportPerson exportPerson) {
+    public static DC toDCModel(ExportPerson exportPerson, boolean supportLegacyIdentifiers) {
         var dcPerson = new DC();
         dcPerson.getType().add("party");
         dcPerson.getSource().add(repositoryName);
-        dcPerson.getIdentifier().add("TESLARIS(" + exportPerson.getDatabaseId() + ")");
+
+        if (supportLegacyIdentifiers && Objects.nonNull(exportPerson.getOldIds()) &&
+            !exportPerson.getOldIds().isEmpty()) {
+            dcPerson.getIdentifier().add(
+                legacyIdentifierPrefix + "(" + exportPerson.getOldIds().stream().findFirst().get() +
+                    ")");
+        } else {
+            dcPerson.getIdentifier().add("TESLARIS(" + exportPerson.getDatabaseId() + ")");
+        }
+
         dcPerson.getIdentifier().add(exportPerson.getOrcid());
         dcPerson.getIdentifier().add(exportPerson.getScopusAuthorId());
         dcPerson.getIdentifier().add(exportPerson.getENaukaId());

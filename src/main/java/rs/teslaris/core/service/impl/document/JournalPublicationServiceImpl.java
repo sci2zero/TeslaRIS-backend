@@ -42,7 +42,6 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Traceable
 @Slf4j
 public class JournalPublicationServiceImpl extends DocumentPublicationServiceImpl
@@ -87,11 +86,13 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public JournalPublication findJournalPublicationById(Integer publicationId) {
         return journalPublicationJPAService.findOne(publicationId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
         JournalPublication publication;
         try {
@@ -113,6 +114,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public List<DocumentPublicationIndex> findMyPublicationsInJournal(Integer journalId,
                                                                       Integer authorId) {
         return documentPublicationIndexRepository.findByTypeAndJournalIdAndAuthorIds(
@@ -120,6 +122,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
                                                                     Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
@@ -132,6 +135,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public JournalPublication createJournalPublication(JournalPublicationDTO publicationDTO,
                                                        Boolean index) {
         var publication = new JournalPublication();
@@ -151,6 +155,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public void editJournalPublication(Integer publicationId,
                                        JournalPublicationDTO publicationDTO) {
         var publicationToUpdate = findJournalPublicationById(publicationId);
@@ -171,6 +176,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public void deleteJournalPublication(Integer journalPublicationId) {
         var publicationToDelete = findJournalPublicationById(journalPublicationId);
 
@@ -184,6 +190,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexJournalPublication(JournalPublication publication,
                                         DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
@@ -203,6 +210,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexJournalPublication(JournalPublication publication) {
         indexJournalPublication(publication,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

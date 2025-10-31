@@ -152,7 +152,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
 
     @Override
-    @Transactional
     protected JpaRepository<Document, Integer> getEntityRepository() {
         return documentRepository;
     }
@@ -510,7 +509,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         index.setWordcloudTokensSr(StringUtil.extractKeywords(index.getTitleSr(),
             StringUtil.valueExists(index.getDescriptionSr()) ? index.getDescriptionSr() :
-                index.getFullTextSr(), index.getKeywordsSr()));
+                StringUtil.sanitizeForKeywordFieldFast(index.getFullTextSr()),
+            index.getKeywordsSr()));
 
         index.setWordcloudTokensOther(StringUtil.extractKeywords(
             MultilingualContentConverter.getLocalizedContent(document.getTitle(),
@@ -518,7 +518,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             (Objects.nonNull(document.getDescription()) && !document.getDescription().isEmpty()) ?
                 MultilingualContentConverter.getLocalizedContent(document.getDescription(),
                     LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN) :
-                index.getFullTextOther(),
+                StringUtil.sanitizeForKeywordFieldFast(index.getFullTextOther()),
             MultilingualContentConverter.getLocalizedContent(document.getKeywords(),
                 LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN)));
     }

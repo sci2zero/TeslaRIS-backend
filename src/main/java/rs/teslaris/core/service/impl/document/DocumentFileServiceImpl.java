@@ -66,7 +66,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 @Slf4j
 public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
@@ -105,6 +104,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     @Deprecated(forRemoval = true)
     public DocumentFile findDocumentFileById(Integer id) {
         return documentFileRepository.findById(id).orElseThrow(
@@ -112,6 +112,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile getDocumentByServerFilename(String serverFilename) {
         return documentFileRepository.getReferenceByServerFilename(serverFilename)
             .orElseThrow(() -> new NotFoundException("Document with given name does not exist."));
@@ -155,6 +156,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index) {
         var newDocumentFile = new DocumentFile();
 
@@ -169,6 +171,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
                                                    Document document, boolean trusted) {
         var newDocumentFile = new DocumentFile();
@@ -191,6 +194,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile saveNewPersonalDocument(DocumentFileDTO documentFile, Boolean index,
                                                 Person person) {
         var newDocumentFile = new DocumentFile();
@@ -208,6 +212,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile saveNewPreliminaryDocument(DocumentFileDTO documentFile) {
         var newDocumentFile = new DocumentFile();
 
@@ -240,6 +245,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index,
                                                     Integer documentId) {
         var documentFileResponse = editDocumentFile(documentFile, index);
@@ -295,6 +301,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index) {
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
 
@@ -411,6 +418,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void deleteDocumentFile(String serverFilename) {
         documentFileRepository.getReferenceByServerFilename(serverFilename)
             .ifPresent(documentFileToDelete -> {
@@ -420,6 +428,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void changeApproveStatus(Integer documentFileId, Boolean approved) throws IOException {
         var documentFile = findOne(documentFileId);
         documentFile.setApproveStatus(approved ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
@@ -474,6 +483,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,
                                          String serverFilename, DocumentFileIndex documentIndex) {
         if (!isPdfFile(multipartPdfFile)) {
@@ -498,6 +508,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void parseAndIndexPdfDocument(DocumentFile documentFile, InputStream inputStream,
                                          String documentTitle, String serverFilename,
                                          DocumentFileIndex documentIndex) {
@@ -518,6 +529,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public Page<DocumentFileIndex> searchDocumentFiles(List<String> tokens,
                                                        Pageable pageable, SearchRequestType type) {
         if (type.equals(SearchRequestType.SIMPLE)) {
@@ -532,11 +544,13 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void deleteIndexes() {
         documentFileIndexRepository.deleteAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexDocumentFiles() {
         int pageNumber = 0;
         int chunkSize = 100;
@@ -569,6 +583,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     @Nullable
     public Integer findDocumentIdForFilename(String filename) {
         var id = documentFileRepository.getDocumentIdByFilename(filename);

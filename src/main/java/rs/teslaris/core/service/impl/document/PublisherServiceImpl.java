@@ -38,7 +38,6 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements PublisherService {
 
@@ -56,6 +55,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
 
     @Override
+    @Transactional(readOnly = true)
     public Page<PublisherDTO> readAllPublishers(Pageable pageable) {
         return this.findAll(pageable).map(p -> new PublisherDTO(p.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(p.getName()),
@@ -64,6 +64,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PublisherDTO readPublisherById(Integer publisherId) {
         Publisher publisher;
         try {
@@ -84,6 +85,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    @Transactional
     public Publisher createPublisher(PublisherDTO publisherDTO, Boolean index) {
         var publisher = new Publisher();
 
@@ -98,6 +100,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    @Transactional
     public Publisher createPublisher(PublisherBasicAdditionDTO publisherDTO) {
         var publisher = new Publisher();
 
@@ -116,6 +119,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    @Transactional
     public void editPublisher(Integer publisherId, PublisherDTO publisherDTO) {
         var publisherToUpdate = findOne(publisherId);
 
@@ -130,6 +134,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    @Transactional
     public void deletePublisher(Integer publisherId) {
 
         if (publisherRepository.hasPublishedDataset(publisherId) ||
@@ -148,6 +153,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     }
 
     @Override
+    @Transactional
     public void forceDeletePublisher(Integer publisherId) {
         publisherRepository.unbindDataset(publisherId);
         publisherRepository.unbindPatent(publisherId);
@@ -169,6 +175,13 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexPublishers() {
         publisherIndexRepository.deleteAll();
+
+        performBulkReindex();
+
+        return null;
+    }
+
+    public void performBulkReindex() {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -182,16 +195,17 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
-        return null;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexPublisher(Publisher publisher) {
         indexPublisher(publisher, publisherIndexRepository.findByDatabaseId(publisher.getId())
             .orElse(new PublisherIndex()));
     }
 
     @Override
+    @Transactional
     public Publisher findRaw(Integer publisherId) {
         return publisherRepository.findRaw(publisherId)
             .orElseThrow(() -> new NotFoundException("Publisher with given ID does not exist."));
@@ -208,6 +222,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         }
     }
 
+    @Transactional(readOnly = true)
     private void indexPublisher(Publisher publisher, PublisherIndex index) {
         index.setDatabaseId(publisher.getId());
 

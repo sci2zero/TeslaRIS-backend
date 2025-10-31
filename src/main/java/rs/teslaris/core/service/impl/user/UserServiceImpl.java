@@ -183,6 +183,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByEmail(username).orElseThrow(
             () -> new UsernameNotFoundException("User with this email does not exist."));
@@ -196,14 +197,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             pageable, UserAccountIndex.class, "user_account");
     }
 
-    @Deprecated(forRemoval = true)
-    public User loadUserById(Integer userID) throws UsernameNotFoundException {
-        return userRepository.findById(userID)
-            .orElseThrow(() -> new UsernameNotFoundException("User with this ID does not exist."));
-    }
-
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public UserResponseDTO getUserProfile(Integer userId) {
         var user = findOne(userId);
         return UserConverter.toUserResponseDTO(user);
@@ -217,6 +212,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public int getUserCommissionId(Integer userId) {
         return userRepository.findCommissionIdForUser(userId).orElseThrow(
             () -> new NotFoundException(
@@ -224,10 +220,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Integer getPersonIdForUser(Integer userId) {
         var user = findOne(userId);
-        if (user.getPerson() == null) {
+        if (Objects.isNull(user.getPerson())) {
             return -1;
         }
 
@@ -235,14 +231,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean isUserAResearcher(Integer userId, Integer personId) {
         var user = findOne(userId);
 
-        return user.getPerson() != null && Objects.equals(user.getPerson().getId(), personId);
+        return Objects.nonNull(user.getPerson()) &&
+            Objects.equals(user.getPerson().getId(), personId);
     }
 
     @Override
+    @Transactional
     public AuthenticationResponseDTO authenticateUser(AuthenticationManager authenticationManager,
                                                       AuthenticationRequestDTO authenticationRequest,
                                                       String fingerprint) {
@@ -300,6 +298,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public AuthenticationResponseDTO takeRoleOfUser(TakeRoleOfUserRequestDTO takeRoleOfUserRequest,
                                                     String fingerprint) {
         var user = (User) loadUserByUsername(takeRoleOfUserRequest.getUserEmail());
@@ -320,6 +319,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public void allowTakingRoleOfAccount(String bearerToken) {
         var email = tokenUtil.extractUsernameFromToken(bearerToken.split(" ")[1]);
 
@@ -361,6 +361,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public boolean isNewResearcherCreationAllowed() {
         return allowNewResearcherCreation;
     }
@@ -517,6 +518,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public User registerInstitutionEmployee(EmployeeRegistrationRequestDTO registrationRequest,
                                             UserRole userRole) throws NoSuchAlgorithmException {
         var authorityName = userRole.toString();
@@ -533,6 +535,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public User registerCommissionUser(CommissionRegistrationRequestDTO registrationRequest)
         throws NoSuchAlgorithmException {
         var authorityName = UserRole.COMMISSION.toString();
@@ -845,6 +848,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public void updateResearcherCurrentOrganisationUnitIfBound(Integer personId) {
         var person = personService.findOne(personId);
         var boundUser = userRepository.findForResearcher(personId);
@@ -874,6 +878,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public List<Integer> getAccountsWithRoleTakingAllowed() {
         return userRepository.getIdsOfUsersWhoAllowedAccountTakeover();
     }
@@ -883,6 +888,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexUsers() {
         userAccountIndexRepository.deleteAll();
+
+        performBulkReindex();
+
+        return null;
+    }
+
+    public void performBulkReindex() {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -896,30 +908,34 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
-        return null;
     }
 
     @Override
+    @Transactional
     public List<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId) {
         return userRepository.findUserCommissionForOrganisationUnit(organisationUnitId);
     }
 
     @Override
+    @Transactional
     public List<User> findAllCommissionUsers() {
         return userRepository.findAllCommissionUsers();
     }
 
     @Override
+    @Transactional
     public List<User> findAllSystemAdminUsers() {
         return userRepository.findAllSystemAdminUsers();
     }
 
     @Override
-    public List<User> findAllInstitutionalLibrarianUsers() {
-        return userRepository.findAllInstitutionalLibrarianUsers();
+    @Transactional
+    public List<User> findAllLibrarianUsers() {
+        return userRepository.findAllLibrarianUsers();
     }
 
     @Override
+    @Transactional
     public List<User> findInstitutionalEditorUsersForInstitutionId(Integer institutionId) {
         return userRepository.findInstitutionalEditorUsersForInstitutionId(institutionId);
     }
@@ -1017,6 +1033,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public void logout(String jti) {
         tokenUtil.revokeToken(jti);
     }
@@ -1050,6 +1067,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             !orgUnitNameOther.isEmpty() ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
     }
 
+    @Transactional(readOnly = true)
     private void indexUser(User user, UserAccountIndex index) {
         index.setDatabaseId(user.getId());
 
