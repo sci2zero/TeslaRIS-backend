@@ -6,6 +6,7 @@ import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +39,7 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @Traceable
+@Slf4j
 public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     implements BookSeriesService {
 
@@ -203,7 +205,14 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             List<BookSeries> chunk =
                 bookSeriesJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((bookSeries) -> indexBookSeries(bookSeries, new BookSeriesIndex()));
+            chunk.forEach((bookSeries) -> {
+                try {
+                    indexBookSeries(bookSeries, new BookSeriesIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping BOOK_SERIES {} due to indexing error: {}",
+                        bookSeries.getId(), e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

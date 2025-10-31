@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
+@Slf4j
 @Traceable
 public class JournalServiceImpl extends PublicationSeriesServiceImpl implements JournalService {
 
@@ -269,7 +271,14 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             List<Journal> chunk =
                 journalJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((journal) -> indexJournal(journal, new JournalIndex()));
+            chunk.forEach((journal) -> {
+                try {
+                    indexJournal(journal, new JournalIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping JOURNAL {} due to indexing error: {}",
+                        journal.getId(), e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

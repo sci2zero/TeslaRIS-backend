@@ -35,7 +35,7 @@ public class DigitalLibraryVisualizationController {
     }
 
     @GetMapping("/monthly-statistics/{organisationUnitId}")
-    public Map<YearMonth, Long> getMonthlyViewsForThesesFromOrganisationUnit(
+    public Map<YearMonth, Long> getMonthlyStatisticsForThesesFromOrganisationUnit(
         @PathVariable Integer organisationUnitId,
         @RequestParam LocalDate from,
         @RequestParam LocalDate to,

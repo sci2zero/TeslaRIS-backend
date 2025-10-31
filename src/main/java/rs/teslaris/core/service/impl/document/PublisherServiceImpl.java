@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +40,7 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements PublisherService {
 
     private final PublisherRepository publisherRepository;
@@ -190,7 +192,14 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
             List<Publisher> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((publisher) -> indexPublisher(publisher, new PublisherIndex()));
+            chunk.forEach((publisher) -> {
+                try {
+                    indexPublisher(publisher, new PublisherIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping PUBLISHER {} due to indexing error: {}",
+                        publisher.getId(), e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

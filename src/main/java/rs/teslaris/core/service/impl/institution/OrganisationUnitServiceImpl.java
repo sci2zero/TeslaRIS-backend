@@ -21,6 +21,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -87,6 +88,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit>
     implements OrganisationUnitService {
 
@@ -1218,8 +1220,14 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             List<OrganisationUnit> chunk =
                 findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((organisationUnit) -> indexOrganisationUnit(organisationUnit,
-                new OrganisationUnitIndex()));
+            chunk.forEach((organisationUnit) -> {
+                try {
+                    indexOrganisationUnit(organisationUnit, new OrganisationUnitIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping ORGANISATION_UNIT {} due to indexing error: {}",
+                        organisationUnit.getId(), e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

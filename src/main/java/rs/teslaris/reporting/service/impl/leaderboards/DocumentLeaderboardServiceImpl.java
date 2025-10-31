@@ -211,8 +211,10 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
         if (onlyTheses) {
             allMergedOrganisationUnitIds.add(institutionId);
             organisationUnitService.collectUpdatableSubOrganisationUnits(institutionId, true)
-                .forEach(institutionPair -> allMergedOrganisationUnitIds.addAll(
-                    institutionPair.b.getMergedIds()));
+                .forEach(institutionPair -> {
+                    allMergedOrganisationUnitIds.add(institutionPair.b.getId());
+                    allMergedOrganisationUnitIds.addAll(institutionPair.b.getMergedIds());
+                });
         } else {
             allMergedOrganisationUnitIds.addAll(
                 QueryUtil.getAllMergedOrganisationUnitIds(institutionId));

@@ -799,7 +799,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach(this::indexPerson);
+            chunk.forEach(person -> {
+                try {
+                    this.indexPerson(person);
+                } catch (Exception e) {
+                    log.warn("Skipping PERSON {} due to indexing error: {}", person.getId(),
+                        e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

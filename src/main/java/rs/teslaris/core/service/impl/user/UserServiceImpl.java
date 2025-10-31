@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -110,6 +111,7 @@ import rs.teslaris.core.util.session.PasswordUtil;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class UserServiceImpl extends JPAServiceImpl<User> implements UserService {
 
     private final MessageSource messageSource;
@@ -903,7 +905,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
             List<User> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((user) -> indexUser(user, new UserAccountIndex()));
+            chunk.forEach((user) -> {
+                try {
+                    indexUser(user, new UserAccountIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping USER {} due to indexing error: {}", user.getId(),
+                        e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
