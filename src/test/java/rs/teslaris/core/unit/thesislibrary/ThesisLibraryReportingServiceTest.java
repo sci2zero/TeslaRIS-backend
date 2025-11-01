@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -17,7 +19,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.document.ThesisRepository;
@@ -36,6 +40,9 @@ public class ThesisLibraryReportingServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private OrganisationUnitIndexRepository organisationUnitIndexRepository;
 
     @InjectMocks
     private ThesisLibraryReportingServiceImpl thesisLibraryReportingService;
@@ -61,13 +68,16 @@ public class ThesisLibraryReportingServiceTest {
                 any())).thenReturn(1);
 
         when(organisationUnitService.findOne(1)).thenReturn(new OrganisationUnit());
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(anyInt(),
+            eq(Pageable.unpaged()))).thenReturn(
+            new PageImpl<>(List.of(new OrganisationUnitIndex())));
 
         // When
         var result = thesisLibraryReportingService.createThesisCountsReport(request);
 
         // Then
         assertEquals(1, result.size());
-        var report = result.get(0);
+        var report = result.getFirst();
         assertEquals(5, report.defendedCount());
         assertEquals(3, report.topicsAcceptedCount());
         assertEquals(2, report.putOnPublicReviewCount());
@@ -93,6 +103,9 @@ public class ThesisLibraryReportingServiceTest {
         when(
             thesisRepository.countPubliclyAvailableDefendedThesesThesesInPeriod(any(), any(), any(),
                 any())).thenReturn(0);
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(anyInt(),
+            eq(Pageable.unpaged()))).thenReturn(
+            new PageImpl<>(List.of(new OrganisationUnitIndex())));
 
         // When
         var result = thesisLibraryReportingService.createThesisCountsReport(request);

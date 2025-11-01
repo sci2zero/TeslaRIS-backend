@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.document;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,22 +30,22 @@ public class ThesisDTO extends DocumentDTO implements PublishableDTO {
     @Positive(message = "Number of pages cannot be a negative number.")
     private Integer numberOfPages;
 
-    @Positive(message = "Number of chapters cannot be a negative number.")
+    @PositiveOrZero(message = "Number of chapters cannot be a negative number.")
     private Integer numberOfChapters;
 
-    @Positive(message = "Number of references cannot be a negative number.")
+    @PositiveOrZero(message = "Number of references cannot be a negative number.")
     private Integer numberOfReferences;
 
-    @Positive(message = "Number of tables cannot be a negative number.")
+    @PositiveOrZero(message = "Number of tables cannot be a negative number.")
     private Integer numberOfTables;
 
-    @Positive(message = "Number of illustrations cannot be a negative number.")
+    @PositiveOrZero(message = "Number of illustrations cannot be a negative number.")
     private Integer numberOfIllustrations;
 
-    @Positive(message = "Number of graphs cannot be a negative number.")
+    @PositiveOrZero(message = "Number of graphs cannot be a negative number.")
     private Integer numberOfGraphs;
 
-    @Positive(message = "Number of appendices cannot be a negative number.")
+    @PositiveOrZero(message = "Number of appendices cannot be a negative number.")
     private Integer numberOfAppendices;
 
     @Positive

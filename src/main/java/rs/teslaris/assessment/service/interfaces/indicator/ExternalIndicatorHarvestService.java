@@ -8,4 +8,8 @@ public interface ExternalIndicatorHarvestService {
     void performPersonIndicatorHarvest();
 
     void performOUIndicatorDeduction();
+
+    void performIndicatorHavestForSinglePerson(Integer personId);
+
+    void performIndicatorDeductionForSingleInstitution(Integer organisationUnitId);
 }

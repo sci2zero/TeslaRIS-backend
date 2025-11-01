@@ -64,6 +64,7 @@ public class DeduplicationController {
         @RequestHeader(value = "Authorization") String bearerToken) {
         log.info("Trying to start deduplication ahead of time.");
         if (!deduplicationService.canPerformDeduplication()) {
+            log.info("Can't perform deduplication. Aborting.");
             return false;
         }
 

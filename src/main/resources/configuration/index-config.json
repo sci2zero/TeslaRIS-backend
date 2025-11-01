@@ -8,7 +8,11 @@
           "Đ => Dj",
           "đ => dj",
           "Ђ => Dj",
-          "ђ => dj"
+          "ђ => dj",
+          "Њ => Nj",
+          "њ => nj",
+          "Љ => Lj",
+          "љ => lj"
         ]
       }
     },
@@ -16,9 +20,10 @@
       "serbian": {
         "type": "custom",
         "char_filter": ["serbian_char_filter"],
-        "tokenizer": "icu_tokenizer",
+        "tokenizer": "standard",
         "filter": [
           "lowercase",
+          "serbian_cyrillic_to_latinic",
           "serbian_stop",
           "serbian_stemmer",
           "icu_folding"

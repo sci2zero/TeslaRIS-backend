@@ -6,6 +6,7 @@ import io.minio.GetObjectResponse;
 import jakarta.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -65,7 +66,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 @Slf4j
 public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
@@ -88,9 +88,15 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private final SearchService<DocumentFileIndex> searchService;
 
     private final ExpressionTransformer expressionTransformer;
+
     private final Tika tika = new Tika();
+
     @Value("${document_file.approved_by_default}")
     private Boolean documentFileApprovedByDefault;
+
+    @Value("${migration-mode.enabled}")
+    private Boolean migrationModeEnabled;
+
 
     @Override
     protected JpaRepository<DocumentFile, Integer> getEntityRepository() {
@@ -98,6 +104,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     @Deprecated(forRemoval = true)
     public DocumentFile findDocumentFileById(Integer id) {
         return documentFileRepository.findById(id).orElseThrow(
@@ -105,6 +112,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile getDocumentByServerFilename(String serverFilename) {
         return documentFileRepository.getReferenceByServerFilename(serverFilename)
             .orElseThrow(() -> new NotFoundException("Document with given name does not exist."));
@@ -148,6 +156,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index) {
         var newDocumentFile = new DocumentFile();
 
@@ -162,6 +171,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile saveNewPublicationDocument(DocumentFileDTO documentFile, Boolean index,
                                                    Document document, boolean trusted) {
         var newDocumentFile = new DocumentFile();
@@ -184,6 +194,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile saveNewPersonalDocument(DocumentFileDTO documentFile, Boolean index,
                                                 Person person) {
         var newDocumentFile = new DocumentFile();
@@ -201,6 +212,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFile saveNewPreliminaryDocument(DocumentFileDTO documentFile) {
         var newDocumentFile = new DocumentFile();
 
@@ -233,6 +245,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index,
                                                     Integer documentId) {
         var documentFileResponse = editDocumentFile(documentFile, index);
@@ -288,11 +301,13 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index) {
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
 
         if (Objects.nonNull(documentFileToEdit.getDocument()) &&
-            documentFileToEdit.getDocument().getIsArchived()) {
+            documentFileToEdit.getDocument().getIsArchived() &&
+            !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 
@@ -403,6 +418,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void deleteDocumentFile(String serverFilename) {
         documentFileRepository.getReferenceByServerFilename(serverFilename)
             .ifPresent(documentFileToDelete -> {
@@ -412,6 +428,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void changeApproveStatus(Integer documentFileId, Boolean approved) throws IOException {
         var documentFile = findOne(documentFileId);
         documentFile.setApproveStatus(approved ? ApproveStatus.APPROVED : ApproveStatus.DECLINED);
@@ -428,20 +445,25 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     private String detectMimeType(MultipartFile file) {
-        var contentAnalyzer = new Tika();
+        var originalFilename = FilenameUtils.normalize(
+            Objects.requireNonNullElse(file.getOriginalFilename(), ""));
 
         String trueMimeType;
         String specifiedMimeType;
 
         try {
+            var originalFilenamePath = Path.of(originalFilename);
+            if (migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin()) {
+                return Files.probeContentType(originalFilenamePath);
+            }
+
+            var contentAnalyzer = new Tika();
             trueMimeType = contentAnalyzer.detect(file.getInputStream());
 
-            var originalFilename = FilenameUtils.normalize(
-                Objects.requireNonNullElse(file.getOriginalFilename(), ""));
             if (originalFilename.isEmpty()) {
                 throw new StorageException("File does not have a valid name.");
             }
-            specifiedMimeType = Files.probeContentType(Path.of(originalFilename));
+            specifiedMimeType = Files.probeContentType(originalFilenamePath);
 
         } catch (IOException e) {
             throw new StorageException("Failed to detect MIME type for file.");
@@ -461,15 +483,41 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void parseAndIndexPdfDocument(DocumentFile documentFile, MultipartFile multipartPdfFile,
                                          String serverFilename, DocumentFileIndex documentIndex) {
         if (!isPdfFile(multipartPdfFile)) {
             return;
         }
 
-        var documentContent = extractDocumentContent(multipartPdfFile);
-        var documentTitle = Objects.nonNull(documentFile.getId()) ? documentFile.getFilename() :
-            extractDocumentTitle(multipartPdfFile);
+        try (var inputStream = multipartPdfFile.getInputStream()) {
+            var documentContent = extractDocumentContent(inputStream);
+            var documentTitle = Objects.nonNull(documentFile.getId()) ? documentFile.getFilename() :
+                extractDocumentTitle(multipartPdfFile);
+
+            var contentLanguageDetected = detectLanguage(documentContent);
+            var titleLanguageDetected = detectLanguage(documentTitle);
+
+            saveDocumentIndex(documentContent, documentTitle, contentLanguageDetected,
+                titleLanguageDetected, documentFile, serverFilename, documentIndex);
+        } catch (IOException e) {
+            throw new LoadingException("Error while trying to index PDF file content.");
+        }
+
+        documentFileIndexRepository.save(documentIndex);
+    }
+
+    @Override
+    @Transactional
+    public void parseAndIndexPdfDocument(DocumentFile documentFile, InputStream inputStream,
+                                         String documentTitle, String serverFilename,
+                                         DocumentFileIndex documentIndex) {
+        // only called for duplicated files, no danger from any kind of injection/spoofing
+        if (!serverFilename.endsWith(".pdf")) {
+            return;
+        }
+
+        var documentContent = extractDocumentContent(inputStream);
 
         var contentLanguageDetected = detectLanguage(documentContent);
         var titleLanguageDetected = detectLanguage(documentTitle);
@@ -481,6 +529,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public Page<DocumentFileIndex> searchDocumentFiles(List<String> tokens,
                                                        Pageable pageable, SearchRequestType type) {
         if (type.equals(SearchRequestType.SIMPLE)) {
@@ -495,11 +544,13 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     public void deleteIndexes() {
         documentFileIndexRepository.deleteAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexDocumentFiles() {
         int pageNumber = 0;
         int chunkSize = 100;
@@ -532,9 +583,17 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
+    @Transactional
     @Nullable
     public Integer findDocumentIdForFilename(String filename) {
-        return documentFileRepository.getDocumentIdByFilename(filename);
+        var id = documentFileRepository.getDocumentIdByFilename(filename);
+
+        // Try preliminary files if not in file items
+        if (Objects.isNull(id)) {
+            id = documentFileRepository.getThesisIdByFilename(filename);
+        }
+
+        return id;
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
@@ -562,7 +621,12 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     private boolean isPdfFile(MultipartFile multipartFile) {
         try {
-            var isSpecifiedPDF = Objects.equals(multipartFile.getContentType(), "application/pdf");
+            var isSpecifiedPDF =
+                Objects.equals(multipartFile.getContentType(), "application/pdf");
+            if (migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin()) {
+                return isSpecifiedPDF;
+            }
+
             var detectedType = tika.detect(multipartFile.getInputStream());
 
             if (isSpecifiedPDF && !detectedType.equals("application/pdf")) {
@@ -575,9 +639,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         }
     }
 
-    private String extractDocumentContent(MultipartFile multipartPdfFile) {
-        try (var inputStream = multipartPdfFile.getInputStream();
-             var pdDocument = Loader.loadPDF(inputStream.readAllBytes())) {
+    private String extractDocumentContent(InputStream inputStream) {
+        try (var pdDocument = Loader.loadPDF(inputStream.readAllBytes())) {
             var textStripper = new PDFTextStripper();
             return textStripper.getText(pdDocument);
         } catch (IOException e) {

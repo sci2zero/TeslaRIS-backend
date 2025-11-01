@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,12 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 public class StringUtil {
 
     private static final Pattern CLEAN_PATTERN = Pattern.compile("(\\b\\d+\\b)|[\\p{Punct}]+");
+
+    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
+
+    private static final Pattern BAD_CHARS = Pattern.compile("[^\\p{L}\\p{Nd} ]+");
+
+    private static final Pattern MULTI_SPACE = Pattern.compile("\\s{2,}");
 
     private static List<String> stopwords;
 
@@ -285,4 +292,18 @@ public class StringUtil {
     public static boolean valueExists(String value) {
         return Objects.nonNull(value) && !value.isBlank();
     }
+
+    public static String sanitizeForKeywordFieldFast(String input) {
+        if (Objects.isNull(input) || input.isEmpty()) {
+            return input;
+        }
+
+        var normalized = Normalizer.normalize(input, Normalizer.Form.NFKD);
+
+        normalized = COMBINING_MARKS.matcher(normalized).replaceAll("");
+        normalized = BAD_CHARS.matcher(normalized).replaceAll(" ");
+
+        return MULTI_SPACE.matcher(normalized.trim()).replaceAll(" ");
+    }
+
 }

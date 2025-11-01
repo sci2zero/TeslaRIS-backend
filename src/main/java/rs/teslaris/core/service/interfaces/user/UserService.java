@@ -31,8 +31,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     Page<UserAccountIndex> searchUserAccounts(List<String> tokens, List<UserRole> allowedRoles,
                                               Pageable pageable);
 
-    User loadUserById(Integer userId);
-
     UserResponseDTO getUserProfile(Integer userId);
 
     int getUserOrganisationUnitId(Integer userId);
@@ -93,7 +91,7 @@ public interface UserService extends UserDetailsService, JPAService<User> {
 
     List<User> findAllSystemAdminUsers();
 
-    List<User> findAllInstitutionalLibrarianUsers();
+    List<User> findAllLibrarianUsers();
 
     List<User> findInstitutionalEditorUsersForInstitutionId(Integer institutionId);
 

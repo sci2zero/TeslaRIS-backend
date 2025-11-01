@@ -104,10 +104,11 @@ public class ExportEventConverter extends ExportConverterBase {
     }
 
     public static rs.teslaris.core.model.oaipmh.event.Event toOpenaireModel(
-        ExportEvent exportEvent) {
+        ExportEvent exportEvent, boolean supportLegacyIdentifiers) {
         var openaireEvent = new rs.teslaris.core.model.oaipmh.event.Event();
 
-        if (Objects.nonNull(exportEvent.getOldIds()) && !exportEvent.getOldIds().isEmpty()) {
+        if (supportLegacyIdentifiers && Objects.nonNull(exportEvent.getOldIds()) &&
+            !exportEvent.getOldIds().isEmpty()) {
             openaireEvent.setOldId("Events/" + legacyIdentifierPrefix +
                 exportEvent.getOldIds().stream().findFirst().get());
         } else {
@@ -151,13 +152,22 @@ public class ExportEventConverter extends ExportConverterBase {
         return openaireEvent;
     }
 
-    public static DC toDCModel(ExportEvent exportEvent) {
+    public static DC toDCModel(ExportEvent exportEvent, boolean supportLegacyIdentifiers) {
         var dcEvent = new DC();
         dcEvent.getSource().add(repositoryName);
         dcEvent.getType().add("event");
         dcEvent.getCoverage()
             .add(exportEvent.getDateFrom().toString() + "-" + exportEvent.getDateTo().toString());
-        dcEvent.getIdentifier().add("TESLARIS(" + exportEvent.getDatabaseId() + ")");
+
+        if (supportLegacyIdentifiers && Objects.nonNull(exportEvent.getOldIds()) &&
+            !exportEvent.getOldIds().isEmpty()) {
+            dcEvent.getIdentifier().add(
+                legacyIdentifierPrefix + "(" + exportEvent.getOldIds().stream().findFirst().get() +
+                    ")");
+        } else {
+            dcEvent.getIdentifier().add("TESLARIS(" + exportEvent.getDatabaseId() + ")");
+        }
+
         dcEvent.getIdentifier().add(exportEvent.getConfId());
 
         clientLanguages.forEach(lang -> {

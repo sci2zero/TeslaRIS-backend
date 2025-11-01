@@ -13,10 +13,12 @@ import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 
 public class ExportPatentConverter extends ExportConverterBase {
 
-    public static Patent toOpenaireModel(ExportDocument exportDocument) {
+    public static Patent toOpenaireModel(ExportDocument exportDocument,
+                                         boolean supportLegacyIdentifiers) {
         var openairePatent = new Patent();
 
-        if (Objects.nonNull(exportDocument.getOldIds()) && !exportDocument.getOldIds().isEmpty()) {
+        if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
+            !exportDocument.getOldIds().isEmpty()) {
             openairePatent.setOldId("Patents/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
@@ -49,7 +51,8 @@ public class ExportPatentConverter extends ExportConverterBase {
 
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
-                        ExportPersonConverter.toOpenaireModel(contribution.getPerson()));
+                        ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
+                            supportLegacyIdentifiers));
                 }
 
                 openairePatent.getInventor().add(personAttributes);
@@ -58,11 +61,18 @@ public class ExportPatentConverter extends ExportConverterBase {
         return openairePatent;
     }
 
-    public static DC toDCModel(ExportDocument exportDocument) {
+    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
         var dcPatent = new DC();
         dcPatent.getType().add("model");
         dcPatent.getSource().add(repositoryName);
-        dcPatent.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+
+        if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
+            !exportDocument.getOldIds().isEmpty()) {
+            dcPatent.getIdentifier().add(legacyIdentifierPrefix + "(" +
+                exportDocument.getOldIds().stream().findFirst().get() + ")");
+        } else {
+            dcPatent.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+        }
 
         clientLanguages.forEach(lang -> {
             dcPatent.getIdentifier()

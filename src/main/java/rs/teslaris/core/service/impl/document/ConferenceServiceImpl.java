@@ -4,6 +4,7 @@ import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,8 +39,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 @Service
-@Transactional
 @Traceable
+@Slf4j
 public class ConferenceServiceImpl extends EventServiceImpl implements ConferenceService {
 
     private final ConferenceJPAServiceImpl conferenceJPAService;
@@ -72,11 +73,13 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ConferenceDTO> readAllConferences(Pageable pageable) {
         return conferenceJPAService.findAll(pageable).map(ConferenceConverter::toDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ConferenceDTO readConferenceByOldId(Integer oldId) {
         return ConferenceConverter.toDTO(conferenceRepository.findConferenceByOldIdsContains(oldId)
             .orElseThrow(() -> new NotFoundException(
@@ -100,6 +103,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ConferenceDTO readConference(Integer conferenceId) {
         Conference conference;
         try {
@@ -114,23 +118,27 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public Conference findConferenceById(Integer conferenceId) {
         return conferenceJPAService.findOne(conferenceId);
     }
 
     @Override
+    @Transactional
     public Conference findRaw(Integer conferenceId) {
         return conferenceRepository.findRaw(conferenceId)
             .orElseThrow(() -> new NotFoundException("Conference with given ID does not exist."));
     }
 
     @Override
+    @Transactional
     @Nullable
     public Conference findConferenceByConfId(String confId) {
         return conferenceRepository.findConferenceByConfId(confId).orElse(null);
     }
 
     @Override
+    @Transactional
     public Conference createConference(ConferenceDTO conferenceDTO, Boolean index) {
         var conference = new Conference();
 
@@ -147,6 +155,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public Conference createConference(ConferenceBasicAdditionDTO conferenceDTO) {
         var conference = new Conference();
 
@@ -164,6 +173,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public void updateConference(Integer conferenceId, ConferenceDTO conferenceDTO) {
         var conferenceToUpdate = findConferenceById(conferenceId);
 
@@ -181,6 +191,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public void deleteConference(Integer conferenceId) {
         if (hasCommonUsage(conferenceId)) {
             throw new ConferenceReferenceConstraintViolationException(
@@ -194,6 +205,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public void forceDeleteConference(Integer conferenceId) {
         eventRepository.deleteAllPublicationsInEvent(conferenceId);
         eventRepository.deleteAllProceedingsInEvent(conferenceId);
@@ -214,6 +226,13 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexConferences() {
         eventIndexRepository.deleteAll();
+
+        performBulkReindex();
+
+        return null;
+    }
+
+    public void performBulkReindex() {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -223,12 +242,18 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             List<Conference> chunk =
                 conferenceJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((conference) -> indexConference(conference, new EventIndex()));
+            chunk.forEach((conference) -> {
+                try {
+                    indexConference(conference, new EventIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping CONFERENCE {} due to indexing error: {}",
+                        conference.getId(), e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
-        return null;
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
@@ -260,12 +285,14 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public boolean isIdentifierInUse(String identifier, Integer conferenceId) {
         return eventRepository.existsByConfId(identifier, conferenceId) ||
             eventRepository.existsByOpenAlexId(identifier, conferenceId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexConference(Conference conference) {
         eventIndexRepository.findByDatabaseId(conference.getId()).ifPresent(index -> {
             indexConference(conference, index);
@@ -273,6 +300,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public void save(Conference conference) {
         conferenceRepository.save(conference);
     }
@@ -287,6 +315,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public void reindexConference(Integer conferenceId) {
         var conferenceToIndex = conferenceJPAService.findOne(conferenceId);
         var indexToUpdate =
@@ -296,6 +325,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public void reindexVolatileConferenceInformation(Integer conferenceId) {
         eventIndexRepository.findByDatabaseId(conferenceId).ifPresent(eventIndex -> {
             eventIndex.setRelatedInstitutionIds(
@@ -309,6 +339,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     }
 
     @Override
+    @Transactional
     public void reorderConferenceContributions(Integer conferenceId, Integer contributionId,
                                                Integer oldContributionOrderNumber,
                                                Integer newContributionOrderNumber) {

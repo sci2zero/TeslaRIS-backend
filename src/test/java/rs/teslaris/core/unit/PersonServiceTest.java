@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -1075,17 +1076,16 @@ public class PersonServiceTest {
     }
 
     @Test
-    void shouldThrowNotFoundExceptionWhenAccountingIdIsNotFound() {
+    void shouldNotThrowNotFoundExceptionWhenAccountingIdIsNotFound() {
         // Given
         var accountingId = "MISSING_ID";
         when(personRepository.findApprovedPersonByAccountingId(accountingId))
             .thenReturn(Optional.empty());
 
         // When / Then
-        var ex = assertThrows(NotFoundException.class, () ->
+        assertDoesNotThrow(() ->
             personService.findPersonByAccountingId(accountingId)
         );
-        assertEquals("Person with accounting ID MISSING_ID does not exist", ex.getMessage());
     }
 
     @Test

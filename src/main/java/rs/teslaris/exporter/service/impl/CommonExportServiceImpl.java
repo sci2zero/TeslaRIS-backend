@@ -58,7 +58,7 @@ import rs.teslaris.exporter.service.interfaces.CommonExportService;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 @Traceable
 @Slf4j
 public class CommonExportServiceImpl implements CommonExportService {

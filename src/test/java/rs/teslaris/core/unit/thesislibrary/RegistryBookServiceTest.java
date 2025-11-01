@@ -37,6 +37,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -616,8 +617,12 @@ class RegistryBookServiceTest {
         LocalDate to = LocalDate.of(2023, 12, 31);
 
         when(userRepository.findOrganisationUnitIdForUser(userId)).thenReturn(institutionId);
-        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
-            .thenReturn(List.of(institutionId));
+        when(organisationUnitService.searchOrganisationUnits(any(), any(), any(), any(), any(),
+            any(), any(), any(), any(), any(), any()))
+            .thenReturn(new PageImpl<>(List.of(new OrganisationUnitIndex() {{
+                setDatabaseId(institutionId);
+                setIsLegalEntity(true);
+            }})));
         when(registryBookEntryRepository.getRegistryBookCountForInstitutionAndPeriodNewPromotion(
             institutionId, from, to))
             .thenReturn(3);
@@ -637,7 +642,8 @@ class RegistryBookServiceTest {
         assertNotNull(dto.institutionName());
 
         verify(userRepository).findOrganisationUnitIdForUser(userId);
-        verify(organisationUnitService).getOrganisationUnitIdsFromSubHierarchy(institutionId);
+        verify(organisationUnitService).searchOrganisationUnits(any(), any(), any(), any(), any(),
+            any(), any(), any(), any(), any(), any());
         verify(registryBookEntryRepository).getRegistryBookCountForInstitutionAndPeriodNewPromotion(
             institutionId, from, to);
         verify(registryBookEntryRepository).getRegistryBookCountForInstitutionAndPeriodOldPromotion(

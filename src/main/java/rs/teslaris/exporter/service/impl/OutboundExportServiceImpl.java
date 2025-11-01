@@ -340,8 +340,14 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         };
 
         try {
-            var conversionMethod = converterClass.getMethod(conversionFunctionName, recordClass);
-            Object convertedEntity = conversionMethod.invoke(null, requestedRecord);
+            var conversionMethod =
+                converterClass.getMethod(conversionFunctionName, recordClass, boolean.class);
+
+            boolean supportLegacyIdentifiers =
+                Objects.nonNull(handler.supportLegacyIdentifiers()) &&
+                    handler.supportLegacyIdentifiers();
+            Object convertedEntity =
+                conversionMethod.invoke(null, requestedRecord, supportLegacyIdentifiers);
 
             ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat, recordClass,
                 handler);

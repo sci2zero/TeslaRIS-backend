@@ -4,10 +4,14 @@ import jakarta.mail.MessagingException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +32,9 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailUtil {
+
+    private static final Map<Class<? extends Exception>, LocalDate> exceptionThrottleMap =
+        new ConcurrentHashMap<>();
 
     private final JavaMailSender mailSender;
 
@@ -129,6 +136,18 @@ public class EmailUtil {
                                             String tracingContextId,
                                             String requestPath,
                                             Exception ex) {
+
+        var exceptionClass = ex.getClass();
+        var today = LocalDate.now();
+
+        var lastSent = exceptionThrottleMap.get(exceptionClass);
+        if (Objects.nonNull(lastSent) && lastSent.isEqual(today)) {
+            log.warn("Skipping email for {} — already sent today", exceptionClass.getSimpleName());
+            return;
+        }
+
+        exceptionThrottleMap.put(exceptionClass, today);
+
         var message = new SimpleMailMessage();
         message.setFrom(emailAddress);
         message.setTo(systemAdminAddress);
@@ -146,7 +165,8 @@ public class EmailUtil {
         try {
             mailSender.send(message);
         } catch (MailException e) {
-            log.error("(CRITICAL) Unhandled error email cannot be sent, reason: " + e.getMessage());
+            log.error("(CRITICAL) Unhandled error email cannot be sent, reason: {}",
+                e.getMessage());
         }
     }
 

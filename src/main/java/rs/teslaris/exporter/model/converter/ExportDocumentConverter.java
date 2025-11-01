@@ -420,10 +420,12 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return relations;
     }
 
-    public static Publication toOpenaireModel(ExportDocument exportDocument) {
+    public static Publication toOpenaireModel(ExportDocument exportDocument,
+                                              boolean supportLegacyIdentifiers) {
         var openairePublication = new Publication();
 
-        if (Objects.nonNull(exportDocument.getOldIds()) && !exportDocument.getOldIds().isEmpty()) {
+        if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
+            !exportDocument.getOldIds().isEmpty()) {
             openairePublication.setOldId("Publications/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
@@ -482,7 +484,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (Objects.nonNull(exportDocument.getJournal())) {
             openairePublication.setPublishedIn(new PublishedIn(
-                ExportDocumentConverter.toOpenaireModel(exportDocument.getJournal())));
+                ExportDocumentConverter.toOpenaireModel(exportDocument.getJournal(),
+                    supportLegacyIdentifiers)));
         }
 
         if (Objects.nonNull(exportDocument.getProceedings())) {
@@ -493,7 +496,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 partOf::setDisplayName
             );
             partOf.setPublication(
-                ExportDocumentConverter.toOpenaireModel(exportDocument.getProceedings()));
+                ExportDocumentConverter.toOpenaireModel(exportDocument.getProceedings(),
+                    supportLegacyIdentifiers));
             openairePublication.setPartOf(partOf);
         } else if (Objects.nonNull(exportDocument.getMonograph())) {
             var partOf = new PartOf();
@@ -503,7 +507,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 partOf::setDisplayName
             );
             partOf.setPublication(
-                ExportDocumentConverter.toOpenaireModel(exportDocument.getMonograph()));
+                ExportDocumentConverter.toOpenaireModel(exportDocument.getMonograph(),
+                    supportLegacyIdentifiers));
             openairePublication.setPartOf(partOf);
         }
 
@@ -530,7 +535,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
-                        ExportPersonConverter.toOpenaireModel(contribution.getPerson()));
+                        ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
+                            supportLegacyIdentifiers));
                 }
 
                 openairePublication.getAuthors().add(personAttributes);
@@ -544,7 +550,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
-                        ExportPersonConverter.toOpenaireModel(contribution.getPerson()));
+                        ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
+                            supportLegacyIdentifiers));
                 }
 
                 openairePublication.getEditors().add(personAttributes);
@@ -564,18 +571,19 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return openairePublication;
     }
 
-    public static DC toDCModel(ExportDocument exportDocument) {
+    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
         var dcPublication = new DC();
 
-        setDCCommonFields(exportDocument, dcPublication);
+        setDCCommonFields(exportDocument, dcPublication, supportLegacyIdentifiers);
 
         return dcPublication;
     }
 
-    public static ETDMSThesis toETDMSModel(ExportDocument exportDocument) {
+    public static ETDMSThesis toETDMSModel(ExportDocument exportDocument,
+                                           boolean supportLegacyIdentifiers) {
         var thesisType = new ThesisType();
 
-        setDCCommonFields(exportDocument, thesisType);
+        setDCCommonFields(exportDocument, thesisType, supportLegacyIdentifiers);
 
         if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
             var degree = new Degree();
@@ -595,11 +603,20 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return thesis;
     }
 
-    public static Marc21 toMARC21Model(ExportDocument exportDocument) {
+    public static Marc21 toMARC21Model(ExportDocument exportDocument,
+                                       boolean supportLegacyIdentifiers) {
         Marc21 marc21 = new Marc21();
         marc21.setLeader("ca a2 n");
 
-        marc21.getControlFields().add(new ControlField("001", exportDocument.getId()));
+        if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
+            !exportDocument.getOldIds().isEmpty()) {
+            marc21.getControlFields()
+                .add(new ControlField("001", legacyIdentifierPrefix + "(" +
+                    exportDocument.getOldIds().stream().findFirst().get() + ")"));
+        } else {
+            marc21.getControlFields()
+                .add(new ControlField("001", "TESLARIS(" + exportDocument.getId() + ")"));
+        }
 
         if (Objects.nonNull(exportDocument.getDoi())) {
             marc21.getDataFields()
@@ -700,8 +717,20 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return dataField;
     }
 
-    public static Dim toDIMModel(ExportDocument exportDocument) {
+    public static Dim toDIMModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
         var dimPublication = new Dim();
+
+        if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
+            !exportDocument.getOldIds().isEmpty()) {
+            dimPublication.getFields().add(
+                new DimField("dc", "identifier", "internal", null, null, null,
+                    legacyIdentifierPrefix + "(" +
+                        exportDocument.getOldIds().stream().findFirst().get() + ")"));
+        } else {
+            dimPublication.getFields().add(
+                new DimField("dc", "identifier", "internal", null, null, null,
+                    "TESLARIS(" + exportDocument.getDatabaseId() + ")"));
+        }
 
         exportDocument.getTitle().forEach(mc -> {
             var field = new DimField();
@@ -850,11 +879,18 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return dimPublication;
     }
 
-    private static void setDCCommonFields(ExportDocument exportDocument, DC dcPublication) {
+    private static void setDCCommonFields(ExportDocument exportDocument, DC dcPublication,
+                                          boolean supportLegacyIdentifiers) {
         dcPublication.getDate().add(exportDocument.getDocumentDate());
         dcPublication.getSource().add(repositoryName);
 
-        dcPublication.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+        if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
+            !exportDocument.getOldIds().isEmpty()) {
+            dcPublication.getIdentifier().add(legacyIdentifierPrefix + "(" +
+                exportDocument.getOldIds().stream().findFirst().get() + ")");
+        } else {
+            dcPublication.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+        }
         // TODO: support other identifiers (if applicable)
 
         dcPublication.getType().add(exportDocument.getType().name());

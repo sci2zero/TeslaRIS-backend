@@ -14,12 +14,14 @@ import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitsRelationResponseDTO;
 import rs.teslaris.core.dto.institution.RelationGraphDataDTO;
+import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.search.SearchRequestType;
 
@@ -49,7 +51,9 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
                                                         Boolean onlyReturnOnesWhichCanHarvest,
                                                         Boolean onlyIndependent,
                                                         ThesisType allowedThesisType,
-                                                        Boolean onlyClientInstitutions);
+                                                        Boolean onlyClientInstitutionsCris,
+                                                        Boolean onlyClientInstitutionsDl,
+                                                        Boolean registryBookRelevant);
 
     OrganisationUnitsRelation findOrganisationUnitsRelationById(Integer id);
 
@@ -121,4 +125,9 @@ public interface OrganisationUnitService extends JPAService<OrganisationUnit> {
     OrganisationUnit findRaw(Integer organisationUnitId);
 
     OrganisationUnitsRelation getSuperOrganisationUnitRelation(Integer organisationUnitId);
+
+    List<Pair<OrganisationUnitIndex, OrganisationUnit>> collectUpdatableSubOrganisationUnits(
+        Integer rootOuId, boolean onlyOnesThatHaveLibrary);
+
+    void migrateInstitutionInternalIdentifiers(InternalIdentifierMigrationDTO dto);
 }

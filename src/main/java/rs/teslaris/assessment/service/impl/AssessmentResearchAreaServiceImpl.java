@@ -3,6 +3,7 @@ package rs.teslaris.assessment.service.impl;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,7 @@ import rs.teslaris.assessment.service.interfaces.AssessmentResearchAreaService;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -38,6 +40,8 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     private final UserRepository userRepository;
 
     private final PersonIndexRepository personIndexRepository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     @Override
@@ -84,6 +88,9 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
         newResearchArea.setPerson(personService.findOne(personId));
         newResearchArea.setResearchAreaCode(researchAreaCode);
         save(newResearchArea);
+
+        applicationEventPublisher.publishEvent(
+            new ResearcherPointsReindexingEvent(List.of(personId)));
     }
 
     @Override
@@ -118,6 +125,9 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
 
         save(newResearchArea);
         commissionService.save(commission);
+
+        applicationEventPublisher.publishEvent(
+            new ResearcherPointsReindexingEvent(List.of(personId)));
     }
 
     @Override

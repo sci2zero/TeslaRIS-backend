@@ -2,9 +2,12 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.SoftwareConverter;
 import rs.teslaris.core.dto.document.SoftwareDTO;
@@ -36,6 +39,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
+@Slf4j
 public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implements SoftwareService {
 
     private final SoftwareJPAServiceImpl softwareJPAService;
@@ -51,6 +55,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                DocumentRepository documentRepository,
                                DocumentFileService documentFileService,
                                CitationService citationService,
+                               ApplicationEventPublisher applicationEventPublisher,
                                PersonContributionService personContributionService,
                                ExpressionTransformer expressionTransformer,
                                EventService eventService,
@@ -63,24 +68,29 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
                                PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.softwareJPAService = softwareJPAService;
         this.publisherService = publisherService;
     }
 
     @Override
+    @Transactional
     public Software findSoftwareById(Integer softwareId) {
         return softwareJPAService.findOne(softwareId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SoftwareDTO readSoftwareById(Integer softwareId) {
         Software software;
         try {
             software = softwareJPAService.findOne(softwareId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent SOFTWARE with ID {}. Clearing index.",
+                softwareId);
             this.clearIndexWhenFailedRead(softwareId, DocumentPublicationType.SOFTWARE);
             throw e;
         }
@@ -94,6 +104,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional
     public Software createSoftware(SoftwareDTO softwareDTO, Boolean index) {
         var newSoftware = new Software();
 
@@ -113,6 +124,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional
     public void editSoftware(Integer softwareId, SoftwareDTO softwareDTO) {
         var softwareToUpdate = softwareJPAService.findOne(softwareId);
 
@@ -145,6 +157,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional
     public void deleteSoftware(Integer softwareId) {
         var softwareToDelete = softwareJPAService.findOne(softwareId);
 
@@ -152,9 +165,13 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
 
         softwareJPAService.delete(softwareId);
         this.delete(softwareId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(softwareId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexSoftware() {
         // Super service does the initial deletion
 
@@ -175,6 +192,7 @@ public class SoftwareServiceImpl extends DocumentPublicationServiceImpl implemen
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexSoftware(Software software) {
         indexSoftware(software,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

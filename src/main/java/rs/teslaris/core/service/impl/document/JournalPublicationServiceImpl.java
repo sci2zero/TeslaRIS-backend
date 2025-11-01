@@ -2,7 +2,9 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,8 +42,8 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Traceable
+@Slf4j
 public class JournalPublicationServiceImpl extends DocumentPublicationServiceImpl
     implements JournalPublicationService {
 
@@ -60,6 +62,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          DocumentRepository documentRepository,
                                          DocumentFileService documentFileService,
                                          CitationService citationService,
+                                         ApplicationEventPublisher applicationEventPublisher,
                                          PersonContributionService personContributionService,
                                          ExpressionTransformer expressionTransformer,
                                          EventService eventService,
@@ -73,25 +76,30 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
     }
 
     @Override
+    @Transactional
     public JournalPublication findJournalPublicationById(Integer publicationId) {
         return journalPublicationJPAService.findOne(publicationId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public JournalPublicationResponseDTO readJournalPublicationById(Integer publicationId) {
         JournalPublication publication;
         try {
             publication = findJournalPublicationById(publicationId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent JOURNAL_PUBLICATION with ID {}. Clearing index.",
+                publicationId);
             this.clearIndexWhenFailedRead(publicationId,
                 DocumentPublicationType.JOURNAL_PUBLICATION);
             throw e;
@@ -106,6 +114,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public List<DocumentPublicationIndex> findMyPublicationsInJournal(Integer journalId,
                                                                       Integer authorId) {
         return documentPublicationIndexRepository.findByTypeAndJournalIdAndAuthorIds(
@@ -113,6 +122,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
                                                                     Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
@@ -125,6 +135,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public JournalPublication createJournalPublication(JournalPublicationDTO publicationDTO,
                                                        Boolean index) {
         var publication = new JournalPublication();
@@ -144,6 +155,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public void editJournalPublication(Integer publicationId,
                                        JournalPublicationDTO publicationDTO) {
         var publicationToUpdate = findJournalPublicationById(publicationId);
@@ -164,6 +176,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional
     public void deleteJournalPublication(Integer journalPublicationId) {
         var publicationToDelete = findJournalPublicationById(journalPublicationId);
 
@@ -171,9 +184,13 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         journalPublicationJPAService.delete(journalPublicationId);
         this.delete(journalPublicationId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(journalPublicationId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexJournalPublication(JournalPublication publication,
                                         DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
@@ -193,6 +210,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexJournalPublication(JournalPublication publication) {
         indexJournalPublication(publication,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

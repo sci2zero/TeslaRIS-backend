@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ReindexRequestDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
@@ -46,6 +47,7 @@ public class ReindexController {
                                         LocalDateTime timestamp,
                                         @RequestParam(defaultValue = "ONCE")
                                         RecurrenceType recurrence,
+                                        @RequestParam Boolean reharvestCitationIndicators,
                                         @RequestHeader("Authorization")
                                         String bearerToken,
                                         @RequestBody ReindexRequestDTO reindexRequest) {
@@ -55,7 +57,8 @@ public class ReindexController {
                     EntityType::name).toList(), "-") +
                 "-" + UUID.randomUUID(),
             timestamp,
-            () -> reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate()),
+            () -> reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate(),
+                reharvestCitationIndicators, null),
             tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
 
         taskManagerService.saveTaskMetadata(
@@ -63,13 +66,18 @@ public class ReindexController {
                 ScheduledTaskType.REINDEXING, new HashMap<>() {{
                 put("indexesToRepopulate", reindexRequest.getIndexesToRepopulate());
                 put("userId", tokenUtil.extractUserIdFromToken(bearerToken));
+                put("reharvestCitationIndicators", String.valueOf(reharvestCitationIndicators));
             }}, recurrence));
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('REINDEX_DATABASE')")
     @Idempotent
-    public void reindexDatabase(@RequestBody ReindexRequestDTO reindexRequest) {
-        reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate());
+    public void reindexDatabase(@RequestBody ReindexRequestDTO reindexRequest,
+                                @RequestParam Boolean reharvestCitationIndicators,
+                                @RequestParam(required = false)
+                                DocumentPublicationType concreteTypeToReindex) {
+        reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate(),
+            reharvestCitationIndicators, concreteTypeToReindex);
     }
 }

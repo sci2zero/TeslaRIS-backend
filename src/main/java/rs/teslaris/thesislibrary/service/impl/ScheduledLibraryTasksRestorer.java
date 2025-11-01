@@ -43,7 +43,7 @@ public class ScheduledLibraryTasksRestorer {
 
 
     @EventListener(ApplicationReadyEvent.class)
-    public void restoreTasksOnStartup() {
+    protected void restoreTasksOnStartup() {
         List<ScheduledTaskMetadata> allMetadata = metadataRepository.findTasksByTypes(
             List.of(
                 ScheduledTaskType.THESIS_LIBRARY_BACKUP,

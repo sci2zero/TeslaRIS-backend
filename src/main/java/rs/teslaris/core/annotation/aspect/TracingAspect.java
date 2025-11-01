@@ -30,6 +30,7 @@ public class TracingAspect {
     @Around("@within(rs.teslaris.core.annotation.Traceable)")
     public Object traceMethodCalls(ProceedingJoinPoint joinPoint) throws Throwable {
         Class<?> targetClass = joinPoint.getTarget().getClass();
+
         boolean isRestController = targetClass.isAnnotationPresent(RestController.class);
 
         populateMDC(isRestController);

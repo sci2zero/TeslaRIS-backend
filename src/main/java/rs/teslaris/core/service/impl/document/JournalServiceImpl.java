@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -46,7 +47,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
-@Transactional
+@Slf4j
 @Traceable
 public class JournalServiceImpl extends PublicationSeriesServiceImpl implements JournalService {
 
@@ -86,6 +87,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<JournalResponseDTO> readAllJournals(Pageable pageable) {
         return journalJPAService.findAll(pageable).map(PublicationSeriesConverter::toDTO);
     }
@@ -98,6 +100,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public JournalResponseDTO readJournal(Integer journalId) {
         Journal journal;
         try {
@@ -139,27 +142,32 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public Journal findJournalById(Integer journalId) {
         return journalJPAService.findOne(journalId);
     }
 
     @Override
+    @Transactional
     public Journal findRaw(Integer journalId) {
         return journalRepository.findRaw(journalId)
             .orElseThrow(() -> new NotFoundException("Journal with given ID does not exist."));
     }
 
     @Override
+    @Transactional
     public Optional<Journal> tryToFindById(Integer journalId) {
         return journalRepository.findById(journalId);
     }
 
     @Override
+    @Transactional
     public Journal findJournalByOldId(Integer journalId) {
         return journalRepository.findByOldIdsContains(journalId).orElse(null);
     }
 
     @Override
+    @Transactional
     public Journal createJournal(PublicationSeriesDTO journalDTO, Boolean index) {
         var journal = new Journal();
 
@@ -177,6 +185,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public Journal createJournal(JournalBasicAdditionDTO journalDTO) {
         var journal = new Journal();
 
@@ -193,6 +202,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public void updateJournal(Integer journalId, PublicationSeriesDTO journalDTO) {
         var journalToUpdate = journalJPAService.findOne(journalId);
         journalToUpdate.getLanguages().clear();
@@ -209,6 +219,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public void deleteJournal(Integer journalId) {
         if (journalRepository.hasPublication(journalId) ||
             publicationSeriesRepository.hasProceedings(journalId)) {
@@ -222,6 +233,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public void forceDeleteJournal(Integer journalId) {
         journalRepository.deleteAllPublicationsInJournal(journalId);
         publicationSeriesRepository.unbindProceedings(journalId);
@@ -243,6 +255,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexJournals() {
         journalIndexRepository.deleteAll();
+
+        performBulkReindex();
+
+        return null;
+    }
+
+    public void performBulkReindex() {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -252,12 +271,18 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             List<Journal> chunk =
                 journalJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((journal) -> indexJournal(journal, new JournalIndex()));
+            chunk.forEach((journal) -> {
+                try {
+                    indexJournal(journal, new JournalIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping JOURNAL {} due to indexing error: {}",
+                        journal.getId(), e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
-        return null;
     }
 
     private void setJournalRelatedFields(Journal journal, PublicationSeriesDTO journalDTO) {
@@ -268,6 +293,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public void indexJournal(Journal journal) {
         journalIndexRepository.findJournalIndexByDatabaseId(journal.getId()).ifPresent(index -> {
             indexJournal(journal, index);
@@ -275,6 +301,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public void indexJournal(Journal journal, JournalIndex index) {
         index.setDatabaseId(journal.getId());
 
@@ -284,6 +311,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public void reindexJournalVolatileInformation(Integer journalId) {
         journalIndexRepository.findJournalIndexByDatabaseId(journalId).ifPresent(journalIndex -> {
             journalIndex.setRelatedInstitutionIds(
@@ -297,6 +325,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public void addOldId(Integer id, Integer oldId) {
         var journal = findOne(id);
         journal.getOldIds().add(oldId);
@@ -304,11 +333,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public void save(Journal journal) {
         journalRepository.save(journal);
     }
 
     @Override
+    @Transactional
     public PublicationSeries findOrCreatePublicationSeries(String[] line,
                                                            String defaultLanguageTag,
                                                            String journalName,
@@ -336,6 +367,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     }
 
     @Override
+    @Transactional
     public Journal findJournalByJournalName(String journalName,
                                             LanguageTag defaultLanguage,
                                             String eIssn, String printIssn) {

@@ -74,6 +74,7 @@ public class DocumentFileServiceTest {
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(documentFileService, "documentFileApprovedByDefault", true);
+        ReflectionTestUtils.setField(documentFileService, "migrationModeEnabled", true);
     }
 
     @Test

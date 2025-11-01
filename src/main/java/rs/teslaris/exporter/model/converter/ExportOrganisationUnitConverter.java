@@ -80,10 +80,11 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         return relations;
     }
 
-    public static OrgUnit toOpenaireModel(ExportOrganisationUnit organisationUnit) {
+    public static OrgUnit toOpenaireModel(ExportOrganisationUnit organisationUnit,
+                                          boolean supportLegacyIdentifiers) {
         var orgUnit = new OrgUnit();
 
-        if (Objects.nonNull(organisationUnit.getOldIds()) &&
+        if (supportLegacyIdentifiers && Objects.nonNull(organisationUnit.getOldIds()) &&
             !organisationUnit.getOldIds().isEmpty()) {
             orgUnit.setOldId("Orgunits/" + legacyIdentifierPrefix +
                 organisationUnit.getOldIds().stream().findFirst().get());
@@ -95,17 +96,28 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             ExportMultilingualContentConverter.toOpenaireModel(organisationUnit.getName()));
         if (Objects.nonNull(organisationUnit.getSuperOU())) {
             orgUnit.setPartOf(new PartOf(
-                ExportOrganisationUnitConverter.toOpenaireModel(organisationUnit.getSuperOU())));
+                ExportOrganisationUnitConverter.toOpenaireModel(organisationUnit.getSuperOU(),
+                    supportLegacyIdentifiers)));
         }
 
         return orgUnit;
     }
 
-    public static DC toDCModel(ExportOrganisationUnit exportOrganisationUnit) {
+    public static DC toDCModel(ExportOrganisationUnit exportOrganisationUnit,
+                               boolean supportLegacyIdentifiers) {
         var dcOrgUnit = new DC();
         dcOrgUnit.getType().add("party");
         dcOrgUnit.getSource().add(repositoryName);
-        dcOrgUnit.getIdentifier().add("TESLARIS(" + exportOrganisationUnit.getDatabaseId() + ")");
+
+        if (supportLegacyIdentifiers && Objects.nonNull(exportOrganisationUnit.getOldIds()) &&
+            !exportOrganisationUnit.getOldIds().isEmpty()) {
+            dcOrgUnit.getIdentifier().add(legacyIdentifierPrefix + "(" +
+                exportOrganisationUnit.getOldIds().stream().findFirst().get() + ")");
+        } else {
+            dcOrgUnit.getIdentifier()
+                .add("TESLARIS(" + exportOrganisationUnit.getDatabaseId() + ")");
+        }
+
         dcOrgUnit.getIdentifier().add(exportOrganisationUnit.getScopusAfid());
 
         clientLanguages.forEach(lang -> {

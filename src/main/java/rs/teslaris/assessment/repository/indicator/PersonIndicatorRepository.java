@@ -1,10 +1,8 @@
 package rs.teslaris.assessment.repository.indicator;
 
-import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +19,6 @@ public interface PersonIndicatorRepository extends JpaRepository<PersonIndicator
                                                                          AccessLevel accessLevel);
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT pi FROM PersonIndicator pi " +
         "WHERE pi.indicator.code = :code AND pi.person.id = :personId")
     Optional<PersonIndicator> findIndicatorForCodeAndPersonId(String code, Integer personId);
@@ -33,7 +30,7 @@ public interface PersonIndicatorRepository extends JpaRepository<PersonIndicator
               AND pi.person.id = :personId
               AND (
                    (:fromYear IS NULL AND pi.fromDate IS NULL)
-                   OR (:fromYear IS NOT NULL AND extract(year from pi.fromDate) = :fromYear)
+                   OR (:fromYear IS NOT NULL AND EXTRACT(year from pi.fromDate) = :fromYear)
               )
         """)
     Optional<PersonIndicator> findIndicatorForCodeAndSourceAndFromDateAndPersonId(String code,
