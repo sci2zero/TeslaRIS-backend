@@ -875,6 +875,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Scheduled(cron = "${thesis.check-public-review-end.period}")
+    @Transactional
     protected void removeFromPublicReviewScheduledFallback() {
         if (Objects.nonNull(fallbackPublicReviewCheckEnabled) && fallbackPublicReviewCheckEnabled) {
             removeFromPublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),

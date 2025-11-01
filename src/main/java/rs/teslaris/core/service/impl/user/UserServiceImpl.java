@@ -1203,6 +1203,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Scheduled(cron = "0 * * * * *") // every 15 minutes
+    @Transactional
     public void cleanupExpiredTokens() {
         tokenUtil.cleanupExpiredTokens();
     }
