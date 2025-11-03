@@ -369,6 +369,25 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    public void changeUserEmail(Integer userId, String newEmail) {
+        var user = findOne(userId);
+
+        if (user.isAccountNonLocked()) {
+            throw new CantEditException(
+                "You have to deactivate user in order to change his email.");
+        }
+
+        if (userRepository.findByEmail(newEmail).isPresent()) {
+            throw new UserAlreadyExistsException("User with given email already exists.");
+        }
+
+        user.setEmail(newEmail);
+
+        var index = userAccountIndexRepository.findByDatabaseId(userId);
+        saveAndNotifyUser(user, index.orElse(new UserAccountIndex()));
+    }
+
+    @Override
     @Transactional
     public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
         validateEmailUniqueness(registrationRequest.getEmail());
@@ -389,7 +408,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         personService.indexPerson(person);
-        return saveAndNotifyUser(newUser);
+        return saveAndNotifyUser(newUser, new UserAccountIndex());
     }
 
     @Override
@@ -416,7 +435,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         Arrays.fill(generatedPassword, '\0');
-        return saveAndNotifyUser(newUser);
+        return saveAndNotifyUser(newUser, new UserAccountIndex());
     }
 
     private Authority getResearcherAuthority() {
@@ -489,9 +508,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
     }
 
-    private User saveAndNotifyUser(User newUser) {
+    private User saveAndNotifyUser(User newUser, UserAccountIndex index) {
         var savedUser = userRepository.save(newUser);
-        indexUser(savedUser, new UserAccountIndex());
+        indexUser(savedUser, index);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);

@@ -106,4 +106,6 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     boolean confirmEmailChange(String emailUpdateToken);
 
     boolean isNewResearcherCreationAllowed();
+
+    void changeUserEmail(Integer userId, String newEmail);
 }

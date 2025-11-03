@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.user.ForceEmailChangeDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.ResetPasswordRequestDTO;
 
@@ -47,6 +48,7 @@ public class UserControllerTest extends BaseTest {
     public void testResetPassword() throws Exception {
         var resetPasswordRequest = new ResetPasswordRequestDTO("TOKEN", "newPassword");
         String requestBody = objectMapper.writeValueAsString(resetPasswordRequest);
+
         mockMvc.perform(
                 MockMvcRequestBuilders.patch("http://localhost:8081/api/user/reset-password")
                     .content(requestBody)
@@ -110,12 +112,39 @@ public class UserControllerTest extends BaseTest {
     }
 
     @Test
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    @WithMockUser(username = "test.author@test.com", password = "testAuthor")
     public void testLogout() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
 
         mockMvc.perform(MockMvcRequestBuilders.patch(
                     "http://localhost:8081/api/user/logout")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testForceEmailChange() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/user/activation-status/{userId}", 10)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+
+        var changeEmailRequest = new ForceEmailChangeDTO("promotion1@email.com");
+        String requestBody = objectMapper.writeValueAsString(changeEmailRequest);
+        mockMvc.perform(MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/user/force-email-change/{userId}", 10)
+                .content(requestBody)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isAccepted());
+
+        mockMvc.perform(MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/user/activation-status/{userId}", 10)
+                .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }

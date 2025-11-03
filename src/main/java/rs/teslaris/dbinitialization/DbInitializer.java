@@ -204,6 +204,7 @@ public class DbInitializer implements ApplicationRunner {
         var readRegistryBook = new Privilege("READ_REGISTRY_BOOK");
         var saveChartDisplayConfiguration = new Privilege("SAVE_CHART_DISPLAY_CONFIGURATION");
         var readDigitalLibraryAnalytics = new Privilege("READ_DIGITAL_LIBRARY_ANALYTICS");
+        var forceEmailChange = new Privilege("FORCE_EMAIL_CHANGE");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -240,7 +241,7 @@ public class DbInitializer implements ApplicationRunner {
                 promotePreliminaryAttachments, scheduleDocumentHarvest, performOAIPMHHarvest,
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
-                saveChartDisplayConfiguration, readDigitalLibraryAnalytics));
+                saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -275,7 +276,8 @@ public class DbInitializer implements ApplicationRunner {
                 validateUploadedFiles, archiveDocument, promotePreliminaryAttachments,
                 scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
-                performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics
+                performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
+                forceEmailChange
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -468,7 +470,8 @@ public class DbInitializer implements ApplicationRunner {
                 englishTag, germanTag, researchArea3, researcherAuthority, commissionAuthority,
                 viceDeanForScienceAuthority, institutionalEditorAuthority,
                 institutionalLibrarianAuthority, headOfLibraryAuthority,
-                promotionRegistryAdministratorAuthority, commissions.a, commissions.b);
+                promotionRegistryAdministratorAuthority, commissions.a, commissions.b,
+                true);
         }
     }
 

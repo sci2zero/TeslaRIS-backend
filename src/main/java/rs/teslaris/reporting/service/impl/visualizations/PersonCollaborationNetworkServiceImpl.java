@@ -293,14 +293,26 @@ public class PersonCollaborationNetworkServiceImpl implements PersonCollaboratio
 
         var sourceAndTargetFields = getQueryAndAggregationFields(collaborationType);
         return BoolQuery.of(b -> {
-            b.must(q -> q.term(t -> t.field(sourceAndTargetFields.a).value(sourcePersonId)));
-            b.must(q -> q.term(t -> t.field(sourceAndTargetFields.b).value(targetPersonId)));
+            if (collaborationType.equals(CollaborationType.MENTORSHIP)) {
+                b.should(sh -> sh.bool(bb -> bb
+                    .must(q -> q.term(t -> t.field(sourceAndTargetFields.a).value(sourcePersonId)))
+                    .must(q -> q.term(t -> t.field(sourceAndTargetFields.b).value(targetPersonId)))
+                ));
+                b.should(sh -> sh.bool(bb -> bb
+                    .must(q -> q.term(t -> t.field(sourceAndTargetFields.a).value(targetPersonId)))
+                    .must(q -> q.term(t -> t.field(sourceAndTargetFields.b).value(sourcePersonId)))
+                ));
+                b.minimumShouldMatch("1");
+            } else {
+                b.must(q -> q.term(t -> t.field(sourceAndTargetFields.a).value(sourcePersonId)));
+                b.must(q -> q.term(t -> t.field(sourceAndTargetFields.b).value(targetPersonId)));
+            }
+
             b.must(m -> m.range(
-                    r -> r.field("year")
-                        .gte(JsonData.of(yearFrom))
-                        .lte(JsonData.of(yearTo))
-                )
-            );
+                r -> r.field("year")
+                    .gte(JsonData.of(yearFrom))
+                    .lte(JsonData.of(yearTo))
+            ));
 
             return b;
         })._toQuery();

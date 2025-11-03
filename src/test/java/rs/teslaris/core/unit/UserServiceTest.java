@@ -1474,4 +1474,145 @@ public class UserServiceTest {
         assertThrows(NotFoundException.class, () ->
             userService.registerResearcherOAuth(registrationRequest, OAuth2Provider.ORCID, "id"));
     }
+
+    @Test
+    public void shouldChangeEmailForDeactivatedUser() {
+        // given
+        var userId = 1;
+        var oldEmail = "old@example.com";
+        var newEmail = "new@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setEmail(oldEmail);
+        user.setLocked(true);
+        user.setAuthority(new Authority("RESEARCHER", new HashSet<>()));
+        user.setPreferredUILanguage(new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+        user.setPreferredReferenceCataloguingLanguage(
+            new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+
+        var index = new UserAccountIndex();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.empty());
+        when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.of(index));
+        when(userRepository.save(user)).thenReturn(user);
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // when
+        userService.changeUserEmail(userId, newEmail);
+
+        // then
+        assertEquals(newEmail, user.getEmail());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenChangingEmailForActiveUser() {
+        // given
+        var userId = 1;
+        var newEmail = "new@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setLocked(false);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // when & then
+        assertThrows(CantEditException.class, () -> {
+            userService.changeUserEmail(userId, newEmail);
+        });
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenEmailAlreadyExists() {
+        // given
+        var userId = 1;
+        var newEmail = "existing@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setLocked(true);
+
+        var existingUser = new User();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.of(existingUser));
+
+        // when & then
+        assertThrows(UserAlreadyExistsException.class,
+            () -> userService.changeUserEmail(userId, newEmail));
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    public void shouldCreateNewIndexWhenNoneExists() {
+        // given
+        var userId = 1;
+        var newEmail = "new@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setLocked(true);
+        user.setAuthority(new Authority("RESEARCHER", new HashSet<>()));
+        user.setPreferredUILanguage(new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+        user.setPreferredReferenceCataloguingLanguage(
+            new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.empty());
+        when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.empty());
+        when(userRepository.save(user)).thenReturn(user);
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // when
+        userService.changeUserEmail(userId, newEmail);
+
+        // then
+        assertEquals(newEmail, user.getEmail());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void shouldPreserveOtherUserPropertiesWhenChangingEmail() {
+        // given
+        var userId = 1;
+        var oldEmail = "old@example.com";
+        var newEmail = "new@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setEmail(oldEmail);
+        user.setLocked(true);
+        user.setFirstname("John");
+        user.setLastName("Doe");
+        user.setAuthority(new Authority("RESEARCHER", new HashSet<>()));
+        user.setPreferredUILanguage(new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+        user.setPreferredReferenceCataloguingLanguage(
+            new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+
+        var index = new UserAccountIndex();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.empty());
+        when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.of(index));
+        when(userRepository.save(user)).thenReturn(user);
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // when
+        userService.changeUserEmail(userId, newEmail);
+
+        // then
+        assertEquals(newEmail, user.getEmail());
+        assertEquals("John", user.getFirstname());
+        assertEquals("Doe", user.getLastName());
+        verify(userRepository).save(user);
+    }
 }
