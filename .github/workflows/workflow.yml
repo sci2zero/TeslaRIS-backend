@@ -85,7 +85,7 @@ jobs:
           DB_PASSWORD: postgres
 
   analyze:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
@@ -116,8 +116,12 @@ jobs:
           languages: java
 
       # Autobuild attempts to build any compiled languages
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      # - name: Autobuild
+      #   uses: github/codeql-action/autobuild@v3
+      
+      # Manual build to replace CodeQL autobuild
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
 
       # Perform GitHub Code Scanning.
       - name: Perform CodeQL Analysis
