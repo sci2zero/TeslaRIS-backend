@@ -334,5 +334,29 @@ public interface DocumentPublicationIndexRepository extends
         """)
     long countAuthorPublications(Integer authorId);
 
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "author_ids": ?0 } },
+              { "term": { "type": "?1" } }
+            ]
+          }
+        }
+        """)
+    long countAuthorPublicationsByType(Integer authorId, String type);
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "author_ids": ?0 } },
+              { "term": { "year": ?1 } }
+            ]
+          }
+        }
+        """)
+    long countAuthorPublicationsByYear(Integer authorId, Integer year);
+
     void deleteByType(String type);
 }

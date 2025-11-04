@@ -18,6 +18,7 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.document.DocumentContributionType;
 
 @Service
 public interface MergeService {
@@ -44,7 +45,8 @@ public interface MergeService {
     void switchPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId,
                                         Integer publicationId);
 
-    void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId);
+    void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId,
+                                           DocumentContributionType contributionType);
 
     void switchPersonToOtherOU(Integer sourceOUId, Integer targetOUId, Integer personId);
 

@@ -14,6 +14,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.BibliographicFormat;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
@@ -34,6 +35,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               List<Integer> ignore,
                                                               List<String> tokens,
                                                               List<DocumentPublicationType> allowedTypes,
+                                                              DocumentContributionType contributionType,
                                                               Pageable pageable);
 
     List<Integer> getResearchOutputIdsForDocument(Integer documentId);
@@ -58,6 +60,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
     void deleteDocumentPublication(Integer documentId);
 
     List<Integer> getContributorIds(Integer publicationId);
+
+    void indexContributionFields(Document document, DocumentPublicationIndex index);
 
     void indexCommonFields(Document document, DocumentPublicationIndex index);
 

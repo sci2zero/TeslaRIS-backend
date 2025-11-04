@@ -407,7 +407,10 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
         var personIndex = personIndexRepository.findByDatabaseId(personId).orElse(null);
 
         if (Objects.isNull(personIndex)) {
-            return new PersonFeaturedInformationDTO(0L, 0L, 0, 0);
+            return new PersonFeaturedInformationDTO(
+                0L, 0L, 0,
+                0, 0L, 0L,
+                0L, 0L);
         }
 
         var publicationCount = documentPublicationIndexRepository.countAuthorPublications(personId);
@@ -421,16 +424,27 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
                 .mapToLong(Map.Entry::getValue)
                 .sum();
 
-            citationTrend =
-                Math.toIntExact(Objects.requireNonNullElse(personIndex.getTotalCitations(), 0L) -
-                    citationsUntilCurrentYear);
+            citationTrend = Math.toIntExact(
+                Objects.requireNonNullElse(personIndex.getTotalCitations(), 0L)
+                    - citationsUntilCurrentYear);
         }
+
+        var currentYear = LocalDate.now().getYear();
+        var publicationsGain =
+            documentPublicationIndexRepository.countAuthorPublicationsByYear(personId, currentYear);
 
         return new PersonFeaturedInformationDTO(
             publicationCount,
             personIndex.getTotalCitations(),
             citationTrend,
-            personIndex.getHIndex()
+            personIndex.getHIndex(),
+            documentPublicationIndexRepository.countAuthorPublicationsByType(personId,
+                DocumentPublicationType.JOURNAL_PUBLICATION.name()),
+            documentPublicationIndexRepository.countAuthorPublicationsByType(personId,
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name()),
+            documentPublicationIndexRepository.countAuthorPublicationsByType(personId,
+                DocumentPublicationType.MONOGRAPH.name()),
+            publicationsGain
         );
     }
 
@@ -438,8 +452,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
     public Pair<Integer, Integer> getContributionYearRange(Integer personId,
                                                            Set<DocumentContributionType> contributionTypes) {
         var contributionFields =
-            Objects.nonNull(contributionTypes) ?
-                contributionTypes.stream().map(this::getIndexFieldForContributionType).toList() :
+            Objects.nonNull(contributionTypes)
+                ? contributionTypes.stream().map(this::getIndexFieldForContributionType).toList() :
                 List.of("author_ids");
 
         return findContributionYearRange(personId, contributionFields);

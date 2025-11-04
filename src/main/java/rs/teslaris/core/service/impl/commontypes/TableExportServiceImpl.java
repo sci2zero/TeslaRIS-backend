@@ -27,6 +27,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ExportableEndpointType;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
@@ -278,7 +279,8 @@ public class TableExportServiceImpl implements TableExportService {
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
                 Integer.parseInt(endpointTokenParameters.getFirst()), null,
                 Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
-                    .filter(t -> !t.isBlank()).toList(), documentSpecificFilters.a, pageable);
+                    .filter(t -> !t.isBlank()).toList(), documentSpecificFilters.a,
+                DocumentContributionType.AUTHOR, pageable);
             case ORGANISATION_UNIT_OUTPUTS ->
                 (Page<T>) documentPublicationService.findPublicationsForOrganisationUnit(
                     Integer.parseInt(endpointTokenParameters.getFirst()),

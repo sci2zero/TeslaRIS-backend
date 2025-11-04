@@ -4,6 +4,10 @@ public record PersonFeaturedInformationDTO(
     Long publicationCount,
     Long currentCitationCount,
     Integer currentCitationTrend,
-    Integer hIndex
+    Integer hIndex,
+    Long journalPublicationsCount,
+    Long proceedingsPublicationsCount,
+    Long monographsCount,
+    Long publicationsGain
 ) {
 }

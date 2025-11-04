@@ -432,7 +432,8 @@ public class DocumentPublicationServiceTest {
         // when
         var resultPage =
             documentPublicationService.findResearcherPublications(authorId, Collections.emptyList(),
-                Collections.emptyList(), Collections.emptyList(), pageable);
+                Collections.emptyList(), Collections.emptyList(), DocumentContributionType.AUTHOR,
+                pageable);
 
         // then
         assertEquals(expectedPage, resultPage);

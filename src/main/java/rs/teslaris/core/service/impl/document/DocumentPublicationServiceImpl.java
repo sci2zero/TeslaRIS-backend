@@ -202,6 +202,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      List<Integer> ignore,
                                                                      List<String> tokens,
                                                                      List<DocumentPublicationType> allowedTypes,
+                                                                     DocumentContributionType contributionType,
                                                                      Pageable pageable) {
         if (Objects.isNull(tokens)) {
             tokens = List.of("*");
@@ -210,8 +211,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var simpleSearchQuery =
             buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes);
 
-        var authorFilter = TermQuery.of(t -> t
-            .field("author_ids")
+        var contributionFilter = TermQuery.of(t -> t
+            .field(getContributionField(contributionType))
             .value(authorId)
         )._toQuery();
 
@@ -229,18 +230,29 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             combinedQuery = BoolQuery.of(bq -> bq
                 .must(simpleSearchQuery)
-                .must(authorFilter)
+                .must(contributionFilter)
                 .mustNot(ignoreFilter)
             )._toQuery();
         } else {
             combinedQuery = BoolQuery.of(bq -> bq
                 .must(simpleSearchQuery)
-                .must(authorFilter)
+                .must(contributionFilter)
             )._toQuery();
         }
 
         return searchService.runQuery(combinedQuery, pageable, DocumentPublicationIndex.class,
             "document_publication");
+    }
+
+    private String getContributionField(
+        DocumentContributionType contributionType) {
+        return switch (contributionType) {
+            case AUTHOR -> "author_ids";
+            case EDITOR -> "editor_ids";
+            case REVIEWER -> "reviewer_ids";
+            case ADVISOR -> "advisor_ids";
+            case BOARD_MEMBER -> "board_member_ids";
+        };
     }
 
     @Override
@@ -444,12 +456,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Transactional
     public List<Integer> getContributorIds(Integer publicationId) {
         return findOne(publicationId).getContributors().stream().map(contribution -> {
-                if (Objects.nonNull(contribution.getPerson())) {
-                    return contribution.getPerson().getId();
-                }
-                return -1;
-            })
-            .filter(Objects::nonNull).collect(Collectors.toList());
+            if (Objects.nonNull(contribution.getPerson())) {
+                return contribution.getPerson().getId();
+            }
+            return -1;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void indexContributionFields(Document document, DocumentPublicationIndex index) {
+        clearCommonIndexFields(index);
+
+        setContributors(document, index);
     }
 
     @Override
@@ -498,6 +517,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         indexDocumentFilesContent(document, index);
 
         if (Objects.nonNull(document.getInternalIdentifiers())) {
+            index.getInternalIdentifiers().clear();
             index.getInternalIdentifiers().addAll(document.getInternalIdentifiers());
         }
 
@@ -1136,8 +1156,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.getEditorIds().clear();
         index.getReviewerIds().clear();
         index.getAdvisorIds().clear();
-
-        index.getInternalIdentifiers().clear();
     }
 
     protected void deleteProofsAndFileItems(Document publicationToDelete) {

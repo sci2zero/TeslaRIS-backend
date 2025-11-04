@@ -44,6 +44,7 @@ import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.BibliographicFormat;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -177,10 +178,12 @@ public class DocumentPublicationController {
         @PathVariable Integer personId,
         @RequestParam(value = "ignore", required = false)
         List<Integer> ignore,
+        @RequestParam(value = "contributionType", required = false, defaultValue = "AUTHOR")
+        DocumentContributionType contributionType,
         Pageable pageable) {
         return documentPublicationService.findResearcherPublications(personId,
             Objects.requireNonNullElse(ignore, Collections.emptyList()), tokens, allowedTypes,
-            pageable);
+            contributionType, pageable);
     }
 
     @GetMapping("/research-output/{documentId}")
