@@ -1,6 +1,8 @@
 package rs.teslaris.exporter.model.converter;
 
+import io.github.coordinates2country.Coordinates2Country;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -45,7 +47,21 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             ExportMultilingualContentConverter.toCommonExportModel(organisationUnit.getName()));
         commonExportOU.setNameAbbreviation(organisationUnit.getNameAbbreviation());
         commonExportOU.setScopusAfid(organisationUnit.getScopusAfid());
+        commonExportOU.setRor(organisationUnit.getRor());
+        commonExportOU.setOpenAlex(organisationUnit.getOpenAlexId());
         commonExportOU.getOldIds().addAll(organisationUnit.getOldIds());
+
+        if (Objects.nonNull(organisationUnit.getUris()) && !organisationUnit.getUris().isEmpty()) {
+            commonExportOU.setUris(organisationUnit.getUris().stream().toList());
+        }
+
+        if (Objects.nonNull(organisationUnit.getLocation()) &&
+            Objects.nonNull(organisationUnit.getLocation().getLatitude()) &&
+            Objects.nonNull(organisationUnit.getLocation().getLongitude())) {
+            commonExportOU.setCountry(getCountryCodeFromName(
+                Coordinates2Country.country(organisationUnit.getLocation().getLatitude(),
+                    organisationUnit.getLocation().getLongitude())));
+        }
 
         var superOu = organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
         superOu.ifPresent(organisationUnitsRelation -> commonExportOU.setSuperOU(
@@ -138,5 +154,16 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         }
 
         return dcOrgUnit;
+    }
+
+    public static String getCountryCodeFromName(String countryName) {
+        var locales = Locale.getAvailableLocales();
+
+        for (Locale locale : locales) {
+            if (countryName.equalsIgnoreCase(locale.getDisplayCountry())) {
+                return locale.getCountry(); // Returns ISO 3166-1 alpha-2 code (e.g., "US")
+            }
+        }
+        return null;
     }
 }

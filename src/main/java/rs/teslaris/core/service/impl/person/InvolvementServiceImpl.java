@@ -375,6 +375,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     private Employment updateExistingEmployment(Employment employment,
                                                 LocalDate employmentStartDate) {
         employment.setDateFrom(employmentStartDate);
+        employment.setDateTo(null);
         return involvementRepository.save(employment);
     }
 

@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.skgif.venue;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.List;
@@ -18,7 +19,8 @@ import rs.teslaris.core.model.skgif.researchproduct.SKGIFContribution;
     property = "type",
     include = JsonTypeInfo.As.EXISTING_PROPERTY
 )
-public abstract class Venue {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class Venue {
     @JsonProperty("local_identifier")
     protected String localIdentifier;
 

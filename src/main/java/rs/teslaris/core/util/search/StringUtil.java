@@ -184,9 +184,11 @@ public class StringUtil {
             if (lang.equalsIgnoreCase(content.getLanguage().getLanguageTag())) {
                 return content.getContent();
             }
+
             fallback = content;
         }
-        return fallback != null ? fallback.getContent() : "";
+
+        return Objects.nonNull(fallback) ? fallback.getContent() : "";
     }
 
     public static boolean isInteger(String s, int radix) {

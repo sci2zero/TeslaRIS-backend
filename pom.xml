@@ -331,6 +331,11 @@
             <version>4.0.1</version>
         </dependency>
         <dependency>
+            <groupId>io.github.coordinates2country</groupId>
+            <artifactId>coordinates2country</artifactId>
+            <version>1.10</version>
+        </dependency>
+        <dependency>
             <groupId>nl.basjes.parse.useragent</groupId>
             <artifactId>yauaa</artifactId>
             <version>7.31.0</version>

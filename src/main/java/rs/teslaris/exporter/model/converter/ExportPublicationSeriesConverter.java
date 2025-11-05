@@ -40,6 +40,9 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
         commonExportPublicationSeries.setEIssn(publicationSeries.getEISSN());
         commonExportPublicationSeries.setPrintIssn(publicationSeries.getPrintISSN());
         commonExportPublicationSeries.getOldIds().addAll(publicationSeries.getOldIds());
+        commonExportPublicationSeries.setAcronym(
+            ExportMultilingualContentConverter.toCommonExportModel(
+                publicationSeries.getNameAbbreviation()));
 
         publicationSeries.getContributions().forEach(contribution -> {
             if (contribution.getContributionType()
@@ -55,7 +58,6 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
 
                 commonExportPublicationSeries.getEditors().add(exportContribution);
             }
-
         });
 
         publicationSeries.getLanguages().forEach(languageTag -> {

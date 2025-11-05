@@ -6,6 +6,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.StaleStateException;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.SchedulingException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -61,6 +64,8 @@ import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
+import rs.teslaris.core.util.exceptionhandling.exception.UnsupportedEntityTypeException;
+import rs.teslaris.core.util.exceptionhandling.exception.UnsupportedFilterException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserIsNotResearcherException;
 import rs.teslaris.core.util.session.TraceMDCKeys;
@@ -488,6 +493,32 @@ public class ErrorHandlerConfiguration {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    @ExceptionHandler(UnsupportedFilterException.class)
+    public ResponseEntity<ProblemDetail> handleUnsupportedFilterException(
+        UnsupportedFilterException ex) {
+        return createErrorResponse(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "https://skg-if.github.io/api/errors#UNSUPPORTED_FILTER",
+            "UNSUPPORTED_FILTER",
+            ex.getMessage(),
+            ex.getUrl()
+        );
+    }
+
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    @ExceptionHandler(UnsupportedEntityTypeException.class)
+    public ResponseEntity<ProblemDetail> handleUnsupportedEntityTypeException(
+        UnsupportedEntityTypeException ex) {
+        return createErrorResponse(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "https://skg-if.github.io/api/errors#UNSUPPORTED_ENTITY_TYPE",
+            "UNSUPPORTED_ENTITY_TYPE",
+            ex.getMessage(),
+            ex.getUrl()
+        );
+    }
+
     private ErrorObject buildErrorObject(HttpServletRequest request, String message,
                                          HttpStatus status) {
         try {
@@ -504,5 +535,14 @@ public class ErrorHandlerConfiguration {
         } finally {
             MDC.remove(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID);
         }
+    }
+
+    private ResponseEntity<ProblemDetail> createErrorResponse(
+        HttpStatus status, String type, String title, String detail, String occurrence) {
+        var problem = ProblemDetail.forStatusAndDetail(status, detail);
+        problem.setType(URI.create(type));
+        problem.setTitle(title);
+        problem.setProperty("occurrence", occurrence);
+        return ResponseEntity.status(status).body(problem);
     }
 }

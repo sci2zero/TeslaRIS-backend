@@ -64,8 +64,11 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
 
     @Autowired
-    public ExportDocumentConverter(DocumentRepository documentRepository) {
+    public ExportDocumentConverter(DocumentRepository documentRepository,
+                                   DocumentPublicationIndexRepository documentPublicationIndexRepository) {
         ExportDocumentConverter.documentRepository = documentRepository;
+        ExportDocumentConverter.documentPublicationIndexRepository =
+            documentPublicationIndexRepository;
     }
 
     public static ExportDocument toCommonExportModel(Dataset dataset, boolean computeRelations) {
@@ -366,6 +369,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             event.setDatabaseId(document.getEvent().getId());
             event.setName(ExportMultilingualContentConverter.toCommonExportModel(
                 document.getEvent().getName()));
+            commonExportDocument.setEvent(event);
         }
 
         if (computeRelations) {

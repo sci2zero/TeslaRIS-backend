@@ -25,5 +25,4 @@ public class GeoLocation {
 
     @Column(name = "address")
     private String address;
-
 }

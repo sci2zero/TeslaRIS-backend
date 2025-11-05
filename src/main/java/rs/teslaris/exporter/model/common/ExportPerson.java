@@ -42,6 +42,6 @@ public class ExportPerson extends BaseExportEntity {
     @Field("electronic_addresses")
     private List<String> electronicAddresses = new ArrayList<>();
 
-    @Field("employment_institutions")
-    private List<ExportOrganisationUnit> employmentInstitutions = new ArrayList<>();
+    @Field("employments")
+    private List<ExportEmployment> employments = new ArrayList<>();
 }

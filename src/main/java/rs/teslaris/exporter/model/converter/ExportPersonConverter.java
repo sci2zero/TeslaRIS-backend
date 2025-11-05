@@ -17,6 +17,9 @@ import rs.teslaris.core.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.exporter.model.common.ExportEmployment;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 
@@ -65,9 +68,14 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
         commonExportPerson.getOldIds().addAll(person.getOldIds());
 
-        involvementRepository.findActiveEmploymentInstitutions(person.getId()).forEach(
-            institution -> commonExportPerson.getEmploymentInstitutions()
-                .add(ExportOrganisationUnitConverter.toCommonExportModel(institution, false)));
+        var involvements = involvementRepository.findActiveEmploymentInstitutions(person.getId());
+        involvements.forEach(involvement -> commonExportPerson.getEmployments().add(
+            new ExportEmployment(
+                ExportOrganisationUnitConverter.toCommonExportModel(
+                    involvement.getOrganisationUnit(),
+                    false), involvement.getDateFrom(), involvement.getDateTo(),
+                StringUtil.getStringContent(involvement.getRole(),
+                    LanguageAbbreviations.ENGLISH))));
 
         if (computeRelations) {
             commonExportPerson.getRelatedInstitutionIds()
@@ -129,13 +137,12 @@ public class ExportPersonConverter extends ExportConverterBase {
             openairePerson.getElectronicAddresses().add(elAddress);
         });
 
-        if (!exportPerson.getEmploymentInstitutions().isEmpty()) {
+        if (!exportPerson.getEmployments().isEmpty()) {
             openairePerson.setAffiliation(new Affiliation(new ArrayList<>(), null));
-            exportPerson.getEmploymentInstitutions().forEach(employmentInstitution -> {
-                openairePerson.getAffiliation().getOrgUnits()
-                    .add(ExportOrganisationUnitConverter.toOpenaireModel(employmentInstitution,
-                        supportLegacyIdentifiers));
-            });
+            exportPerson.getEmployments().forEach(employment ->
+                openairePerson.getAffiliation().getOrgUnits().add(
+                    ExportOrganisationUnitConverter.toOpenaireModel(
+                        employment.getEmploymentInstitution(), supportLegacyIdentifiers)));
         }
 
         return openairePerson;
@@ -175,8 +182,9 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
 
         addContentToList(
-            exportPerson.getEmploymentInstitutions(),
-            institution -> "oai:CRIS.UNS:Orgunits/(TESLARIS)" + institution.getDatabaseId(),
+            exportPerson.getEmployments(),
+            employment -> "oai:CRIS.UNS:Orgunits/(TESLARIS)" +
+                employment.getEmploymentInstitution().getDatabaseId(),
             content -> dcPerson.getRelation().add(content)
         );
 
