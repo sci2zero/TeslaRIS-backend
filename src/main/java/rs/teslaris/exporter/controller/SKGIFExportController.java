@@ -2,8 +2,11 @@ package rs.teslaris.exporter.controller;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +24,7 @@ import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
 import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.exporter.service.interfaces.SKGIFExportService;
+import rs.teslaris.exporter.util.skgif.SKGIFFilterCriteria;
 
 @RestController
 @RequestMapping("/api/skg-if")
@@ -38,7 +42,7 @@ public class SKGIFExportController {
         @RequestParam(defaultValue = "json") String format) {
         var entityClass = getEntityClass(request, entityType);
 
-        localIdentifier = localIdentifier.trim().replace(IdentifierUtil.identifierPrefix, "");
+        localIdentifier = IdentifierUtil.removeCommonPrefix(localIdentifier);
 
         int databaseId;
         try {
@@ -62,6 +66,13 @@ public class SKGIFExportController {
                                                  @RequestParam("page_size") Integer pageSize) {
         var entityClass = getEntityClass(request, entityType);
 
+        var filterCriteria = new SKGIFFilterCriteria(filter);
+        var unsupportedFilters = validateFilters(filterCriteria, entityType);
+        if (!unsupportedFilters.isEmpty()) {
+            throw new UnsupportedFilterException("Unsupported filters: " + unsupportedFilters,
+                request.getRequestURL().toString());
+        }
+
         if (!List.of(10, 20, 50, 100).contains(pageSize)) {
             throw new UnsupportedFilterException(
                 "Supported page sizes are [10, 20, 50, 100].",
@@ -69,7 +80,7 @@ public class SKGIFExportController {
         }
 
         return skgifExportService.getEntitiesFiltered(entityClass, filter,
-            entityType.equals("venue"), PageRequest.of(page, pageSize));
+            entityType.equals("venue"), filterCriteria, PageRequest.of(page, pageSize));
     }
 
     private Class<? extends BaseExportEntity> getEntityClass(HttpServletRequest request,
@@ -91,6 +102,30 @@ public class SKGIFExportController {
             case "organisation" -> ExportOrganisationUnit.class;
             case "venue", "product" -> ExportDocument.class;
             default -> null;
+        };
+    }
+
+    private List<String> validateFilters(SKGIFFilterCriteria criteria, String entityType) {
+        List<String> supportedFilters = getSupportedFilters(entityType);
+        return criteria.getFilterKeys().stream()
+            .filter(filter -> !supportedFilters.contains(filter))
+            .collect(Collectors.toList());
+    }
+
+    private List<String> getSupportedFilters(String entityType) {
+        return switch (entityType) {
+            case "person" -> Arrays.asList(
+                "identifiers.scheme", "identifiers.value",
+                "given_name", "family_name", "name", "affiliations.affiliation",
+                "affiliations.role", "affiliations.period.start", "affiliations.period.end"
+            );
+            case "organisation" -> Arrays.asList(
+                "identifiers.scheme", "identifiers.value", "name", "short_name", "other_names"
+            );
+            case "product" -> Arrays.asList(
+                "product_type", "identifiers.scheme", "identifiers.value"
+            );
+            default -> Collections.emptyList();
         };
     }
 }

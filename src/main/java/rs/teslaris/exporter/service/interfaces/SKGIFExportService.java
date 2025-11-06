@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
 import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
+import rs.teslaris.exporter.util.skgif.SKGIFFilterCriteria;
 
 @Service
 public interface SKGIFExportService {
@@ -16,5 +17,6 @@ public interface SKGIFExportService {
     <T extends BaseExportEntity> SKGIFListResponse getEntitiesFiltered(Class<T> entityClass,
                                                                        String filter,
                                                                        boolean isVenue,
+                                                                       SKGIFFilterCriteria criteria,
                                                                        Pageable pageable);
 }

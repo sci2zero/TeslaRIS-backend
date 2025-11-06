@@ -57,6 +57,10 @@ public class IdentifierUtil {
         }
     }
 
+    public static String removeCommonPrefix(String localIdentifier) {
+        return localIdentifier.trim().replace(IdentifierUtil.identifierPrefix, "");
+    }
+
     @Value("${export.internal-identifier.prefix}")
     public void setIdentifierPrefix(String prefix) {
         identifierPrefix = prefix;

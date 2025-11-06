@@ -24,6 +24,7 @@ import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 import rs.teslaris.exporter.service.impl.SKGIFExportServiceImpl;
+import rs.teslaris.exporter.util.skgif.SKGIFFilterCriteria;
 
 @SpringBootTest
 public class SKGIFExportServiceTest {
@@ -95,7 +96,7 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportPerson.class, null, false, pageable);
+            ExportPerson.class, null, false, new SKGIFFilterCriteria(""), pageable);
 
         // then
         assertNotNull(result);
@@ -123,7 +124,7 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportPerson.class, null, false, pageable);
+            ExportPerson.class, null, false, new SKGIFFilterCriteria(""), pageable);
 
         // then
         assertNotNull(result);
@@ -143,7 +144,7 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportPerson.class, null, false, pageable);
+            ExportPerson.class, null, false, new SKGIFFilterCriteria(""), pageable);
 
         // then
         assertNotNull(result);
@@ -165,7 +166,7 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportDocument.class, null, true, pageable);
+            ExportDocument.class, null, true, new SKGIFFilterCriteria(""), pageable);
 
         // then
         assertNotNull(result);
@@ -187,7 +188,7 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportDocument.class, null, false, pageable);
+            ExportDocument.class, null, false, new SKGIFFilterCriteria(""), pageable);
 
         // then
         assertNotNull(result);

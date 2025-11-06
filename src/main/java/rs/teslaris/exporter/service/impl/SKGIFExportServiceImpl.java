@@ -23,6 +23,9 @@ import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
 import rs.teslaris.exporter.model.skgif.SKGIFMeta;
 import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.exporter.service.interfaces.SKGIFExportService;
+import rs.teslaris.exporter.util.skgif.OrganisationFilteringUtil;
+import rs.teslaris.exporter.util.skgif.PersonFilteringUtil;
+import rs.teslaris.exporter.util.skgif.SKGIFFilterCriteria;
 
 @Service
 @RequiredArgsConstructor
@@ -67,11 +70,13 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
     public <T extends BaseExportEntity> SKGIFListResponse getEntitiesFiltered(Class<T> entityClass,
                                                                               String filter,
                                                                               boolean isVenue,
+                                                                              SKGIFFilterCriteria criteria,
                                                                               Pageable pageable) {
         var conversionMethod = getConversionMethod(entityClass, isVenue);
 
         var query = new Query();
         addDocumentTypeConstraints(query, entityClass, isVenue);
+        addQueryFilters(entityClass, query, criteria);
 
         var totalCount = mongoTemplate.count(query, entityClass);
 
@@ -126,6 +131,23 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
             } else {
                 query.addCriteria(Criteria.where("type").nin(venueTypes));
             }
+        }
+    }
+
+    private void addQueryFilters(Class<? extends BaseExportEntity> entityClass, Query query,
+                                 SKGIFFilterCriteria criteria) {
+        switch (entityClass.getSimpleName()) {
+            case "ExportPerson":
+                PersonFilteringUtil.addPersonFilters(criteria, query);
+                break;
+            case "ExportOrganisationUnit":
+                OrganisationFilteringUtil.addOrganisationFilters(criteria, query);
+                break;
+            case "ExportDocument":
+                // TODO: finish this
+                break;
+            default:
+                throw new IllegalArgumentException("No filter handler for: " + entityClass);
         }
     }
 }
