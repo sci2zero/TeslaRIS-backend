@@ -2,11 +2,10 @@ package rs.teslaris.core.converter.person;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -24,10 +23,18 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.session.SessionUtil;
 
+@Component
 public class PersonConverter {
+
+    private static InvolvementRepository involvementRepository;
+
+    public PersonConverter(InvolvementRepository involvementRepository) {
+        PersonConverter.involvementRepository = involvementRepository;
+    }
 
     public static PersonResponseDTO toDTO(Person person) {
         var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
@@ -146,26 +153,13 @@ public class PersonConverter {
     private static void setPersonInvolvementIds(Person person, ArrayList<Integer> employmentIds,
                                                 ArrayList<Integer> educationIds,
                                                 ArrayList<Integer> membershipIds) {
-        person.getInvolvements().stream()
-            .sorted(Comparator.comparing(
-                involvement -> Optional.ofNullable(involvement.getDateFrom())
-                    .orElse(LocalDate.now()),
-                Comparator.reverseOrder()
-            ))
-            .forEach(involvement -> {
-                switch (involvement.getInvolvementType()) {
-                    case HIRED_BY:
-                    case EMPLOYED_AT:
-                    case CANDIDATE:
-                        employmentIds.add(involvement.getId());
-                        break;
-                    case MEMBER_OF:
-                        membershipIds.add(involvement.getId());
-                        break;
-                    default:
-                        educationIds.add(involvement.getId());
-                }
-            });
+        for (var inv : involvementRepository.findIdsTypesAndDatesByPersonId(person.getId())) {
+            switch (inv.getInvolvementType()) {
+                case HIRED_BY, EMPLOYED_AT, CANDIDATE -> employmentIds.add(inv.getId());
+                case MEMBER_OF -> membershipIds.add(inv.getId());
+                default -> educationIds.add(inv.getId());
+            }
+        }
     }
 
     private static void setExpertisesAndSkills(Person person,

@@ -18,6 +18,7 @@ import rs.teslaris.core.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEmployment;
 import rs.teslaris.exporter.model.common.ExportPerson;
@@ -119,7 +120,8 @@ public class ExportPersonConverter extends ExportConverterBase {
             openairePerson.setOldId("Persons/" + legacyIdentifierPrefix +
                 exportPerson.getOldIds().stream().findFirst().get());
         } else {
-            openairePerson.setOldId("Persons/(TESLARIS)" + exportPerson.getDatabaseId());
+            openairePerson.setOldId(
+                "Persons/" + IdentifierUtil.identifierPrefix + exportPerson.getDatabaseId());
         }
 
         openairePerson.setScopusAuthorId(exportPerson.getScopusAuthorId());
@@ -183,7 +185,8 @@ public class ExportPersonConverter extends ExportConverterBase {
 
         addContentToList(
             exportPerson.getEmployments(),
-            employment -> "oai:CRIS.UNS:Orgunits/(TESLARIS)" +
+            employment -> "oai:CRIS.UNS:Orgunits/"
+                + IdentifierUtil.identifierPrefix +
                 employment.getEmploymentInstitution().getDatabaseId(),
             content -> dcPerson.getRelation().add(content)
         );

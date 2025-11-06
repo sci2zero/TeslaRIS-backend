@@ -1,5 +1,6 @@
 package rs.teslaris.exporter.model.common;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,4 +18,10 @@ public class ExportContribution {
 
     @Field("person")
     private ExportPerson person;
+
+    @Field("order_number")
+    private int orderNumber;
+
+    @Field("declared_contributions")
+    private List<Integer> declaredContributions;
 }

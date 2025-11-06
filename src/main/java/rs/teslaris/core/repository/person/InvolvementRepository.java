@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.person;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 
 @Repository
 public interface InvolvementRepository extends JpaRepository<Involvement, Integer> {
@@ -52,4 +54,22 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
         "WHERE e.organisationUnit.id IN :institutionIds " +
         "AND e.dateTo IS NULL")
     Integer countActiveEmploymentsForInstitutions(List<Integer> institutionIds);
+
+    @Query("""
+            SELECT i.id AS id,
+                   i.involvementType AS involvementType,
+                   i.dateFrom AS dateFrom
+            FROM Involvement i
+            WHERE i.personInvolved.id = :personId
+            ORDER BY i.dateFrom DESC NULLS LAST
+        """)
+    List<InvolvementIdTypeDate> findIdsTypesAndDatesByPersonId(Integer personId);
+
+    interface InvolvementIdTypeDate {
+        Integer getId();
+
+        InvolvementType getInvolvementType();
+
+        LocalDate getDateFrom();
+    }
 }

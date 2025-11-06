@@ -47,7 +47,7 @@ import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.dto.RemainingRecordsCountResponseDTO;
 import rs.teslaris.importer.model.converter.load.event.EventConverter;
 import rs.teslaris.importer.model.converter.load.institution.OrganisationUnitConverter;
-import rs.teslaris.importer.model.converter.load.person.PersonConverter;
+import rs.teslaris.importer.model.converter.load.person.ImportPersonConverter;
 import rs.teslaris.importer.model.converter.load.publication.DissertationConverter;
 import rs.teslaris.importer.model.converter.load.publication.JournalConverter;
 import rs.teslaris.importer.model.converter.load.publication.JournalPublicationConverter;
@@ -74,7 +74,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
     private final OrganisationUnitConverter organisationUnitConverter;
 
-    private final PersonConverter personConverter;
+    private final ImportPersonConverter importPersonConverter;
 
     private final EventConverter eventConverter;
 
@@ -146,7 +146,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
         switch (requestDataSet) {
             case PERSONS:
-                return (R) findAndConvertEntity(Person.class, personConverter,
+                return (R) findAndConvertEntity(Person.class, importPersonConverter,
                     DataSet.PERSONS, query, userId);
             case EVENTS:
                 return (R) findAndConvertEntity(Event.class, eventConverter, DataSet.EVENTS,
@@ -329,7 +329,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                         batchSize);
                     break;
                 case PERSONS:
-                    hasNextPage = loadBatch(Person.class, personConverter,
+                    hasNextPage = loadBatch(Person.class, importPersonConverter,
                         personService::importPersonWithBasicInfo, query, performIndex, batchSize);
                     break;
                 case EVENTS:
@@ -505,7 +505,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                             FunctionalUtil.forEachWithCounter(person.getAffiliation().getOrgUnits(),
                                 (i, affiliation) -> {
                                     var creationDTO =
-                                        personConverter.toPersonEmployment(person, affiliation);
+                                        importPersonConverter.toPersonEmployment(person,
+                                            affiliation);
                                     creationDTO.forEach(
                                         employmentDTO -> involvementService.addEmployment(
                                             savedPerson.getId(), employmentDTO));

@@ -31,6 +31,7 @@ import rs.teslaris.core.model.oaipmh.marc21.DataField;
 import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.oaipmh.marc21.SubField;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 
@@ -66,7 +67,8 @@ public class ThesisConverter extends DocumentPublicationConverter {
             type = BibTeXEntry.TYPE_MASTERSTHESIS;
         }
 
-        var entry = new BibTeXEntry(type, new Key("(TESLARIS)" + thesis.getId().toString()));
+        var entry = new BibTeXEntry(type,
+            new Key(IdentifierUtil.identifierPrefix + thesis.getId().toString()));
 
         setCommonFields(thesis, entry, defaultLanguageTag);
 

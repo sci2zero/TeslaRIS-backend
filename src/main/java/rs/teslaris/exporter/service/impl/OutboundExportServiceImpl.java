@@ -56,6 +56,7 @@ import rs.teslaris.core.repository.institution.OrganisationUnitsRelationReposito
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
@@ -179,7 +180,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 (BaseExportEntity) fetchedRecordEntity,
                 ("oai:" + repositoryName.replace(" ", ".") + ":") +
                     (!matchedSet.get().identifierSetSpec().isBlank() ?
-                        (matchedSet.get().identifierSetSpec() + "/") : "") + "(TESLARIS)" +
+                        (matchedSet.get().identifierSetSpec() + "/") : "") +
+                    IdentifierUtil.identifierPrefix +
                     ((BaseExportEntity) fetchedRecordEntity).getDatabaseId(),
                 matchedSet.get().identifierSetSpec()));
 
@@ -478,7 +480,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         oaiIdentifier.setRepositoryIdentifier(repositoryName.replace(" ", "."));
         oaiIdentifier.setDelimiter(":");
         oaiIdentifier.setSampleIdentifier(
-            "oai:" + repositoryName.replace(" ", ".") + ":Publications/(TESLARIS)1000");
+            "oai:" + repositoryName.replace(" ", ".") + ":Publications/" +
+                IdentifierUtil.identifierPrefix + "1000");
 
         var toolkit = new Toolkit();
         toolkit.setTitle("Sci2Zero Alliance Custom implementation");

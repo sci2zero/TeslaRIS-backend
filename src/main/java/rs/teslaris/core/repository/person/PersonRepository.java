@@ -136,5 +136,4 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         WHERE p.id = :personId
         """)
     Optional<Person> findOneWithInvolvements(Integer personId);
-
 }

@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
+import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 import rs.teslaris.exporter.model.converter.skgif.AgentConverter;
 import rs.teslaris.exporter.model.converter.skgif.ResearchProductConverter;
@@ -42,6 +43,8 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
 
         var query = new Query();
         query.addCriteria(Criteria.where("database_id").is(localIdentifier));
+        addDocumentTypeConstraints(query, entityClass, isVenue);
+
         var records = mongoTemplate.find(query, entityClass);
 
         if (records.isEmpty()) {
@@ -68,12 +71,7 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
         var conversionMethod = getConversionMethod(entityClass, isVenue);
 
         var query = new Query();
-
-        if (isVenue) {
-            query.addCriteria(Criteria.where("type")
-                .in(List.of(ExportPublicationType.JOURNAL, ExportPublicationType.PROCEEDINGS,
-                    ExportPublicationType.MONOGRAPH)));
-        }
+        addDocumentTypeConstraints(query, entityClass, isVenue);
 
         var totalCount = mongoTemplate.count(query, entityClass);
 
@@ -115,6 +113,19 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
             return converterClass.getMethod("toSKGIF", entityClass);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void addDocumentTypeConstraints(Query query, Class<?> entityClass, boolean isVenue) {
+        if (entityClass.equals(ExportDocument.class)) {
+            var venueTypes =
+                List.of(ExportPublicationType.JOURNAL, ExportPublicationType.PROCEEDINGS,
+                    ExportPublicationType.MONOGRAPH);
+            if (isVenue) {
+                query.addCriteria(Criteria.where("type").in(venueTypes));
+            } else {
+                query.addCriteria(Criteria.where("type").nin(venueTypes));
+            }
         }
     }
 }

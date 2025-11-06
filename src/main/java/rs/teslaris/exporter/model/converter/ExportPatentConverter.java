@@ -7,6 +7,7 @@ import java.util.function.Function;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.patent.Patent;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
@@ -22,7 +23,8 @@ public class ExportPatentConverter extends ExportConverterBase {
             openairePatent.setOldId("Patents/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
-            openairePatent.setOldId("Patents/(TESLARIS)" + exportDocument.getDatabaseId());
+            openairePatent.setOldId(
+                "Patents/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId());
         }
 
         openairePatent.setTitle(

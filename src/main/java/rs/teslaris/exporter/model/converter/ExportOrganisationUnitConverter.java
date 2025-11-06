@@ -15,6 +15,7 @@ import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.model.oaipmh.organisationunit.PartOf;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 
@@ -105,7 +106,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             orgUnit.setOldId("Orgunits/" + legacyIdentifierPrefix +
                 organisationUnit.getOldIds().stream().findFirst().get());
         } else {
-            orgUnit.setOldId("Orgunits/(TESLARIS)" + organisationUnit.getDatabaseId());
+            orgUnit.setOldId(
+                "Orgunits/" + IdentifierUtil.identifierPrefix + organisationUnit.getDatabaseId());
         }
 
         orgUnit.setName(

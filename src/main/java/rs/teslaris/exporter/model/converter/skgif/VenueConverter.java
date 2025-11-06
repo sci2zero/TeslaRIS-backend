@@ -7,6 +7,7 @@ import rs.teslaris.core.model.skgif.common.SKGIFAccessRights;
 import rs.teslaris.core.model.skgif.common.SKGIFIdentifier;
 import rs.teslaris.core.model.skgif.researchproduct.SKGIFContribution;
 import rs.teslaris.core.model.skgif.venue.Venue;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
@@ -16,7 +17,7 @@ public class VenueConverter extends BaseConverter {
     public static List<Venue> toSKGIF(ExportDocument document) {
         var venue = new Venue();
 
-        venue.setLocalIdentifier("(TESLARIS)" + document.getDatabaseId());
+        venue.setLocalIdentifier(IdentifierUtil.identifierPrefix + document.getDatabaseId());
 
         venue.setEntityType("venue");
         venue.setType(getEntityType(document.getType()));

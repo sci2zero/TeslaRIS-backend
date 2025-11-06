@@ -13,6 +13,7 @@ import rs.teslaris.core.model.skgif.agent.SKGIFPerson;
 import rs.teslaris.core.model.skgif.agent.TimePeriod;
 import rs.teslaris.core.model.skgif.common.SKGIFIdentifier;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
@@ -34,8 +35,8 @@ public class AgentConverter extends BaseConverter {
                 }
 
                 return SKGIFAffiliation.builder()
-                    .affiliation(Objects.nonNull(institutionId) ? ("(TESLARIS)" + institutionId) :
-                        affiliationName)
+                    .affiliation(Objects.nonNull(institutionId) ?
+                        (IdentifierUtil.identifierPrefix + institutionId) : affiliationName)
                     .role(employment.getRole())
                     .period(new TimePeriod(
                         Objects.nonNull(employment.getDateFrom()) ?
@@ -47,11 +48,13 @@ public class AgentConverter extends BaseConverter {
             })
             .collect(Collectors.toList());
 
+        var identifiers = getPersonIdentifiers(person);
+
         var response = new ArrayList<Agent>(List.of(SKGIFPerson.builder()
-            .localIdentifier("(TESLARIS)" + person.getDatabaseId())
+            .localIdentifier(IdentifierUtil.identifierPrefix + person.getDatabaseId())
             .entityType("person")
             .name(person.getName().toString())
-            .identifiers(List.of(new SKGIFIdentifier("orcid", person.getOrcid())))
+            .identifiers(identifiers)
             .givenName(person.getName().getFirstName())
             .familyName(person.getName().getLastName())
             .affiliations(affiliations)
@@ -78,7 +81,8 @@ public class AgentConverter extends BaseConverter {
 
         var identifiers = new ArrayList<SKGIFIdentifier>();
         if (StringUtil.valueExists(institution.getScopusAfid())) {
-            identifiers.add(new SKGIFIdentifier("scopus", institution.getScopusAfid()));
+            identifiers.add(new SKGIFIdentifier("url",
+                "https://www.scopus.com/pages/organization/" + institution.getScopusAfid()));
         }
 
         if (StringUtil.valueExists(institution.getRor())) {
@@ -86,7 +90,7 @@ public class AgentConverter extends BaseConverter {
         }
 
         if (StringUtil.valueExists(institution.getOpenAlex())) {
-            identifiers.add(new SKGIFIdentifier("open_alex", institution.getOpenAlex()));
+            identifiers.add(new SKGIFIdentifier("openalex", institution.getOpenAlex()));
         }
 
         var website = "";
@@ -95,7 +99,7 @@ public class AgentConverter extends BaseConverter {
         }
 
         return List.of(SKGIFOrganisation.builder()
-            .localIdentifier("(TESLARIS)" + institution.getDatabaseId())
+            .localIdentifier(IdentifierUtil.identifierPrefix + institution.getDatabaseId())
             .entityType("organisation")
             .name(institutionName)
             .otherNames(otherNames)
@@ -105,5 +109,19 @@ public class AgentConverter extends BaseConverter {
             .identifiers(identifiers)
             .types(List.of("research"))
             .build());
+    }
+
+    public static List<SKGIFIdentifier> getPersonIdentifiers(ExportPerson person) {
+        var identifiers = new ArrayList<SKGIFIdentifier>();
+        if (StringUtil.valueExists(person.getOrcid())) {
+            identifiers.add(new SKGIFIdentifier("orcid", person.getOrcid()));
+        }
+
+        if (StringUtil.valueExists(person.getScopusAuthorId())) {
+            identifiers.add(new SKGIFIdentifier("url",
+                "https://www.scopus.com/authid/detail.uri?authorId=" + person.getScopusAuthorId()));
+        }
+
+        return identifiers;
     }
 }

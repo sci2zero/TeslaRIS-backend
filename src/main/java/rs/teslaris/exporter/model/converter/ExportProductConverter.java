@@ -7,6 +7,7 @@ import java.util.Objects;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.product.Product;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
@@ -23,7 +24,8 @@ public class ExportProductConverter extends ExportConverterBase {
             openaireProduct.setOldId("Products/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
-            openaireProduct.setOldId("Products/(TESLARIS)" + exportDocument.getDatabaseId());
+            openaireProduct.setOldId(
+                "Products/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId());
         }
 
         openaireProduct.setName(

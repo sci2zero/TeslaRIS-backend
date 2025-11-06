@@ -26,7 +26,7 @@ import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PersonConverter implements RecordConverter<Person, ImportPersonDTO> {
+public class ImportPersonConverter implements RecordConverter<Person, ImportPersonDTO> {
 
     private final OrganisationUnitService organisationUnitService;
 

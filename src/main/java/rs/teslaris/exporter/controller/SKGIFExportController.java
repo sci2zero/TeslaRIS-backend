@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.util.exceptionhandling.exception.UnsupportedEntityTypeException;
 import rs.teslaris.core.util.exceptionhandling.exception.UnsupportedFilterException;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
@@ -37,17 +38,17 @@ public class SKGIFExportController {
         @RequestParam(defaultValue = "json") String format) {
         var entityClass = getEntityClass(request, entityType);
 
-        localIdentifier = localIdentifier.trim().replace("(TESLARIS)", "");
+        localIdentifier = localIdentifier.trim().replace(IdentifierUtil.identifierPrefix, "");
 
         int databaseId;
         try {
             databaseId = Integer.parseInt(localIdentifier);
         } catch (NumberFormatException e) {
             throw new UnsupportedFilterException(
-                "Ivalid ID format. Supported format example: '(TESLARIS)123456'.",
+                "Invalid ID format. Supported format example: '" + IdentifierUtil.identifierPrefix +
+                    "123456'.",
                 request.getRequestURL().toString());
         }
-
 
         return skgifExportService.getEntityById(entityClass, databaseId,
             entityType.equals("venue"));
@@ -88,7 +89,7 @@ public class SKGIFExportController {
         return switch (entityType) {
             case "person" -> ExportPerson.class;
             case "organisation" -> ExportOrganisationUnit.class;
-            case "venue" -> ExportDocument.class;
+            case "venue", "product" -> ExportDocument.class;
             default -> null;
         };
     }

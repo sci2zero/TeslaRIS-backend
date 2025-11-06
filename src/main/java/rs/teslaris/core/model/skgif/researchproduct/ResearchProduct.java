@@ -1,7 +1,9 @@
 package rs.teslaris.core.model.skgif.researchproduct;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
@@ -20,13 +22,14 @@ import rs.teslaris.core.model.skgif.common.SKGIFTopic;
     property = "product_type",
     include = JsonTypeInfo.As.EXISTING_PROPERTY
 )
-public abstract class ResearchProduct {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class ResearchProduct {
 
     @JsonProperty("local_identifier")
     private String localIdentifier;
 
     @JsonProperty("identifiers")
-    private List<SKGIFIdentifier> identifiers;
+    private List<SKGIFIdentifier> identifiers = new ArrayList<>();
 
     @JsonProperty("entity_type")
     private String entityType = "product";
@@ -44,10 +47,10 @@ public abstract class ResearchProduct {
     private List<SKGIFTopic> topics;
 
     @JsonProperty("contributions")
-    private List<SKGIFContribution> contributions;
+    private List<SKGIFContribution> contributions = new ArrayList<>();
 
     @JsonProperty("manifestations")
-    private List<Manifestation> manifestations;
+    private List<Manifestation> manifestations = new ArrayList<>();
 
     @JsonProperty("relevant_organisations")
     private List<String> relevantOrganisations;

@@ -12,11 +12,13 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
@@ -46,8 +48,11 @@ import rs.teslaris.core.model.oaipmh.publication.PartOf;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.model.oaipmh.publication.PublishedIn;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
+import rs.teslaris.exporter.model.common.ExportDocumentFile;
 import rs.teslaris.exporter.model.common.ExportEvent;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportPerson;
@@ -62,13 +67,17 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     private static DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private static ThesisResearchOutputRepository thesisResearchOutputRepository;
+
 
     @Autowired
     public ExportDocumentConverter(DocumentRepository documentRepository,
-                                   DocumentPublicationIndexRepository documentPublicationIndexRepository) {
+                                   DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                   ThesisResearchOutputRepository thesisResearchOutputRepository) {
         ExportDocumentConverter.documentRepository = documentRepository;
         ExportDocumentConverter.documentPublicationIndexRepository =
             documentPublicationIndexRepository;
+        ExportDocumentConverter.thesisResearchOutputRepository = thesisResearchOutputRepository;
     }
 
     public static ExportDocument toCommonExportModel(Dataset dataset, boolean computeRelations) {
@@ -362,6 +371,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setDocumentDate(document.getDocumentDate());
         commonExportDocument.setDoi(document.getDoi());
         commonExportDocument.setScopus(document.getScopusId());
+        commonExportDocument.setOpenAlex(document.getOpenAlexId());
         commonExportDocument.getOldIds().addAll(document.getOldIds());
 
         if (Objects.nonNull(document.getEvent())) {
@@ -384,12 +394,36 @@ public class ExportDocumentConverter extends ExportConverterBase {
             if (file.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
                 commonExportDocument.setOpenAccess(true);
             }
+
+            addDocumentFileInformation(commonExportDocument, file);
         });
+
+        if (document instanceof Thesis) {
+            ((Thesis) document).getPreliminaryFiles().forEach(
+                preliminaryFile -> addDocumentFileInformation(commonExportDocument,
+                    preliminaryFile));
+
+            commonExportDocument.setResearchOutput(
+                thesisResearchOutputRepository.findResearchOutputIdsForThesis(document.getId()));
+        }
+    }
+
+    private static void addDocumentFileInformation(ExportDocument commonExportDocument,
+                                                   DocumentFile file) {
+        var exportDocumentFile = new ExportDocumentFile();
+        exportDocumentFile.setAccessRights(file.getAccessRights());
+        exportDocumentFile.setLicense(file.getLicense());
+        exportDocumentFile.setType(file.getResourceType());
+        exportDocumentFile.setCreationDate(file.getCreateDate());
+        exportDocumentFile.setLastUpdated(file.getLastModification());
+
+        commonExportDocument.getDocumentFiles().add(exportDocumentFile);
     }
 
     private static ExportContribution createExportContribution(
         PersonDocumentContribution contribution) {
         var exportContribution = new ExportContribution();
+        exportContribution.setOrderNumber(contribution.getOrderNumber());
         exportContribution.setDisplayName(
             contribution.getAffiliationStatement().getDisplayPersonName().toString());
         if (Objects.nonNull(contribution.getPerson())) {
@@ -399,6 +433,11 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 contribution.getPerson().getName().getOtherName(),
                 contribution.getPerson().getName().getLastname()));
             exportContribution.setPerson(person);
+        }
+
+        if (Objects.nonNull(contribution.getInstitutions())) {
+            exportContribution.setDeclaredContributions(
+                contribution.getInstitutions().stream().map(BaseEntity::getId).toList());
         }
 
         return exportContribution;
@@ -434,7 +473,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
             openairePublication.setOldId(
-                "Publications/(TESLARIS)" + exportDocument.getDatabaseId());
+                "Publications/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId());
         }
 
         openairePublication.setTitle(
