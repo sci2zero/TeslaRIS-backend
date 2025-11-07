@@ -2,7 +2,6 @@ package rs.teslaris.exporter.controller;
 
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +23,11 @@ import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
 import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.exporter.service.interfaces.SKGIFExportService;
+import rs.teslaris.exporter.util.skgif.OrganisationFilteringUtil;
+import rs.teslaris.exporter.util.skgif.PersonFilteringUtil;
+import rs.teslaris.exporter.util.skgif.ResearchProductFilteringUtil;
 import rs.teslaris.exporter.util.skgif.SKGIFFilterCriteria;
+import rs.teslaris.exporter.util.skgif.VenueFilteringUtil;
 
 @RestController
 @RequestMapping("/api/skg-if")
@@ -114,17 +117,10 @@ public class SKGIFExportController {
 
     private List<String> getSupportedFilters(String entityType) {
         return switch (entityType) {
-            case "person" -> Arrays.asList(
-                "identifiers.scheme", "identifiers.value",
-                "given_name", "family_name", "name", "affiliations.affiliation",
-                "affiliations.role", "affiliations.period.start", "affiliations.period.end"
-            );
-            case "organisation" -> Arrays.asList(
-                "identifiers.scheme", "identifiers.value", "name", "short_name", "other_names"
-            );
-            case "product" -> Arrays.asList(
-                "product_type", "identifiers.scheme", "identifiers.value"
-            );
+            case "person" -> PersonFilteringUtil.SUPPORTED_FILTERS;
+            case "organisation" -> OrganisationFilteringUtil.SUPPORTED_FILTERS;
+            case "venue" -> VenueFilteringUtil.SUPPORTED_FILTERS;
+            case "product" -> ResearchProductFilteringUtil.SUPPORTED_FILTERS;
             default -> Collections.emptyList();
         };
     }

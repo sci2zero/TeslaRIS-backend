@@ -2,13 +2,22 @@ package rs.teslaris.exporter.util.skgif;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 public class PersonFilteringUtil {
 
-    public static void addPersonFilters(SKGIFFilterCriteria criteria, Query query) {
+    public static final List<String> SUPPORTED_FILTERS = Arrays.asList(
+        "identifiers.scheme", "identifiers.value",
+        "given_name", "family_name", "name", "affiliations.affiliation",
+        "affiliations.role", "affiliations.period.start", "affiliations.period.end"
+    );
+
+
+    public static void addQueryFilters(SKGIFFilterCriteria criteria, Query query) {
         criteria.getFilters().forEach((key, value) -> {
             switch (key) {
                 case "identifiers.scheme":

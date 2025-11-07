@@ -8,7 +8,6 @@ import java.util.Objects;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.skgif.common.SKGIFAccessRights;
-import rs.teslaris.core.model.skgif.common.SKGIFIdentifier;
 import rs.teslaris.core.model.skgif.researchproduct.BibliographicInfo;
 import rs.teslaris.core.model.skgif.researchproduct.Manifestation;
 import rs.teslaris.core.model.skgif.researchproduct.ManifestationDates;
@@ -18,7 +17,6 @@ import rs.teslaris.core.model.skgif.researchproduct.ResearchProduct;
 import rs.teslaris.core.model.skgif.researchproduct.SKGIFContribution;
 import rs.teslaris.core.model.skgif.researchproduct.TypeInfo;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
-import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
@@ -31,7 +29,7 @@ public class ResearchProductConverter extends BaseConverter {
         researchProduct.setLocalIdentifier(
             IdentifierUtil.identifierPrefix + document.getDatabaseId());
 
-        populateIdentifiers(researchProduct, document);
+        populateIdentifiers(researchProduct.getIdentifiers(), document);
 
         researchProduct.setEntityType("product");
         researchProduct.setProductType(getProductType(document.getType()));
@@ -39,7 +37,7 @@ public class ResearchProductConverter extends BaseConverter {
         researchProduct.setTitles(getMultilingualContent(document.getTitle()));
         researchProduct.setAbstracts(getMultilingualContent(document.getDescription()));
 
-        populateAuthorshipInformation(researchProduct, document);
+        populateContributorInformation(researchProduct, document);
 
         researchProduct.setRelevantOrganisations(
             document.getActivelyRelatedInstitutionIds().stream()
@@ -54,65 +52,33 @@ public class ResearchProductConverter extends BaseConverter {
         return List.of(researchProduct);
     }
 
-    private static void populateIdentifiers(ResearchProduct researchProduct,
-                                            ExportDocument document) {
-        if (StringUtil.valueExists(document.getDoi())) {
-            researchProduct.getIdentifiers().add(new SKGIFIdentifier("doi", document.getDoi()));
-        }
-
-        if (StringUtil.valueExists(document.getScopus())) {
-            researchProduct.getIdentifiers().add(new SKGIFIdentifier("url",
-                "https://www.scopus.com/pages/publications/" + document.getScopus()));
-        }
-
-        if (StringUtil.valueExists(document.getOpenAlex())) {
-            researchProduct.getIdentifiers()
-                .add(new SKGIFIdentifier("openalex", document.getOpenAlex()));
-        }
-
-        if (StringUtil.valueExists(document.getEIssn())) {
-            researchProduct.getIdentifiers().add(new SKGIFIdentifier("eissn", document.getEIssn()));
-        }
-
-        if (StringUtil.valueExists(document.getPrintIssn())) {
-            researchProduct.getIdentifiers()
-                .add(new SKGIFIdentifier("issn", document.getPrintIssn()));
-        }
-
-        if (StringUtil.valueExists(document.getEIsbn())) {
-            researchProduct.getIdentifiers()
-                .add(new SKGIFIdentifier("isbn", document.getEIsbn()));
-        } else if (StringUtil.valueExists(document.getPrintIsbn())) {
-            researchProduct.getIdentifiers()
-                .add(new SKGIFIdentifier("isbn", document.getPrintIsbn()));
-        }
-    }
-
-    private static void populateAuthorshipInformation(ResearchProduct researchProduct,
-                                                      ExportDocument document) {
+    private static void populateContributorInformation(ResearchProduct researchProduct,
+                                                       ExportDocument document) {
         addToContributions(researchProduct, document.getAuthors(), "author",
             List.of("writing – original draft", "conceptualization"));
         addToContributions(researchProduct, document.getEditors(), "editor",
             List.of("writing – review & editing"));
+        addToContributions(researchProduct, document.getAdvisors(), "advisor",
+            List.of("supervision", "validation"));
     }
 
     private static void addToContributions(ResearchProduct researchProduct,
                                            List<ExportContribution> contributions, String role,
                                            List<String> contributionTypes) {
         contributions.forEach(author -> {
-            var authorship = new SKGIFContribution();
+            var contribution = new SKGIFContribution();
 
-            authorship.setBy(Objects.nonNull(author.getPerson()) ?
+            contribution.setBy(Objects.nonNull(author.getPerson()) ?
                 (IdentifierUtil.identifierPrefix + author.getPerson().getDatabaseId()) :
                 author.getDisplayName());
-            authorship.setRole(role);
-            authorship.setContributionTypes(contributionTypes);
-            authorship.setRank(author.getOrderNumber());
+            contribution.setRole(role);
+            contribution.setContributionTypes(contributionTypes);
+            contribution.setRank(author.getOrderNumber());
 
-            authorship.setDeclaredAffiliations(author.getDeclaredContributions().stream()
+            contribution.setDeclaredAffiliations(author.getDeclaredContributions().stream()
                 .map(id -> IdentifierUtil.identifierPrefix + id).toList());
 
-            researchProduct.getContributions().add(authorship);
+            researchProduct.getContributions().add(contribution);
         });
     }
 

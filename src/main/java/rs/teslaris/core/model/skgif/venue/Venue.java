@@ -3,6 +3,7 @@ package rs.teslaris.core.model.skgif.venue;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,7 +32,7 @@ public class Venue {
     protected String type;
 
     @JsonProperty("identifiers")
-    protected List<SKGIFIdentifier> identifiers;
+    protected List<SKGIFIdentifier> identifiers = new ArrayList<>();
 
     @JsonProperty("title")
     protected String title;

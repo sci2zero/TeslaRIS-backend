@@ -46,7 +46,9 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
 
         publicationSeries.getContributions().forEach(contribution -> {
             if (contribution.getContributionType()
-                .equals(PublicationSeriesContributionType.EDITOR)) {
+                .equals(PublicationSeriesContributionType.EDITOR) ||
+                contribution.getContributionType()
+                    .equals(PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER)) {
                 var exportContribution = new ExportContribution();
                 exportContribution.setDisplayName(
                     contribution.getAffiliationStatement().getDisplayPersonName().toString());
@@ -56,7 +58,12 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
                         ExportPersonConverter.toCommonExportModel(contribution.getPerson(), false));
                 }
 
-                commonExportPublicationSeries.getEditors().add(exportContribution);
+                if (contribution.getContributionType()
+                    .equals(PublicationSeriesContributionType.EDITOR)) {
+                    commonExportPublicationSeries.getEditors().add(exportContribution);
+                } else {
+                    commonExportPublicationSeries.getBoardMembers().add(exportContribution);
+                }
             }
         });
 

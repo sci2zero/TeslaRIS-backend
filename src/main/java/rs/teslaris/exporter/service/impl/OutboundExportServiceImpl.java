@@ -358,7 +358,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 metadataFormat, recordClass, handler);
 
             switch (set) {
-                case "Publications":
+                case "Publications", "Theses":
                     metadata.setPublication((PublicationConvertable) convertedEntity);
                     break;
                 case "Products":

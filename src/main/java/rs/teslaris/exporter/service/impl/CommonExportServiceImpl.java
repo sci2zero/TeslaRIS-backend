@@ -118,6 +118,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 OrganisationUnit::getId,
                 allTime
             );
+        } catch (Exception e) {
+            log.error("Organisation Unit export set not completed due to an error.", e);
         } finally {
             organisationUnitExportLock.unlock();
         }
@@ -138,6 +140,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 Person::getId,
                 allTime
             );
+        } catch (Exception e) {
+            log.error("Person export set not completed due to an error.", e);
         } finally {
             personExportLock.unlock();
         }
@@ -158,6 +162,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 Conference::getId,
                 allTime
             );
+        } catch (Exception e) {
+            log.error("Event export set not completed due to an error.", e);
         } finally {
             eventExportLock.unlock();
         }
@@ -258,6 +264,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 monographFuture, monographPublicationFuture,
                 thesisFuture
             ).join();
+        } catch (Exception e) {
+            log.error("Document export set not completed due to an error.", e);
         } finally {
             documentExportLock.unlock();
         }

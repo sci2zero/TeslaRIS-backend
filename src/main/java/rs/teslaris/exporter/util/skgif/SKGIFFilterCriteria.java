@@ -31,4 +31,8 @@ public class SKGIFFilterCriteria {
             filterValues.add(keyValue[1]);
         });
     }
+
+    public boolean containsTypeFilter() {
+        return filterKeys.contains("type");
+    }
 }

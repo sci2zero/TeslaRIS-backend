@@ -25,7 +25,9 @@ import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.exporter.service.interfaces.SKGIFExportService;
 import rs.teslaris.exporter.util.skgif.OrganisationFilteringUtil;
 import rs.teslaris.exporter.util.skgif.PersonFilteringUtil;
+import rs.teslaris.exporter.util.skgif.ResearchProductFilteringUtil;
 import rs.teslaris.exporter.util.skgif.SKGIFFilterCriteria;
+import rs.teslaris.exporter.util.skgif.VenueFilteringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -75,8 +77,12 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
         var conversionMethod = getConversionMethod(entityClass, isVenue);
 
         var query = new Query();
-        addDocumentTypeConstraints(query, entityClass, isVenue);
-        addQueryFilters(entityClass, query, criteria);
+
+        if (!criteria.containsTypeFilter()) {
+            addDocumentTypeConstraints(query, entityClass, isVenue);
+        }
+
+        addQueryFilters(entityClass, query, criteria, isVenue);
 
         var totalCount = mongoTemplate.count(query, entityClass);
 
@@ -135,16 +141,20 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
     }
 
     private void addQueryFilters(Class<? extends BaseExportEntity> entityClass, Query query,
-                                 SKGIFFilterCriteria criteria) {
+                                 SKGIFFilterCriteria criteria, boolean isVenue) {
         switch (entityClass.getSimpleName()) {
             case "ExportPerson":
-                PersonFilteringUtil.addPersonFilters(criteria, query);
+                PersonFilteringUtil.addQueryFilters(criteria, query);
                 break;
             case "ExportOrganisationUnit":
-                OrganisationFilteringUtil.addOrganisationFilters(criteria, query);
+                OrganisationFilteringUtil.addQueryFilters(criteria, query);
                 break;
             case "ExportDocument":
-                // TODO: finish this
+                if (isVenue) {
+                    VenueFilteringUtil.addQueryFilters(criteria, query);
+                } else {
+                    ResearchProductFilteringUtil.addQueryFilters(criteria, query);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("No filter handler for: " + entityClass);

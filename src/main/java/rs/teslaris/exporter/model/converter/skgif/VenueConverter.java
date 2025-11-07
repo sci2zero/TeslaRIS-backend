@@ -4,11 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import rs.teslaris.core.model.skgif.common.SKGIFAccessRights;
-import rs.teslaris.core.model.skgif.common.SKGIFIdentifier;
 import rs.teslaris.core.model.skgif.researchproduct.SKGIFContribution;
 import rs.teslaris.core.model.skgif.venue.Venue;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
-import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 
@@ -22,10 +20,7 @@ public class VenueConverter extends BaseConverter {
         venue.setEntityType("venue");
         venue.setType(getEntityType(document.getType()));
 
-        venue.setIdentifiers(new ArrayList<>());
-        if (StringUtil.valueExists(document.getDoi())) {
-            venue.getIdentifiers().add(new SKGIFIdentifier("doi", document.getDoi()));
-        }
+        populateIdentifiers(venue.getIdentifiers(), document);
 
         venue.setTitle(extractTitleFromMC(document.getTitle()));
 
@@ -35,7 +30,7 @@ public class VenueConverter extends BaseConverter {
 
         venue.setSeries(getSeriesName(document));
         venue.setCreationDate(document.getDocumentDate());
-        venue.setAccessRights(new SKGIFAccessRights(document.getOpenAccess() ? "Open" : "Closed",
+        venue.setAccessRights(new SKGIFAccessRights(document.getOpenAccess() ? "open" : "closed",
             document.getOpenAccess() ? "Open Access" : "Closed Access"));
 
         venue.setContributions(new ArrayList<>());
@@ -58,7 +53,7 @@ public class VenueConverter extends BaseConverter {
         document.getBoardMembers().forEach(boardMember -> {
             var contribution = new SKGIFContribution();
             contribution.setBy(boardMember.getDisplayName());
-            contribution.setRole("board_member");
+            contribution.setRole("scientific board member");
 
             venue.getContributions().add(contribution);
         });

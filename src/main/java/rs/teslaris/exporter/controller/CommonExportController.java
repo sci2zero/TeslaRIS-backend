@@ -3,7 +3,7 @@ package rs.teslaris.exporter.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -19,9 +19,10 @@ public class CommonExportController {
 
     private final CommonExportService commonExportService;
 
-    @GetMapping("/prepare-for-export")
+
+    @PostMapping("/prepare-for-export")
     @PreAuthorize("hasAuthority('PREPARE_EXPORT_DATA')")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void handleOAIOpenAIRECRIS(@RequestParam String set, @RequestParam boolean allTime) {
         switch (set) {
             case "org_units":
