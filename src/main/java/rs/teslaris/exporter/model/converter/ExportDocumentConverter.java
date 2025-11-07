@@ -352,7 +352,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 }
             });
 
-        commonExportDocument.setUris(document.getUris().stream().toList());
+        commonExportDocument.setUris(new ArrayList<>(document.getUris().stream().toList()));
         document.getFileItems().forEach(fileItem -> {
             if (fileItem.getIsVerifiedData() &&
                 fileItem.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {

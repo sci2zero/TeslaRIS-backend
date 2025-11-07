@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.model.oaipmh.common.Request;
+import rs.teslaris.core.util.xmlutil.XMLUtil;
 import rs.teslaris.exporter.service.interfaces.OutboundExportService;
 import rs.teslaris.exporter.util.ExportDataFormat;
 import rs.teslaris.exporter.util.OAIErrorFactory;
@@ -41,8 +42,12 @@ public class OutboundExportController {
                                                 @RequestParam(required = false)
                                                 String resumptionToken,
                                                 @PathVariable String handlerName) {
-        return performExport(handlerName, verb, metadataPrefix, from, until, set,
-            identifier, resumptionToken);
+        var response =
+            performExport(handlerName, verb, metadataPrefix, from, until, set, identifier,
+                resumptionToken);
+        XMLUtil.cleanXmlObject(response);
+
+        return response;
     }
 
     private OAIPMHResponse performExport(String handlerName,
@@ -64,7 +69,7 @@ public class OutboundExportController {
         if (Objects.nonNull(metadataPrefix)) {
             metadataPrefix = metadataPrefix.toLowerCase();
         } else {
-            metadataPrefix = ExportDataFormat.DUBLIN_CORE.name();
+            metadataPrefix = ExportDataFormat.DUBLIN_CORE.getStringValue();
         }
 
         if (Objects.isNull(from)) {

@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.oaipmh.dublincore;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -27,6 +28,7 @@ import rs.teslaris.core.model.oaipmh.publication.PublicationConvertable;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DC implements PublicationConvertable, EventConvertable, OrgUnitConvertable,
     PersonConvertable,
     PatentConvertable, ProductConvertable {

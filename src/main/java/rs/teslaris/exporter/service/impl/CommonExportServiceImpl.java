@@ -298,7 +298,20 @@ public class CommonExportServiceImpl implements CommonExportService {
             List<T> chunk =
                 repositoryFunction.apply(PageRequest.of(pageNumber, chunkSize), allTime)
                     .getContent();
+
+            // TODO: Remove this
+            if (exportClass.equals(ExportOrganisationUnit.class)) {
+                System.out.println("OU CHUNK SIZE: " + chunk.size() + ". CONTENT: ");
+            }
+            /// ////////////////
+
             for (T entity : chunk) {
+                // TODO: Remove this
+                if (exportClass.equals(ExportOrganisationUnit.class)) {
+                    System.out.println(((OrganisationUnit) entity).getId());
+                }
+                /// ////////////////
+
                 var query = new Query();
                 query.addCriteria(Criteria.where("database_id").is(idGetter.apply(entity)));
                 query.limit(1);
