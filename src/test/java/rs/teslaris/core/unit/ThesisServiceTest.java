@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.xml.bind.JAXBException;
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -95,6 +96,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConf
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @SpringBootTest
@@ -176,6 +178,7 @@ public class ThesisServiceTest {
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(thesisService, "documentApprovedByDefault", true);
+        ReflectionTestUtils.setField(thesisService, "migrationModeEnabled", true);
     }
 
     @Test
@@ -696,10 +699,11 @@ public class ThesisServiceTest {
         thesis.setFileItems(new HashSet<>());
 
         when(thesisJPAService.findOne(1)).thenReturn(thesis);
-        when(fileService.duplicateFile(any())).thenReturn(UUID.randomUUID() + ".pdf");
+        when(fileService.duplicateFile(any())).thenReturn(
+            new Pair<>(UUID.randomUUID() + ".png", new ByteArrayInputStream(new byte[] {})));
 
         // When
-        thesisService.transferPreprintToOfficialPublication(1, 42);
+        thesisService.transferPreliminaryFileToOfficial(1, 42);
 
         // Then
         assertFalse(thesis.getPreliminaryFiles().isEmpty());
@@ -718,13 +722,17 @@ public class ThesisServiceTest {
 
         var thesis = new Thesis();
         thesis.setId(1);
+        thesis.setPreliminaryFiles(new HashSet<>(List.of(new DocumentFile() {{
+            setId(123);
+            setResourceType(ResourceType.PREPRINT);
+        }})));
         thesis.setFileItems(new HashSet<>(List.of(officialFile)));
 
         when(thesisJPAService.findOne(1)).thenReturn(thesis);
 
         // When / Then
         assertThrows(ThesisException.class,
-            () -> thesisService.transferPreprintToOfficialPublication(1, 123));
+            () -> thesisService.transferPreliminaryFileToOfficial(1, 123));
     }
 
     @Test

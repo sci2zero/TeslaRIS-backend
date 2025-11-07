@@ -18,6 +18,8 @@ public interface DocumentPublicationIndexRepository extends
 
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseId(Integer databaseId);
 
+    Optional<DocumentPublicationIndex> findByDoi(String doi);
+
     Optional<DocumentPublicationIndex> findDocumentPublicationIndexByDatabaseIdAndType(
         Integer databaseId, String type);
 
@@ -46,9 +48,32 @@ public interface DocumentPublicationIndexRepository extends
 
     Page<DocumentPublicationIndex> findByAuthorIds(Integer authorId, Pageable pageable);
 
+    @Query("""
+        {
+            "bool": {
+                "must": [
+                    {"term": {"author_ids": ?0}},
+                    {"range": {"year": {"gte": ?1, "lte": ?2}}},
+                    {"exists": {"field": "assessed_by"}}
+                ]
+            }
+        }
+        """)
     Page<DocumentPublicationIndex> findByAuthorIdsAndYearBetween(Integer authorId,
                                                                  Integer startYear, Integer endYear,
                                                                  Pageable pageable);
+
+    @Query("""
+        {
+            "bool": {
+                "must": [
+                    {"term": {"author_ids": ?0}},
+                    {"exists": {"field": "assessed_by"}}
+                ]
+            }
+        }
+        """)
+    Page<DocumentPublicationIndex> findAssessedByAuthorIds(Integer authorId, Pageable pageable);
 
     @Query("""
         {
@@ -295,5 +320,43 @@ public interface DocumentPublicationIndexRepository extends
         """)
     long countApprovedPublications();
 
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "author_ids": ?0 } }
+            ],
+            "must_not": [
+              { "term": { "type": "PROCEEDINGS" } }
+            ]
+          }
+        }
+        """)
+    long countAuthorPublications(Integer authorId);
 
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "author_ids": ?0 } },
+              { "term": { "type": "?1" } }
+            ]
+          }
+        }
+        """)
+    long countAuthorPublicationsByType(Integer authorId, String type);
+
+    @CountQuery("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "author_ids": ?0 } },
+              { "term": { "year": ?1 } }
+            ]
+          }
+        }
+        """)
+    long countAuthorPublicationsByYear(Integer authorId, Integer year);
+
+    void deleteByType(String type);
 }

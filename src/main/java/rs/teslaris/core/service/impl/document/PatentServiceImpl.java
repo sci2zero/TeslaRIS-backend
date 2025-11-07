@@ -2,7 +2,9 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,8 +38,8 @@ import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Traceable
+@Slf4j
 public class PatentServiceImpl extends DocumentPublicationServiceImpl implements PatentService {
 
     private final PatentJPAServiceImpl patentJPAService;
@@ -53,6 +55,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              CitationService citationService,
+                             ApplicationEventPublisher applicationEventPublisher,
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
@@ -64,24 +67,28 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
     }
 
     @Override
+    @Transactional
     public Patent findPatentById(Integer patentId) {
         return patentJPAService.findOne(patentId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PatentDTO readPatentById(Integer patentId) {
         Patent patent;
         try {
             patent = patentJPAService.findOne(patentId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent PATENT with ID {}. Clearing index.", patentId);
             this.clearIndexWhenFailedRead(patentId, DocumentPublicationType.PATENT);
             throw e;
         }
@@ -95,6 +102,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public Patent createPatent(PatentDTO patentDTO, Boolean index) {
         var newPatent = new Patent();
 
@@ -114,6 +122,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void editPatent(Integer patentId, PatentDTO patentDTO) {
         var patentToUpdate = patentJPAService.findOne(patentId);
 
@@ -145,6 +154,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void deletePatent(Integer patentId) {
         var patentToDelete = patentJPAService.findOne(patentId);
 
@@ -152,6 +162,9 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
         patentJPAService.delete(patentId);
         this.delete(patentId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(patentId));
     }
 
     @Override
@@ -176,6 +189,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexPatent(Patent patent) {
         indexPatent(patent,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

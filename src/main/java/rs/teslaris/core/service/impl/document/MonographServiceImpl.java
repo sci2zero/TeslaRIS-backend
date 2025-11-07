@@ -5,10 +5,13 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
@@ -50,6 +53,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
+@Slf4j
 public class MonographServiceImpl extends DocumentPublicationServiceImpl implements
     MonographService {
 
@@ -79,6 +83,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 DocumentRepository documentRepository,
                                 DocumentFileService documentFileService,
                                 CitationService citationService,
+                                ApplicationEventPublisher applicationEventPublisher,
                                 PersonContributionService personContributionService,
                                 ExpressionTransformer expressionTransformer,
                                 EventService eventService,
@@ -96,9 +101,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.monographJPAService = monographJPAService;
         this.languageTagService = languageTagService;
         this.journalService = journalService;
@@ -109,17 +115,20 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional
     public Monograph findMonographById(Integer monographId) {
         return monographJPAService.findOne(monographId);
     }
 
     @Override
+    @Transactional
     public Monograph findRaw(Integer monographId) {
         return monographRepository.findRaw(monographId)
             .orElseThrow(() -> new NotFoundException("Monograph with given ID does not exist."));
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> searchMonographs(List<String> tokens, boolean onlyBooks) {
         return searchService.runQuery(buildSimpleSearchQuery(tokens, onlyBooks),
             PageRequest.of(0, 5),
@@ -127,11 +136,14 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MonographDTO readMonographById(Integer monographId) {
         Monograph monograph;
         try {
             monograph = monographJPAService.findOne(monographId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent MONOGRAPH with ID {}. Clearing index.",
+                monographId);
             this.clearIndexWhenFailedRead(monographId, DocumentPublicationType.MONOGRAPH);
             throw e;
         }
@@ -145,6 +157,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional
     public Monograph findMonographByIsbn(String eIsbn, String printIsbn) {
         boolean isEisbnBlank = (Objects.isNull(eIsbn) || eIsbn.isBlank());
         boolean isPrintIsbnBlank = (Objects.isNull(printIsbn) || printIsbn.isBlank());
@@ -168,6 +181,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional
     public Monograph createMonograph(MonographDTO monographDTO, Boolean index) {
         var newMonograph = new Monograph();
 
@@ -186,6 +200,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
@@ -204,6 +219,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional
     public void deleteMonograph(Integer monographId) {
         monographJPAService.findOne(monographId);
 
@@ -219,6 +235,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional
     public void forceDeleteMonograph(Integer monographId) {
         monographRepository.deleteAllPublicationsInMonograph(monographId);
 
@@ -232,6 +249,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexMonographs() {
         // Super service does the initial deletion
 
@@ -295,6 +313,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexMonograph(Monograph monograph, DocumentPublicationIndex index) {
         indexCommonFields(monograph, index);
 
@@ -329,6 +348,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexMonograph(Monograph monograph) {
         indexMonograph(monograph,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -358,6 +378,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional
     public boolean isIdentifierInUse(String identifier, Integer monographId) {
         return monographRepository.existsByeISBN(identifier, monographId) ||
             monographRepository.existsByPrintISBN(identifier, monographId) ||
@@ -365,6 +386,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     }
 
     @Override
+    @Transactional
     public void addOldId(Integer id, Integer oldId) {
         var monograph = findOne(id);
         monograph.getOldIds().add(oldId);

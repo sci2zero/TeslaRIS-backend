@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import jakarta.annotation.Nullable;
 import java.io.StringReader;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -216,7 +215,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         metadata.setVolume(getStringField(bibEntry, BibTeXEntry.KEY_VOLUME));
         metadata.setIssue(getStringField(bibEntry, BibTeXEntry.KEY_NUMBER));
         metadata.setUrl(getStringField(bibEntry, BibTeXEntry.KEY_URL));
-        metadata.setYear(getIntField(bibEntry, BibTeXEntry.KEY_YEAR, LocalDate.now().getYear()));
+        metadata.setYear(getIntField(bibEntry, BibTeXEntry.KEY_YEAR, -1));
         metadata.setDoi(getStringField(bibEntry, BibTeXEntry.KEY_DOI));
 
         setPageInfo(metadata, bibEntry.getField(new Key("pages")));

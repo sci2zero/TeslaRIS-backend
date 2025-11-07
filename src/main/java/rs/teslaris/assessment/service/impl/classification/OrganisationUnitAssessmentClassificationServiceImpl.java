@@ -3,6 +3,7 @@ package rs.teslaris.assessment.service.impl.classification;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
@@ -28,13 +29,13 @@ public class OrganisationUnitAssessmentClassificationServiceImpl
     @Autowired
     public OrganisationUnitAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        CommissionService commissionService,
-        DocumentPublicationService documentPublicationService,
+        CommissionService commissionService, DocumentPublicationService documentPublicationService,
         ConferenceService conferenceService,
+        ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         OrganisationUnitAssessmentClassificationRepository organisationUnitAssessmentClassificationRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, entityAssessmentClassificationRepository);
+            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.organisationUnitAssessmentClassificationRepository =
             organisationUnitAssessmentClassificationRepository;
     }

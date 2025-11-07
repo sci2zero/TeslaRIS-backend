@@ -29,7 +29,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +42,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.DocumentPublicationConverter;
@@ -99,7 +103,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 @Service
 @Primary
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     implements DocumentPublicationService {
@@ -117,6 +120,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     protected final DocumentFileService documentFileService;
 
     protected final CitationService citationService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final PersonContributionService personContributionService;
 
@@ -142,6 +147,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Value("${document.approved_by_default}")
     protected Boolean documentApprovedByDefault;
 
+    @Value("${migration-mode.enabled}")
+    private Boolean migrationModeEnabled;
+
 
     @Override
     protected JpaRepository<Document, Integer> getEntityRepository() {
@@ -149,11 +157,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public DocumentDTO readDocumentPublication(Integer documentId) {
         return DocumentPublicationConverter.toDTO(findOne(documentId));
     }
 
     @Override
+    @Transactional
     public String readBibliographicMetadataById(Integer documentId, BibliographicFormat format) {
         var document = findOne(documentId);
 
@@ -171,6 +181,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     @Deprecated(forRemoval = true)
     public Document findDocumentById(Integer documentId) {
         return documentRepository.findById(documentId)
@@ -178,6 +189,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     @Nullable
     public Document findDocumentByOldId(Integer documentOldId) {
         var documentId = documentRepository.findDocumentByOldIdsContains(documentOldId);
@@ -185,10 +197,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,
                                                                      List<Integer> ignore,
                                                                      List<String> tokens,
                                                                      List<DocumentPublicationType> allowedTypes,
+                                                                     DocumentContributionType contributionType,
                                                                      Pageable pageable) {
         if (Objects.isNull(tokens)) {
             tokens = List.of("*");
@@ -197,8 +211,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var simpleSearchQuery =
             buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes);
 
-        var authorFilter = TermQuery.of(t -> t
-            .field("author_ids")
+        var contributionFilter = TermQuery.of(t -> t
+            .field(getContributionField(contributionType))
             .value(authorId)
         )._toQuery();
 
@@ -216,13 +230,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             combinedQuery = BoolQuery.of(bq -> bq
                 .must(simpleSearchQuery)
-                .must(authorFilter)
+                .must(contributionFilter)
                 .mustNot(ignoreFilter)
             )._toQuery();
         } else {
             combinedQuery = BoolQuery.of(bq -> bq
                 .must(simpleSearchQuery)
-                .must(authorFilter)
+                .must(contributionFilter)
             )._toQuery();
         }
 
@@ -230,7 +244,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "document_publication");
     }
 
+    private String getContributionField(
+        DocumentContributionType contributionType) {
+        return switch (contributionType) {
+            case AUTHOR -> "author_ids";
+            case EDITOR -> "editor_ids";
+            case REVIEWER -> "reviewer_ids";
+            case ADVISOR -> "advisor_ids";
+            case BOARD_MEMBER -> "board_member_ids";
+        };
+    }
+
     @Override
+    @Transactional
     public List<Integer> getResearchOutputIdsForDocument(Integer documentId) {
         return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                 documentId).orElseThrow(
@@ -239,12 +265,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findPublicationsForPublisher(Integer publisherId,
                                                                        Pageable pageable) {
         return documentPublicationIndexRepository.findByPublisherId(publisherId, pageable);
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
         Integer organisationUnitId, List<String> tokens, List<DocumentPublicationType> allowedTypes,
         Pageable pageable) {
@@ -319,6 +347,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Long getPublicationCount() {
         if (SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.countPublications();
@@ -328,6 +357,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void updateDocumentApprovalStatus(Integer documentId, Boolean isApproved) {
         var documentToUpdate = findOne(documentId);
 
@@ -345,7 +375,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                    Boolean isProof) {
         var document = findOne(documentId);
 
-        if (document.getIsArchived()) {
+        if (document.getIsArchived() &&
+            !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 
@@ -363,10 +394,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         documentRepository.save(document);
 
+        var index = findDocumentPublicationIndexByDatabaseId(documentId);
+        index.setContainsFiles(
+            !document.getFileItems().isEmpty() || !document.getProofs().isEmpty());
         if (!isProof) {
-            indexDocumentFilesContent(document,
-                findDocumentPublicationIndexByDatabaseId(documentId));
+            indexDocumentFilesContent(document, index);
         }
+        documentPublicationIndexRepository.save(index);
 
         return DocumentFileConverter.toDTO(documentFile);
     }
@@ -376,7 +410,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void deleteDocumentFile(Integer documentId, Integer documentFileId) {
         var document = findOne(documentId);
 
-        if (document.getIsArchived()) {
+        if (document.getIsArchived() &&
+            !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
 
@@ -395,13 +430,17 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.getProofs().stream()
                 .noneMatch(file -> file.getIsVerifiedData().equals(false)));
 
+        var index = findDocumentPublicationIndexByDatabaseId(documentId);
+        index.setContainsFiles(
+            !document.getFileItems().isEmpty() || !document.getProofs().isEmpty());
         if (!isProof) {
-            indexDocumentFilesContent(document,
-                findDocumentPublicationIndexByDatabaseId(documentId));
+            indexDocumentFilesContent(document, index);
         }
+        documentPublicationIndexRepository.save(index);
     }
 
     @Override
+    @Transactional
     public void deleteDocumentPublication(Integer documentId) {
         var document = findOne(documentId);
         documentRepository.delete(document);
@@ -414,29 +453,48 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public List<Integer> getContributorIds(Integer publicationId) {
         return findOne(publicationId).getContributors().stream().map(contribution -> {
-                if (Objects.nonNull(contribution.getPerson())) {
-                    return contribution.getPerson().getId();
-                }
-                return -1;
-            })
-            .filter(Objects::nonNull).collect(Collectors.toList());
+            if (Objects.nonNull(contribution.getPerson())) {
+                return contribution.getPerson().getId();
+            }
+            return -1;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public void indexContributionFields(Document document, DocumentPublicationIndex index) {
+        clearCommonIndexFields(index);
+
+        setContributors(document, index);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
+        var oldYear = index.getYear();
+        var oldAuthors = index.getAuthorIds().stream().sorted().toList();
+
         clearCommonIndexFields(index);
 
         setBasicMetadata(document, index);
         setContributors(document, index);
-        setAdditionalMetadata(document, index);
+        setAdditionalMetadata(document.getId(), index);
 
         index.setIsApproved(Objects.nonNull(document.getApproveStatus()) &&
             document.getApproveStatus().equals(ApproveStatus.APPROVED));
         index.setAreFilesValid(document.getAreFilesValid());
+
+        if (Objects.nonNull(index.getId()) && (!index.getYear().equals(oldYear) ||
+            !index.getAuthorIds().stream().sorted().toList().equals(oldAuthors))) {
+            applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
+                index.getAuthorIds().stream().filter(id -> id > 0).toList()));
+        }
     }
 
+    @Transactional
     private void setBasicMetadata(Document document, DocumentPublicationIndex index) {
         index.setLastEdited(Objects.nonNull(document.getLastModification())
             ? document.getLastModification()
@@ -453,9 +511,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setIsOpenAccess(documentRepository.isDocumentPubliclyAvailable(document.getId()));
         indexDescription(document, index);
         indexKeywords(document, index);
+
+        index.setContainsFiles(
+            !document.getFileItems().isEmpty() || !document.getProofs().isEmpty());
         indexDocumentFilesContent(document, index);
 
         if (Objects.nonNull(document.getInternalIdentifiers())) {
+            index.getInternalIdentifiers().clear();
             index.getInternalIdentifiers().addAll(document.getInternalIdentifiers());
         }
 
@@ -465,14 +527,18 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             index.setEventId(null);
         }
 
-        index.setWordcloudTokensSr(
-            StringUtil.extractKeywords(index.getTitleSr(), index.getDescriptionSr(),
-                index.getKeywordsSr()));
+        index.setWordcloudTokensSr(StringUtil.extractKeywords(index.getTitleSr(),
+            StringUtil.valueExists(index.getDescriptionSr()) ? index.getDescriptionSr() :
+                StringUtil.sanitizeForKeywordFieldFast(index.getFullTextSr()),
+            index.getKeywordsSr()));
+
         index.setWordcloudTokensOther(StringUtil.extractKeywords(
             MultilingualContentConverter.getLocalizedContent(document.getTitle(),
                 LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN),
-            MultilingualContentConverter.getLocalizedContent(document.getDescription(),
-                LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN),
+            (Objects.nonNull(document.getDescription()) && !document.getDescription().isEmpty()) ?
+                MultilingualContentConverter.getLocalizedContent(document.getDescription(),
+                    LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN) :
+                StringUtil.sanitizeForKeywordFieldFast(index.getFullTextOther()),
             MultilingualContentConverter.getLocalizedContent(document.getKeywords(),
                 LanguageAbbreviations.ENGLISH, LanguageAbbreviations.SERBIAN)));
     }
@@ -563,7 +629,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 .toList());
         }
 
-
         switch (contribution.getContributionType()) {
             case AUTHOR ->
                 handleAuthorContribution(contribution, index, contributorName, personExists);
@@ -614,22 +679,37 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             index.getBoardMemberNames() + "; " + contributorName));
     }
 
-    private void setAdditionalMetadata(Document document, DocumentPublicationIndex index) {
+    private void setAdditionalMetadata(Integer documentId, DocumentPublicationIndex index) {
         index.setAssessedBy(
-            commissionRepository.findCommissionsThatAssessedDocument(document.getId()));
+            commissionRepository.findCommissionsThatAssessedDocument(documentId));
+
+        index.getCommissionAssessmentGroups().clear();
+        index.getCommissionAssessments().clear();
+        commissionRepository.findAssessmentClassificationBasicInfoForDocumentAndCommissions(
+            documentId, index.getAssessedBy()).forEach(assessment -> {
+            index.getCommissionAssessmentGroups().add(
+                new Triple<>(assessment.commissionId(),
+                    assessment.assessmentCode().substring(0, 2) + "0",
+                    assessment.manual()));
+            index.getCommissionAssessments().add(
+                new Triple<>(assessment.commissionId(),
+                    assessment.assessmentCode(),
+                    assessment.manual()));
+        });
     }
 
     @Override
+    @Transactional
     public void reindexDocumentVolatileInformation(Integer documentId) {
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
             .ifPresent(documentIndex -> {
-                documentIndex.setAssessedBy(
-                    commissionRepository.findCommissionsThatAssessedDocument(documentId));
+                setAdditionalMetadata(documentId, documentIndex);
                 documentPublicationIndexRepository.save(documentIndex);
             });
     }
 
     @Override
+    @Transactional
     public DocumentPublicationIndex findDocumentPublicationIndexByDatabaseId(Integer documentId) {
         var fallbackDocument = new DocumentPublicationIndex();
         fallbackDocument.setDatabaseId(documentId);
@@ -638,6 +718,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void archiveDocument(Integer documentId) {
         var document = findOne(documentId);
 
@@ -655,6 +736,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void unarchiveDocument(Integer documentId) {
         var document = findOne(documentId);
         document.setIsArchived(false);
@@ -663,7 +745,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    @Async
+    @Transactional
     public synchronized void reindexEmploymentInformationForAllPersonPublications(
         Integer personId) {
         int pageNumber = 0;
@@ -701,6 +783,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void deleteNonManagedDocuments() {
         int pageSize = 100;
         int page = 0;
@@ -728,6 +811,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void updateDocumentIdentifiers(Integer documentId,
                                           DocumentIdentifierUpdateDTO requestDTO) {
         var document = findOne(documentId);
@@ -749,6 +833,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         save(document);
+    }
+
+    @Override
+    public void deleteIndexesByType(DocumentPublicationType type) {
+        documentPublicationIndexRepository.deleteByType(type.name());
     }
 
     private void indexDocumentFilesContent(Document document, DocumentPublicationIndex index) {
@@ -947,6 +1036,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public boolean isIdentifierInUse(String identifier, Integer documentPublicationId) {
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
             documentRepository.existsByScopusId(identifier, documentPublicationId) ||
@@ -955,17 +1045,20 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public boolean isDoiInUse(String doi) {
         return documentRepository.existsByDoi(doi, null);
     }
 
     @Override
+    @Transactional
     public Pair<Long, Long> getDocumentCountsBelongingToInstitution(Integer institutionId) {
         return new Pair<>(documentPublicationIndexRepository.countAssessable(),
             documentPublicationIndexRepository.countAssessableByOrganisationUnitIds(institutionId));
     }
 
     @Override
+    @Transactional
     public Pair<Long, Long> getAssessedDocumentCountsForCommission(Integer institutionId,
                                                                    Integer commissionId) {
         return new Pair<>(documentPublicationIndexRepository.countByAssessedBy(commissionId),
@@ -974,6 +1067,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public List<Triple<String, List<MultilingualContentDTO>, String>> getSearchFields(
         Boolean onlyExportFields) {
         return searchFieldsLoader.getSearchFields("documentSearchFieldConfiguration.json",
@@ -981,10 +1075,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public List<Pair<String, Long>> getWordCloudForSingleDocument(Integer documentId,
+                                                                  DocumentPublicationType documentType,
                                                                   String language) {
         var document =
-            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdAndType(
+                    documentId, documentType.name())
                 .orElseThrow(() -> new NotFoundException(
                     "Document with ID " + documentId + " does not exist."));
 
@@ -1006,6 +1103,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Optional<Document> findDocumentByCommonIdentifier(String doi, String openAlexId,
                                                              String scopusId,
                                                              String webOfScienceId) {
@@ -1058,8 +1156,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.getEditorIds().clear();
         index.getReviewerIds().clear();
         index.getAdvisorIds().clear();
-
-        index.getInternalIdentifiers().clear();
     }
 
     protected void deleteProofsAndFileItems(Document publicationToDelete) {
@@ -1070,6 +1166,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> searchDocumentPublications(List<String> tokens,
                                                                      Pageable pageable,
                                                                      SearchRequestType type,
@@ -1093,6 +1190,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles,
                                                                  String doi,
                                                                  String scopusId,
@@ -1108,6 +1206,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findNonAffiliatedDocuments(Integer organisationUnitId,
                                                                      Integer personId,
                                                                      Pageable pageable) {
@@ -1118,6 +1217,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void massAssignContributionInstitution(Integer organisationUnitId, Integer personId,
                                                   List<Integer> documentIds, Boolean deleteOthers) {
         documentIds.forEach(documentId -> {
@@ -1139,11 +1239,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void deleteIndexes() {
         documentPublicationIndexRepository.deleteAll();
     }
 
     @Override
+    @Transactional
     public void reorderDocumentContributions(Integer documentId, Integer contributionId,
                                              Integer oldContributionOrderNumber,
                                              Integer newContributionOrderNumber) {
@@ -1174,6 +1276,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void unbindResearcherFromContribution(Integer personId, Integer documentId) {
         var contribution =
             personContributionService.findContributionForResearcherAndDocument(personId,
@@ -1274,6 +1377,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
+    @Transactional
     public void unbindInstitutionResearchersFromDocument(Integer institutionId,
                                                          Integer documentId) {
         var allPossibleInstitutions =
@@ -1669,7 +1773,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         } else {
             return !roleAuthority.equals(UserRole.ADMIN.name()) &&
                 !roleAuthority.equals(UserRole.INSTITUTIONAL_EDITOR.name()) &&
-                !roleAuthority.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name());
+                !roleAuthority.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name()) &&
+                !roleAuthority.equals(UserRole.HEAD_OF_LIBRARY.name());
         }
     }
 
@@ -1692,5 +1797,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
             .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
                 !configuration.trustNewDocumentFiles());
+    }
+
+    @Async
+    @EventListener
+    protected void handlePersonEmploymentOUHierarchyStructureChangedEvent(
+        PersonEmploymentOUHierarchyStructureChangedEvent event) {
+        reindexEmploymentInformationForAllPersonPublications(event.getPersonId());
     }
 }

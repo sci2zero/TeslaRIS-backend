@@ -52,6 +52,7 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -431,7 +432,8 @@ public class DocumentPublicationServiceTest {
         // when
         var resultPage =
             documentPublicationService.findResearcherPublications(authorId, Collections.emptyList(),
-                Collections.emptyList(), Collections.emptyList(), pageable);
+                Collections.emptyList(), Collections.emptyList(), DocumentContributionType.AUTHOR,
+                pageable);
 
         // then
         assertEquals(expectedPage, resultPage);
@@ -829,12 +831,14 @@ public class DocumentPublicationServiceTest {
         List<String> terms = List.of("abc", "def", "abc", "xyz", "xyz", "xyz");
 
         when(
-            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdAndType(
+                documentId, DocumentPublicationType.JOURNAL_PUBLICATION.name()))
             .thenReturn(Optional.of(mockDoc));
         when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
 
         // when
         var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            DocumentPublicationType.JOURNAL_PUBLICATION,
             LanguageAbbreviations.SERBIAN);
 
         // then
@@ -855,12 +859,14 @@ public class DocumentPublicationServiceTest {
         List<String> terms = List.of("abc", "def", "abc", "xyz", "xyz", "xyz");
 
         when(
-            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdAndType(
+                documentId, DocumentPublicationType.PROCEEDINGS_PUBLICATION.name()))
             .thenReturn(Optional.of(mockDoc));
         when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
 
         // when
         var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            DocumentPublicationType.PROCEEDINGS_PUBLICATION,
             LanguageAbbreviations.SERBIAN_CYRILLIC);
 
         // then
@@ -884,6 +890,7 @@ public class DocumentPublicationServiceTest {
         // when & then
         assertThrows(NotFoundException.class, () -> {
             documentPublicationService.getWordCloudForSingleDocument(documentId,
+                DocumentPublicationType.THESIS,
                 LanguageAbbreviations.SERBIAN);
         });
     }
@@ -896,12 +903,14 @@ public class DocumentPublicationServiceTest {
         List<String> foreignTerms = List.of("uno", "dos", "uno", "tres");
 
         when(
-            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseIdAndType(
+                documentId, DocumentPublicationType.MONOGRAPH_PUBLICATION.name()))
             .thenReturn(Optional.of(mockDoc));
         when(mockDoc.getWordcloudTokensOther()).thenReturn(foreignTerms);
 
         // when
         var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
+            DocumentPublicationType.MONOGRAPH_PUBLICATION,
             LanguageAbbreviations.ENGLISH);
 
         // then

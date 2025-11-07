@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.assessment.dto.classification.DocumentAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.DocumentAssessmentClassification;
@@ -30,6 +31,7 @@ import rs.teslaris.assessment.service.impl.classification.DocumentAssessmentClas
 import rs.teslaris.assessment.service.impl.cruddelegate.DocumentClassificationJPAServiceImpl;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.Dataset;
@@ -68,6 +70,9 @@ public class DocumentAssessmentClassificationServiceTest {
 
     @Mock
     private DocumentPublicationService documentPublicationService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private DocumentAssessmentClassificationServiceImpl documentAssessmentClassificationService;
@@ -158,6 +163,8 @@ public class DocumentAssessmentClassificationServiceTest {
         assertNotNull(result);
         verify(documentAssessmentClassificationRepository).save(
             any(DocumentAssessmentClassification.class));
+        verify(applicationEventPublisher, times(1)).publishEvent(
+            any(ResearcherPointsReindexingEvent.class));
     }
 
     @Test
@@ -218,6 +225,8 @@ public class DocumentAssessmentClassificationServiceTest {
             classificationDTO);
 
         verify(entityAssessmentClassificationRepository).save(any());
+        verify(applicationEventPublisher, times(1)).publishEvent(any(
+            ResearcherPointsReindexingEvent.class));
     }
 
     @Test

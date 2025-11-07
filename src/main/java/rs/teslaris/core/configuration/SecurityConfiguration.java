@@ -214,6 +214,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/file/logo/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/file/image/{personId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/file/raw-image/{personId}").permitAll()
 
                 // ERROR
                 .requestMatchers("/error").permitAll()
@@ -336,6 +337,15 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/organisation-unit/linkset/{organisationUnitId}/{linksetFormat}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/journal/linkset/{journalId}/{linksetFormat}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/book-series/linkset/{bookSeriesId}/{linksetFormat}").permitAll()
+
+                // VISUALIZATION & LEADERBOARD DATA
+                .requestMatchers(HttpMethod.GET, "/api/visualization-data/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/leaderboard-data/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/collaboration-network/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/chart-display-configuration/person/{personId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/chart-display-configuration/organisation-unit/{organisationUnitId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/chart-display-configuration/document/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/chart-display-configuration/digital-library/{organisationUnitId}").permitAll()
 
                 // FILE DOWNLOAD - authentication is performed outside SpringSecurity due to message streaming optimisations
                 .requestMatchers(HttpMethod.GET, "/api/document/backup/download/{backupFileName}").permitAll()

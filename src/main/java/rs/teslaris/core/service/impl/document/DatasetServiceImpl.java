@@ -2,9 +2,12 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.DatasetConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -36,6 +39,7 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Traceable
+@Slf4j
 public class DatasetServiceImpl extends DocumentPublicationServiceImpl implements DatasetService {
 
     private final DatasetJPAServiceImpl datasetJPAService;
@@ -51,6 +55,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               DocumentRepository documentRepository,
                               DocumentFileService documentFileService,
                               CitationService citationService,
+                              ApplicationEventPublisher applicationEventPublisher,
                               PersonContributionService personContributionService,
                               ExpressionTransformer expressionTransformer,
                               EventService eventService,
@@ -63,24 +68,28 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }
 
     @Override
+    @Transactional
     public Dataset findDatasetById(Integer datasetId) {
         return datasetJPAService.findOne(datasetId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DatasetDTO readDatasetById(Integer datasetId) {
         Dataset dataset;
         try {
             dataset = datasetJPAService.findOne(datasetId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent DATASET with ID {}. Clearing index.", datasetId);
             this.clearIndexWhenFailedRead(datasetId, DocumentPublicationType.DATASET);
             throw e;
         }
@@ -94,6 +103,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional
     public Dataset createDataset(DatasetDTO datasetDTO, Boolean index) {
         var newDataset = new Dataset();
 
@@ -113,6 +123,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional
     public void editDataset(Integer datasetId, DatasetDTO datasetDTO) {
         var datasetToUpdate = datasetJPAService.findOne(datasetId);
 
@@ -144,6 +155,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional
     public void deleteDataset(Integer datasetId) {
         var datasetToDelete = datasetJPAService.findOne(datasetId);
 
@@ -151,9 +163,13 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
 
         datasetJPAService.delete(datasetId);
         this.delete(datasetId);
+
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(datasetId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexDatasets() {
         // Super service does the initial deletion
 
@@ -174,6 +190,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexDataset(Dataset dataset) {
         indexDataset(dataset,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

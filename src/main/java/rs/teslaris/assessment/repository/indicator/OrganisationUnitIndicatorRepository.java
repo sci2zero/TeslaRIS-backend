@@ -1,10 +1,8 @@
 package rs.teslaris.assessment.repository.indicator;
 
-import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +22,6 @@ public interface OrganisationUnitIndicatorRepository
         AccessLevel accessLevel);
 
     @Transactional
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT oui FROM OrganisationUnitIndicator oui " +
         "WHERE oui.indicator.code = :code AND oui.organisationUnit.id = :organisationUnitId")
     Optional<OrganisationUnitIndicator> findIndicatorForCodeAndOrganisationUnitId(String code,

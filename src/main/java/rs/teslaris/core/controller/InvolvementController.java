@@ -26,7 +26,6 @@ import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
-import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.person.Education;
@@ -173,12 +172,5 @@ public class InvolvementController {
     @GetMapping("/employment-title/{personId}")
     public EmploymentTitle getCurrentEmploymentTitle(@PathVariable Integer personId) {
         return involvementService.getCurrentEmploymentTitle(personId);
-    }
-
-    @PostMapping("/migrate-employment")
-    @ResponseStatus(HttpStatus.CREATED)
-    public EmploymentDTO migrateEmployment(
-        @Valid @RequestBody EmploymentMigrationDTO employmentMigrationDTO) {
-        return involvementService.migrateEmployment(employmentMigrationDTO);
     }
 }

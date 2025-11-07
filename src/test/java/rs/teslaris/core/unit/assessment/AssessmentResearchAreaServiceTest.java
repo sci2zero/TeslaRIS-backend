@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +25,7 @@ import rs.teslaris.assessment.model.AssessmentResearchArea;
 import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.service.impl.AssessmentResearchAreaServiceImpl;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.institution.Commission;
@@ -54,6 +57,9 @@ public class AssessmentResearchAreaServiceTest {
 
     @Mock
     private PersonIndexRepository personIndexRepository;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private AssessmentResearchAreaServiceImpl assessmentResearchAreaService;
@@ -116,6 +122,8 @@ public class AssessmentResearchAreaServiceTest {
 
         // Then
         verify(assessmentResearchAreaRepository).save(any(AssessmentResearchArea.class));
+        verify(applicationEventPublisher, times(1)).publishEvent(
+            any(ResearcherPointsReindexingEvent.class));
     }
 
     @Test
@@ -160,6 +168,8 @@ public class AssessmentResearchAreaServiceTest {
 
         // Then
         verify(assessmentResearchAreaRepository).save(any(AssessmentResearchArea.class));
+        verify(applicationEventPublisher, times(1)).publishEvent(
+            any(ResearcherPointsReindexingEvent.class));
     }
 
     @Test

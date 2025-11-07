@@ -194,7 +194,8 @@ public class TestingDataInitializer {
                                                  Authority institutionalLibrarianAuthority,
                                                  Authority headOfLibraryAuthority,
                                                  Authority promotionRegistryAdminAuthority,
-                                                 Commission commission5, Commission commission6) {
+                                                 Commission commission5, Commission commission6,
+                                                 boolean addOldIdData) {
         var country = new Country("SRB", new HashSet<>(), "");
         countryRepository.save(country);
 
@@ -204,7 +205,11 @@ public class TestingDataInitializer {
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666"), new HashSet<>(), new HashSet<>());
         var person1 = new Person();
-        person1.getOldIds().add(3);
+
+        if (addOldIdData) {
+            person1.getOldIds().add(3);
+        }
+
         person1.setName(
             new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
         person1.setApproveStatus(ApproveStatus.APPROVED);
@@ -225,7 +230,11 @@ public class TestingDataInitializer {
 
         var dummyOU = new OrganisationUnit();
         dummyOU.setNameAbbreviation("FTN");
-        dummyOU.getOldIds().add(2);
+
+        if (addOldIdData) {
+            dummyOU.getOldIds().add(2);
+        }
+
         dummyOU.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(englishTag, "Faculty of Technical Sciences", 1),
             new MultiLingualContent(serbianTag, "Fakultet Tehničkih Nauka", 2)})));
@@ -239,7 +248,9 @@ public class TestingDataInitializer {
             List.of(ThesisType.PHD.name(), ThesisType.PHD_ART_PROJECT.name(),
                 ThesisType.MASTER.name(), ThesisType.BACHELOR.name(),
                 ThesisType.BACHELOR_WITH_HONORS.name()));
-        dummyOU.setIsClientInstitution(true);
+        dummyOU.setIsClientInstitutionCris(true);
+        dummyOU.setIsClientInstitutionDl(true);
+        dummyOU.setLegalEntity(true);
         organisationUnitRepository.save(dummyOU);
         researcherUser.setOrganisationUnit(dummyOU);
         userRepository.save(researcherUser);
@@ -258,6 +269,8 @@ public class TestingDataInitializer {
         dummyOU2.setLocation(new GeoLocation(19.8502021, 45.2454147, "NOWHERE"));
         dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
         dummyOU2.setScopusAfid("60068802");
+        dummyOU2.setIsClientInstitutionDl(true);
+        dummyOU2.setLegalEntity(true);
         organisationUnitRepository.save(dummyOU2);
 
         var conferenceEvent1 = new Conference();
@@ -1002,7 +1015,9 @@ public class TestingDataInitializer {
         thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
         thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
         thesis6.setPublicReviewCompleted(true);
-        thesis6.getOldIds().add(998);
+        if (addOldIdData) {
+            thesis6.getOldIds().add(998);
+        }
 
         var thesisContribution4 = new PersonDocumentContribution();
         thesisContribution4.setPerson(person3);
@@ -1067,5 +1082,36 @@ public class TestingDataInitializer {
                 "language", "SR",
                 "metadataFormat", ExportFileType.CSV
             ), RecurrenceType.ONCE));
+
+        var thesis7 = new Thesis();
+        thesis7.setApproveStatus(ApproveStatus.APPROVED);
+        thesis7.setThesisType(ThesisType.PHD);
+        thesis7.setOrganisationUnit(dummyOU);
+        thesis7.setTitle(
+            Set.of(new MultiLingualContent(englishTag,
+                "Doktorska disertacija, na uvidu, neodbranjena", 1)));
+        thesis7.setLanguage(serbianLanguage);
+        thesis7.getPublicReviewStartDates().add(LocalDate.now().minusDays(31));
+        thesis7.setIsOnPublicReview(true);
+        thesis7.setScientificArea(Set.of(new MultiLingualContent(englishTag,
+            "Scientific Area For Testing", 1)));
+
+        var thesisContribution5 = new PersonDocumentContribution();
+        thesisContribution5.setPerson(person3);
+        thesisContribution5.setContributionType(DocumentContributionType.AUTHOR);
+        thesisContribution5.setIsMainContributor(true);
+        thesisContribution5.setIsCorrespondingContributor(true);
+        thesisContribution5.setOrderNumber(1);
+        thesisContribution5.setDocument(thesis7);
+        thesisContribution5.setApproveStatus(ApproveStatus.APPROVED);
+        thesisContribution5.setInstitutions(Set.of(dummyOU));
+        thesisContribution5.setAffiliationStatement(
+            new AffiliationStatement(new HashSet<>(),
+                new PersonName(person3.getName().getFirstname(), "",
+                    person3.getName().getLastname(), null, null),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+
+        thesis7.getContributors().add(thesisContribution5);
+        thesisRepository.save(thesis7);
     }
 }

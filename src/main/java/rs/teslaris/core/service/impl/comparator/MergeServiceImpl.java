@@ -39,7 +39,9 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.BookSeriesPublishable;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.PublisherPublishable;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -229,15 +231,17 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
-    public void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId) {
+    public void switchAllPublicationToOtherPerson(Integer sourcePersonId, Integer targetPersonId,
+                                                  DocumentContributionType contributionType) {
         processChunks(
             sourcePersonId,
             (srcId, personPublicationIndex) -> performPersonPublicationSwitch(srcId, targetPersonId,
                 personPublicationIndex.getDatabaseId(), true),
-            pageRequest -> documentPublicationService.findResearcherPublications(sourcePersonId,
-                Collections.emptyList(), List.of("*"),
-                Arrays.asList(DocumentPublicationType.values()),
-                pageRequest).getContent()
+            pageRequest ->
+                documentPublicationService.findResearcherPublications(sourcePersonId,
+                    Collections.emptyList(), List.of("*"),
+                    Arrays.asList(DocumentPublicationType.values()), contributionType,
+                    pageRequest).getContent()
         );
     }
 
@@ -680,44 +684,57 @@ public class MergeServiceImpl implements MergeService {
                                                 boolean skipCoauthoredPublications) {
         var document = documentPublicationService.findDocumentById(publicationId);
 
+        boolean targetPersonFound = false;
+        boolean sourcePersonFound = false;
+        PersonDocumentContribution sourceContribution = null;
+
         for (var contribution : document.getContributors()) {
-            if (Objects.nonNull(contribution.getPerson()) &&
-                contribution.getPerson().getId().equals(targetPersonId)) {
+            if (Objects.isNull(contribution.getPerson())) {
+                continue;
+            }
+
+            var personId = contribution.getPerson().getId();
+
+            if (personId.equals(targetPersonId)) {
+                targetPersonFound = true;
                 if (skipCoauthoredPublications) {
                     return;
-                } else {
-                    throw new PersonReferenceConstraintViolationException(
-                        "allreadyInAuthorListError");
                 }
+            }
+
+            if (personId.equals(sourcePersonId)) {
+                sourcePersonFound = true;
+                sourceContribution = contribution;
             }
         }
 
-        document.getContributors().forEach(contribution -> {
-            if (Objects.nonNull(contribution.getPerson()) &&
-                contribution.getPerson().getId().equals(sourcePersonId)) {
-                var newPerson = personService.findOne(targetPersonId);
-                contribution.setPerson(newPerson);
+        if (targetPersonFound && !skipCoauthoredPublications) {
+            throw new PersonReferenceConstraintViolationException("alreadyInAuthorListError");
+        }
 
-                if (!newPerson.getName()
-                    .equals(contribution.getAffiliationStatement().getDisplayPersonName()) &&
-                    !newPerson.getOtherNames()
-                        .contains(contribution.getAffiliationStatement().getDisplayPersonName())) {
-                    contribution.getAffiliationStatement().getDisplayPersonName()
-                        .setFirstname(newPerson.getName().getFirstname());
-                    contribution.getAffiliationStatement().getDisplayPersonName()
-                        .setOtherName("");
-                    contribution.getAffiliationStatement().getDisplayPersonName()
-                        .setLastname(newPerson.getName().getLastname());
-                }
+        if (!sourcePersonFound) {
+            return; // Source person not found in contributors
+        }
 
-            }
-        });
+        var newPerson = personService.findOne(targetPersonId);
+        sourceContribution.setPerson(newPerson);
+
+        var displayName = sourceContribution.getAffiliationStatement().getDisplayPersonName();
+        var newPersonName = newPerson.getName();
+
+        if (!newPersonName.equals(displayName) &&
+            !newPerson.getOtherNames().contains(displayName)) {
+
+            displayName.setFirstname(newPersonName.getFirstname());
+            displayName.setOtherName("");
+            displayName.setLastname(newPersonName.getLastname());
+        }
 
         documentRepository.save(document);
 
         var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             publicationId).orElse(new DocumentPublicationIndex());
-        documentPublicationService.indexCommonFields(document, index);
+        documentPublicationService.indexContributionFields(document, index);
         documentPublicationIndexRepository.save(index);
     }
 

@@ -38,8 +38,8 @@
       "openCitations": 40
     },
     "rateLimits": {
-      "scopus": 200,
-      "openAlex": 2000,
+      "scopus": 2000,
+      "openAlex": 15000,
       "openCitations": 1000000
     }
   },

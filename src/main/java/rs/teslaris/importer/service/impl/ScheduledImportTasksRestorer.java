@@ -45,7 +45,7 @@ public class ScheduledImportTasksRestorer {
 
 
     @EventListener(ApplicationReadyEvent.class)
-    public void restoreTasksOnStartup() {
+    protected void restoreTasksOnStartup() {
         List<ScheduledTaskMetadata> allMetadata = metadataRepository.findTasksByTypes(
             List.of(
                 ScheduledTaskType.DOCUMENT_BACKUP,

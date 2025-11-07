@@ -22,6 +22,7 @@ import org.hibernate.Hibernate;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -83,7 +84,8 @@ public class FileController {
         @PathVariable String filename,
         @RequestParam(value = "inline", defaultValue = "false") Boolean inline,
         @RequestHeader(value = "Authorization", required = false) String bearerToken,
-        @CookieValue("jwt-security-fingerprint") String fingerprintCookie) throws IOException {
+        @CookieValue(value = "jwt-security-fingerprint", required = false) String fingerprintCookie)
+        throws IOException {
 
         var file = fileService.loadAsResource(filename);
         var documentFile = documentFileService.getDocumentByServerFilename(filename);
@@ -95,7 +97,12 @@ public class FileController {
             Hibernate.getClass(documentFile.getDocument()).equals(Thesis.class);
 
         if (isThesisDocument && ((Thesis) documentFile.getDocument()).getIsOnPublicReview()) {
-            return serveFile(filename, documentFile, file, inline);
+            if (!documentFile.getResourceType().equals(ResourceType.STATEMENT)) {
+                return serveFile(filename, documentFile, file, inline);
+            }
+
+            return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
+                "loginToViewDocumentMessage");
         }
 
         if (!isOpenAccess && !authenticatedUser) {
@@ -248,6 +255,35 @@ public class FileController {
                 new ByteArrayResource(outputStream.toByteArray()));
     }
 
+    @GetMapping("/raw-image/{personId}")
+    public ResponseEntity<InputStreamResource> serveImageFileRaw(@PathVariable Integer personId) {
+        try {
+            var filename = personService.getPersonProfileImageServerFilename(personId);
+            var file = fileService.loadAsResource(filename);
+
+            var resource = new InputStreamResource(file);
+
+            var contentType = file.headers().get("Content-Type");
+            if (Objects.isNull(contentType)) {
+                contentType = Files.probeContentType(Path.of(filename));
+            }
+            if (Objects.isNull(contentType)) {
+                contentType = "application/octet-stream";
+            }
+
+            return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .contentLength(Long.parseLong(
+                    Objects.requireNonNullElse(file.headers().get("Content-Length"), "0")))
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
+                .header(HttpHeaders.ETAG, file.headers().get("ETag"))
+                .body(resource);
+
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/logo/{organisationUnitId}")
     @ResponseBody
     public ResponseEntity<Object> serveLogoFile(@PathVariable Integer organisationUnitId,
@@ -307,7 +343,7 @@ public class FileController {
     }
 
     private boolean isAuthenticatedUser(String bearerToken, String fingerprintCookie) {
-        if (Objects.isNull(bearerToken)) {
+        if (Objects.isNull(bearerToken) || Objects.isNull(fingerprintCookie)) {
             return false;
         }
 

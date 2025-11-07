@@ -160,9 +160,14 @@ public class DocumentConverter {
                         .getId());
             }
 
-            dto.setLanguageId(
-                languageService.findLanguageByCode(
-                    record.getLanguage().substring(0, 2).toUpperCase()).getId());
+            try {
+                dto.setLanguageId(
+                    languageService.findLanguageByCode(
+                        record.getLanguage().substring(0, 2).toUpperCase()).getId());
+            } catch (NotFoundException ignored) {
+                dto.setLanguageId(
+                    languageService.findLanguageByCode(LanguageAbbreviations.ENGLISH).getId());
+            }
         }
 
         if (Objects.isNull(record.getInstitutions()) || record.getInstitutions().isEmpty()) {
@@ -211,22 +216,36 @@ public class DocumentConverter {
         dto.setTypeOfTitle(multilingualContentConverter.toDTO(record.getLevelOfEducation()));
         dto.setPlaceOfKeep(multilingualContentConverter.toDTO(record.getHoldingData()));
 
-        if (Objects.nonNull(record.getAcceptedOnDate())) {
-            dto.setTopicAcceptanceDate(
-                LocalDate.ofInstant(record.getAcceptedOnDate().toInstant(),
-                    ZoneId.systemDefault()));
-        }
-
-        if (Objects.nonNull(record.getDefendedOnDate())) {
-            dto.setThesisDefenceDate(
-                LocalDate.ofInstant(record.getDefendedOnDate().toInstant(),
-                    ZoneId.systemDefault()));
-        }
-
         if (Objects.nonNull(record.getPublicReviewStartDate())) {
             dto.setPublicReviewStartDate(
                 LocalDate.ofInstant(record.getPublicReviewStartDate().toInstant(),
                     ZoneId.systemDefault()));
+        }
+
+        if (Objects.nonNull(record.getDefendedOnDate())) {
+            var defenceDate =
+                LocalDate.ofInstant(record.getDefendedOnDate().toInstant(), ZoneId.systemDefault());
+            if (defenceDate.getYear() > 20000) {
+                if (Objects.nonNull(dto.getPublicReviewStartDate())) {
+                    dto.setThesisDefenceDate(LocalDate.of(dto.getPublicReviewStartDate().getYear(),
+                        defenceDate.getMonthValue(), defenceDate.getDayOfMonth()));
+                }
+            } else {
+                dto.setThesisDefenceDate(defenceDate);
+            }
+        }
+
+        if (Objects.nonNull(record.getAcceptedOnDate())) {
+            var acceptanceDate =
+                LocalDate.ofInstant(record.getAcceptedOnDate().toInstant(), ZoneId.systemDefault());
+            if (acceptanceDate.getYear() > 20000) {
+                if (Objects.nonNull(dto.getThesisDefenceDate())) {
+                    dto.setTopicAcceptanceDate(LocalDate.of(dto.getThesisDefenceDate().getYear(),
+                        acceptanceDate.getMonthValue(), acceptanceDate.getDayOfMonth()));
+                }
+            } else {
+                dto.setTopicAcceptanceDate(acceptanceDate);
+            }
         }
 
         if (Objects.nonNull(record.getPublisher())) {

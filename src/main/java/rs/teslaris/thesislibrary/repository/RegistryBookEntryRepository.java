@@ -47,7 +47,7 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
 
     @Query("""
         SELECT rbe FROM RegistryBookEntry rbe
-        WHERE rbe.registryBookInstitution.id = :institutionId
+        WHERE rbe.registryBookInstitution.id IN :institutionIds
           AND rbe.promotion.finished = true
           AND rbe.promotion.promotionDate BETWEEN :from AND :to
           AND (
@@ -73,7 +73,7 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
           )
         """)
     Page<RegistryBookEntry> getRegistryBookEntriesForInstitutionAndPeriod(
-        Integer institutionId,
+        List<Integer> institutionIds,
         LocalDate from,
         LocalDate to,
         String authorNameLat,

@@ -27,9 +27,13 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ExportableEndpointType;
+import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.impl.TableExportHelper;
 import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
+import rs.teslaris.core.service.interfaces.document.DocumentAnalyticsService;
+import rs.teslaris.core.service.interfaces.document.DocumentCollaborationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -56,6 +60,10 @@ public class TableExportServiceImpl implements TableExportService {
 
     private final CitationService citationService;
 
+    private final DocumentCollaborationService documentCollaborationService;
+
+    private final DocumentAnalyticsService documentAnalyticsService;
+
     @Value("${table-export.maximum-export-amount}")
     private Integer maximumExportAmount;
 
@@ -68,7 +76,9 @@ public class TableExportServiceImpl implements TableExportService {
         OrganisationUnitService organisationUnitService,
         PersonService personService,
         DocumentPublicationService documentPublicationService,
-        CitationService citationService) {
+        CitationService citationService, DocumentCollaborationService documentCollaborationService,
+        DocumentAnalyticsService documentAnalyticsService
+    ) {
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
         this.personIndexRepository = personIndexRepository;
         this.organisationUnitIndexRepository = organisationUnitIndexRepository;
@@ -76,6 +86,8 @@ public class TableExportServiceImpl implements TableExportService {
         this.personService = personService;
         this.documentPublicationService = documentPublicationService;
         this.citationService = citationService;
+        this.documentCollaborationService = documentCollaborationService;
+        this.documentAnalyticsService = documentAnalyticsService;
     }
 
     @Override
@@ -256,17 +268,19 @@ public class TableExportServiceImpl implements TableExportService {
                     Arrays.stream(endpointTokenParameters.getFirst().split("tokens="))
                         .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
                     SearchRequestType.SIMPLE, null,
-                    Integer.parseInt(endpointTokenParameters.getLast()), null, null, null, null);
+                    Integer.parseInt(endpointTokenParameters.getLast()), null, null, null, null,
+                    null, null);
             case ORGANISATION_UNIT_SEARCH_ADVANCED ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     Arrays.stream(endpointTokenParameters.getFirst().replace("&tokens=", "tokens=")
                             .split("tokens="))
                         .filter(t -> !t.isBlank()).collect(Collectors.toList()), pageable,
-                    SearchRequestType.ADVANCED, null, null, null, null, null, null);
+                    SearchRequestType.ADVANCED, null, null, null, null, null, null, null, null);
             case PERSON_OUTPUTS -> (Page<T>) documentPublicationService.findResearcherPublications(
                 Integer.parseInt(endpointTokenParameters.getFirst()), null,
                 Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
-                    .filter(t -> !t.isBlank()).toList(), documentSpecificFilters.a, pageable);
+                    .filter(t -> !t.isBlank()).toList(), documentSpecificFilters.a,
+                DocumentContributionType.AUTHOR, pageable);
             case ORGANISATION_UNIT_OUTPUTS ->
                 (Page<T>) documentPublicationService.findPublicationsForOrganisationUnit(
                     Integer.parseInt(endpointTokenParameters.getFirst()),
@@ -278,6 +292,27 @@ public class TableExportServiceImpl implements TableExportService {
                     Arrays.stream(endpointTokenParameters.get(1).split("tokens="))
                         .filter(t -> !t.isBlank()).toList(), pageable,
                     Boolean.parseBoolean(endpointTokenParameters.getLast()));
+            case COLLABORATION_PUBLICATIONS ->
+                (Page<T>) documentCollaborationService.findPublicationsForCollaboration(
+                    Integer.parseInt(endpointTokenParameters.getFirst()),
+                    Integer.parseInt(endpointTokenParameters.get(1)),
+                    endpointTokenParameters.getLast(),
+                    Integer.parseInt(endpointTokenParameters.get(2)),
+                    Integer.parseInt(endpointTokenParameters.get(3)),
+                    pageable
+                );
+            case VISUALIZATION_PUBLICATIONS ->
+                (Page<T>) documentAnalyticsService.findPublicationsForTypeAndPeriod(
+                    endpointTokenParameters.getFirst().isBlank() ? null :
+                        DocumentPublicationType.valueOf(endpointTokenParameters.getFirst()),
+                    endpointTokenParameters.get(1).isBlank() ? null :
+                        ThesisType.valueOf(endpointTokenParameters.get(1)),
+                    Integer.parseInt(endpointTokenParameters.get(2)),
+                    Integer.parseInt(endpointTokenParameters.get(3)),
+                    Integer.parseInt(endpointTokenParameters.get(4)),
+                    Integer.parseInt(endpointTokenParameters.getLast()),
+                    pageable
+                );
         };
     }
 }

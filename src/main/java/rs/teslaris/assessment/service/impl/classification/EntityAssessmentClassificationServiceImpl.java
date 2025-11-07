@@ -1,7 +1,9 @@
 package rs.teslaris.assessment.service.impl.classification;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.EntityAssessmentClassificationService;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -36,6 +39,8 @@ public class EntityAssessmentClassificationServiceImpl
 
     protected final ConferenceService conferenceService;
 
+    protected final ApplicationEventPublisher applicationEventPublisher;
+
     private final EntityAssessmentClassificationRepository entityAssessmentClassificationRepository;
 
 
@@ -48,6 +53,10 @@ public class EntityAssessmentClassificationServiceImpl
             documentPublicationService.reindexDocumentVolatileInformation(
                 ((DocumentAssessmentClassification) entityAssessmentClassificationToDelete).getDocument()
                     .getId());
+            applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
+                ((DocumentAssessmentClassification) entityAssessmentClassificationToDelete).getDocument()
+                    .getContributors().stream().filter(c -> Objects.nonNull(c.getPerson()))
+                    .map(c -> c.getPerson().getId()).toList()));
         } else if (entityAssessmentClassificationToDelete instanceof EventAssessmentClassification) {
             conferenceService.reindexVolatileConferenceInformation(
                 ((EventAssessmentClassification) entityAssessmentClassificationToDelete).getEvent()

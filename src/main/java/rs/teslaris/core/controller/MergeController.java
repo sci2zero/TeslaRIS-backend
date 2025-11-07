@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.OrgUnitEditCheck;
@@ -33,6 +34,7 @@ import rs.teslaris.core.dto.deduplication.MergedSoftwareDTO;
 import rs.teslaris.core.dto.deduplication.MergedThesesDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -114,8 +116,11 @@ public class MergeController {
     @PersonEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void switchAllPublicationsToOtherPerson(@PathVariable Integer sourcePersonId,
-                                                   @PathVariable Integer targetPersonId) {
-        mergeService.switchAllPublicationToOtherPerson(sourcePersonId, targetPersonId);
+                                                   @PathVariable Integer targetPersonId,
+                                                   @RequestParam(value = "contributionType", required = false, defaultValue = "AUTHOR")
+                                                   DocumentContributionType contributionType) {
+        mergeService.switchAllPublicationToOtherPerson(sourcePersonId, targetPersonId,
+            contributionType);
     }
 
     @PatchMapping("/employment/{sourceOUId}/target/{targetOUId}/person/{personId}")

@@ -2,6 +2,7 @@ package rs.teslaris.core.util.session;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -37,9 +38,9 @@ public class RestTemplateProvider {
     private SimpleClientHttpRequestFactory createRequestFactory() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10 * 1000);
-        factory.setReadTimeout(10 * 1000);
+        factory.setReadTimeout(20 * 1000);
 
-        if (proxyEnabled && proxyHost != null && proxyPort > 0) {
+        if (proxyEnabled && Objects.nonNull(proxyHost) && proxyPort > 0) {
             Proxy.Type type =
                 "SOCKS".equalsIgnoreCase(proxyType) ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
             Proxy proxy = new Proxy(type, new InetSocketAddress(proxyHost, proxyPort));

@@ -56,6 +56,7 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -375,12 +376,12 @@ public class MergeServiceTest {
 
         when(
             documentPublicationService.findResearcherPublications(sourceId, List.of(), List.of("*"),
-                Arrays.asList(DocumentPublicationType.values()),
+                Arrays.asList(DocumentPublicationType.values()), DocumentContributionType.AUTHOR,
                 PageRequest.of(0, 100))).thenReturn(
             page1);
         when(
             documentPublicationService.findResearcherPublications(sourceId, List.of(), List.of("*"),
-                Arrays.asList(DocumentPublicationType.values()),
+                Arrays.asList(DocumentPublicationType.values()), DocumentContributionType.AUTHOR,
                 PageRequest.of(1, 100))).thenReturn(
             page2);
 
@@ -408,7 +409,8 @@ public class MergeServiceTest {
         otherPerson.setId(targetId);
         when(personService.findOne(targetId)).thenReturn(otherPerson);
 
-        mergeService.switchAllPublicationToOtherPerson(sourceId, targetId);
+        mergeService.switchAllPublicationToOtherPerson(sourceId, targetId,
+            DocumentContributionType.AUTHOR);
 
         verify(documentRepository, times(1)).save(any(JournalPublication.class));
         assertEquals(contribution.getPerson().getId(), targetId);

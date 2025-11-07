@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -110,6 +111,7 @@ import rs.teslaris.core.util.session.PasswordUtil;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class UserServiceImpl extends JPAServiceImpl<User> implements UserService {
 
     private final MessageSource messageSource;
@@ -183,6 +185,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByEmail(username).orElseThrow(
             () -> new UsernameNotFoundException("User with this email does not exist."));
@@ -196,14 +199,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             pageable, UserAccountIndex.class, "user_account");
     }
 
-    @Deprecated(forRemoval = true)
-    public User loadUserById(Integer userID) throws UsernameNotFoundException {
-        return userRepository.findById(userID)
-            .orElseThrow(() -> new UsernameNotFoundException("User with this ID does not exist."));
-    }
-
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public UserResponseDTO getUserProfile(Integer userId) {
         var user = findOne(userId);
         return UserConverter.toUserResponseDTO(user);
@@ -217,6 +214,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public int getUserCommissionId(Integer userId) {
         return userRepository.findCommissionIdForUser(userId).orElseThrow(
             () -> new NotFoundException(
@@ -224,10 +222,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Integer getPersonIdForUser(Integer userId) {
         var user = findOne(userId);
-        if (user.getPerson() == null) {
+        if (Objects.isNull(user.getPerson())) {
             return -1;
         }
 
@@ -235,14 +233,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean isUserAResearcher(Integer userId, Integer personId) {
         var user = findOne(userId);
 
-        return user.getPerson() != null && Objects.equals(user.getPerson().getId(), personId);
+        return Objects.nonNull(user.getPerson()) &&
+            Objects.equals(user.getPerson().getId(), personId);
     }
 
     @Override
+    @Transactional
     public AuthenticationResponseDTO authenticateUser(AuthenticationManager authenticationManager,
                                                       AuthenticationRequestDTO authenticationRequest,
                                                       String fingerprint) {
@@ -300,6 +300,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public AuthenticationResponseDTO takeRoleOfUser(TakeRoleOfUserRequestDTO takeRoleOfUserRequest,
                                                     String fingerprint) {
         var user = (User) loadUserByUsername(takeRoleOfUserRequest.getUserEmail());
@@ -320,6 +321,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public void allowTakingRoleOfAccount(String bearerToken) {
         var email = tokenUtil.extractUsernameFromToken(bearerToken.split(" ")[1]);
 
@@ -361,8 +363,28 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public boolean isNewResearcherCreationAllowed() {
         return allowNewResearcherCreation;
+    }
+
+    @Override
+    public void changeUserEmail(Integer userId, String newEmail) {
+        var user = findOne(userId);
+
+        if (user.isAccountNonLocked()) {
+            throw new CantEditException(
+                "You have to deactivate user in order to change his email.");
+        }
+
+        if (userRepository.findByEmail(newEmail).isPresent()) {
+            throw new UserAlreadyExistsException("User with given email already exists.");
+        }
+
+        user.setEmail(newEmail);
+
+        var index = userAccountIndexRepository.findByDatabaseId(userId);
+        saveAndNotifyUser(user, index.orElse(new UserAccountIndex()));
     }
 
     @Override
@@ -376,7 +398,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var involvement = personService.getLatestResearcherInvolvement(person);
 
         validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
-            registrationRequest.getEmail());
+            registrationRequest.getEmail(), true);
 
         var newUser = buildUser(
             registrationRequest.getEmail(),
@@ -386,7 +408,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         personService.indexPerson(person);
-        return saveAndNotifyUser(newUser);
+        return saveAndNotifyUser(newUser, new UserAccountIndex());
     }
 
     @Override
@@ -402,7 +424,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var involvement = personService.getLatestResearcherInvolvement(person);
 
         validateInstitutionClientStatus(registrationRequest.getOrganisationUnitId(),
-            registrationRequest.getEmail());
+            registrationRequest.getEmail(), true);
 
         char[] generatedPassword = PasswordUtil.generatePassword(30);
         var newUser = buildUser(
@@ -413,7 +435,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         Arrays.fill(generatedPassword, '\0');
-        return saveAndNotifyUser(newUser);
+        return saveAndNotifyUser(newUser, new UserAccountIndex());
     }
 
     private Authority getResearcherAuthority() {
@@ -486,9 +508,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
     }
 
-    private User saveAndNotifyUser(User newUser) {
+    private User saveAndNotifyUser(User newUser, UserAccountIndex index) {
         var savedUser = userRepository.save(newUser);
-        indexUser(savedUser, new UserAccountIndex());
+        indexUser(savedUser, index);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
@@ -517,6 +539,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public User registerInstitutionEmployee(EmployeeRegistrationRequestDTO registrationRequest,
                                             UserRole userRole) throws NoSuchAlgorithmException {
         var authorityName = userRole.toString();
@@ -533,6 +556,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public User registerCommissionUser(CommissionRegistrationRequestDTO registrationRequest)
         throws NoSuchAlgorithmException {
         var authorityName = UserRole.COMMISSION.toString();
@@ -554,7 +578,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         throws NoSuchAlgorithmException {
         validateEmailUniqueness(email);
 
-        validateInstitutionClientStatus(organisationUnitId, email);
+        var checkCrisConfig =
+            !List.of(UserRole.INSTITUTIONAL_LIBRARIAN.name(), UserRole.HEAD_OF_LIBRARY.name(),
+                UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name()).contains(authorityName);
+        validateInstitutionClientStatus(organisationUnitId, email, checkCrisConfig);
 
         var authority = authorityRepository.findByName(authorityName)
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
@@ -616,17 +643,22 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         return savedUser;
     }
 
-    private void validateInstitutionClientStatus(Integer organisationUnitId, String email) {
+    private void validateInstitutionClientStatus(Integer organisationUnitId, String email,
+                                                 boolean checkCrisConfig) {
         var specifiedOU = organisationUnitService.findOne(organisationUnitId);
-        if (!specifiedOU.getIsClientInstitution()) {
+        if ((checkCrisConfig && !specifiedOU.getIsClientInstitutionCris()) ||
+            (!checkCrisConfig && !specifiedOU.getIsClientInstitutionDl())) {
             throw new RegistrationException(
-                "Institution is not a client. Unable to register researchers.");
+                "Institution is not a client. Unable to perform registration.");
         }
 
-        if (Objects.nonNull(specifiedOU.getValidateEmailDomain()) &&
-            specifiedOU.getValidateEmailDomain()) {
-            validateEmailDomain(email, specifiedOU.getInstitutionEmailDomain(),
-                specifiedOU.getAllowSubdomains());
+        var configuration =
+            checkCrisConfig ? specifiedOU.getCrisConfig() : specifiedOU.getDlConfig();
+
+        if (Objects.nonNull(configuration.getValidateEmailDomain()) &&
+            configuration.getValidateEmailDomain()) {
+            validateEmailDomain(email, configuration.getInstitutionEmailDomain(),
+                configuration.getAllowSubdomains());
         }
     }
 
@@ -805,9 +837,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 Locale.forLanguageTag(
                     user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
+
+            var systemName = getSystemName(language);
             String emailBody = messageSource.getMessage(
                 "resetPassword.mailBody",
-                new Object[] {resetLink},
+                new Object[] {systemName, resetLink},
                 Locale.forLanguageTag(
                     user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
@@ -835,6 +869,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public void updateResearcherCurrentOrganisationUnitIfBound(Integer personId) {
         var person = personService.findOne(personId);
         var boundUser = userRepository.findForResearcher(personId);
@@ -864,6 +899,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public List<Integer> getAccountsWithRoleTakingAllowed() {
         return userRepository.getIdsOfUsersWhoAllowedAccountTakeover();
     }
@@ -873,6 +909,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexUsers() {
         userAccountIndexRepository.deleteAll();
+
+        performBulkReindex();
+
+        return null;
+    }
+
+    public void performBulkReindex() {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -881,35 +924,46 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
             List<User> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((user) -> indexUser(user, new UserAccountIndex()));
+            chunk.forEach((user) -> {
+                try {
+                    indexUser(user, new UserAccountIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping USER {} due to indexing error: {}", user.getId(),
+                        e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
-        return null;
     }
 
     @Override
+    @Transactional
     public List<Commission> findCommissionForOrganisationUnitId(Integer organisationUnitId) {
         return userRepository.findUserCommissionForOrganisationUnit(organisationUnitId);
     }
 
     @Override
+    @Transactional
     public List<User> findAllCommissionUsers() {
         return userRepository.findAllCommissionUsers();
     }
 
     @Override
+    @Transactional
     public List<User> findAllSystemAdminUsers() {
         return userRepository.findAllSystemAdminUsers();
     }
 
     @Override
-    public List<User> findAllInstitutionalLibrarianUsers() {
-        return userRepository.findAllInstitutionalLibrarianUsers();
+    @Transactional
+    public List<User> findAllLibrarianUsers() {
+        return userRepository.findAllLibrarianUsers();
     }
 
     @Override
+    @Transactional
     public List<User> findInstitutionalEditorUsersForInstitutionId(Integer institutionId) {
         return userRepository.findInstitutionalEditorUsersForInstitutionId(institutionId);
     }
@@ -984,9 +1038,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
+        var systemName = getSystemName(language);
+
         var message = messageSource.getMessage(
             "adminPasswordReset.mailBodyEmployee",
-            new Object[] {new String(generatedPassword)},
+            new Object[] {systemName, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
 
@@ -1005,6 +1061,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Override
+    @Transactional
     public void logout(String jti) {
         tokenUtil.revokeToken(jti);
     }
@@ -1038,6 +1095,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             !orgUnitNameOther.isEmpty() ? orgUnitNameOther.toString() : orgUnitNameSr.toString());
     }
 
+    @Transactional(readOnly = true)
     private void indexUser(User user, UserAccountIndex index) {
         index.setDatabaseId(user.getId());
 
@@ -1164,6 +1222,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     @Scheduled(cron = "0 * * * * *") // every 15 minutes
+    @Transactional
     public void cleanupExpiredTokens() {
         tokenUtil.cleanupExpiredTokens();
     }

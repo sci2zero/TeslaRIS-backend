@@ -16,13 +16,11 @@ public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDServi
 
     private String printGenericTypeName() {
         Type genericSuperclass = getClass().getGenericSuperclass();
-        if (genericSuperclass instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType) genericSuperclass;
+        if (genericSuperclass instanceof ParameterizedType parameterizedType) {
             Type[] typeArguments = parameterizedType.getActualTypeArguments();
             if (typeArguments.length > 0) {
                 Type typeArgument = typeArguments[0];
-                if (typeArgument instanceof Class) {
-                    Class<?> typeClass = (Class<?>) typeArgument;
+                if (typeArgument instanceof Class<?> typeClass) {
                     return typeClass.getSimpleName();
                 }
             }

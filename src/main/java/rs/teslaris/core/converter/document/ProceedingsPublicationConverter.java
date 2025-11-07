@@ -92,7 +92,7 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
         }
 
         if (Objects.nonNull(proceedingsPublication.getNumberOfPages())) {
-            sb.append(refMan ? "SP  - " : "%7").append(proceedingsPublication.getNumberOfPages())
+            sb.append(refMan ? "SP  - " : "%7 ").append(proceedingsPublication.getNumberOfPages())
                 .append("\n");
         }
 

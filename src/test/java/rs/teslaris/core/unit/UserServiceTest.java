@@ -286,8 +286,8 @@ public class UserServiceTest {
         when(userAccountIndexRepository.findByDatabaseId(1)).thenReturn(
             Optional.of(new UserAccountIndex()));
         when(organisationUnitService.findOne(anyInt())).thenReturn(new OrganisationUnit() {{
-            setIsClientInstitution(true);
-            setValidateEmailDomain(false);
+            setIsClientInstitutionCris(true);
+            getCrisConfig().setValidateEmailDomain(false);
         }});
 
         // when
@@ -326,7 +326,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("johndoe@example.com", "password123", "",
@@ -381,7 +381,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("johndoe@example.com", "password123", "",
@@ -439,7 +439,7 @@ public class UserServiceTest {
             Set.of(
                 new MultiLingualContent(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"),
                     "University", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionDl(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("regadmin@example.com", "password123", "",
@@ -496,7 +496,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
@@ -927,6 +927,8 @@ public class UserServiceTest {
             new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"));
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         // When
         userService.initiatePasswordResetProcess(forgotPasswordRequest);
@@ -1201,6 +1203,8 @@ public class UserServiceTest {
         var emailFuture = CompletableFuture.completedFuture(true);
         when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
         when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         // When
         var result = userService.generateNewPasswordForUser(8);
@@ -1224,6 +1228,8 @@ public class UserServiceTest {
 
         var emailFuture = CompletableFuture.completedFuture(false);
         when(emailUtil.sendSimpleEmail(any(), any(), any())).thenReturn(emailFuture);
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
 
         // When
         var result = userService.generateNewPasswordForUser(9);
@@ -1354,7 +1360,7 @@ public class UserServiceTest {
         when(personService.findOne(1)).thenReturn(person);
 
         var organisationUnit = new OrganisationUnit();
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(anyInt())).thenReturn(organisationUnit);
 
         var newUser = new User("oauthuser@example.com", "EncodedPassword", "",
@@ -1402,7 +1408,7 @@ public class UserServiceTest {
         organisationUnit.setName(
             Set.of(new MultiLingualContent(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"),
                 "Content", 1)));
-        organisationUnit.setIsClientInstitution(true);
+        organisationUnit.setIsClientInstitutionCris(true);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
 
         var newUser = new User("newperson@example.com", "EncodedPassword", "",
@@ -1467,5 +1473,146 @@ public class UserServiceTest {
         // when / then
         assertThrows(NotFoundException.class, () ->
             userService.registerResearcherOAuth(registrationRequest, OAuth2Provider.ORCID, "id"));
+    }
+
+    @Test
+    public void shouldChangeEmailForDeactivatedUser() {
+        // given
+        var userId = 1;
+        var oldEmail = "old@example.com";
+        var newEmail = "new@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setEmail(oldEmail);
+        user.setLocked(true);
+        user.setAuthority(new Authority("RESEARCHER", new HashSet<>()));
+        user.setPreferredUILanguage(new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+        user.setPreferredReferenceCataloguingLanguage(
+            new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+
+        var index = new UserAccountIndex();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.empty());
+        when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.of(index));
+        when(userRepository.save(user)).thenReturn(user);
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // when
+        userService.changeUserEmail(userId, newEmail);
+
+        // then
+        assertEquals(newEmail, user.getEmail());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenChangingEmailForActiveUser() {
+        // given
+        var userId = 1;
+        var newEmail = "new@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setLocked(false);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // when & then
+        assertThrows(CantEditException.class, () -> {
+            userService.changeUserEmail(userId, newEmail);
+        });
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenEmailAlreadyExists() {
+        // given
+        var userId = 1;
+        var newEmail = "existing@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setLocked(true);
+
+        var existingUser = new User();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.of(existingUser));
+
+        // when & then
+        assertThrows(UserAlreadyExistsException.class,
+            () -> userService.changeUserEmail(userId, newEmail));
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    public void shouldCreateNewIndexWhenNoneExists() {
+        // given
+        var userId = 1;
+        var newEmail = "new@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setLocked(true);
+        user.setAuthority(new Authority("RESEARCHER", new HashSet<>()));
+        user.setPreferredUILanguage(new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+        user.setPreferredReferenceCataloguingLanguage(
+            new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.empty());
+        when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.empty());
+        when(userRepository.save(user)).thenReturn(user);
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // when
+        userService.changeUserEmail(userId, newEmail);
+
+        // then
+        assertEquals(newEmail, user.getEmail());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void shouldPreserveOtherUserPropertiesWhenChangingEmail() {
+        // given
+        var userId = 1;
+        var oldEmail = "old@example.com";
+        var newEmail = "new@example.com";
+
+        var user = new User();
+        user.setId(userId);
+        user.setEmail(oldEmail);
+        user.setLocked(true);
+        user.setFirstname("John");
+        user.setLastName("Doe");
+        user.setAuthority(new Authority("RESEARCHER", new HashSet<>()));
+        user.setPreferredUILanguage(new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+        user.setPreferredReferenceCataloguingLanguage(
+            new LanguageTag(LanguageAbbreviations.SERBIAN, "Serbian"));
+
+        var index = new UserAccountIndex();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.empty());
+        when(userAccountIndexRepository.findByDatabaseId(userId)).thenReturn(Optional.of(index));
+        when(userRepository.save(user)).thenReturn(user);
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // when
+        userService.changeUserEmail(userId, newEmail);
+
+        // then
+        assertEquals(newEmail, user.getEmail());
+        assertEquals("John", user.getFirstname());
+        assertEquals("Doe", user.getLastName());
+        verify(userRepository).save(user);
     }
 }

@@ -45,6 +45,16 @@ public interface UserRepository extends JpaRepository<User, Integer> {
         """)
     List<Commission> findUserCommissionForOrganisationUnit(Integer organisationUnitId);
 
+    @Query("""
+            SELECT DISTINCT u.commission
+            FROM User u
+            JOIN u.organisationUnit ou
+            LEFT JOIN FETCH u.commission.relations rel
+            LEFT JOIN FETCH rel.targetCommissions
+            WHERE u.commission IS NOT NULL
+            AND ou.id IN :organisationUnitIds
+        """)
+    List<Commission> findUserCommissionForOrganisationUnits(List<Integer> organisationUnitIds);
 
     @Query("SELECT ou.id FROM User u JOIN u.organisationUnit ou WHERE u.commission.id = :commissionId")
     Integer findOUIdForCommission(Integer commissionId);
@@ -58,8 +68,10 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT u FROM User u WHERE u.authority.name = 'ADMIN'")
     List<User> findAllSystemAdminUsers();
 
-    @Query("SELECT u FROM User u WHERE u.authority.name = 'INSTITUTIONAL_LIBRARIAN'")
-    List<User> findAllInstitutionalLibrarianUsers();
+    @Query("SELECT u FROM User u " +
+        "WHERE u.authority.name = 'INSTITUTIONAL_LIBRARIAN' OR " +
+        "u.authority.name = 'HEAD_OF_LIBRARY'")
+    List<User> findAllLibrarianUsers();
 
     @Query("SELECT u FROM User u WHERE " +
         "u.authority.name = 'INSTITUTIONAL_EDITOR' AND " +

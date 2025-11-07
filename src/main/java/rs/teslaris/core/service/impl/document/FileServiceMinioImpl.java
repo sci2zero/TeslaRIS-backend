@@ -5,7 +5,9 @@ import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
-import io.minio.StatObjectArgs;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
@@ -19,6 +21,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.core.util.functional.Pair;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class FileServiceMinioImpl implements FileService {
 
     @Value("${spring.minio.bucket}")
     private String bucketName;
+
 
     @Override
     public String store(MultipartFile file, String serverFilename) {
@@ -57,7 +61,8 @@ public class FileServiceMinioImpl implements FileService {
                 .build();
             minioClient.putObject(args);
         } catch (Exception e) {
-            throw new StorageException("Error while storing file in Minio.");
+            throw new StorageException(
+                "Error while storing file in Minio. Reason: " + e.getMessage());
         }
 
         return serverFilename + "." + extension;
@@ -72,7 +77,9 @@ public class FileServiceMinioImpl implements FileService {
                 .build();
             minioClient.removeObject(args);
         } catch (Exception e) {
-            throw new StorageException("Error while deleting " + serverFilename + " from Minio.");
+            throw new StorageException(
+                "Error while deleting " + serverFilename + " from Minio. Reason: " +
+                    e.getMessage());
         }
     }
 
@@ -91,35 +98,35 @@ public class FileServiceMinioImpl implements FileService {
     }
 
     @Override
-    public String duplicateFile(String serverFilename) {
+    public Pair<String, InputStream> duplicateFile(String serverFilename) {
         try {
-            var statArgs = StatObjectArgs.builder()
-                .bucket(bucketName)
-                .object(serverFilename)
-                .build();
-
-            var stat = minioClient.statObject(statArgs);
-            long fileSize = stat.size();
-
             GetObjectArgs getArgs = GetObjectArgs.builder()
                 .bucket(bucketName)
                 .object(serverFilename)
                 .build();
 
-            try (GetObjectResponse file = minioClient.getObject(getArgs)) {
-                var serverFilenameTokens = serverFilename.split("\\.");
-                var extension = serverFilenameTokens[serverFilenameTokens.length - 1];
-                var newServerFilename = UUID.randomUUID() + "." + extension;
+            var file = minioClient.getObject(getArgs);
 
-                PutObjectArgs putArgs = PutObjectArgs.builder()
-                    .bucket(bucketName)
-                    .object(newServerFilename)
-                    .stream(file, fileSize, -1)
-                    .build();
+            var baos = new ByteArrayOutputStream();
+            file.transferTo(baos);
+            byte[] data = baos.toByteArray();
 
-                minioClient.putObject(putArgs);
-                return newServerFilename;
-            }
+            InputStream uploadStream = new ByteArrayInputStream(data);
+
+            var serverFilenameTokens = serverFilename.split("\\.");
+            var extension = serverFilenameTokens[serverFilenameTokens.length - 1];
+            var newServerFilename = UUID.randomUUID() + "." + extension;
+
+            PutObjectArgs putArgs = PutObjectArgs.builder()
+                .bucket(bucketName)
+                .object(newServerFilename)
+                .stream(uploadStream, data.length, -1)
+                .build();
+
+            minioClient.putObject(putArgs);
+
+            return new Pair<>(newServerFilename, new ByteArrayInputStream(data));
+
         } catch (Exception e) {
             throw new NotFoundException("Document " + serverFilename + " does not exist.");
         }

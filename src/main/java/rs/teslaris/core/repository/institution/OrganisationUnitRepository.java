@@ -88,10 +88,11 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.organisationUnit.id = :organisationUnitId AND u.authority.name = 'INSTITUTIONAL_EDITOR'")
     boolean checkIfInstitutionalAdminsExist(Integer organisationUnitId);
 
-    @Query("SELECT ou FROM OrganisationUnit ou " +
-        "JOIN ou.accountingIds aid " +
-        "WHERE aid = :id AND ou.approveStatus = 1")
-    Optional<OrganisationUnit> findApprovedOrganisationUnitByAccountingId(String id);
+    @Query(value = "SELECT * FROM organisation_units ou " +
+        "WHERE ou.accounting_ids @> :accountingId " +
+        "AND ou.approve_status = 1",
+        nativeQuery = true)
+    Optional<OrganisationUnit> findApprovedOrganisationUnitByAccountingId(String accountingId);
 
     @Query(value = "SELECT * FROM organisation_units ou WHERE ou.id = :organisationUnitId",
         nativeQuery = true)

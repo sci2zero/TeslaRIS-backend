@@ -15,10 +15,11 @@ import rs.teslaris.exporter.model.common.ExportPublicationType;
 public class ExportProductConverter extends ExportConverterBase {
 
     public static Product toOpenaireModel(
-        ExportDocument exportDocument) {
+        ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
         var openaireProduct = new Product();
 
-        if (Objects.nonNull(exportDocument.getOldIds()) && !exportDocument.getOldIds().isEmpty()) {
+        if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
+            !exportDocument.getOldIds().isEmpty()) {
             openaireProduct.setOldId("Products/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
@@ -57,7 +58,8 @@ public class ExportProductConverter extends ExportConverterBase {
 
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
-                        ExportPersonConverter.toOpenaireModel(contribution.getPerson()));
+                        ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
+                            supportLegacyIdentifiers));
                 }
 
                 openaireProduct.getCreators().add(personAttributes);
@@ -66,21 +68,26 @@ public class ExportProductConverter extends ExportConverterBase {
         return openaireProduct;
     }
 
-    public static DC toDCModel(ExportDocument exportDocument) {
+    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
         var dcProduct = new DC();
         dcProduct.getType().add(
             exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
                 "software");
         dcProduct.getSource().add(repositoryName);
-        dcProduct.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
 
-        clientLanguages.forEach(lang -> {
-            dcProduct.getIdentifier()
-                .add(baseFrontendUrl + lang + "/scientific-result/" +
-                    (exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
-                        "software") + "/" +
-                    exportDocument.getDatabaseId());
-        });
+        if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
+            !exportDocument.getOldIds().isEmpty()) {
+            dcProduct.getIdentifier().add(legacyIdentifierPrefix + "(" +
+                exportDocument.getOldIds().stream().findFirst().get() + ")");
+        } else {
+
+            dcProduct.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+        }
+
+        clientLanguages.forEach(lang -> dcProduct.getIdentifier().add(
+            baseFrontendUrl + lang + "/scientific-result/" +
+                (exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
+                    "software") + "/" + exportDocument.getDatabaseId()));
 
         addContentToList(
             exportDocument.getTitle(),

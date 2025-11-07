@@ -2,23 +2,31 @@ package rs.teslaris.core.service.impl.person;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
+import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -36,13 +44,14 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
-import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.SearchRequestType;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -64,7 +73,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
     private final EmploymentRepository employmentRepository;
 
-    private final DocumentPublicationService documentPublicationService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     @Override
@@ -197,7 +206,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         var savedEmployment = involvementRepository.save(newEmployment);
 
-        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(personId);
+        applicationEventPublisher.publishEvent(
+            new PersonEmploymentOUHierarchyStructureChangedEvent(personId));
 
         return savedEmployment;
     }
@@ -207,17 +217,19 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         Person person = resolvePerson(employmentMigrationRequest);
         OrganisationUnit organisationUnit = resolveOrganisationUnit(employmentMigrationRequest);
 
-        var existingEmployment = findExistingEmployment(person, organisationUnit,
+        var existingEmployment = findExistingEmployment(person, organisationUnit.getId(),
             employmentMigrationRequest.employmentPosition());
 
         Employment employment;
         if (existingEmployment.isPresent()) {
             employment = updateExistingEmployment((Employment) existingEmployment.get(),
-                employmentMigrationRequest);
+                employmentMigrationRequest.employmentStartDate());
         } else {
             employment =
-                createNewMigratedEmployment(person, organisationUnit, employmentMigrationRequest);
-            closeOtherOpenEmployments(person, organisationUnit, employment);
+                createNewMigratedEmployment(person, organisationUnit,
+                    employmentMigrationRequest.employmentStartDate(),
+                    employmentMigrationRequest.employmentPosition());
+            closeOtherOpenEmployments(person, organisationUnit.getId(), employment);
         }
 
         personService.save(person);
@@ -226,10 +238,96 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         // TODO: This is an administrative task that we run once a year, maybe a better solution
         //  for this is to run reindexing task after migration, to avoid so many index updates
         //  with each new insert.
-        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
-            person.getId());
+        applicationEventPublisher.publishEvent(
+            new PersonEmploymentOUHierarchyStructureChangedEvent(person.getId()));
 
         return InvolvementConverter.toDTO(employment);
+    }
+
+    @Override
+    public void migrateEmployment(List<ExtraEmploymentMigrationDTO> request) {
+        request.forEach(migration -> {
+            var ouResults = organisationUnitService.searchOrganisationUnits(
+                new ArrayList<>(
+                    Arrays.stream(migration.organisationUnitName().split(" ")).toList()),
+                PageRequest.of(0, 1),
+                SearchRequestType.SIMPLE,
+                null, null, null,
+                null, null, null,
+                null, null).getContent();
+
+            if (ouResults.isEmpty()) {
+                log.warn("Unable to find OU with name {} when migrating employments.",
+                    migration.organisationUnitName());
+                return;
+            }
+
+            var person = personService.findPersonByAccountingId(
+                String.valueOf(migration.personAccountingId()));
+            if (Objects.isNull(person)) {
+                var newPerson = new BasicPersonDTO();
+                newPerson.setPersonName(migration.personName());
+                newPerson.setOrganisationUnitId(ouResults.getFirst().getDatabaseId());
+                newPerson.setEmploymentPosition(migration.employmentPosition());
+
+                person = personService.createPersonWithBasicInfo(newPerson, true);
+            }
+
+            var existingEmployment =
+                findExistingEmployment(person, ouResults.getFirst().getDatabaseId(),
+                    migration.employmentPosition());
+
+            Employment employment;
+            if (existingEmployment.isPresent()) {
+                updateExistingEmployment((Employment) existingEmployment.get(),
+                    migration.employmentStartDate());
+            } else {
+                employment =
+                    createNewMigratedEmployment(person,
+                        organisationUnitService.findOne(ouResults.getFirst().getDatabaseId()),
+                        migration.employmentStartDate(), migration.employmentPosition());
+                closeOtherOpenEmployments(person, ouResults.getFirst().getDatabaseId(),
+                    employment);
+            }
+
+            personService.save(person);
+            userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
+        });
+
+        // TODO: Update employment hierarchy for all users
+    }
+
+    @Override
+    public void migrateEmployeeInternalIdentifiers(InternalIdentifierMigrationDTO dto) {
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(dto.institutionId());
+        involvementRepository.findActiveEmploymentsForInstitutions(institutionIds)
+            .forEach(employment -> {
+                if (Objects.isNull(employment.getPersonInvolved())) {
+                    return;
+                }
+
+                var migrated = false;
+                for (var oldId : employment.getPersonInvolved().getOldIds()) {
+                    if (dto.oldToInternalIdMapping().containsKey(oldId)) {
+                        if (dto.accountingIds()) {
+                            employment.getPersonInvolved().getAccountingIds()
+                                .add(String.valueOf(dto.oldToInternalIdMapping().get(oldId)));
+                        } else {
+                            employment.getPersonInvolved().getInternalIdentifiers()
+                                .add(String.valueOf(dto.oldToInternalIdMapping().get(oldId)));
+                        }
+                        migrated = true;
+                        personService.save(employment.getPersonInvolved());
+                    }
+                }
+
+                if (!migrated) {
+                    employment.setDateTo(dto.defaultInvolvementEndDate());
+                }
+
+                save(employment);
+            });
     }
 
     private Person resolvePerson(EmploymentMigrationDTO request) {
@@ -264,29 +362,30 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         return unit;
     }
 
-    private Optional<Involvement> findExistingEmployment(Person person, OrganisationUnit unit,
+    private Optional<Involvement> findExistingEmployment(Person person, Integer organisationUnitId,
                                                          EmploymentPosition position) {
         return person.getInvolvements().stream()
             .filter(involvement ->
                 involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) &&
-                    involvement.getOrganisationUnit().getId().equals(unit.getId()) &&
+                    involvement.getOrganisationUnit().getId().equals(organisationUnitId) &&
                     ((Employment) involvement).getEmploymentPosition().equals(position))
             .findAny();
     }
 
     private Employment updateExistingEmployment(Employment employment,
-                                                EmploymentMigrationDTO request) {
-        employment.setDateFrom(request.employmentStartDate());
+                                                LocalDate employmentStartDate) {
+        employment.setDateFrom(employmentStartDate);
         return involvementRepository.save(employment);
     }
 
-    private Employment createNewMigratedEmployment(Person person, OrganisationUnit unit,
-                                                   EmploymentMigrationDTO request) {
+    private Employment createNewMigratedEmployment(Person person, OrganisationUnit organisationUnit,
+                                                   LocalDate employmentStartDate,
+                                                   EmploymentPosition position) {
         var employment = new Employment();
-        employment.setDateFrom(request.employmentStartDate());
+        employment.setDateFrom(employmentStartDate);
         employment.setInvolvementType(InvolvementType.EMPLOYED_AT);
-        employment.setOrganisationUnit(unit);
-        employment.setEmploymentPosition(request.employmentPosition());
+        employment.setOrganisationUnit(organisationUnit);
+        employment.setEmploymentPosition(position);
         employment.setApproveStatus(ApproveStatus.APPROVED);
 
         person.addInvolvement(employment);
@@ -295,12 +394,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         return saved;
     }
 
-    private void closeOtherOpenEmployments(Person person, OrganisationUnit unit,
+    private void closeOtherOpenEmployments(Person person, Integer organisationUnitId,
                                            Employment newEmployment) {
         person.getInvolvements().stream()
             .filter(involvement ->
                 involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) &&
-                    involvement.getOrganisationUnit().getId().equals(unit.getId()) &&
+                    involvement.getOrganisationUnit().getId().equals(organisationUnitId) &&
                     involvement != newEmployment &&
                     Objects.isNull(involvement.getDateTo()))
             .forEach(involvement -> involvement.setDateTo(newEmployment.getDateFrom()));
@@ -401,8 +500,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
             employmentToUpdate.getPersonInvolved().getId());
         personService.indexPerson(employmentToUpdate.getPersonInvolved());
 
-        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
-            employmentToUpdate.getPersonInvolved().getId());
+        applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
+            employmentToUpdate.getPersonInvolved().getId()));
     }
 
     @Override
@@ -417,8 +516,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
 
         if (involvementToDelete instanceof Employment) {
-            documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
-                involvementToDelete.getPersonInvolved().getId());
+            applicationEventPublisher.publishEvent(
+                new PersonEmploymentOUHierarchyStructureChangedEvent(
+                    involvementToDelete.getPersonInvolved().getId()));
         }
 
         person.removeInvolvement(involvementToDelete);
@@ -440,8 +540,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         employmentRepository.save(employment.get());
         personService.indexPerson(employment.get().getPersonInvolved());
 
-        documentPublicationService.reindexEmploymentInformationForAllPersonPublications(
-            employment.get().getPersonInvolved().getId());
+        applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
+            employment.get().getPersonInvolved().getId()));
     }
 
     @Override

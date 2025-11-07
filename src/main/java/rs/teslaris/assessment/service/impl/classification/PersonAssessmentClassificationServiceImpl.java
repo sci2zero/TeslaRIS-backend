@@ -14,8 +14,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +28,7 @@ import rs.teslaris.assessment.dto.ResearcherAssessmentResponseDTO;
 import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.model.AssessmentMeasure;
 import rs.teslaris.assessment.model.AssessmentResearchArea;
-import rs.teslaris.assessment.model.classification.EntityAssessmentClassification;
+import rs.teslaris.assessment.model.indicator.DocumentIndicator;
 import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.assessment.repository.classification.DocumentAssessmentClassificationRepository;
@@ -39,6 +42,8 @@ import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassi
 import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -56,10 +61,10 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 
 @Service
-@Transactional
 @Slf4j
 @Traceable
 public class PersonAssessmentClassificationServiceImpl
@@ -95,10 +100,10 @@ public class PersonAssessmentClassificationServiceImpl
     @Autowired
     public PersonAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
-        CommissionService commissionService,
-        DocumentPublicationService documentPublicationService,
+        CommissionService commissionService, DocumentPublicationService documentPublicationService,
         ConferenceService conferenceService,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
+        ApplicationEventPublisher applicationEventPublisher,
         PersonAssessmentClassificationRepository personAssessmentClassificationRepository,
         SearchService<PersonIndex> searchService,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
@@ -110,7 +115,7 @@ public class PersonAssessmentClassificationServiceImpl
         CitationService citationService, InvolvementRepository involvementRepository,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, entityAssessmentClassificationRepository);
+            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.personAssessmentClassificationRepository = personAssessmentClassificationRepository;
         this.searchService = searchService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -127,6 +132,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForPerson(
         Integer personId) {
         return personAssessmentClassificationRepository.findAssessmentClassificationsForPerson(
@@ -136,6 +142,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public List<EnrichedResearcherAssessmentResponseDTO> assessResearchers(Integer commissionId,
                                                                            List<Integer> researcherIds,
                                                                            Integer startYear,
@@ -221,6 +228,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
                                                                         LocalDate startDate,
                                                                         LocalDate endDate) {
@@ -235,26 +243,144 @@ public class PersonAssessmentClassificationServiceImpl
             .readAssessmentMeasuresForRulebook(Pageable.unpaged(), findDefaultRulebookId())
             .getContent();
 
-        index.get().getEmploymentInstitutionsIdHierarchy().forEach(institutionId -> {
-            var commissions = userRepository.findUserCommissionForOrganisationUnit(institutionId);
-            commissions.forEach(commission -> {
-                var pointsRuleEngine = new AssessmentPointsRuleEngine();
-                var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
+        var institutionIds = index.get().getEmploymentInstitutionsIdHierarchy();
+        var commissions = userRepository.findUserCommissionForOrganisationUnits(institutionIds);
 
-                var assessmentResult = new EnrichedResearcherAssessmentResponseDTO();
-                assessmentResult.setCommissionId(commission.getId());
-                assessmentResult.setCommissionDescription(
-                    MultilingualContentConverter.getMultilingualContentDTO(
-                        commission.getDescription()));
+        commissions.forEach(commission -> {
+            var pointsRuleEngine = new AssessmentPointsRuleEngine();
+            var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
 
-                processResearcher(index.get(), commission, assessmentMeasures,
-                    pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
-                    endDate.getYear(), Collections.emptyList());
-                assessmentResponse.add(assessmentResult);
-            });
+            var assessmentResult = new EnrichedResearcherAssessmentResponseDTO();
+            assessmentResult.setCommissionId(commission.getId());
+            assessmentResult.setCommissionDescription(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    commission.getDescription()));
+
+            processResearcher(index.get(), commission, assessmentMeasures,
+                pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
+                endDate.getYear(), Collections.emptyList());
+            assessmentResponse.add(assessmentResult);
         });
 
         return assessmentResponse;
+    }
+
+    @Override
+    @Transactional
+    public synchronized void reindexPublicationPointsForAllResearchers() {
+        int pageNumber = 0;
+        int chunkSize = 1000;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            var persons =
+                personIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+            persons.forEach(this::reindexPublicationPointsForResearcher);
+
+            pageNumber++;
+            hasNextPage = persons.size() == chunkSize;
+        }
+    }
+
+    @Override
+    @Transactional
+    public void reindexPublicationPointsForResearcher(PersonIndex index) {
+        var assessmentMeasures = loadAssessmentMeasures();
+        var commissionResearchAreas = resolveCommissionResearchAreas(index);
+
+        processPublicationsInChunks(index, commissionResearchAreas, assessmentMeasures);
+    }
+
+    private List<AssessmentMeasure> loadAssessmentMeasures() {
+        return assessmentRulebookRepository
+            .readAssessmentMeasuresForRulebook(Pageable.unpaged(), findDefaultRulebookId())
+            .getContent();
+    }
+
+    private List<Pair<Integer, String>> resolveCommissionResearchAreas(PersonIndex index) {
+        var institutionIds = index.getEmploymentInstitutionsIdHierarchy();
+        var commissions = userRepository.findUserCommissionForOrganisationUnits(institutionIds);
+
+        var commissionResearchArea = new ArrayList<Pair<Integer, String>>();
+        commissions.forEach(commission -> {
+            var researchArea = getResearchArea(index.getDatabaseId(), commission);
+            researchArea.ifPresent(areaCode -> {
+                if (commission.getRecognisedResearchAreas().contains(areaCode)) {
+                    commissionResearchArea.add(new Pair<>(commission.getId(), areaCode));
+                }
+            });
+        });
+        return commissionResearchArea;
+    }
+
+    private void processPublicationsInChunks(
+        PersonIndex index,
+        List<Pair<Integer, String>> commissionResearchAreas,
+        List<AssessmentMeasure> assessmentMeasures
+    ) {
+        int pageNumber = 0;
+        int chunkSize = 1000;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            var publications = documentPublicationIndexRepository
+                .findAssessedByAuthorIds(index.getDatabaseId(),
+                    PageRequest.of(pageNumber, chunkSize))
+                .getContent();
+
+            publications.forEach(
+                publication -> updatePublicationAssessments(
+                    publication, index, commissionResearchAreas, assessmentMeasures));
+
+            pageNumber++;
+            hasNextPage = publications.size() == chunkSize;
+        }
+    }
+
+    private void updatePublicationAssessments(
+        DocumentPublicationIndex publication,
+        PersonIndex index,
+        List<Pair<Integer, String>> commissionResearchAreas,
+        List<AssessmentMeasure> assessmentMeasures
+    ) {
+        commissionResearchAreas.forEach(commissionResearchArea -> {
+            var pointsRuleEngine = new AssessmentPointsRuleEngine();
+            var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
+
+            publication.getCommissionAssessments().stream()
+                .filter(assessment -> assessment.a.equals(commissionResearchArea.a))
+                .findFirst()
+                .ifPresent(assessment -> {
+                    var applicableMeasure = findApplicableMeasure(assessmentMeasures, assessment.b);
+                    if (applicableMeasure.isEmpty()) {
+                        return;
+                    }
+
+                    var indicators =
+                        documentIndicatorRepository.findIndicatorsForDocumentAndIndicatorAccessLevel(
+                            publication.getDatabaseId(), AccessLevel.ADMIN_ONLY);
+
+                    var points = getPointsForPublication(
+                        publication, pointsRuleEngine, scalingRuleEngine,
+                        commissionResearchArea.b, assessment.b, applicableMeasure.get(),
+                        indicators);
+
+                    updatePublicationPoints(publication, index.getDatabaseId(),
+                        commissionResearchArea.a, points);
+                });
+        });
+
+        documentPublicationIndexRepository.save(publication);
+    }
+
+    private void updatePublicationPoints(
+        DocumentPublicationIndex publication, Integer researcherId,
+        Integer commissionId, Double points
+    ) {
+        publication.getAssessmentPoints().removeIf(
+            triple -> triple.a.equals(researcherId) && triple.b.equals(commissionId));
+        publication.getAssessmentPoints().add(
+            new Triple<>(researcherId, commissionId, points));
     }
 
     private void processResearcher(PersonIndex personIndex, Commission commission,
@@ -297,13 +423,12 @@ public class PersonAssessmentClassificationServiceImpl
         List<Integer> subOUsForTopLevelInstitution) {
 
         int pageNumber = 0;
-        int chunkSize = 100;
+        int chunkSize = 500;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> publications =
                 fetchPublications(personIndex, pageNumber, chunkSize, startYear, endYear);
-            hasNextPage = publications.size() == chunkSize;
 
             for (DocumentPublicationIndex publication : publications) {
                 processPublication(publication, commission, measures, pointsRuleEngine,
@@ -312,6 +437,7 @@ public class PersonAssessmentClassificationServiceImpl
             }
 
             pageNumber++;
+            hasNextPage = publications.size() == chunkSize;
         }
     }
 
@@ -333,24 +459,14 @@ public class PersonAssessmentClassificationServiceImpl
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
         List<Integer> subOUsForTopLevelInstitution) {
 
-        var classifications = documentAssessmentClassificationRepository
-            .findAssessmentClassificationsForDocumentAndCommission(publication.getDatabaseId(),
-                commission.getId());
+        var assessment = publication.getCommissionAssessments().stream()
+            .filter(ca -> ca.a.equals(commission.getId())).findFirst();
 
-        if (classifications.isEmpty()) {
+        if (assessment.isEmpty()) {
             return;
         }
 
-        var classification = classifications.stream().filter(
-                EntityAssessmentClassification::getManual).findFirst()
-            .orElseGet(() -> classifications.stream().findFirst().get());
-        var classificationCode = classification.getAssessmentClassification().getCode();
-
-        var applicableMeasureOpt = measures.stream()
-            .filter(measure -> ClassificationPriorityMapping.existsInGroup(measure.getCode(),
-                classificationCode))
-            .findFirst();
-
+        var applicableMeasureOpt = findApplicableMeasure(measures, assessment.get().b);
         if (applicableMeasureOpt.isEmpty()) {
             return;
         }
@@ -360,16 +476,15 @@ public class PersonAssessmentClassificationServiceImpl
             documentIndicatorRepository.findIndicatorsForDocumentAndIndicatorAccessLevel(
                 publication.getDatabaseId(), AccessLevel.ADMIN_ONLY);
 
-        scalingRuleEngine.setCurrentEntityIndicators(indicators);
-        double points = calculatePoints(applicableMeasure, pointsRuleEngine, scalingRuleEngine,
-            researchAreaCode, classificationCode, publication);
+        var points = getPointsForPublication(publication, pointsRuleEngine, scalingRuleEngine,
+            researchAreaCode, assessment.get().b, applicableMeasure, indicators);
 
         log.info("{} more points for {}", points, personIndex.getName());
 
         var citation = citationService.craftCitations(publication, "EN");
 
         assessmentResult.getPublicationsPerCategory()
-            .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(classificationCode),
+            .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(assessment.get().b),
                 k -> new ArrayList<>())
             .add(new Triple<>(citation.getHarvard(), isUserLoggedIn() ? points : 0,
                 publication.getDatabaseId()));
@@ -377,6 +492,53 @@ public class PersonAssessmentClassificationServiceImpl
         if (!subOUsForTopLevelInstitution.isEmpty()) {
             populateTopLevelBelongingInformation(publication, assessmentResult,
                 subOUsForTopLevelInstitution);
+        }
+    }
+
+    private double getPointsForPublication(DocumentPublicationIndex publication,
+                                           AssessmentPointsRuleEngine pointsRuleEngine,
+                                           AssessmentPointsScalingRuleEngine scalingRuleEngine,
+                                           String researchAreaCode, String classificationCode,
+                                           AssessmentMeasure applicableMeasure,
+                                           List<DocumentIndicator> indicators) {
+        scalingRuleEngine.setCurrentEntityIndicators(indicators);
+        return calculatePoints(applicableMeasure, pointsRuleEngine, scalingRuleEngine,
+            researchAreaCode, classificationCode, publication);
+    }
+
+    private double calculatePoints(
+        AssessmentMeasure measure,
+        AssessmentPointsRuleEngine pointsRuleEngine,
+        AssessmentPointsScalingRuleEngine scalingRuleEngine,
+        String researchAreaCode,
+        String classificationCode,
+        DocumentPublicationIndex publication) {
+
+        double basePoints = invokeRule(AssessmentPointsRuleEngine.class, measure.getPointRule(),
+            pointsRuleEngine, researchAreaCode, classificationCode);
+
+        return invokeRule(AssessmentPointsScalingRuleEngine.class, measure.getScalingRule(),
+            scalingRuleEngine, publication.getAuthorIds().size(), classificationCode, basePoints);
+    }
+
+    private Double invokeRule(Class<?> clazz, String methodName, Object instance,
+                              Object... args) {
+        try {
+            Class<?>[] paramTypes = new Class[args.length];
+            for (int i = 0; i < args.length; i++) {
+                paramTypes[i] = args[i].getClass();
+            }
+
+            var method = clazz.getMethod(methodName, paramTypes);
+
+            return (Double) method.invoke(instance, args);
+
+        } catch (NoSuchMethodException e) {
+            throw new NotFoundException(
+                "Method not found: " + methodName + ". Reason: " + e.getMessage());
+        } catch (Exception e) {
+            throw new LoadingException(
+                "Error invoking method: " + methodName + ". Reason: " + e.getMessage());
         }
     }
 
@@ -424,22 +586,7 @@ public class PersonAssessmentClassificationServiceImpl
         }
     }
 
-    private double calculatePoints(
-        AssessmentMeasure measure,
-        AssessmentPointsRuleEngine pointsRuleEngine,
-        AssessmentPointsScalingRuleEngine scalingRuleEngine,
-        String researchAreaCode,
-        String classificationCode,
-        DocumentPublicationIndex publication) {
-
-        double basePoints = invokeRule(AssessmentPointsRuleEngine.class, measure.getPointRule(),
-            pointsRuleEngine, researchAreaCode, classificationCode);
-
-        return invokeRule(AssessmentPointsScalingRuleEngine.class, measure.getScalingRule(),
-            scalingRuleEngine, publication.getAuthorIds().size(), classificationCode, basePoints);
-    }
-
-    public Query findAllPersonsByFilters(
+    private Query findAllPersonsByFilters(
         List<Integer> researcherIds,
         List<Integer> organisationUnitIds) {
 
@@ -463,26 +610,6 @@ public class PersonAssessmentClassificationServiceImpl
         })))._toQuery();
     }
 
-    public Double invokeRule(Class<?> clazz, String methodName, Object instance, Object... args) {
-        try {
-            Class<?>[] paramTypes = new Class[args.length];
-            for (int i = 0; i < args.length; i++) {
-                paramTypes[i] = args[i].getClass();
-            }
-
-            var method = clazz.getMethod(methodName, paramTypes);
-
-            return (Double) method.invoke(instance, args);
-
-        } catch (NoSuchMethodException e) {
-            throw new NotFoundException(
-                "Method not found: " + methodName + ". Reason: " + e.getMessage());
-        } catch (Exception e) {
-            throw new LoadingException(
-                "Error invoking method: " + methodName + ". Reason: " + e.getMessage());
-        }
-    }
-
     private boolean isUserLoggedIn() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         return !(Objects.isNull(authentication) || !authentication.isAuthenticated() ||
@@ -494,5 +621,31 @@ public class PersonAssessmentClassificationServiceImpl
         return assessmentRulebookRepository.findDefaultRulebook().orElseGet(
             () -> assessmentRulebookRepository.findById(1)
                 .orElseThrow(() -> new NotFoundException("noRulebooksDefinedMessage"))).getId();
+    }
+
+    private Optional<AssessmentMeasure> findApplicableMeasure(
+        List<AssessmentMeasure> measures, String assessmentArea
+    ) {
+        return measures.stream()
+            .filter(measure -> ClassificationPriorityMapping.existsInGroup(
+                measure.getCode(), assessmentArea))
+            .findFirst();
+    }
+
+    @Async
+    @EventListener
+    protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
+        if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
+            return;
+        }
+
+        event.personIds()
+            .forEach(personId -> personIndexRepository.findByDatabaseId(personId)
+                .ifPresent(this::reindexPublicationPointsForResearcher));
+    }
+
+    @EventListener
+    protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
+        reindexPublicationPointsForAllResearchers();
     }
 }

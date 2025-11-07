@@ -106,10 +106,11 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         "(i.involvementType = 4 OR i.involvementType = 5)")
     List<Integer> findInstitutionIdsForPerson(Integer personId);
 
-    @Query("SELECT p FROM Person p " +
-        "JOIN p.accountingIds aid " +
-        "WHERE aid = :id AND p.approveStatus = 1")
-    Optional<Person> findApprovedPersonByAccountingId(String id);
+    @Query(value = "SELECT * FROM persons p " +
+        "WHERE p.accounting_ids @> to_jsonb(?1) " +
+        "AND p.approve_status = 1",
+        nativeQuery = true)
+    Optional<Person> findApprovedPersonByAccountingId(String accountingId);
 
     @Query("SELECT p FROM Person p ORDER BY " +
         "CASE WHEN p.dateOfLastIndicatorHarvest IS NULL THEN 0 ELSE 1 END, " +
@@ -118,4 +119,22 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query(value = "SELECT * FROM persons p WHERE p.id = :personId", nativeQuery = true)
     Optional<Person> findRaw(Integer personId);
+
+    @Query("SELECT p.profilePhoto.imageServerName " +
+        "FROM Person p " +
+        "WHERE p.id IN :personId " +
+        "AND p.profilePhoto IS NOT NULL " +
+        "AND p.profilePhoto.imageServerName IS NOT NULL")
+    Optional<String> findProfileImageByPersonId(Integer personId);
+
+    @Query("""
+        SELECT DISTINCT p
+        FROM Person p
+        LEFT JOIN FETCH p.employmentInstitutionsIdHierarchy eih
+        LEFT JOIN FETCH p.involvements i
+        LEFT JOIN FETCH i.organisationUnit
+        WHERE p.id = :personId
+        """)
+    Optional<Person> findOneWithInvolvements(Integer personId);
+
 }

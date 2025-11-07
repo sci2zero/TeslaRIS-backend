@@ -93,8 +93,9 @@ public class OrganisationUnitRelationController {
     }
 
     @DeleteMapping("/delete/{sourceId}/{targetId}")
+    @PreAuthorize("hasAnyAuthority('EDIT_OU_RELATIONS', 'ADD_SUB_UNIT')")
+    @OrgUnitEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAuthority('EDIT_OU_RELATIONS')")
     public void deleteOrganisationUnitsRelation(@PathVariable Integer sourceId,
                                                 @PathVariable Integer targetId) {
         organisationUnitService.deleteOrganisationUnitsRelation(sourceId, targetId);

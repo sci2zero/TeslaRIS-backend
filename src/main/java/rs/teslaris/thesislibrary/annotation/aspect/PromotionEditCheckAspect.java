@@ -2,7 +2,6 @@ package rs.teslaris.thesislibrary.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -53,14 +52,6 @@ public class PromotionEditCheckAspect {
                 if (!organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
                         userService.getUserOrganisationUnitId(userId))
                     .contains(promotionService.findOne(promotionId).getInstitution().getId())) {
-
-                    // TODO: Remove this
-                    var subunits = organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
-                        userService.getUserOrganisationUnitId(userId));
-                    log.warn("PROMOTION EDIT CHECK -> SUBUNITS: [{}] -> PROMOTION_OU: {}",
-                        subunits.stream().map(String::valueOf).collect(Collectors.joining(",")),
-                        promotionService.findOne(promotionId).getInstitution().getId());
-
                     throw new CantEditException("Unauthorised to edit or use this promotion.");
                 }
                 break;

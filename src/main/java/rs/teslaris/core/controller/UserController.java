@@ -33,6 +33,7 @@ import rs.teslaris.core.dto.user.AuthenticationResponseDTO;
 import rs.teslaris.core.dto.user.CommissionRegistrationRequestDTO;
 import rs.teslaris.core.dto.user.ConfirmEmailUpdateRequestDTO;
 import rs.teslaris.core.dto.user.EmployeeRegistrationRequestDTO;
+import rs.teslaris.core.dto.user.ForceEmailChangeDTO;
 import rs.teslaris.core.dto.user.ForgotPasswordRequestDTO;
 import rs.teslaris.core.dto.user.RefreshTokenRequestDTO;
 import rs.teslaris.core.dto.user.ResearcherRegistrationRequestDTO;
@@ -58,6 +59,7 @@ public class UserController {
     private final JwtUtil tokenUtil;
 
     private final UserService userService;
+
 
     public static HttpHeaders getJwtSecurityCookieHeader(String fingerprint) {
         var headers = new HttpHeaders();
@@ -294,5 +296,13 @@ public class UserController {
     @PatchMapping("/confirm-email-change")
     public boolean confirmEmailChange(@RequestBody ConfirmEmailUpdateRequestDTO request) {
         return userService.confirmEmailChange(request.getConfirmationToken());
+    }
+
+    @PatchMapping("/force-email-change/{userId}")
+    @PreAuthorize("hasAuthority('FORCE_EMAIL_CHANGE')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void forceEmailChange(@PathVariable Integer userId,
+                                 @RequestBody ForceEmailChangeDTO request) {
+        userService.changeUserEmail(userId, request.newEmail());
     }
 }

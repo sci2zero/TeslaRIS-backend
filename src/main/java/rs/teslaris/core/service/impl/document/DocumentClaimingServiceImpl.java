@@ -96,7 +96,7 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
     }
 
     @Override
-    public void claimDocument(Integer userId, Integer documentId) {
+    public synchronized void claimDocument(Integer userId, Integer documentId) {
         personDocumentContributionRepository.findUnmanagedContributionsForDocument(documentId);
 
         var personId = personService.getPersonIdForUserId(userId);

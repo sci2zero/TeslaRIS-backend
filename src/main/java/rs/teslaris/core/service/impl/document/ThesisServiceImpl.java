@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import jakarta.xml.bind.JAXBException;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +42,7 @@ import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -95,7 +98,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
 
 @Service
-@Transactional
 @Slf4j
 @Traceable
 public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements ThesisService {
@@ -143,6 +145,9 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Value("${thesis.check-public-review-end.enable-fallback}")
     private Boolean fallbackPublicReviewCheckEnabled;
 
+    @Value("${migration-mode.enabled}")
+    private Boolean migrationModeEnabled;
+
 
     @Autowired
     public ThesisServiceImpl(MultilingualContentService multilingualContentService,
@@ -152,6 +157,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              DocumentRepository documentRepository,
                              DocumentFileService documentFileService,
                              CitationService citationService,
+                             ApplicationEventPublisher applicationEventPublisher,
                              PersonContributionService personContributionService,
                              ExpressionTransformer expressionTransformer, EventService eventService,
                              CommissionRepository commissionRepository,
@@ -171,9 +177,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              TaskManagerService taskManagerService, FileService fileService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
-            personContributionService, expressionTransformer, eventService, commissionRepository,
-            searchFieldsLoader, organisationUnitTrustConfigurationService, involvementRepository,
-            organisationUnitOutputConfigurationService);
+            applicationEventPublisher, personContributionService, expressionTransformer,
+            eventService,
+            commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
+            involvementRepository, organisationUnitOutputConfigurationService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;
@@ -191,16 +198,19 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public Thesis getThesisById(Integer thesisId) {
         return thesisJPAService.findOne(thesisId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ThesisResponseDTO readThesisById(Integer thesisId) {
         Thesis thesis;
         try {
             thesis = thesisJPAService.findOne(thesisId);
         } catch (NotFoundException e) {
+            log.info("Trying to read non-existent THESIS with ID {}. Clearing index.", thesisId);
             this.clearIndexWhenFailedRead(thesisId, DocumentPublicationType.THESIS);
             throw e;
         }
@@ -214,6 +224,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public ThesisResponseDTO readThesisByOldId(Integer oldId) {
         var thesis = thesisRepository.findThesisByOldIdsContains(oldId);
         if (thesis.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
@@ -225,6 +236,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public Thesis createThesis(ThesisDTO thesisDTO, Boolean index) {
         var newThesis = new Thesis();
 
@@ -262,6 +274,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
 
@@ -297,14 +310,18 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void deleteThesis(Integer thesisId) {
         var thesisToDelete = thesisJPAService.findOne(thesisId);
         checkIfAvailableForEditing(thesisToDelete);
 
         thesisJPAService.delete(thesisId);
+        documentPublicationIndexRepository.delete(
+            findDocumentPublicationIndexByDatabaseId(thesisId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void reindexTheses() {
         // Super service does the initial deletion
 
@@ -317,7 +334,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             List<Thesis> chunk =
                 thesisJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((thesis) -> indexThesis(thesis, new DocumentPublicationIndex()));
+            chunk.forEach(thesis -> {
+                try {
+                    indexThesis(thesis, new DocumentPublicationIndex());
+                } catch (Exception e) {
+                    log.warn("Skipping THESIS {} due to indexing error: {}", thesis.getId(),
+                        e.getMessage());
+                }
+            });
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
@@ -325,6 +349,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexThesis(Thesis thesis) {
         indexThesis(thesis,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -332,11 +357,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO addThesisAttachment(Integer thesisId, DocumentFileDTO document,
                                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
 
-        checkIfAvailableForEditing(thesis);
+        if (!(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
+            checkIfAvailableForEditing(thesis);
+        }
 
         document.setResourceType(attachmentType.getResourceType());
         var documentFile = documentFileService.saveNewPreliminaryDocument(document);
@@ -359,20 +387,47 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         thesisJPAService.save(thesis);
+
+        var index = findDocumentPublicationIndexByDatabaseId(thesisId);
+        index.setContainsFiles(
+            !thesis.getFileItems().isEmpty() || !thesis.getProofs().isEmpty() ||
+                !thesis.getPreliminaryFiles().isEmpty() ||
+                !thesis.getPreliminarySupplements().isEmpty() ||
+                !thesis.getCommissionReports().isEmpty());
+        documentPublicationIndexRepository.save(index);
+
         return DocumentFileConverter.toDTO(documentFile);
     }
 
     @Override
-    public void transferPreprintToOfficialPublication(Integer thesisId, Integer documentFileId) {
+    @Transactional
+    public void transferPreliminaryFileToOfficial(Integer thesisId, Integer documentFileId) {
         var thesis = thesisJPAService.findOne(thesisId);
 
-        if (thesis.getFileItems().stream()
-            .anyMatch(f -> f.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION))) {
+        var documentFile = thesis.getPreliminaryFiles().stream().filter(
+            file -> file.getId().equals(documentFileId) &&
+                file.getResourceType().equals(ResourceType.PREPRINT)).findFirst();
+
+        if (documentFile.isEmpty()) {
+            documentFile = thesis.getPreliminarySupplements().stream().filter(
+                file -> file.getId().equals(documentFileId) &&
+                    file.getResourceType().equals(ResourceType.SUPPLEMENT)).findFirst();
+        }
+
+        var finalDocumentFile = documentFile;
+        if (
+            documentFile.isPresent() &&
+                ((documentFile.get().getResourceType().equals(ResourceType.PREPRINT) &&
+                    thesis.getFileItems().stream()
+                        .anyMatch(
+                            f -> f.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION))) ||
+                    thesis.getFileItems().stream().anyMatch(f -> f.getFilename().equals(
+                        finalDocumentFile.get().getFilename())))
+        ) {
             throw new ThesisException("Thesis already has an official file version uploaded.");
         }
 
-        thesis.getPreliminaryFiles().stream().filter(file -> file.getId().equals(documentFileId) &&
-            file.getResourceType().equals(ResourceType.PREPRINT)).findFirst().ifPresent(file -> {
+        finalDocumentFile.ifPresent(file -> {
             var officialPublication = new DocumentFile();
             officialPublication.setDocument(file.getDocument());
             officialPublication.setFilename(file.getFilename());
@@ -381,23 +436,39 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             officialPublication.setAccessRights(file.getAccessRights());
             officialPublication.setLicense(file.getLicense());
             officialPublication.setApproveStatus(file.getApproveStatus());
-            officialPublication.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+
+            if (file.getResourceType().equals(ResourceType.PREPRINT)) {
+                officialPublication.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
+            } else {
+                officialPublication.setResourceType(ResourceType.SUPPLEMENT);
+            }
 
             var description = new HashSet<>();
             file.getDescription().forEach(multiLingualContent -> description.add(
                 new MultiLingualContent(multiLingualContent)));
             officialPublication.setDescription((Set) description);
 
-            var newServerFilename = fileService.duplicateFile(file.getServerFilename());
-            officialPublication.setServerFilename(newServerFilename);
+            var copiedFileResource = fileService.duplicateFile(file.getServerFilename());
+            officialPublication.setServerFilename(copiedFileResource.a);
             documentFileService.save(officialPublication);
+
+            documentFileService.parseAndIndexPdfDocument(officialPublication, copiedFileResource.b,
+                officialPublication.getFilename(), officialPublication.getServerFilename(),
+                new DocumentFileIndex());
 
             thesis.getFileItems().add(officialPublication);
             thesisJPAService.save(thesis);
+
+            try {
+                copiedFileResource.b.close();
+            } catch (IOException e) {
+                log.error("Unable to close stream of duplicated file {}.", copiedFileResource.a);
+            }
         });
     }
 
     @Override
+    @Transactional
     public void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
                                              Integer publicReviewLengthDays, Integer userId,
                                              RecurrenceType recurrence) {
@@ -419,6 +490,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void deleteThesisAttachment(Integer thesisId, Integer documentFileId,
                                        ThesisAttachmentType attachmentType) {
         var thesis = thesisJPAService.findOne(thesisId);
@@ -453,6 +525,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void putOnPublicReview(Integer thesisId, Boolean continueLastReview) {
         var thesis = thesisJPAService.findOne(thesisId);
         validateThesisForPublicReview(thesis);
@@ -503,6 +576,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void removeFromPublicReview(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
 
@@ -527,6 +601,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void archiveThesis(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
 
@@ -540,6 +615,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public void unarchiveThesis(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
         thesis.setIsArchived(false);
@@ -548,6 +624,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public ThesisLibraryFormatsResponseDTO getLibraryReferenceFormat(Integer thesisId) {
         var thesis = thesisJPAService.findOne(thesisId);
         try {
@@ -563,6 +640,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Override
+    @Transactional
     public String getSingleLibraryReferenceFormat(Integer thesisId, LibraryFormat libraryFormat) {
         var thesis = thesisJPAService.findOne(thesisId);
         try {
@@ -606,12 +684,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             if (thesis.getPublicReviewCompleted() || isAdmin) {
                 thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
             }
-        } else if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
-            !thesis.getPublicReviewStartDates().isEmpty()) {
-            thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
-                .ifPresent(latestPublicReviewDate -> {
-                    thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
-                });
+        } else {
+            thesis.setThesisDefenceDate(null);
+
+            if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
+                !thesis.getPublicReviewStartDates().isEmpty()) {
+                thesis.getPublicReviewStartDates().stream().max(LocalDate::compareTo)
+                    .ifPresent(latestPublicReviewDate -> {
+                        thesis.setDocumentDate(String.valueOf(latestPublicReviewDate.getYear()));
+                    });
+            }
         }
 
         thesis.setPublisher(null);
@@ -793,6 +875,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     @Scheduled(cron = "${thesis.check-public-review-end.period}")
+    @Transactional
     protected void removeFromPublicReviewScheduledFallback() {
         if (Objects.nonNull(fallbackPublicReviewCheckEnabled) && fallbackPublicReviewCheckEnabled) {
             removeFromPublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
@@ -806,7 +889,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         var latestPossibleStartDate = LocalDate.now().minusDays(publicReviewLengthDays);
         var thesesByInstitution =
-            new ConcurrentHashMap<Integer, List<Triple<String, Set<MultiLingualContent>, String>>>();
+            new ConcurrentHashMap<Integer, List<Triple<String, Set<MultiLingualContent>, LocalDate>>>();
 
         thesesOnPublicReview.stream()
             .filter(thesis -> isPublicReviewExpired(thesis, latestPossibleStartDate))
@@ -826,11 +909,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                     .orElse(LocalDate.now());
 
                 thesesByInstitution.get(institutionId).add(
-                    new Triple<>(authorName, thesis.getTitle(),
-                        dtFormatter.format(latestReviewDate)));
+                    new Triple<>(authorName, thesis.getTitle(), latestReviewDate));
             });
 
-        notifyLibrarians(thesesByInstitution);
+        notifyLibrarians(thesesByInstitution, publicReviewLengthDays);
     }
 
     private boolean isPublicReviewExpired(Thesis thesis, LocalDate cutoffDate) {
@@ -862,10 +944,18 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     private void notifyLibrarians(
-        Map<Integer, List<Triple<String, Set<MultiLingualContent>, String>>> thesesByInstitution) {
-        userService.findAllInstitutionalLibrarianUsers().forEach(librarianUser -> {
+        Map<Integer, List<Triple<String, Set<MultiLingualContent>, LocalDate>>> thesesByInstitution,
+        Integer publicReviewLengthDays) {
+        userService.findAllLibrarianUsers().forEach(librarianUser -> {
             var thesesList = new StringBuilder();
             var preferredLocale = librarianUser.getPreferredUILanguage().getLanguageTag();
+
+            if (Objects.isNull(librarianUser.getOrganisationUnit())) {
+                log.error("{} user with ID {} and email {} does not have an OU bound to him!",
+                    librarianUser.getAuthority().getName(), librarianUser.getId(),
+                    librarianUser.getEmail());
+                return;
+            }
 
             for (var institutionId : organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
                 librarianUser.getOrganisationUnit().getId())) {
@@ -880,8 +970,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                             .append(" - ")
                             .append(StringEscapeUtils.escapeHtml4(
                                 getLocalisedContentString(content.b, preferredLocale)))
-                            .append(" (").append(content.c).append(" - ")
-                            .append(dtFormatter.format(LocalDate.now()))
+                            .append(" (").append(dtFormatter.format(content.c)).append(" - ")
+                            .append(dtFormatter.format(content.c.plusDays(publicReviewLengthDays)))
                             .append(")<br/>"));
                 }
             }

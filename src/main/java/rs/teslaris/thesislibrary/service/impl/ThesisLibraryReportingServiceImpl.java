@@ -25,7 +25,9 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -50,6 +52,8 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
 
     private final OrganisationUnitService organisationUnitService;
 
+    private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
+
     private final LoadingCache<ThesisReportRequestDTO, List<ThesisReportCountsDTO>>
         thesisReportCache =
         CacheBuilder.newBuilder()
@@ -69,7 +73,19 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
     }
 
     private List<ThesisReportCountsDTO> fetchThesisCounts(ThesisReportRequestDTO request) {
-        return request.topLevelInstitutionIds().stream()
+        var facultyIds = new HashSet<Integer>();
+
+        request.topLevelInstitutionIds().forEach(institutionId -> {
+            facultyIds.add(institutionId);
+
+            facultyIds.addAll(
+                organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
+                        institutionId, Pageable.unpaged()).stream()
+                    .filter(OrganisationUnitIndex::getIsLegalEntity)
+                    .map(OrganisationUnitIndex::getDatabaseId).toList());
+        });
+
+        return facultyIds.stream()
             .map(institutionId -> {
                 var institutionIds =
                     organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);

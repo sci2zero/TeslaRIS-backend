@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit.assessment;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,9 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.assessment.model.classification.DocumentAssessmentClassification;
 import rs.teslaris.assessment.repository.classification.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.service.impl.classification.EntityAssessmentClassificationServiceImpl;
+import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
@@ -23,6 +26,9 @@ public class EntityAssessmentClassificationServiceTest {
 
     @Mock
     private DocumentPublicationService documentPublicationService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private EntityAssessmentClassificationServiceImpl entityAssessmentClassificationService;
@@ -46,5 +52,7 @@ public class EntityAssessmentClassificationServiceTest {
         // Then
         verify(entityAssessmentClassificationRepository, times(1)).delete(
             entityAssessmentClassification);
+        verify(applicationEventPublisher, times(1)).publishEvent(any(
+            ResearcherPointsReindexingEvent.class));
     }
 }

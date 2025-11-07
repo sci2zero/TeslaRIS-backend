@@ -1,0 +1,12 @@
+databaseChangeLog:
+- changeSet:
+    id: 1761046897379-1
+    author: ivanmrsulja (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: digital_library_chart_display_settings
+            type: JSONB
+        tableName: person_charts_display_configuration
+

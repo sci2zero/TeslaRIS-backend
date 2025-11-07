@@ -87,6 +87,11 @@ public class SessionUtil {
                 authentication.getPrincipal().equals("anonymousUser")));
     }
 
+    public static boolean isUserLoggedInAndAdmin() {
+        return isUserLoggedIn() &&
+            getLoggedInUser().getAuthority().getName().equals(UserRole.ADMIN.name());
+    }
+
     @Nullable
     public static User getLoggedInUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();

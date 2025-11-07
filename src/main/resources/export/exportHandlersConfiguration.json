@@ -2,12 +2,13 @@
   "handlers": [
     {
       "identifier": "OAIHandlerOpenAIRECRIS",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "17",
       "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
       "handlerDescription": "CERIF compliant CRIS system developed by Science 2.0 Alliance for Faculty of Sciences, University of Novi Sad",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -88,12 +89,13 @@
     },
     {
       "identifier": "OAIHandlerDOISerbia",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "17",
       "handlerName": "DOI Serbia OAI Handler",
       "handlerDescription": "OAI handler for DOI Serbia",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -112,12 +114,13 @@
     },
     {
       "identifier": "OAIHandlerOATDPA",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "389",
       "handlerName": "DOI Serbia OAI Handler for University Business Academy",
       "handlerDescription": "OAI handler for University Business Academy for DOI Serbia",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -142,6 +145,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -160,12 +164,13 @@
     },
     {
       "identifier": "OAIHandlerDARTEurope",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "17",
       "handlerName": "DART Europe OAI Handler",
       "handlerDescription": "OAI handler for DART Europe",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -184,12 +189,13 @@
     },
     {
       "identifier": "OAIHandlerDARTEuropePA",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "389",
       "handlerName": "DART Europe Business Academy OAI Handler",
       "handlerDescription": "OAI handler for Business Academy for DART Europe",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -208,12 +214,13 @@
     },
     {
       "identifier": "OAIHandlerDARTEuropePA",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "389",
       "handlerName": "DART Europe Business Academy OAI Handler",
       "handlerDescription": "OAI handler for Business Academy for DART Europe",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -238,6 +245,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -257,12 +265,13 @@
     },
     {
       "identifier": "OAIHandlerNDLTDPA",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "389",
       "handlerName": "NDLTD Business Academy OAI Handler",
       "handlerDescription": "OAI handler for Business Academy for NDLTD",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -288,6 +297,7 @@
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -307,12 +317,13 @@
     },
     {
       "identifier": "OAIHandlerOATDPA",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "389",
       "handlerName": "OATD Business Academy OAI Handler",
       "handlerDescription": "OAI handler for Business Academy for OATD",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -332,12 +343,13 @@
     },
     {
       "identifier": "OAIHandlerNaRDuS",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "389",
       "handlerName": "NaRDuS Business Academy OAI Handler",
       "handlerDescription": "OAI handler for Business Academy for NaRDuS",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -357,12 +369,13 @@
     },
     {
       "identifier": "OAIHandlerProQuest",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "17",
       "handlerName": "ProQuest OAI Handler",
       "handlerDescription": "OAI handler for ProQuest",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -381,12 +394,13 @@
     },
     {
       "identifier": "OAIHandlerBEOPEN",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "17",
       "handlerName": "BEOPEN OAI Handler",
       "handlerDescription": "OAI handler for BEOPEN",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -422,12 +436,13 @@
     },
     {
       "identifier": "OAIHandlerBEOPENILFE",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "6",
       "handlerName": "BEOPENILFE OAI Handler",
       "handlerDescription": "OAI handler for ILFE for BEOPEN",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "theses",
@@ -463,12 +478,13 @@
     },
     {
       "identifier": "OAIHandlerENauka",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "17",
       "handlerName": "ENauka OAI Handler",
       "handlerDescription": "OAI Handler for Enauka",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -549,12 +565,13 @@
     },
     {
       "identifier": "OAIHandlerENaukaILFE",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "6",
       "handlerName": "ENaukaILFE OAI Handler",
       "handlerDescription": "OAI Handler for ILFE for Enauka",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -635,12 +652,13 @@
     },
     {
       "identifier": "OAIHandlerENaukaUPAFarmacija",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "7",
       "handlerName": "ENauka UPA Farmacija OAI Handler",
       "handlerDescription": "OAI Handler for UPA Farmacija for ENauka",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
+      "supportLegacyIdentifiers": true,
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",

@@ -2,7 +2,6 @@ package rs.teslaris.core.model.institution;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,7 +9,10 @@ import jakarta.persistence.Index;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -77,10 +79,12 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
     @Embedded
     private Contact contact;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "accounting_ids")
     private Set<String> accountingIds = new HashSet<>();
 
     @Embedded
@@ -90,18 +94,50 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
     @Column(columnDefinition = "jsonb", name = "allowed_thesis_types")
     private Set<String> allowedThesisTypes = new HashSet<>();
 
-    @Column(name = "is_client_institution", nullable = false)
-    private Boolean isClientInstitution = false;
+    @Column(name = "is_client_institution_cris", nullable = false)
+    private Boolean isClientInstitutionCris = false;
 
-    @Column(name = "validate_email_domain", nullable = false)
-    private Boolean validateEmailDomain = false;
+    @Column(name = "is_client_institution_dl", nullable = false)
+    private Boolean isClientInstitutionDl = false;
 
-    @Column(name = "allow_subdomains")
-    private Boolean allowSubdomains = false;
-
-    @Column(name = "institution_email_domain")
-    private String institutionEmailDomain;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "email_configurations")
+    private Map<String, EmailConfiguration> emailConfigurations = new HashMap<>();
 
     @Column(name = "legal_entity", nullable = false)
     private Boolean legalEntity = false;
+
+
+    public EmailConfiguration getCrisConfig() {
+        lazilyInitializeEmailConfiguration();
+
+        return emailConfigurations.get("cris");
+    }
+
+    public void setCrisConfig(EmailConfiguration config) {
+        lazilyInitializeEmailConfiguration();
+
+        emailConfigurations.put("cris", config);
+    }
+
+    public EmailConfiguration getDlConfig() {
+        lazilyInitializeEmailConfiguration();
+
+        return emailConfigurations.get("digital_library");
+    }
+
+    public void setDlConfig(EmailConfiguration config) {
+        lazilyInitializeEmailConfiguration();
+
+        emailConfigurations.put("digital_library", config);
+    }
+
+    private void lazilyInitializeEmailConfiguration() {
+        if (Objects.isNull(emailConfigurations)) {
+            this.emailConfigurations = new HashMap<>();
+        }
+
+        emailConfigurations.putIfAbsent("cris", new EmailConfiguration());
+        emailConfigurations.putIfAbsent("digital_library", new EmailConfiguration());
+    }
 }
