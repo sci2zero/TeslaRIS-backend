@@ -299,31 +299,15 @@ public class CommonExportServiceImpl implements CommonExportService {
                 repositoryFunction.apply(PageRequest.of(pageNumber, chunkSize), allTime)
                     .getContent();
 
-            // TODO: Remove this
-            if (exportClass.equals(ExportOrganisationUnit.class)) {
-                System.out.println("OU CHUNK SIZE: " + chunk.size() + ". CONTENT: ");
-            }
-            /// ////////////////
-
             for (T entity : chunk) {
-                try {
-                    var query = new Query();
-                    query.addCriteria(Criteria.where("database_id").is(idGetter.apply(entity)));
-                    query.limit(1);
+                var query = new Query();
+                query.addCriteria(Criteria.where("database_id").is(idGetter.apply(entity)));
+                query.limit(1);
 
-                    var exportEntry = converter.apply(entity, true);
+                var exportEntry = converter.apply(entity, true);
 
-                    mongoTemplate.remove(query, exportClass);
-                    mongoTemplate.save(exportEntry);
-
-                    // TODO: Remove this
-                    if (exportClass.equals(ExportOrganisationUnit.class)) {
-                        System.out.println(((OrganisationUnit) entity).getId());
-                    }
-                    /// ////////////////
-                } catch (Exception e) {
-                    log.error("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ", e);
-                }
+                mongoTemplate.remove(query, exportClass);
+                mongoTemplate.save(exportEntry);
             }
 
             pageNumber++;

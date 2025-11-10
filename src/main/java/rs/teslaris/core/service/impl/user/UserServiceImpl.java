@@ -378,7 +378,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         if (userRepository.findByEmail(newEmail).isPresent()) {
-            throw new UserAlreadyExistsException("User with given email already exists.");
+            throw new UserAlreadyExistsException("userWithEmailExistsMessage");
         }
 
         user.setEmail(newEmail);
