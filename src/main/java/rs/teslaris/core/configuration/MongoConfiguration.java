@@ -41,7 +41,7 @@ public class MongoConfiguration extends AbstractMongoClientConfiguration {
                     .readTimeout(30, TimeUnit.SECONDS))   // Query execution
             .applyToClusterSettings(builder ->
                 builder.serverSelectionTimeout(30,
-                    TimeUnit.SECONDS)) // Choosing node, is deployed in cloud
+                    TimeUnit.SECONDS)) // Choosing node, if deployed in cloud
             .applyToConnectionPoolSettings(pool -> pool
                 .maxSize(50)
                 .minSize(5)
