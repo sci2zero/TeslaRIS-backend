@@ -241,4 +241,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "contains_files", store = true)
     private Boolean containsFiles;
+
+    @Field(type = FieldType.Boolean, name = "is_archived", store = true)
+    private Boolean isArchived;
 }

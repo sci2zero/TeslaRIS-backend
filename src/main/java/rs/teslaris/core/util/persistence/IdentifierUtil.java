@@ -14,6 +14,9 @@ public class IdentifierUtil {
 
     public static String identifierPrefix;
 
+    public static String legacyIdentifierPrefix;
+
+
     public static void validateAndSetIdentifier(
         String identifier,
         Integer entityId,
@@ -63,6 +66,11 @@ public class IdentifierUtil {
 
     @Value("${export.internal-identifier.prefix}")
     public void setIdentifierPrefix(String prefix) {
-        identifierPrefix = prefix;
+        IdentifierUtil.identifierPrefix = prefix;
+    }
+
+    @Value("${legacy-identifier.prefix}")
+    public void setLegacyIdentifierPrefix(String prefix) {
+        IdentifierUtil.legacyIdentifierPrefix = prefix;
     }
 }

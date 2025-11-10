@@ -250,19 +250,26 @@ public class TableExportServiceImpl implements TableExportService {
                 endpointTokenParameters, pageable);
             case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
-                    endpointTokenParameters, pageable,
+                    Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
+                        .filter(String::isBlank).toList(), pageable,
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
-                    false, onlyUnmanaged, documentSpecificFilters.a);
+                    false, onlyUnmanaged, documentSpecificFilters.a,
+                    Boolean.parseBoolean(endpointTokenParameters.getFirst()));
             case AUTHOR_REPRINT_DOCUMENTS_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
-                    endpointTokenParameters, pageable,
+                    Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
+                        .filter(String::isBlank).toList(), pageable,
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
-                    true, null, documentSpecificFilters.a);
+                    true, null, documentSpecificFilters.a,
+                    Boolean.parseBoolean(endpointTokenParameters.getFirst()));
             case DOCUMENT_ADVANCED_SEARCH, THESIS_ADVANCED_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
-                    endpointTokenParameters, pageable,
+                    Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
+                        .filter(String::isBlank).toList(), pageable,
                     SearchRequestType.ADVANCED, documentSpecificFilters.b,
-                    documentSpecificFilters.c, null, onlyUnmanaged, documentSpecificFilters.a);
+                    documentSpecificFilters.c, null, onlyUnmanaged,
+                    documentSpecificFilters.a,
+                    Boolean.parseBoolean(endpointTokenParameters.getFirst()));
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     Arrays.stream(endpointTokenParameters.getFirst().split("tokens="))
@@ -285,7 +292,8 @@ public class TableExportServiceImpl implements TableExportService {
                 (Page<T>) documentPublicationService.findPublicationsForOrganisationUnit(
                     Integer.parseInt(endpointTokenParameters.getFirst()),
                     Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
-                        .filter(t -> !t.isBlank()).toList(), documentSpecificFilters.a, pageable);
+                        .filter(t -> !t.isBlank()).toList(), documentSpecificFilters.a,
+                    Boolean.parseBoolean(endpointTokenParameters.get(1)), pageable);
             case ORGANISATION_UNIT_EMPLOYEES ->
                 (Page<T>) personService.findPeopleForOrganisationUnit(
                     Integer.parseInt(endpointTokenParameters.getFirst()),

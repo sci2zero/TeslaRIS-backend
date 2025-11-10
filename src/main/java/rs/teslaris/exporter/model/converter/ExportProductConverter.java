@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Objects;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.product.Product;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
@@ -81,20 +83,33 @@ public class ExportProductConverter extends ExportConverterBase {
             !exportDocument.getOldIds().isEmpty()) {
             dcProduct.getIdentifier().add(legacyIdentifierPrefix + "(" +
                 exportDocument.getOldIds().stream().findFirst().get() + ")");
-        } else {
-
-            dcProduct.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
         }
+
+        dcProduct.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());
 
         clientLanguages.forEach(lang -> dcProduct.getIdentifier().add(
             baseFrontendUrl + lang + "/scientific-result/" +
                 (exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
                     "software") + "/" + exportDocument.getDatabaseId()));
 
+        if (StringUtil.valueExists(exportDocument.getDoi())) {
+            dcProduct.getIdentifier().add("DOI:" + exportDocument.getDoi());
+        }
+
+        if (StringUtil.valueExists(exportDocument.getScopus())) {
+            dcProduct.getIdentifier().add("SCOPUS:" + exportDocument.getScopus());
+        }
+
+        if (StringUtil.valueExists(exportDocument.getOpenAlex())) {
+            dcProduct.getIdentifier().add("OPENALEX:" + exportDocument.getOpenAlex());
+        }
+
         addContentToList(
             exportDocument.getTitle(),
             ExportMultilingualContent::getContent,
-            content -> dcProduct.getTitle().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcProduct.getTitle()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(
@@ -106,13 +121,17 @@ public class ExportProductConverter extends ExportConverterBase {
         addContentToList(
             exportDocument.getDescription(),
             ExportMultilingualContent::getContent,
-            content -> dcProduct.getDescription().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcProduct.getDescription()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(
             exportDocument.getKeywords(),
             ExportMultilingualContent::getContent,
-            content -> dcProduct.getSubject().add(content.replace("\n", "; "))
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcProduct.getSubject()
+                .add(new DCMultilingualContent(content.replace("\n", "; "), languageTag))
         );
 
         addContentToList(

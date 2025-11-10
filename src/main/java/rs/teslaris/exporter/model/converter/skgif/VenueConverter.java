@@ -29,7 +29,8 @@ public class VenueConverter extends BaseConverter {
         }
 
         venue.setSeries(getSeriesName(document));
-        venue.setCreationDate(document.getDocumentDate());
+        venue.setCreationDate(document.getDocumentDate() +
+            (document.getDocumentDate().length() == 4 ? "-01-01T00:00:00" : ""));
         venue.setAccessRights(new SKGIFAccessRights(document.getOpenAccess() ? "open" : "closed",
             document.getOpenAccess() ? "Open Access" : "Closed Access"));
 

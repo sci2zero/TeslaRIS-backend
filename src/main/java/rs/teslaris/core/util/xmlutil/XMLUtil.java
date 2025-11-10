@@ -54,6 +54,13 @@ public class XMLUtil {
                     continue;
                 }
 
+                if (value instanceof String str) {
+                    if (str.isBlank()) {
+                        field.set(obj, null);
+                    }
+                    continue;
+                }
+
                 if (value instanceof Collection<?> collection) {
                     if (collection.isEmpty()) {
                         field.set(obj, null);

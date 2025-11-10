@@ -13,6 +13,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.Person;
@@ -160,13 +161,29 @@ public class ExportPersonConverter extends ExportConverterBase {
             dcPerson.getIdentifier().add(
                 legacyIdentifierPrefix + "(" + exportPerson.getOldIds().stream().findFirst().get() +
                     ")");
-        } else {
-            dcPerson.getIdentifier().add("TESLARIS(" + exportPerson.getDatabaseId() + ")");
         }
 
-        dcPerson.getIdentifier().add(exportPerson.getOrcid());
-        dcPerson.getIdentifier().add(exportPerson.getScopusAuthorId());
-        dcPerson.getIdentifier().add(exportPerson.getENaukaId());
+        dcPerson.getIdentifier().add(identifierPrefix + exportPerson.getDatabaseId());
+
+        if (StringUtil.valueExists(exportPerson.getOrcid())) {
+            dcPerson.getIdentifier().add(exportPerson.getOrcid());
+        }
+
+        if (StringUtil.valueExists(exportPerson.getScopusAuthorId())) {
+            dcPerson.getIdentifier().add("SCOPUS:" + exportPerson.getScopusAuthorId());
+        }
+
+        if (StringUtil.valueExists(exportPerson.getENaukaId())) {
+            dcPerson.getIdentifier().add("ENAUKA:" + exportPerson.getENaukaId());
+        }
+
+        if (StringUtil.valueExists(exportPerson.getECrisId())) {
+            dcPerson.getIdentifier().add("ECRIS:" + exportPerson.getECrisId());
+        }
+
+        if (StringUtil.valueExists(exportPerson.getApvnt())) {
+            dcPerson.getIdentifier().add("APVNT:" + exportPerson.getApvnt());
+        }
 
         clientLanguages.forEach(lang -> {
             dcPerson.getIdentifier()
@@ -175,12 +192,14 @@ public class ExportPersonConverter extends ExportConverterBase {
         });
 
         if (Objects.nonNull(exportPerson.getName().getMiddleName())) {
-            dcPerson.getTitle().add(exportPerson.getName().getFirstName() + " " +
-                exportPerson.getName().getMiddleName() + " " +
-                exportPerson.getName().getLastName());
+            dcPerson.getTitle()
+                .add(new DCMultilingualContent(exportPerson.getName().getFirstName() + " " +
+                    exportPerson.getName().getMiddleName() + " " +
+                    exportPerson.getName().getLastName(), null));
         } else {
             dcPerson.getTitle().add(
-                exportPerson.getName().getFirstName() + " " + exportPerson.getName().getLastName());
+                new DCMultilingualContent(exportPerson.getName().getFirstName() + " " +
+                    exportPerson.getName().getLastName(), null));
         }
 
         addContentToList(

@@ -23,7 +23,7 @@ public class SKGIFSingleResponse {
 
     public SKGIFSingleResponse(List<Object> entities, String baseUrl) {
         this.context = Arrays.asList(
-            "https://w3id.org/skg-if/context/1.1.0/skg-if.json",
+            "https://w3id.org/skg-if/context/skg-if.json",
             Map.of("@base", baseUrl + "/api/skg-if")
         );
 

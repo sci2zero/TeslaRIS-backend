@@ -176,14 +176,17 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             listRecords.getRecords().add(record);
             var metadata = new Metadata();
 
-            record.setHeader(constructOaiResponseHeader(handlerConfiguration.get(),
+            record.setHeader(constructOaiResponseHeader(
+                handlerConfiguration.get(),
                 (BaseExportEntity) fetchedRecordEntity,
-                ("oai:" + repositoryName.replace(" ", ".") + ":") +
-                    (!matchedSet.get().identifierSetSpec().isBlank() ?
-                        (matchedSet.get().identifierSetSpec() + "/") : "") +
-                    IdentifierUtil.identifierPrefix +
-                    ((BaseExportEntity) fetchedRecordEntity).getDatabaseId(),
-                matchedSet.get().identifierSetSpec()));
+                constructRecordIdentifier(
+                    handlerConfiguration.get(),
+                    (BaseExportEntity) fetchedRecordEntity,
+                    repositoryName,
+                    matchedSet.get()
+                ),
+                matchedSet.get().identifierSetSpec()
+            ));
 
             if (Objects.nonNull(record.getHeader().getStatus()) &&
                 record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
@@ -246,14 +249,18 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         String set;
         if (identifier.contains("/")) {
             try {
-                set = identifier.split("/")[0].split(":")[2];
+                set = identifier.split("/")[0];
+                if (set.contains(":")) {
+                    set = set.split(":")[2];
+                }
             } catch (IndexOutOfBoundsException e) {
                 response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
                 return null;
             }
 
+            var parsedSetValue = set;
             var matchedSet = handlerConfiguration.get().sets().stream()
-                .filter(configuredSet -> configuredSet.identifierSetSpec().equals(set))
+                .filter(configuredSet -> configuredSet.identifierSetSpec().equals(parsedSetValue))
                 .findFirst();
 
             if (matchedSet.isEmpty() || matchedSet.get().commonEntityClass().equals("NONE")) {
@@ -387,10 +394,10 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                                                 ExportHandlersConfigurationLoader.Handler handlerConfiguration) {
         var query = new Query();
 
-        if (identifier.contains("BISIS")) {
+        if (identifier.contains(IdentifierUtil.legacyIdentifierPrefix)) {
             query.addCriteria(
                 Criteria.where("oldId").is(OAIPMHParseUtility.parseBISISID(identifier)));
-        } else if (identifier.contains("TESLARIS")) {
+        } else if (identifier.contains(identifier)) {
             query.addCriteria(
                 Criteria.where("databaseId").is(OAIPMHParseUtility.parseBISISID(identifier)));
         }
@@ -593,5 +600,33 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             .ensureIndex(new Index().on("expirationTimestamp", Sort.Direction.ASC)
                 .expire(0L));
         return newToken;
+    }
+
+    private String constructRecordIdentifier(
+        ExportHandlersConfigurationLoader.Handler handlerConfig,
+        BaseExportEntity entity,
+        String repositoryName,
+        ExportHandlersConfigurationLoader.Set matchedSet) {
+        String basePrefix = "oai:" + repositoryName.replace(" ", ".") + ":";
+
+        String setSpecPrefix = !matchedSet.identifierSetSpec().isBlank()
+            ? matchedSet.identifierSetSpec() + "/"
+            : "";
+
+        String identifierPrefix = handlerConfig.supportLegacyIdentifiers()
+            ? IdentifierUtil.legacyIdentifierPrefix
+            : IdentifierUtil.identifierPrefix;
+
+        var entityId = getEntityIdentifier(handlerConfig, entity);
+
+        return basePrefix + setSpecPrefix + identifierPrefix + entityId;
+    }
+
+    private Integer getEntityIdentifier(ExportHandlersConfigurationLoader.Handler handlerConfig,
+                                        BaseExportEntity entity) {
+        if (handlerConfig.supportLegacyIdentifiers() && !entity.getOldIds().isEmpty()) {
+            return entity.getOldIds().stream().findFirst().get();
+        }
+        return entity.getDatabaseId();
     }
 }

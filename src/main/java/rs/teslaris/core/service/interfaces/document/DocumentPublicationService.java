@@ -46,6 +46,7 @@ public interface DocumentPublicationService extends JPAService<Document> {
     Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(Integer organisationUnitId,
                                                                        List<String> tokens,
                                                                        List<DocumentPublicationType> allowedTypes,
+                                                                       Boolean notArchivedOnly,
                                                                        Pageable pageable);
 
     Long getPublicationCount();
@@ -76,7 +77,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               Integer commissionId,
                                                               Boolean authorReprint,
                                                               Boolean unmanaged,
-                                                              List<DocumentPublicationType> allowedTypes);
+                                                              List<DocumentPublicationType> allowedTypes,
+                                                              Boolean notArchivedOnly);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
                                                           String scopusId, String openAlexId,

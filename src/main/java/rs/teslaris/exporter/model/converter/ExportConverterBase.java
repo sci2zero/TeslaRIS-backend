@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,8 @@ public class ExportConverterBase {
 
     protected static String legacyIdentifierPrefix;
 
+    protected static String identifierPrefix;
+
     @Autowired
     private Environment environment;
 
@@ -60,6 +63,24 @@ public class ExportConverterBase {
             }
 
             consumer.accept(preprocessingFunction.apply(item));
+        });
+    }
+
+    protected static <T> void addContentToList(List<T> sourceList,
+                                               Function<T, String> contentExtractionFunction,
+                                               Function<T, String> identifierExtractionFunction,
+                                               BiConsumer<String, String> consumer) {
+        sourceList.forEach(item -> {
+            if (Objects.isNull(item)) {
+                return;
+            }
+
+            if ((item instanceof String) && ((String) item).isBlank()) {
+                return;
+            }
+
+            consumer.accept(contentExtractionFunction.apply(item),
+                identifierExtractionFunction.apply(item).toLowerCase());
         });
     }
 
@@ -186,5 +207,6 @@ public class ExportConverterBase {
             Objects.requireNonNull(environment.getProperty("client.localization.languages"))
                 .split(",")));
         legacyIdentifierPrefix = environment.getProperty("legacy-identifier.prefix");
+        identifierPrefix = environment.getProperty("export.internal-identifier.prefix");
     }
 }

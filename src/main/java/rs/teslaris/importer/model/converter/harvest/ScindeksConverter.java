@@ -24,9 +24,10 @@ public class ScindeksConverter {
         document.setDocumentDate(record.getDate().getFirst());
         document.getInternalIdentifiers().add(document.getIdentifier());
 
-        document.getTitle().add(new MultilingualContent("EN", record.getTitle().getFirst(), 1));
+        document.getTitle()
+            .add(new MultilingualContent("EN", record.getTitle().getFirst().getValue(), 1));
         document.getDescription()
-            .add(new MultilingualContent("EN", record.getDescription().getFirst(), 1));
+            .add(new MultilingualContent("EN", record.getDescription().getFirst().getValue(), 1));
 
         if (record.getType().stream()
             .anyMatch(source -> source.equals("info:eu-repo/semantics/article"))) {

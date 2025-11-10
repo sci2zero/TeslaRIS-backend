@@ -33,6 +33,8 @@ public class ResearchProductConverter extends BaseConverter {
 
         researchProduct.setEntityType("product");
         researchProduct.setProductType(getProductType(document.getType()));
+        researchProduct.setCreationDate(document.getDocumentDate() +
+            (document.getDocumentDate().length() == 4 ? "-01-01T00:00:00" : ""));
 
         researchProduct.setTitles(getMultilingualContent(document.getTitle()));
         researchProduct.setAbstracts(getMultilingualContent(document.getDescription()));

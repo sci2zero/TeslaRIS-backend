@@ -138,6 +138,9 @@ public class ExportDocument extends BaseExportEntity {
     @Field("thesis_grantor")
     private ExportOrganisationUnit thesisGrantor;
 
+    @Field("external_thesis_grantor_name")
+    private List<ExportMultilingualContent> externalThesisGrantorName;
+
     @Field("acronym")
     private List<ExportMultilingualContent> acronym;
 

@@ -130,7 +130,7 @@ public class OutboundExportServiceTest {
 
         // When
         var result = outboundExportService.listRequestedRecord("handler", "oai_dim",
-            "oai:repo:123", response);
+            "oai:repo:(Teslaris)123", response);
 
         // Then
         assertNotNull(result);
@@ -147,7 +147,7 @@ public class OutboundExportServiceTest {
 
         // When
         var result = outboundExportService.listRequestedRecord("handler", "oai_cerif_openaire",
-            "oai:repo:123", response);
+            "oai:repo:(TESLARIS)123", response);
 
         // Then
         assertNull(result);

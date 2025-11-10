@@ -34,19 +34,19 @@ public class DC implements PublicationConvertable, EventConvertable, OrgUnitConv
     PatentConvertable, ProductConvertable {
 
     @XmlElement(name = "title", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> title = new ArrayList<>();
+    private List<DCMultilingualContent> title = new ArrayList<>();
 
     @XmlElement(name = "creator", namespace = "http://purl.org/dc/elements/1.1/")
     private List<String> creator = new ArrayList<>();
 
     @XmlElement(name = "subject", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> subject = new ArrayList<>();
+    private List<DCMultilingualContent> subject = new ArrayList<>();
 
     @XmlElement(name = "description", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> description = new ArrayList<>();
+    private List<DCMultilingualContent> description = new ArrayList<>();
 
     @XmlElement(name = "publisher", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> publisher = new ArrayList<>();
+    private List<DCMultilingualContent> publisher = new ArrayList<>();
 
     @XmlElement(name = "contributor", namespace = "http://purl.org/dc/elements/1.1/")
     private List<Contributor> contributor = new ArrayList<>();

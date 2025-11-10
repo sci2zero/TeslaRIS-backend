@@ -11,11 +11,13 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.model.oaipmh.organisationunit.PartOf;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 
@@ -40,7 +42,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         var commonExportOU = new ExportOrganisationUnit();
 
         setBaseFields(commonExportOU, organisationUnit);
-        if (organisationUnit.getDeleted()) {
+        if (commonExportOU.getDeleted()) {
             return commonExportOU;
         }
 
@@ -133,10 +135,16 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
                 exportOrganisationUnit.getOldIds().stream().findFirst().get() + ")");
         } else {
             dcOrgUnit.getIdentifier()
-                .add("TESLARIS(" + exportOrganisationUnit.getDatabaseId() + ")");
+                .add(identifierPrefix + exportOrganisationUnit.getDatabaseId());
         }
 
-        dcOrgUnit.getIdentifier().add(exportOrganisationUnit.getScopusAfid());
+        if (StringUtil.valueExists(exportOrganisationUnit.getScopusAfid())) {
+            dcOrgUnit.getIdentifier().add("SCOPUS:" + exportOrganisationUnit.getScopusAfid());
+        }
+
+        if (StringUtil.valueExists(exportOrganisationUnit.getRor())) {
+            dcOrgUnit.getIdentifier().add("ROR:" + exportOrganisationUnit.getRor());
+        }
 
         clientLanguages.forEach(lang -> {
             dcOrgUnit.getIdentifier()
@@ -147,12 +155,15 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         addContentToList(
             exportOrganisationUnit.getName(),
             ExportMultilingualContent::getContent,
-            content -> dcOrgUnit.getTitle().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcOrgUnit.getTitle()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         if (Objects.nonNull(exportOrganisationUnit.getNameAbbreviation()) &&
             !exportOrganisationUnit.getNameAbbreviation().isBlank()) {
-            dcOrgUnit.getTitle().add(exportOrganisationUnit.getNameAbbreviation());
+            dcOrgUnit.getTitle()
+                .add(new DCMultilingualContent(exportOrganisationUnit.getNameAbbreviation(), null));
         }
 
         return dcOrgUnit;

@@ -1,5 +1,6 @@
 package rs.teslaris.exporter.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
@@ -8,6 +9,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +23,7 @@ import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
+import rs.teslaris.exporter.model.skgif.JsonLdToTurtleConverter;
 import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
 import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.exporter.service.interfaces.SKGIFExportService;
@@ -37,14 +41,15 @@ public class SKGIFExportController {
     private final SKGIFExportService skgifExportService;
 
 
-    @GetMapping("/{entityType}/{localIdentifier}")
-    public SKGIFSingleResponse getEntityById(
+    @GetMapping(value = "/{entityType}/{localIdentifier}", produces = {
+        MediaType.APPLICATION_JSON_VALUE, "text/turtle"})
+    public ResponseEntity<?> getEntityById(
         HttpServletRequest request,
         @PathVariable String entityType,
         @PathVariable String localIdentifier,
         @RequestParam(defaultValue = "json") String format) {
-        var entityClass = getEntityClass(request, entityType);
 
+        var entityClass = getEntityClass(request, entityType);
         localIdentifier = IdentifierUtil.removeCommonPrefix(localIdentifier);
 
         int databaseId;
@@ -57,8 +62,28 @@ public class SKGIFExportController {
                 request.getRequestURL().toString());
         }
 
-        return skgifExportService.getEntityById(entityClass, databaseId,
+        SKGIFSingleResponse response = skgifExportService.getEntityById(entityClass, databaseId,
             entityType.equals("venue"));
+
+        if (format.equals("rdf") || format.equals("ttl")) {
+            try {
+                var mapper = new ObjectMapper();
+                String jsonString = mapper.writeValueAsString(response);
+                String turtleContent = JsonLdToTurtleConverter.convertJsonLdToTurtle(jsonString);
+
+                return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("text/turtle; charset=UTF-8"))
+                    .header("Content-Disposition", "inline; filename=\"entity.ttl\"")
+                    .body(turtleContent);
+
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to convert to RDF format", e);
+            }
+        } else {
+            return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
+        }
     }
 
     @GetMapping("/{entityType}")

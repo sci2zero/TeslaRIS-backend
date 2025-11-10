@@ -126,6 +126,7 @@ public class DocumentPublicationController {
         @RequestParam(value = "unmanaged", defaultValue = "false") Boolean unmanaged,
         @RequestParam(value = "allowedTypes", required = false)
         List<DocumentPublicationType> allowedTypes,
+        @RequestParam(value = "notArchivedOnly", required = false) Boolean notArchivedOnly,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
@@ -136,7 +137,7 @@ public class DocumentPublicationController {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.SIMPLE, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
-                null, authorReprint, unmanaged, allowedTypes);
+                null, authorReprint, unmanaged, allowedTypes, notArchivedOnly);
     }
 
     @GetMapping("/advanced-search")
@@ -147,6 +148,7 @@ public class DocumentPublicationController {
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
         @RequestParam(value = "allowedTypes", required = false)
         List<DocumentPublicationType> allowedTypes,
+        @RequestParam(value = "notArchivedOnly", required = false) Boolean notArchivedOnly,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         var isCommission = !bearerToken.isEmpty() &&
@@ -155,7 +157,7 @@ public class DocumentPublicationController {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.ADVANCED, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
-                null, null, null, allowedTypes);
+                null, null, null, allowedTypes, notArchivedOnly);
     }
 
     @GetMapping("/deduplication-search")
@@ -224,10 +226,11 @@ public class DocumentPublicationController {
         @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
         @RequestParam(value = "allowedTypes", required = false)
         List<DocumentPublicationType> allowedTypes,
+        @RequestParam(value = "notArchivedOnly", required = false) Boolean notArchivedOnly,
         @PathVariable Integer organisationUnitId,
         Pageable pageable) {
         return documentPublicationService.findPublicationsForOrganisationUnit(organisationUnitId,
-            tokens, allowedTypes, pageable);
+            tokens, allowedTypes, notArchivedOnly, pageable);
     }
 
     @GetMapping("/count")
