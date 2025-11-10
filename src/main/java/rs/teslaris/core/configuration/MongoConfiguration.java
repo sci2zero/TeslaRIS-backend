@@ -37,7 +37,8 @@ public class MongoConfiguration extends AbstractMongoClientConfiguration {
         var mongoClientSettings = MongoClientSettings.builder()
             .applyConnectionString(connectionString)
             .applyToSocketSettings(builder ->
-                builder.connectTimeout(isDeployedLocally ? 5 : 15, TimeUnit.SECONDS)  // TCP connect
+                builder.connectTimeout(isDeployedLocally ? 10 : 20,
+                        TimeUnit.SECONDS)  // TCP connect
                     .readTimeout(30, TimeUnit.SECONDS))   // Query execution
             .applyToClusterSettings(builder ->
                 builder.serverSelectionTimeout(30,
