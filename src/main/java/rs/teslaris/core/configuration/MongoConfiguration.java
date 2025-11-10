@@ -31,19 +31,26 @@ public class MongoConfiguration extends AbstractMongoClientConfiguration {
     @NotNull
     @Override
     public MongoClient mongoClient() {
+        var isDeployedLocally = host.contains("localhost") || host.contains("127.0.0.1");
+
         var connectionString = new ConnectionString(host + getDatabaseName());
         var mongoClientSettings = MongoClientSettings.builder()
             .applyConnectionString(connectionString)
             .applyToSocketSettings(builder ->
-                builder.connectTimeout(5, TimeUnit.SECONDS)
-                    .readTimeout(3, TimeUnit.SECONDS))
+                builder.connectTimeout(isDeployedLocally ? 5 : 15, TimeUnit.SECONDS)  // TCP connect
+                    .readTimeout(30, TimeUnit.SECONDS))   // Query execution
             .applyToClusterSettings(builder ->
-                builder.serverSelectionTimeout(3, TimeUnit.SECONDS))
+                builder.serverSelectionTimeout(30,
+                    TimeUnit.SECONDS)) // Choosing node, is deployed in cloud
+            .applyToConnectionPoolSettings(pool -> pool
+                .maxSize(50)
+                .minSize(5)
+                .maxWaitTime(10, TimeUnit.SECONDS)
+            )
             .build();
 
         return MongoClients.create(mongoClientSettings);
     }
-
 
     @NotNull
     @Override
