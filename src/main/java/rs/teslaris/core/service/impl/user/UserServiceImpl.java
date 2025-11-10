@@ -512,6 +512,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var savedUser = userRepository.save(newUser);
         indexUser(savedUser, index);
 
+        userAccountActivationRepository.deleteAllByUserId(savedUser.getId());
+
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
         userAccountActivationRepository.save(activationToken);
 

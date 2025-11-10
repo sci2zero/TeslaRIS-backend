@@ -40,7 +40,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         var commonExportOU = new ExportOrganisationUnit();
 
         setBaseFields(commonExportOU, organisationUnit);
-        if (commonExportOU.getDeleted()) {
+        if (organisationUnit.getDeleted()) {
             return commonExportOU;
         }
 

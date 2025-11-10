@@ -6,12 +6,15 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.connector.ClientAbortException;
 import org.hibernate.StaleStateException;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
@@ -20,11 +23,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.SchedulingException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.ErrorObject;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
@@ -144,6 +149,14 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleNonExistingRefreshTokenException(HttpServletRequest request,
                                                        NonExistingRefreshTokenException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.LOCKED)
+    @ExceptionHandler(LockedException.class)
+    @ResponseBody
+    ErrorObject handleLockedException(HttpServletRequest request,
+                                      LockedException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.LOCKED);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -517,6 +530,36 @@ public class ErrorHandlerConfiguration {
             ex.getMessage(),
             ex.getUrl()
         );
+    }
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    @ResponseBody
+    public ResponseEntity<Object> handleAsyncRequestNotUsableException(
+        AsyncRequestNotUsableException ex) {
+        if (isBrokenPipeException(ex)) { // Check if client just disconnected
+            log.debug("Client disconnected during file download (broken pipe)");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+
+        log.error("Async request error", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    private boolean isBrokenPipeException(Exception ex) {
+        var cause = ex.getCause();
+        while (Objects.nonNull(cause)) {
+            if (cause instanceof IOException && "Broken pipe".equals(cause.getMessage())) {
+                return true;
+            }
+
+            if (cause instanceof ClientAbortException) {
+                return true;
+            }
+
+            cause = cause.getCause();
+        }
+
+        return false;
     }
 
     private ErrorObject buildErrorObject(HttpServletRequest request, String message,
