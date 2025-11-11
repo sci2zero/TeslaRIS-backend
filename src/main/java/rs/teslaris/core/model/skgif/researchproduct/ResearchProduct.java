@@ -27,18 +27,25 @@ public class ResearchProduct {
 
     @JsonProperty("creation_date")
     protected String creationDate;
+
     @JsonProperty("local_identifier")
     private String localIdentifier;
+
     @JsonProperty("identifiers")
     private List<SKGIFIdentifier> identifiers = new ArrayList<>();
+
     @JsonProperty("entity_type")
     private String entityType = "product";
+
     @JsonProperty("titles")
     private Map<String, List<String>> titles; // @language container with array values
+
     @JsonProperty("abstracts")
     private Map<String, List<String>> abstracts; // @language container with array values
+
     @JsonProperty("product_type")
     private String productType;
+
     @JsonProperty("topics")
     private List<SKGIFTopic> topics;
 

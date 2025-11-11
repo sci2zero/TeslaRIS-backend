@@ -7,6 +7,7 @@ import rs.teslaris.core.model.skgif.common.SKGIFAccessRights;
 import rs.teslaris.core.model.skgif.researchproduct.SKGIFContribution;
 import rs.teslaris.core.model.skgif.venue.Venue;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 
@@ -29,10 +30,17 @@ public class VenueConverter extends BaseConverter {
         }
 
         venue.setSeries(getSeriesName(document));
-        venue.setCreationDate(document.getDocumentDate() +
-            (document.getDocumentDate().length() == 4 ? "-01-01T00:00:00" : ""));
-        venue.setAccessRights(new SKGIFAccessRights(document.getOpenAccess() ? "open" : "closed",
-            document.getOpenAccess() ? "Open Access" : "Closed Access"));
+
+        if (StringUtil.valueExists(document.getDocumentDate())) {
+            venue.setCreationDate(document.getDocumentDate() +
+                (document.getDocumentDate().length() == 4 ? "-01-01T00:00:00" : ""));
+        }
+
+        if (Objects.nonNull(document.getOpenAccess())) {
+            venue.setAccessRights(
+                new SKGIFAccessRights(document.getOpenAccess() ? "open" : "closed",
+                    document.getOpenAccess() ? "Open Access" : "Closed Access"));
+        }
 
         venue.setContributions(new ArrayList<>());
         document.getPublishers().forEach(publisher -> {

@@ -17,6 +17,7 @@ import rs.teslaris.core.model.skgif.researchproduct.ResearchProduct;
 import rs.teslaris.core.model.skgif.researchproduct.SKGIFContribution;
 import rs.teslaris.core.model.skgif.researchproduct.TypeInfo;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
@@ -33,8 +34,11 @@ public class ResearchProductConverter extends BaseConverter {
 
         researchProduct.setEntityType("product");
         researchProduct.setProductType(getProductType(document.getType()));
-        researchProduct.setCreationDate(document.getDocumentDate() +
-            (document.getDocumentDate().length() == 4 ? "-01-01T00:00:00" : ""));
+
+        if (StringUtil.valueExists(document.getDocumentDate())) {
+            researchProduct.setCreationDate(document.getDocumentDate() +
+                (document.getDocumentDate().length() == 4 ? "-01-01T00:00:00" : ""));
+        }
 
         researchProduct.setTitles(getMultilingualContent(document.getTitle()));
         researchProduct.setAbstracts(getMultilingualContent(document.getDescription()));
