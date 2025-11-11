@@ -1,6 +1,7 @@
 package rs.teslaris.exporter.service.impl;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
@@ -49,6 +50,7 @@ import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportEvent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
+import rs.teslaris.exporter.model.common.ExportPublicationType;
 import rs.teslaris.exporter.model.converter.ExportDocumentConverter;
 import rs.teslaris.exporter.model.converter.ExportEventConverter;
 import rs.teslaris.exporter.model.converter.ExportOrganisationUnitConverter;
@@ -116,7 +118,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportOrganisationUnitConverter::toCommonExportModel,
                 ExportOrganisationUnit.class,
                 OrganisationUnit::getId,
-                allTime
+                allTime,
+                null
             );
         } catch (Exception e) {
             log.error("Organisation Unit export set not completed due to an error.", e);
@@ -138,7 +141,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportPersonConverter::toCommonExportModel,
                 ExportPerson.class,
                 Person::getId,
-                allTime
+                allTime,
+                null
             );
         } catch (Exception e) {
             log.error("Person export set not completed due to an error.", e);
@@ -160,7 +164,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportEventConverter::toCommonExportModel,
                 ExportEvent.class,
                 Conference::getId,
-                allTime
+                allTime,
+                null
             );
         } catch (Exception e) {
             log.error("Event export set not completed due to an error.", e);
@@ -182,7 +187,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Dataset::getId,
-                allTime
+                allTime,
+                ExportPublicationType.DATASET
             );
 
             var softwareFuture = exportEntitiesAsync(
@@ -190,7 +196,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Software::getId,
-                allTime
+                allTime,
+                ExportPublicationType.SOFTWARE
             );
 
             var patentFuture = exportEntitiesAsync(
@@ -198,7 +205,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Patent::getId,
-                allTime
+                allTime,
+                ExportPublicationType.PATENT
             );
 
             var journalFuture = exportEntitiesAsync(
@@ -206,7 +214,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportPublicationSeriesConverter::toCommonExportModel,
                 ExportDocument.class,
                 Journal::getId,
-                allTime
+                allTime,
+                ExportPublicationType.JOURNAL
             );
 
             var journalPublicationFuture = exportEntitiesAsync(
@@ -214,7 +223,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 JournalPublication::getId,
-                allTime
+                allTime,
+                ExportPublicationType.JOURNAL_PUBLICATION
             );
 
             var proceedingsFuture = exportEntitiesAsync(
@@ -222,7 +232,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Proceedings::getId,
-                allTime
+                allTime,
+                ExportPublicationType.PROCEEDINGS
             );
 
             var proceedingsPublicationFuture = exportEntitiesAsync(
@@ -230,7 +241,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 ProceedingsPublication::getId,
-                allTime
+                allTime,
+                ExportPublicationType.PROCEEDINGS_PUBLICATION
             );
 
             var monographFuture = exportEntitiesAsync(
@@ -238,7 +250,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Monograph::getId,
-                allTime
+                allTime,
+                ExportPublicationType.MONOGRAPH
             );
 
             var monographPublicationFuture = exportEntitiesAsync(
@@ -246,7 +259,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 MonographPublication::getId,
-                allTime
+                allTime,
+                ExportPublicationType.MONOGRAPH_PUBLICATION
             );
 
             var thesisFuture = exportEntitiesAsync(
@@ -254,7 +268,8 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportDocumentConverter::toCommonExportModel,
                 ExportDocument.class,
                 Thesis::getId,
-                allTime
+                allTime,
+                ExportPublicationType.THESIS
             );
 
             CompletableFuture.allOf(
@@ -277,9 +292,11 @@ public class CommonExportServiceImpl implements CommonExportService {
         BiFunction<T, Boolean, E> converter,
         Class<E> exportClass,
         Function<T, Integer> idGetter,
-        boolean allTime
+        boolean allTime,
+        ExportPublicationType exportPublicationType
     ) {
-        exportEntities(repositoryFunction, converter, exportClass, idGetter, allTime);
+        exportEntities(repositoryFunction, converter, exportClass, idGetter, allTime,
+            exportPublicationType);
         return CompletableFuture.completedFuture(null);
     }
 
@@ -288,7 +305,8 @@ public class CommonExportServiceImpl implements CommonExportService {
         BiFunction<T, Boolean, E> converter,
         Class<E> exportClass,
         Function<T, Integer> idGetter,
-        boolean allTime
+        boolean allTime,
+        ExportPublicationType exportPublicationType
     ) {
         int pageNumber = 0;
         int chunkSize = 100;
@@ -302,6 +320,11 @@ public class CommonExportServiceImpl implements CommonExportService {
             for (T entity : chunk) {
                 var query = new Query();
                 query.addCriteria(Criteria.where("database_id").is(idGetter.apply(entity)));
+
+                if (Objects.nonNull(exportPublicationType)) {
+                    query.addCriteria(Criteria.where("type").is(exportPublicationType.name()));
+                }
+
                 query.limit(1);
 
                 var exportEntry = converter.apply(entity, true);

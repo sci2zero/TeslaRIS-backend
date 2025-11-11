@@ -72,8 +72,8 @@ public class ExportPatentConverter extends ExportConverterBase {
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
-            dcPatent.getIdentifier().add(legacyIdentifierPrefix + "(" +
-                exportDocument.getOldIds().stream().findFirst().get() + ")");
+            dcPatent.getIdentifier().add(legacyIdentifierPrefix +
+                exportDocument.getOldIds().stream().findFirst().get());
         }
 
         dcPatent.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());

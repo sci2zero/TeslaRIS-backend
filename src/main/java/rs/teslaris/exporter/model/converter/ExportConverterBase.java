@@ -53,6 +53,10 @@ public class ExportConverterBase {
     protected static <T> void addContentToList(List<T> sourceList,
                                                Function<T, String> preprocessingFunction,
                                                Consumer<String> consumer) {
+        if (Objects.isNull(sourceList)) {
+            return;
+        }
+
         sourceList.forEach(item -> {
             if (Objects.isNull(item)) {
                 return;
@@ -70,6 +74,10 @@ public class ExportConverterBase {
                                                Function<T, String> contentExtractionFunction,
                                                Function<T, String> identifierExtractionFunction,
                                                BiConsumer<String, String> consumer) {
+        if (Objects.isNull(sourceList)) {
+            return;
+        }
+
         sourceList.forEach(item -> {
             if (Objects.isNull(item)) {
                 return;

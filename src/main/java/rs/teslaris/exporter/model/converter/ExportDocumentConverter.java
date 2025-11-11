@@ -28,6 +28,7 @@ import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
@@ -646,11 +647,21 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
             var degree = new Degree();
-            addContentToList(
-                exportDocument.getThesisGrantor().getName(),
-                ExportMultilingualContent::getContent,
-                content -> degree.getGrantor().add(content)
-            );
+
+            if (Objects.nonNull(exportDocument.getThesisGrantor())) {
+                addContentToList(
+                    exportDocument.getThesisGrantor().getName(),
+                    ExportMultilingualContent::getContent,
+                    content -> degree.getGrantor().add(content)
+                );
+            } else {
+                addContentToList(
+                    exportDocument.getExternalThesisGrantorName(),
+                    ExportMultilingualContent::getContent,
+                    content -> degree.getGrantor().add(content)
+                );
+            }
+
             degree.setLevel(
                 new LevelType(String.valueOf(exportDocument.getThesisType().ordinal() % 3)));
             degree.getName().add(exportDocument.getThesisType().name());
@@ -670,8 +681,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
             marc21.getControlFields()
-                .add(new ControlField("001", legacyIdentifierPrefix + "(" +
-                    exportDocument.getOldIds().stream().findFirst().get() + ")"));
+                .add(new ControlField("001", legacyIdentifierPrefix +
+                    exportDocument.getOldIds().stream().findFirst().get()));
         } else {
             marc21.getControlFields()
                 .add(new ControlField("001", identifierPrefix + exportDocument.getId()));
@@ -903,14 +914,38 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 field.setValue(mc.getContent());
                 dimPublication.getFields().add(field);
             });
+        } else if (Objects.nonNull(exportDocument.getExternalThesisGrantorName())) {
+            exportDocument.getExternalThesisGrantorName().forEach(mc -> {
+                var field = new DimField();
+                field.setMdschema("dc");
+                field.setElement("source");
+                field.setLanguage(mc.getLanguageTag());
+                field.setValue(mc.getContent());
+                dimPublication.getFields().add(field);
+            });
         }
+
         dimPublication.getFields().add(new DimField("dc", "source", null, null, null, null,
             repositoryName + " (" + baseFrontendUrl + ")"));
 
-        dimPublication.getFields().add(new DimField("dc", "rights", null, null, null, null,
-            (Objects.nonNull(exportDocument.getOpenAccess()) && exportDocument.getOpenAccess()) ?
-                "Attribution-NonCommercial" :
-                "Attribution-NonCommercial-NoDerivs")); // TODO: improve this
+        exportDocument.getDocumentFiles().stream().filter(file -> file.getType().equals(
+                ResourceType.OFFICIAL_PUBLICATION) && Objects.nonNull(file.getLicense())).findFirst()
+            .ifPresent(officialPublication -> {
+                var license = switch (officialPublication.getLicense()) {
+                    case BY -> "Attribution";
+                    case BY_SA -> "Attribution-ShareAlike";
+                    case BY_NC -> "Attribution-NonCommercial";
+                    case BY_NC_SA -> "Attribution-NonCommercial-ShareAlike";
+                    case BY_ND -> "Attribution-NoDerivs";
+                    case BY_NC_ND -> "Attribution-NonCommercial-NoDerivs";
+                    case CC0 -> "PublicDomain";
+                };
+
+                dimPublication.getFields().add(
+                    new DimField("dc", "rights", null,
+                        null, null, null, license)
+                );
+            });
 
         clientLanguages.forEach(lang -> {
             dimPublication.getFields()
@@ -945,8 +980,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
-            dcPublication.getIdentifier().add(legacyIdentifierPrefix + "(" +
-                exportDocument.getOldIds().stream().findFirst().get() + ")");
+            dcPublication.getIdentifier().add(legacyIdentifierPrefix +
+                exportDocument.getOldIds().stream().findFirst().get());
         }
 
         dcPublication.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());

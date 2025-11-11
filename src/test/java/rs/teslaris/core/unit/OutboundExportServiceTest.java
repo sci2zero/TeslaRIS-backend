@@ -59,7 +59,7 @@ public class OutboundExportServiceTest {
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-                    null)), List.of("oai_cerif_openaire", "oai_dim"),
+                    null)), List.of("oai_cerif_openaire", "dim"),
                 false, null, Map.of());
 
         var mocked = mockStatic(ExportHandlersConfigurationLoader.class);
@@ -93,7 +93,7 @@ public class OutboundExportServiceTest {
 
 
         // When
-        var result = outboundExportService.listRequestedRecords("handler", "oai_dim",
+        var result = outboundExportService.listRequestedRecords("handler", "dim",
             "2023-01-01", "2023-12-31", "openaire_cris_publications", new OAIPMHResponse(), 0,
             false);
 
@@ -129,7 +129,7 @@ public class OutboundExportServiceTest {
         var response = new OAIPMHResponse();
 
         // When
-        var result = outboundExportService.listRequestedRecord("handler", "oai_dim",
+        var result = outboundExportService.listRequestedRecord("handler", "dim",
             "oai:repo:(Teslaris)123", response);
 
         // Then
@@ -200,7 +200,7 @@ public class OutboundExportServiceTest {
         assertEquals(2, result.getMetadataFormat().size());
         assertEquals("oai_cerif_openaire",
             result.getMetadataFormat().getFirst().getMetadataPrefix());
-        assertEquals("oai_dim", result.getMetadataFormat().get(1).getMetadataPrefix());
+        assertEquals("dim", result.getMetadataFormat().get(1).getMetadataPrefix());
     }
 
     @Test

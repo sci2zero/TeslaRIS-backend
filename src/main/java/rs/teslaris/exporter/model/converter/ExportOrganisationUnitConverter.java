@@ -131,8 +131,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportOrganisationUnit.getOldIds()) &&
             !exportOrganisationUnit.getOldIds().isEmpty()) {
-            dcOrgUnit.getIdentifier().add(legacyIdentifierPrefix + "(" +
-                exportOrganisationUnit.getOldIds().stream().findFirst().get() + ")");
+            dcOrgUnit.getIdentifier().add(legacyIdentifierPrefix +
+                exportOrganisationUnit.getOldIds().stream().findFirst().get());
         } else {
             dcOrgUnit.getIdentifier()
                 .add(identifierPrefix + exportOrganisationUnit.getDatabaseId());

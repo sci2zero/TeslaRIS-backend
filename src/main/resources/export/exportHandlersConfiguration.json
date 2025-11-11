@@ -361,7 +361,7 @@
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
         "THESIS": "test_the"
@@ -419,7 +419,7 @@
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
         "PROCEEDINGS": "test_proc",
@@ -461,7 +461,7 @@
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
         "PROCEEDINGS": "test_proc",
@@ -548,7 +548,7 @@
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
         "PROCEEDINGS": "test_proc",
@@ -635,7 +635,7 @@
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
         "PROCEEDINGS": "test_proc",
@@ -722,7 +722,7 @@
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
         "PROCEEDINGS": "test_proc",

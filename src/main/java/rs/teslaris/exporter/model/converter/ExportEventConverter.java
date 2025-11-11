@@ -166,8 +166,7 @@ public class ExportEventConverter extends ExportConverterBase {
         if (supportLegacyIdentifiers && Objects.nonNull(exportEvent.getOldIds()) &&
             !exportEvent.getOldIds().isEmpty()) {
             dcEvent.getIdentifier().add(
-                legacyIdentifierPrefix + "(" + exportEvent.getOldIds().stream().findFirst().get() +
-                    ")");
+                legacyIdentifierPrefix + exportEvent.getOldIds().stream().findFirst().get());
         }
 
         dcEvent.getIdentifier().add(identifierPrefix + exportEvent.getDatabaseId());

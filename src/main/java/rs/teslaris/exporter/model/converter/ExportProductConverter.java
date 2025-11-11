@@ -81,8 +81,8 @@ public class ExportProductConverter extends ExportConverterBase {
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
-            dcProduct.getIdentifier().add(legacyIdentifierPrefix + "(" +
-                exportDocument.getOldIds().stream().findFirst().get() + ")");
+            dcProduct.getIdentifier().add(legacyIdentifierPrefix +
+                exportDocument.getOldIds().stream().findFirst().get());
         }
 
         dcProduct.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());

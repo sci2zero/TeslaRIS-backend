@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
-import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.DocumentFileSection;
@@ -131,15 +131,23 @@ public class ScheduledTasksRestorer {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
+        DocumentPublicationType concretePublicationType;
+        if (data.containsKey("concretePublicationType")) {
+            concretePublicationType =
+                DocumentPublicationType.valueOf((String) data.get("concretePublicationType"));
+        } else {
+            concretePublicationType = null;
+        }
+
         var taskId = taskManagerService.scheduleTask(
-            "DatabaseReindex-" +
-                StringUtils.join(indexesToRepopulate.stream().map(
-                    EntityType::name).toList(), "-") +
-                "-" + UUID.randomUUID(),
+            "DatabaseReindex-" + StringUtils.join(
+                indexesToRepopulate.stream().map(EntityType::name).toList(), "-") +
+                (Objects.nonNull(concretePublicationType) ? ("-" + concretePublicationType + "-") :
+                    "") + "-" + UUID.randomUUID(),
             timeToRun,
             () -> reindexService.reindexDatabase(indexesToRepopulate, reharvestCitationIndicators,
-                null),
-            userId, RecurrenceType.ONCE);
+                concretePublicationType),
+            userId, metadata.getRecurrenceType());
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, timeToRun,
@@ -147,7 +155,11 @@ public class ScheduledTasksRestorer {
                 put("indexesToRepopulate", indexesToRepopulate);
                 put("userId", userId);
                 put("reharvestCitationIndicators", String.valueOf(reharvestCitationIndicators));
-            }}, RecurrenceType.ONCE));
+
+                if (Objects.nonNull(concretePublicationType)) {
+                    put("concretePublicationType", concretePublicationType.name());
+                }
+            }}, metadata.getRecurrenceType()));
     }
 
     private void restoreUnmanagedDocumentsDeletion(ScheduledTaskMetadata metadata) {

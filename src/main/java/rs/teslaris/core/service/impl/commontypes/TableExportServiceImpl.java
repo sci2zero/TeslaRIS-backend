@@ -251,21 +251,21 @@ public class TableExportServiceImpl implements TableExportService {
             case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
-                        .filter(String::isBlank).toList(), pageable,
+                        .filter(t -> !t.isBlank()).toList(), pageable,
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
                     false, onlyUnmanaged, documentSpecificFilters.a,
                     Boolean.parseBoolean(endpointTokenParameters.getFirst()));
             case AUTHOR_REPRINT_DOCUMENTS_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
-                        .filter(String::isBlank).toList(), pageable,
+                        .filter(t -> !t.isBlank()).toList(), pageable,
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
                     true, null, documentSpecificFilters.a,
                     Boolean.parseBoolean(endpointTokenParameters.getFirst()));
             case DOCUMENT_ADVANCED_SEARCH, THESIS_ADVANCED_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
-                        .filter(String::isBlank).toList(), pageable,
+                        .filter(t -> !t.isBlank()).toList(), pageable,
                     SearchRequestType.ADVANCED, documentSpecificFilters.b,
                     documentSpecificFilters.c, null, onlyUnmanaged,
                     documentSpecificFilters.a,

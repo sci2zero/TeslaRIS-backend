@@ -582,7 +582,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                 organisationUnitService.findOrganisationUnitById(
                     commonFields.getOrganisationUnitId());
             involvement.setOrganisationUnit(organisationUnit);
+            involvement.getAffiliationStatement().clear();
         } else {
+            involvement.setOrganisationUnit(null);
             var affiliationStatements = multilingualContentService.getMultilingualContent(
                 commonFields.getAffiliationStatement());
             involvement.setAffiliationStatement(affiliationStatements);

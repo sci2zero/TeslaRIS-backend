@@ -159,8 +159,7 @@ public class ExportPersonConverter extends ExportConverterBase {
         if (supportLegacyIdentifiers && Objects.nonNull(exportPerson.getOldIds()) &&
             !exportPerson.getOldIds().isEmpty()) {
             dcPerson.getIdentifier().add(
-                legacyIdentifierPrefix + "(" + exportPerson.getOldIds().stream().findFirst().get() +
-                    ")");
+                legacyIdentifierPrefix + exportPerson.getOldIds().stream().findFirst().get());
         }
 
         dcPerson.getIdentifier().add(identifierPrefix + exportPerson.getDatabaseId());

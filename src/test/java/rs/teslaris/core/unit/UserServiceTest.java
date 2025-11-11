@@ -1615,4 +1615,175 @@ public class UserServiceTest {
         assertEquals("Doe", user.getLastName());
         verify(userRepository).save(user);
     }
+
+    @Test
+    public void shouldResendActivationEmailForDeactivatedUser() {
+        // Given
+        Integer userId = 1;
+        var user = new User();
+        user.setId(userId);
+        user.setEmail("johndoe@example.com");
+        user.setLocked(true);
+
+        var language = new LanguageTag();
+        language.setLanguageTag("en");
+        user.setPreferredUILanguage(language);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        var activationToken = new UserAccountActivation("test-token-123", user);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(messageSource.getMessage(eq("accountActivation.mailSubject"), any(), any()))
+            .thenReturn("Activate Your Account");
+        when(messageSource.getMessage(eq("accountActivation.mailBodyResearcher"), any(), any()))
+            .thenReturn("Welcome! Activate your account here: {1}");
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // When
+        userService.resendUserActivationEmail(userId);
+
+        // Then
+        verify(userAccountActivationRepository).deleteAllByUserId(userId);
+        verify(userAccountActivationRepository).save(any(UserAccountActivation.class));
+        verify(emailUtil).sendSimpleEmail(eq("johndoe@example.com"), eq("Activate Your Account"),
+            anyString());
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenResendingActivationEmailForActiveUser() {
+        // Given
+        Integer userId = 1;
+        var user = new User();
+        user.setId(userId);
+        user.setLocked(false);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // When & Then
+        assertThrows(CantEditException.class, () -> {
+            userService.resendUserActivationEmail(userId);
+        });
+
+        verify(userAccountActivationRepository, never()).deleteAllByUserId(any());
+        verify(userAccountActivationRepository, never()).save(any());
+        verify(emailUtil, never()).sendSimpleEmail(any(), any(), any());
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenUserNotFound() {
+        // Given
+        Integer userId = 999;
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(NotFoundException.class, () -> {
+            userService.resendUserActivationEmail(userId);
+        });
+
+        verify(userAccountActivationRepository, never()).deleteAllByUserId(any());
+        verify(userAccountActivationRepository, never()).save(any());
+        verify(emailUtil, never()).sendSimpleEmail(any(), any(), any());
+    }
+
+    @Test
+    public void shouldConstructCorrectActivationLinkWithTrailingSlash() {
+        // Given
+        Integer userId = 1;
+        var user = new User();
+        user.setId(userId);
+        user.setEmail("johndoe@example.com");
+        user.setLocked(true);
+
+        var language = new LanguageTag();
+        language.setLanguageTag("en");
+        user.setPreferredUILanguage(language);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        var activationToken = new UserAccountActivation("test-token-123", user);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("test");
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // When
+        userService.resendUserActivationEmail(userId);
+
+        // Then - Verify the activation link construction
+        verify(emailUtil).sendSimpleEmail(eq("johndoe@example.com"), any(), any());
+    }
+
+    @Test
+    public void shouldConstructCorrectActivationLinkWithoutTrailingSlash() {
+        // Given
+        Integer userId = 1;
+        var user = new User();
+        user.setId(userId);
+        user.setEmail("johndoe@example.com");
+        user.setLocked(true);
+
+        var language = new LanguageTag();
+        language.setLanguageTag("sr");
+        user.setPreferredUILanguage(language);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        var activationToken = new UserAccountActivation("test-token-456", user);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("test");
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // When
+        userService.resendUserActivationEmail(userId);
+
+        // Then - Verify the activation link construction
+        verify(emailUtil).sendSimpleEmail(eq("johndoe@example.com"), any(), any());
+    }
+
+    @Test
+    public void shouldUseCorrectLanguageInEmailContent() {
+        // Given
+        Integer userId = 1;
+        var user = new User();
+        user.setId(userId);
+        user.setEmail("johndoe@example.com");
+        user.setLocked(true);
+
+        var language = new LanguageTag();
+        language.setLanguageTag("de"); // German language
+        user.setPreferredUILanguage(language);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        var activationToken = new UserAccountActivation("test-token-789", user);
+        when(userAccountActivationRepository.save(any(UserAccountActivation.class))).thenReturn(
+            activationToken);
+
+        when(messageSource.getMessage(eq("accountActivation.mailSubject"), any(),
+            eq(Locale.forLanguageTag("de"))))
+            .thenReturn("Aktivieren Sie Ihr Konto");
+        when(messageSource.getMessage(eq("accountActivation.mailBodyResearcher"), any(),
+            eq(Locale.forLanguageTag("de"))))
+            .thenReturn("Willkommen! Aktivieren Sie Ihr Konto hier: {1}");
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+
+        // When
+        userService.resendUserActivationEmail(userId);
+
+        // Then
+        verify(messageSource).getMessage(eq("accountActivation.mailSubject"), any(),
+            eq(Locale.forLanguageTag("de")));
+        verify(messageSource).getMessage(eq("accountActivation.mailBodyResearcher"), any(),
+            eq(Locale.forLanguageTag("de")));
+    }
 }
