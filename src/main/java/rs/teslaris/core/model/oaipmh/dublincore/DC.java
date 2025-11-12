@@ -55,7 +55,7 @@ public class DC implements PublicationConvertable, EventConvertable, OrgUnitConv
     private List<String> date = new ArrayList<>();
 
     @XmlElement(name = "type", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> type = new ArrayList<>();
+    private List<DCType> type = new ArrayList<>();
 
     @XmlElement(name = "format", namespace = "http://purl.org/dc/elements/1.1/")
     private List<String> format = new ArrayList<>();

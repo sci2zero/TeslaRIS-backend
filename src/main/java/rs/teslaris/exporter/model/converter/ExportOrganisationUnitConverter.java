@@ -1,7 +1,9 @@
 package rs.teslaris.exporter.model.converter;
 
 import io.github.coordinates2country.Coordinates2Country;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,8 +14,10 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.model.oaipmh.organisationunit.PartOf;
+import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -77,6 +81,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             commonExportOU.getActivelyRelatedInstitutionIds().addAll(topLevelIds);
         }
 
+        commonExportOU.setIsLegalEntity(organisationUnit.getLegalEntity());
+
         return commonExportOU;
     }
 
@@ -120,13 +126,18 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
                     supportLegacyIdentifiers)));
         }
 
+        orgUnit.setType(new ArrayList<>(List.of(
+            new PublicationType("https://w3id.org/cerif/vocab/OrganisationTypes#HigherEducation",
+                "", "https://w3id.org/cerif/vocab/OrganisationTypes"))));
+
         return orgUnit;
     }
 
     public static DC toDCModel(ExportOrganisationUnit exportOrganisationUnit,
                                boolean supportLegacyIdentifiers) {
         var dcOrgUnit = new DC();
-        dcOrgUnit.getType().add("party");
+        dcOrgUnit.getType().add(new DCType("ORGANISATION_UNIT", null,
+            exportOrganisationUnit.getIsLegalEntity() ? "LEGAL" : null));
         dcOrgUnit.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportOrganisationUnit.getOldIds()) &&

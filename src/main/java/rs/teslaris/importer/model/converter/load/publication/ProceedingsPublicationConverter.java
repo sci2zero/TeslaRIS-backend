@@ -46,7 +46,7 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
 
         var isInvited =
             Objects.nonNull(record.getInvited()) && record.getInvited().equals(Boolean.TRUE);
-        if (record.getType().endsWith("c_5794")) {
+        if (record.getType().getFirst().getValue().endsWith("c_5794")) {
             dto.setProceedingsPublicationType(
                 isInvited ? ProceedingsPublicationType.INVITED_FULL_ARTICLE :
                     ProceedingsPublicationType.REGULAR_FULL_ARTICLE);

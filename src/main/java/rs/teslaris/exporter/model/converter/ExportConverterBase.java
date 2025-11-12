@@ -15,9 +15,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.oaipmh.dspaceinternal.Dim;
+import rs.teslaris.core.model.oaipmh.dspaceinternal.DimField;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
+import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
@@ -121,19 +128,32 @@ public class ExportConverterBase {
         }
     }
 
-    protected static String inferPublicationCOARType(ExportPublicationType type) {
-        return switch (type) {
-            case JOURNAL_PUBLICATION -> "http://purl.org/coar/resource_type/c_2df8fbb1";
+    protected static PublicationType inferPublicationCOARType(ExportDocument exportDocument) {
+        var scheme = "https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types";
+
+        var coarType = switch (exportDocument.getType()) {
+            case JOURNAL_PUBLICATION -> exportDocument.getJournalPublicationType().equals(
+                JournalPublicationType.RESEARCH_ARTICLE) ?
+                "http://purl.org/coar/resource_type/c_2df8fbb1" :
+                "http://purl.org/coar/resource_type/c_3e5a";
             case PROCEEDINGS -> "http://purl.org/coar/resource_type/c_f744";
-            case PROCEEDINGS_PUBLICATION -> "http://purl.org/coar/resource_type/c_5794";
+            case PROCEEDINGS_PUBLICATION -> exportDocument.getProceedingsPublicationType().equals(
+                ProceedingsPublicationType.REGULAR_FULL_ARTICLE) ?
+                "http://purl.org/coar/resource_type/c_5794" :
+                "http://purl.org/coar/resource_type/c_c94f";
             case MONOGRAPH -> "http://purl.org/coar/resource_type/c_2f33"; // book
             case PATENT -> "http://purl.org/coar/resource_type/c_15cd";
             case SOFTWARE -> "http://purl.org/coar/resource_type/c_5ce6";
             case DATASET -> "http://purl.org/coar/resource_type/c_ddb1";
             case JOURNAL -> "http://purl.org/coar/resource_type/c_0640";
             case MONOGRAPH_PUBLICATION -> "http://purl.org/coar/resource_type/c_3248"; // book part
-            case THESIS -> "http://purl.org/coar/resource_type/c_46ec";
+            case THESIS -> (exportDocument.getThesisType().equals(ThesisType.PHD) ||
+                exportDocument.getThesisType().equals(ThesisType.PHD_ART_PROJECT)) ?
+                "http://purl.org/coar/resource_type/c_db06" :
+                "http://purl.org/coar/resource_type/c_46ec";
         };
+
+        return new PublicationType(coarType, null, scheme);
     }
 
     /**
@@ -169,26 +189,75 @@ public class ExportConverterBase {
     }
 
     public static void applyCustomMappings(Object convertedEntity, ExportDataFormat format,
-                                           Class<?> recordClass,
                                            ExportHandlersConfigurationLoader.Handler handler) {
-        if (format.equals(ExportDataFormat.DUBLIN_CORE) &&
-            recordClass.equals(ExportDocument.class)) {
-            var typeKey = ((DC) convertedEntity).getType().getFirst();
+        if ((format.equals(ExportDataFormat.DUBLIN_CORE) ||
+            format.equals(ExportDataFormat.ETD_MS))) {
+            var typeKey = ((DC) convertedEntity).getType().getFirst().getValue().toUpperCase();
+            var concreteTypeKey = ((DC) convertedEntity).getType().getFirst().getScheme();
 
             ((DC) convertedEntity).getType().clear();
-            ((DC) convertedEntity).getType().add(handler.typeMappings().get(typeKey));
-
-        } else if (format.equals(ExportDataFormat.DSPACE_INTERNAL_MODEL) &&
-            recordClass.equals(ExportDocument.class)) {
-            var typeElement = ((Dim) convertedEntity).getFields().stream()
+            ((DC) convertedEntity).getType()
+                .addAll(constructDCTypeFields(handler, typeKey, concreteTypeKey));
+        } else if (format.equals(ExportDataFormat.DSPACE_INTERNAL_MODEL)) {
+            var typeField = ((Dim) convertedEntity).getFields().stream()
                 .filter(field -> field.getElement().equals("type")).findFirst();
 
-            if (typeElement.isEmpty()) {
+            if (typeField.isEmpty()) {
                 throw new NotFoundException("Fatal error. No type found for document.");
             }
 
-            typeElement.get().setValue(handler.typeMappings().get(typeElement.get().getValue()));
+            var typeKey = typeField.get().getValue();
+            var concreteTypeKey = typeField.get().getQualifier();
+
+            ((Dim) convertedEntity).getFields().remove(typeField.get());
+            constructDCTypeFields(handler, typeKey, concreteTypeKey).forEach(
+                dcType -> ((Dim) convertedEntity).getFields().add(
+                    new DimField("dc", "type", dcType.getScheme(), dcType.getLang(), null, null,
+                        dcType.getValue())));
         }
+    }
+
+    private static List<DCType> constructDCTypeFields(
+        ExportHandlersConfigurationLoader.Handler handler, String typeKey, String concreteTypeKey) {
+        var types = new ArrayList<DCType>();
+        if (!handler.typeMappings().containsKey(typeKey)) {
+            return types;
+        }
+
+        var typeConfiguration = Arrays.asList(handler.typeMappings().get(typeKey).split(";"));
+
+        if (StringUtil.valueExists(concreteTypeKey) && typeConfiguration.stream()
+            .anyMatch(entry -> entry.startsWith("(" + concreteTypeKey + ")"))) {
+            typeConfiguration = typeConfiguration.stream()
+                .filter(entry -> entry.startsWith("(" + concreteTypeKey + ")"))
+                .map(entry -> entry.replace("(" + concreteTypeKey + ")", ""))
+                .toList();
+        } else {
+            typeConfiguration = typeConfiguration.stream()
+                .filter(entry -> entry.startsWith("(DEFAULT)"))
+                .map(entry -> entry.replace("(DEFAULT)", "")).toList();
+        }
+
+        typeConfiguration.forEach(type -> {
+            var typeTokens = type.split("§");
+            var name = typeTokens[0];
+
+            String scheme = null;
+            if (typeTokens.length == 2) {
+                scheme = typeTokens[1];
+            }
+
+            String lang = null;
+            if (name.contains("@")) {
+                var typeAndLang = typeTokens[0].split("@");
+                name = typeAndLang[0];
+                lang = typeAndLang[1];
+            }
+
+            types.add(new DCType(name, lang, scheme));
+        });
+
+        return types;
     }
 
     protected static String getConcreteEntityPath(ExportPublicationType type) {

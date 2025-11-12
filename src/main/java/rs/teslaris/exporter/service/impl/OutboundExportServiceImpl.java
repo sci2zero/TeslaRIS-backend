@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -162,9 +163,19 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             });
         }
 
+        var concreteTypeFilters = new HashMap<String, List<String>>();
+        if (Objects.nonNull(matchedSet.get().concreteTypeFilters())) {
+            var filters = matchedSet.get().concreteTypeFilters().split(";");
+            Arrays.stream(filters).forEach(filter -> {
+                var filterParts = filter.split(":");
+                var stringTypes = filterParts[1].split(",");
+                concreteTypeFilters.put(filterParts[0], Arrays.stream(stringTypes).toList());
+            });
+        }
+
         var recordsPage =
             findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get(),
-                publicationTypeFilters);
+                publicationTypeFilters, concreteTypeFilters);
 
         if (recordsPage.getTotalElements() == 0) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
@@ -358,8 +369,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             Object convertedEntity =
                 conversionMethod.invoke(null, requestedRecord, supportLegacyIdentifiers);
 
-            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat, recordClass,
-                handler);
+            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat, handler);
 
             ExportConverterBase.performExceptionalHandlingWhereAbsolutelyNecessary(convertedEntity,
                 metadataFormat, recordClass, handler);
@@ -419,7 +429,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     private <E> Page<E> findRequestedRecords(Class<E> entityClass, String from, String until,
                                              int page,
                                              ExportHandlersConfigurationLoader.Handler handlerConfiguration,
-                                             List<ExportPublicationType> publicationTypeFilters) {
+                                             List<ExportPublicationType> publicationTypeFilters,
+                                             HashMap<String, List<String>> concreteTypeFilters) {
         var query = new Query();
 
         query.addCriteria(Criteria.where("last_updated").gte(Date.valueOf(
@@ -439,6 +450,22 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         if (!publicationTypeFilters.isEmpty()) {
             query.addCriteria(Criteria.where("type").in(publicationTypeFilters));
+        }
+
+        List<Criteria> allFieldCriteria = new ArrayList<>();
+
+        concreteTypeFilters.forEach((field, types) -> {
+            Criteria fieldCriteria = new Criteria().orOperator(
+                Criteria.where(field).in(types),
+                Criteria.where(field).exists(false)
+            );
+            allFieldCriteria.add(fieldCriteria);
+        });
+
+        if (!allFieldCriteria.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(
+                allFieldCriteria.toArray(new Criteria[0])
+            ));
         }
 
         var totalCount = mongoTemplate.count(query, entityClass);

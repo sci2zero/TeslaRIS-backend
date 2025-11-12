@@ -7,6 +7,7 @@ import java.util.Objects;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.product.Product;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -35,7 +36,8 @@ public class ExportProductConverter extends ExportConverterBase {
         openaireProduct.setDescription(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getDescription()));
 
-        openaireProduct.setType(inferPublicationCOARType(exportDocument.getType()));
+        openaireProduct.setType(
+            new ArrayList<>(List.of(inferPublicationCOARType(exportDocument))));
 
         openaireProduct.setKeywords(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getKeywords()));
@@ -74,9 +76,9 @@ public class ExportProductConverter extends ExportConverterBase {
 
     public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
         var dcProduct = new DC();
-        dcProduct.getType().add(
-            exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
-                "software");
+        dcProduct.getType().add(new DCType(
+            exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" : "software",
+            null, null));
         dcProduct.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&

@@ -38,6 +38,7 @@ import rs.teslaris.core.model.oaipmh.dspaceinternal.DimField;
 import rs.teslaris.core.model.oaipmh.dublincore.Contributor;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.etdms.Degree;
 import rs.teslaris.core.model.oaipmh.etdms.ETDMSThesis;
 import rs.teslaris.core.model.oaipmh.etdms.LevelType;
@@ -498,7 +499,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         openairePublication.setSubtitle(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getSubtitle()));
 
-        openairePublication.setType(inferPublicationCOARType(exportDocument.getType()));
+        openairePublication.setType(
+            new ArrayList<>(List.of(inferPublicationCOARType(exportDocument))));
 
         if (!exportDocument.getLanguageTags().isEmpty()) {
             openairePublication.setLanguage(
@@ -902,8 +904,11 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         dimPublication.getFields().add(new DimField("dc", "date", "issued", null, null, null,
             exportDocument.getDocumentDate()));
+
+        String qualifier = getConcreteTypeIfRelevant(exportDocument);
         dimPublication.getFields().add(
-            new DimField("dc", "type", null, "en", null, null, exportDocument.getType().name()));
+            new DimField("dc", "type", qualifier, "en", null, null,
+                exportDocument.getType().name()));
 
         if (Objects.nonNull(exportDocument.getThesisGrantor())) {
             exportDocument.getThesisGrantor().getName().forEach(mc -> {
@@ -986,7 +991,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         dcPublication.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());
 
-        dcPublication.getType().add(exportDocument.getType().name());
+        String scheme = getConcreteTypeIfRelevant(exportDocument);
+        dcPublication.getType().add(new DCType(exportDocument.getType().name(), null, scheme));
 
         clientLanguages.forEach(lang -> {
             dcPublication.getIdentifier()
@@ -1093,5 +1099,16 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 "info:eu-repo/semantics/openAccess" :
                 "info:eu-repo/semantics/metadataOnlyAccess");
         dcPublication.getRights().add("http://creativecommons.org/publicdomain/zero/1.0/");
+    }
+
+    private static String getConcreteTypeIfRelevant(ExportDocument exportDocument) {
+        return switch (exportDocument.getType()) {
+            case JOURNAL_PUBLICATION -> exportDocument.getJournalPublicationType().name();
+            case PROCEEDINGS_PUBLICATION -> exportDocument.getProceedingsPublicationType().name();
+            case MONOGRAPH -> exportDocument.getMonographType().name();
+            case MONOGRAPH_PUBLICATION -> exportDocument.getMonographPublicationType().name();
+            case THESIS -> exportDocument.getThesisType().name();
+            default -> null;
+        };
     }
 }

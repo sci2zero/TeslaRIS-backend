@@ -39,4 +39,7 @@ public class ExportOrganisationUnit extends BaseExportEntity {
 
     @Field("country")
     private String country;
+
+    @Field("is_legal_entity")
+    private Boolean isLegalEntity;
 }

@@ -1,5 +1,7 @@
 package rs.teslaris.core.util.signposting;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,7 +67,7 @@ public class FairSignpostingL1Utility {
 
         if (valuePresent(person.getPersonalInfo().getOrcid())) {
             headers.add(HttpHeaders.LINK,
-                "<https://orcid.org/" + person.getPersonalInfo().getOrcid() +
+                "<" + buildSafeUri("https://orcid.org/" + person.getPersonalInfo().getOrcid()) +
                     ">; rel=\"identifier\"; type=\"text/html\"");
         }
 
@@ -186,7 +188,7 @@ public class FairSignpostingL1Utility {
     private static void setCommonFields(HttpHeaders headers, DocumentDTO dto, String selfUrl) {
         if (valuePresent(dto.getDoi())) {
             headers.add(HttpHeaders.LINK,
-                "<https://doi.org/" + dto.getDoi() + ">; rel=\"cite-as\"");
+                "<" + buildSafeUri("https://doi.org/" + dto.getDoi()) + ">; rel=\"cite-as\"");
         }
 
         if (valuePresent(dto.getScopusId())) {
@@ -203,7 +205,7 @@ public class FairSignpostingL1Utility {
 
         if (valuePresent(dto.getOpenAlexId())) {
             headers.add(HttpHeaders.LINK,
-                "<https://openalex.org/" + dto.getDoi() + ">; rel=\"cite-as\"");
+                "<" + buildSafeUri("https://openalex.org/" + dto.getDoi()) + ">; rel=\"cite-as\"");
         }
 
         addMetadataLinks(headers, dto, selfUrl);
@@ -217,8 +219,9 @@ public class FairSignpostingL1Utility {
                     return;
                 }
                 headers.add(HttpHeaders.LINK,
-                    "<https://spdx.org/licenses/CC-" + file.getLicense().name().replace("_", "-") +
-                        "-4.0>; rel=\"license\"");
+                    "<" + buildSafeUri("https://spdx.org/licenses/CC-" +
+                        file.getLicense().name().replace("_", "-") + "-4.0") +
+                        ">; rel=\"license\"");
             });
 
         if (Objects.nonNull(dto.getContributions())) {
@@ -321,8 +324,8 @@ public class FairSignpostingL1Utility {
             .filter(df -> df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
             .forEach(file ->
                 headers.add(HttpHeaders.LINK,
-                    "<" + baseUrl + "/api/file/" + file.getFileName() + ">; rel=\"item\" type=\"" +
-                        file.getMimeType() + "\"")
+                    "<" + buildSafeUri(baseUrl + "/api/file/" + file.getFileName()) +
+                        ">; rel=\"item\" type=\"" + file.getMimeType() + "\"")
             );
     }
 
@@ -343,8 +346,8 @@ public class FairSignpostingL1Utility {
         if (dto instanceof ThesisResponseDTO) {
             for (var libraryFormat : LibraryFormat.values()) {
                 headers.add(HttpHeaders.LINK,
-                    "<" + baseUrl + selfUrl + "/library-format/" + dto.getId() + "/" +
-                        libraryFormat.name() + ">; rel=\"describedby\"; type=\"" +
+                    "<" + buildSafeUri(baseUrl + selfUrl + "/library-format/" + dto.getId() + "/" +
+                        libraryFormat.name()) + ">; rel=\"describedby\"; type=\"" +
                         libraryFormat.getValue() + "\"");
             }
         }
@@ -352,13 +355,20 @@ public class FairSignpostingL1Utility {
 
     private static void addLinksetReferences(HttpHeaders headers, String selfUrl, String entityId) {
         headers.add(HttpHeaders.LINK,
-            "<" + baseUrl + selfUrl + "/linkset/" + entityId + "/JSON" +
+            "<" + buildSafeUri(baseUrl + selfUrl + "/linkset/" + entityId + "/JSON") +
                 ">; rel=\"describedby\"; type=\"" + LinksetFormat.JSON.getValue() + "\"");
         headers.add(HttpHeaders.LINK,
-            "<" + baseUrl + selfUrl + "/linkset/" + entityId + "/LINKSET" +
+            "<" + buildSafeUri(baseUrl + selfUrl + "/linkset/" + entityId + "/LINKSET") +
                 ">; rel=\"describedby\"; type=\"" + LinksetFormat.LINKSET.getValue() + "\"");
     }
 
+    public static String buildSafeUri(String uri) {
+        try {
+            return new URI(uri).toASCIIString();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid URI", e);
+        }
+    }
 
     @Value("${export.base.url}")
     public void setBaseUrl(String baseUrl) {

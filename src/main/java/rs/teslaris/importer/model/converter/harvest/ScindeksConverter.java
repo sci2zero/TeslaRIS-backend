@@ -8,6 +8,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -48,7 +49,8 @@ public class ScindeksConverter {
                     document.setEIssn(issn.split(":")[1].trim());
                 });
         } else {
-            log.error("UNKNOWN TYPE: {}", String.join(", ", record.getType()));
+            log.error("UNKNOWN TYPE: {}",
+                String.join(", ", record.getType().stream().map(DCType::getValue).toList()));
         }
 
         FunctionalUtil.forEachWithCounter(record.getCreator(), (i, authorship) -> {

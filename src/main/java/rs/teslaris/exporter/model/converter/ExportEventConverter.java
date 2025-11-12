@@ -17,6 +17,7 @@ import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -159,7 +160,7 @@ public class ExportEventConverter extends ExportConverterBase {
     public static DC toDCModel(ExportEvent exportEvent, boolean supportLegacyIdentifiers) {
         var dcEvent = new DC();
         dcEvent.getSource().add(repositoryName);
-        dcEvent.getType().add("event");
+        dcEvent.getType().add(new DCType("EVENT", null, null));
         dcEvent.getCoverage()
             .add(exportEvent.getDateFrom().toString() + "-" + exportEvent.getDateTo().toString());
 

@@ -8,6 +8,7 @@ import de.undercouch.citeproc.csl.CSLNameBuilder;
 import de.undercouch.citeproc.csl.CSLType;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
@@ -22,6 +23,7 @@ import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Component
@@ -154,7 +156,8 @@ public class CitationServiceImpl implements CitationService {
                 .orElseThrow(() -> new NotFoundException(
                     "Document with id " + documentId + " does not exist."));
 
-        if (!SessionUtil.isUserLoggedIn() && !documentIndex.getIsApproved()) {
+        if (!SessionUtil.isUserLoggedIn() && (Objects.isNull(documentIndex.getIsApproved()) ||
+            !documentIndex.getIsApproved())) {
             throw new NotFoundException("Document with id " + documentId + " does not exist.");
         }
 
@@ -162,6 +165,10 @@ public class CitationServiceImpl implements CitationService {
     }
 
     private CSLType deduceCSLType(String type) {
+        if (!StringUtil.valueExists(type)) {
+            return CSLType.ARTICLE;
+        }
+
         return switch (type) {
             case "JOURNAL_PUBLICATION" -> CSLType.ARTICLE_JOURNAL;
             case "PROCEEDINGS_PUBLICATION" -> CSLType.PAPER_CONFERENCE;

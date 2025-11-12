@@ -2,11 +2,13 @@ package rs.teslaris.exporter.model.converter;
 
 import com.google.common.base.Functions;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.patent.Patent;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -32,7 +34,8 @@ public class ExportPatentConverter extends ExportConverterBase {
         openairePatent.setTitle(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
 
-        openairePatent.setType(inferPublicationCOARType(exportDocument.getType()));
+        openairePatent.setType(
+            new ArrayList<>(List.of(inferPublicationCOARType(exportDocument))));
 
         ExportMultilingualContentConverter.setFieldFromPriorityContent(
             exportDocument.getDescription().stream(),
@@ -67,7 +70,7 @@ public class ExportPatentConverter extends ExportConverterBase {
 
     public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
         var dcPatent = new DC();
-        dcPatent.getType().add("model");
+        dcPatent.getType().add(new DCType("model", null, null));
         dcPatent.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&

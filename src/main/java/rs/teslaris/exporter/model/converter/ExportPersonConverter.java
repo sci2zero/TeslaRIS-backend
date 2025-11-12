@@ -14,6 +14,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.Person;
@@ -153,7 +154,7 @@ public class ExportPersonConverter extends ExportConverterBase {
 
     public static DC toDCModel(ExportPerson exportPerson, boolean supportLegacyIdentifiers) {
         var dcPerson = new DC();
-        dcPerson.getType().add("party");
+        dcPerson.getType().add(new DCType("PERSON", null, null));
         dcPerson.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportPerson.getOldIds()) &&

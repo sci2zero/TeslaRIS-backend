@@ -26,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -59,7 +60,7 @@ public class OutboundExportServiceTest {
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-                    null)), List.of("oai_cerif_openaire", "dim"),
+                    null, null)), List.of("oai_cerif_openaire", "dim"),
                 false, null, Map.of());
 
         var mocked = mockStatic(ExportHandlersConfigurationLoader.class);
@@ -87,6 +88,7 @@ public class OutboundExportServiceTest {
         document.setOpenAccess(true);
         document.setLastUpdated(new Date());
         document.setType(ExportPublicationType.JOURNAL_PUBLICATION);
+        document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
         when(mongoTemplate.find(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(List.of(document));
         when(mongoTemplate.count(any(Query.class), eq(ExportDocument.class))).thenReturn(1L);
@@ -123,6 +125,7 @@ public class OutboundExportServiceTest {
         document.setOpenAccess(true);
         document.setLastUpdated(new Date());
         document.setType(ExportPublicationType.JOURNAL_PUBLICATION);
+        document.setJournalPublicationType(JournalPublicationType.REVIEW_ARTICLE);
         when(mongoTemplate.findOne(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(document);
 

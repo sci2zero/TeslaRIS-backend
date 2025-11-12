@@ -344,7 +344,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     );
                     var batch = mongoTemplate.find(query.addCriteria(criteria), Publication.class);
                     batch.forEach(record -> {
-                        if (record.getType()
+                        if (record.getType().getFirst().getValue()
                             .endsWith("c_f744")) { // COAR type: conference proceedings
                             var creationDTO = proceedingsConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
@@ -369,7 +369,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                     }
                                 }
                             }
-                        } else if (record.getType().endsWith("c_0640")) { // COAR type: journal
+                        } else if (record.getType().getFirst().getValue()
+                            .endsWith("c_0640")) { // COAR type: journal
                             var creationDTO = journalConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 try {
@@ -393,7 +394,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                     }
                                 }
                             }
-                        } else if (record.getType().endsWith("c_2f33")) { // COAR type: monograph
+                        } else if (record.getType().getFirst().getValue()
+                            .endsWith("c_2f33")) { // COAR type: monograph
                             var creationDTO = monographConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 try {
@@ -532,8 +534,9 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     var publicationBatch =
                         mongoTemplate.find(query.addCriteria(criteria), Publication.class);
                     publicationBatch.forEach(record -> {
-                        if (record.getType().endsWith("c_2df8fbb1") || record.getType().endsWith(
-                            "c_3e5a")) { // COAR type: research article, contribution to journal
+                        if (record.getType().getFirst().getValue().endsWith("c_2df8fbb1") ||
+                            record.getType().getFirst().getValue().endsWith(
+                                "c_3e5a")) { // COAR type: research article, contribution to journal
                             var creationDTO = journalPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 try {
@@ -546,8 +549,9 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                 }
                             }
                         } else if (
-                            record.getType().endsWith("c_5794") || record.getType().endsWith(
-                                "c_c94f")) { // COAR type: conference paper, conference output
+                            record.getType().getFirst().getValue().endsWith("c_5794") ||
+                                record.getType().getFirst().getValue().endsWith(
+                                    "c_c94f")) { // COAR type: conference paper, conference output
                             var creationDTO = proceedingsPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 saveWithDuplicateCheck(
@@ -558,7 +562,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                     "PROCEEDINGS_PUBLICATION",
                                     documentPublicationService);
                             }
-                        } else if (record.getType().endsWith("c_3248")) { // COAR type: book part
+                        } else if (record.getType().getFirst().getValue()
+                            .endsWith("c_3248")) { // COAR type: book part
                             var creationDTO = monographPublicationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 saveWithDuplicateCheck(
@@ -569,7 +574,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                     "MONOGRAPH_PUBLICATION",
                                     documentPublicationService);
                             }
-                        } else if (record.getType()
+                        } else if (record.getType().getFirst().getValue()
                             .endsWith("c_db06")) { // COAR type: dissertation (thesis)
                             var creationDTO = dissertationConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
@@ -581,7 +586,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                                         record.getOldId(), e.getMessage());
                                 }
                             }
-                        } else if (record.getType().endsWith("c_46ec")) { // COAR type: MR (thesis)
+                        } else if (record.getType().getFirst().getValue()
+                            .endsWith("c_46ec")) { // COAR type: MR (thesis)
                             var creationDTO = magistrateConverter.toDTO(record);
                             if (Objects.nonNull(creationDTO)) {
                                 try {
