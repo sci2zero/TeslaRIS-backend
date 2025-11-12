@@ -1,5 +1,6 @@
 package rs.teslaris.exporter.service.impl;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -175,114 +176,125 @@ public class CommonExportServiceImpl implements CommonExportService {
     }
 
     @Override
-    public void exportDocumentsToCommonModel(boolean allTime) {
+    public void exportDocumentsToCommonModel(boolean allTime,
+                                             List<ExportPublicationType> exportTypes) {
         if (!documentExportLock.tryLock()) {
             log.info("Document export already in progress, skipping this run.");
             return;
         }
 
+        if (Objects.isNull(exportTypes) || exportTypes.isEmpty()) {
+            exportTypes = Arrays.asList(ExportPublicationType.values());
+        }
+
         try {
-            var datasetFuture = exportEntitiesAsync(
-                datasetRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                Dataset::getId,
-                allTime,
-                ExportPublicationType.DATASET
-            );
+            List<CompletableFuture<Void>> futures = exportTypes.stream()
+                .map(exportType -> createExportFuture(exportType, allTime))
+                .filter(Objects::nonNull)
+                .toList();
 
-            var softwareFuture = exportEntitiesAsync(
-                softwareRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                Software::getId,
-                allTime,
-                ExportPublicationType.SOFTWARE
-            );
+            if (!futures.isEmpty()) {
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+                log.info("Completed export for types: {}", exportTypes);
+            } else {
+                log.info("No valid export types specified, skipping export.");
+            }
 
-            var patentFuture = exportEntitiesAsync(
-                patentRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                Patent::getId,
-                allTime,
-                ExportPublicationType.PATENT
-            );
-
-            var journalFuture = exportEntitiesAsync(
-                journalRepository::findAllModified,
-                ExportPublicationSeriesConverter::toCommonExportModel,
-                ExportDocument.class,
-                Journal::getId,
-                allTime,
-                ExportPublicationType.JOURNAL
-            );
-
-            var journalPublicationFuture = exportEntitiesAsync(
-                journalPublicationRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                JournalPublication::getId,
-                allTime,
-                ExportPublicationType.JOURNAL_PUBLICATION
-            );
-
-            var proceedingsFuture = exportEntitiesAsync(
-                proceedingsRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                Proceedings::getId,
-                allTime,
-                ExportPublicationType.PROCEEDINGS
-            );
-
-            var proceedingsPublicationFuture = exportEntitiesAsync(
-                proceedingsPublicationRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                ProceedingsPublication::getId,
-                allTime,
-                ExportPublicationType.PROCEEDINGS_PUBLICATION
-            );
-
-            var monographFuture = exportEntitiesAsync(
-                monographRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                Monograph::getId,
-                allTime,
-                ExportPublicationType.MONOGRAPH
-            );
-
-            var monographPublicationFuture = exportEntitiesAsync(
-                monographPublicationRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                MonographPublication::getId,
-                allTime,
-                ExportPublicationType.MONOGRAPH_PUBLICATION
-            );
-
-            var thesisFuture = exportEntitiesAsync(
-                thesisRepository::findAllModified,
-                ExportDocumentConverter::toCommonExportModel,
-                ExportDocument.class,
-                Thesis::getId,
-                allTime,
-                ExportPublicationType.THESIS
-            );
-
-            CompletableFuture.allOf(
-                datasetFuture, softwareFuture, patentFuture,
-                journalFuture, journalPublicationFuture,
-                proceedingsFuture, proceedingsPublicationFuture,
-                monographFuture, monographPublicationFuture,
-                thesisFuture
-            ).join();
         } catch (Exception e) {
             log.error("Document export set not completed due to an error.", e);
         } finally {
             documentExportLock.unlock();
+        }
+    }
+
+    private CompletableFuture<Void> createExportFuture(ExportPublicationType exportType,
+                                                       boolean allTime) {
+        try {
+            return switch (exportType) {
+                case DATASET -> exportEntitiesAsync(
+                    datasetRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    Dataset::getId,
+                    allTime,
+                    ExportPublicationType.DATASET
+                );
+                case SOFTWARE -> exportEntitiesAsync(
+                    softwareRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    Software::getId,
+                    allTime,
+                    ExportPublicationType.SOFTWARE
+                );
+                case PATENT -> exportEntitiesAsync(
+                    patentRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    Patent::getId,
+                    allTime,
+                    ExportPublicationType.PATENT
+                );
+                case JOURNAL -> exportEntitiesAsync(
+                    journalRepository::findAllModified,
+                    ExportPublicationSeriesConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    Journal::getId,
+                    allTime,
+                    ExportPublicationType.JOURNAL
+                );
+                case JOURNAL_PUBLICATION -> exportEntitiesAsync(
+                    journalPublicationRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    JournalPublication::getId,
+                    allTime,
+                    ExportPublicationType.JOURNAL_PUBLICATION
+                );
+                case PROCEEDINGS -> exportEntitiesAsync(
+                    proceedingsRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    Proceedings::getId,
+                    allTime,
+                    ExportPublicationType.PROCEEDINGS
+                );
+                case PROCEEDINGS_PUBLICATION -> exportEntitiesAsync(
+                    proceedingsPublicationRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    ProceedingsPublication::getId,
+                    allTime,
+                    ExportPublicationType.PROCEEDINGS_PUBLICATION
+                );
+                case MONOGRAPH -> exportEntitiesAsync(
+                    monographRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    Monograph::getId,
+                    allTime,
+                    ExportPublicationType.MONOGRAPH
+                );
+                case MONOGRAPH_PUBLICATION -> exportEntitiesAsync(
+                    monographPublicationRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    MonographPublication::getId,
+                    allTime,
+                    ExportPublicationType.MONOGRAPH_PUBLICATION
+                );
+                case THESIS -> exportEntitiesAsync(
+                    thesisRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    Thesis::getId,
+                    allTime,
+                    ExportPublicationType.THESIS
+                );
+            };
+        } catch (Exception e) {
+            log.error("Failed to create export future for type: {}", exportType, e);
+            return null;
         }
     }
 
@@ -295,8 +307,14 @@ public class CommonExportServiceImpl implements CommonExportService {
         boolean allTime,
         ExportPublicationType exportPublicationType
     ) {
-        exportEntities(repositoryFunction, converter, exportClass, idGetter, allTime,
-            exportPublicationType);
+        try {
+            exportEntities(repositoryFunction, converter, exportClass, idGetter, allTime,
+                exportPublicationType);
+        } catch (Exception e) {
+            log.error("{} export set not completed in async thread due to an error. Reason: {}",
+                exportClass.getName(), e.getMessage(), e);
+        }
+
         return CompletableFuture.completedFuture(null);
     }
 
@@ -344,7 +362,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             return;
         }
 
-        exportDocumentsToCommonModel(false);
+        exportDocumentsToCommonModel(false, Arrays.asList(ExportPublicationType.values()));
     }
 
     @Scheduled(cron = "${export-to-common.schedule.event}")
