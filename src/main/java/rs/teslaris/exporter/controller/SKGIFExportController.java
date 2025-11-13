@@ -3,6 +3,7 @@ package rs.teslaris.exporter.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -87,11 +88,15 @@ public class SKGIFExportController {
     }
 
     @GetMapping("/{entityType}")
-    public SKGIFListResponse getEntitiesFiltered(HttpServletRequest request,
-                                                 @PathVariable String entityType,
-                                                 @RequestParam(defaultValue = "") String filter,
-                                                 @RequestParam Integer page,
-                                                 @RequestParam("page_size") Integer pageSize) {
+    public SKGIFListResponse<?> getEntitiesFiltered(HttpServletRequest request,
+                                                    @PathVariable String entityType,
+                                                    @RequestParam(defaultValue = "") String filter,
+                                                    @RequestParam Integer page,
+                                                    @RequestParam("page_size") Integer pageSize,
+                                                    @RequestParam(required = false)
+                                                    LocalDate dateFrom,
+                                                    @RequestParam(required = false)
+                                                    LocalDate dateTo) {
         var entityClass = getEntityClass(request, entityType);
 
         var filterCriteria = new SKGIFFilterCriteria(filter);
@@ -108,7 +113,8 @@ public class SKGIFExportController {
         }
 
         return skgifExportService.getEntitiesFiltered(entityClass, filter,
-            entityType.equals("venue"), filterCriteria, PageRequest.of(page, pageSize));
+            entityType.equals("venue"), filterCriteria, dateFrom, dateTo,
+            PageRequest.of(page, pageSize));
     }
 
     private Class<? extends BaseExportEntity> getEntityClass(HttpServletRequest request,

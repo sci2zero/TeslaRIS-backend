@@ -910,9 +910,10 @@ public class InvolvementServiceTest {
         when(organisationUnitService.findOne(1)).thenReturn(new OrganisationUnit() {{
             setId(1);
         }});
+        when(personService.save(any())).thenReturn(newPerson);
 
         // When
-        involvementService.migrateEmployment(migrationDTO);
+        involvementService.migrateEmployment(migrationDTO, LocalDate.of(2024, 11, 1));
 
         // Then
         verify(personService).createPersonWithBasicInfo(argThat(dto ->
@@ -970,9 +971,10 @@ public class InvolvementServiceTest {
         when(employmentRepository.save(any())).thenReturn(new Employment() {{
             setInvolvementType(InvolvementType.EMPLOYED_AT);
         }});
+        when(personService.save(any())).thenReturn(existingPerson);
 
         // When
-        involvementService.migrateEmployment(migrationDTO);
+        involvementService.migrateEmployment(migrationDTO, LocalDate.of(2024, 11, 1));
 
         // Then
         verify(employmentRepository, never()).save(any());
@@ -993,7 +995,7 @@ public class InvolvementServiceTest {
             .thenReturn(new PageImpl<>(List.of()));
 
         // When
-        involvementService.migrateEmployment(migrationDTO);
+        involvementService.migrateEmployment(migrationDTO, LocalDate.of(2024, 11, 1));
 
         // Then
         verify(personService, never()).findPersonByAccountingId(any());
@@ -1044,9 +1046,10 @@ public class InvolvementServiceTest {
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit1);
         when(organisationUnitService.findOne(2)).thenReturn(organisationUnit2);
         when(employmentRepository.save(any())).thenReturn(new Employment());
+        when(personService.save(any())).thenReturn(person1);
 
         // When
-        involvementService.migrateEmployment(migrationDTOs);
+        involvementService.migrateEmployment(migrationDTOs, LocalDate.of(2024, 11, 1));
 
         // Then
         verify(personService, times(2)).save(any(Person.class));
@@ -1087,9 +1090,10 @@ public class InvolvementServiceTest {
 
         when(personService.findPersonByAccountingId("12345")).thenReturn(existingPerson);
         when(organisationUnitService.findOne(1)).thenReturn(organisationUnit);
+        when(personService.save(any())).thenReturn(existingPerson);
 
         // When
-        involvementService.migrateEmployment(migrationDTO);
+        involvementService.migrateEmployment(migrationDTO, LocalDate.of(2024, 11, 1));
 
         // Then
         verify(employmentRepository, never()).save(any());

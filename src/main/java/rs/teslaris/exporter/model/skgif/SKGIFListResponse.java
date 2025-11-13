@@ -12,9 +12,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SKGIFListResponse {
+public class SKGIFListResponse<T> {
 
     private SKGIFMeta meta;
 
-    private List<Object> results;
+    private List<T> results;
 }

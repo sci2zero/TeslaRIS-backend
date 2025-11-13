@@ -348,6 +348,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var endDate = LocalDate.now();
         var startDate = endDate.minusYears(harvestPeriodOffset);
 
+        var restTemplate = restTemplateProvider.provideRestTemplate();
+
         if (!StringUtil.valueExists(person.getOpenAlexId()) ||
             !StringUtil.valueExists(person.getOrcid()) ||
             !StringUtil.valueExists(person.getScopusAuthorId())) {
@@ -375,8 +377,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             while (Objects.nonNull(cursor)) {
                 String paginatedUrl = baseUrl + "&cursor=" + cursor;
                 ResponseEntity<String> responseEntity =
-                    restTemplateProvider.provideRestTemplate()
-                        .getForEntity(paginatedUrl, String.class);
+                    restTemplate.getForEntity(paginatedUrl, String.class);
 
                 if (responseEntity.getStatusCode() != HttpStatus.OK) {
                     break;

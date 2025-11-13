@@ -2,6 +2,9 @@ package rs.teslaris.exporter.service.impl;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -41,9 +44,9 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
 
 
     @Override
-    public <T extends BaseExportEntity> SKGIFSingleResponse getEntityById(Class<T> entityClass,
-                                                                          Integer localIdentifier,
-                                                                          boolean isVenue) {
+    public <T extends BaseExportEntity> SKGIFSingleResponse<?> getEntityById(Class<T> entityClass,
+                                                                             Integer localIdentifier,
+                                                                             boolean isVenue) {
         var conversionMethod = getConversionMethod(entityClass, isVenue);
 
         var query = new Query();
@@ -56,11 +59,11 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
             throw new NotFoundException("Record with ID " + localIdentifier + " does not exist.");
         }
 
-        SKGIFSingleResponse response;
+        SKGIFSingleResponse<?> response;
         try {
             var convertedEntity =
                 conversionMethod.invoke(null, records.getFirst());
-            response = new SKGIFSingleResponse((List<Object>) convertedEntity, baseUrl);
+            response = new SKGIFSingleResponse<>((List<Object>) convertedEntity, baseUrl);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
@@ -69,11 +72,14 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
     }
 
     @Override
-    public <T extends BaseExportEntity> SKGIFListResponse getEntitiesFiltered(Class<T> entityClass,
-                                                                              String filter,
-                                                                              boolean isVenue,
-                                                                              SKGIFFilterCriteria criteria,
-                                                                              Pageable pageable) {
+    public <T extends BaseExportEntity> SKGIFListResponse<?> getEntitiesFiltered(
+        Class<T> entityClass,
+        String filter,
+        boolean isVenue,
+        SKGIFFilterCriteria criteria,
+        LocalDate dateFrom,
+        LocalDate dateTo,
+        Pageable pageable) {
         var conversionMethod = getConversionMethod(entityClass, isVenue);
 
         var query = new Query();
@@ -82,7 +88,7 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
             addDocumentTypeConstraints(query, entityClass, isVenue);
         }
 
-        addQueryFilters(entityClass, query, criteria, isVenue);
+        addQueryFilters(entityClass, query, criteria, isVenue, dateFrom, dateTo);
 
         var totalCount = mongoTemplate.count(query, entityClass);
 
@@ -94,12 +100,11 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
                 return ((List<Object>) conversionMethod.invoke(null, record)).getFirst();
             } catch (IllegalAccessException | InvocationTargetException e) {
                 log.error("Error while converting SKG-IF entity: {}", e.getMessage());
-                e.printStackTrace();
                 return null;
             }
         }).filter(Objects::nonNull).toList();
 
-        var response = new SKGIFListResponse();
+        var response = new SKGIFListResponse<>();
         response.setMeta(
             new SKGIFMeta(totalCount, pageable.getPageNumber(), pageable.getPageSize()));
         response.setResults(convertedRecords);
@@ -141,7 +146,25 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
     }
 
     private void addQueryFilters(Class<? extends BaseExportEntity> entityClass, Query query,
-                                 SKGIFFilterCriteria criteria, boolean isVenue) {
+                                 SKGIFFilterCriteria criteria, boolean isVenue, LocalDate dateFrom,
+                                 LocalDate dateTo) {
+        if (!criteria.containsLastUpdatedFilter() &&
+            (Objects.nonNull(dateFrom) || Objects.nonNull(dateTo))) {
+            var dateCriteria = new Criteria();
+
+            if (Objects.nonNull(dateFrom)) {
+                dateCriteria = dateCriteria.gte(
+                    Date.from(dateFrom.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+            }
+
+            if (Objects.nonNull(dateTo)) {
+                dateCriteria = dateCriteria.lte(
+                    Date.from(dateTo.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+            }
+
+            query.addCriteria(Criteria.where("last_updated").is(dateCriteria));
+        }
+
         switch (entityClass.getSimpleName()) {
             case "ExportPerson":
                 PersonFilteringUtil.addQueryFilters(criteria, query);

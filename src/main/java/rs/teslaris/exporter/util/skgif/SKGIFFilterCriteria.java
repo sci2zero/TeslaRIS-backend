@@ -35,4 +35,8 @@ public class SKGIFFilterCriteria {
     public boolean containsTypeFilter() {
         return filterKeys.contains("type");
     }
+
+    public boolean containsLastUpdatedFilter() {
+        return filterKeys.contains("manifestations.dates.modified");
+    }
 }

@@ -159,16 +159,18 @@ public class ResearchProductConverter extends BaseConverter {
 
             manifestation.setAccessRights(getAccessRights(documentFile.getAccessRights()));
             manifestation.setVersion("1.0.0");
-            var bibliographicInfo = BibliographicInfo.builder()
-                .in(getPublishedIn(document))
-                .volume(document.getVolume())
-                .issue(document.getIssue())
-                .pages(new PageRange(document.getStartPage(), document.getEndPage()))
-                .build();
-            manifestation.setBiblio(bibliographicInfo);
+            manifestation.setBiblio(getBibliographicInfo(document));
 
             researchProduct.getManifestations().add(manifestation);
         });
+
+        if (researchProduct.getManifestations().isEmpty()) {
+            var manifestation = new Manifestation();
+
+            manifestation.setVersion("1.0.0");
+            manifestation.setBiblio(getBibliographicInfo(document));
+            researchProduct.getManifestations().add(manifestation);
+        }
     }
 
     private static String getPublishedIn(ExportDocument document) {
@@ -181,5 +183,14 @@ public class ResearchProductConverter extends BaseConverter {
                 IdentifierUtil.identifierPrefix + document.getMonograph().getDatabaseId() : "";
             default -> "";
         };
+    }
+
+    private static BibliographicInfo getBibliographicInfo(ExportDocument document) {
+        return BibliographicInfo.builder()
+            .in(getPublishedIn(document))
+            .volume(document.getVolume())
+            .issue(document.getIssue())
+            .pages(new PageRange(document.getStartPage(), document.getEndPage()))
+            .build();
     }
 }

@@ -19,6 +19,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
+import rs.teslaris.core.model.skgif.agent.Agent;
 import rs.teslaris.core.model.skgif.agent.SKGIFPerson;
 import rs.teslaris.core.model.skgif.researchproduct.ResearchProduct;
 import rs.teslaris.core.model.skgif.venue.Venue;
@@ -47,9 +48,13 @@ public class SKGIFConverter {
     public static Optional<DocumentImport> toCommonImportModel(ResearchProduct record,
                                                                String sourceIdentifierPrefix,
                                                                String baseUrl) {
-        if (Objects.isNull(record.getManifestations()) || record.getManifestations().isEmpty() ||
-            record.getManifestations().stream().allMatch(m -> Objects.isNull(m.getBiblio()) ||
-                !StringUtil.valueExists(m.getBiblio().getIn()))) {
+        if (((Objects.isNull(record.getManifestations()) || record.getManifestations().isEmpty()) &&
+            !StringUtil.valueExists(record.getCreationDate()))) {
+            return Optional.empty();
+        }
+
+        if (record.getManifestations().stream().allMatch(m -> Objects.isNull(m.getBiblio()) ||
+            !StringUtil.valueExists(m.getBiblio().getIn()))) {
             return Optional.empty();
         }
 
@@ -95,16 +100,18 @@ public class SKGIFConverter {
                     document.getTitle().size() + 1));
         });
 
-        record.getAbstracts().forEach((lang, description) -> {
-            if (description.isEmpty()) {
-                return;
-            }
+        if (Objects.nonNull(record.getAbstracts())) {
+            record.getAbstracts().forEach((lang, description) -> {
+                if (description.isEmpty()) {
+                    return;
+                }
 
-            document.getDescription()
-                .add(new MultilingualContent(lang.replace("@", "").toUpperCase(),
-                    description.getFirst(),
-                    document.getDescription().size() + 1));
-        });
+                document.getDescription()
+                    .add(new MultilingualContent(lang.replace("@", "").toUpperCase(),
+                        description.getFirst(),
+                        document.getDescription().size() + 1));
+            });
+        }
 
         if (record.getProductType().equals("literature")) {
             var venueId = record.getManifestations().stream().filter(
@@ -113,7 +120,8 @@ public class SKGIFConverter {
                 .getBiblio()
                 .getIn();
 
-            var optionalVenue = fetchEntityFromExternalGraph(venueId, Venue.class, baseUrl);
+            var optionalVenue =
+                fetchEntityFromExternalGraph(venueId, "venue", Venue.class, baseUrl);
             if (optionalVenue.isEmpty()) {
                 return Optional.empty();
             }
@@ -171,12 +179,14 @@ public class SKGIFConverter {
 
             fetchEntityFromExternalGraph(
                 contribution.getBy(),
-                SKGIFPerson.class,
+                "person",
+                Agent.class,
                 baseUrl
             ).ifPresent(author -> {
                 var person = new Person();
                 person.setName(
-                    new PersonName(author.getGivenName(), "", author.getFamilyName()));
+                    new PersonName(((SKGIFPerson) author).getGivenName(), "",
+                        ((SKGIFPerson) author).getFamilyName()));
 
                 if (author.getIdentifiers().stream()
                     .anyMatch(id -> id.getScheme().equals("orcid"))) {
@@ -195,12 +205,13 @@ public class SKGIFConverter {
     }
 
     public static <T> Optional<T> fetchEntityFromExternalGraph(String entityId,
+                                                               String set,
                                                                Class<T> entityClass,
                                                                String baseUrl) {
         var objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        String fetchUrl = baseUrl + "venue/" + entityId;
+        String fetchUrl = baseUrl + "/" + set + "/" + entityId;
         ResponseEntity<String> responseEntity =
             restTemplateProvider.provideRestTemplate().getForEntity(fetchUrl, String.class);
 
@@ -209,8 +220,11 @@ public class SKGIFConverter {
         }
 
         try {
-            var result =
-                objectMapper.readValue(responseEntity.getBody(), SKGIFSingleResponse.class);
+            SKGIFSingleResponse<?> result = objectMapper.readValue(
+                responseEntity.getBody(),
+                objectMapper.getTypeFactory()
+                    .constructParametricType(SKGIFSingleResponse.class, entityClass)
+            );
 
             if (result.getGraph().isEmpty()) {
                 return Optional.empty();

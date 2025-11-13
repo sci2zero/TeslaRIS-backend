@@ -1411,6 +1411,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return personRepository.findProfileImageByPersonId(personId).orElse(null);
     }
 
+    @Override
+    public boolean personHasContributions(Integer personId) {
+        return documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(personId) > 0;
+    }
+
     public List<Integer> findTopCoauthors(Integer authorId) {
         try {
             var response = elasticsearchClient.search(s -> s

@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -96,7 +97,10 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportPerson.class, null, false, new SKGIFFilterCriteria(""), pageable);
+            ExportPerson.class, null, false, new SKGIFFilterCriteria(""),
+            LocalDate.of(2020, 1, 1),
+            LocalDate.of(2024, 1, 1),
+            pageable);
 
         // then
         assertNotNull(result);
@@ -124,7 +128,10 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportPerson.class, null, false, new SKGIFFilterCriteria(""), pageable);
+            ExportPerson.class, null, false, new SKGIFFilterCriteria(""),
+            LocalDate.of(2020, 1, 1),
+            LocalDate.of(2024, 1, 1),
+            pageable);
 
         // then
         assertNotNull(result);
@@ -144,7 +151,10 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportPerson.class, null, false, new SKGIFFilterCriteria(""), pageable);
+            ExportPerson.class, null, false, new SKGIFFilterCriteria(""),
+            LocalDate.of(2020, 1, 1),
+            LocalDate.of(2024, 1, 1),
+            pageable);
 
         // then
         assertNotNull(result);
@@ -166,7 +176,10 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportDocument.class, null, true, new SKGIFFilterCriteria(""), pageable);
+            ExportDocument.class, null, true, new SKGIFFilterCriteria(""),
+            LocalDate.of(2020, 1, 1),
+            LocalDate.of(2024, 1, 1),
+            pageable);
 
         // then
         assertNotNull(result);
@@ -188,7 +201,10 @@ public class SKGIFExportServiceTest {
 
         // when
         var result = skgifExportService.getEntitiesFiltered(
-            ExportDocument.class, null, false, new SKGIFFilterCriteria(""), pageable);
+            ExportDocument.class, null, false, new SKGIFFilterCriteria(""),
+            LocalDate.of(2020, 1, 1),
+            LocalDate.of(2024, 1, 1),
+            pageable);
 
         // then
         assertNotNull(result);

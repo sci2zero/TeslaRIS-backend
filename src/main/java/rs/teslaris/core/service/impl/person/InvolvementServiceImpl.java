@@ -1,8 +1,11 @@
 package rs.teslaris.core.service.impl.person;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -245,7 +248,11 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     }
 
     @Override
-    public void migrateEmployment(List<ExtraEmploymentMigrationDTO> request) {
+    public void migrateEmployment(List<ExtraEmploymentMigrationDTO> request,
+                                  LocalDate initialMigrationDate) {
+        var handledPersonIds = new ArrayList<Integer>();
+        var handledInstitutionIds = new HashSet<Integer>();
+
         request.forEach(migration -> {
             var ouResults = organisationUnitService.searchOrganisationUnits(
                 new ArrayList<>(
@@ -290,11 +297,44 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                     employment);
             }
 
-            personService.save(person);
-            userService.updateResearcherCurrentOrganisationUnitIfBound(person.getId());
+            var savedPerson = personService.save(person);
+            personService.indexPerson(savedPerson);
+            userService.updateResearcherCurrentOrganisationUnitIfBound(savedPerson.getId());
+
+            handledPersonIds.add(savedPerson.getId());
+            handledInstitutionIds.add(ouResults.getFirst().getDatabaseId());
         });
 
-        // TODO: Update employment hierarchy for all users
+        var employmentIdsForDeletion = new ArrayList<Integer>();
+        var personIdsForDeletion = new ArrayList<Integer>();
+        handledInstitutionIds.forEach(
+            institutionId ->
+                employmentRepository.findByEmploymentInstitutionId(institutionId)
+                    .forEach(employment -> {
+                        var personInvolved = employment.getPersonInvolved();
+
+                        if (!handledPersonIds.contains(personInvolved.getId())) {
+                            if (!personService.personHasContributions(personInvolved.getId()) &&
+                                personInvolved.getCreateDate().equals(
+                                    Date.from(
+                                        initialMigrationDate.atStartOfDay(ZoneId.systemDefault())
+                                            .toInstant()))) {
+                                employmentIdsForDeletion.add(employment.getId());
+                                personIdsForDeletion.add(personInvolved.getId());
+                                return;
+                            }
+
+                            employment.setDateTo(LocalDate.of(2023, 12, 31));
+                            save(employment);
+                            personService.indexPerson(personInvolved);
+                        }
+                    }));
+
+        log.info("STALE DATA CLEANUP SUMMARY:");
+        log.info("Employment records marked for deletion: {} - IDs: {}",
+            employmentIdsForDeletion.size(), employmentIdsForDeletion);
+        log.info("Person records marked for deletion: {} - IDs: {}",
+            personIdsForDeletion.size(), personIdsForDeletion);
     }
 
     @Override

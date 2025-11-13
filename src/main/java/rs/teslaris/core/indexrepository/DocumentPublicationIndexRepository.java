@@ -358,5 +358,22 @@ public interface DocumentPublicationIndexRepository extends
         """)
     long countAuthorPublicationsByYear(Integer authorId, Integer year);
 
+    @Query("""
+        {
+          "query": {
+            "bool": {
+              "should": [
+                { "term": { "author_ids": ?0 } },
+                { "term": { "editor_ids": ?0 } },
+                { "term": { "reviewer_ids": ?0 } },
+                { "term": { "board_member_ids": ?0 } }
+              ],
+              "minimum_should_match": 1
+            }
+          }
+        }
+        """)
+    long countDocumentsWithAuthorInAnyRole(Integer authorId);
+
     void deleteByType(String type);
 }

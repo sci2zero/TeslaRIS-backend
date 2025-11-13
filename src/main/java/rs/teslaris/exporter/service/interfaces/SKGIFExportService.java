@@ -1,5 +1,6 @@
 package rs.teslaris.exporter.service.interfaces;
 
+import java.time.LocalDate;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
@@ -14,9 +15,11 @@ public interface SKGIFExportService {
                                                                    Integer localIdentifier,
                                                                    boolean isVenue);
 
-    <T extends BaseExportEntity> SKGIFListResponse getEntitiesFiltered(Class<T> entityClass,
-                                                                       String filter,
-                                                                       boolean isVenue,
-                                                                       SKGIFFilterCriteria criteria,
-                                                                       Pageable pageable);
+    <T extends BaseExportEntity> SKGIFListResponse<?> getEntitiesFiltered(Class<T> entityClass,
+                                                                          String filter,
+                                                                          boolean isVenue,
+                                                                          SKGIFFilterCriteria criteria,
+                                                                          LocalDate dateFrom,
+                                                                          LocalDate dateTo,
+                                                                          Pageable pageable);
 }

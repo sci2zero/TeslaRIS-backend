@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.interfaces.person;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -32,7 +33,8 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     EmploymentDTO migrateEmployment(EmploymentMigrationDTO employmentMigrationRequest);
 
-    void migrateEmployment(List<ExtraEmploymentMigrationDTO> request);
+    void migrateEmployment(List<ExtraEmploymentMigrationDTO> request,
+                           LocalDate initialMigrationDate);
 
     List<EmploymentDTO> getDirectAndIndirectEmploymentsForPerson(Integer personId);
 

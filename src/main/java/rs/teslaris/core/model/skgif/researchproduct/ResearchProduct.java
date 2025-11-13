@@ -2,7 +2,6 @@ package rs.teslaris.core.model.skgif.researchproduct;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,11 +16,6 @@ import rs.teslaris.core.model.skgif.common.SKGIFTopic;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    property = "product_type",
-    include = JsonTypeInfo.As.EXISTING_PROPERTY
-)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ResearchProduct {
 
