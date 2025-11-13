@@ -103,7 +103,7 @@ public class ResearchProductConverter extends BaseConverter {
         List<ExportMultilingualContent> multilingualContent) {
         var mc = new HashMap<String, List<String>>();
         multilingualContent.forEach(
-            title -> mc.put("@" + title.getLanguageTag(), List.of(title.getContent())));
+            title -> mc.put(title.getLanguageTag().toLowerCase(), List.of(title.getContent())));
 
         return mc;
     }

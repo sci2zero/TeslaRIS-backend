@@ -83,6 +83,6 @@ public class ExtraMigrationController {
     @ResponseStatus(HttpStatus.CREATED)
     public void migrateEmploymentNew(
         @Valid @RequestBody List<ExtraEmploymentMigrationDTO> employmentMigrationDTO) {
-        involvementService.migrateEmployment(employmentMigrationDTO, LocalDate.of(2025, 11, 1));
+        involvementService.migrateEmployment(employmentMigrationDTO, LocalDate.of(2025, 11, 6));
     }
 }
