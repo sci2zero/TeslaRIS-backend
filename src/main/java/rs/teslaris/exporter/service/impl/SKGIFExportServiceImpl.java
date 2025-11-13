@@ -150,7 +150,8 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
                                  LocalDate dateTo) {
         if (!criteria.containsLastUpdatedFilter() &&
             (Objects.nonNull(dateFrom) || Objects.nonNull(dateTo))) {
-            var dateCriteria = new Criteria();
+
+            Criteria dateCriteria = Criteria.where("last_updated");
 
             if (Objects.nonNull(dateFrom)) {
                 dateCriteria = dateCriteria.gte(
@@ -162,7 +163,7 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
                     Date.from(dateTo.atStartOfDay(ZoneId.systemDefault()).toInstant()));
             }
 
-            query.addCriteria(Criteria.where("last_updated").is(dateCriteria));
+            query.addCriteria(dateCriteria);
         }
 
         switch (entityClass.getSimpleName()) {

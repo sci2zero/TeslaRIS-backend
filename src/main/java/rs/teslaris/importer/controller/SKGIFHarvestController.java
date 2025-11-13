@@ -43,6 +43,8 @@ public class SKGIFHarvestController {
                                      @RequestParam RelativeDateDTO until,
                                      @RequestParam LocalDateTime timestamp,
                                      @RequestParam RecurrenceType recurrence,
+                                     @RequestParam(required = false) String authorIdentifier,
+                                     @RequestParam(required = false) String institutionIdentifier,
                                      @RequestHeader("Authorization") String bearerToken) {
         if (!SKGIFHarvestConfigurationLoader.sourceExists(sourceName)) {
             throw new LoadingException(
@@ -54,7 +56,7 @@ public class SKGIFHarvestController {
             "SKGIF_Harvest-" + sourceName +
                 "-" + from + "_" + until +
                 "-" + UUID.randomUUID(), timestamp,
-            () -> skgifHarvester.harvest(sourceName, null,
+            () -> skgifHarvester.harvest(sourceName, authorIdentifier, institutionIdentifier,
                 from.computeDate(), until.computeDate(), userId),
             userId, recurrence);
 
@@ -65,6 +67,8 @@ public class SKGIFHarvestController {
                 put("from", from.toString());
                 put("until", until.toString());
                 put("userId", userId);
+                put("authorIdentifier", authorIdentifier);
+                put("institutionIdentifier", institutionIdentifier);
             }}, recurrence));
     }
 

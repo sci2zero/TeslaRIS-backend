@@ -36,6 +36,9 @@ public class ExportPerson extends BaseExportEntity {
     @Field("scopus_id")
     private String scopusAuthorId;
 
+    @Field("open_alex")
+    private String openAlexId;
+
     @Field("sex")
     private Sex sex;
 

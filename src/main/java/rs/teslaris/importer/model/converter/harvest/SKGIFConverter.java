@@ -204,10 +204,10 @@ public class SKGIFConverter {
         return Optional.of(document);
     }
 
-    public static <T> Optional<T> fetchEntityFromExternalGraph(String entityId,
-                                                               String set,
-                                                               Class<T> entityClass,
-                                                               String baseUrl) {
+    private static <T> Optional<T> fetchEntityFromExternalGraph(String entityId,
+                                                                String set,
+                                                                Class<T> entityClass,
+                                                                String baseUrl) {
         var objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 

@@ -28,9 +28,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.skgif.researchproduct.ResearchProduct;
+import rs.teslaris.core.model.skgif.venue.Venue;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
 import rs.teslaris.importer.model.common.DocumentImport;
@@ -48,7 +50,9 @@ import rs.teslaris.importer.utility.skgif.SKGIFHarvestConfigurationLoader;
 public class SKGIFHarvesterImpl implements SKGIFHarvester {
 
     private static final int MAX_RESTART_NUMBER = 10;
+
     private final int PAGE_SIZE = 100;
+
     private final MongoTemplate mongoTemplate;
 
     private final RestTemplateProvider restTemplateProvider;
@@ -59,11 +63,37 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
 
 
     @Override
-    public void harvest(String sourceName, String entityId, LocalDate startDate, LocalDate endDate,
-                        Integer userId) {
+    public void harvest(String sourceName, String authorIdentifier, String institutionIdentifier,
+                        LocalDate startDate, LocalDate endDate, Integer userId) {
         var sourceConfiguration = getSourceConfiguration(sourceName);
         var objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        String identifierFilter = "";
+        if (StringUtil.valueExists(authorIdentifier)) {
+            identifierFilter = "contributions.by.identifiers.value:" + authorIdentifier;
+        } else if (StringUtil.valueExists(institutionIdentifier)) {
+            String fetchUrl = sourceConfiguration.baseUrl() + "/venue?filter=contributions.role:" +
+                institutionIdentifier;
+            ResponseEntity<String> responseEntity =
+                restTemplateProvider.provideRestTemplate().getForEntity(fetchUrl, String.class);
+            try {
+                SKGIFListResponse<?> result = objectMapper.readValue(
+                    responseEntity.getBody(),
+                    objectMapper.getTypeFactory()
+                        .constructParametricType(SKGIFListResponse.class, Venue.class)
+                );
+
+                if (result.getResults().isEmpty()) {
+                    return;
+                }
+
+                identifierFilter = "relevant_organisations:" +
+                    ((Venue) result.getResults().getFirst()).getLocalIdentifier();
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         var adminUserIds = CommonImportUtility.getAdminUserIds();
 
@@ -79,7 +109,8 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
             pageSize = Integer.parseInt(pageAndPageSize[1]);
         }
 
-        var endpoint = constructSKGIFEndpoint(sourceConfiguration, startDate, endDate);
+        var endpoint =
+            constructSKGIFEndpoint(sourceConfiguration, startDate, endDate, identifierFilter);
         var restTemplate = restTemplateProvider.provideRestTemplate();
 
         var newEntriesCount = new HashMap<Integer, Integer>();
@@ -107,12 +138,13 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                 shouldContinue = results.getResults().size() == PAGE_SIZE;
             }
         } catch (HttpClientErrorException e) {
-            log.error("HTTP error for SKG-IF client ID {}: {}", entityId, e.getMessage());
+            log.error("HTTP error for SKG-IF client ID {}: {}", identifierFilter, e.getMessage());
         } catch (JsonProcessingException e) {
-            log.error("JSON parsing error for SKG-IF client ID {}: {}", entityId,
+            log.error("JSON parsing error for SKG-IF client ID {}: {}", identifierFilter,
                 e.getMessage());
         } catch (ResourceAccessException e) {
-            log.error("SKG-IF client is unreachable for ID {}: {}", entityId, e.getMessage());
+            log.error("SKG-IF client is unreachable for ID {}: {}", identifierFilter,
+                e.getMessage());
         }
     }
 
@@ -130,11 +162,14 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
     }
 
     private String constructSKGIFEndpoint(SKGIFHarvestConfigurationLoader.Source sourceConfig,
-                                          LocalDate from, LocalDate until) {
+                                          LocalDate from, LocalDate until,
+                                          String identifierFilter) {
         return sourceConfig.baseUrl() + "/product?" + sourceConfig.metadataFormatParameter() +
-            "=json" + "&filter=" + sourceConfig.additionalFilters() + "&" +
-            sourceConfig.dateFromFilterParam() + "=" + from.toString() + "&" +
-            sourceConfig.dateToFilterParam() + "=" + until.toString();
+            "=json" + "&" + sourceConfig.dateFromFilterParam() + "=" + from.toString() + "&" +
+            sourceConfig.dateToFilterParam() + "=" + until.toString() +
+            "&filter=" + sourceConfig.additionalFilters() +
+            (StringUtil.valueExists(sourceConfig.additionalFilters()) ? "," : "") +
+            identifierFilter;
     }
 
     private String constructIdentifyingDatasetName(

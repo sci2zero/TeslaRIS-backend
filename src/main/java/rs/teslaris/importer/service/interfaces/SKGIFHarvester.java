@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 @Service
 public interface SKGIFHarvester {
 
-    void harvest(String sourceName, String entityId, LocalDate startDate, LocalDate endDate,
-                 Integer userId);
+    void harvest(String sourceName, String authorIdentifier, String institutionIdentifier,
+                 LocalDate startDate, LocalDate endDate, Integer userId);
 
     List<String> getSources();
 }

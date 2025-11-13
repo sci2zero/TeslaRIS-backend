@@ -19,7 +19,8 @@ public class ResearchProductFilteringUtil {
         "contributions.contribution_types", "manifestations.type.class",
         "manifestations.dates.modified", "manifestations.dates.distribution",
         "manifestations.license", "biblio.issue", "biblio.volume", "biblio.pages.first",
-        "biblio.pages.last", "biblio.in"
+        "biblio.pages.last", "biblio.in", "contributions.by.identifiers.value",
+        "relevant_organisations"
     );
 
 
@@ -133,6 +134,33 @@ public class ResearchProductFilteringUtil {
                                 .elemMatch(Criteria.where("content").regex(value, "i"))
                         )
                     );
+                    break;
+                case "contributions.by.identifiers.value":
+                    query.addCriteria(
+                        new Criteria().orOperator(
+                            Criteria.where("authors")
+                                .elemMatch(Criteria.where("person.orcid").is(value)),
+                            Criteria.where("editors")
+                                .elemMatch(Criteria.where("person.orcid").is(value)),
+                            Criteria.where("advisor")
+                                .elemMatch(Criteria.where("person.orcid").is(value)),
+                            Criteria.where("authors")
+                                .elemMatch(Criteria.where("person.scopus_id").is(value)),
+                            Criteria.where("editors")
+                                .elemMatch(Criteria.where("person.scopus_id").is(value)),
+                            Criteria.where("advisor")
+                                .elemMatch(Criteria.where("person.scopus_id").is(value)),
+                            Criteria.where("authors")
+                                .elemMatch(Criteria.where("person.open_alex").is(value)),
+                            Criteria.where("editors")
+                                .elemMatch(Criteria.where("person.open_alex").is(value)),
+                            Criteria.where("advisor")
+                                .elemMatch(Criteria.where("person.open_alex").is(value))
+                        ));
+                    break;
+                case "relevant_organisations":
+                    query.addCriteria(Criteria.where("related_institution_ids")
+                        .in(IdentifierUtil.removeCommonPrefix(value)));
                     break;
             }
         });

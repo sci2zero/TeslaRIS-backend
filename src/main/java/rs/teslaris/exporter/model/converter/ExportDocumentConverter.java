@@ -450,6 +450,9 @@ public class ExportDocumentConverter extends ExportConverterBase {
             person.setName(new ExportPersonName(contribution.getPerson().getName().getFirstname(),
                 contribution.getPerson().getName().getOtherName(),
                 contribution.getPerson().getName().getLastname()));
+            person.setOrcid(contribution.getPerson().getOrcid());
+            person.setScopusAuthorId(contribution.getPerson().getScopusAuthorId());
+            person.setOpenAlexId(contribution.getPerson().getOpenAlexId());
             exportContribution.setPerson(person);
         }
 
