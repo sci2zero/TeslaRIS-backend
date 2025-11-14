@@ -2,6 +2,8 @@ package rs.teslaris.core.util.signposting;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
@@ -366,7 +368,8 @@ public class FairSignpostingL1Utility {
         try {
             return new URI(uri).toASCIIString();
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid URI", e);
+            return URLEncoder.encode(uri, StandardCharsets.UTF_8)
+                .replace("+", "%20"); // Simple fallback
         }
     }
 

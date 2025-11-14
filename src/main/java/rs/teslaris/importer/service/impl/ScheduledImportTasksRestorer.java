@@ -22,8 +22,10 @@ import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.service.impl.commontypes.ScheduledTasksRestorer;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.controller.CommonHarvestController;
 import rs.teslaris.importer.service.interfaces.OAIPMHHarvester;
+import rs.teslaris.importer.service.interfaces.SKGIFHarvester;
 
 @Component
 @RequiredArgsConstructor
@@ -41,6 +43,8 @@ public class ScheduledImportTasksRestorer {
 
     private final OAIPMHHarvester oaipmhHarvester;
 
+    private final SKGIFHarvester skgifHarvester;
+
     private final ObjectMapper objectMapper;
 
 
@@ -48,8 +52,10 @@ public class ScheduledImportTasksRestorer {
     protected void restoreTasksOnStartup() {
         List<ScheduledTaskMetadata> allMetadata = metadataRepository.findTasksByTypes(
             List.of(
-                ScheduledTaskType.DOCUMENT_BACKUP,
-                ScheduledTaskType.REINDEXING
+                ScheduledTaskType.PUBLICATION_HARVEST,
+                ScheduledTaskType.AUTHOR_CENTRIC_PUBLICATION_HARVEST,
+                ScheduledTaskType.OAI_PMH_HARVEST,
+                ScheduledTaskType.SKG_IF_HARVEST
             ));
 
         for (ScheduledTaskMetadata metadata : allMetadata) {
@@ -71,6 +77,8 @@ public class ScheduledImportTasksRestorer {
             restoreAuthorCentricPublicationHarvest(metadata);
         } else if (metadata.getType().equals(ScheduledTaskType.OAI_PMH_HARVEST)) {
             restoreOAIPMHHarvest(metadata);
+        } else if (metadata.getType().equals(ScheduledTaskType.SKG_IF_HARVEST)) {
+            restoreSKGIFHarvest(metadata);
         }
 
         metadataRepository.deleteTaskForTaskId(metadata.getTaskId());
@@ -186,6 +194,49 @@ public class ScheduledImportTasksRestorer {
                 put("from", from.toString());
                 put("until", until.toString());
                 put("userId", userId);
+            }}, metadata.getRecurrenceType()));
+    }
+
+    private void restoreSKGIFHarvest(ScheduledTaskMetadata metadata) {
+        Map<String, Object> data = metadata.getMetadata();
+
+        var userId = (Integer) data.get("userId");
+        var sourceName = (String) data.get("sourceName");
+        var from = RelativeDateDTO.parse((String) data.get("from"));
+        var until = RelativeDateDTO.parse((String) data.get("until"));
+
+        var authorIdentifier =
+            StringUtil.normalizeNullString((String) data.get("authorIdentifier"));
+        var institutionIdentifier =
+            StringUtil.normalizeNullString((String) data.get("institutionIdentifier"));
+
+        var timeToRun = metadata.getTimeToRun();
+
+        if (timeToRun.isBefore(LocalDateTime.now())) {
+            timeToRun = taskManagerService.findNextFreeExecutionTime();
+        }
+
+        var taskId = taskManagerService.scheduleTask(
+            "SKGIF_Harvest-" + sourceName +
+                "-" + from + "_" + until +
+                "-" + UUID.randomUUID(), timeToRun,
+            () -> skgifHarvester.harvest(
+                sourceName, authorIdentifier,
+                institutionIdentifier,
+                from.computeDate(),
+                until.computeDate(),
+                userId
+            ), userId, metadata.getRecurrenceType());
+
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.SKG_IF_HARVEST, new HashMap<>() {{
+                put("sourceName", sourceName);
+                put("from", from.toString());
+                put("until", until.toString());
+                put("userId", userId);
+                put("authorIdentifier", authorIdentifier);
+                put("institutionIdentifier", institutionIdentifier);
             }}, metadata.getRecurrenceType()));
     }
 }

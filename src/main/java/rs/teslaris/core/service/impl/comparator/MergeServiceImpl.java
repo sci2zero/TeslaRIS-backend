@@ -764,7 +764,8 @@ public class MergeServiceImpl implements MergeService {
             patentRepository,
             datasetRepository,
             softwareRepository,
-            thesisRepository
+            thesisRepository,
+            monographRepository
         );
 
         for (var repository : repositories) {

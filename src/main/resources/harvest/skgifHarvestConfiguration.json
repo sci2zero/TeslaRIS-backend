@@ -6,9 +6,9 @@
       "metadataFormatParameter": "format",
       "dateFromFilterParam": "dateFrom",
       "dateToFilterParam": "dateTo",
-      "additionalFilters": "",
+      "additionalFilters": "product_type:literature",
       "converterClass": "SKGIFConverter",
-      "sourceIdentifierPrefix": "CRISUNS"
+      "sourceIdentifierPrefix": "TESLARIS"
     }
   ]
 }

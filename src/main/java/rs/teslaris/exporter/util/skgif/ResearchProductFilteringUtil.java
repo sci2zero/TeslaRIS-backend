@@ -216,16 +216,16 @@ public class ResearchProductFilteringUtil {
     private static void addContributionTypeQuery(Query query, String contributionType) {
         contributionType = contributionType.toLowerCase();
 
-        if (!List.of("writing – original draft", "conceptualization", "writing – review & editing",
+        if (!List.of("writing - original draft", "conceptualization", "writing - review & editing",
             "supervision", "validation").contains(contributionType)) {
             throw new IllegalArgumentException(
                 "Non-recognised contribution type: " + contributionType);
         }
 
         switch (contributionType) {
-            case "writing – original draft", "conceptualization" ->
+            case "writing - original draft", "conceptualization" ->
                 query.addCriteria(Criteria.where("authors").not().size(0));
-            case "writing – review & editing" ->
+            case "writing - review & editing" ->
                 query.addCriteria(Criteria.where("editors").not().size(0));
             case "supervision", "validation" ->
                 query.addCriteria(Criteria.where("advisors").not().size(0));

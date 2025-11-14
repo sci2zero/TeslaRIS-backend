@@ -308,4 +308,7 @@ public class StringUtil {
         return MULTI_SPACE.matcher(normalized.trim()).replaceAll(" ");
     }
 
+    public static String normalizeNullString(String value) {
+        return (value == null || "null".equals(value)) ? null : value;
+    }
 }

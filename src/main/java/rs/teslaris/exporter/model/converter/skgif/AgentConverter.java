@@ -117,6 +117,10 @@ public class AgentConverter extends BaseConverter {
             identifiers.add(new SKGIFIdentifier("orcid", person.getOrcid()));
         }
 
+        if (StringUtil.valueExists(person.getOpenAlexId())) {
+            identifiers.add(new SKGIFIdentifier("openalex", person.getOpenAlexId()));
+        }
+
         if (StringUtil.valueExists(person.getScopusAuthorId())) {
             identifiers.add(new SKGIFIdentifier("url",
                 "https://www.scopus.com/authid/detail.uri?authorId=" + person.getScopusAuthorId()));

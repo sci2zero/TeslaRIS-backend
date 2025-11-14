@@ -61,9 +61,9 @@ public class ResearchProductConverter extends BaseConverter {
     private static void populateContributorInformation(ResearchProduct researchProduct,
                                                        ExportDocument document) {
         addToContributions(researchProduct, document.getAuthors(), "author",
-            List.of("writing – original draft", "conceptualization"));
+            List.of("writing - original draft", "conceptualization"));
         addToContributions(researchProduct, document.getEditors(), "editor",
-            List.of("writing – review & editing"));
+            List.of("writing - review & editing"));
         addToContributions(researchProduct, document.getAdvisors(), "advisor",
             List.of("supervision", "validation"));
     }

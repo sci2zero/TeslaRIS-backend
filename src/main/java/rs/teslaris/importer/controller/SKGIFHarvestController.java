@@ -53,7 +53,7 @@ public class SKGIFHarvestController {
 
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var taskId = taskManagerService.scheduleTask(
-            "SKGIF_Harvest-" + sourceName +
+            "SKGIF_Harvest-" + sourceName.replace(" ", "_") +
                 "-" + from + "_" + until +
                 "-" + UUID.randomUUID(), timestamp,
             () -> skgifHarvester.harvest(sourceName, authorIdentifier, institutionIdentifier,

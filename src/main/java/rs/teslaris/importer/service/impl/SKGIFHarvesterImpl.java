@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -49,7 +50,7 @@ import rs.teslaris.importer.utility.skgif.SKGIFHarvestConfigurationLoader;
 @Slf4j
 public class SKGIFHarvesterImpl implements SKGIFHarvester {
 
-    private static final int MAX_RESTART_NUMBER = 10;
+    private static final int MAX_RESTART_NUMBER = 2;
 
     private final int PAGE_SIZE = 100;
 
@@ -66,33 +67,16 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
     public void harvest(String sourceName, String authorIdentifier, String institutionIdentifier,
                         LocalDate startDate, LocalDate endDate, Integer userId) {
         var sourceConfiguration = getSourceConfiguration(sourceName);
+
         var objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        String identifierFilter = "";
-        if (StringUtil.valueExists(authorIdentifier)) {
-            identifierFilter = "contributions.by.identifiers.value:" + authorIdentifier;
-        } else if (StringUtil.valueExists(institutionIdentifier)) {
-            String fetchUrl = sourceConfiguration.baseUrl() + "/venue?filter=contributions.role:" +
-                institutionIdentifier;
-            ResponseEntity<String> responseEntity =
-                restTemplateProvider.provideRestTemplate().getForEntity(fetchUrl, String.class);
-            try {
-                SKGIFListResponse<?> result = objectMapper.readValue(
-                    responseEntity.getBody(),
-                    objectMapper.getTypeFactory()
-                        .constructParametricType(SKGIFListResponse.class, Venue.class)
-                );
-
-                if (result.getResults().isEmpty()) {
-                    return;
-                }
-
-                identifierFilter = "relevant_organisations:" +
-                    ((Venue) result.getResults().getFirst()).getLocalIdentifier();
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+        var identifierFilter =
+            constructIdentifierFilter(authorIdentifier, institutionIdentifier, objectMapper,
+                sourceConfiguration);
+        if (Objects.isNull(identifierFilter)) {
+            return;
         }
 
         var adminUserIds = CommonImportUtility.getAdminUserIds();
@@ -114,37 +98,48 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
         var restTemplate = restTemplateProvider.provideRestTemplate();
 
         var newEntriesCount = new HashMap<Integer, Integer>();
-        var shouldContinue = true;
-        try {
-            while (shouldContinue) {
-                String paginatedUrl = endpoint + "&page=" + page + "&page_size=" + pageSize;
-                ResponseEntity<String> responseEntity =
-                    restTemplate.getForEntity(paginatedUrl, String.class);
 
-                if (responseEntity.getStatusCode() != HttpStatus.OK) {
-                    break;
+        var restartCount = 0;
+        while (restartCount <= MAX_RESTART_NUMBER) {
+            var shouldContinue = true;
+            try {
+                while (shouldContinue) {
+                    String paginatedUrl = endpoint + "&page=" + page + "&page_size=" + pageSize;
+                    ResponseEntity<String> responseEntity =
+                        restTemplate.getForEntity(paginatedUrl, String.class);
+
+                    if (responseEntity.getStatusCode() != HttpStatus.OK) {
+                        break;
+                    }
+
+                    var results =
+                        objectMapper.readValue(responseEntity.getBody(),
+                            new TypeReference<SKGIFListResponse<ResearchProduct>>() {
+                            });
+
+                    if (Objects.nonNull(results.getResults())) {
+                        processParsedRecords(results.getResults(), sourceConfiguration,
+                            newEntriesCount,
+                            userId, adminUserIds);
+                    }
+
+                    shouldContinue = results.getResults().size() == PAGE_SIZE;
                 }
 
-                var results =
-                    objectMapper.readValue(responseEntity.getBody(),
-                        new TypeReference<SKGIFListResponse<ResearchProduct>>() {
-                        });
-
-                if (Objects.nonNull(results.getResults())) {
-                    processParsedRecords(results.getResults(), sourceConfiguration, newEntriesCount,
-                        userId, adminUserIds);
-                }
-
-                shouldContinue = results.getResults().size() == PAGE_SIZE;
+                break;
+            } catch (HttpClientErrorException e) {
+                log.error("HTTP error for SKG-IF client ID {}: {}", identifierFilter,
+                    e.getMessage());
+                restartCount++;
+            } catch (JsonProcessingException e) {
+                log.error("JSON parsing error for SKG-IF client ID {}: {}", identifierFilter,
+                    e.getMessage());
+                break;
+            } catch (ResourceAccessException e) {
+                log.error("SKG-IF server is unreachable for ID {}: {}", identifierFilter,
+                    e.getMessage());
+                restartCount++;
             }
-        } catch (HttpClientErrorException e) {
-            log.error("HTTP error for SKG-IF client ID {}: {}", identifierFilter, e.getMessage());
-        } catch (JsonProcessingException e) {
-            log.error("JSON parsing error for SKG-IF client ID {}: {}", identifierFilter,
-                e.getMessage());
-        } catch (ResourceAccessException e) {
-            log.error("SKG-IF client is unreachable for ID {}: {}", identifierFilter,
-                e.getMessage());
         }
     }
 
@@ -174,7 +169,8 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
 
     private String constructIdentifyingDatasetName(
         SKGIFHarvestConfigurationLoader.Source sourceConfig) {
-        return "HARVEST_" + sourceConfig.sourceName() + "_SKG-IF-PRODUCTS";
+        return "HARVEST_" +
+            sourceConfig.sourceName().replace(" ", "_") + "_SKG-IF-PRODUCTS";
     }
 
     @Nullable
@@ -304,5 +300,37 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                 documentImport.getImportInstitutionsId()
                     .addAll(person.getEmploymentInstitutionsIdHierarchy());
             });
+    }
+
+    private String constructIdentifierFilter(String authorIdentifier, String institutionIdentifier,
+                                             ObjectMapper objectMapper,
+                                             SKGIFHarvestConfigurationLoader.Source sourceConfiguration) {
+        String identifierFilter = "";
+        if (StringUtil.valueExists(authorIdentifier)) {
+            identifierFilter = "contributions.by.identifiers.value:" + authorIdentifier;
+        } else if (StringUtil.valueExists(institutionIdentifier)) {
+            String fetchUrl = sourceConfiguration.baseUrl() + "/venue?filter=contributions.role:" +
+                institutionIdentifier;
+            ResponseEntity<String> responseEntity =
+                restTemplateProvider.provideRestTemplate().getForEntity(fetchUrl, String.class);
+            try {
+                SKGIFListResponse<?> result = objectMapper.readValue(
+                    responseEntity.getBody(),
+                    objectMapper.getTypeFactory()
+                        .constructParametricType(SKGIFListResponse.class, Venue.class)
+                );
+
+                if (result.getResults().isEmpty()) {
+                    return null;
+                }
+
+                identifierFilter = "relevant_organisations:" +
+                    ((Venue) result.getResults().getFirst()).getLocalIdentifier();
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return identifierFilter;
     }
 }
