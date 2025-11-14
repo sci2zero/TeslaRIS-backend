@@ -209,7 +209,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         var simpleSearchQuery =
-            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes);
+            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes, null);
 
         var contributionFilter = TermQuery.of(t -> t
             .field(getContributionField(contributionType))
@@ -274,7 +274,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     @Transactional
     public Page<DocumentPublicationIndex> findPublicationsForOrganisationUnit(
-        Integer organisationUnitId, List<String> tokens, List<DocumentPublicationType> allowedTypes,
+        Integer organisationUnitId, List<String> tokens,
+        List<DocumentPublicationType> allowedTypes,
+        Boolean notArchivedOnly,
         Pageable pageable) {
         var allOUIdsFromSubHierarchy =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
@@ -284,7 +286,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         var simpleSearchQuery =
-            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes);
+            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes, notArchivedOnly);
 
         var outputConfiguration =
             organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
@@ -527,6 +529,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             index.setEventId(null);
         }
 
+        index.setIsArchived(document.getIsArchived());
+
         index.setWordcloudTokensSr(StringUtil.extractKeywords(index.getTitleSr(),
             StringUtil.valueExists(index.getDescriptionSr()) ? index.getDescriptionSr() :
                 StringUtil.sanitizeForKeywordFieldFast(index.getFullTextSr()),
@@ -733,6 +737,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setIsArchived(true);
         save(document);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(index -> {
+                index.setIsArchived(document.getIsArchived());
+                documentPublicationIndexRepository.save(index);
+            });
     }
 
     @Override
@@ -742,6 +752,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setIsArchived(false);
 
         save(document);
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(index -> {
+                index.setIsArchived(document.getIsArchived());
+                documentPublicationIndexRepository.save(index);
+            });
     }
 
     @Override
@@ -798,7 +813,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 null,
                 null,
                 true,
-                List.of()
+                List.of(), false
             );
 
             pageResult.getContent().forEach(documentIndex ->
@@ -1174,18 +1189,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      Integer commissionId,
                                                                      Boolean authorReprint,
                                                                      Boolean unmanaged,
-                                                                     List<DocumentPublicationType> allowedTypes) {
+                                                                     List<DocumentPublicationType> allowedTypes,
+                                                                     Boolean notArchivedOnly) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, institutionId, commissionId, authorReprint,
-                    unmanaged, allowedTypes),
+                    unmanaged, allowedTypes, notArchivedOnly),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
 
         return searchService.runQuery(
             buildAdvancedSearchQuery(tokens, institutionId, commissionId, authorReprint,
-                unmanaged, allowedTypes), pageable,
+                unmanaged, allowedTypes, notArchivedOnly), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -1529,7 +1545,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                            Integer commissionId,
                                            Boolean authorReprint,
                                            Boolean unmanaged,
-                                           List<DocumentPublicationType> allowedTypes) {
+                                           List<DocumentPublicationType> allowedTypes,
+                                           Boolean notArchivedOnly) {
         return BoolQuery.of(b -> {
             if (Objects.nonNull(institutionId) && institutionId > 0) {
                 var allSubInstitutions =
@@ -1547,6 +1564,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             if (Objects.nonNull(authorReprint) && authorReprint) {
                 b.must(q -> q.term(t -> t.field("author_reprint").value(true)));
+            }
+
+            if (Objects.nonNull(notArchivedOnly) && notArchivedOnly) {
+                b.must(q -> q.term(t -> t.field("is_archived").value(false)));
             }
 
             if (Objects.nonNull(allowedTypes) && !allowedTypes.isEmpty()) {
@@ -1663,7 +1684,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                          Integer commissionId,
                                          Boolean authorReprint,
                                          Boolean unmanaged,
-                                         List<DocumentPublicationType> allowedTypes) {
+                                         List<DocumentPublicationType> allowedTypes,
+                                         Boolean notArchivedOnly) {
         String minShouldMatch;
         if (tokens.size() <= 2) {
             minShouldMatch = "1"; // Allow partial match for very short queries
@@ -1673,7 +1695,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
-                allowedTypes));
+                allowedTypes, notArchivedOnly));
             b.must(buildSimpleTokenQuery(tokens, minShouldMatch));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
@@ -1686,10 +1708,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                           Integer commissionId,
                                           Boolean authorReprint,
                                           Boolean unmanaged,
-                                          List<DocumentPublicationType> allowedTypes) {
+                                          List<DocumentPublicationType> allowedTypes,
+                                          Boolean notArchivedOnly) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
-                allowedTypes));
+                allowedTypes, notArchivedOnly));
             b.must(expressionTransformer.parseAdvancedQuery(tokens));
             b.mustNot(sb -> sb.match(
                 m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));

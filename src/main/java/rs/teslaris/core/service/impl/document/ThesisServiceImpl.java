@@ -612,6 +612,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
         thesis.setIsArchived(true);
         thesisJPAService.save(thesis);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+            .ifPresent(index -> {
+                index.setIsArchived(thesis.getIsArchived());
+                documentPublicationIndexRepository.save(index);
+            });
     }
 
     @Override
@@ -621,6 +627,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         thesis.setIsArchived(false);
 
         thesisJPAService.save(thesis);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+            .ifPresent(index -> {
+                index.setIsArchived(thesis.getIsArchived());
+                documentPublicationIndexRepository.save(index);
+            });
     }
 
     @Override

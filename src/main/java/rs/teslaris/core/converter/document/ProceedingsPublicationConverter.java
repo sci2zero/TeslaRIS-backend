@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.model.document.ProceedingsPublication;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 public class ProceedingsPublicationConverter extends DocumentPublicationConverter {
@@ -33,7 +34,7 @@ public class ProceedingsPublicationConverter extends DocumentPublicationConverte
     public static BibTeXEntry toBibTexEntry(ProceedingsPublication proceedingsPublication,
                                             String defaultLanguageTag) {
         var entry = new BibTeXEntry(BibTeXEntry.TYPE_INPROCEEDINGS,
-            new Key("(TESLARIS)" + proceedingsPublication.getId().toString()));
+            new Key(IdentifierUtil.identifierPrefix + proceedingsPublication.getId().toString()));
 
         setCommonFields(proceedingsPublication, entry, defaultLanguageTag);
 

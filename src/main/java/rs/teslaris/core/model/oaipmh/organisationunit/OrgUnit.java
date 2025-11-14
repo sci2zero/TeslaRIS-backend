@@ -15,6 +15,7 @@ import lombok.Setter;
 import lombok.ToString;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
+import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 
 @XmlType(name = "TOrgUnit", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -28,6 +29,9 @@ import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 public class OrgUnit implements OrgUnitConvertable, HasOldId {
 
     private String id;
+
+    @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types")
+    private List<PublicationType> type;
 
     @XmlAttribute(name = "id")
     private String oldId;

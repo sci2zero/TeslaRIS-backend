@@ -1,6 +1,10 @@
 package rs.teslaris.exporter.model.converter;
 
+import io.github.coordinates2country.Coordinates2Country;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -9,10 +13,15 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.model.oaipmh.organisationunit.PartOf;
+import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 
@@ -45,7 +54,21 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             ExportMultilingualContentConverter.toCommonExportModel(organisationUnit.getName()));
         commonExportOU.setNameAbbreviation(organisationUnit.getNameAbbreviation());
         commonExportOU.setScopusAfid(organisationUnit.getScopusAfid());
+        commonExportOU.setRor(organisationUnit.getRor());
+        commonExportOU.setOpenAlex(organisationUnit.getOpenAlexId());
         commonExportOU.getOldIds().addAll(organisationUnit.getOldIds());
+
+        if (Objects.nonNull(organisationUnit.getUris()) && !organisationUnit.getUris().isEmpty()) {
+            commonExportOU.setUris(organisationUnit.getUris().stream().toList());
+        }
+
+        if (Objects.nonNull(organisationUnit.getLocation()) &&
+            Objects.nonNull(organisationUnit.getLocation().getLatitude()) &&
+            Objects.nonNull(organisationUnit.getLocation().getLongitude())) {
+            commonExportOU.setCountry(getCountryCodeFromName(
+                Coordinates2Country.country(organisationUnit.getLocation().getLatitude(),
+                    organisationUnit.getLocation().getLongitude())));
+        }
 
         var superOu = organisationUnitsRelationRepository.getSuperOU(organisationUnit.getId());
         superOu.ifPresent(organisationUnitsRelation -> commonExportOU.setSuperOU(
@@ -57,6 +80,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             commonExportOU.getRelatedInstitutionIds().addAll(topLevelIds);
             commonExportOU.getActivelyRelatedInstitutionIds().addAll(topLevelIds);
         }
+
+        commonExportOU.setIsLegalEntity(organisationUnit.getLegalEntity());
 
         return commonExportOU;
     }
@@ -89,7 +114,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
             orgUnit.setOldId("Orgunits/" + legacyIdentifierPrefix +
                 organisationUnit.getOldIds().stream().findFirst().get());
         } else {
-            orgUnit.setOldId("Orgunits/(TESLARIS)" + organisationUnit.getDatabaseId());
+            orgUnit.setOldId(
+                "Orgunits/" + IdentifierUtil.identifierPrefix + organisationUnit.getDatabaseId());
         }
 
         orgUnit.setName(
@@ -100,25 +126,36 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
                     supportLegacyIdentifiers)));
         }
 
+        orgUnit.setType(new ArrayList<>(List.of(
+            new PublicationType("https://w3id.org/cerif/vocab/OrganisationTypes#HigherEducation",
+                "", "https://w3id.org/cerif/vocab/OrganisationTypes"))));
+
         return orgUnit;
     }
 
     public static DC toDCModel(ExportOrganisationUnit exportOrganisationUnit,
                                boolean supportLegacyIdentifiers) {
         var dcOrgUnit = new DC();
-        dcOrgUnit.getType().add("party");
+        dcOrgUnit.getType().add(new DCType("ORGANISATION_UNIT", null,
+            exportOrganisationUnit.getIsLegalEntity() ? "LEGAL" : null));
         dcOrgUnit.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportOrganisationUnit.getOldIds()) &&
             !exportOrganisationUnit.getOldIds().isEmpty()) {
-            dcOrgUnit.getIdentifier().add(legacyIdentifierPrefix + "(" +
-                exportOrganisationUnit.getOldIds().stream().findFirst().get() + ")");
+            dcOrgUnit.getIdentifier().add(legacyIdentifierPrefix +
+                exportOrganisationUnit.getOldIds().stream().findFirst().get());
         } else {
             dcOrgUnit.getIdentifier()
-                .add("TESLARIS(" + exportOrganisationUnit.getDatabaseId() + ")");
+                .add(identifierPrefix + exportOrganisationUnit.getDatabaseId());
         }
 
-        dcOrgUnit.getIdentifier().add(exportOrganisationUnit.getScopusAfid());
+        if (StringUtil.valueExists(exportOrganisationUnit.getScopusAfid())) {
+            dcOrgUnit.getIdentifier().add("SCOPUS:" + exportOrganisationUnit.getScopusAfid());
+        }
+
+        if (StringUtil.valueExists(exportOrganisationUnit.getRor())) {
+            dcOrgUnit.getIdentifier().add("ROR:" + exportOrganisationUnit.getRor());
+        }
 
         clientLanguages.forEach(lang -> {
             dcOrgUnit.getIdentifier()
@@ -129,14 +166,28 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         addContentToList(
             exportOrganisationUnit.getName(),
             ExportMultilingualContent::getContent,
-            content -> dcOrgUnit.getTitle().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcOrgUnit.getTitle()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         if (Objects.nonNull(exportOrganisationUnit.getNameAbbreviation()) &&
             !exportOrganisationUnit.getNameAbbreviation().isBlank()) {
-            dcOrgUnit.getTitle().add(exportOrganisationUnit.getNameAbbreviation());
+            dcOrgUnit.getTitle()
+                .add(new DCMultilingualContent(exportOrganisationUnit.getNameAbbreviation(), null));
         }
 
         return dcOrgUnit;
+    }
+
+    public static String getCountryCodeFromName(String countryName) {
+        var locales = Locale.getAvailableLocales();
+
+        for (Locale locale : locales) {
+            if (countryName.equalsIgnoreCase(locale.getDisplayCountry())) {
+                return locale.getCountry(); // Returns ISO 3166-1 alpha-2 code (e.g., "US")
+            }
+        }
+        return null;
     }
 }

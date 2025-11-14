@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 public class SoftwareConverter extends DocumentPublicationConverter {
@@ -27,7 +28,7 @@ public class SoftwareConverter extends DocumentPublicationConverter {
 
     public static BibTeXEntry toBibTexEntry(Software software, String defaultLanguageTag) {
         var entry = new BibTeXEntry(new Key("software"),
-            new Key("(TESLARIS)" + software.getId().toString()));
+            new Key(IdentifierUtil.identifierPrefix + software.getId().toString()));
 
         setCommonFields(software, entry, defaultLanguageTag);
 

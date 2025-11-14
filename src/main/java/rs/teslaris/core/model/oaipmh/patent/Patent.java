@@ -17,6 +17,7 @@ import lombok.ToString;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
+import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 import rs.teslaris.core.model.oaipmh.publication.Publisher;
 
 @XmlType(name = "TPatent", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
@@ -35,7 +36,7 @@ public class Patent implements PatentConvertable, HasOldId {
     private String oldId;
 
     @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Patent_Types")
-    private String type;
+    private List<PublicationType> type;
 
     @XmlElement(name = "Title")
     private List<MultilingualContent> title;

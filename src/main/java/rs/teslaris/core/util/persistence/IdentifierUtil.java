@@ -4,10 +4,18 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.functional.BiPredicate;
 
+@Component
 public class IdentifierUtil {
+
+    public static String identifierPrefix;
+
+    public static String legacyIdentifierPrefix;
+
 
     public static void validateAndSetIdentifier(
         String identifier,
@@ -50,5 +58,19 @@ public class IdentifierUtil {
                 }
             });
         }
+    }
+
+    public static String removeCommonPrefix(String localIdentifier) {
+        return localIdentifier.trim().replace(IdentifierUtil.identifierPrefix, "");
+    }
+
+    @Value("${export.internal-identifier.prefix}")
+    public void setIdentifierPrefix(String prefix) {
+        IdentifierUtil.identifierPrefix = prefix;
+    }
+
+    @Value("${legacy-identifier.prefix}")
+    public void setLegacyIdentifierPrefix(String prefix) {
+        IdentifierUtil.legacyIdentifierPrefix = prefix;
     }
 }

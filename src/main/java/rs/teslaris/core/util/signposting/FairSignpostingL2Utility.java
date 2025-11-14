@@ -96,7 +96,8 @@ public class FairSignpostingL2Utility {
     }
 
     public static String addLinksForDocumentFileItems(DocumentFile file, LinksetFormat format) {
-        var anchor = baseUrl + "/api/file/" + file.getFilename();
+        var anchor =
+            FairSignpostingL1Utility.buildSafeUri(baseUrl + "/api/file/" + file.getFilename());
         var linkEntries = new ArrayList<FairSignpostingLinksetUtility.LinkEntry>();
 
         linkEntries.add(
@@ -131,7 +132,8 @@ public class FairSignpostingL2Utility {
         );
 
         if (FairSignpostingL1Utility.valuePresent(person.getPersonalInfo().getOrcid())) {
-            var dataciteUri = "https://orcid.org/" + person.getPersonalInfo().getOrcid();
+            var dataciteUri = FairSignpostingL1Utility.buildSafeUri(
+                "https://orcid.org/" + person.getPersonalInfo().getOrcid());
             linkEntries.add(
                 new FairSignpostingLinksetUtility.LinkEntry(dataciteUri, "cite-as",
                     "application/vnd.datacite.datacite+json", anchor)
@@ -271,8 +273,9 @@ public class FairSignpostingL2Utility {
                 if (Objects.nonNull(file.getAccessRights()) &&
                     Objects.nonNull(file.getLicense()) &&
                     file.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
-                    var licenseUri = "https://spdx.org/licenses/CC-" +
-                        file.getLicense().name().replace("_", "-") + "-4.0";
+                    var licenseUri = FairSignpostingL1Utility.buildSafeUri(
+                        "https://spdx.org/licenses/CC-" +
+                            file.getLicense().name().replace("_", "-") + "-4.0");
                     linkEntries.add(new FairSignpostingLinksetUtility.LinkEntry(
                         licenseUri, "license", null, anchor));
                 }
@@ -404,7 +407,8 @@ public class FairSignpostingL2Utility {
         items.stream()
             .filter(df -> df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
             .forEach(file -> {
-                var fileUri = baseUrl + "/api/file/" + file.getFileName();
+                var fileUri = FairSignpostingL1Utility.buildSafeUri(
+                    baseUrl + "/api/file/" + file.getFileName());
                 linkEntries.add(
                     new FairSignpostingLinksetUtility.LinkEntry(fileUri, "item", file.getMimeType(),
                         anchor)

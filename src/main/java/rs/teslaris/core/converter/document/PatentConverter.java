@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 public class PatentConverter extends DocumentPublicationConverter {
@@ -27,7 +28,7 @@ public class PatentConverter extends DocumentPublicationConverter {
 
     public static BibTeXEntry toBibTexEntry(Patent patent, String defaultLanguageTag) {
         var entry = new BibTeXEntry(new Key("patent"),
-            new Key("(TESLARIS)" + patent.getId().toString()));
+            new Key(IdentifierUtil.identifierPrefix + patent.getId().toString()));
 
         setCommonFields(patent, entry, defaultLanguageTag);
 

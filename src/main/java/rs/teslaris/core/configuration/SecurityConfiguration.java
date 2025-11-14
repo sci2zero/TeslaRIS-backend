@@ -221,6 +221,7 @@ public class SecurityConfiguration {
 
                 // EXPORT
                 .requestMatchers(HttpMethod.GET, "/api/export/{handlerName}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/skg-if/**").permitAll()
 
                 // SEARCH TABLE EXPORT
                 .requestMatchers(HttpMethod.GET, "/api/table-export/records-per-page").permitAll()

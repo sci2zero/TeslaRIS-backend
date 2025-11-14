@@ -264,7 +264,8 @@ public class TaskManagerServiceImpl implements TaskManagerService {
     }
 
     private boolean isHarvestTask(String taskId, String role) {
-        if (role.equals(UserRole.ADMIN.name()) && taskId.startsWith("OAIPMH_Harvest-")) {
+        if (role.equals(UserRole.ADMIN.name()) &&
+            (taskId.startsWith("OAIPMH_Harvest-") || taskId.startsWith("SKGIF_Harvest-"))) {
             return true;
         }
 

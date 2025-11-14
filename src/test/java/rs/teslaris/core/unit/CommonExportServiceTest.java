@@ -7,8 +7,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -41,6 +43,7 @@ import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.exporter.model.common.ExportEvent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
+import rs.teslaris.exporter.model.common.ExportPublicationType;
 import rs.teslaris.exporter.service.impl.CommonExportServiceImpl;
 
 @SpringBootTest
@@ -189,7 +192,7 @@ public class CommonExportServiceTest {
             (Page) emptyPage);
 
         // When
-        commonExportService.exportDocumentsToCommonModel(allTime);
+        commonExportService.exportDocumentsToCommonModel(allTime, Collections.emptyList());
 
         // Then
         verify(datasetRepository, times(1)).findAllModified(any(Pageable.class),
@@ -210,5 +213,72 @@ public class CommonExportServiceTest {
             anyBoolean());
         verify(monographPublicationRepository, times(1)).findAllModified(
             any(Pageable.class), anyBoolean());
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExportPublicationType.class)
+    public void shouldExportDocumentsToCommonModel(ExportPublicationType exportPublicationType) {
+        // Given
+        var emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+
+        when(datasetRepository.findAllModified(any(Pageable.class),
+            anyBoolean())).thenReturn(
+            (Page) emptyPage);
+        when(softwareRepository.findAllModified(any(Pageable.class),
+            anyBoolean())).thenReturn(
+            (Page) emptyPage);
+        when(patentRepository.findAllModified(any(Pageable.class),
+            anyBoolean())).thenReturn(
+            (Page) emptyPage);
+        when(journalRepository.findAllModified(
+            any(Pageable.class), anyBoolean())).thenReturn((Page) emptyPage);
+        when(journalPublicationRepository.findAllModified(
+            any(Pageable.class), anyBoolean())).thenReturn((Page) emptyPage);
+        when(proceedingsRepository.findAllModified(any(Pageable.class),
+            anyBoolean())).thenReturn(
+            (Page) emptyPage);
+        when(proceedingsPublicationRepository.findAllModified(
+            any(Pageable.class), anyBoolean())).thenReturn((Page) emptyPage);
+        when(monographRepository.findAllModified(any(Pageable.class),
+            anyBoolean())).thenReturn(
+            (Page) emptyPage);
+        when(monographPublicationRepository.findAllModified(
+            any(Pageable.class), anyBoolean())).thenReturn((Page) emptyPage);
+        when(thesisRepository.findAllModified(any(Pageable.class),
+            anyBoolean())).thenReturn(
+            (Page) emptyPage);
+
+        // When
+        commonExportService.exportDocumentsToCommonModel(true, List.of(exportPublicationType));
+
+        // Then
+        switch (exportPublicationType) {
+            case JOURNAL_PUBLICATION ->
+                verify(journalPublicationRepository, times(1)).findAllModified(any(Pageable.class),
+                    anyBoolean());
+            case PROCEEDINGS ->
+                verify(proceedingsRepository, times(1)).findAllModified(any(Pageable.class),
+                    anyBoolean());
+            case PROCEEDINGS_PUBLICATION ->
+                verify(proceedingsPublicationRepository, times(1)).findAllModified(
+                    any(Pageable.class), anyBoolean());
+            case MONOGRAPH ->
+                verify(monographRepository, times(1)).findAllModified(any(Pageable.class),
+                    anyBoolean());
+            case PATENT -> verify(patentRepository, times(1)).findAllModified(any(Pageable.class),
+                anyBoolean());
+            case SOFTWARE ->
+                verify(softwareRepository, times(1)).findAllModified(any(Pageable.class),
+                    anyBoolean());
+            case DATASET -> verify(datasetRepository, times(1)).findAllModified(any(Pageable.class),
+                anyBoolean());
+            case JOURNAL -> verify(journalRepository, times(1)).findAllModified(any(Pageable.class),
+                anyBoolean());
+            case MONOGRAPH_PUBLICATION ->
+                verify(monographPublicationRepository, times(1)).findAllModified(
+                    any(Pageable.class), anyBoolean());
+            case THESIS -> verify(thesisRepository, times(1)).findAllModified(any(Pageable.class),
+                anyBoolean());
+        }
     }
 }

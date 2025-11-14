@@ -25,6 +25,21 @@ public class ExportOrganisationUnit extends BaseExportEntity {
     @Field("scopus_afid")
     private String scopusAfid;
 
+    @Field("ror")
+    private String ror;
+
+    @Field("open_alex")
+    private String openAlex;
+
     @Field("super_organisation_unit")
     private ExportOrganisationUnit superOU;
+
+    @Field("uris")
+    private List<String> uris;
+
+    @Field("country")
+    private String country;
+
+    @Field("is_legal_entity")
+    private Boolean isLegalEntity;
 }

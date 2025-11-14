@@ -1,0 +1,14 @@
+{
+  "sources": [
+    {
+      "sourceName": "CRIS UNS",
+      "baseUrl": "https://cris.uns.ac.rs/api/skg-if",
+      "metadataFormatParameter": "format",
+      "dateFromFilterParam": "dateFrom",
+      "dateToFilterParam": "dateTo",
+      "additionalFilters": "product_type:literature",
+      "converterClass": "SKGIFConverter",
+      "sourceIdentifierPrefix": "TESLARIS"
+    }
+  ]
+}

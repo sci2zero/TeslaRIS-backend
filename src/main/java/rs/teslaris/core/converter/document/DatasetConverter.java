@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 public class DatasetConverter extends DocumentPublicationConverter {
@@ -27,7 +28,7 @@ public class DatasetConverter extends DocumentPublicationConverter {
 
     public static BibTeXEntry toBibTexEntry(Dataset dataset, String defaultLanguageTag) {
         var entry = new BibTeXEntry(new Key("dataset"),
-            new Key("(TESLARIS)" + dataset.getId().toString()));
+            new Key(IdentifierUtil.identifierPrefix + dataset.getId().toString()));
 
         setCommonFields(dataset, entry, defaultLanguageTag);
 

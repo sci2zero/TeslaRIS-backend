@@ -98,7 +98,7 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
 
     @Query(value = "SELECT * FROM persons p WHERE " +
         "(:allTime = TRUE OR p.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
-        "p.approve_status = 1", nativeQuery = true)
+        "p.approve_status = 1 ORDER BY p.id", nativeQuery = true)
     Page<Person> findAllModified(Pageable pageable, boolean allTime);
 
     @Query("SELECT i.organisationUnit.id FROM Involvement i WHERE " +
@@ -136,5 +136,4 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         WHERE p.id = :personId
         """)
     Optional<Person> findOneWithInvolvements(Integer personId);
-
 }

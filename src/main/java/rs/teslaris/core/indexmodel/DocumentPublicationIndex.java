@@ -219,7 +219,7 @@ public class DocumentPublicationIndex {
     private List<String> wordcloudTokensOther = new ArrayList<>();
 
     @Field(type = FieldType.Boolean, name = "is_approved", store = true)
-    private Boolean isApproved;
+    private Boolean isApproved = false;
 
     @Field(type = FieldType.Boolean, name = "are_files_valid", store = true)
     private Boolean areFilesValid;
@@ -241,4 +241,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "contains_files", store = true)
     private Boolean containsFiles;
+
+    @Field(type = FieldType.Boolean, name = "is_archived", store = true)
+    private Boolean isArchived;
 }

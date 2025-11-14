@@ -13,10 +13,16 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.person.Affiliation;
 import rs.teslaris.core.model.oaipmh.person.PersonName;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.exporter.model.common.ExportEmployment;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 
@@ -65,9 +71,14 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
         commonExportPerson.getOldIds().addAll(person.getOldIds());
 
-        involvementRepository.findActiveEmploymentInstitutions(person.getId()).forEach(
-            institution -> commonExportPerson.getEmploymentInstitutions()
-                .add(ExportOrganisationUnitConverter.toCommonExportModel(institution, false)));
+        var involvements = involvementRepository.findActiveEmploymentInstitutions(person.getId());
+        involvements.forEach(involvement -> commonExportPerson.getEmployments().add(
+            new ExportEmployment(
+                ExportOrganisationUnitConverter.toCommonExportModel(
+                    involvement.getOrganisationUnit(),
+                    false), involvement.getDateFrom(), involvement.getDateTo(),
+                StringUtil.getStringContent(involvement.getRole(),
+                    LanguageAbbreviations.ENGLISH))));
 
         if (computeRelations) {
             commonExportPerson.getRelatedInstitutionIds()
@@ -111,7 +122,8 @@ public class ExportPersonConverter extends ExportConverterBase {
             openairePerson.setOldId("Persons/" + legacyIdentifierPrefix +
                 exportPerson.getOldIds().stream().findFirst().get());
         } else {
-            openairePerson.setOldId("Persons/(TESLARIS)" + exportPerson.getDatabaseId());
+            openairePerson.setOldId(
+                "Persons/" + IdentifierUtil.identifierPrefix + exportPerson.getDatabaseId());
         }
 
         openairePerson.setScopusAuthorId(exportPerson.getScopusAuthorId());
@@ -129,13 +141,12 @@ public class ExportPersonConverter extends ExportConverterBase {
             openairePerson.getElectronicAddresses().add(elAddress);
         });
 
-        if (!exportPerson.getEmploymentInstitutions().isEmpty()) {
+        if (!exportPerson.getEmployments().isEmpty()) {
             openairePerson.setAffiliation(new Affiliation(new ArrayList<>(), null));
-            exportPerson.getEmploymentInstitutions().forEach(employmentInstitution -> {
-                openairePerson.getAffiliation().getOrgUnits()
-                    .add(ExportOrganisationUnitConverter.toOpenaireModel(employmentInstitution,
-                        supportLegacyIdentifiers));
-            });
+            exportPerson.getEmployments().forEach(employment ->
+                openairePerson.getAffiliation().getOrgUnits().add(
+                    ExportOrganisationUnitConverter.toOpenaireModel(
+                        employment.getEmploymentInstitution(), supportLegacyIdentifiers)));
         }
 
         return openairePerson;
@@ -143,21 +154,36 @@ public class ExportPersonConverter extends ExportConverterBase {
 
     public static DC toDCModel(ExportPerson exportPerson, boolean supportLegacyIdentifiers) {
         var dcPerson = new DC();
-        dcPerson.getType().add("party");
+        dcPerson.getType().add(new DCType("PERSON", null, null));
         dcPerson.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportPerson.getOldIds()) &&
             !exportPerson.getOldIds().isEmpty()) {
             dcPerson.getIdentifier().add(
-                legacyIdentifierPrefix + "(" + exportPerson.getOldIds().stream().findFirst().get() +
-                    ")");
-        } else {
-            dcPerson.getIdentifier().add("TESLARIS(" + exportPerson.getDatabaseId() + ")");
+                legacyIdentifierPrefix + exportPerson.getOldIds().stream().findFirst().get());
         }
 
-        dcPerson.getIdentifier().add(exportPerson.getOrcid());
-        dcPerson.getIdentifier().add(exportPerson.getScopusAuthorId());
-        dcPerson.getIdentifier().add(exportPerson.getENaukaId());
+        dcPerson.getIdentifier().add(identifierPrefix + exportPerson.getDatabaseId());
+
+        if (StringUtil.valueExists(exportPerson.getOrcid())) {
+            dcPerson.getIdentifier().add(exportPerson.getOrcid());
+        }
+
+        if (StringUtil.valueExists(exportPerson.getScopusAuthorId())) {
+            dcPerson.getIdentifier().add("SCOPUS:" + exportPerson.getScopusAuthorId());
+        }
+
+        if (StringUtil.valueExists(exportPerson.getENaukaId())) {
+            dcPerson.getIdentifier().add("ENAUKA:" + exportPerson.getENaukaId());
+        }
+
+        if (StringUtil.valueExists(exportPerson.getECrisId())) {
+            dcPerson.getIdentifier().add("ECRIS:" + exportPerson.getECrisId());
+        }
+
+        if (StringUtil.valueExists(exportPerson.getApvnt())) {
+            dcPerson.getIdentifier().add("APVNT:" + exportPerson.getApvnt());
+        }
 
         clientLanguages.forEach(lang -> {
             dcPerson.getIdentifier()
@@ -166,17 +192,21 @@ public class ExportPersonConverter extends ExportConverterBase {
         });
 
         if (Objects.nonNull(exportPerson.getName().getMiddleName())) {
-            dcPerson.getTitle().add(exportPerson.getName().getFirstName() + " " +
-                exportPerson.getName().getMiddleName() + " " +
-                exportPerson.getName().getLastName());
+            dcPerson.getTitle()
+                .add(new DCMultilingualContent(exportPerson.getName().getFirstName() + " " +
+                    exportPerson.getName().getMiddleName() + " " +
+                    exportPerson.getName().getLastName(), null));
         } else {
             dcPerson.getTitle().add(
-                exportPerson.getName().getFirstName() + " " + exportPerson.getName().getLastName());
+                new DCMultilingualContent(exportPerson.getName().getFirstName() + " " +
+                    exportPerson.getName().getLastName(), null));
         }
 
         addContentToList(
-            exportPerson.getEmploymentInstitutions(),
-            institution -> "oai:CRIS.UNS:Orgunits/(TESLARIS)" + institution.getDatabaseId(),
+            exportPerson.getEmployments(),
+            employment -> "oai:CRIS.UNS:Orgunits/"
+                + IdentifierUtil.identifierPrefix +
+                employment.getEmploymentInstitution().getDatabaseId(),
             content -> dcPerson.getRelation().add(content)
         );
 

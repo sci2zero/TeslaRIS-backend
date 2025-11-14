@@ -5,5 +5,5 @@ public enum MonographType {
     BOOK,
     BIBLIOGRAPHY,
     TRANSLATION,
-    STUDY,
+    STUDY
 }

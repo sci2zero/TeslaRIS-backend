@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -22,6 +24,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.oaipmh.dublincore.Contributor;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.etdms.Degree;
 import rs.teslaris.core.model.oaipmh.etdms.ETDMSThesis;
 import rs.teslaris.core.model.oaipmh.etdms.LevelType;
@@ -31,6 +34,8 @@ import rs.teslaris.core.model.oaipmh.marc21.DataField;
 import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.oaipmh.marc21.SubField;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 
@@ -66,7 +71,8 @@ public class ThesisConverter extends DocumentPublicationConverter {
             type = BibTeXEntry.TYPE_MASTERSTHESIS;
         }
 
-        var entry = new BibTeXEntry(type, new Key("(TESLARIS)" + thesis.getId().toString()));
+        var entry = new BibTeXEntry(type,
+            new Key(IdentifierUtil.identifierPrefix + thesis.getId().toString()));
 
         setCommonFields(thesis, entry, defaultLanguageTag);
 
@@ -284,7 +290,9 @@ public class ThesisConverter extends DocumentPublicationConverter {
         addContentToList(
             exportDocument.getTitle(),
             MultiLingualContent::getContent,
-            dcPublication.getTitle()::add
+            MultiLingualContent::getLanguage,
+            (content, languageTag) -> dcPublication.getTitle()
+                .add(new DCMultilingualContent(content, languageTag))
         );
     }
 
@@ -296,28 +304,35 @@ public class ThesisConverter extends DocumentPublicationConverter {
             DocumentContributionType.BOARD_MEMBER, "board_member"
         );
 
-        roleMap.forEach((type, role) ->
-            addContentToList(
-                getContributorNames(exportDocument, type),
-                PersonName::toString,
-                content -> addContributor(dcPublication, content, role)
-            )
+        roleMap.forEach((type, role) -> {
+                getContributorNames(exportDocument, type).forEach(
+                    nameAndIdentifier ->
+                        addContributor(
+                            dcPublication,
+                            nameAndIdentifier.a.toString(),
+                            role,
+                            nameAndIdentifier.b));
+            }
         );
     }
 
-    private static Set<PersonName> getContributorNames(Thesis exportDocument,
-                                                       DocumentContributionType type) {
+    private static Set<Pair<PersonName, String>> getContributorNames(Thesis exportDocument,
+                                                                     DocumentContributionType type) {
         return exportDocument.getContributors().stream()
             .filter(contribution -> contribution.getContributionType().equals(type))
-            .map(contribution -> contribution.getAffiliationStatement().getDisplayPersonName())
+            .map(contribution -> new Pair<>(
+                contribution.getAffiliationStatement().getDisplayPersonName(),
+                Objects.nonNull(contribution.getPerson()) ?
+                    Objects.requireNonNullElse(contribution.getPerson().getOrcid(), "") : ""))
             .collect(Collectors.toSet());
     }
 
-    private static void addContributor(DC dcPublication, String name, String role) {
+    private static void addContributor(DC dcPublication, String name, String role, String orcid) {
         if ("creator".equals(role)) {
             dcPublication.getCreator().add(name);
         } else {
-            dcPublication.getContributor().add(new Contributor(name, role));
+            dcPublication.getContributor().add(
+                new Contributor(name, role, orcid.isBlank() ? "" : "https://orcid.org/" + orcid));
         }
     }
 
@@ -325,7 +340,9 @@ public class ThesisConverter extends DocumentPublicationConverter {
         addContentToList(
             exportDocument.getDescription(),
             MultiLingualContent::getContent,
-            dcPublication.getDescription()::add
+            MultiLingualContent::getLanguage,
+            (content, languageTag) -> dcPublication.getDescription()
+                .add(new DCMultilingualContent(content, languageTag))
         );
     }
 
@@ -333,7 +350,9 @@ public class ThesisConverter extends DocumentPublicationConverter {
         addContentToList(
             exportDocument.getKeywords(),
             MultiLingualContent::getContent,
-            content -> dcPublication.getSubject().add(content.replace("\n", "; "))
+            MultiLingualContent::getLanguage,
+            (content, languageTag) -> dcPublication.getSubject()
+                .add(new DCMultilingualContent(content.replace("\n", "; "), languageTag))
         );
     }
 
@@ -352,7 +371,9 @@ public class ThesisConverter extends DocumentPublicationConverter {
             addContentToList(
                 exportDocument.getPublisher().getName(),
                 MultiLingualContent::getContent,
-                dcPublication.getPublisher()::add
+                MultiLingualContent::getLanguage,
+                (content, languageTag) -> dcPublication.getPublisher()
+                    .add(new DCMultilingualContent(content, languageTag))
             );
         }
     }
@@ -398,6 +419,24 @@ public class ThesisConverter extends DocumentPublicationConverter {
             }
 
             consumer.accept(preprocessingFunction.apply(item));
+        });
+    }
+
+    protected static <T> void addContentToList(Set<T> sourceList,
+                                               Function<T, String> contentExtractionFunction,
+                                               Function<T, LanguageTag> languageTagExtractionFunction,
+                                               BiConsumer<String, String> consumer) {
+        sourceList.forEach(item -> {
+            if (Objects.isNull(item)) {
+                return;
+            }
+
+            if ((item instanceof String) && ((String) item).isBlank()) {
+                return;
+            }
+
+            consumer.accept(contentExtractionFunction.apply(item),
+                languageTagExtractionFunction.apply(item).getLanguageTag().toLowerCase());
         });
     }
 
