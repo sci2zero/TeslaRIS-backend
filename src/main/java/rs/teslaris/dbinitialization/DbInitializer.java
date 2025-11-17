@@ -206,6 +206,7 @@ public class DbInitializer implements ApplicationRunner {
         var readDigitalLibraryAnalytics = new Privilege("READ_DIGITAL_LIBRARY_ANALYTICS");
         var forceEmailChange = new Privilege("FORCE_EMAIL_CHANGE");
         var performSKGIFHarvest = new Privilege("PERFORM_SKGIF_HARVEST");
+        var readPromotions = new Privilege("READ_PROMOTIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -243,7 +244,7 @@ public class DbInitializer implements ApplicationRunner {
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
-                performSKGIFHarvest));
+                performSKGIFHarvest, readPromotions));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -326,7 +327,7 @@ public class DbInitializer implements ApplicationRunner {
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
                 validateMetadata, validateUploadedFiles, promotePreliminaryAttachments,
                 setDefaultContent, createUserBasic, deleteThesisAttachments, readRegistryBook,
-                readDigitalLibraryAnalytics
+                readDigitalLibraryAnalytics, readPromotions
             )));
 
         var headOfLibraryAuthority =
@@ -334,7 +335,7 @@ public class DbInitializer implements ApplicationRunner {
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
                 unarchiveThesis, performThesisReport, generateThesisLibraryBackup, readRegistryBook,
-                readDigitalLibraryAnalytics
+                readDigitalLibraryAnalytics, readPromotions
             )));
 
         var promotionRegistryAdministratorAuthority =

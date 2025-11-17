@@ -188,8 +188,9 @@ class RegistryBookServiceTest {
         verify(registryBookEntryRepository).save(any());
     }
 
-    @Test
-    void shouldUpdateRegistryBookEntry() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldUpdateRegistryBookEntry(boolean editedByLibrarian) {
         // Given
         var personalInfo = new RegistryBookPersonalInformationDTO();
         personalInfo.setAuthorName(
@@ -215,7 +216,7 @@ class RegistryBookServiceTest {
         when(promotionService.findOne(5)).thenReturn(new Promotion());
 
         // When
-        registryBookService.updateRegistryBookEntry(id, dto);
+        registryBookService.updateRegistryBookEntry(id, dto, editedByLibrarian);
 
         // Then
         verify(registryBookEntryRepository).save(entry);
@@ -725,8 +726,9 @@ class RegistryBookServiceTest {
         assertTrue(result.getFirst().contains("+381641234567"));
     }
 
-    @Test
-    void shouldReturnTrueWhenPromotionIsNull() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldReturnTrueWhenPromotionIsNull(boolean librarianCheck) {
         // Given
         var entryId = 1;
         var entry = mock(RegistryBookEntry.class);
@@ -734,7 +736,7 @@ class RegistryBookServiceTest {
         when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
 
         // When
-        var result = registryBookService.canEdit(entryId);
+        var result = registryBookService.canEdit(entryId, librarianCheck);
 
         // Then
         assertTrue(result);
@@ -752,7 +754,7 @@ class RegistryBookServiceTest {
         when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
 
         // When
-        var result = registryBookService.canEdit(entryId);
+        var result = registryBookService.canEdit(entryId, false);
 
         // Then
         assertTrue(result);
@@ -771,7 +773,7 @@ class RegistryBookServiceTest {
         when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
 
         // When
-        var result = registryBookService.canEdit(entryId);
+        var result = registryBookService.canEdit(entryId, false);
 
         // Then
         assertTrue(result);

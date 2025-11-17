@@ -60,7 +60,7 @@ public class OutboundExportServiceTest {
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-                    null, null)), List.of("oai_cerif_openaire", "dim"),
+                    null, null, null)), List.of("oai_cerif_openaire", "dim"),
                 false, null, Map.of());
 
         var mocked = mockStatic(ExportHandlersConfigurationLoader.class);

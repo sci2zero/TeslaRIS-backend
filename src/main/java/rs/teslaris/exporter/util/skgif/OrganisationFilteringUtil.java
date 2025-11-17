@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class OrganisationFilteringUtil {
 
@@ -20,11 +21,13 @@ public class OrganisationFilteringUtil {
                     query.addCriteria(Criteria.where(fieldName).exists(true));
                     break;
                 case "identifiers.value":
+                    value = StringUtil.normalizeIdentifier(value);
                     query.addCriteria(
                         new Criteria().orOperator(
                             Criteria.where("orcid").is(value),
                             Criteria.where("scopus_afid").is(value),
-                            Criteria.where("open_alex").is(value)
+                            Criteria.where("open_alex").is(value),
+                            Criteria.where("ror").is(value)
                         )
                     );
                     break;

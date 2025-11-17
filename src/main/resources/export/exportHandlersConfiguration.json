@@ -238,7 +238,8 @@
           "setName": "theses",
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "additionalFilters": "open_access=bool:true"
         }
       ],
       "metadataFormats": [
@@ -291,7 +292,8 @@
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD"
+          "concreteTypeFilters": "thesis_type:PHD",
+          "additionalFilters": "open_access=bool:true"
         }
       ],
       "metadataFormats": [

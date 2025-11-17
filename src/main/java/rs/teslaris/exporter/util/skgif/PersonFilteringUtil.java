@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 
 public class PersonFilteringUtil {
 
@@ -25,6 +26,7 @@ public class PersonFilteringUtil {
                     query.addCriteria(Criteria.where(fieldName).exists(true));
                     break;
                 case "identifiers.value":
+                    value = StringUtil.normalizeIdentifier(value);
                     query.addCriteria(
                         new Criteria().orOperator(
                             Criteria.where("orcid").is(value),

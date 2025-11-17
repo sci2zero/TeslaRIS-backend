@@ -48,7 +48,7 @@ public class PromotionEditCheckAspect {
         switch (UserRole.valueOf(role)) {
             case ADMIN:
                 break;
-            case PROMOTION_REGISTRY_ADMINISTRATOR:
+            case PROMOTION_REGISTRY_ADMINISTRATOR, INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY:
                 if (!organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
                         userService.getUserOrganisationUnitId(userId))
                     .contains(promotionService.findOne(promotionId).getInstitution().getId())) {

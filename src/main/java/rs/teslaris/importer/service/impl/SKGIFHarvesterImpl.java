@@ -307,10 +307,12 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                                              SKGIFHarvestConfigurationLoader.Source sourceConfiguration) {
         String identifierFilter = "";
         if (StringUtil.valueExists(authorIdentifier)) {
-            identifierFilter = "contributions.by.identifiers.value:" + authorIdentifier;
+            identifierFilter = "contributions.by.identifiers.value:" +
+                StringUtil.normalizeIdentifier(authorIdentifier);
         } else if (StringUtil.valueExists(institutionIdentifier)) {
-            String fetchUrl = sourceConfiguration.baseUrl() + "/venue?filter=contributions.role:" +
-                institutionIdentifier;
+            String fetchUrl =
+                sourceConfiguration.baseUrl() + "/organisation?filter=identifiers.value:" +
+                    StringUtil.normalizeIdentifier(institutionIdentifier);
             ResponseEntity<String> responseEntity =
                 restTemplateProvider.provideRestTemplate().getForEntity(fetchUrl, String.class);
             try {

@@ -51,6 +51,7 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
 
         var query = new Query();
         query.addCriteria(Criteria.where("database_id").is(localIdentifier));
+        query.addCriteria(Criteria.where("deleted").is(false));
         addDocumentTypeConstraints(query, entityClass, isVenue);
 
         var records = mongoTemplate.find(query, entityClass);
@@ -83,6 +84,7 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
         var conversionMethod = getConversionMethod(entityClass, isVenue);
 
         var query = new Query();
+        query.addCriteria(Criteria.where("deleted").is(false));
 
         if (!criteria.containsTypeFilter()) {
             addDocumentTypeConstraints(query, entityClass, isVenue);

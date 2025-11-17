@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
 
 public class ResearchProductFilteringUtil {
@@ -41,6 +42,7 @@ public class ResearchProductFilteringUtil {
                     }
                     break;
                 case "identifiers.value":
+                    value = StringUtil.normalizeIdentifier(value);
                     query.addCriteria(
                         new Criteria().orOperator(
                             Criteria.where("orcid").is(value),

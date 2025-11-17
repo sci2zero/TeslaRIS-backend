@@ -76,7 +76,8 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty(value = "commonEntityClass", required = true) String commonEntityClass,
         @JsonProperty("publicationTypes") String publicationTypes,
         @JsonProperty(value = "concreteTypeFilters") String concreteTypeFilters,
-        @JsonProperty("converterClass") String converterClass
+        @JsonProperty("converterClass") String converterClass,
+        @JsonProperty("additionalFilters") String additionalFilters
     ) {
     }
 }

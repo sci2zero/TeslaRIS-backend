@@ -173,9 +173,18 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             });
         }
 
+        var additionalFilters = new HashMap<String, String>();
+        if (Objects.nonNull(matchedSet.get().additionalFilters())) {
+            var filters = matchedSet.get().additionalFilters().split(";");
+            Arrays.stream(filters).forEach(filter -> {
+                var filterParts = filter.split("=", 2);
+                additionalFilters.put(filterParts[0], filterParts[1]);
+            });
+        }
+
         var recordsPage =
             findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get(),
-                publicationTypeFilters, concreteTypeFilters);
+                publicationTypeFilters, concreteTypeFilters, additionalFilters);
 
         if (recordsPage.getTotalElements() == 0) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
@@ -430,7 +439,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                                              int page,
                                              ExportHandlersConfigurationLoader.Handler handlerConfiguration,
                                              List<ExportPublicationType> publicationTypeFilters,
-                                             HashMap<String, List<String>> concreteTypeFilters) {
+                                             HashMap<String, List<String>> concreteTypeFilters,
+                                             HashMap<String, String> additionalFilters) {
         var query = new Query();
 
         query.addCriteria(Criteria.where("last_updated").gte(Date.valueOf(
@@ -450,6 +460,20 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         if (!publicationTypeFilters.isEmpty()) {
             query.addCriteria(Criteria.where("type").in(publicationTypeFilters));
+        }
+
+        if (!additionalFilters.isEmpty()) {
+            additionalFilters.forEach((field, value) -> {
+                if (value.startsWith("bool:")) {
+                    query.addCriteria(
+                        Criteria.where(field).is(
+                            Boolean.parseBoolean(value.replace("bool:", ""))
+                        )
+                    );
+                } else {
+                    query.addCriteria(Criteria.where(field).is(value));
+                }
+            });
         }
 
         List<Criteria> allFieldCriteria = new ArrayList<>();

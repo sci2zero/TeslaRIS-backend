@@ -41,14 +41,14 @@ public class PromotionController {
 
 
     @GetMapping
-    @PreAuthorize("hasAuthority('MANAGE_PROMOTIONS')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PROMOTIONS', 'READ_PROMOTIONS')")
     public Page<PromotionDTO> getAllPromotions(@RequestHeader("Authorization") String bearerToken,
                                                Pageable pageable) {
         return promotionService.getAllPromotions(getBelongingInstitution(bearerToken), pageable);
     }
 
     @GetMapping("/non-finished")
-    @PreAuthorize("hasAuthority('MANAGE_PROMOTIONS')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PROMOTIONS', 'READ_PROMOTIONS')")
     public List<PromotionDTO> getNonFinishedPromotionList(
         @RequestHeader("Authorization") String bearerToken) {
         return promotionService.getNonFinishedPromotions(getBelongingInstitution(bearerToken));
