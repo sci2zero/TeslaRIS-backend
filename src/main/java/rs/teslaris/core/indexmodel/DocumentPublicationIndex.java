@@ -41,10 +41,10 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "title_other_sortable", normalizer = "english_normalizer")
     private String titleOtherSortable;
 
-    @Field(type = FieldType.Text, name = "description_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Text, name = "description_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String descriptionSr;
 
-    @Field(type = FieldType.Text, name = "description_other", store = true, analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Text, name = "description_other", analyzer = "english", searchAnalyzer = "english")
     private String descriptionOther;
 
     @Field(type = FieldType.Keyword, name = "keywords_sr", store = true)
@@ -53,10 +53,10 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "keywords_other", store = true)
     private String keywordsOther;
 
-    @Field(type = FieldType.Text, name = "full_text_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Text, name = "full_text_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String fullTextSr;
 
-    @Field(type = FieldType.Text, name = "full_text_other", store = true, analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Text, name = "full_text_other", analyzer = "english", searchAnalyzer = "english")
     private String fullTextOther;
 
     @Field(type = FieldType.Integer, name = "author_ids", store = true)

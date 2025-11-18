@@ -819,10 +819,19 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             emailUpdateRequestRepository.findByEmailUpdateToken(emailUpdateToken);
 
         if (emailUpdateRequest.isPresent()) {
-            emailUpdateRequest.get().getUser()
-                .setEmail(emailUpdateRequest.get().getNewEmailAddress());
-            userRepository.save(emailUpdateRequest.get().getUser());
+            var user = emailUpdateRequest.get().getUser();
+
+            user.setEmail(emailUpdateRequest.get().getNewEmailAddress());
+            userRepository.save(user);
             emailUpdateRequestRepository.delete(emailUpdateRequest.get());
+
+            userAccountIndexRepository.findByDatabaseId(user.getId())
+                .ifPresent(index -> {
+                    index.setEmail(user.getEmail());
+                    index.setEmailSortable(index.getEmail());
+                    userAccountIndexRepository.save(index);
+                });
+
             return true;
         }
 

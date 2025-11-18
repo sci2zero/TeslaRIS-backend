@@ -28,6 +28,13 @@ public class InstitutionDefaultSubmissionContentController {
     private final JwtUtil tokenUtil;
 
 
+    @GetMapping("/{organisationUnitId}/can-edit")
+    @PreAuthorize("hasAuthority('SET_DEFAULT_CONTENT')")
+    @OrgUnitEditCheck("LIBRARY_OPERATIONS")
+    public boolean canEditInstitutionDefaultSubmissionContent() {
+        return true;
+    }
+
     @GetMapping("/institution/{organisationUnitId}")
     @PreAuthorize("hasAuthority('SET_DEFAULT_CONTENT')")
     @OrgUnitEditCheck("LIBRARY_OPERATIONS")

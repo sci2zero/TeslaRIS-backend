@@ -34,7 +34,8 @@ public interface InvolvementService extends JPAService<Involvement> {
     EmploymentDTO migrateEmployment(EmploymentMigrationDTO employmentMigrationRequest);
 
     void migrateEmployment(List<ExtraEmploymentMigrationDTO> request,
-                           LocalDate initialMigrationDate);
+                           LocalDate initialMigrationDate,
+                           Integer additionalInstitutionToLook);
 
     List<EmploymentDTO> getDirectAndIndirectEmploymentsForPerson(Integer personId);
 
