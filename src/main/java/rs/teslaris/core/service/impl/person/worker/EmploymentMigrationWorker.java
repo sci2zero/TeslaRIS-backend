@@ -138,7 +138,10 @@ public class EmploymentMigrationWorker {
                 return;
             }
 
-            employment.setDateTo(LocalDate.of(2023, 12, 31));
+            if (Objects.isNull(employment.getDateTo())) {
+                employment.setDateTo(LocalDate.of(2023, 12, 31));
+            }
+
             employmentRepository.save(employment);
             personService.save(personInvolved);
             personService.indexPerson(personInvolved);
