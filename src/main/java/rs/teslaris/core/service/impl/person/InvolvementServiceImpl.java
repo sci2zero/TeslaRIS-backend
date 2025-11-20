@@ -237,6 +237,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         var handledPersonIds = new HashSet<Integer>();
 
         for (var migration : request) {
+            log.info("Handling migration for {} {} with accounting ID {}",
+                migration.personName().getFirstname(),
+                migration.personName().getLastname(),
+                migration.personAccountingId()
+            );
+
             employmentMigrationWorker.processSingleMigration(migration, handledInstitutionIds,
                 handledPersonIds);
         }
@@ -245,6 +251,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         var personIdsForDeletion = new ArrayList<Integer>();
 
         for (var institutionId : handledInstitutionIds) {
+            log.info("Cleaning up alumni for institution with ID {}", institutionId);
+
             for (var employment :
                 employmentRepository.findByEmploymentInstitutionId(institutionId)) {
                 employmentMigrationWorker.cleanupAlumni(employment, handledPersonIds,
