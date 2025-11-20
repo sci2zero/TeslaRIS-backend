@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -144,19 +145,30 @@ public class ReindexServiceImpl implements ReindexService {
 
     @Async("reindexExecutor")
     public CompletableFuture<Void> reindexPublications() {
-        documentPublicationService.deleteIndexes();
-
-        journalPublicationService.reindexJournalPublications();
-        proceedingsPublicationService.reindexProceedingsPublications();
-        patentService.reindexPatents();
-        softwareService.reindexSoftware();
-        datasetService.reindexDatasets();
-        monographService.reindexMonographs();
-        monographPublicationService.reindexMonographPublications();
-        proceedingsService.reindexProceedings();
-        thesisService.reindexTheses();
+        safeReindex(documentPublicationService::deleteIndexes,
+            "Error deleting document publication indexes");
+        safeReindex(journalPublicationService::reindexJournalPublications,
+            "Error reindexing journal publications");
+        safeReindex(proceedingsPublicationService::reindexProceedingsPublications,
+            "Error reindexing proceedings publications");
+        safeReindex(patentService::reindexPatents, "Error reindexing patents");
+        safeReindex(softwareService::reindexSoftware, "Error reindexing software");
+        safeReindex(datasetService::reindexDatasets, "Error reindexing datasets");
+        safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
+        safeReindex(monographPublicationService::reindexMonographPublications,
+            "Error reindexing monograph publications");
+        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
+        safeReindex(thesisService::reindexTheses, "Error reindexing theses");
 
         return CompletableFuture.completedFuture(null);
+    }
+
+    private void safeReindex(Runnable reindexOperation, String errorMessage) {
+        try {
+            reindexOperation.run();
+        } catch (Exception e) {
+            log.error(errorMessage + ": ", e);
+        }
     }
 
     @Async("reindexExecutor")
@@ -166,14 +178,12 @@ public class ReindexServiceImpl implements ReindexService {
         switch (type) {
             case JOURNAL_PUBLICATION -> journalPublicationService.reindexJournalPublications();
             case PROCEEDINGS -> proceedingsService.reindexProceedings();
-            case PROCEEDINGS_PUBLICATION ->
-                proceedingsPublicationService.reindexProceedingsPublications();
+            case PROCEEDINGS_PUBLICATION -> proceedingsPublicationService.reindexProceedingsPublications();
             case MONOGRAPH -> monographService.reindexMonographs();
             case PATENT -> patentService.reindexPatents();
             case SOFTWARE -> softwareService.reindexSoftware();
             case DATASET -> datasetService.reindexDatasets();
-            case MONOGRAPH_PUBLICATION ->
-                monographPublicationService.reindexMonographPublications();
+            case MONOGRAPH_PUBLICATION -> monographPublicationService.reindexMonographPublications();
             case THESIS -> thesisService.reindexTheses();
         }
 
