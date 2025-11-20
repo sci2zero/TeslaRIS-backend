@@ -445,6 +445,37 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Transactional
     public void deleteDocumentPublication(Integer documentId) {
         var document = findOne(documentId);
+
+        document.getFileItems().forEach(file -> {
+            file.setDeleted(true);
+            documentFileService.save(file);
+        });
+
+        document.getProofs().forEach(file -> {
+            file.setDeleted(true);
+            documentFileService.save(file);
+        });
+
+        if (document instanceof Thesis) {
+            ((Thesis) document).getPreliminaryFiles().forEach(file -> {
+                file.setDeleted(true);
+                documentFileService.save(file);
+            });
+            ((Thesis) document).getPreliminarySupplements().forEach(file -> {
+                file.setDeleted(true);
+                documentFileService.save(file);
+            });
+            ((Thesis) document).getCommissionReports().forEach(file -> {
+                file.setDeleted(true);
+                documentFileService.save(file);
+            });
+        }
+
+        document.getContributors().forEach(contribution -> {
+            contribution.setDeleted(true);
+            personContributionService.save(contribution);
+        });
+
         documentRepository.delete(document);
 
         var index =

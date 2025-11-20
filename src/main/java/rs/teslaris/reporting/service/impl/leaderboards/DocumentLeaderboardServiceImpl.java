@@ -79,17 +79,19 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
                             .aggregations("by_citation_count", sum -> sum
                                 .sum(v -> v.field("total_citations"))
                             ))
-                        .source(sc -> sc.filter(f -> f.includes("databaseId", "apa", "type"))),
+                        .source(sc -> sc.filter(
+                            f -> f.includes("databaseId", "apa", "type", "title_sr", "title_other"))),
                     DocumentPublicationIndex.class
                 );
 
             var citationCountsByDatabaseId = new HashMap<Integer, Long>();
-            if (publicationResponse.aggregations() != null &&
-                publicationResponse.aggregations().get("top_documents") != null) {
+            if (Objects.nonNull(publicationResponse.aggregations()) &&
+                Objects.nonNull(publicationResponse.aggregations().get("top_documents"))) {
 
                 var topDocumentsAgg =
                     publicationResponse.aggregations().get("top_documents").lterms();
-                if (topDocumentsAgg != null && topDocumentsAgg.buckets() != null) {
+                if (Objects.nonNull(topDocumentsAgg) &&
+                    Objects.nonNull(topDocumentsAgg.buckets())) {
                     for (var bucket : topDocumentsAgg.buckets().array()) {
                         var databaseId = (int) bucket.key();
                         Long citationCount =

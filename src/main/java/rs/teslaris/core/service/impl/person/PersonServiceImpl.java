@@ -76,7 +76,10 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
+import rs.teslaris.core.repository.person.ExpertiseOrSkillRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -136,6 +139,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final ElasticsearchClient elasticsearchClient;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final InvolvementRepository involvementRepository;
+
+    private final ExpertiseOrSkillRepository expertiseOrSkillRepository;
+
+    private final PrizeRepository prizeRepository;
 
     private final Pattern orcidRegexPattern =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
@@ -561,6 +570,22 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             throw new PersonReferenceConstraintViolationException(
                 "This person is already in use.");
         }
+
+        var person = findOne(personId);
+        person.getInvolvements().forEach(involvement -> {
+            involvement.setDeleted(true);
+            involvementRepository.save(involvement);
+        });
+
+        person.getExpertisesAndSkills().forEach(expertiseOrSkill -> {
+            expertiseOrSkill.setDeleted(true);
+            expertiseOrSkillRepository.save(expertiseOrSkill);
+        });
+
+        person.getPrizes().forEach(prize -> {
+            prize.setDeleted(true);
+            prizeRepository.save(prize);
+        });
 
         delete(personId);
         var index = personIndexRepository.findByDatabaseId(personId);

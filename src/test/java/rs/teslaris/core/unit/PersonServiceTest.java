@@ -685,7 +685,7 @@ public class PersonServiceTest {
         personService.deletePerson(personId);
 
         // Then
-        verify(personRepository, times(1)).findById(personId);
+        verify(personRepository, times(2)).findById(personId);
         verify(personRepository, times(1)).save(any());
         verify(personIndexRepository, times(1)).delete(any());
     }

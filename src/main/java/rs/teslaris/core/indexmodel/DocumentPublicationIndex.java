@@ -1,6 +1,7 @@
 package rs.teslaris.core.indexmodel;
 
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -29,12 +30,14 @@ public class DocumentPublicationIndex {
     @Id
     private String id;
 
+    @JsonAlias("title_sr")
     @Field(type = FieldType.Text, name = "title_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String titleSr;
 
     @Field(type = FieldType.Keyword, name = "title_sr_sortable", normalizer = "serbian_normalizer")
     private String titleSrSortable;
 
+    @JsonAlias("title_other")
     @Field(type = FieldType.Text, name = "title_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String titleOther;
 
