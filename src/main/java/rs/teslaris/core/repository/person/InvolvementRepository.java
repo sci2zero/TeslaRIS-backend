@@ -47,7 +47,7 @@ public interface InvolvementRepository extends JpaRepository<Involvement, Intege
 
     @Query("SELECT e FROM Employment e LEFT JOIN FETCH e.organisationUnit " +
         "WHERE e.organisationUnit.id IN :institutionIds " +
-        "AND e.dateTo IS NULL")
+        "AND e.dateTo IS NULL ORDER BY e.id")
     List<Employment> findActiveEmploymentsForInstitutions(List<Integer> institutionIds);
 
     @Query("SELECT COUNT(e) FROM Employment e LEFT JOIN e.organisationUnit " +

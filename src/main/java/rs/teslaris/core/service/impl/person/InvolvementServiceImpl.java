@@ -270,7 +270,6 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                     return;
                 }
 
-                var migrated = false;
                 for (var oldId : employment.getPersonInvolved().getOldIds()) {
                     if (dto.oldToInternalIdMapping().containsKey(oldId)) {
                         if (dto.accountingIds()) {
@@ -280,13 +279,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                             employment.getPersonInvolved().getInternalIdentifiers()
                                 .add(String.valueOf(dto.oldToInternalIdMapping().get(oldId)));
                         }
-                        migrated = true;
                         personService.save(employment.getPersonInvolved());
                     }
-                }
-
-                if (!migrated) {
-                    employment.setDateTo(dto.defaultInvolvementEndDate());
                 }
 
                 save(employment);

@@ -625,7 +625,6 @@ public class InvolvementServiceTest {
 
         // Then
         assertEquals(Set.of("500"), person.getInternalIdentifiers());
-        assertEquals(defaultEndDate, employment.getDateTo());
 
         verify(personService, never()).save(person);
         verify(involvementRepository).save(employment);
@@ -696,7 +695,6 @@ public class InvolvementServiceTest {
         assertNull(employment1.getDateTo());
 
         assertEquals(Set.of("600"), person2.getInternalIdentifiers());
-        assertEquals(defaultEndDate, employment2.getDateTo());
 
         verify(involvementRepository, times(2)).save(any(Employment.class));
     }
@@ -789,7 +787,6 @@ public class InvolvementServiceTest {
 
         // Then
         assertEquals(Set.of("500"), person.getInternalIdentifiers());
-        assertEquals(defaultEndDate, employment.getDateTo());
 
         verify(personService, never()).save(person);
         verify(involvementRepository).save(employment);
