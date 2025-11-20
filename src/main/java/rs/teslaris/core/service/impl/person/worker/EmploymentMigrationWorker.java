@@ -87,6 +87,8 @@ public class EmploymentMigrationWorker {
             newPerson.setEmploymentPosition(migration.employmentPosition());
 
             person = personService.createPersonWithBasicInfo(newPerson, true);
+            person.getAccountingIds().add(String.valueOf(migration.personAccountingId()));
+            personService.save(person);
         }
 
         var existingEmployment =

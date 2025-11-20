@@ -262,29 +262,23 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     @Override
     @Transactional
     public void migrateEmployeeInternalIdentifiers(InternalIdentifierMigrationDTO dto) {
-        var institutionIds =
-            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(dto.institutionId());
-        involvementRepository.findActiveEmploymentsForInstitutions(institutionIds)
-            .forEach(employment -> {
-                if (Objects.isNull(employment.getPersonInvolved())) {
-                    return;
-                }
+        dto.oldToInternalIdMapping().forEach((oldId, internalId) -> {
+            var person = personService.findPersonByOldId(oldId);
+            if (Objects.isNull(person)) {
+                log.warn("Person with old ID {} does not exist.", oldId);
+                return;
+            }
 
-                for (var oldId : employment.getPersonInvolved().getOldIds()) {
-                    if (dto.oldToInternalIdMapping().containsKey(oldId)) {
-                        if (dto.accountingIds()) {
-                            employment.getPersonInvolved().getAccountingIds()
-                                .add(String.valueOf(dto.oldToInternalIdMapping().get(oldId)));
-                        } else {
-                            employment.getPersonInvolved().getInternalIdentifiers()
-                                .add(String.valueOf(dto.oldToInternalIdMapping().get(oldId)));
-                        }
-                        personService.save(employment.getPersonInvolved());
-                    }
-                }
+            if (dto.accountingIds()) {
+                person.getAccountingIds()
+                    .add(String.valueOf(internalId));
+            } else {
+                person.getInternalIdentifiers()
+                    .add(String.valueOf(internalId));
+            }
 
-                save(employment);
-            });
+            personService.save(person);
+        });
     }
 
     @Override
