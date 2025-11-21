@@ -28,6 +28,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.user.User;
+import rs.teslaris.core.util.deduplication.Accounted;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
@@ -47,7 +48,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
     @Index(name = "idx_person_name_id", columnList = "name_id")
 })
 @SQLRestriction("deleted=false")
-public class Person extends BaseEntity implements Mergeable {
+public class Person extends BaseEntity implements Mergeable, Accounted {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private PersonName name;

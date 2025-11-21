@@ -42,6 +42,7 @@ public class SKGIFConverter {
         }
 
         var document = new DocumentImport();
+        document.setSource("SKG_IF");
 
         setCommonFields(record, document, sourceIdentifierPrefix);
         if (!StringUtil.valueExists(document.getDocumentDate()) || document.getTitle().isEmpty()) {

@@ -23,6 +23,8 @@ public class WebOfScienceConverter {
     public static Optional<DocumentImport> toCommonImportModel(
         WebOfScienceImportUtility.WosPublication record) {
         var document = new DocumentImport();
+        document.setSource("WEB_OF_SCIENCE");
+
         document.setIdentifier(record.uid().replace("WOS:", ""));
         document.setWebOfScienceId(document.getIdentifier());
 

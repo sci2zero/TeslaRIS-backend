@@ -198,6 +198,12 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                 "Conference with given ID is in use and cannot be deleted.");
         }
 
+        var conference = conferenceJPAService.findOne(conferenceId);
+        conference.getContributions().forEach(contribution -> {
+            contribution.setDeleted(true);
+            personContributionService.save(contribution);
+        });
+
         conferenceJPAService.delete(conferenceId);
 
         var index = eventIndexRepository.findByDatabaseId(conferenceId);

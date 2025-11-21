@@ -227,6 +227,12 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                 "PublicationSeries with given ID is already in use.");
         }
 
+        var journal = journalJPAService.findOne(journalId);
+        journal.getContributions().forEach(contribution -> {
+            contribution.setDeleted(true);
+            personContributionService.save(contribution);
+        });
+
         journalJPAService.delete(journalId);
         var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
         index.ifPresent(journalIndexRepository::delete);

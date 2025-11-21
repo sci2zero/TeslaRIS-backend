@@ -23,6 +23,7 @@ public class ScopusConverter {
     public static Optional<DocumentImport> toCommonImportModel(ScopusImportUtility.Entry entry,
                                                                ScopusImportUtility scopusImportUtility) {
         var document = new DocumentImport();
+        document.setSource("SCOPUS");
 
         deducePublicationType(entry, document, scopusImportUtility);
         if (Objects.isNull(document.getPublicationType()) || (

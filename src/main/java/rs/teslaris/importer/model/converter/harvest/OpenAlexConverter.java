@@ -25,6 +25,7 @@ public class OpenAlexConverter {
         OpenAlexImportUtility.OpenAlexPublication record) {
 
         var document = new DocumentImport();
+        document.setSource("OPEN_ALEX");
 
         if (!hasValidSource(record)) {
             return Optional.empty();

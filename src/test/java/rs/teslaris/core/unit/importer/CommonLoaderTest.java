@@ -60,6 +60,7 @@ import rs.teslaris.importer.dto.LoadingConfigurationDTO;
 import rs.teslaris.importer.dto.ProceedingsPublicationLoadDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
+import rs.teslaris.importer.model.common.MultilingualContent;
 import rs.teslaris.importer.model.common.OrganisationUnit;
 import rs.teslaris.importer.model.common.Person;
 import rs.teslaris.importer.model.common.PersonDocumentContribution;
@@ -148,6 +149,15 @@ public class CommonLoaderTest {
         var documentImport = new DocumentImport();
         documentImport.setPublicationType(publicationType);
         documentImport.setId(ProgressReportUtility.DEFAULT_HEX_ID);
+
+        if (publicationType.equals(DocumentPublicationType.JOURNAL_PUBLICATION)) {
+            documentImport.setPublishedIn(List.of(new MultilingualContent()));
+        } else {
+            documentImport.setEvent(new Event() {{
+                setName(List.of(new MultilingualContent()));
+            }});
+        }
+
         when(mongoTemplate.findOne(expectedQuery, DocumentImport.class,
             "documentImports")).thenReturn(documentImport);
         when(proceedingsPublicationConverter.toImportDTO(documentImport)).thenReturn(
@@ -179,6 +189,9 @@ public class CommonLoaderTest {
         var documentImport = new DocumentImport();
         documentImport.setPublicationType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
         documentImport.setId(ProgressReportUtility.DEFAULT_HEX_ID);
+        documentImport.setEvent(new Event() {{
+            setName(List.of(new MultilingualContent()));
+        }});
         when(mongoTemplate.findOne(expectedQuery, DocumentImport.class,
             "documentImports")).thenReturn(documentImport);
         when(proceedingsPublicationConverter.toImportDTO(documentImport)).thenReturn(

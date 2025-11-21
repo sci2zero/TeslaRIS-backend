@@ -21,6 +21,8 @@ public class ScindeksConverter {
 
     public static Optional<DocumentImport> toCommonImportModel(DC record) {
         var document = new DocumentImport();
+        document.setSource("SCINDEKS");
+
         document.setIdentifier("SCINDEKS:" + record.getIdentifier().getFirst().split("=")[1]);
         document.setDocumentDate(record.getDate().getFirst());
         document.getInternalIdentifiers().add(document.getIdentifier());

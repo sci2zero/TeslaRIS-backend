@@ -165,6 +165,12 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                 "BookSeries with given ID is already in use.");
         }
 
+        var bookSeries = bookSeriesJPAService.findOne(bookSeriesId);
+        bookSeries.getContributions().forEach(contribution -> {
+            contribution.setDeleted(true);
+            personContributionService.save(contribution);
+        });
+
         bookSeriesJPAService.delete(bookSeriesId);
         bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)
             .ifPresent(bookSeriesIndexRepository::delete);

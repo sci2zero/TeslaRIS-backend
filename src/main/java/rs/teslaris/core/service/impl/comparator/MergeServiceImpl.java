@@ -78,6 +78,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.deduplication.Accounted;
 import rs.teslaris.core.util.deduplication.Mergeable;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -657,10 +658,18 @@ public class MergeServiceImpl implements MergeService {
                 conferenceService::save, deletionEntityId, mergedEntityId);
             case JOURNAL -> migrateIdentifierHistory(journalService::findRaw, journalService::save,
                 deletionEntityId, mergedEntityId);
-            case ORGANISATION_UNIT -> migrateIdentifierHistory(organisationUnitService::findRaw,
-                organisationUnitService::save, deletionEntityId, mergedEntityId);
-            case PERSON -> migrateIdentifierHistory(personService::findRaw, personService::save,
-                deletionEntityId, mergedEntityId);
+            case ORGANISATION_UNIT -> {
+                migrateIdentifierHistory(organisationUnitService::findRaw,
+                    organisationUnitService::save, deletionEntityId, mergedEntityId);
+                migrateAccountingIds(organisationUnitService::findRaw,
+                    organisationUnitService::save, deletionEntityId, mergedEntityId);
+            }
+            case PERSON -> {
+                migrateIdentifierHistory(personService::findRaw, personService::save,
+                    deletionEntityId, mergedEntityId);
+                migrateAccountingIds(personService::findRaw, personService::save,
+                    deletionEntityId, mergedEntityId);
+            }
             case PUBLISHER ->
                 migrateIdentifierHistory(publisherService::findRaw, publisherService::save,
                     deletionEntityId, mergedEntityId);
@@ -948,6 +957,19 @@ public class MergeServiceImpl implements MergeService {
         mergedEntity.getMergedIds().addAll(deletionEntity.getMergedIds());
         mergedEntity.getMergedIds().add(deletionEntityId);
         mergedEntity.getOldIds().addAll(deletionEntity.getOldIds());
+
+        saveMethod.accept(mergedEntity);
+    }
+
+    private <T extends Accounted> void migrateAccountingIds(Function<Integer, T> fetchFunction,
+                                                            Consumer<T> saveMethod,
+                                                            Integer deletionEntityId,
+                                                            Integer mergedEntityId) {
+
+        var deletionEntity = fetchFunction.apply(deletionEntityId);
+        var mergedEntity = fetchFunction.apply(mergedEntityId);
+
+        mergedEntity.getAccountingIds().addAll(deletionEntity.getAccountingIds());
 
         saveMethod.accept(mergedEntity);
     }

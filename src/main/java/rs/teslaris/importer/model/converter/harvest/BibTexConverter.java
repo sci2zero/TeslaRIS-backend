@@ -39,6 +39,7 @@ public class BibTexConverter {
         }
 
         var document = new DocumentImport();
+        document.setSource("BIBTEX");
         // is this ok?
         document.setIdentifier(citationKey);
         document.setPublicationType(
@@ -136,6 +137,16 @@ public class BibTexConverter {
                 loadAdditionalData(document, bibEntry);
             }
         });
+
+        if (document.getPublicationType().equals(DocumentPublicationType.JOURNAL_PUBLICATION) &&
+            (Objects.isNull(document.getPublishedIn()) || document.getPublishedIn().isEmpty())) {
+            return Optional.empty();
+        }
+
+        if (document.getPublicationType().equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION) &&
+            (Objects.isNull(document.getEvent()) || document.getEvent().getName().isEmpty())) {
+            return Optional.empty();
+        }
 
         return Optional.of(document);
     }

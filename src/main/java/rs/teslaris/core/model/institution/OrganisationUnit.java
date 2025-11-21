@@ -28,6 +28,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.util.deduplication.Accounted;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
@@ -39,7 +40,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
     @Index(name = "idx_org_unit_scopus_afid", columnList = "scopus_afid")
 })
 @SQLRestriction("deleted=false")
-public class OrganisationUnit extends BaseEntity implements Mergeable {
+public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();

@@ -502,7 +502,7 @@ public class ErrorHandlerConfiguration {
 
         var tracingContextId = MDC.get(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID);
         emailUtil.sendUnhandledExceptionEmail(exceptionId, tracingContextId,
-            request.getRequestURI(), ex);
+            request.getRequestURI(), ex, false);
         return buildErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
