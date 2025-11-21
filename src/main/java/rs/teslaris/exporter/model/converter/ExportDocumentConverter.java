@@ -423,6 +423,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
             commonExportDocument.setResearchOutput(
                 thesisResearchOutputRepository.findResearchOutputIdsForThesis(document.getId()));
         }
+
+        commonExportDocument.setIsArchived(document.getIsArchived());
     }
 
     private static void addDocumentFileInformation(ExportDocument commonExportDocument,

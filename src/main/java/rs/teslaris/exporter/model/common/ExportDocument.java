@@ -149,4 +149,7 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("research_output")
     private List<Integer> researchOutput = new ArrayList<>();
+
+    @Field("is_archived")
+    private Boolean isArchived;
 }
