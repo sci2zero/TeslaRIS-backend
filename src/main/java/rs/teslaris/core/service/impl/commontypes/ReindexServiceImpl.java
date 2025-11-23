@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -178,12 +177,14 @@ public class ReindexServiceImpl implements ReindexService {
         switch (type) {
             case JOURNAL_PUBLICATION -> journalPublicationService.reindexJournalPublications();
             case PROCEEDINGS -> proceedingsService.reindexProceedings();
-            case PROCEEDINGS_PUBLICATION -> proceedingsPublicationService.reindexProceedingsPublications();
+            case PROCEEDINGS_PUBLICATION ->
+                proceedingsPublicationService.reindexProceedingsPublications();
             case MONOGRAPH -> monographService.reindexMonographs();
             case PATENT -> patentService.reindexPatents();
             case SOFTWARE -> softwareService.reindexSoftware();
             case DATASET -> datasetService.reindexDatasets();
-            case MONOGRAPH_PUBLICATION -> monographPublicationService.reindexMonographPublications();
+            case MONOGRAPH_PUBLICATION ->
+                monographPublicationService.reindexMonographPublications();
             case THESIS -> thesisService.reindexTheses();
         }
 

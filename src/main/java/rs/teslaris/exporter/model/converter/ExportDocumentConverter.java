@@ -228,6 +228,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setStartPage(proceedingsPublication.getStartPage());
         commonExportDocument.setEndPage(proceedingsPublication.getEndPage());
         commonExportDocument.setNumber(proceedingsPublication.getArticleNumber());
+
         if (Objects.nonNull(proceedingsPublication.getProceedings())) {
             commonExportDocument.setProceedings(ExportDocumentConverter.toCommonExportModel(
                 proceedingsPublication.getProceedings(), false));
