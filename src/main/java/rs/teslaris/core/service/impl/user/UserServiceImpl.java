@@ -31,6 +31,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -949,7 +950,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         while (hasNextPage) {
 
-            List<User> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+            List<User> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
+                Sort.by(Sort.Direction.ASC, "id"))).getContent();
 
             chunk.forEach((user) -> {
                 try {

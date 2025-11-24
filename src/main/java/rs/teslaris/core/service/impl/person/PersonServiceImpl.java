@@ -38,6 +38,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -822,7 +823,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         while (hasNextPage) {
 
-            List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+            List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
+                Sort.by(Sort.Direction.ASC, "id"))).getContent();
 
             chunk.forEach(person -> {
                 try {
