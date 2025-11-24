@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -1218,7 +1219,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         while (hasNextPage) {
 
             List<OrganisationUnit> chunk =
-                findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+                findAll(PageRequest.of(pageNumber, chunkSize,
+                    Sort.by(Sort.Direction.ASC, "id"))).getContent();
 
             chunk.forEach((organisationUnit) -> {
                 try {
