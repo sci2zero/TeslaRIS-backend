@@ -118,6 +118,10 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     public EmailConfiguration getCrisConfig() {
         Map<String, EmailConfiguration> map = getEmailConfigurationsOrInit();
+        if (Objects.isNull(map)) {
+            return new EmailConfiguration();
+        }
+
         return map.getOrDefault(CRIS_KEY, new EmailConfiguration());
     }
 
@@ -128,6 +132,10 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     public EmailConfiguration getDlConfig() {
         Map<String, EmailConfiguration> map = getEmailConfigurationsOrInit();
+        if (Objects.isNull(map)) {
+            return new EmailConfiguration();
+        }
+
         return map.getOrDefault(DL_KEY, new EmailConfiguration());
     }
 
