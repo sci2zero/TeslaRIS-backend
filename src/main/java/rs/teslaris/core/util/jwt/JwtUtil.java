@@ -223,6 +223,17 @@ public class JwtUtil {
         });
     }
 
+    public void revokeAllNonAdminTokens() {
+        jwtTokenRepository.findAll().forEach(token -> {
+            if (token.getUser().getAuthority().getName().equals(UserRole.ADMIN.name())) {
+                return;
+            }
+
+            token.setRevoked(true);
+            jwtTokenRepository.save(token);
+        });
+    }
+
     public void cleanupExpiredTokens() {
         jwtTokenRepository.deleteRevokedAndExpiredTokens();
     }

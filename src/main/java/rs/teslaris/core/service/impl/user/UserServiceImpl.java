@@ -77,6 +77,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.commontypes.ApplicationConfigurationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
@@ -97,6 +98,7 @@ import rs.teslaris.core.util.email.EmailDomainChecker;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
+import rs.teslaris.core.util.exceptionhandling.exception.MaintenanceModeException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
@@ -154,6 +156,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final OAuthCodeRepository oAuthCodeRepository;
 
     private final BrandingInformationService brandingInformationService;
+
+    private final ApplicationConfigurationRepository applicationConfigurationRepository;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -247,6 +251,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     public AuthenticationResponseDTO authenticateUser(AuthenticationManager authenticationManager,
                                                       AuthenticationRequestDTO authenticationRequest,
                                                       String fingerprint) {
+        if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
+            var user = userRepository.findByEmail(authenticationRequest.getEmail());
+            if (user.isEmpty() ||
+                !user.get().getAuthority().getName().equals(UserRole.ADMIN.name())) {
+                throw new MaintenanceModeException("maintenanceInProgressMessage");
+            }
+        }
+
         var authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(authenticationRequest.getEmail(),
                 authenticationRequest.getPassword()));
@@ -403,6 +415,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     @Transactional
     public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
+        if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
+            throw new MaintenanceModeException("maintenanceInProgressMessage");
+        }
+
         validateEmailUniqueness(registrationRequest.getEmail());
         validatePasswordStrength(registrationRequest.getPassword());
 
