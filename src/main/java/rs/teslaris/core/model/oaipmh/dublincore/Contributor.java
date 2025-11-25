@@ -27,4 +27,7 @@ public class Contributor {
 
     @XmlAttribute(name = "role")
     private String role;
+
+    @XmlAttribute(name = "authority")
+    private String authority;
 }

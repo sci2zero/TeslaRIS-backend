@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.skgif.researchproduct;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PageRange {
 
     @JsonProperty("first")

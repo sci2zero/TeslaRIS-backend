@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -190,7 +191,8 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
 
         while (hasNextPage) {
 
-            List<Publisher> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+            List<Publisher> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
+                Sort.by(Sort.Direction.ASC, "id"))).getContent();
 
             chunk.forEach((publisher) -> {
                 try {

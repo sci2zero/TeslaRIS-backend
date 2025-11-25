@@ -42,22 +42,12 @@ public class StreamingUtil {
         return createStreamingBody(inputStream, BUFFER_SIZE, runnable);
     }
 
-    public static StreamingResponseBody createStreamingBodyFromS3Response(GetObjectResponse file,
-                                                                          int bufferSize) {
+    public static StreamingResponseBody createStreamingBodyFromS3Response(GetObjectResponse file) {
         return outputStream -> {
             try (var inputStream = file) {
-                byte[] buffer = new byte[bufferSize];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                    outputStream.flush();
-                }
+                inputStream.transferTo(outputStream);
             }
         };
-    }
-
-    public static StreamingResponseBody createStreamingBodyFromS3Response(GetObjectResponse file) {
-        return createStreamingBodyFromS3Response(file, BUFFER_SIZE);
     }
 
     public static void streamData(InputStream inputStream, OutputStream outputStream,

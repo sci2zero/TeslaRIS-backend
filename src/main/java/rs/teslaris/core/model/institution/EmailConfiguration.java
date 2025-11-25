@@ -10,7 +10,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmailConfiguration {
+
     private Boolean validateEmailDomain = false;
+
     private Boolean allowSubdomains = false;
+
     private String institutionEmailDomain;
 }

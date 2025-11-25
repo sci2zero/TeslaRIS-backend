@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.MDC;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -32,6 +33,7 @@ import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Document;
@@ -50,9 +52,11 @@ import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.core.util.session.TraceMDCKeys;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -107,29 +111,52 @@ public class CommonLoaderImpl implements CommonLoader {
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final EmailUtil emailUtil;
+
 
     @Override
     public <R> R loadRecordsWizard(Integer userId, Integer institutionId) {
-        Query query = new Query();
-        if (Objects.nonNull(institutionId)) {
-            query.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
-        } else {
-            query.addCriteria(Criteria.where("import_users_id").in(userId));
-        }
-        query.addCriteria(Criteria.where("is_loaded").is(false));
+        int maxRetries = 10;
+        int retryCount = 0;
 
-        var progressReport =
-            ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
-                mongoTemplate);
-        if (Objects.nonNull(progressReport)) {
-            query.addCriteria(
-                Criteria.where("_id").gte(progressReport.getLastLoadedId()));
-        } else {
-            query.addCriteria(Criteria.where("identifier").gte(""));
-        }
-        query.limit(1);
+        while (retryCount < maxRetries) {
+            Query query = new Query();
+            if (Objects.nonNull(institutionId)) {
+                query.addCriteria(Criteria.where("import_institutions_id").in(institutionId));
+            } else {
+                query.addCriteria(Criteria.where("import_users_id").in(userId));
+            }
+            query.addCriteria(Criteria.where("is_loaded").is(false));
 
-        return findAndConvertEntity(query, userId, institutionId);
+            var progressReport =
+                ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+                    institutionId,
+                    mongoTemplate);
+            if (Objects.nonNull(progressReport)) {
+                query.addCriteria(
+                    Criteria.where("_id").gte(progressReport.getLastLoadedId()));
+            } else {
+                query.addCriteria(Criteria.where("identifier").gte(""));
+            }
+            query.limit(1);
+
+            try {
+                return findAndConvertEntity(query, userId, institutionId);
+            } catch (IllegalStateException e) {
+                log.error(
+                    "Illegal state detected while performing import. {} Skipping and removing user from record if applicable...",
+                    e.getMessage());
+                emailUtil.sendUnhandledExceptionEmail(
+                    "IMPORT ERROR",
+                    MDC.get(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID),
+                    "/load-wizard", e, true);
+                skipRecord(userId, institutionId, true);
+            }
+
+            retryCount++;
+        }
+
+        return null; // should never return this
     }
 
     @Override
@@ -150,7 +177,7 @@ public class CommonLoaderImpl implements CommonLoader {
                     institutionId,
                     DataSet.DOCUMENT_IMPORTS));
 
-        if (removeFromRecord &&
+        if (removeFromRecord && SessionUtil.isUserLoggedIn() &&
             Objects.requireNonNull(SessionUtil.getLoggedInUser()).getAuthority().getName()
                 .equals(UserRole.RESEARCHER.name())) {
             Query currentRecordQuery = new Query();
@@ -991,36 +1018,50 @@ public class CommonLoaderImpl implements CommonLoader {
     private <R> R findAndConvertEntity(Query query, Integer userId, Integer institutionId) {
         var entity = mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
 
-        if (Objects.nonNull(entity)) {
-            Method getIdMethod, getIdentifierMethod;
-
-            try {
-                getIdentifierMethod = DocumentImport.class.getMethod("getIdentifier");
-                getIdMethod = DocumentImport.class.getMethod("getId");
-            } catch (NoSuchMethodException e) {
-                return null;
-            }
-
-            try {
-                ProgressReportUtility.updateProgressReport(DataSet.DOCUMENT_IMPORTS,
-                    (String) getIdentifierMethod.invoke(entity),
-                    (String) getIdMethod.invoke(entity), userId, institutionId,
-                    mongoTemplate);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                return null;
-            }
-
-            switch (entity.getPublicationType()) {
-                case JOURNAL_PUBLICATION -> {
-                    return (R) journalPublicationConverter.toImportDTO(entity);
-                }
-                case PROCEEDINGS_PUBLICATION -> {
-                    return (R) proceedingsPublicationConverter.toImportDTO(entity);
-                }
-            }
-
+        if (Objects.isNull(entity)) {
+            return null;
         }
-        return null;
+
+        if (Objects.isNull(entity.getPublicationType())) {
+            throw new IllegalStateException(
+                "Import entity (" + entity.getId() + ") must have a publication type.");
+        }
+
+        if (entity.getPublicationType().equals(DocumentPublicationType.JOURNAL_PUBLICATION) &&
+            (Objects.isNull(entity.getPublishedIn()) || entity.getPublishedIn().isEmpty())) {
+            throw new IllegalStateException(
+                "Journal publication (" + entity.getId() + ") without journal detected.");
+        }
+
+        if (entity.getPublicationType().equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION) &&
+            (Objects.isNull(entity.getEvent()) || entity.getEvent().getName().isEmpty())) {
+            throw new IllegalStateException(
+                "Proceedings publication (" + entity.getId() + ") without proceedings detected.");
+        }
+
+        Method getIdMethod, getIdentifierMethod;
+
+        try {
+            getIdentifierMethod = DocumentImport.class.getMethod("getIdentifier");
+            getIdMethod = DocumentImport.class.getMethod("getId");
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+
+        try {
+            ProgressReportUtility.updateProgressReport(DataSet.DOCUMENT_IMPORTS,
+                (String) getIdentifierMethod.invoke(entity),
+                (String) getIdMethod.invoke(entity), userId, institutionId,
+                mongoTemplate);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            return null;
+        }
+
+        return switch (entity.getPublicationType()) {
+            case JOURNAL_PUBLICATION -> (R) journalPublicationConverter.toImportDTO(entity);
+            case PROCEEDINGS_PUBLICATION -> (R) proceedingsPublicationConverter.toImportDTO(entity);
+            default -> null;
+        };
     }
 
     private boolean isLoadedAsUnmanagedEntity(Integer userId, Integer institutionId) {

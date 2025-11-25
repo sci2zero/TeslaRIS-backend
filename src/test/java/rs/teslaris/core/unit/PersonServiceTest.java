@@ -685,7 +685,7 @@ public class PersonServiceTest {
         personService.deletePerson(personId);
 
         // Then
-        verify(personRepository, times(1)).findById(personId);
+        verify(personRepository, times(2)).findById(personId);
         verify(personRepository, times(1)).save(any());
         verify(personIndexRepository, times(1)).delete(any());
     }
@@ -1512,5 +1512,81 @@ public class PersonServiceTest {
         assertEquals("Last", addedName.getLastname());
         assertNull(addedName.getDateFrom());
         assertNull(addedName.getDateTo());
+    }
+
+    @Test
+    public void shouldReturnTrueWhenPersonHasContributions() {
+        // Given
+        Integer personId = 1;
+        when(documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(personId))
+            .thenReturn(5L); // More than 0 contributions
+
+        // When
+        boolean result = personService.personHasContributions(personId);
+
+        // Then
+        assertTrue(result);
+        verify(documentPublicationIndexRepository).countDocumentsWithAuthorInAnyRole(personId);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenPersonHasNoContributions() {
+        // Given
+        Integer personId = 2;
+        when(documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(personId))
+            .thenReturn(0L); // No contributions
+
+        // When
+        boolean result = personService.personHasContributions(personId);
+
+        // Then
+        assertFalse(result);
+        verify(documentPublicationIndexRepository).countDocumentsWithAuthorInAnyRole(personId);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenPersonDoesNotExist() {
+        // Given
+        Integer nonExistentPersonId = 999;
+        when(documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(
+            nonExistentPersonId))
+            .thenReturn(0L);
+
+        // When
+        boolean result = personService.personHasContributions(nonExistentPersonId);
+
+        // Then
+        assertFalse(result);
+        verify(documentPublicationIndexRepository).countDocumentsWithAuthorInAnyRole(
+            nonExistentPersonId);
+    }
+
+    @Test
+    public void shouldReturnTrueForSingleContribution() {
+        // Given
+        Integer personId = 3;
+        when(documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(personId))
+            .thenReturn(1L);
+
+        // When
+        boolean result = personService.personHasContributions(personId);
+
+        // Then
+        assertTrue(result);
+        verify(documentPublicationIndexRepository).countDocumentsWithAuthorInAnyRole(personId);
+    }
+
+    @Test
+    public void shouldCallRepositoryWithCorrectPersonId() {
+        // Given
+        Integer personId = 123;
+        when(documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(personId))
+            .thenReturn(2L);
+
+        // When
+        personService.personHasContributions(personId);
+
+        // Then
+        verify(documentPublicationIndexRepository).countDocumentsWithAuthorInAnyRole(eq(personId));
     }
 }

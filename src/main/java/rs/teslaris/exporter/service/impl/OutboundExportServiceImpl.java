@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -56,6 +57,7 @@ import rs.teslaris.core.repository.institution.OrganisationUnitsRelationReposito
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
@@ -161,9 +163,28 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             });
         }
 
+        var concreteTypeFilters = new HashMap<String, List<String>>();
+        if (Objects.nonNull(matchedSet.get().concreteTypeFilters())) {
+            var filters = matchedSet.get().concreteTypeFilters().split(";");
+            Arrays.stream(filters).forEach(filter -> {
+                var filterParts = filter.split(":");
+                var stringTypes = filterParts[1].split(",");
+                concreteTypeFilters.put(filterParts[0], Arrays.stream(stringTypes).toList());
+            });
+        }
+
+        var additionalFilters = new HashMap<String, String>();
+        if (Objects.nonNull(matchedSet.get().additionalFilters())) {
+            var filters = matchedSet.get().additionalFilters().split(";");
+            Arrays.stream(filters).forEach(filter -> {
+                var filterParts = filter.split("=", 2);
+                additionalFilters.put(filterParts[0], filterParts[1]);
+            });
+        }
+
         var recordsPage =
             findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get(),
-                publicationTypeFilters);
+                publicationTypeFilters, concreteTypeFilters, additionalFilters);
 
         if (recordsPage.getTotalElements() == 0) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
@@ -175,13 +196,17 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             listRecords.getRecords().add(record);
             var metadata = new Metadata();
 
-            record.setHeader(constructOaiResponseHeader(handlerConfiguration.get(),
+            record.setHeader(constructOaiResponseHeader(
+                handlerConfiguration.get(),
                 (BaseExportEntity) fetchedRecordEntity,
-                ("oai:" + repositoryName.replace(" ", ".") + ":") +
-                    (!matchedSet.get().identifierSetSpec().isBlank() ?
-                        (matchedSet.get().identifierSetSpec() + "/") : "") + "(TESLARIS)" +
-                    ((BaseExportEntity) fetchedRecordEntity).getDatabaseId(),
-                matchedSet.get().identifierSetSpec()));
+                constructRecordIdentifier(
+                    handlerConfiguration.get(),
+                    (BaseExportEntity) fetchedRecordEntity,
+                    repositoryName,
+                    matchedSet.get()
+                ),
+                matchedSet.get().identifierSetSpec()
+            ));
 
             if (Objects.nonNull(record.getHeader().getStatus()) &&
                 record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
@@ -244,14 +269,18 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         String set;
         if (identifier.contains("/")) {
             try {
-                set = identifier.split("/")[0].split(":")[2];
+                set = identifier.split("/")[0];
+                if (set.contains(":")) {
+                    set = set.split(":")[2];
+                }
             } catch (IndexOutOfBoundsException e) {
                 response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
                 return null;
             }
 
+            var parsedSetValue = set;
             var matchedSet = handlerConfiguration.get().sets().stream()
-                .filter(configuredSet -> configuredSet.identifierSetSpec().equals(set))
+                .filter(configuredSet -> configuredSet.identifierSetSpec().equals(parsedSetValue))
                 .findFirst();
 
             if (matchedSet.isEmpty() || matchedSet.get().commonEntityClass().equals("NONE")) {
@@ -349,14 +378,13 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             Object convertedEntity =
                 conversionMethod.invoke(null, requestedRecord, supportLegacyIdentifiers);
 
-            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat, recordClass,
-                handler);
+            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat, handler);
 
             ExportConverterBase.performExceptionalHandlingWhereAbsolutelyNecessary(convertedEntity,
                 metadataFormat, recordClass, handler);
 
             switch (set) {
-                case "Publications":
+                case "Publications", "Theses":
                     metadata.setPublication((PublicationConvertable) convertedEntity);
                     break;
                 case "Products":
@@ -385,10 +413,10 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                                                 ExportHandlersConfigurationLoader.Handler handlerConfiguration) {
         var query = new Query();
 
-        if (identifier.contains("BISIS")) {
+        if (identifier.contains(IdentifierUtil.legacyIdentifierPrefix)) {
             query.addCriteria(
                 Criteria.where("oldId").is(OAIPMHParseUtility.parseBISISID(identifier)));
-        } else if (identifier.contains("TESLARIS")) {
+        } else if (identifier.contains(identifier)) {
             query.addCriteria(
                 Criteria.where("databaseId").is(OAIPMHParseUtility.parseBISISID(identifier)));
         }
@@ -410,7 +438,9 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     private <E> Page<E> findRequestedRecords(Class<E> entityClass, String from, String until,
                                              int page,
                                              ExportHandlersConfigurationLoader.Handler handlerConfiguration,
-                                             List<ExportPublicationType> publicationTypeFilters) {
+                                             List<ExportPublicationType> publicationTypeFilters,
+                                             HashMap<String, List<String>> concreteTypeFilters,
+                                             HashMap<String, String> additionalFilters) {
         var query = new Query();
 
         query.addCriteria(Criteria.where("last_updated").gte(Date.valueOf(
@@ -430,6 +460,36 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         if (!publicationTypeFilters.isEmpty()) {
             query.addCriteria(Criteria.where("type").in(publicationTypeFilters));
+        }
+
+        if (!additionalFilters.isEmpty()) {
+            additionalFilters.forEach((field, value) -> {
+                if (value.startsWith("bool:")) {
+                    query.addCriteria(
+                        Criteria.where(field).is(
+                            Boolean.parseBoolean(value.replace("bool:", ""))
+                        )
+                    );
+                } else {
+                    query.addCriteria(Criteria.where(field).is(value));
+                }
+            });
+        }
+
+        List<Criteria> allFieldCriteria = new ArrayList<>();
+
+        concreteTypeFilters.forEach((field, types) -> {
+            Criteria fieldCriteria = new Criteria().orOperator(
+                Criteria.where(field).in(types),
+                Criteria.where(field).exists(false)
+            );
+            allFieldCriteria.add(fieldCriteria);
+        });
+
+        if (!allFieldCriteria.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(
+                allFieldCriteria.toArray(new Criteria[0])
+            ));
         }
 
         var totalCount = mongoTemplate.count(query, entityClass);
@@ -478,7 +538,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         oaiIdentifier.setRepositoryIdentifier(repositoryName.replace(" ", "."));
         oaiIdentifier.setDelimiter(":");
         oaiIdentifier.setSampleIdentifier(
-            "oai:" + repositoryName.replace(" ", ".") + ":Publications/(TESLARIS)1000");
+            "oai:" + repositoryName.replace(" ", ".") + ":Publications/" +
+                IdentifierUtil.identifierPrefix + "1000");
 
         var toolkit = new Toolkit();
         toolkit.setTitle("Sci2Zero Alliance Custom implementation");
@@ -590,5 +651,33 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             .ensureIndex(new Index().on("expirationTimestamp", Sort.Direction.ASC)
                 .expire(0L));
         return newToken;
+    }
+
+    private String constructRecordIdentifier(
+        ExportHandlersConfigurationLoader.Handler handlerConfig,
+        BaseExportEntity entity,
+        String repositoryName,
+        ExportHandlersConfigurationLoader.Set matchedSet) {
+        String basePrefix = "oai:" + repositoryName.replace(" ", ".") + ":";
+
+        String setSpecPrefix = !matchedSet.identifierSetSpec().isBlank()
+            ? matchedSet.identifierSetSpec() + "/"
+            : "";
+
+        String identifierPrefix = handlerConfig.supportLegacyIdentifiers()
+            ? IdentifierUtil.legacyIdentifierPrefix
+            : IdentifierUtil.identifierPrefix;
+
+        var entityId = getEntityIdentifier(handlerConfig, entity);
+
+        return basePrefix + setSpecPrefix + identifierPrefix + entityId;
+    }
+
+    private Integer getEntityIdentifier(ExportHandlersConfigurationLoader.Handler handlerConfig,
+                                        BaseExportEntity entity) {
+        if (handlerConfig.supportLegacyIdentifiers() && !entity.getOldIds().isEmpty()) {
+            return entity.getOldIds().stream().findFirst().get();
+        }
+        return entity.getDatabaseId();
     }
 }

@@ -1,6 +1,7 @@
 package rs.teslaris.core.indexmodel;
 
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -29,22 +30,24 @@ public class DocumentPublicationIndex {
     @Id
     private String id;
 
+    @JsonAlias("title_sr")
     @Field(type = FieldType.Text, name = "title_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
     private String titleSr;
 
     @Field(type = FieldType.Keyword, name = "title_sr_sortable", normalizer = "serbian_normalizer")
     private String titleSrSortable;
 
+    @JsonAlias("title_other")
     @Field(type = FieldType.Text, name = "title_other", store = true, analyzer = "english", searchAnalyzer = "english")
     private String titleOther;
 
     @Field(type = FieldType.Keyword, name = "title_other_sortable", normalizer = "english_normalizer")
     private String titleOtherSortable;
 
-    @Field(type = FieldType.Text, name = "description_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Text, name = "description_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String descriptionSr;
 
-    @Field(type = FieldType.Text, name = "description_other", store = true, analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Text, name = "description_other", analyzer = "english", searchAnalyzer = "english")
     private String descriptionOther;
 
     @Field(type = FieldType.Keyword, name = "keywords_sr", store = true)
@@ -53,10 +56,10 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "keywords_other", store = true)
     private String keywordsOther;
 
-    @Field(type = FieldType.Text, name = "full_text_sr", store = true, analyzer = "serbian", searchAnalyzer = "serbian")
+    @Field(type = FieldType.Text, name = "full_text_sr", analyzer = "serbian", searchAnalyzer = "serbian")
     private String fullTextSr;
 
-    @Field(type = FieldType.Text, name = "full_text_other", store = true, analyzer = "english", searchAnalyzer = "english")
+    @Field(type = FieldType.Text, name = "full_text_other", analyzer = "english", searchAnalyzer = "english")
     private String fullTextOther;
 
     @Field(type = FieldType.Integer, name = "author_ids", store = true)
@@ -219,7 +222,7 @@ public class DocumentPublicationIndex {
     private List<String> wordcloudTokensOther = new ArrayList<>();
 
     @Field(type = FieldType.Boolean, name = "is_approved", store = true)
-    private Boolean isApproved;
+    private Boolean isApproved = false;
 
     @Field(type = FieldType.Boolean, name = "are_files_valid", store = true)
     private Boolean areFilesValid;
@@ -241,4 +244,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "contains_files", store = true)
     private Boolean containsFiles;
+
+    @Field(type = FieldType.Boolean, name = "is_archived", store = true)
+    private Boolean isArchived;
 }

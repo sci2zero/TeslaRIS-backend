@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
 import org.jbibtex.LaTeXParser;
@@ -16,6 +17,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -25,6 +27,9 @@ import rs.teslaris.importer.model.common.PersonDocumentContribution;
 import rs.teslaris.importer.model.common.PersonName;
 
 public class BibTexConverter {
+
+    private static final Pattern doiPattern =
+        Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
     public static Optional<DocumentImport> toCommonImportModel(BibTeXEntry bibEntry) {
         String entryType = bibEntry.getType().getValue();
@@ -39,8 +44,13 @@ public class BibTexConverter {
         }
 
         var document = new DocumentImport();
-        // is this ok?
+        document.setSource("BIBTEX");
+
         document.setIdentifier(citationKey);
+        if (doiPattern.matcher(StringUtil.performDOIPreprocessing(citationKey)).matches()) {
+            document.setDoi(StringUtil.performDOIPreprocessing(citationKey));
+        }
+
         document.setPublicationType(
             isArticle ? DocumentPublicationType.JOURNAL_PUBLICATION :
                 DocumentPublicationType.PROCEEDINGS_PUBLICATION
@@ -137,6 +147,16 @@ public class BibTexConverter {
             }
         });
 
+        if (document.getPublicationType().equals(DocumentPublicationType.JOURNAL_PUBLICATION) &&
+            (Objects.isNull(document.getPublishedIn()) || document.getPublishedIn().isEmpty())) {
+            return Optional.empty();
+        }
+
+        if (document.getPublicationType().equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION) &&
+            (Objects.isNull(document.getEvent()) || document.getEvent().getName().isEmpty())) {
+            return Optional.empty();
+        }
+
         return Optional.of(document);
     }
 
@@ -183,7 +203,9 @@ public class BibTexConverter {
         var printer = new LaTeXPrinter();
 
         var contributions = new ArrayList<PersonDocumentContribution>();
-        var authors = printer.print(parser.parse(authorValue.toUserString())).split(" and ");
+        var authors = printer.print(parser.parse(authorValue.toUserString()))
+            .replace("\n", " ")
+            .split(" and ");
 
         var orderNumber = 1;
         for (var authorName : authors) {

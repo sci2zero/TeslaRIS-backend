@@ -67,7 +67,8 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS"
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT;proceedings_publication_type:REGULAR_FULL_ARTICLE,REGULAR_ABSTRACT_ARTICLE"
         }
       ],
       "metadataFormats": [
@@ -75,21 +76,23 @@
         "oai_cerif_openaire"
       ],
       "typeMappings": {
-        "PROCEEDINGS": "test_proc",
-        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
-        "MONOGRAPH": "test_mon",
-        "MONOGRAPH_PUBLICATION": "test_mon_pub",
-        "JOURNAL": "test_jour",
-        "JOURNAL_PUBLICATION": "test_jour_pub",
-        "THESIS": "test_the",
-        "SOFTWARE": "test_sof",
-        "DATASET": "test_dat",
-        "PATENT": "test_pat"
+        "EVENT": "(DEFAULT)https://w3id.org/cerif/vocab/EventTypes#Conference§https://w3id.org/cerif/vocab/EventTypes",
+        "ORGANISATION_UNIT": "(DEFAULT)https://w3id.org/cerif/vocab/OrganisationTypes#HigherEducation§https://w3id.org/cerif/vocab/OrganisationTypes",
+        "PROCEEDINGS": "(DEFAULT)http://purl.org/coar/resource_type/c_f744§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "PROCEEDINGS_PUBLICATION": "(REGULAR_FULL_ARTICLE)http://purl.org/coar/resource_type/c_5794§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;(REGULAR_ABSTRACT_ARTICLE)http://purl.org/coar/resource_type/c_c94f§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "MONOGRAPH": "(DEFAULT)http://purl.org/coar/resource_type/c_2f33§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "MONOGRAPH_PUBLICATION": "(DEFAULT)http://purl.org/coar/resource_type/c_3248§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "JOURNAL": "(DEFAULT)http://purl.org/coar/resource_type/c_0640§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "JOURNAL_PUBLICATION": "(RESEARCH_ARTICLE)http://purl.org/coar/resource_type/c_2df8fbb1§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;(DEFAULT)http://purl.org/coar/resource_type/c_3e5a§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "THESIS": "(PHD)http://purl.org/coar/resource_type/c_db06§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;(PHD_ART_PROJECT)http://purl.org/coar/resource_type/c_db06§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;http://purl.org/coar/resource_type/c_46ec§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "SOFTWARE": "(DEFAULT)http://purl.org/coar/resource_type/c_5ce6§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "DATASET": "(DEFAULT)http://purl.org/coar/resource_type/c_ddb1§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "PATENT": "(DEFAULT)http://purl.org/coar/resource_type/c_15cd§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types"
       }
     },
     {
       "identifier": "OAIHandlerDOISerbia",
-      "internalInstitutionId": "17",
+      "internalInstitutionId": "14",
       "handlerName": "DOI Serbia OAI Handler",
       "handlerDescription": "OAI handler for DOI Serbia",
       "handlerLanguage": "sr",
@@ -100,16 +103,17 @@
         {
           "setSpec": "theses",
           "setName": "theses",
-          "identifierSetSpec": "",
+          "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "concreteTypeFilters": "thesis_type:PHD"
         }
       ],
       "metadataFormats": [
         "oai_dc"
       ],
       "typeMappings": {
-        "THESIS": "test_the"
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en"
       }
     },
     {
@@ -125,121 +129,23 @@
         {
           "setSpec": "theses",
           "setName": "theses",
-          "identifierSetSpec": "",
+          "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "concreteTypeFilters": "thesis_type:PHD",
+          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
       "metadataFormats": [
         "oai_dc"
       ],
       "typeMappings": {
-        "THESIS": "test_the"
-      }
-    },
-    {
-      "identifier": "OAIHandlerDARTEurope",
-      "internalInstitutionId": "18",
-      "handlerName": "DART Europe OAI Handler",
-      "handlerDescription": "OAI handler for DART Europe",
-      "handlerLanguage": "sr",
-      "exportOnlyActiveEmployees": false,
-      "tokenExpirationTimeMinutes": 60,
-      "supportLegacyIdentifiers": true,
-      "sets": [
-        {
-          "setSpec": "theses",
-          "setName": "theses",
-          "identifierSetSpec": "",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
-        }
-      ],
-      "metadataFormats": [
-        "oai_dc"
-      ],
-      "typeMappings": {
-        "THESIS": "test_the"
-      }
-    },
-    {
-      "identifier": "OAIHandlerDARTEurope",
-      "internalInstitutionId": "17",
-      "handlerName": "DART Europe OAI Handler",
-      "handlerDescription": "OAI handler for DART Europe",
-      "handlerLanguage": "sr",
-      "exportOnlyActiveEmployees": false,
-      "tokenExpirationTimeMinutes": 60,
-      "supportLegacyIdentifiers": true,
-      "sets": [
-        {
-          "setSpec": "theses",
-          "setName": "theses",
-          "identifierSetSpec": "",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
-        }
-      ],
-      "metadataFormats": [
-        "oai_dc"
-      ],
-      "typeMappings": {
-        "THESIS": "test_the"
-      }
-    },
-    {
-      "identifier": "OAIHandlerDARTEuropePA",
-      "internalInstitutionId": "389",
-      "handlerName": "DART Europe Business Academy OAI Handler",
-      "handlerDescription": "OAI handler for Business Academy for DART Europe",
-      "handlerLanguage": "sr",
-      "exportOnlyActiveEmployees": false,
-      "tokenExpirationTimeMinutes": 60,
-      "supportLegacyIdentifiers": true,
-      "sets": [
-        {
-          "setSpec": "theses",
-          "setName": "theses",
-          "identifierSetSpec": "",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
-        }
-      ],
-      "metadataFormats": [
-        "oai_dc"
-      ],
-      "typeMappings": {
-        "THESIS": "test_the"
-      }
-    },
-    {
-      "identifier": "OAIHandlerDARTEuropePA",
-      "internalInstitutionId": "389",
-      "handlerName": "DART Europe Business Academy OAI Handler",
-      "handlerDescription": "OAI handler for Business Academy for DART Europe",
-      "handlerLanguage": "sr",
-      "exportOnlyActiveEmployees": false,
-      "tokenExpirationTimeMinutes": 60,
-      "supportLegacyIdentifiers": true,
-      "sets": [
-        {
-          "setSpec": "theses",
-          "setName": "theses",
-          "identifierSetSpec": "",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
-        }
-      ],
-      "metadataFormats": [
-        "oai_dc"
-      ],
-      "typeMappings": {
-        "THESIS": "test_the"
+        "THESIS": "(PHD)info:eu-repo/semantics/doctoralThesis;(PHD)info:eu-repo/semantics/publishedVersion"
       }
     },
     {
       "identifier": "OAIHandlerNDLTD",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "14",
       "handlerName": "NDLTD OAI Handler",
       "handlerDescription": "OAI handler for NDLTD",
       "handlerLanguage": "sr",
@@ -250,9 +156,11 @@
         {
           "setSpec": "theses",
           "setName": "theses",
-          "identifierSetSpec": "",
+          "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "concreteTypeFilters": "thesis_type:PHD",
+          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
       "metadataFormats": [
@@ -260,7 +168,7 @@
         "oai_etdms"
       ],
       "typeMappings": {
-        "THESIS": "test_the"
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en"
       }
     },
     {
@@ -276,9 +184,11 @@
         {
           "setSpec": "theses",
           "setName": "theses",
-          "identifierSetSpec": "",
+          "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "concreteTypeFilters": "thesis_type:PHD",
+          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
       "metadataFormats": [
@@ -286,12 +196,12 @@
         "oai_etdms"
       ],
       "typeMappings": {
-        "THESIS": "test_the"
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en"
       }
     },
     {
       "identifier": "OAIHandlerOATD",
-      "internalInstitutionId": "18",
+      "internalInstitutionId": "14",
       "handlerName": "OATD OAI Handler",
       "handlerDescription": "OAI handler for OATD",
       "handlerLanguage": "sr",
@@ -302,9 +212,11 @@
         {
           "setSpec": "theses",
           "setName": "theses",
-          "identifierSetSpec": "",
+          "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "concreteTypeFilters": "thesis_type:PHD",
+          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
       "metadataFormats": [
@@ -312,40 +224,14 @@
         "oai_etdms"
       ],
       "typeMappings": {
-        "THESIS": "test_the"
-      }
-    },
-    {
-      "identifier": "OAIHandlerOATDPA",
-      "internalInstitutionId": "389",
-      "handlerName": "OATD Business Academy OAI Handler",
-      "handlerDescription": "OAI handler for Business Academy for OATD",
-      "handlerLanguage": "sr",
-      "exportOnlyActiveEmployees": false,
-      "tokenExpirationTimeMinutes": 60,
-      "supportLegacyIdentifiers": true,
-      "sets": [
-        {
-          "setSpec": "theses",
-          "setName": "theses",
-          "identifierSetSpec": "",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
-        }
-      ],
-      "metadataFormats": [
-        "oai_dc",
-        "oai_etdms"
-      ],
-      "typeMappings": {
-        "THESIS": "test_the"
+        "THESIS": "(PHD)info:eu-repo/semantics/doctoralThesis;(PHD)info:eu-repo/semantics/publishedVersion"
       }
     },
     {
       "identifier": "OAIHandlerNaRDuS",
-      "internalInstitutionId": "389",
-      "handlerName": "NaRDuS Business Academy OAI Handler",
-      "handlerDescription": "OAI handler for Business Academy for NaRDuS",
+      "internalInstitutionId": "14",
+      "handlerName": "NaRDuS OAI Handler",
+      "handlerDescription": "OAI handler for NaRDuS",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
@@ -354,22 +240,23 @@
         {
           "setSpec": "theses",
           "setName": "theses",
-          "identifierSetSpec": "",
+          "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
-        "THESIS": "test_the"
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en;(DEFAULT)Text@en;(DEFAULT)Tekstualni dokument@sr"
       }
     },
     {
       "identifier": "OAIHandlerProQuest",
-      "internalInstitutionId": "17",
+      "internalInstitutionId": "14",
       "handlerName": "ProQuest OAI Handler",
       "handlerDescription": "OAI handler for ProQuest",
       "handlerLanguage": "sr",
@@ -380,23 +267,25 @@
         {
           "setSpec": "theses",
           "setName": "theses",
-          "identifierSetSpec": "",
+          "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "concreteTypeFilters": "thesis_type:PHD",
+          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
       "metadataFormats": [
         "oai_dc"
       ],
       "typeMappings": {
-        "THESIS": "test_the"
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en"
       }
     },
     {
-      "identifier": "OAIHandlerBEOPEN",
-      "internalInstitutionId": "17",
-      "handlerName": "BEOPEN OAI Handler",
-      "handlerDescription": "OAI handler for BEOPEN",
+      "identifier": "OAIHandlerOpenAIRE",
+      "internalInstitutionId": "14",
+      "handlerName": "OpenAIRE OAI Handler",
+      "handlerDescription": "OAI handler for OpenAIRE",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
@@ -407,73 +296,16 @@
           "setName": "theses",
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
-        },
-        {
-          "setSpec": "publications",
-          "setName": "publications",
-          "identifierSetSpec": "Publications",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION"
+          "publicationTypes": "THESIS",
+          "concreteTypeFilters": "thesis_type:PHD",
+          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
       "metadataFormats": [
-        "oai_dc",
-        "oai_dim"
+        "oai_dc"
       ],
       "typeMappings": {
-        "PROCEEDINGS": "test_proc",
-        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
-        "MONOGRAPH": "test_mon",
-        "MONOGRAPH_PUBLICATION": "test_mon_pub",
-        "JOURNAL": "test_jour",
-        "JOURNAL_PUBLICATION": "test_jour_pub",
-        "THESIS": "test_the",
-        "SOFTWARE": "test_sof",
-        "DATASET": "test_dat",
-        "PATENT": "test_pat"
-      }
-    },
-    {
-      "identifier": "OAIHandlerBEOPENILFE",
-      "internalInstitutionId": "6",
-      "handlerName": "BEOPENILFE OAI Handler",
-      "handlerDescription": "OAI handler for ILFE for BEOPEN",
-      "handlerLanguage": "sr",
-      "exportOnlyActiveEmployees": false,
-      "tokenExpirationTimeMinutes": 60,
-      "supportLegacyIdentifiers": true,
-      "sets": [
-        {
-          "setSpec": "theses",
-          "setName": "theses",
-          "identifierSetSpec": "Theses",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
-        },
-        {
-          "setSpec": "publications",
-          "setName": "publications",
-          "identifierSetSpec": "Publications",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION"
-        }
-      ],
-      "metadataFormats": [
-        "oai_dc",
-        "oai_dim"
-      ],
-      "typeMappings": {
-        "PROCEEDINGS": "test_proc",
-        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
-        "MONOGRAPH": "test_mon",
-        "MONOGRAPH_PUBLICATION": "test_mon_pub",
-        "JOURNAL": "test_jour",
-        "JOURNAL_PUBLICATION": "test_jour_pub",
-        "THESIS": "test_the",
-        "SOFTWARE": "test_sof",
-        "DATASET": "test_dat",
-        "PATENT": "test_pat"
+        "THESIS": "(PHD)info:eu-repo/semantics/doctoralThesis;(PHD)info:eu-repo/semantics/publishedVersion"
       }
     },
     {
@@ -543,24 +375,28 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS"
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "concreteTypeFilters": "thesis_type:PHD"
         }
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
-        "PROCEEDINGS": "test_proc",
-        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
-        "MONOGRAPH": "test_mon",
-        "MONOGRAPH_PUBLICATION": "test_mon_pub",
-        "JOURNAL": "test_jour",
-        "JOURNAL_PUBLICATION": "test_jour_pub",
-        "THESIS": "test_the",
-        "SOFTWARE": "test_sof",
-        "DATASET": "test_dat",
-        "PATENT": "test_pat"
+        "PERSON": "(DEFAULT)Osoba@sr;(DEFAULT)Person@en",
+        "EVENT": "(DEFAULT)Konferencija@sr;(DEFAULT)Conference@en",
+        "ORGANISATION_UNIT": "(LEGAL)Instituticija@sr;(LEGAL)Institution@en;(DEFAULT)Organizaciona jedinica@sr;(DEFAULT)Organisation unit@en",
+        "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",
+        "PROCEEDINGS_PUBLICATION": "(DEFAULT)Rad u zborniku@sr;(DEFAULT)Conference Paper@en",
+        "MONOGRAPH": "(DEFAULT)Monografija@sr;(DEFAULT)Book@en;(STUDY)Studija@sr;(STUDY)archWork@en",
+        "MONOGRAPH_PUBLICATION": "(DEFAULT)Poglavlje u monografiji@sr;(DEFAULT)Book Chapter@en",
+        "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
+        "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
+        "SOFTWARE": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
+        "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
+        "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
       }
     },
     {
@@ -630,24 +466,25 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS"
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "concreteTypeFilters": "thesis_type:PHD"
         }
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
-        "PROCEEDINGS": "test_proc",
-        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
-        "MONOGRAPH": "test_mon",
-        "MONOGRAPH_PUBLICATION": "test_mon_pub",
-        "JOURNAL": "test_jour",
-        "JOURNAL_PUBLICATION": "test_jour_pub",
-        "THESIS": "test_the",
-        "SOFTWARE": "test_sof",
-        "DATASET": "test_dat",
-        "PATENT": "test_pat"
+        "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",
+        "PROCEEDINGS_PUBLICATION": "(DEFAULT)Rad u zborniku@sr;(DEFAULT)Conference Paper@en",
+        "MONOGRAPH": "(DEFAULT)Monografija@sr;(DEFAULT)Book@en;(STUDY)Studija@sr;(STUDY)archWork@en",
+        "MONOGRAPH_PUBLICATION": "(DEFAULT)Poglavlje u monografiji@sr;(DEFAULT)Book Chapter@en",
+        "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
+        "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
+        "SOFTWARE": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
+        "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
+        "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
       }
     },
     {
@@ -717,24 +554,25 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS"
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "concreteTypeFilters": "thesis_type:PHD"
         }
       ],
       "metadataFormats": [
         "oai_dc",
-        "oai_dim"
+        "dim"
       ],
       "typeMappings": {
-        "PROCEEDINGS": "test_proc",
-        "PROCEEDINGS_PUBLICATION": "test_proc_pub",
-        "MONOGRAPH": "test_mon",
-        "MONOGRAPH_PUBLICATION": "test_mon_pub",
-        "JOURNAL": "test_jour",
-        "JOURNAL_PUBLICATION": "test_jour_pub",
-        "THESIS": "test_the",
-        "SOFTWARE": "test_sof",
-        "DATASET": "test_dat",
-        "PATENT": "test_pat"
+        "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",
+        "PROCEEDINGS_PUBLICATION": "(DEFAULT)Rad u zborniku@sr;(DEFAULT)Conference Paper@en",
+        "MONOGRAPH": "(DEFAULT)Monografija@sr;(DEFAULT)Book@en;(STUDY)Studija@sr;(STUDY)archWork@en",
+        "MONOGRAPH_PUBLICATION": "(DEFAULT)Poglavlje u monografiji@sr;(DEFAULT)Book Chapter@en",
+        "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
+        "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
+        "SOFTWARE": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
+        "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
+        "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
       }
     }
   ]

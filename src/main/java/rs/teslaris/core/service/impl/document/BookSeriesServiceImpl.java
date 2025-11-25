@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -165,6 +166,12 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                 "BookSeries with given ID is already in use.");
         }
 
+        var bookSeries = bookSeriesJPAService.findOne(bookSeriesId);
+        bookSeries.getContributions().forEach(contribution -> {
+            contribution.setDeleted(true);
+            personContributionService.save(contribution);
+        });
+
         bookSeriesJPAService.delete(bookSeriesId);
         bookSeriesIndexRepository.findBookSeriesIndexByDatabaseId(bookSeriesId)
             .ifPresent(bookSeriesIndexRepository::delete);
@@ -203,7 +210,9 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
         while (hasNextPage) {
 
             List<BookSeries> chunk =
-                bookSeriesJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+                bookSeriesJPAService.findAll(
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
+                    .getContent();
 
             chunk.forEach((bookSeries) -> {
                 try {

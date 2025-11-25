@@ -38,6 +38,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -76,7 +77,10 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
+import rs.teslaris.core.repository.person.ExpertiseOrSkillRepository;
+import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -136,6 +140,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final ElasticsearchClient elasticsearchClient;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final InvolvementRepository involvementRepository;
+
+    private final ExpertiseOrSkillRepository expertiseOrSkillRepository;
+
+    private final PrizeRepository prizeRepository;
 
     private final Pattern orcidRegexPattern =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
@@ -562,6 +572,22 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 "This person is already in use.");
         }
 
+        var person = findOne(personId);
+        person.getInvolvements().forEach(involvement -> {
+            involvement.setDeleted(true);
+            involvementRepository.save(involvement);
+        });
+
+        person.getExpertisesAndSkills().forEach(expertiseOrSkill -> {
+            expertiseOrSkill.setDeleted(true);
+            expertiseOrSkillRepository.save(expertiseOrSkill);
+        });
+
+        person.getPrizes().forEach(prize -> {
+            prize.setDeleted(true);
+            prizeRepository.save(prize);
+        });
+
         delete(personId);
         var index = personIndexRepository.findByDatabaseId(personId);
         index.ifPresent(personIndexRepository::delete);
@@ -797,7 +823,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         while (hasNextPage) {
 
-            List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+            List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
+                Sort.by(Sort.Direction.ASC, "id"))).getContent();
 
             chunk.forEach(person -> {
                 try {
@@ -842,7 +869,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public void indexPerson(Person savedPerson) {
         var personIndex = getPersonIndexForId(savedPerson.getId());
 
@@ -1409,6 +1436,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     public String getPersonProfileImageServerFilename(Integer personId) {
         return personRepository.findProfileImageByPersonId(personId).orElse(null);
+    }
+
+    @Override
+    public boolean personHasContributions(Integer personId) {
+        return documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(personId) > 0;
     }
 
     public List<Integer> findTopCoauthors(Integer authorId) {

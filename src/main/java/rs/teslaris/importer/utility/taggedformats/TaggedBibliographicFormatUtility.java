@@ -73,6 +73,16 @@ public class TaggedBibliographicFormatUtility {
     public static void finalizeAndSaveDocument(DocumentImport doc, Integer userId,
                                                HashMap<Integer, Integer> count,
                                                List<String> affiliations, List<String> keywords) {
+        if (doc.getPublicationType().equals(DocumentPublicationType.JOURNAL_PUBLICATION) &&
+            (Objects.isNull(doc.getPublishedIn()) || doc.getPublishedIn().isEmpty())) {
+            return;
+        }
+
+        if (doc.getPublicationType().equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION) &&
+            (Objects.isNull(doc.getEvent()) || doc.getEvent().getName().isEmpty())) {
+            return;
+        }
+
         doc.getImportUsersId().add(userId);
 
         if (affiliations.size() == 1) {
@@ -158,6 +168,8 @@ public class TaggedBibliographicFormatUtility {
 
     public static DocumentImport parseDocumentType(String content) {
         var doc = new DocumentImport();
+        doc.setSource("TAGGED_FORMAT");
+
         doc.setStartPage("");
         doc.setEndPage("");
         if ("JOUR".equalsIgnoreCase(content) || "Journal Article".equalsIgnoreCase(content)) {

@@ -2,11 +2,16 @@ package rs.teslaris.exporter.model.converter;
 
 import com.google.common.base.Functions;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.patent.Patent;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
@@ -22,13 +27,15 @@ public class ExportPatentConverter extends ExportConverterBase {
             openairePatent.setOldId("Patents/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
-            openairePatent.setOldId("Patents/(TESLARIS)" + exportDocument.getDatabaseId());
+            openairePatent.setOldId(
+                "Patents/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId());
         }
 
         openairePatent.setTitle(
             ExportMultilingualContentConverter.toOpenaireModel(exportDocument.getTitle()));
 
-        openairePatent.setType(inferPublicationCOARType(exportDocument.getType()));
+        openairePatent.setType(
+            new ArrayList<>(List.of(inferPublicationCOARType(exportDocument))));
 
         ExportMultilingualContentConverter.setFieldFromPriorityContent(
             exportDocument.getDescription().stream(),
@@ -63,16 +70,16 @@ public class ExportPatentConverter extends ExportConverterBase {
 
     public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
         var dcPatent = new DC();
-        dcPatent.getType().add("model");
+        dcPatent.getType().add(new DCType("model", null, null));
         dcPatent.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
-            dcPatent.getIdentifier().add(legacyIdentifierPrefix + "(" +
-                exportDocument.getOldIds().stream().findFirst().get() + ")");
-        } else {
-            dcPatent.getIdentifier().add("TESLARIS(" + exportDocument.getDatabaseId() + ")");
+            dcPatent.getIdentifier().add(legacyIdentifierPrefix +
+                exportDocument.getOldIds().stream().findFirst().get());
         }
+
+        dcPatent.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());
 
         clientLanguages.forEach(lang -> {
             dcPatent.getIdentifier()
@@ -80,10 +87,24 @@ public class ExportPatentConverter extends ExportConverterBase {
                     exportDocument.getDatabaseId());
         });
 
+        if (StringUtil.valueExists(exportDocument.getDoi())) {
+            dcPatent.getIdentifier().add("DOI:" + exportDocument.getDoi());
+        }
+
+        if (StringUtil.valueExists(exportDocument.getScopus())) {
+            dcPatent.getIdentifier().add("SCOPUS:" + exportDocument.getScopus());
+        }
+
+        if (StringUtil.valueExists(exportDocument.getOpenAlex())) {
+            dcPatent.getIdentifier().add("OPENALEX:" + exportDocument.getOpenAlex());
+        }
+
         addContentToList(
             exportDocument.getTitle(),
             ExportMultilingualContent::getContent,
-            content -> dcPatent.getTitle().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcPatent.getTitle()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(
@@ -95,13 +116,17 @@ public class ExportPatentConverter extends ExportConverterBase {
         addContentToList(
             exportDocument.getDescription(),
             ExportMultilingualContent::getContent,
-            content -> dcPatent.getDescription().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcPatent.getDescription()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(
             exportDocument.getKeywords(),
             ExportMultilingualContent::getContent,
-            content -> dcPatent.getSubject().add(content.replace("\n", "; "))
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcPatent.getSubject()
+                .add(new DCMultilingualContent(content.replace("\n", "; "), languageTag))
         );
 
         addContentToList(

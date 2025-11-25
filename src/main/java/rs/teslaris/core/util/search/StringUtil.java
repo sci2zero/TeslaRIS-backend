@@ -42,11 +42,15 @@ public class StringUtil {
     private static final Pattern BAD_CHARS = Pattern.compile("[^\\p{L}\\p{Nd} ]+");
 
     private static final Pattern MULTI_SPACE = Pattern.compile("\\s{2,}");
-
+    private static final List<String> identifierUrlPrefixes = List.of(
+        "https://doi.org/", "https://orcid.org/", "https://www.scopus.com/pages/organization/",
+        "https://www.scopus.com/authid/detail.uri?authorId=",
+        "https://www.scopus.com/pages/publications/",
+        "https://openalex.org/", "https://ror.org/",
+        "https://www.webofscience.com/api/gateway?GWVersion=2&SrcApp=teslaris&SrcAuth=WosAPI&DestLinkType=FullRecord&DestApp=WOS_CPL&KeyUT=WOS:"
+    );
     private static List<String> stopwords;
-
     private static Analyzer analyzer;
-
 
     @Autowired
     public StringUtil() throws IOException {
@@ -184,9 +188,11 @@ public class StringUtil {
             if (lang.equalsIgnoreCase(content.getLanguage().getLanguageTag())) {
                 return content.getContent();
             }
+
             fallback = content;
         }
-        return fallback != null ? fallback.getContent() : "";
+
+        return Objects.nonNull(fallback) ? fallback.getContent() : "";
     }
 
     public static boolean isInteger(String s, int radix) {
@@ -306,4 +312,15 @@ public class StringUtil {
         return MULTI_SPACE.matcher(normalized.trim()).replaceAll(" ");
     }
 
+    public static String normalizeNullString(String value) {
+        return (Objects.isNull(value) || "null".equals(value)) ? null : value;
+    }
+
+    public static String normalizeIdentifier(String identifier) {
+        for (var identifierUrlPrefix : identifierUrlPrefixes) {
+            identifier = identifier.replace(identifierUrlPrefix, "");
+        }
+
+        return identifier;
+    }
 }

@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.oaipmh.dublincore;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -27,24 +28,25 @@ import rs.teslaris.core.model.oaipmh.publication.PublicationConvertable;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DC implements PublicationConvertable, EventConvertable, OrgUnitConvertable,
     PersonConvertable,
     PatentConvertable, ProductConvertable {
 
     @XmlElement(name = "title", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> title = new ArrayList<>();
+    private List<DCMultilingualContent> title = new ArrayList<>();
 
     @XmlElement(name = "creator", namespace = "http://purl.org/dc/elements/1.1/")
     private List<String> creator = new ArrayList<>();
 
     @XmlElement(name = "subject", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> subject = new ArrayList<>();
+    private List<DCMultilingualContent> subject = new ArrayList<>();
 
     @XmlElement(name = "description", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> description = new ArrayList<>();
+    private List<DCMultilingualContent> description = new ArrayList<>();
 
     @XmlElement(name = "publisher", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> publisher = new ArrayList<>();
+    private List<DCMultilingualContent> publisher = new ArrayList<>();
 
     @XmlElement(name = "contributor", namespace = "http://purl.org/dc/elements/1.1/")
     private List<Contributor> contributor = new ArrayList<>();
@@ -53,7 +55,7 @@ public class DC implements PublicationConvertable, EventConvertable, OrgUnitConv
     private List<String> date = new ArrayList<>();
 
     @XmlElement(name = "type", namespace = "http://purl.org/dc/elements/1.1/")
-    private List<String> type = new ArrayList<>();
+    private List<DCType> type = new ArrayList<>();
 
     @XmlElement(name = "format", namespace = "http://purl.org/dc/elements/1.1/")
     private List<String> format = new ArrayList<>();

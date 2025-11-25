@@ -212,7 +212,7 @@ public class ThesisControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis/schedule-public-review-end-check?types=PHD&types=PHD_ART_PROJECT&publicReviewLengthDays=20&timestamp=" +
-                            LocalDateTime.now().plusMinutes(1) + "&recurrence=DAILY")
+                            LocalDateTime.now().plusMinutes(10) + "&recurrence=DAILY")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                     .header("Idempotency-Key", "MOCK_KEY_THESIS_SCHEDULE"))

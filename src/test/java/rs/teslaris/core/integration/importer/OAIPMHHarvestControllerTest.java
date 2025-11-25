@@ -22,7 +22,7 @@ public class OAIPMHHarvestControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/oai-harvest/schedule?sourceName=Scindeks&from=2024-01-01&until=2025-12-31&timestamp=" +
-                            LocalDateTime.now().plusMinutes(1) + "&recurrence=ONCE")
+                            LocalDateTime.now().plusMinutes(10) + "&recurrence=ONCE")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isAccepted());
@@ -36,7 +36,7 @@ public class OAIPMHHarvestControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/oai-harvest/schedule?sourceName=NON_EXISTANT&from=2024-01-01&until=2025-12-31&timestamp=" +
-                            LocalDateTime.now().plusMinutes(1) + "&recurrence=ONCE")
+                            LocalDateTime.now().plusMinutes(10) + "&recurrence=ONCE")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isUnauthorized());

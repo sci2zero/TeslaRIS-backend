@@ -27,7 +27,7 @@ public class OAIPMHParseUtility {
 
     public static Integer parseBISISID(String id) {
         var tokens = id.split("\\)");
-        return Integer.parseInt(tokens[1]);
+        return tokens.length > 1 ? Integer.parseInt(tokens[1]) : Integer.parseInt(tokens[0]);
     }
 
     public static boolean validateResumptionToken(String token) {

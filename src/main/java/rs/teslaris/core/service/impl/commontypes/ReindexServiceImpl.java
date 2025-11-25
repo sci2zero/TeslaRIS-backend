@@ -144,19 +144,30 @@ public class ReindexServiceImpl implements ReindexService {
 
     @Async("reindexExecutor")
     public CompletableFuture<Void> reindexPublications() {
-        documentPublicationService.deleteIndexes();
-
-        journalPublicationService.reindexJournalPublications();
-        proceedingsPublicationService.reindexProceedingsPublications();
-        patentService.reindexPatents();
-        softwareService.reindexSoftware();
-        datasetService.reindexDatasets();
-        monographService.reindexMonographs();
-        monographPublicationService.reindexMonographPublications();
-        proceedingsService.reindexProceedings();
-        thesisService.reindexTheses();
+        safeReindex(documentPublicationService::deleteIndexes,
+            "Error deleting document publication indexes");
+        safeReindex(journalPublicationService::reindexJournalPublications,
+            "Error reindexing journal publications");
+        safeReindex(proceedingsPublicationService::reindexProceedingsPublications,
+            "Error reindexing proceedings publications");
+        safeReindex(patentService::reindexPatents, "Error reindexing patents");
+        safeReindex(softwareService::reindexSoftware, "Error reindexing software");
+        safeReindex(datasetService::reindexDatasets, "Error reindexing datasets");
+        safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
+        safeReindex(monographPublicationService::reindexMonographPublications,
+            "Error reindexing monograph publications");
+        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
+        safeReindex(thesisService::reindexTheses, "Error reindexing theses");
 
         return CompletableFuture.completedFuture(null);
+    }
+
+    private void safeReindex(Runnable reindexOperation, String errorMessage) {
+        try {
+            reindexOperation.run();
+        } catch (Exception e) {
+            log.error(errorMessage + ": ", e);
+        }
     }
 
     @Async("reindexExecutor")

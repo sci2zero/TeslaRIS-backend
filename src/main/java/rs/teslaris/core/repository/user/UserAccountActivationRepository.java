@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.user.UserAccountActivation;
 
 @Repository
@@ -17,4 +18,9 @@ public interface UserAccountActivationRepository
     @Modifying
     @Query("DELETE FROM UserAccountActivation uaa WHERE uaa.createDate < :date")
     void deleteAllByCreateDateBefore(Date date);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM UserAccountActivation uaa WHERE uaa.user.id = :userId")
+    void deleteAllByUserId(Integer userId);
 }

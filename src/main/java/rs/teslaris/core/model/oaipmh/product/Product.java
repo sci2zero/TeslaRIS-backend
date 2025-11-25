@@ -17,6 +17,7 @@ import lombok.ToString;
 import rs.teslaris.core.model.oaipmh.common.HasOldId;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
+import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 import rs.teslaris.core.model.oaipmh.publication.Publisher;
 
 @XmlType(name = "TProduct", namespace = "https://www.openaire.eu/cerif-profile/1.1/")
@@ -38,7 +39,7 @@ public class Product implements ProductConvertable, HasOldId {
     private String oldId;
 
     @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Product_Types")
-    private String type;
+    private List<PublicationType> type;
 
     @XmlElement(name = "Language")
     private String language;

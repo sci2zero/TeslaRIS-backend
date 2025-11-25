@@ -16,7 +16,11 @@ import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
+import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
+import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.repository.document.EventRepository;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEvent;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 
@@ -112,7 +116,8 @@ public class ExportEventConverter extends ExportConverterBase {
             openaireEvent.setOldId("Events/" + legacyIdentifierPrefix +
                 exportEvent.getOldIds().stream().findFirst().get());
         } else {
-            openaireEvent.setOldId("Events/(TESLARIS)" + exportEvent.getDatabaseId());
+            openaireEvent.setOldId(
+                "Events/" + IdentifierUtil.identifierPrefix + exportEvent.getDatabaseId());
         }
 
         openaireEvent.setEventName(
@@ -155,20 +160,21 @@ public class ExportEventConverter extends ExportConverterBase {
     public static DC toDCModel(ExportEvent exportEvent, boolean supportLegacyIdentifiers) {
         var dcEvent = new DC();
         dcEvent.getSource().add(repositoryName);
-        dcEvent.getType().add("event");
+        dcEvent.getType().add(new DCType("EVENT", null, null));
         dcEvent.getCoverage()
             .add(exportEvent.getDateFrom().toString() + "-" + exportEvent.getDateTo().toString());
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportEvent.getOldIds()) &&
             !exportEvent.getOldIds().isEmpty()) {
             dcEvent.getIdentifier().add(
-                legacyIdentifierPrefix + "(" + exportEvent.getOldIds().stream().findFirst().get() +
-                    ")");
-        } else {
-            dcEvent.getIdentifier().add("TESLARIS(" + exportEvent.getDatabaseId() + ")");
+                legacyIdentifierPrefix + exportEvent.getOldIds().stream().findFirst().get());
         }
 
-        dcEvent.getIdentifier().add(exportEvent.getConfId());
+        dcEvent.getIdentifier().add(identifierPrefix + exportEvent.getDatabaseId());
+
+        if (StringUtil.valueExists(exportEvent.getConfId())) {
+            dcEvent.getIdentifier().add("CONFID:" + exportEvent.getConfId());
+        }
 
         clientLanguages.forEach(lang -> {
             dcEvent.getIdentifier()
@@ -178,25 +184,33 @@ public class ExportEventConverter extends ExportConverterBase {
         addContentToList(
             exportEvent.getName(),
             ExportMultilingualContent::getContent,
-            content -> dcEvent.getTitle().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcEvent.getTitle()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(
             exportEvent.getNameAbbreviation(),
             ExportMultilingualContent::getContent,
-            content -> dcEvent.getTitle().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcEvent.getTitle()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(
             exportEvent.getDescription(),
             ExportMultilingualContent::getContent,
-            content -> dcEvent.getDescription().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcEvent.getDescription()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(
             exportEvent.getKeywords(),
             keywordSet -> keywordSet.getContent().replace("\n", "; "),
-            content -> dcEvent.getSubject().add(content)
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcEvent.getSubject()
+                .add(new DCMultilingualContent(content, languageTag))
         );
 
         addContentToList(

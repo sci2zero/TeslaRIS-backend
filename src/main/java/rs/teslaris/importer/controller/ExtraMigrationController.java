@@ -82,7 +82,10 @@ public class ExtraMigrationController {
     @PreAuthorize("hasAuthority('PERFORM_EXTRA_MIGRATION_OPERATIONS')")
     @ResponseStatus(HttpStatus.CREATED)
     public void migrateEmploymentNew(
-        @Valid @RequestBody List<ExtraEmploymentMigrationDTO> employmentMigrationDTO) {
-        involvementService.migrateEmployment(employmentMigrationDTO);
+        @Valid @RequestBody List<ExtraEmploymentMigrationDTO> employmentMigrationDTO,
+        @RequestParam(required = false) Integer institutionId) {
+        involvementService.migrateEmployment(employmentMigrationDTO,
+            LocalDate.of(2025, 11, 6),
+            institutionId);
     }
 }

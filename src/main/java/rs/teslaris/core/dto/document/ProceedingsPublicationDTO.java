@@ -23,7 +23,6 @@ public class ProceedingsPublicationDTO extends DocumentDTO {
 
     private Integer numberOfPages;
 
-    @NotNull(message = "You have to provide an article number.")
     private String articleNumber;
 
     @NotNull(message = "You have to provide a proceedings ID.")

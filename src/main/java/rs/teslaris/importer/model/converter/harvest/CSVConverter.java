@@ -2,6 +2,7 @@ package rs.teslaris.importer.model.converter.harvest;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -62,6 +63,7 @@ public class CSVConverter {
         }
 
         var document = new DocumentImport();
+        document.setSource("CSV");
         populateBasicMetadata(document, record);
 
         if (!populatePublicationTypeAndEvent(document, record)) {
@@ -71,6 +73,16 @@ public class CSVConverter {
         populateAuthors(document, record);
         populatePagination(document, record);
         populateIdentifiersAndDescriptions(document, record);
+
+        if (document.getPublicationType().equals(DocumentPublicationType.JOURNAL_PUBLICATION) &&
+            (Objects.isNull(document.getPublishedIn()) || document.getPublishedIn().isEmpty())) {
+            return Optional.empty();
+        }
+
+        if (document.getPublicationType().equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION) &&
+            (Objects.isNull(document.getEvent()) || document.getEvent().getName().isEmpty())) {
+            return Optional.empty();
+        }
 
         return Optional.of(document);
     }

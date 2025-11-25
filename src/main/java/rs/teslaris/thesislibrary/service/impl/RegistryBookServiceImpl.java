@@ -225,10 +225,13 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Override
     @Transactional
     public void updateRegistryBookEntry(Integer registryBookEntryId,
-                                        RegistryBookEntryDTO dto) {
+                                        RegistryBookEntryDTO dto,
+                                        boolean editedByLibrarian) {
         var entry = findOne(registryBookEntryId);
 
-        if (Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
+        if (editedByLibrarian && Objects.nonNull(entry.getPromotion())) {
+            throw new RegistryBookException("Can't update a promoted or in-promotion entry.");
+        } else if (Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
             !entry.getAllowSingleEdit()) {
             throw new RegistryBookException("Can't update a promoted entry.");
         }
@@ -342,7 +345,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public PhdThesisPrePopulatedDataDTO getPrePopulatedPHDThesisInformation(Integer thesisId) {
         var phdThesis = thesisService.getThesisById(thesisId);
 
@@ -655,9 +658,14 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    @Transactional
-    public boolean canEdit(Integer registryBookEntryId) {
+    @Transactional(readOnly = true)
+    public boolean canEdit(Integer registryBookEntryId, boolean librarianCheck) {
         var entry = findOne(registryBookEntryId);
+
+        if (librarianCheck) {
+            return Objects.isNull(entry.getPromotion());
+        }
+
         return Objects.isNull(entry.getPromotion()) || !entry.getPromotion().getFinished() ||
             entry.getAllowSingleEdit();
     }

@@ -27,7 +27,8 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
     @Index(name = "idx_monograph_print_isbn", columnList = "print_isbn")
 })
 @SQLRestriction("deleted=false")
-public non-sealed class Monograph extends Document implements BookSeriesPublishable {
+public non-sealed class Monograph extends Document
+    implements BookSeriesPublishable, PublisherPublishable {
 
     @Column(name = "monograph_type", nullable = false)
     @ColumnDefault("0")

@@ -27,7 +27,8 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     RegistryBookEntry migrateRegistryBookEntry(RegistryBookEntryDTO dto, Integer thesisId);
 
     void updateRegistryBookEntry(Integer registryBookEntryId,
-                                 RegistryBookEntryDTO registryBookEntryDTO);
+                                 RegistryBookEntryDTO registryBookEntryDTO,
+                                 boolean editedByLibrarian);
 
     void deleteRegistryBookEntry(Integer registryBookEntryId);
 
@@ -64,5 +65,5 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
 
     void allowSingleUpdate(Integer registryBookEntryId);
 
-    boolean canEdit(Integer registryBookEntryId);
+    boolean canEdit(Integer registryBookEntryId, boolean librarianCheck);
 }

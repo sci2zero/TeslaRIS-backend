@@ -34,7 +34,7 @@ public class Publication implements PublicationConvertable, HasOldId {
     private String oldId;
 
     @XmlElement(name = "Type", namespace = "https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types")
-    private String type;
+    private List<PublicationType> type;
 
     @XmlElement(name = "Language")
     private String language;

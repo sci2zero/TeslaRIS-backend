@@ -9,6 +9,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +29,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.util.deduplication.Accounted;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
@@ -39,7 +41,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
     @Index(name = "idx_org_unit_scopus_afid", columnList = "scopus_afid")
 })
 @SQLRestriction("deleted=false")
-public class OrganisationUnit extends BaseEntity implements Mergeable {
+public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
@@ -107,37 +109,45 @@ public class OrganisationUnit extends BaseEntity implements Mergeable {
     @Column(name = "legal_entity", nullable = false)
     private Boolean legalEntity = false;
 
+    @Transient
+    private static final String CRIS_KEY = "cris";
+
+    @Transient
+    private static final String DL_KEY = "digital_library";
+
 
     public EmailConfiguration getCrisConfig() {
-        lazilyInitializeEmailConfiguration();
+        Map<String, EmailConfiguration> map = getEmailConfigurationsOrInit();
+        if (Objects.isNull(map)) {
+            return new EmailConfiguration();
+        }
 
-        return emailConfigurations.get("cris");
+        return map.getOrDefault(CRIS_KEY, new EmailConfiguration());
     }
 
     public void setCrisConfig(EmailConfiguration config) {
-        lazilyInitializeEmailConfiguration();
-
-        emailConfigurations.put("cris", config);
+        Map<String, EmailConfiguration> map = getEmailConfigurationsOrInit();
+        map.put(CRIS_KEY, config);
     }
 
     public EmailConfiguration getDlConfig() {
-        lazilyInitializeEmailConfiguration();
+        Map<String, EmailConfiguration> map = getEmailConfigurationsOrInit();
+        if (Objects.isNull(map)) {
+            return new EmailConfiguration();
+        }
 
-        return emailConfigurations.get("digital_library");
+        return map.getOrDefault(DL_KEY, new EmailConfiguration());
     }
 
     public void setDlConfig(EmailConfiguration config) {
-        lazilyInitializeEmailConfiguration();
-
-        emailConfigurations.put("digital_library", config);
+        Map<String, EmailConfiguration> map = getEmailConfigurationsOrInit();
+        map.put(DL_KEY, config);
     }
 
-    private void lazilyInitializeEmailConfiguration() {
+    private Map<String, EmailConfiguration> getEmailConfigurationsOrInit() {
         if (Objects.isNull(emailConfigurations)) {
-            this.emailConfigurations = new HashMap<>();
+            emailConfigurations = new HashMap<>();
         }
-
-        emailConfigurations.putIfAbsent("cris", new EmailConfiguration());
-        emailConfigurations.putIfAbsent("digital_library", new EmailConfiguration());
+        return emailConfigurations;
     }
 }

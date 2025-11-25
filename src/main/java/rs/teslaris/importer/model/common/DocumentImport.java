@@ -126,4 +126,7 @@ public class DocumentImport {
 
     @Field(name = "internal_identifiers")
     private Set<String> internalIdentifiers = new HashSet<>();
+
+    @Field(name = "source")
+    private String source;
 }

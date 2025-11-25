@@ -2,6 +2,7 @@ package rs.teslaris.core.controller;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -50,15 +51,16 @@ public class ReindexController {
                                         @RequestParam Boolean reharvestCitationIndicators,
                                         @RequestHeader("Authorization")
                                         String bearerToken,
+                                        @RequestParam(required = false)
+                                        DocumentPublicationType concretePublicationType,
                                         @RequestBody ReindexRequestDTO reindexRequest) {
-        var taskId = taskManagerService.scheduleTask(
-            "DatabaseReindex-" +
-                StringUtils.join(reindexRequest.getIndexesToRepopulate().stream().map(
-                    EntityType::name).toList(), "-") +
-                "-" + UUID.randomUUID(),
+        var taskId = taskManagerService.scheduleTask("DatabaseReindex-" + StringUtils.join(
+                reindexRequest.getIndexesToRepopulate().stream().map(EntityType::name).toList(), "-") +
+                (Objects.nonNull(concretePublicationType) ? ("-" + concretePublicationType + "-") :
+                    "") + "-" + UUID.randomUUID(),
             timestamp,
             () -> reindexService.reindexDatabase(reindexRequest.getIndexesToRepopulate(),
-                reharvestCitationIndicators, null),
+                reharvestCitationIndicators, concretePublicationType),
             tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
 
         taskManagerService.saveTaskMetadata(
@@ -67,6 +69,10 @@ public class ReindexController {
                 put("indexesToRepopulate", reindexRequest.getIndexesToRepopulate());
                 put("userId", tokenUtil.extractUserIdFromToken(bearerToken));
                 put("reharvestCitationIndicators", String.valueOf(reharvestCitationIndicators));
+
+                if (Objects.nonNull(concretePublicationType)) {
+                    put("concretePublicationType", concretePublicationType.name());
+                }
             }}, recurrence));
     }
 

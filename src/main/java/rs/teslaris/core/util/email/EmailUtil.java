@@ -135,15 +135,19 @@ public class EmailUtil {
     public void sendUnhandledExceptionEmail(String exceptionId,
                                             String tracingContextId,
                                             String requestPath,
-                                            Exception ex) {
+                                            Exception ex,
+                                            boolean mustSend) {
 
         var exceptionClass = ex.getClass();
         var today = LocalDate.now();
 
-        var lastSent = exceptionThrottleMap.get(exceptionClass);
-        if (Objects.nonNull(lastSent) && lastSent.isEqual(today)) {
-            log.warn("Skipping email for {} — already sent today", exceptionClass.getSimpleName());
-            return;
+        if (!mustSend) {
+            var lastSent = exceptionThrottleMap.get(exceptionClass);
+            if (Objects.nonNull(lastSent) && lastSent.isEqual(today)) {
+                log.warn("Skipping email for {} — already sent today",
+                    exceptionClass.getSimpleName());
+                return;
+            }
         }
 
         exceptionThrottleMap.put(exceptionClass, today);
@@ -151,14 +155,21 @@ public class EmailUtil {
         var message = new SimpleMailMessage();
         message.setFrom(emailAddress);
         message.setTo(systemAdminAddress);
-        message.setSubject("TeslaRIS - Unhandled Exception Occurred (" + exceptionId + ")");
+
+        var importError = exceptionId.equals("IMPORT ERROR");
+        if (importError) {
+            message.setSubject("TeslaRIS - Import Error Occurred");
+        } else {
+            message.setSubject("TeslaRIS - Unhandled Exception Occurred (" + exceptionId + ")");
+        }
 
         var stackTraceWriter = new StringWriter();
         var stackTracePrinter = new PrintWriter(stackTraceWriter);
         ex.printStackTrace(stackTracePrinter);
 
         message.setText(MessageFormat.format(
-            "Unhandled error (ID:{0}) occurred at: {2}.\nMessage: {1}\nRequest path: {3}\nTracing context id: {5}\n\nFull stack trace:\n{4}",
+            (importError ? "Import" : "Unhandled") +
+                " error (ID:{0}) occurred at: {2}.\nMessage: {1}\nRequest path: {3}\nTracing context id: {5}\n\nFull stack trace:\n{4}",
             exceptionId, ex.getMessage(), LocalDateTime.now(), requestPath,
             stackTraceWriter.toString(), tracingContextId));
 

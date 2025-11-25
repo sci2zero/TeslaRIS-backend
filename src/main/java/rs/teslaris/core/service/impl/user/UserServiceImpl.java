@@ -31,6 +31,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -378,13 +379,25 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         if (userRepository.findByEmail(newEmail).isPresent()) {
-            throw new UserAlreadyExistsException("User with given email already exists.");
+            throw new UserAlreadyExistsException("userWithEmailExistsMessage");
         }
 
         user.setEmail(newEmail);
 
         var index = userAccountIndexRepository.findByDatabaseId(userId);
         saveAndNotifyUser(user, index.orElse(new UserAccountIndex()));
+    }
+
+    @Override
+    public void resendUserActivationEmail(Integer userId) {
+        var user = findOne(userId);
+
+        if (user.isAccountNonLocked()) {
+            throw new CantEditException(
+                "Activation email can only be sent to deactivated users.");
+        }
+
+        sendActivationEmail(user);
     }
 
     @Override
@@ -512,7 +525,15 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var savedUser = userRepository.save(newUser);
         indexUser(savedUser, index);
 
-        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
+        sendActivationEmail(savedUser);
+
+        return savedUser;
+    }
+
+    private void sendActivationEmail(User savedUser) {
+        userAccountActivationRepository.deleteAllByUserId(savedUser.getId());
+
+        var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), savedUser);
         userAccountActivationRepository.save(activationToken);
 
         var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
@@ -533,9 +554,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new Object[] {systemName, activationLink},
             Locale.forLanguageTag(language)
         );
-        emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
-
-        return savedUser;
+        emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);
     }
 
     @Override
@@ -801,10 +820,19 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             emailUpdateRequestRepository.findByEmailUpdateToken(emailUpdateToken);
 
         if (emailUpdateRequest.isPresent()) {
-            emailUpdateRequest.get().getUser()
-                .setEmail(emailUpdateRequest.get().getNewEmailAddress());
-            userRepository.save(emailUpdateRequest.get().getUser());
+            var user = emailUpdateRequest.get().getUser();
+
+            user.setEmail(emailUpdateRequest.get().getNewEmailAddress());
+            userRepository.save(user);
             emailUpdateRequestRepository.delete(emailUpdateRequest.get());
+
+            userAccountIndexRepository.findByDatabaseId(user.getId())
+                .ifPresent(index -> {
+                    index.setEmail(user.getEmail());
+                    index.setEmailSortable(index.getEmail());
+                    userAccountIndexRepository.save(index);
+                });
+
             return true;
         }
 
@@ -922,7 +950,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         while (hasNextPage) {
 
-            List<User> chunk = findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+            List<User> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
+                Sort.by(Sort.Direction.ASC, "id"))).getContent();
 
             chunk.forEach((user) -> {
                 try {

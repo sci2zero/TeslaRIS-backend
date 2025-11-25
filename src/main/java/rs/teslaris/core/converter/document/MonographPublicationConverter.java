@@ -6,6 +6,7 @@ import org.jbibtex.Key;
 import org.jbibtex.StringValue;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 public class MonographPublicationConverter extends DocumentPublicationConverter {
@@ -34,7 +35,7 @@ public class MonographPublicationConverter extends DocumentPublicationConverter 
     public static BibTeXEntry toBibTexEntry(MonographPublication monographPublication,
                                             String defaultLanguageTag) {
         var entry = new BibTeXEntry(BibTeXEntry.TYPE_INBOOK,
-            new Key("(TESLARIS)" + monographPublication.getId().toString()));
+            new Key(IdentifierUtil.identifierPrefix + monographPublication.getId().toString()));
 
         setCommonFields(monographPublication, entry, defaultLanguageTag);
 

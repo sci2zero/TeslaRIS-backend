@@ -26,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -59,7 +60,7 @@ public class OutboundExportServiceTest {
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-                    null)), List.of("oai_cerif_openaire", "oai_dim"),
+                    null, null, null)), List.of("oai_cerif_openaire", "dim"),
                 false, null, Map.of());
 
         var mocked = mockStatic(ExportHandlersConfigurationLoader.class);
@@ -87,13 +88,14 @@ public class OutboundExportServiceTest {
         document.setOpenAccess(true);
         document.setLastUpdated(new Date());
         document.setType(ExportPublicationType.JOURNAL_PUBLICATION);
+        document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
         when(mongoTemplate.find(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(List.of(document));
         when(mongoTemplate.count(any(Query.class), eq(ExportDocument.class))).thenReturn(1L);
 
 
         // When
-        var result = outboundExportService.listRequestedRecords("handler", "oai_dim",
+        var result = outboundExportService.listRequestedRecords("handler", "dim",
             "2023-01-01", "2023-12-31", "openaire_cris_publications", new OAIPMHResponse(), 0,
             false);
 
@@ -123,14 +125,15 @@ public class OutboundExportServiceTest {
         document.setOpenAccess(true);
         document.setLastUpdated(new Date());
         document.setType(ExportPublicationType.JOURNAL_PUBLICATION);
+        document.setJournalPublicationType(JournalPublicationType.REVIEW_ARTICLE);
         when(mongoTemplate.findOne(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(document);
 
         var response = new OAIPMHResponse();
 
         // When
-        var result = outboundExportService.listRequestedRecord("handler", "oai_dim",
-            "oai:repo:123", response);
+        var result = outboundExportService.listRequestedRecord("handler", "dim",
+            "oai:repo:(Teslaris)123", response);
 
         // Then
         assertNotNull(result);
@@ -147,7 +150,7 @@ public class OutboundExportServiceTest {
 
         // When
         var result = outboundExportService.listRequestedRecord("handler", "oai_cerif_openaire",
-            "oai:repo:123", response);
+            "oai:repo:(TESLARIS)123", response);
 
         // Then
         assertNull(result);
@@ -200,7 +203,7 @@ public class OutboundExportServiceTest {
         assertEquals(2, result.getMetadataFormat().size());
         assertEquals("oai_cerif_openaire",
             result.getMetadataFormat().getFirst().getMetadataPrefix());
-        assertEquals("oai_dim", result.getMetadataFormat().get(1).getMetadataPrefix());
+        assertEquals("dim", result.getMetadataFormat().get(1).getMetadataPrefix());
     }
 
     @Test

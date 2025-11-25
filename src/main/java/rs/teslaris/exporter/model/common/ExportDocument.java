@@ -69,6 +69,9 @@ public class ExportDocument extends BaseExportEntity {
     @Field("scopus_id")
     private String scopus;
 
+    @Field("open_alex")
+    private String openAlex;
+
     @Field("e_isbn")
     private String eIsbn;
 
@@ -134,4 +137,19 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("thesis_grantor")
     private ExportOrganisationUnit thesisGrantor;
+
+    @Field("external_thesis_grantor_name")
+    private List<ExportMultilingualContent> externalThesisGrantorName;
+
+    @Field("acronym")
+    private List<ExportMultilingualContent> acronym;
+
+    @Field("document_files")
+    private List<ExportDocumentFile> documentFiles = new ArrayList<>();
+
+    @Field("research_output")
+    private List<Integer> researchOutput = new ArrayList<>();
+
+    @Field("is_archived")
+    private Boolean isArchived;
 }

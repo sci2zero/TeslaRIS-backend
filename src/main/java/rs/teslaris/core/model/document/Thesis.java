@@ -29,7 +29,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @SQLRestriction("deleted=false")
 public non-sealed class Thesis extends Document implements PublisherPublishable {
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.commontypes.ReCaptchaService;
 import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -49,10 +50,15 @@ public class RegistryBookController {
 
 
     @GetMapping("/can-edit/{registryBookEntryId}")
-    @PreAuthorize("hasAuthority('UPDATE_REGISTRY_BOOK')")
+    @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRY_BOOK', 'READ_REGISTRY_BOOK')")
     @RegistryBookEntryEditCheck
-    public boolean canEditEntry(@PathVariable Integer registryBookEntryId) {
-        return registryBookService.canEdit(registryBookEntryId);
+    public boolean canEditEntry(@PathVariable Integer registryBookEntryId,
+                                @RequestHeader("Authorization") String bearerToken) {
+        var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
+        var librarianCheck = userRole.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name()) ||
+            userRole.equals(UserRole.HEAD_OF_LIBRARY.name());
+
+        return registryBookService.canEdit(registryBookEntryId, librarianCheck);
     }
 
     @GetMapping("/can-add/{documentId}")
@@ -70,7 +76,7 @@ public class RegistryBookController {
     }
 
     @GetMapping("/for-promotion/{promotionId}")
-    @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRY_BOOK', 'REMOVE_FROM_PROMOTION')")
+    @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRY_BOOK', 'REMOVE_FROM_PROMOTION', 'READ_REGISTRY_BOOK')")
     @PromotionEditAndUsageCheck
     public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(
         @PathVariable Integer promotionId, Pageable pageable) {
@@ -78,7 +84,7 @@ public class RegistryBookController {
     }
 
     @GetMapping("/non-promoted")
-    @PreAuthorize("hasAuthority('ADD_TO_PROMOTION')")
+    @PreAuthorize("hasAnyAuthority('ADD_TO_PROMOTION', 'READ_REGISTRY_BOOK')")
     public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(
         @RequestHeader("Authorization") String bearerToken, Pageable pageable) {
         return registryBookService.getNonPromotedRegistryBookEntries(
@@ -116,13 +122,19 @@ public class RegistryBookController {
     }
 
     @PutMapping("/{registryBookEntryId}")
-    @PreAuthorize("hasAuthority('UPDATE_REGISTRY_BOOK')")
+    @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRY_BOOK', 'READ_REGISTRY_BOOK')")
     @RegistryBookEntryEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateRegistryBookEntry(@PathVariable Integer registryBookEntryId,
                                         @RequestBody
-                                        @Valid RegistryBookEntryDTO registryBookEntryDTO) {
-        registryBookService.updateRegistryBookEntry(registryBookEntryId, registryBookEntryDTO);
+                                        @Valid RegistryBookEntryDTO registryBookEntryDTO,
+                                        @RequestHeader("Authorization") String bearerToken) {
+        var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
+        var editedByLibrarian = userRole.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name()) ||
+            userRole.equals(UserRole.HEAD_OF_LIBRARY.name());
+
+        registryBookService.updateRegistryBookEntry(registryBookEntryId, registryBookEntryDTO,
+            editedByLibrarian);
     }
 
     @DeleteMapping("/{registryBookEntryId}")
@@ -195,7 +207,7 @@ public class RegistryBookController {
     }
 
     @GetMapping("/count-report")
-    @PreAuthorize("hasAuthority('GENERATE_PROMOTION_REPORT')")
+    @PreAuthorize("hasAnyAuthority('GENERATE_PROMOTION_REPORT', 'READ_REGISTRY_BOOK')")
     public List<InstitutionCountsReportDTO> getInstitutionCountsReport(
         @RequestParam
         LocalDate from,
@@ -208,7 +220,7 @@ public class RegistryBookController {
     }
 
     @GetMapping("/promoted/{institutionId}")
-    @PreAuthorize("hasAuthority('GENERATE_PROMOTION_REPORT')")
+    @PreAuthorize("hasAnyAuthority('GENERATE_PROMOTION_REPORT', 'READ_REGISTRY_BOOK')")
     public Page<RegistryBookEntryDTO> getRegistryBookContent(@PathVariable Integer institutionId,
                                                              @RequestParam(required = false)
                                                              LocalDate from,

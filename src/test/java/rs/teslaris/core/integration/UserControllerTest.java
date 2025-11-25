@@ -148,4 +148,28 @@ public class UserControllerTest extends BaseTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testResendActivationEmail() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/user/activation-status/{userId}", 10)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/user/resend-activation-email/{userId}", 10)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isAccepted());
+
+        mockMvc.perform(MockMvcRequestBuilders.patch(
+                    "http://localhost:8081/api/user/activation-status/{userId}", 10)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
 }

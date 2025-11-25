@@ -22,5 +22,4 @@ public class ETDMSThesis implements PublicationConvertable {
 
     @XmlElement(name = "thesisType", namespace = "http://www.ndltd.org/standards/metadata/etdms/1.1/")
     private ThesisType thesisType;
-
 }

@@ -46,7 +46,7 @@ public class MonographPublicationConverter extends DocumentConverter implements
         var dto = new MonographPublicationDTO();
         dto.setOldId(OAIPMHParseUtility.parseBISISID(record.getOldId()));
 
-        if (record.getType().endsWith("c_3248")) {
+        if (record.getType().getFirst().getValue().endsWith("c_3248")) {
             dto.setMonographPublicationType(MonographPublicationType.CHAPTER);
         } else {
             dto.setMonographPublicationType(MonographPublicationType.RESEARCH_ARTICLE);

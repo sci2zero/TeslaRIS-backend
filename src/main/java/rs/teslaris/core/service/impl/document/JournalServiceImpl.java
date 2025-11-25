@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -227,6 +228,12 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                 "PublicationSeries with given ID is already in use.");
         }
 
+        var journal = journalJPAService.findOne(journalId);
+        journal.getContributions().forEach(contribution -> {
+            contribution.setDeleted(true);
+            personContributionService.save(contribution);
+        });
+
         journalJPAService.delete(journalId);
         var index = journalIndexRepository.findJournalIndexByDatabaseId(journalId);
         index.ifPresent(journalIndexRepository::delete);
@@ -269,7 +276,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         while (hasNextPage) {
 
             List<Journal> chunk =
-                journalJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+                journalJPAService.findAll(
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
+                    .getContent();
 
             chunk.forEach((journal) -> {
                 try {

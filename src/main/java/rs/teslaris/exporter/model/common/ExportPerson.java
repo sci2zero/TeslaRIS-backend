@@ -36,12 +36,15 @@ public class ExportPerson extends BaseExportEntity {
     @Field("scopus_id")
     private String scopusAuthorId;
 
+    @Field("open_alex")
+    private String openAlexId;
+
     @Field("sex")
     private Sex sex;
 
     @Field("electronic_addresses")
     private List<String> electronicAddresses = new ArrayList<>();
 
-    @Field("employment_institutions")
-    private List<ExportOrganisationUnit> employmentInstitutions = new ArrayList<>();
+    @Field("employments")
+    private List<ExportEmployment> employments = new ArrayList<>();
 }

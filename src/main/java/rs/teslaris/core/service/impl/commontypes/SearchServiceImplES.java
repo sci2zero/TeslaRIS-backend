@@ -22,6 +22,7 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilterBuilder;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -36,6 +37,11 @@ public class SearchServiceImplES<T> implements SearchService<T> {
     private final ElasticsearchOperations elasticsearchTemplate;
 
     private final ElasticsearchClient elasticsearchClient;
+
+    // Very large fields, not needed for display, only for search
+    private final List<String> fieldsToOmit = List.of(
+        "full_text_sr", "full_text_other", "description_sr", "description_other"
+    );
 
 
     @Override
@@ -56,7 +62,10 @@ public class SearchServiceImplES<T> implements SearchService<T> {
         var searchQueryBuilder = new NativeQueryBuilder()
             .withQuery(query)
             .withPageable(pageable)
-            .withTrackTotalHits(true);
+            .withTrackTotalHits(true)
+            .withSourceFilter(new FetchSourceFilterBuilder()
+                .withExcludes(fieldsToOmit.toArray(new String[0]))
+                .build());
 
         var searchQuery = searchQueryBuilder.build();
         var searchHits =
@@ -96,7 +105,10 @@ public class SearchServiceImplES<T> implements SearchService<T> {
                 .withQuery(query)
                 .withSort(stableSort)
                 .withPageable(PageRequest.of(0, pageSize))
-                .withTrackTotalHits(true);
+                .withTrackTotalHits(true)
+                .withSourceFilter(new FetchSourceFilterBuilder()
+                    .withExcludes(fieldsToOmit.toArray(new String[0]))
+                    .build());
 
             if (Objects.nonNull(searchAfter)) {
                 searchQueryBuilder.withSearchAfter(searchAfter);

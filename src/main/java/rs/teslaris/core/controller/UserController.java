@@ -305,4 +305,11 @@ public class UserController {
                                  @RequestBody ForceEmailChangeDTO request) {
         userService.changeUserEmail(userId, request.newEmail());
     }
+
+    @PatchMapping("/resend-activation-email/{userId}")
+    @PreAuthorize("hasAuthority('FORCE_EMAIL_CHANGE')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void resendActivationEmail(@PathVariable Integer userId) {
+        userService.resendUserActivationEmail(userId);
+    }
 }

@@ -122,4 +122,6 @@ public interface PersonService extends JPAService<Person> {
     List<Pair<String, Integer>> getTopCoauthorsForPerson(Integer personId);
 
     String getPersonProfileImageServerFilename(Integer personId);
+
+    boolean personHasContributions(Integer personId);
 }
