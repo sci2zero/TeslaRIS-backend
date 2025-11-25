@@ -32,4 +32,12 @@ public class OAIErrorFactory {
     public static OAIError constructBadVerbError() {
         return new OAIError("badVerb", "Illegal verb");
     }
+
+    public static OAIError constructNoVerbError() {
+        return new OAIError("badVerb", "The request did not provide a verb.");
+    }
+
+    public static OAIError constructServiceUnavailableError() {
+        return new OAIError("badArgument", "TAn internal server error occurred.");
+    }
 }
