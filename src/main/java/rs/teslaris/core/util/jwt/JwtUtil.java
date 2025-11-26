@@ -194,7 +194,7 @@ public class JwtUtil {
         String jwtSecurity = this.extractJWTSecurity(token);
 
         final String jti = extractJtiFromToken(token);
-        var tokenOpt = jwtTokenRepository.findByJti(jti);
+        var tokenOpt = jwtTokenRepository.findByJtiAndRevokedFalse(jti);
 
         if (tokenOpt.isEmpty() || tokenOpt.get().isRevoked()) {
             return false;
@@ -217,21 +217,14 @@ public class JwtUtil {
     }
 
     public void revokeToken(String jti) {
-        jwtTokenRepository.findByJti(jti).ifPresent(token -> {
+        jwtTokenRepository.findByJtiAndRevokedFalse(jti).ifPresent(token -> {
             token.setRevoked(true);
             jwtTokenRepository.save(token);
         });
     }
 
     public void revokeAllNonAdminTokens() {
-        jwtTokenRepository.findAll().forEach(token -> {
-            if (token.getUser().getAuthority().getName().equals(UserRole.ADMIN.name())) {
-                return;
-            }
-
-            token.setRevoked(true);
-            jwtTokenRepository.save(token);
-        });
+        jwtTokenRepository.revokeAllNonAdminTokens();
     }
 
     public void cleanupExpiredTokens() {

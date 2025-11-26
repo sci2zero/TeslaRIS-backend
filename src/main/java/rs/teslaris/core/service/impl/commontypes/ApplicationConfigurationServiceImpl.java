@@ -7,7 +7,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.dto.commontypes.MaintenanceModeDTO;
+import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.dto.commontypes.MaintenanceInformationDTO;
 import rs.teslaris.core.dto.commontypes.ScheduledTaskResponseDTO;
 import rs.teslaris.core.model.commontypes.ApplicationConfiguration;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
@@ -15,6 +16,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.repository.commontypes.ApplicationConfigurationRepository;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
+import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.ApplicationConfigurationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
@@ -33,6 +35,8 @@ public class ApplicationConfigurationServiceImpl extends JPAServiceImpl<Applicat
 
     private final JwtUtil jwtUtil;
 
+    private final RefreshTokenRepository refreshTokenRepository;
+
 
     @Override
     protected JpaRepository<ApplicationConfiguration, Integer> getEntityRepository() {
@@ -40,6 +44,7 @@ public class ApplicationConfigurationServiceImpl extends JPAServiceImpl<Applicat
     }
 
     @Override
+    @Transactional
     public void scheduleMaintenanceMode(LocalDateTime startTime, String approximateEndMoment,
                                         Integer userId) {
         var taskId = taskManagerService.scheduleTask(
@@ -56,16 +61,19 @@ public class ApplicationConfigurationServiceImpl extends JPAServiceImpl<Applicat
     }
 
     @Override
+    @Transactional
     public void turnOnMaintenanceMode() {
         var config = getCurrentConfiguration();
         config.setIsInMaintenanceMode(true);
 
         jwtUtil.revokeAllNonAdminTokens();
+        refreshTokenRepository.deleteAllNonAdminRefreshTokens();
 
         save(config);
     }
 
     @Override
+    @Transactional
     public void turnOffMaintenanceMode() {
         var config = getCurrentConfiguration();
         config.setIsInMaintenanceMode(false);
@@ -79,7 +87,8 @@ public class ApplicationConfigurationServiceImpl extends JPAServiceImpl<Applicat
     }
 
     @Override
-    public MaintenanceModeDTO getNextScheduledMaintenance() {
+    @Transactional(readOnly = true)
+    public MaintenanceInformationDTO getNextScheduledMaintenance() {
         var maintenanceTasks = taskManagerService.listScheduledMaintenanceTasks();
 
         var firstToCome = maintenanceTasks.stream()
@@ -94,7 +103,7 @@ public class ApplicationConfigurationServiceImpl extends JPAServiceImpl<Applicat
 
         return taskMetadata.map(
                 scheduledTaskMetadata ->
-                    new MaintenanceModeDTO(scheduledTaskMetadata.getTimeToRun(),
+                    new MaintenanceInformationDTO(scheduledTaskMetadata.getTimeToRun(),
                         scheduledTaskMetadata.getMetadata()
                             .getOrDefault("approximateEndMoment", "").toString()))
             .orElse(null);

@@ -59,7 +59,7 @@ public class BibTexHarvesterImpl implements BibTexHarvester {
 
                 var embedding = generateEmbedding(bibEntry);
 
-                if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+                if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
                     return;
                 }
 

@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
 import co.elastic.clients.json.JsonData;
 import java.util.Map;
@@ -141,6 +142,46 @@ public class IndexBulkUpdateServiceImpl implements IndexBulkUpdateService {
                 idToRemove, response.updated(), indexName);
         } catch (Exception e) {
             log.error("An error occurred while updating list and related array fields: {}",
+                e.getMessage());
+        }
+    }
+
+    @Override
+    public void setYearForAggregatedRecord(String fieldMappingName, Integer queryValue,
+                                           Integer year) {
+        var requestBuilder = new UpdateByQueryRequest.Builder()
+            .index("document_publication")
+            .waitForCompletion(true);
+
+        var queryBuilder = Query.of(q -> q.bool(b -> {
+            b.must(m -> m.term(t -> t.field(fieldMappingName).value(queryValue)));
+
+            if (fieldMappingName.startsWith("monograph")) {
+                b.must(m ->
+                    m.term(t -> t.field("publication_type").value("CHAPTER")));
+            }
+
+            return b;
+        }));
+
+        requestBuilder.query(queryBuilder)
+            .script(s -> s
+                .inline(i -> i
+                    .source("ctx._source.year = params.year")
+                    .lang("painless")
+                    .params(Map.of("year", JsonData.of(year)))));
+
+        var request = requestBuilder.build();
+
+        try {
+            elasticsearchClient.updateByQuery(request);
+            elasticsearchClient.indices().refresh(r -> r.index("document_publication"));
+
+            log.info("Set year {} for document in index document_publication on field {}", year,
+                fieldMappingName);
+        } catch (Exception e) {
+            log.error(
+                "An error occurred while setting year to document_publication index records: {}",
                 e.getMessage());
         }
     }

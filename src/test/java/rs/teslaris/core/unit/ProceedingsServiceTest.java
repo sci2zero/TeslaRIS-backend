@@ -42,10 +42,12 @@ import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.ProceedingsServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingsJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -101,6 +103,12 @@ public class ProceedingsServiceTest {
 
     @Mock
     private CitationService citationService;
+
+    @Mock
+    private ProceedingsPublicationRepository proceedingsPublicationRepository;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
@@ -188,6 +196,7 @@ public class ProceedingsServiceTest {
         var proceedingsId = 1;
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setLanguageTagIds(new ArrayList<>());
+        proceedingsDTO.setDocumentDate("2025");
         var proceedingsToUpdate = new Proceedings();
         proceedingsToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
 
@@ -207,6 +216,8 @@ public class ProceedingsServiceTest {
         verify(proceedingsJPAService).findOne(eq(proceedingsId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             eq(proceedingsToUpdate), eq(proceedingsDTO));
+        verify(proceedingsPublicationRepository).setDateToAggregatedPublications(any(), any());
+        verify(indexBulkUpdateService).setYearForAggregatedRecord(any(), any(), any());
     }
 
     @Test

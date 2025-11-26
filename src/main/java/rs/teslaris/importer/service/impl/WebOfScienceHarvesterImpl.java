@@ -193,7 +193,7 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
                     }
 
                     var embedding = CommonImportUtility.generateEmbedding(documentImport);
-                    if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+                    if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
                         return;
                     }
 

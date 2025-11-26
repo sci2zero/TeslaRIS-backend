@@ -7,10 +7,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import jakarta.annotation.Nullable;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -533,7 +529,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             ? document.getLastModification()
             : new Date());
         index.setDatabaseId(document.getId());
-        index.setYear(parseYear(document.getDocumentDate()));
+        index.setYear(StringUtil.parseYear(document.getDocumentDate()));
         indexTitle(document, index);
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOtherSortable(index.getTitleOther());
@@ -955,36 +951,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
     }
 
-    private int parseYear(String dateString) {
-        if (Objects.isNull(dateString)) {
-            return -1;
-        }
-
-        DateTimeFormatter[] formatters = {
-            DateTimeFormatter.ofPattern("yyyy"), // Year only
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy"),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy.")
-        };
-
-        for (var formatter : formatters) {
-            try {
-                TemporalAccessor parsed = formatter.parse(dateString);
-
-                if (parsed.isSupported(ChronoField.YEAR)) {
-                    return parsed.get(ChronoField.YEAR);
-                }
-            } catch (DateTimeParseException e) {
-                // Parsing failed, try the next formatter
-            }
-        }
-
-        return -1;
-    }
-
     protected void setCommonFields(Document document, DocumentDTO documentDTO) {
         if (document.getIsArchived()) {
             throw new CantEditException("Document is archived. Can't edit.");
@@ -1197,11 +1163,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setEditorNames("");
         index.setReviewerNames("");
         index.setAdvisorNames("");
+        index.setBoardMemberNames("");
 
         index.getAuthorIds().clear();
         index.getEditorIds().clear();
         index.getReviewerIds().clear();
         index.getAdvisorIds().clear();
+        index.getBoardMemberIds().clear();
     }
 
     protected void deleteProofsAndFileItems(Document publicationToDelete) {

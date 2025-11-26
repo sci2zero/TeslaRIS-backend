@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -22,4 +23,9 @@ public interface ProceedingsPublicationRepository
         "(:allTime = TRUE OR pp.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +
         "pp.approve_status = 1 ORDER BY pp.id", nativeQuery = true)
     Page<ProceedingsPublication> findAllModified(Pageable pageable, boolean allTime);
+
+    @Modifying
+    @Query("UPDATE ProceedingsPublication pp SET pp.documentDate = :date " +
+        "WHERE pp.proceedings.id = :proceedingsId")
+    void setDateToAggregatedPublications(Integer proceedingsId, String date);
 }

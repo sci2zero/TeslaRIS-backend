@@ -131,7 +131,7 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 
-    @Field(type = FieldType.Keyword, name = "doi", store = true)
+    @Field(type = FieldType.Keyword, name = "doi", store = true, normalizer = "doi_normalizer")
     private String doi;
 
     @Field(type = FieldType.Keyword, name = "scopus_id", store = true)

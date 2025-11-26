@@ -32,6 +32,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -155,6 +156,7 @@ public class MonographPublicationServiceTest {
     void shouldCreateAndApproveMonographPublicationWhenDocumentApprovedByDefault() {
         // Given
         var monographPublicationDTO = new MonographPublicationDTO();
+        monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
         var newMonographPublication = new MonographPublication();
         newMonographPublication.setMonograph(new Monograph());
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
@@ -179,6 +181,7 @@ public class MonographPublicationServiceTest {
     void shouldCreateAndRequestMonographPublicationWhenDocumentNotApprovedByDefault() {
         // Given
         var monographPublicationDTO = new MonographPublicationDTO();
+        monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
         var newMonographPublication = new MonographPublication();
         newMonographPublication.setMonograph(new Monograph() {{
             setId(1);
@@ -208,6 +211,7 @@ public class MonographPublicationServiceTest {
     void shouldNotIndexMonographPublicationWhenIndexIsFalse() {
         // Given
         var monographPublicationDTO = new MonographPublicationDTO();
+        monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
         var newMonographPublication = new MonographPublication();
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -233,6 +237,7 @@ public class MonographPublicationServiceTest {
         var monographPublicationId = 1;
         var monographPublicationDTO = new MonographPublicationDTO();
         monographPublicationDTO.setMonographId(1);
+        monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
         var monographPublicationToUpdate = new MonographPublication();
         monographPublicationToUpdate.setId(monographPublicationId);
         monographPublicationToUpdate.setApproveStatus(ApproveStatus.APPROVED);
@@ -259,6 +264,7 @@ public class MonographPublicationServiceTest {
         // Given
         var monographPublicationId = 1;
         var monographPublicationDTO = new MonographPublicationDTO();
+        monographPublicationDTO.setMonographPublicationType(MonographPublicationType.PREFACE);
         var monographPublicationToUpdate = new MonographPublication();
         monographPublicationToUpdate.setId(monographPublicationId);
         monographPublicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);

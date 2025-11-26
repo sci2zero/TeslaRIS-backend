@@ -23,10 +23,12 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -71,6 +73,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private final PublisherService publisherService;
 
+    private final IndexBulkUpdateService indexBulkUpdateService;
+
+    private final MonographPublicationRepository monographPublicationRepository;
+
     private final Pattern issnPattern =
         Pattern.compile("^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
@@ -98,7 +104,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
                                 MonographRepository monographRepository,
-                                PublisherService publisherService) {
+                                PublisherService publisherService,
+                                IndexBulkUpdateService indexBulkUpdateService,
+                                MonographPublicationRepository monographPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -112,6 +120,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         this.researchAreaService = researchAreaService;
         this.monographRepository = monographRepository;
         this.publisherService = publisherService;
+        this.indexBulkUpdateService = indexBulkUpdateService;
+        this.monographPublicationRepository = monographPublicationRepository;
     }
 
     @Override
@@ -204,6 +214,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
+        var updatePublicationDates =
+            !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());
+
         monographToUpdate.getLanguages().clear();
         clearCommonFields(monographToUpdate);
 
@@ -214,6 +227,14 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         indexMonograph(monographToUpdate, monographIndex);
 
         monographJPAService.save(monographToUpdate);
+
+        if (updatePublicationDates) {
+            monographPublicationRepository.setDateToAggregatedPublications(
+                monographToUpdate.getId(), monographToUpdate.getDocumentDate());
+            indexBulkUpdateService.setYearForAggregatedRecord("monograph_id",
+                monographToUpdate.getId(),
+                StringUtil.parseYear(monographToUpdate.getDocumentDate()));
+        }
 
         sendNotifications(monographToUpdate);
     }

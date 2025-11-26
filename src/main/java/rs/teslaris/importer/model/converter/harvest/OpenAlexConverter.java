@@ -10,6 +10,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.common.Event;
 import rs.teslaris.importer.model.common.MultilingualContent;
@@ -35,13 +36,28 @@ public class OpenAlexConverter {
 
         var publicationYear = extractPublicationYear(record.publicationDate());
 
-        switch (record.typeCrossref()) {
-            case "journal-article" -> handleJournalArticle(document, record);
-            case "proceedings-article" ->
-                handleProceedingsArticle(document, record, publicationYear);
-            default -> {
-                return Optional.empty();
+        if (Objects.nonNull(record.typeCrossref())) {
+            switch (record.typeCrossref()) {
+                case "journal-article" -> handleJournalArticle(document, record);
+                case "proceedings-article" ->
+                    handleProceedingsArticle(document, record, publicationYear);
+                default -> {
+                    return Optional.empty();
+                }
             }
+        } else if (Objects.nonNull(record.type()) && record.type().equals("article") &&
+            Objects.nonNull(record.primaryLocation()) &&
+            Objects.nonNull(record.primaryLocation().source()) &&
+            StringUtil.valueExists(record.primaryLocation().source().type())) {
+            switch (record.primaryLocation().source().type()) {
+                case "journal" -> handleJournalArticle(document, record);
+                case "conference" -> handleProceedingsArticle(document, record, publicationYear);
+                default -> {
+                    return Optional.empty();
+                }
+            }
+        } else {
+            return Optional.empty();
         }
 
         populateContributions(document, record);

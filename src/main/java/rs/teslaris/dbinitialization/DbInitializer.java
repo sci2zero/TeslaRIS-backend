@@ -207,6 +207,7 @@ public class DbInitializer implements ApplicationRunner {
         var forceEmailChange = new Privilege("FORCE_EMAIL_CHANGE");
         var performSKGIFHarvest = new Privilege("PERFORM_SKGIF_HARVEST");
         var readPromotions = new Privilege("READ_PROMOTIONS");
+        var configureAppSettings = new Privilege("CONFIGURE_APP_SETTINGS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -244,7 +245,7 @@ public class DbInitializer implements ApplicationRunner {
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
-                performSKGIFHarvest, readPromotions));
+                performSKGIFHarvest, readPromotions, configureAppSettings));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -280,7 +281,7 @@ public class DbInitializer implements ApplicationRunner {
                 scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
-                forceEmailChange, performSKGIFHarvest
+                forceEmailChange, performSKGIFHarvest, configureAppSettings
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

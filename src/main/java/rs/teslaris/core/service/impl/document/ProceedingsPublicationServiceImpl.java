@@ -288,8 +288,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         publication.setProceedings(
             proceedingsService.findProceedingsById(publicationDTO.getProceedingsId()));
 
-        if (Objects.isNull(publication.getDocumentDate()) ||
-            publication.getDocumentDate().isEmpty()) {
+        if (Objects.nonNull(publication.getProceedings())) {
             publication.setDocumentDate(publication.getProceedings().getDocumentDate());
         }
     }

@@ -43,10 +43,12 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.MonographServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -102,6 +104,12 @@ public class MonographServiceTest {
 
     @Mock
     private CitationService citationService;
+
+    @Mock
+    private MonographPublicationRepository monographPublicationRepository;
+
+    @Mock
+    private IndexBulkUpdateService indexBulkUpdateService;
 
     @InjectMocks
     private MonographServiceImpl monographService;
@@ -219,6 +227,7 @@ public class MonographServiceTest {
         var monographId = 1;
         var monographDTO = new MonographDTO();
         monographDTO.setLanguageTagIds(new ArrayList<>());
+        monographDTO.setDocumentDate("2025");
         var monographToUpdate = new Monograph();
         monographToUpdate.setId(monographId);
         monographToUpdate.setApproveStatus(ApproveStatus.APPROVED);
@@ -233,6 +242,8 @@ public class MonographServiceTest {
         // Then
         verify(monographJPAService, times(1)).findOne(monographId);
         verify(monographJPAService, times(1)).save(monographToUpdate);
+        verify(monographPublicationRepository).setDateToAggregatedPublications(any(), any());
+        verify(indexBulkUpdateService).setYearForAggregatedRecord(any(), any(), any());
     }
 
     @Test
@@ -241,6 +252,7 @@ public class MonographServiceTest {
         var monographId = 1;
         var monographDTO = new MonographDTO();
         monographDTO.setLanguageTagIds(new ArrayList<>());
+        monographDTO.setDocumentDate("2025");
         var monographToUpdate = new Monograph();
         monographToUpdate.setId(monographId);
         monographToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
@@ -253,6 +265,8 @@ public class MonographServiceTest {
         // Then
         verify(monographJPAService, times(1)).findOne(monographId);
         verify(monographJPAService, times(1)).save(monographToUpdate);
+        verify(monographPublicationRepository).setDateToAggregatedPublications(any(), any());
+        verify(indexBulkUpdateService).setYearForAggregatedRecord(any(), any(), any());
     }
 
     @Test

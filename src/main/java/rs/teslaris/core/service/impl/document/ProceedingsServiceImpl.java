@@ -20,10 +20,12 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingsJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -44,6 +46,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
@@ -67,6 +70,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     private final PublisherService publisherService;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
+
+    private final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
 
     @Autowired
@@ -92,7 +99,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   JournalService journalService,
                                   BookSeriesService bookSeriesService, EventService eventService1,
                                   PublisherService publisherService,
-                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
+                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1,
+                                  IndexBulkUpdateService indexBulkUpdateService,
+                                  ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -107,6 +116,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.eventService = eventService1;
         this.publisherService = publisherService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
+        this.indexBulkUpdateService = indexBulkUpdateService;
+        this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }
 
     @Override
@@ -172,6 +183,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
 
+        var updatePublicationDates =
+            !proceedingsDTO.getDocumentDate().equals(proceedingsToUpdate.getDocumentDate());
+
         proceedingsToUpdate.getLanguages().clear();
         clearCommonFields(proceedingsToUpdate);
 
@@ -182,6 +196,14 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         indexProceedings(proceedingsToUpdate, proceedingsIndex);
 
         proceedingsJPAService.save(proceedingsToUpdate);
+
+        if (updatePublicationDates) {
+            proceedingsPublicationRepository.setDateToAggregatedPublications(
+                proceedingsToUpdate.getId(), proceedingsToUpdate.getDocumentDate());
+            indexBulkUpdateService.setYearForAggregatedRecord("proceedings_id",
+                proceedingsToUpdate.getId(),
+                StringUtil.parseYear(proceedingsToUpdate.getDocumentDate()));
+        }
 
         sendNotifications(proceedingsToUpdate);
     }

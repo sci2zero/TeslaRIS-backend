@@ -41,7 +41,6 @@ import rs.teslaris.core.model.document.BookSeriesPublishable;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Monograph;
-import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.PublisherPublishable;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -695,7 +694,8 @@ public class MergeServiceImpl implements MergeService {
 
         boolean targetPersonFound = false;
         boolean sourcePersonFound = false;
-        PersonDocumentContribution sourceContribution = null;
+
+        var newPerson = personService.findOne(targetPersonId);
 
         for (var contribution : document.getContributors()) {
             if (Objects.isNull(contribution.getPerson())) {
@@ -713,30 +713,16 @@ public class MergeServiceImpl implements MergeService {
 
             if (personId.equals(sourcePersonId)) {
                 sourcePersonFound = true;
-                sourceContribution = contribution;
+                contribution.setPerson(newPerson);
             }
         }
 
-        if (targetPersonFound && !skipCoauthoredPublications) {
+        if (targetPersonFound) {
             throw new PersonReferenceConstraintViolationException("alreadyInAuthorListError");
         }
 
         if (!sourcePersonFound) {
             return; // Source person not found in contributors
-        }
-
-        var newPerson = personService.findOne(targetPersonId);
-        sourceContribution.setPerson(newPerson);
-
-        var displayName = sourceContribution.getAffiliationStatement().getDisplayPersonName();
-        var newPersonName = newPerson.getName();
-
-        if (!newPersonName.equals(displayName) &&
-            !newPerson.getOtherNames().contains(displayName)) {
-
-            displayName.setFirstname(newPersonName.getFirstname());
-            displayName.setOtherName("");
-            displayName.setLastname(newPersonName.getLastname());
         }
 
         documentRepository.save(document);

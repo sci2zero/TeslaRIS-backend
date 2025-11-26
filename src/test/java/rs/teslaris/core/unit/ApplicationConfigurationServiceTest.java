@@ -29,6 +29,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.repository.commontypes.ApplicationConfigurationRepository;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
+import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.service.impl.commontypes.ApplicationConfigurationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -47,6 +48,9 @@ class ApplicationConfigurationServiceTest {
 
     @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @InjectMocks
     private ApplicationConfigurationServiceImpl configurationService;
@@ -103,6 +107,7 @@ class ApplicationConfigurationServiceTest {
         assertTrue(config.getIsInMaintenanceMode());
         verify(jwtUtil).revokeAllNonAdminTokens();
         verify(applicationConfigurationRepository).save(config);
+        verify(refreshTokenRepository).deleteAllNonAdminRefreshTokens();
     }
 
     @Test
