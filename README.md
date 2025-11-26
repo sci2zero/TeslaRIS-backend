@@ -22,3 +22,6 @@ or ```systemd```. For detailed tutorial on this topic, please visit the official
 documentation [page](https://docs.spring.io/spring-boot/docs/2.0.6.RELEASE/reference/html/deployment-install.html#deployment-service)
 .
 
+## Acknowledgement
+
+This project has received funding from the European Union’s Horizon Europe research and innovation programme under grant agreement No 101094406 (RDA TIGER).
