@@ -1212,6 +1212,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                  String openAlexId,
                                                                  String webOfScienceId,
                                                                  List<String> internalIdentifiers) {
+        if ((Objects.isNull(titles) || titles.isEmpty()) &&
+            (Objects.isNull(internalIdentifiers) || internalIdentifiers.isEmpty()) &&
+            !StringUtil.valueExists(doi) && !StringUtil.valueExists(scopusId) &&
+            !StringUtil.valueExists(openAlexId) && !StringUtil.valueExists(webOfScienceId)) {
+            return Page.empty();
+        }
+
         var query =
             buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId, webOfScienceId,
                 internalIdentifiers);

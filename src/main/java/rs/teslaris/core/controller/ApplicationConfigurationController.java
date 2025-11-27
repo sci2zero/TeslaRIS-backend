@@ -51,12 +51,14 @@ public class ApplicationConfigurationController {
 
     @PatchMapping("/maintenance/turn-on")
     @PreAuthorize("hasAuthority('CONFIGURE_APP_SETTINGS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void turnOnMaintenanceMode() {
         applicationConfigurationService.turnOnMaintenanceMode();
     }
 
     @PatchMapping("/maintenance/turn-off")
     @PreAuthorize("hasAuthority('CONFIGURE_APP_SETTINGS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void turnOffMaintenanceMode() {
         applicationConfigurationService.turnOffMaintenanceMode();
     }

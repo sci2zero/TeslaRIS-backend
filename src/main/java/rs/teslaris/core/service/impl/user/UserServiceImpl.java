@@ -64,6 +64,7 @@ import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.Commission;
+import rs.teslaris.core.model.institution.EmailConfiguration;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -687,8 +688,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "Institution is not a client. Unable to perform registration.");
         }
 
-        var configuration =
-            checkCrisConfig ? specifiedOU.getCrisConfig() : specifiedOU.getDlConfig();
+        EmailConfiguration configuration;
+
+        if (Objects.isNull(specifiedOU.getEmailConfigurations())) {
+            configuration = new EmailConfiguration();
+        } else {
+            configuration =
+                checkCrisConfig ? specifiedOU.getCrisConfig() : specifiedOU.getDlConfig();
+        }
 
         if (Objects.nonNull(configuration.getValidateEmailDomain()) &&
             configuration.getValidateEmailDomain()) {

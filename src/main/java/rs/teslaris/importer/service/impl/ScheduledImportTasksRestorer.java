@@ -23,7 +23,7 @@ import rs.teslaris.core.service.impl.commontypes.ScheduledTasksRestorer;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.importer.controller.CommonHarvestController;
+import rs.teslaris.importer.service.interfaces.CommonHarvester;
 import rs.teslaris.importer.service.interfaces.OAIPMHHarvester;
 import rs.teslaris.importer.service.interfaces.SKGIFHarvester;
 
@@ -37,7 +37,7 @@ public class ScheduledImportTasksRestorer {
 
     private final TaskManagerService taskManagerService;
 
-    private final CommonHarvestController commonHarvestController;
+    private final CommonHarvester commonHarvester;
 
     private final UserService userService;
 
@@ -104,7 +104,7 @@ public class ScheduledImportTasksRestorer {
                 userService.getUserOrganisationUnitId(userId)) +
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timeToRun,
-            () -> commonHarvestController.performHarvest(userId, userRole, dateFrom.computeDate(),
+            () -> commonHarvester.performHarvest(userId, userRole, dateFrom.computeDate(),
                 dateTo.computeDate(), institutionId),
             userId, metadata.getRecurrenceType());
 
@@ -145,7 +145,7 @@ public class ScheduledImportTasksRestorer {
                 userService.getUserOrganisationUnitId(userId)) +
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timeToRun,
-            () -> commonHarvestController.performAuthorCentricLoading(userId, userRole,
+            () -> commonHarvester.performAuthorCentricHarvest(userId, userRole,
                 dateFrom.computeDate(), dateTo.computeDate(), authorIds, allAuthors, institutionId),
             userId, metadata.getRecurrenceType());
 

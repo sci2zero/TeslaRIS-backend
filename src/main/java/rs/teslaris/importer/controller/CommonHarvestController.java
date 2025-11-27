@@ -31,21 +31,14 @@ import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.jwt.JwtUtil;
-import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.importer.dto.AuthorCentricInstitutionHarvestRequestDTO;
-import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.CommonHarvestService;
-import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
-import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
-import rs.teslaris.importer.service.interfaces.RefManHarvester;
-import rs.teslaris.importer.service.interfaces.ScopusHarvester;
-import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
+import rs.teslaris.importer.service.interfaces.CommonHarvester;
 
 @RestController
 @RequestMapping("/api/import-common")
@@ -56,27 +49,15 @@ public class CommonHarvestController {
 
     private final JwtUtil tokenUtil;
 
-    private final ScopusHarvester scopusHarvester;
-
-    private final OpenAlexHarvester openAlexHarvester;
-
-    private final WebOfScienceHarvester webOfScienceHarvester;
-
-    private final BibTexHarvester bibTexHarvester;
-
-    private final RefManHarvester refManHarvester;
-
-    private final EndNoteHarvester endNoteHarvester;
-
-    private final CSVHarvester csvHarvester;
-
-    private final NotificationService notificationService;
-
     private final UserService userService;
 
     private final CommonHarvestService commonHarvestService;
 
     private final TaskManagerService taskManagerService;
+
+    private final CommonHarvester commonHarvester;
+
+    private final CSVHarvester csvHarvester;
 
 
     @GetMapping("/can-perform")
@@ -95,13 +76,14 @@ public class CommonHarvestController {
     }
 
     @GetMapping("/documents-by-author-or-institution")
-    public Integer harvestPublicationsForAuthor(
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void harvestPublicationsForAuthor(
         @RequestHeader("Authorization") String bearerToken, @RequestParam LocalDate dateFrom,
         @RequestParam LocalDate dateTo, @RequestParam(required = false) Integer institutionId) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
-        return performHarvest(userId, userRole, dateFrom, dateTo, institutionId);
+        commonHarvester.performHarvestAsync(userId, userRole, dateFrom, dateTo, institutionId);
     }
 
     @PostMapping("/schedule/documents-by-author-or-institution")
@@ -121,7 +103,8 @@ public class CommonHarvestController {
                     userService.getUserOrganisationUnitId(userId)) +
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timestamp,
-            () -> performHarvest(userId, userRole, dateFrom.computeDate(), dateTo.computeDate(),
+            () -> commonHarvester.performHarvest(userId, userRole, dateFrom.computeDate(),
+                dateTo.computeDate(),
                 institutionId),
             userId, recurrenceType);
 
@@ -136,73 +119,17 @@ public class CommonHarvestController {
             }}, recurrenceType));
     }
 
-    public Integer performHarvest(Integer userId, String userRole, LocalDate dateFrom,
-                                  LocalDate dateTo, Integer institutionId) {
-        Map<Integer, Integer> newDocumentImportCountByUser = new HashMap<>();
-
-        if (userRole.equals(UserRole.RESEARCHER.name())) {
-            scopusHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo, new HashMap<>())
-                .forEach((key, value) ->
-                    newDocumentImportCountByUser.merge(key, value, Integer::sum)
-                );
-            openAlexHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo, new HashMap<>())
-                .forEach((key, value) ->
-                    newDocumentImportCountByUser.merge(key, value, Integer::sum)
-                );
-            webOfScienceHarvester.harvestDocumentsForAuthor(userId, dateFrom, dateTo,
-                    new HashMap<>())
-                .forEach((key, value) ->
-                    newDocumentImportCountByUser.merge(key, value, Integer::sum)
-                );
-        } else if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
-            scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
-                dateTo,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-            openAlexHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
-                dateTo,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-            webOfScienceHarvester.harvestDocumentsForInstitutionalEmployee(userId, null, dateFrom,
-                dateTo,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-        } else if (userRole.equals(UserRole.ADMIN.name())) {
-            scopusHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
-                dateFrom, dateTo,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-            openAlexHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
-                dateFrom, dateTo,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-            webOfScienceHarvester.harvestDocumentsForInstitutionalEmployee(userId, institutionId,
-                dateFrom, dateTo,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-        } else {
-            return 0;
-        }
-
-        dispatchNotifications(newDocumentImportCountByUser, userId);
-        return newDocumentImportCountByUser.getOrDefault(userId, 0);
-    }
-
     @PostMapping("/author-centric-for-institution")
-    public Integer performAuthorCentricHarvestForInstitution(
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void performAuthorCentricHarvestForInstitution(
         @RequestHeader("Authorization") String bearerToken, @RequestParam RelativeDateDTO dateFrom,
         @RequestParam RelativeDateDTO dateTo,
         @RequestBody AuthorCentricInstitutionHarvestRequestDTO request) {
         var userId = tokenUtil.extractUserIdFromToken(bearerToken);
         var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
 
-        return performAuthorCentricLoading(userId, userRole, dateFrom.computeDate(),
+        commonHarvester.performAuthorCentricHarvestAsync(
+            userId, userRole, dateFrom.computeDate(),
             dateTo.computeDate(), request.authorIds(), request.allAuthors(),
             request.institutionId());
     }
@@ -224,7 +151,8 @@ public class CommonHarvestController {
                     request.institutionId() : userService.getUserOrganisationUnitId(userId)) +
                 "-" + dateFrom + "_" + dateTo +
                 "-" + UUID.randomUUID(), timestamp,
-            () -> performAuthorCentricLoading(userId, userRole, dateFrom.computeDate(),
+            () -> commonHarvester.performAuthorCentricHarvest(userId, userRole,
+                dateFrom.computeDate(),
                 dateTo.computeDate(), request.authorIds(), request.allAuthors(),
                 request.institutionId()),
             userId, recurrenceType);
@@ -242,75 +170,9 @@ public class CommonHarvestController {
             }}, recurrenceType));
     }
 
-    public Integer performAuthorCentricLoading(Integer userId, String userRole, LocalDate dateFrom,
-                                               LocalDate dateTo, List<Integer> authorIds,
-                                               Boolean allAuthors, Integer institutionId) {
-        Map<Integer, Integer> newDocumentImportCountByUser = new HashMap<>();
-        if (userRole.equals(UserRole.INSTITUTIONAL_EDITOR.name())) {
-            scopusHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
-                dateTo, authorIds, allAuthors,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-            openAlexHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
-                dateTo, authorIds, allAuthors,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-            webOfScienceHarvester.harvestDocumentsForInstitution(userId, null, dateFrom,
-                dateTo, authorIds, allAuthors,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-        } else if (userRole.equals(UserRole.ADMIN.name())) {
-            scopusHarvester.harvestDocumentsForInstitution(userId, institutionId,
-                dateFrom, dateTo, authorIds, allAuthors,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-            openAlexHarvester.harvestDocumentsForInstitution(userId, institutionId,
-                dateFrom, dateTo, authorIds, allAuthors,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-            webOfScienceHarvester.harvestDocumentsForInstitution(userId, institutionId,
-                dateFrom, dateTo, authorIds, allAuthors,
-                new HashMap<>()).forEach((key, value) ->
-                newDocumentImportCountByUser.merge(key, value, Integer::sum)
-            );
-        } else {
-            return 0;
-        }
-
-        dispatchNotifications(newDocumentImportCountByUser, userId);
-        return newDocumentImportCountByUser.getOrDefault(userId, 0);
-    }
-
-    private void dispatchNotifications(Map<Integer, Integer> newDocumentImportCountByUser,
-                                       Integer userId) {
-        newDocumentImportCountByUser.keySet().forEach(key -> {
-            if (Objects.equals(key, userId)) {
-                return;
-            }
-
-            var notificationValues = new HashMap<String, String>();
-            notificationValues.put("newImportCount",
-                String.valueOf(newDocumentImportCountByUser.get(key)));
-            notificationService.createNotification(
-                NotificationFactory.contructNewImportsNotification(notificationValues,
-                    userService.findOne(key)));
-        });
-    }
-
     @GetMapping("/csv-file-format")
     public Pair<String, String> getCSVFormatDescription(@RequestParam String language) {
         return csvHarvester.getFormatDescription(language);
-    }
-
-    @GetMapping("/testWebOfScience")
-    public void testWebOfScience() {
-        webOfScienceHarvester.harvestDocumentsForAuthor(1, LocalDate.of(2000, 1, 2),
-            LocalDate.now(), null);
     }
 
     @PostMapping("/documents-from-file")
@@ -336,7 +198,7 @@ public class CommonHarvestController {
                     publicationsFile.transferTo(tempFile);
                     validateFileContent(tempFile, detectedType);
 
-                    processVerifiedFile(userId, publicationsFile,
+                    commonHarvester.processVerifiedFile(userId, publicationsFile,
                         publicationsFile.getOriginalFilename(),
                         newDocumentImportCountByUser);
                 } finally {
@@ -406,18 +268,5 @@ public class CommonHarvestController {
             }
         }
         return false;
-    }
-
-    private void processVerifiedFile(Integer userId, MultipartFile file, String filename,
-                                     HashMap<Integer, Integer> counts) {
-        if (filename.endsWith(".bib")) {
-            bibTexHarvester.harvestDocumentsForAuthor(userId, file, counts);
-        } else if (filename.endsWith(".ris")) {
-            refManHarvester.harvestDocumentsForAuthor(userId, file, counts);
-        } else if (filename.endsWith(".enw")) {
-            endNoteHarvester.harvestDocumentsForAuthor(userId, file, counts);
-        } else if (filename.endsWith(".csv")) {
-            csvHarvester.harvestDocumentsForAuthor(userId, file, counts);
-        }
     }
 }

@@ -79,6 +79,8 @@ public class CommonLoaderImpl implements CommonLoader {
 
     private static final Object institutionLock = new Object();
 
+    private static final Object institutionIdentifiersLock = new Object();
+
     private static final Object personLock = new Object();
 
     private static final Object journalLock = new Object();
@@ -599,12 +601,15 @@ public class CommonLoaderImpl implements CommonLoader {
         for (var contribution : currentlyLoadedEntity.getContributions()) {
             for (var institution : contribution.getInstitutions()) {
                 if (institution.getImportId().equals(importId)) {
-                    var savedInstitution = organisationUnitService.findOne(selectedInstitutionId);
+                    synchronized (institutionIdentifiersLock) {
+                        var savedInstitution =
+                            organisationUnitService.findOne(selectedInstitutionId);
 
-                    copyMissingInstitutionIdentifiers(institution, savedInstitution);
-                    organisationUnitService.save(savedInstitution);
-                    organisationUnitService.indexOrganisationUnit(savedInstitution,
-                        savedInstitution.getId());
+                        copyMissingInstitutionIdentifiers(institution, savedInstitution);
+                        organisationUnitService.save(savedInstitution);
+                        organisationUnitService.indexOrganisationUnit(savedInstitution,
+                            savedInstitution.getId());
+                    }
 
                     return;
                 }
