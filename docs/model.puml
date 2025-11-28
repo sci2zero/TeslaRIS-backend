@@ -688,28 +688,34 @@ package project {
     Set<MultiLingualContent> keywords
     Set<MultiLingualContent> adminNote
     Set<String> uris
-    Set<PersonProjectContribution> contributors
+    Set<AgentProjectContribution> contributions
     Set<ProjectDocument> documents
-    LocalDate dateFrom
-    LocalDate dateTo
-    Set<ProjectStatus> statuses
-    ProjectType type
+    LocalDate proposalSubmitted
+    LocalDate projectApproved
+    LocalDate projectStarted
+    LocalDate projectCompleted
+    ProjectCollaborationType collaborationType
+    ProjectResearchType researchType
     Set<Funding> fundings
   }
 
-  enum ProjectStatus {
-    PROPOSAL
-    SUBMITTED
-    REJECTED
-    APPROVED
-    STARTED
-    COMPLETED
+  enum ProjectCollaborationType {
+    INTERNAL
+    INTERNATIONAL_BILATERAL
+    INTERNATIONAL_MULTILATERAL
+    NATIONAL ' domestic
   }
 
-  enum ProjectType {
-    INTERNAL
-    INTERNATIONAL
-    NATIONAL
+  enum ProjectResearchType {
+    FUNDAMENTAL
+    INNOVATION
+    DEVELOPMENT ' APPLIED
+    STRATEGIC
+    NETWORKING
+    CAPACITY_BUILDING
+    MOBILITY
+    INFRASTRUCTURE
+    OTHER
   }
 
   class Funding {
@@ -718,6 +724,7 @@ package project {
     Set<MultiLingualContent> fundingCall
     Set<MultiLingualContent> fundingProgram
     Set<MultiLingualContent> fundingAgency
+    Funding superFunding
     MonetaryAmount grant
     LocalDate dateFrom
     LocalDate dateTo
@@ -734,15 +741,41 @@ package project {
     String code  ' for instance USD
   }
 
-  class PersonProjectContribution extends PersonContribution {
+  class AgentProjectContribution {
     ProjectContributionType contributionType
+    Set<AgentProjectContribution> contributors
     LocalDate dateFrom
     LocalDate dateTo
+    Set<Funding> funding
   }
 
-  enum ProjectContributionType {
+  class OrganisationUnitContribution {
+    OrganisationUnit organisationUnit
+    Set<MultiLingualContent> contributionDescription
+    Set<MultilingualContent> displayPersonName
+    Integer orderNumber
+    ApproveStatus approveStatus
+    ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
+  }
+
+  class OrganisationUnitProjectContribution extends OrganisationUnitContribution, AgentProjectContribution {
+    OrganisationUnitProjectContributionType contributionType
+  }
+
+  enum OrganisationUnitProjectContributionType {
+    COORDINATOR
+    PARTNER
+    ' BENEFICIARY
+  }
+
+  class PersonProjectContribution extends PersonContribution, AgentProjectContribution {
+    PersonProjectContributionType contributionType
+  }
+
+  enum PersonProjectContributionType {
     PRINCIPLE_INVESTIGATOR
     PARTICIPATION
+    ' CONSULTANT
   }
 
   ProjectsRelation "*" --> "1" Project : source
@@ -754,26 +787,24 @@ package project {
     LocalDate dateTo
   }
 
-
   enum ProjectsRelationType {
     PART_OF
     RESULT_OF
     PREDECESSOR
   }
 
-
   class ProjectDocument {
     Document document
     ProjectDocumentType relationType
   }
-
 
   enum ProjectDocumentType {
     REPORT
     RESULT
     USED
   }
-
+}
+package Assessment {
   class AssessmentRulebook {
     -Set<MultiLingualContent> name
     -Set<MultiLingualContent> description
