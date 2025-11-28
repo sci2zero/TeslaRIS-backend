@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SKGIFMeta {
+public class SearchResultPage {
 
     @JsonProperty("local_identifier")
     private String localIdentifier;
@@ -20,12 +20,8 @@ public class SKGIFMeta {
     @JsonProperty("entity_type")
     private String entityType = "search_result_page";
 
-    @JsonProperty("next_page")
-    private SearchResultPage nextPage;
 
-    @JsonProperty("prev_page")
-    private SearchResultPage prevPage;
-
-    @JsonProperty("part_of")
-    private SearchResultPartOf partOf;
+    public SearchResultPage(String localIdentifier) {
+        this.localIdentifier = localIdentifier;
+    }
 }

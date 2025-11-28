@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.oaipmh.common.ListRecords;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.model.oaipmh.common.Request;
 import rs.teslaris.core.util.xmlutil.XMLUtil;
@@ -101,6 +103,11 @@ public class OutboundExportController {
                     outboundExportService.listMetadataFormatsForHandler(handlerName));
                 break;
             case "ListRecords", "ListIdentifiers":
+                var onlyListIdentifiers = verb.equals("ListIdentifiers");
+                Consumer<ListRecords> setterMethod =
+                    onlyListIdentifiers ? response::setListIdentifiers :
+                        response::setListRecords;
+
                 if (Objects.nonNull(resumptionToken)) {
                     if (!OAIPMHParseUtility.validateResumptionToken(resumptionToken)) {
                         response.setError(OAIErrorFactory.constructBadResumptionTokenError());
@@ -116,20 +123,20 @@ public class OutboundExportController {
                     }
 
                     try {
-                        response.setListRecords(
+                        setterMethod.accept(
                             outboundExportService.listRequestedRecords(handlerName,
                                 dataFromToken.format(),
                                 dataFromToken.from(), dataFromToken.until(), dataFromToken.set(),
-                                response, dataFromToken.page(), verb.equals("ListIdentifiers")));
+                                response, dataFromToken.page(), onlyListIdentifiers));
                     } catch (Exception e) {
                         logError(e.getMessage(), verb);
                         response.setError(OAIErrorFactory.constructServiceUnavailableError());
                     }
                 } else {
                     try {
-                        response.setListRecords(
+                        setterMethod.accept(
                             outboundExportService.listRequestedRecords(handlerName, metadataPrefix,
-                                from, until, set, response, 0, verb.equals("ListIdentifiers")));
+                                from, until, set, response, 0, onlyListIdentifiers));
                     } catch (Exception e) {
                         logError(e.getMessage(), verb);
                         response.setError(OAIErrorFactory.constructServiceUnavailableError());

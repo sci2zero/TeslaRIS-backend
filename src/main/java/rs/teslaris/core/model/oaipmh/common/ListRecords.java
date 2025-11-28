@@ -22,6 +22,10 @@ import lombok.ToString;
 @ToString
 public class ListRecords {
 
+    // When using list identifiers, header should be outside records
+    @XmlElement(name = "header")
+    private List<Header> header;
+
     @XmlElement(name = "record")
     private List<Record> records;
 

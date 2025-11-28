@@ -41,7 +41,7 @@ public class OAIPMHResponse {
     private ListMetadataFormats listMetadataFormats;
 
     @XmlElement(name = "ListIdentifiers")
-    private ListMetadataFormats listIdentifiers;
+    private ListRecords listIdentifiers;
 
     @XmlElement(name = "ListRecords")
     private ListRecords listRecords;

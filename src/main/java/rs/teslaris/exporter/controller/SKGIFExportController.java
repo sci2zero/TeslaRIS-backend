@@ -112,9 +112,11 @@ public class SKGIFExportController {
                 request.getRequestURL().toString());
         }
 
+        var fullRequestUrl = request.getRequestURL().toString() +
+            (Objects.nonNull(request.getQueryString()) ? "?" + request.getQueryString() : "");
         return skgifExportService.getEntitiesFiltered(entityClass, filter,
             entityType.equals("venue"), filterCriteria, dateFrom, dateTo,
-            PageRequest.of(page, pageSize));
+            PageRequest.of(page, pageSize), fullRequestUrl);
     }
 
     private Class<? extends BaseExportEntity> getEntityClass(HttpServletRequest request,

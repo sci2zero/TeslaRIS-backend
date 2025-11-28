@@ -281,7 +281,7 @@ public class DbInitializer implements ApplicationRunner {
                 scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
-                forceEmailChange, performSKGIFHarvest, configureAppSettings
+                forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -306,7 +306,7 @@ public class DbInitializer implements ApplicationRunner {
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
                     scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
                     saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
-                    saveChartDisplayConfiguration)));
+                    saveChartDisplayConfiguration, getTopCollaborators)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

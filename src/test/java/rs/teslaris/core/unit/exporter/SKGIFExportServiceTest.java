@@ -100,15 +100,13 @@ public class SKGIFExportServiceTest {
             ExportPerson.class, null, false, new SKGIFFilterCriteria(""),
             LocalDate.of(2020, 1, 1),
             LocalDate.of(2024, 1, 1),
-            pageable);
+            pageable, "http://example.com?page=0&page_size=50");
 
         // then
         assertNotNull(result);
         assertNotNull(result.getMeta());
-        assertEquals(totalCount, result.getMeta().getCount());
-        assertEquals(0, result.getMeta().getPage());
-        assertEquals(10, result.getMeta().getSize());
-        assertNotNull(result.getResults());
+        assertEquals(totalCount, result.getMeta().getPartOf().getTotalItems());
+        assertNotNull(result.getGraph());
 
         verify(mongoTemplate).count(any(Query.class), eq(ExportPerson.class));
         verify(mongoTemplate).find(any(Query.class), eq(ExportPerson.class));
@@ -131,11 +129,11 @@ public class SKGIFExportServiceTest {
             ExportPerson.class, null, false, new SKGIFFilterCriteria(""),
             LocalDate.of(2020, 1, 1),
             LocalDate.of(2024, 1, 1),
-            pageable);
+            pageable, "http://example.com?page=0&page_size=50");
 
         // then
         assertNotNull(result);
-        assertTrue(result.getResults().stream().allMatch(Objects::nonNull));
+        assertTrue(result.getGraph().stream().allMatch(Objects::nonNull));
     }
 
     @Test
@@ -154,12 +152,12 @@ public class SKGIFExportServiceTest {
             ExportPerson.class, null, false, new SKGIFFilterCriteria(""),
             LocalDate.of(2020, 1, 1),
             LocalDate.of(2024, 1, 1),
-            pageable);
+            pageable, "http://example.com?page=0&page_size=50");
 
         // then
         assertNotNull(result);
-        assertEquals(0, result.getMeta().getCount());
-        assertTrue(result.getResults().isEmpty());
+        assertEquals(0, result.getMeta().getPartOf().getTotalItems());
+        assertTrue(result.getGraph().isEmpty());
     }
 
     @Test
@@ -179,7 +177,7 @@ public class SKGIFExportServiceTest {
             ExportDocument.class, null, true, new SKGIFFilterCriteria(""),
             LocalDate.of(2020, 1, 1),
             LocalDate.of(2024, 1, 1),
-            pageable);
+            pageable, "http://example.com?page=0&page_size=50");
 
         // then
         assertNotNull(result);
@@ -204,7 +202,7 @@ public class SKGIFExportServiceTest {
             ExportDocument.class, null, false, new SKGIFFilterCriteria(""),
             LocalDate.of(2020, 1, 1),
             LocalDate.of(2024, 1, 1),
-            pageable);
+            pageable, "http://example.com?page=0&page_size=50");
 
         // then
         assertNotNull(result);

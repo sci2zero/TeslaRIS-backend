@@ -541,6 +541,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     private void validateThesisForPublicReview(Thesis thesis) {
+        if (Objects.isNull(thesis.getOrganisationUnit()) ||
+            !thesis.getOrganisationUnit().getIsClientInstitutionDl()) {
+            throw new ThesisException("Institution is not a digital library client.");
+        }
+
         if (!isPhdThesis(thesis)) {
             throw new ThesisException("Only PHD theses can be put on public reviews.");
         }
@@ -668,9 +673,32 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     }
 
     private void setThesisRelatedFields(Thesis thesis, ThesisDTO thesisDTO) {
-        var isAdmin = SessionUtil.isUserLoggedIn() &&
+        if (Objects.nonNull(thesisDTO.getOrganisationUnitId())) {
+            var institution = organisationUnitService.findOne(thesisDTO.getOrganisationUnitId());
+
+            if (Objects.nonNull(thesisDTO.getThesisType()) &&
+                !institution.getAllowedThesisTypes().contains(thesisDTO.getThesisType().name())) {
+                throw new OrganisationUnitReferenceConstraintViolationException(
+                    "thesisTypeNotAllowedMessage");
+            }
+
+            thesis.setOrganisationUnit(institution);
+        } else {
+            if (Objects.isNull(thesisDTO.getExternalOrganisationUnitName())) {
+                throw new NotFoundException(
+                    "No organisation unit ID provided without external OU name reference.");
+            }
+
+            thesis.setExternalOrganisationUnitName(
+                multilingualContentService.getMultilingualContent(
+                    thesisDTO.getExternalOrganisationUnitName()));
+        }
+
+        var isAdmin = SessionUtil.isUserLoggedInAndAdmin();
+
+        var isHeadOfLibrary = SessionUtil.isUserLoggedIn() &&
             Objects.requireNonNull(SessionUtil.getLoggedInUser()).getAuthority().getName()
-                .equals(UserRole.ADMIN.name());
+                .equals(UserRole.HEAD_OF_LIBRARY.name());
 
         thesis.setThesisType(thesisDTO.getThesisType());
         thesis.setTopicAcceptanceDate(thesisDTO.getTopicAcceptanceDate());
@@ -693,7 +721,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         if (Objects.nonNull(thesisDTO.getThesisDefenceDate())) {
             thesis.setDocumentDate(String.valueOf(thesisDTO.getThesisDefenceDate().getYear()));
 
-            if (thesis.getPublicReviewCompleted() || isAdmin) {
+            if (thesis.getPublicReviewCompleted() || isAdmin || isHeadOfLibrary ||
+                Objects.isNull(thesis.getOrganisationUnit()) ||
+                (Objects.nonNull(thesis.getOrganisationUnit()) &&
+                    !thesis.getOrganisationUnit().getIsClientInstitutionDl())) {
                 thesis.setThesisDefenceDate(thesisDTO.getThesisDefenceDate());
             }
         } else {
@@ -738,27 +769,6 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         if (Objects.nonNull(thesisDTO.getWritingLanguageTagId())) {
             thesis.setWritingLanguage(
                 languageTagService.findOne(thesisDTO.getWritingLanguageTagId()));
-        }
-
-        if (Objects.nonNull(thesisDTO.getOrganisationUnitId())) {
-            var institution = organisationUnitService.findOne(thesisDTO.getOrganisationUnitId());
-
-            if (Objects.nonNull(thesisDTO.getThesisType()) &&
-                !institution.getAllowedThesisTypes().contains(thesisDTO.getThesisType().name())) {
-                throw new OrganisationUnitReferenceConstraintViolationException(
-                    "thesisTypeNotAllowedMessage");
-            }
-
-            thesis.setOrganisationUnit(institution);
-        } else {
-            if (Objects.isNull(thesisDTO.getExternalOrganisationUnitName())) {
-                throw new NotFoundException(
-                    "No organisation unit ID provided without external OU name reference.");
-            }
-
-            thesis.setExternalOrganisationUnitName(
-                multilingualContentService.getMultilingualContent(
-                    thesisDTO.getExternalOrganisationUnitName()));
         }
 
         setCommonIdentifiers(thesis, thesisDTO);

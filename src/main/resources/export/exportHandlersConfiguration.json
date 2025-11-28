@@ -68,7 +68,8 @@
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT;proceedings_publication_type:REGULAR_FULL_ARTICLE,REGULAR_ABSTRACT_ARTICLE"
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT;proceedings_publication_type:REGULAR_FULL_ARTICLE,REGULAR_ABSTRACT_ARTICLE",
+          "default": true
         }
       ],
       "metadataFormats": [
@@ -376,7 +377,8 @@
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-          "concreteTypeFilters": "thesis_type:PHD"
+          "concreteTypeFilters": "thesis_type:PHD",
+          "default": true
         }
       ],
       "metadataFormats": [
@@ -467,7 +469,8 @@
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-          "concreteTypeFilters": "thesis_type:PHD"
+          "concreteTypeFilters": "thesis_type:PHD",
+          "default": true
         }
       ],
       "metadataFormats": [
@@ -555,7 +558,8 @@
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-          "concreteTypeFilters": "thesis_type:PHD"
+          "concreteTypeFilters": "thesis_type:PHD",
+          "default": true
         }
       ],
       "metadataFormats": [

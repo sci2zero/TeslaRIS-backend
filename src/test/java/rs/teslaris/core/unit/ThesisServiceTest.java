@@ -338,7 +338,9 @@ public class ThesisServiceTest {
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
         when(thesis.getIsOnPublicReview()).thenReturn(false);
-        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit());
+        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
         when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(new DocumentFile()));
         when(thesis.getPreliminarySupplements()).thenReturn(Set.of(new DocumentFile()));
@@ -422,7 +424,9 @@ public class ThesisServiceTest {
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
         when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
         when(thesis.getIsOnPublicReview()).thenReturn(false);
-        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit());
+        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
         when(thesis.getIsOnPublicReviewPause()).thenReturn(true);
         when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
@@ -453,7 +457,9 @@ public class ThesisServiceTest {
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
         when(thesis.getThesisType()).thenReturn(ThesisType.PHD);
         when(thesis.getIsOnPublicReview()).thenReturn(false);
-        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit());
+        when(thesis.getOrganisationUnit()).thenReturn(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
         when(thesis.getIsOnPublicReviewPause()).thenReturn(true);
         when(thesis.getPublicReviewStartDates()).thenReturn(reviewDates);
         when(thesis.getPreliminaryFiles()).thenReturn(Set.of(mock(DocumentFile.class)));
@@ -556,6 +562,9 @@ public class ThesisServiceTest {
         var thesis = new Thesis();
         thesis.setThesisType(ThesisType.PHD);
         thesis.setIsOnPublicReview(false);
+        thesis.setOrganisationUnit(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
         var thesisId = 1;
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 
@@ -576,12 +585,14 @@ public class ThesisServiceTest {
         var thesis = new Thesis();
         thesis.setThesisType(ThesisType.PHD);
         thesis.setIsOnPublicReview(false);
+        thesis.setOrganisationUnit(new OrganisationUnit() {{
+            setIsClientInstitutionDl(true);
+        }});
         var thesisId = 1;
         thesis.getPreliminaryFiles().addAll(createMockDocuments(files));
         thesis.getCommissionReports().addAll(createMockDocuments(reports));
         thesis.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
         thesis.setScientificArea(new HashSet<>(List.of(mock(MultiLingualContent.class))));
-        thesis.setOrganisationUnit(new OrganisationUnit());
 
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 
