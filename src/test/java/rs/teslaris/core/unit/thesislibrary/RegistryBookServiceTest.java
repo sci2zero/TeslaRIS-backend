@@ -38,6 +38,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -109,6 +110,9 @@ class RegistryBookServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     @InjectMocks
     private RegistryBookServiceImpl registryBookService;
@@ -227,6 +231,9 @@ class RegistryBookServiceTest {
         // Given
         var id = 10;
         RegistryBookEntry entry = new RegistryBookEntry();
+        entry.setThesis(new Thesis() {{
+            setId(1);
+        }});
         when(registryBookEntryRepository.findById(id)).thenReturn(Optional.of(entry));
 
         // When

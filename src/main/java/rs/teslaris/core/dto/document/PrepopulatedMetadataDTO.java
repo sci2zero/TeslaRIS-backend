@@ -38,4 +38,6 @@ public class PrepopulatedMetadataDTO {
     private String url;
 
     private String doi;
+
+    private List<MultilingualContentDTO> keywords = new ArrayList<>();
 }

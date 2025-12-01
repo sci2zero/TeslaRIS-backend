@@ -111,4 +111,7 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
                                                                         LocalDate from,
                                                                         LocalDate to,
                                                                         Pageable pageable);
+
+    @Query("SELECT COUNT(rbe) > 0 FROM RegistryBookEntry rbe WHERE rbe.thesis.id = :thesisId")
+    Boolean isThesisInRegistryBook(Integer thesisId);
 }

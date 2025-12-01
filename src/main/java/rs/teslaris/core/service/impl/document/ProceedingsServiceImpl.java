@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
@@ -287,7 +288,9 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         while (hasNextPage) {
 
             List<Proceedings> chunk =
-                proceedingsJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+                proceedingsJPAService.findAll(
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
+                    .getContent();
 
             chunk.forEach(
                 (proceedings) -> indexProceedings(proceedings, new DocumentPublicationIndex()));

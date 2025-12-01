@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import rs.teslaris.core.model.document.ThesisType;
 
-public record ThesisReportRequestDTO(
+public record NotAddedToPromotionThesesRequestDTO(
 
     @NotNull(message = "You have to provide start date.")
     LocalDate fromDate,
@@ -16,7 +16,7 @@ public record ThesisReportRequestDTO(
     @NotNull(message = "You have to provide top level institution IDs tokens.")
     List<Integer> topLevelInstitutionIds,
 
-    @NotNull(message = "You have to provide thesis type.")
-    ThesisType thesisType
+    @NotNull(message = "You have to provide thesis types.")
+    List<ThesisType> thesisTypes
 ) {
 }

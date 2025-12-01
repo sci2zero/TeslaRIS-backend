@@ -36,6 +36,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.language.SerbianTransliteration;
+import rs.teslaris.thesislibrary.dto.NotAddedToPromotionThesesRequestDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingService;
@@ -122,6 +123,28 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
 
         return documentPublicationIndexRepository.fetchDefendedThesesInPeriod(request.fromDate(),
             request.toDate(), institutionIds, request.thesisType().name(), pageable);
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> fetchDefendedThesesInPeriodNotSentToPromotion(
+        NotAddedToPromotionThesesRequestDTO request, Integer libraryInstitutionId,
+        Pageable pageable) {
+        List<Integer> institutionIds;
+        if (Objects.nonNull(libraryInstitutionId)) {
+            institutionIds =
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                    libraryInstitutionId);
+        } else {
+            institutionIds = getAllSubInstitutionsForTopLevelOnes(request.topLevelInstitutionIds());
+        }
+
+        return documentPublicationIndexRepository.fetchDefendedThesesNotSentToPromotionInPeriod(
+            request.fromDate(),
+            request.toDate(), institutionIds,
+            request.thesisTypes().isEmpty() ?
+                List.of(ThesisType.PHD.name(), ThesisType.PHD_ART_PROJECT.name()) :
+                request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable);
     }
 
     @Override

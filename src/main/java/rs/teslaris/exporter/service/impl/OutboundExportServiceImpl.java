@@ -561,8 +561,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var toolkit = new Toolkit();
         toolkit.setTitle("Sci2Zero Alliance Custom implementation");
         toolkit.setAuthor(
-            new Toolkit.Author("Sci2Zero team", "chenejac@uns.ac.rs", "Science 2.0 Alliance"));
-        toolkit.setVersion("1.0.0");
+            new Toolkit.Author("Sci2Zero team", "info@sci2zero.org", "Science 2.0 Alliance"));
+        toolkit.setVersion("1.1.0");
 
         var serviceDescription = new Description();
         serviceDescription.setService(service);

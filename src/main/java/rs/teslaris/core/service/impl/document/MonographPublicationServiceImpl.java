@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
@@ -199,7 +200,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         while (hasNextPage) {
 
             List<MonographPublication> chunk =
-                monographPublicationJPAService.findAll(PageRequest.of(pageNumber, chunkSize))
+                monographPublicationJPAService.findAll(
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
                     .getContent();
 
             chunk.forEach((monographPublication) -> indexMonographPublication(monographPublication,

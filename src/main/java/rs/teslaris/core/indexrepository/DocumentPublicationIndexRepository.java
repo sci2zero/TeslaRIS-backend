@@ -224,6 +224,33 @@ public interface DocumentPublicationIndexRepository extends
             "must": [
               { "term": { "type": "THESIS" } },
               { "range": {
+                  "thesis_defence_date": {
+                    "gte": "?0",
+                    "lte": "?1"
+                  }
+                }
+              },
+              { "terms": { "thesis_institution_id": ?2 } },
+              { "terms": { "publication_type": ?3 } },
+              { "term": { "is_added_to_registry_book": false } },
+              { "term": { "is_public_review_completed": true } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchDefendedThesesNotSentToPromotionInPeriod(
+        LocalDate startDate,
+        LocalDate endDate,
+        List<Integer> institutionIds,
+        List<String> thesisTypes,
+        Pageable pageable);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "type": "THESIS" } },
+              { "range": {
                   "topic_acceptance_date": {
                     "gte": "?0",
                     "lte": "?1"

@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.thesislibrary.dto.NotAddedToPromotionThesesRequestDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 
 @SpringBootTest
@@ -131,6 +132,28 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + authResponse.a)
                     .cookie(authResponse.b))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetThesesNotAddedToPromotion() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var request = new NotAddedToPromotionThesesRequestDTO(
+            LocalDate.of(2024, 1, 1),
+            LocalDate.of(2024, 12, 31),
+            List.of(1),
+            List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT)
+        );
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/thesis-library/report/not-added-to-registry-book")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
     }
 }

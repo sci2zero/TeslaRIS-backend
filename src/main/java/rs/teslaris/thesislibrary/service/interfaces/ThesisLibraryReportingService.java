@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.thesislibrary.dto.NotAddedToPromotionThesesRequestDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 
@@ -31,4 +32,8 @@ public interface ThesisLibraryReportingService {
     Pair<InputStreamResource, Integer> generatePhdLibraryReportDocument(
         ThesisReportRequestDTO request,
         String locale);
+
+    Page<DocumentPublicationIndex> fetchDefendedThesesInPeriodNotSentToPromotion(
+        NotAddedToPromotionThesesRequestDTO request, Integer libraryInstitutionId,
+        Pageable pageable);
 }

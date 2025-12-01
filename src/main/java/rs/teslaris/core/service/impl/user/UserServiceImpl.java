@@ -307,7 +307,6 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             () -> new NonExistingRefreshTokenException("Non existing refresh token provided."));
 
         var newRefreshToken = createAndSaveRefreshTokenForUser(refreshToken.getUser());
-        refreshTokenRepository.delete(refreshToken);
 
         return new AuthenticationResponseDTO(
             tokenUtil.generateToken(refreshToken.getUser(), fingerprint), newRefreshToken);
@@ -1124,9 +1123,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var hashedRefreshToken =
             Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();
 
-        var oldRefreshToken = refreshTokenRepository.findByUserId(user.getId());
-        oldRefreshToken.ifPresent(refreshTokenRepository::delete);
-
+        refreshTokenRepository.deleteAllByUserId(user.getId());
         refreshTokenRepository.save(new RefreshToken(hashedRefreshToken, user));
 
         return refreshTokenValue;
