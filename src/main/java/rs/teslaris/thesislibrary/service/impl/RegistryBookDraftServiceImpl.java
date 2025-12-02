@@ -73,12 +73,18 @@ public class RegistryBookDraftServiceImpl extends JPAServiceImpl<RegistryBookEnt
         }
 
         var thesis = thesisService.getThesisById(thesisId);
-        registryBookEntryDraftRepository.deleteByThesisId(thesisId);
+        deleteDraftsForThesis(thesisId);
 
         var newDraft = new RegistryBookEntryDraft();
         newDraft.setThesis(thesis);
         newDraft.setDraftData(jsonDraft);
 
         registryBookEntryDraftRepository.save(newDraft);
+    }
+
+    @Override
+    @Transactional
+    public void deleteDraftsForThesis(Integer thesisId) {
+        registryBookEntryDraftRepository.deleteByThesisId(thesisId);
     }
 }

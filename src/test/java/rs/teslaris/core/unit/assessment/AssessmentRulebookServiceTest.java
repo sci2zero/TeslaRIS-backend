@@ -176,7 +176,7 @@ public class AssessmentRulebookServiceTest {
         when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false))).thenReturn(
             documentFile);
         when(documentFileService.findDocumentFileIndexByDatabaseId(any())).thenReturn(
-            new DocumentFileIndex());
+            Optional.of(new DocumentFileIndex()));
 
         // When
         assessmentRulebookService.addPDFFile(rulebookId, new DocumentFileDTO());

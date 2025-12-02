@@ -11,4 +11,6 @@ public interface RegistryBookDraftService extends JPAService<RegistryBookEntryDr
     RegistryBookEntryDTO fetchRegistryBookEntryDraft(Integer thesisId);
 
     void saveRegistryBookEntryDraft(RegistryBookEntryDTO registryBookEntryDTO, Integer thesisId);
+
+    void deleteDraftsForThesis(Integer thesisId);
 }

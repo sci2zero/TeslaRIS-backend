@@ -3,6 +3,7 @@ package rs.teslaris.core.service.interfaces.document;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +25,7 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
 
     DocumentFile getDocumentByServerFilename(String serverFilename);
 
-    DocumentFileIndex findDocumentFileIndexByDatabaseId(Integer databaseId);
+    Optional<DocumentFileIndex> findDocumentFileIndexByDatabaseId(Integer databaseId);
 
     DocumentFile saveNewDocument(DocumentFileDTO documentFile, Boolean index);
 
@@ -60,4 +61,6 @@ public interface DocumentFileService extends JPAService<DocumentFile> {
     CompletableFuture<Void> reindexDocumentFiles();
 
     Integer findDocumentIdForFilename(String filename);
+
+    DocumentFileIndex reindexDocumentFile(DocumentFile documentFile);
 }

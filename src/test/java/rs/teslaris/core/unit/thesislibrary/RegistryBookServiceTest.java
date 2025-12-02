@@ -79,6 +79,7 @@ import rs.teslaris.thesislibrary.model.RegistryBookPersonalInformation;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
 import rs.teslaris.thesislibrary.service.impl.RegistryBookServiceImpl;
 import rs.teslaris.thesislibrary.service.interfaces.PromotionService;
+import rs.teslaris.thesislibrary.service.interfaces.RegistryBookDraftService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
 @SpringBootTest
@@ -113,6 +114,9 @@ class RegistryBookServiceTest {
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private RegistryBookDraftService registryBookDraftService;
 
     @InjectMocks
     private RegistryBookServiceImpl registryBookService;
@@ -190,6 +194,7 @@ class RegistryBookServiceTest {
         // Then
         assertNotNull(result);
         verify(registryBookEntryRepository).save(any());
+        verify(registryBookDraftService).deleteDraftsForThesis(1);
     }
 
     @ParameterizedTest
@@ -329,7 +334,7 @@ class RegistryBookServiceTest {
         // Then
         assertEquals(LocalDate.of(1990, 1, 1), result.getLocalBirthDate());
         assertEquals("Novi Sad", result.getPlaceOfBirth());
-        assertEquals("мр Mentor Prezime, ванр. проф.", result.getMentor());
+        assertEquals("мр Ментор Презиме, ванр. проф.", result.getMentor());
         assertEquals("email@example.com", result.getContact().getContactEmail());
         assertEquals("+381111111", result.getContact().getPhoneNumber());
     }

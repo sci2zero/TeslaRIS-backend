@@ -272,7 +272,7 @@ public class DocumentPublicationServiceTest {
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
         when(documentFileService.findDocumentFileIndexByDatabaseId(any())).thenReturn(
-            new DocumentFileIndex());
+            Optional.of(new DocumentFileIndex()));
 
         // When
         documentPublicationService.addDocumentFile(documentId, new DocumentFileDTO(), isProof);

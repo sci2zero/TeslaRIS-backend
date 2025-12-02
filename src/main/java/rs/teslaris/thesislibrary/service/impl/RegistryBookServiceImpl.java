@@ -75,6 +75,7 @@ import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 import rs.teslaris.thesislibrary.model.RegistryBookPersonalInformation;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
 import rs.teslaris.thesislibrary.service.interfaces.PromotionService;
+import rs.teslaris.thesislibrary.service.interfaces.RegistryBookDraftService;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
@@ -104,6 +105,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     private final MessageSource messageSource;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    private final RegistryBookDraftService registryBookDraftService;
 
     private final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.GERMANY);
@@ -170,7 +173,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                 documentPublicationIndexRepository.save(index);
             });
 
-        return save(newEntry);
+        var savedEntry = save(newEntry);
+        registryBookDraftService.deleteDraftsForThesis(thesisId);
+
+        return savedEntry;
     }
 
     @Override
@@ -788,7 +794,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             .ifPresent(mentor -> {
                 StringBuilder sb = new StringBuilder();
                 sb.append(mentor.getPersonalTitle().getValue()).append(" ")
-                    .append(mentor.getAffiliationStatement().getDisplayPersonName())
+                    .append(SerbianTransliteration.toCyrillic(
+                        mentor.getAffiliationStatement().getDisplayPersonName().toString()))
                     .append(", ").append(mentor.getEmploymentTitle().getValue());
 
                 mentor.getInstitutions().stream().findFirst()
@@ -810,7 +817,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     sb.append("\n");
                 }
                 sb.append(member.getPersonalTitle().getValue()).append(" ")
-                    .append(member.getAffiliationStatement().getDisplayPersonName())
+                    .append(SerbianTransliteration.toCyrillic(
+                        member.getAffiliationStatement().getDisplayPersonName().toString()))
                     .append(", ").append(member.getEmploymentTitle().getValue());
 
                 member.getInstitutions().stream().findFirst()

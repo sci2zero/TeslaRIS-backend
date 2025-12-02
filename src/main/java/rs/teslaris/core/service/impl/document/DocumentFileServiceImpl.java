@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
@@ -119,10 +120,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     }
 
     @Override
-    public DocumentFileIndex findDocumentFileIndexByDatabaseId(Integer databaseId) {
-        return documentFileIndexRepository.findDocumentFileIndexByDatabaseId(databaseId)
-            .orElseThrow(
-                () -> new NotFoundException("Document file index with given ID does not exist."));
+    public Optional<DocumentFileIndex> findDocumentFileIndexByDatabaseId(Integer databaseId) {
+        return documentFileIndexRepository.findDocumentFileIndexByDatabaseId(databaseId);
     }
 
     private void setCommonFields(DocumentFile documentFile, DocumentFileDTO documentFileDTO) {
@@ -561,25 +560,30 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 documentFileRepository.findAllIndexable(PageRequest.of(pageNumber, chunkSize))
                     .getContent();
 
-            chunk.forEach(
-                (documentFile) -> {
-                    try {
-                        var resource = fileService.loadAsResource(documentFile.getServerFilename());
-                        parseAndIndexPdfDocument(documentFile,
-                            getMultipartFileFromObjectResponse(resource, documentFile),
-                            documentFile.getServerFilename(), new DocumentFileIndex());
-                    } catch (Exception e) {
-                        log.error(
-                            "File ('{}','{}') does not exist in the bucket. Skipping reindexing.",
-                            documentFile.getServerFilename(), documentFile.getFilename());
-                    }
-                });
+            chunk.forEach(this::reindexDocumentFile);
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;
         }
 
         return null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentFileIndex reindexDocumentFile(DocumentFile documentFile) {
+        try {
+            var resource = fileService.loadAsResource(documentFile.getServerFilename());
+            parseAndIndexPdfDocument(documentFile,
+                getMultipartFileFromObjectResponse(resource, documentFile),
+                documentFile.getServerFilename(), new DocumentFileIndex());
+        } catch (Exception e) {
+            log.error(
+                "Error reindexing ('{}','{}'). Skipping reindexing. Reason: {}",
+                documentFile.getServerFilename(), documentFile.getFilename(), e.getMessage());
+        }
+
+        return findDocumentFileIndexByDatabaseId(documentFile.getId()).orElse(null);
     }
 
     @Override

@@ -53,7 +53,7 @@ public class EmailUtil {
     @Value("${entity-creation.admin.locale}")
     private String universalEditorLocale;
 
-    @Value("${mail.system-admin.address}")
+    @Value("${mail.system-error.address}")
     private String systemAdminAddress;
 
     @Value("${frontend.application.address}")

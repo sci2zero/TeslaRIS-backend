@@ -48,6 +48,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -900,12 +901,23 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 return;
             }
 
-            var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
-            index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
-            index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
+            documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId())
+                .ifPresentOrElse(file -> setFullTextFields(index, file),
+                    () -> {
+                        // Simple retry logic
+                        var file = documentFileService.reindexDocumentFile(documentFile);
+                        if (Objects.nonNull(file)) {
+                            setFullTextFields(index, file);
+                        }
+                    });
         });
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    private void setFullTextFields(DocumentPublicationIndex index, DocumentFileIndex file) {
+        index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
+        index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
     }
 
     private void indexTitle(Document document, DocumentPublicationIndex index) {

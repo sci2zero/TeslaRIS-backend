@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -334,5 +335,17 @@ public class RegistryBookDraftServiceTest {
             assertTrue(json.contains("promoted\":false"));
             return true;
         }));
+    }
+
+    @Test
+    void shouldDeleteAllDraftsForThesis() {
+        // Given
+        var thesisId = 1;
+
+        // When
+        registryBookDraftService.deleteDraftsForThesis(thesisId);
+
+        // Then
+        verify(registryBookEntryDraftRepository, times(thesisId)).deleteByThesisId(1);
     }
 }
