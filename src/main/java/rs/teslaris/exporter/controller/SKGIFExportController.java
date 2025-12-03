@@ -25,6 +25,7 @@ import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
 import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.skgif.JsonLdToTurtleConverter;
+import rs.teslaris.exporter.model.skgif.SKGIFDiscoverTypes;
 import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
 import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
 import rs.teslaris.exporter.service.interfaces.SKGIFExportService;
@@ -33,6 +34,7 @@ import rs.teslaris.exporter.util.skgif.PersonFilteringUtil;
 import rs.teslaris.exporter.util.skgif.ResearchProductFilteringUtil;
 import rs.teslaris.exporter.util.skgif.SKGIFFilterCriteria;
 import rs.teslaris.exporter.util.skgif.VenueFilteringUtil;
+import rs.teslaris.exporter.util.skgif.builder.SKGIFRecordsFactory;
 
 @RestController
 @RequestMapping("/api/skg-if")
@@ -41,6 +43,18 @@ public class SKGIFExportController {
 
     private final SKGIFExportService skgifExportService;
 
+    private final SKGIFRecordsFactory skgifRecordsFactory;
+
+
+    @GetMapping
+    public SKGIFDiscoverTypes.ApiDiscoveryResponse getApiDiscovery() {
+        return skgifRecordsFactory.createDefaultDiscovery();
+    }
+
+    @GetMapping("/echo")
+    public SKGIFDiscoverTypes.HealthCheckResponse getHealthCheck() {
+        return skgifRecordsFactory.createHealthResponse();
+    }
 
     @GetMapping(value = "/{entityType}/{localIdentifier}", produces = {
         MediaType.APPLICATION_JSON_VALUE, "text/turtle"})
@@ -92,7 +106,8 @@ public class SKGIFExportController {
                                                     @PathVariable String entityType,
                                                     @RequestParam(defaultValue = "") String filter,
                                                     @RequestParam Integer page,
-                                                    @RequestParam("page_size") Integer pageSize,
+                                                    @RequestParam(value = "page_size", defaultValue = "10")
+                                                    Integer pageSize,
                                                     @RequestParam(required = false)
                                                     LocalDate dateFrom,
                                                     @RequestParam(required = false)

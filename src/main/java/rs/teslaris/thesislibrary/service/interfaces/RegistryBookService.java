@@ -66,4 +66,6 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     void allowSingleUpdate(Integer registryBookEntryId);
 
     boolean canEdit(Integer registryBookEntryId, boolean librarianCheck);
+
+    boolean canAllowSingleEdit(Integer registryBookEntryId);
 }

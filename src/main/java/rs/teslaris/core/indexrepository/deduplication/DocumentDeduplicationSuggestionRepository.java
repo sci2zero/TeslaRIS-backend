@@ -1,6 +1,7 @@
 package rs.teslaris.core.indexrepository.deduplication;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.annotations.Query;
@@ -11,6 +12,9 @@ import rs.teslaris.core.indexmodel.deduplication.DeduplicationSuggestion;
 @Repository
 public interface DocumentDeduplicationSuggestionRepository
     extends ElasticsearchRepository<DeduplicationSuggestion, String> {
+
+    Optional<DeduplicationSuggestion> findByLeftEntityIdAndRightEntityIdAndEntityType(
+        Integer leftEntityId, Integer rightEntityId, String entityType);
 
     Page<DeduplicationSuggestion> findByEntityType(String entityType, Pageable pageable);
 

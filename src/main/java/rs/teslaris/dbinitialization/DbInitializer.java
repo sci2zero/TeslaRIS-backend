@@ -344,7 +344,7 @@ public class DbInitializer implements ApplicationRunner {
                 new HashSet<>(List.of(
                     updateProfile, allowAccountTakeover, addToPromotion, removeFromPromotion,
                     updateRegistryBook, managePromotions, generatePromotionReport,
-                    generateRegBookReport, readRegistryBook
+                    generateRegBookReport, readRegistryBook, allowRegEntrySingleUpdate
                 )));
 
         authorityRepository.saveAll(

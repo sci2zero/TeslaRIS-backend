@@ -771,6 +771,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         if (Objects.nonNull(thesisDTO.getWritingLanguageTagId())) {
             thesis.setWritingLanguage(
                 languageTagService.findOne(thesisDTO.getWritingLanguageTagId()));
+        } else {
+            thesis.setWritingLanguage(null);
         }
 
         setCommonIdentifiers(thesis, thesisDTO);

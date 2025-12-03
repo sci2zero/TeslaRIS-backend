@@ -61,6 +61,20 @@ public class RegistryBookController {
         return registryBookService.canEdit(registryBookEntryId, librarianCheck);
     }
 
+    @GetMapping("/can-allow-single-edit/{registryBookEntryId}")
+    @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRY_BOOK', 'READ_REGISTRY_BOOK')")
+    @RegistryBookEntryEditCheck
+    public boolean canAllowSingleEdit(@PathVariable Integer registryBookEntryId,
+                                      @RequestHeader("Authorization") String bearerToken) {
+        var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
+
+        if (!userRole.equals(UserRole.PROMOTION_REGISTRY_ADMINISTRATOR.name())) {
+            return false;
+        }
+
+        return registryBookService.canAllowSingleEdit(registryBookEntryId);
+    }
+
     @GetMapping("/can-add/{documentId}")
     @PreAuthorize("hasAuthority('ADD_TO_REGISTRY_BOOK')")
     @PublicationEditCheck("THESIS")

@@ -258,7 +258,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                                         boolean editedByLibrarian) {
         var entry = findOne(registryBookEntryId);
 
-        if (editedByLibrarian && Objects.nonNull(entry.getPromotion())) {
+        if (editedByLibrarian && Objects.nonNull(entry.getPromotion()) &&
+            !entry.getAllowSingleEdit()) {
             throw new RegistryBookException("Can't update a promoted or in-promotion entry.");
         } else if (Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
             !entry.getAllowSingleEdit()) {
@@ -699,11 +700,20 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var entry = findOne(registryBookEntryId);
 
         if (librarianCheck) {
-            return Objects.isNull(entry.getPromotion());
+            return Objects.isNull(entry.getPromotion()) || entry.getAllowSingleEdit();
         }
 
         return Objects.isNull(entry.getPromotion()) || !entry.getPromotion().getFinished() ||
             entry.getAllowSingleEdit();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canAllowSingleEdit(Integer registryBookEntryId) {
+        var entry = findOne(registryBookEntryId);
+
+        return Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
+            !entry.getAllowSingleEdit();
     }
 
     private List<Integer> getInstitutionIdsForUser(Integer userId) {

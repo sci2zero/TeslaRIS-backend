@@ -79,6 +79,14 @@ public class DeduplicationController {
         deduplicationService.flagAsNotDuplicate(suggestionId);
     }
 
+    @PatchMapping("/suggestion/{leftEntityId}/{rightEntityId}/{entityType}")
+    @PreAuthorize("hasAuthority('PERFORM_DEDUPLICATION')")
+    public String getSuggestionId(@PathVariable Integer leftEntityId,
+                                  @PathVariable Integer rightEntityId,
+                                  @PathVariable EntityType entityType) {
+        return deduplicationService.getSuggestionId(leftEntityId, rightEntityId, entityType);
+    }
+
     @DeleteMapping("/suggestion/{suggestionId}")
     @PreAuthorize("hasAuthority('PERFORM_DEDUPLICATION')")
     public void deleteDeduplicationSuggestion(@PathVariable String suggestionId) {

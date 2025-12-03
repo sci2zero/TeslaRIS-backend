@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.document;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.ScriptQuery;
+import jakarta.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +132,14 @@ public class DeduplicationServiceImpl implements DeduplicationService {
         }
 
         deleteSuggestion(suggestionId);
+    }
+
+    @Override
+    @Nullable
+    public String getSuggestionId(Integer leftId, Integer rightId, EntityType entityType) {
+        return deduplicationSuggestionRepository.findByLeftEntityIdAndRightEntityIdAndEntityType(
+            leftId, rightId, entityType.name()
+        ).orElse(new DeduplicationSuggestion()).getId();
     }
 
     @Override
@@ -424,8 +433,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 return b;
             }))),
             EventIndex::getDatabaseId,
-            EventIndex::getNameSr,
-            EventIndex::getNameOther,
+            (eventIndex -> eventIndex.getNameSr() + " (" + eventIndex.getDateFromTo() + ")"),
+            (eventIndex -> eventIndex.getNameOther() + " (" + eventIndex.getDateFromTo() + ")"),
             null,
             "events"
         );

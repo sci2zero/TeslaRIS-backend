@@ -146,7 +146,7 @@
     },
     {
       "identifier": "OAIHandlerNDLTD",
-      "internalInstitutionId": "14",
+      "internalInstitutionId": "1",
       "handlerName": "NDLTD OAI Handler",
       "handlerDescription": "OAI handler for NDLTD",
       "handlerLanguage": "sr",

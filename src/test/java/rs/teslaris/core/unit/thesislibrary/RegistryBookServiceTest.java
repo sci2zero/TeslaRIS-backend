@@ -853,4 +853,61 @@ class RegistryBookServiceTest {
         // Then
         assertFalse(result);
     }
+
+    @Test
+    void shouldReturnTrueWhenPromotionFinishedAndAllowSingleEditFalse() {
+        // Given
+        var entryId = 1;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(true);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(entry.getAllowSingleEdit()).thenReturn(false);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canAllowSingleEdit(entryId);
+
+        // Then
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenPromotionFinishedButAllowSingleEditTrue() {
+        // Given
+        var entryId = 2;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(true);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(entry.getAllowSingleEdit()).thenReturn(true);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canAllowSingleEdit(entryId);
+
+        // Then
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenPromotionNotFinished() {
+        // Given
+        var entryId = 3;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(false);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(entry.getAllowSingleEdit()).thenReturn(false);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canAllowSingleEdit(entryId);
+
+        // Then
+        assertFalse(result);
+    }
 }
