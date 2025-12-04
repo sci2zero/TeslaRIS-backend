@@ -16,7 +16,7 @@ import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -34,7 +34,7 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
 
     protected final MultilingualContentService multilingualContentService;
 
-    protected final LanguageTagService languageTagService;
+    protected final LanguageService languageService;
 
     protected final PersonContributionService personContributionService;
 
@@ -84,9 +84,9 @@ public class PublicationSeriesServiceImpl extends JPAServiceImpl<PublicationSeri
         IdentifierUtil.setUris(publicationSeries.getUris(), publicationSeriesDTO.getUris());
         setCommonIdentifiers(publicationSeries, publicationSeriesDTO);
 
-        publicationSeriesDTO.getLanguageTagIds().forEach(languageTagId -> {
+        publicationSeriesDTO.getLanguageIds().forEach(languageId -> {
             publicationSeries.getLanguages()
-                .add(languageTagService.findLanguageTagById(languageTagId));
+                .add(languageService.findLanguageById(languageId));
         });
     }
 

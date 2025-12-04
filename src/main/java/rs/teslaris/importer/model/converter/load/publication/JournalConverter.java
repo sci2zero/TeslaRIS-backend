@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
@@ -19,7 +19,7 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
 
     private final MultilingualContentConverter multilingualContentConverter;
 
-    private final LanguageTagService languageTagService;
+    private final LanguageService languageService;
 
 
     @Override
@@ -45,20 +45,20 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
 
         dto.setSubtitle(new ArrayList<>());
 
-        var languageTagValue = record.getLanguage().trim().toUpperCase();
-        if (languageTagValue.isEmpty()) {
-            languageTagValue = LanguageAbbreviations.ENGLISH;
+        var languageCode = record.getLanguage().trim().toUpperCase();
+        if (languageCode.isEmpty()) {
+            languageCode = LanguageAbbreviations.ENGLISH;
         }
 
-        if (languageTagValue.equals("GE")) {
-            languageTagValue = LanguageAbbreviations.GERMAN;
+        if (languageCode.equals("GE")) {
+            languageCode = LanguageAbbreviations.GERMAN;
         }
 
-        var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
+        var languageTag = languageService.findLanguageByCode(languageCode);
         if (Objects.nonNull(languageTag.getId())) {
-            dto.setLanguageTagIds(List.of(languageTag.getId()));
+            dto.setLanguageIds(List.of(languageTag.getId()));
         } else {
-            dto.setLanguageTagIds(new ArrayList<>());
+            dto.setLanguageIds(new ArrayList<>());
         }
 
         return dto;

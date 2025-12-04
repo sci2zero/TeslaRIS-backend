@@ -19,8 +19,8 @@ public class PublicationSeriesConverter {
 
         responseDTO.setLanguageTagNames(new ArrayList<>());
         journal.getLanguages()
-            .forEach(languageTag -> responseDTO.getLanguageTagNames().add(
-                languageTag.getLanguageTag()));
+            .forEach(language -> responseDTO.getLanguageTagNames().add(
+                language.getLanguageCode()));
 
         return responseDTO;
     }
@@ -32,8 +32,8 @@ public class PublicationSeriesConverter {
 
         responseDTO.setLanguageTagNames(new ArrayList<>());
         bookSeries.getLanguages()
-            .forEach(languageTag -> responseDTO.getLanguageTagNames().add(
-                languageTag.getLanguageTag()));
+            .forEach(language -> responseDTO.getLanguageTagNames().add(
+                language.getLanguageCode()));
 
         return responseDTO;
     }
@@ -53,9 +53,9 @@ public class PublicationSeriesConverter {
             MultilingualContentConverter.getMultilingualContentDTO(
                 publicationSeries.getNameAbbreviation()));
 
-        responseDTO.setLanguageTagIds(new ArrayList<>());
+        responseDTO.setLanguageIds(new ArrayList<>());
         publicationSeries.getLanguages()
-            .forEach(languageTag -> responseDTO.getLanguageTagIds().add(languageTag.getId()));
+            .forEach(language -> responseDTO.getLanguageIds().add(language.getId()));
 
         responseDTO.setContributions(
             PersonContributionConverter.publicationSeriesContributionToDTO(

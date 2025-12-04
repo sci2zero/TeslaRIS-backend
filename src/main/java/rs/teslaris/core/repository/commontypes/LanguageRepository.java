@@ -10,5 +10,5 @@ import rs.teslaris.core.model.commontypes.Language;
 public interface LanguageRepository extends JpaRepository<Language, Integer> {
 
     @Query("SELECT l FROM Language l WHERE l.languageCode = :code")
-    Optional<Language> getLanguageTagByLanguageCode(String code);
+    Optional<Language> getLanguageByLanguageCode(String code);
 }

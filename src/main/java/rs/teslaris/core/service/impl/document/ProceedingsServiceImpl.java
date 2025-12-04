@@ -27,7 +27,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingsJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -60,7 +60,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private final ProceedingsRepository proceedingsRepository;
 
-    private final LanguageTagService languageTagService;
+    private final LanguageService languageService;
 
     private final JournalService journalService;
 
@@ -96,7 +96,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
-                                  LanguageTagService languageTagService,
+                                  LanguageService languageService,
                                   JournalService journalService,
                                   BookSeriesService bookSeriesService, EventService eventService1,
                                   PublisherService publisherService,
@@ -111,7 +111,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             involvementRepository, organisationUnitOutputConfigurationService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
-        this.languageTagService = languageTagService;
+        this.languageService = languageService;
         this.journalService = journalService;
         this.bookSeriesService = bookSeriesService;
         this.eventService = eventService1;
@@ -311,9 +311,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         proceedings.setNameAbbreviation(
             multilingualContentService.getMultilingualContent(proceedingsDTO.getAcronym()));
 
-        proceedingsDTO.getLanguageTagIds().forEach(id -> {
-            proceedings.getLanguages().add(languageTagService.findLanguageTagById(id));
-        });
+        proceedingsDTO.getLanguageIds().forEach(languageId -> proceedings.getLanguages()
+            .add(languageService.findLanguageById(languageId)));
 
         proceedings.setEvent(eventService.findOne(proceedingsDTO.getEventId()));
 

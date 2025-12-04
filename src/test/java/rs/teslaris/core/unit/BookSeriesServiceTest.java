@@ -114,7 +114,7 @@ public class BookSeriesServiceTest {
         bookSeriesDTO.setEissn("1234-5678");
         bookSeriesDTO.setPrintISSN("1234-5678");
         bookSeriesDTO.setContributions(new ArrayList<>());
-        bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
+        bookSeriesDTO.setLanguageIds(new ArrayList<>());
 
         var bookSeriesIndex = new BookSeriesIndex();
         bookSeriesIndex.setDatabaseId(1);
@@ -142,7 +142,7 @@ public class BookSeriesServiceTest {
         bookSeriesDTO.setEissn("1234-5676");
         bookSeriesDTO.setPrintISSN("1234-5676");
         bookSeriesDTO.setContributions(new ArrayList<>());
-        bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
+        bookSeriesDTO.setLanguageIds(new ArrayList<>());
 
         var bookSeries = new BookSeries();
 

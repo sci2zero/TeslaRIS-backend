@@ -25,7 +25,7 @@ public class ProceedingsDTO extends DocumentDTO implements PublishableDTO, InSer
     private Integer numberOfPages;
 
     @NotNull(message = "You have to provide languages.")
-    private List<Integer> languageTagIds;
+    private List<Integer> languageIds;
 
     @Positive(message = "Publisher ID cannot be negative or zero.")
     private Integer publisherId;

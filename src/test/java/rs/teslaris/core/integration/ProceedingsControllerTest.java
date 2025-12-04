@@ -49,7 +49,7 @@ public class ProceedingsControllerTest extends BaseTest {
             new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
         proceedingsDTO.setContributions(List.of(contribution));
         proceedingsDTO.setUris(new HashSet<>());
-        proceedingsDTO.setLanguageTagIds(new ArrayList<>());
+        proceedingsDTO.setLanguageIds(new ArrayList<>());
 
         return proceedingsDTO;
     }

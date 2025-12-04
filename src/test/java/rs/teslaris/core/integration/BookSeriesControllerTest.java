@@ -49,7 +49,7 @@ public class BookSeriesControllerTest extends BaseTest {
         contribution.setPersonName(
             new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
         bookSeriesDTO.setContributions(List.of(contribution));
-        bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
+        bookSeriesDTO.setLanguageIds(new ArrayList<>());
 
         return bookSeriesDTO;
     }

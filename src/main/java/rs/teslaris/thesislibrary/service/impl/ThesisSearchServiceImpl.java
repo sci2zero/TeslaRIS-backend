@@ -106,7 +106,7 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                                   List<ThesisType> allowedTypes, LocalDate startDate,
                                   LocalDate endDate, SearchRequestType searchRequestType,
                                   Boolean showOnlyOpenAccessTheses) {
-        var minShouldMatch = "2<-80% 5<-70% 10<-60%";
+        var minShouldMatch = getMinimumShouldMatch(tokens.size());
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildMetadataQuery(facultyIds, authorIds, advisorIds, boardMemberIds,
@@ -223,5 +223,21 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                 .map(FieldValue::of)
                 .toList()))
         )._toQuery();
+    }
+
+    private String getMinimumShouldMatch(Integer tokensLength) {
+        String minShouldMatch = "1";
+
+        if (tokensLength > 1) {
+            if (tokensLength == 2) {
+                minShouldMatch = "2";
+            } else if (tokensLength < 7) {
+                minShouldMatch = String.valueOf((int) Math.floor(0.75 * tokensLength));
+            } else {
+                minShouldMatch = String.valueOf((int) Math.floor(0.6 * tokensLength));
+            }
+        }
+
+        return minShouldMatch;
     }
 }

@@ -53,17 +53,17 @@ public class ProceedingsConverter extends DocumentConverter
         dto.setAcronym(multilingualContentConverter.toDTO(record.getAcronym()));
 
         if (Objects.nonNull(record.getLanguage())) {
-            var languageTagValue = deduceLanguageTagValue(record);
+            var languageCode = deduceLanguageCode(record);
 
-            var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
+            var languageTag = languageTagService.findLanguageTagByValue(languageCode);
             if (Objects.nonNull(languageTag.getId())) {
-                dto.setLanguageTagIds(List.of(languageTag.getId()));
+                dto.setLanguageIds(List.of(languageTag.getId()));
             } else {
-                log.warn("No saved language with tag: {}", languageTagValue);
+                log.warn("No saved language with code: {}", languageCode);
                 return null;
             }
         } else {
-            dto.setLanguageTagIds(Collections.emptyList());
+            dto.setLanguageIds(Collections.emptyList());
         }
 
         if (Objects.nonNull(record.getOutputFrom().getEvent().getOldId()) &&

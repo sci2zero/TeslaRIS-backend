@@ -783,7 +783,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setLanguageTagIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new ArrayList<>());
 
         synchronized (journalLock) {
             potentialMatch = searchPotentialMatches(documentImport);
@@ -811,7 +811,7 @@ public class CommonLoaderImpl implements CommonLoader {
         proceedingsDTO.setKeywords(new ArrayList<>());
         proceedingsDTO.setContributions(new ArrayList<>());
         proceedingsDTO.setUris(new HashSet<>());
-        proceedingsDTO.setLanguageTagIds(new ArrayList<>());
+        proceedingsDTO.setLanguageIds(new ArrayList<>());
 
         var publicationSeries =
             publicationSeriesService.findPublicationSeriesByIssn(proceedingsPublication.getEIssn(),

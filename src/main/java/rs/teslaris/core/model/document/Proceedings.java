@@ -15,7 +15,7 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
-import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Getter
@@ -39,7 +39,7 @@ public non-sealed class Proceedings extends Document
     private Integer numberOfPages;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    private Set<LanguageTag> languages = new HashSet<>();
+    private Set<Language> languages = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")

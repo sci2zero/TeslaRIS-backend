@@ -192,9 +192,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setPrintIsbn(proceedings.getPrintISBN());
         commonExportDocument.setVolume(proceedings.getPublicationSeriesVolume());
         commonExportDocument.setIssue(proceedings.getPublicationSeriesIssue());
-        proceedings.getLanguages().forEach(languageTag -> {
-            commonExportDocument.getLanguageTags().add(languageTag.getLanguageTag());
-        });
+        proceedings.getLanguages().forEach(
+            language -> commonExportDocument.getLanguageTags().add(language.getLanguageCode()));
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             commonExportDocument.setJournal(ExportPublicationSeriesConverter.toCommonExportModel(
@@ -262,9 +261,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get().getContent());
         }
 
-        monograph.getLanguages().forEach(languageTag -> {
-            commonExportDocument.getLanguageTags().add(languageTag.getLanguageTag());
-        });
+        monograph.getLanguages().forEach(languageTag -> commonExportDocument.getLanguageTags()
+            .add(languageTag.getLanguageCode()));
 
         return commonExportDocument;
     }

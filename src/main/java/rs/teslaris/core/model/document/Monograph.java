@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLRestriction;
-import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 
 @Getter
@@ -55,7 +55,7 @@ public non-sealed class Monograph extends Document
     private PublicationSeries publicationSeries;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    private Set<LanguageTag> languages = new HashSet<>();
+    private Set<Language> languages = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "research_area_id")

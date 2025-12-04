@@ -32,7 +32,7 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
         proceedingsResponseDTO.setAcronym(MultilingualContentConverter.getMultilingualContentDTO(
             proceedings.getNameAbbreviation()));
 
-        proceedingsResponseDTO.setLanguageTagIds(new ArrayList<>());
+        proceedingsResponseDTO.setLanguageIds(new ArrayList<>());
         setLanguageInfo(proceedings, proceedingsResponseDTO);
         setPublicationSeriesInfo(proceedings, proceedingsResponseDTO);
         setEventInfo(proceedings, proceedingsResponseDTO);
@@ -41,9 +41,8 @@ public class ProceedingsConverter extends DocumentPublicationConverter {
 
     private static void setLanguageInfo(Proceedings proceedings,
                                         ProceedingsResponseDTO proceedingsResponseDTO) {
-        proceedings.getLanguages().forEach(languageTag -> {
-            proceedingsResponseDTO.getLanguageTagIds().add(languageTag.getId());
-        });
+        proceedings.getLanguages().forEach(
+            languageTag -> proceedingsResponseDTO.getLanguageIds().add(languageTag.getId()));
     }
 
     private static void setPublicationSeriesInfo(Proceedings proceedings,

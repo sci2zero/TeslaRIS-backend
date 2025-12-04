@@ -32,8 +32,8 @@ public class PublicationSeriesDTO {
     @NotNull(message = "You have to provide contributions.")
     private List<PersonPublicationSeriesContributionDTO> contributions;
 
-    @NotNull(message = "You have to provide language tags.")
-    private List<Integer> languageTagIds;
+    @NotNull(message = "You have to provide languages.")
+    private List<Integer> languageIds;
 
     @NotNull(message = "You have to provide name abbreviations.")
     private List<MultilingualContentDTO> nameAbbreviation;

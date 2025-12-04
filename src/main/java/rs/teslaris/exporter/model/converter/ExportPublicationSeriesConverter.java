@@ -68,7 +68,7 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
         });
 
         publicationSeries.getLanguages().forEach(languageTag -> {
-            commonExportPublicationSeries.getLanguageTags().add(languageTag.getLanguageTag());
+            commonExportPublicationSeries.getLanguageTags().add(languageTag.getLanguageCode());
         });
 
         if (computeRelations) {

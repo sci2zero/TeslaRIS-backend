@@ -9,7 +9,6 @@
         // Main OAI-PMH namespaces
         @jakarta.xml.bind.annotation.XmlNs(prefix = "oai", namespaceURI = "http://www.openarchives.org/OAI/2.0/"),
         @jakarta.xml.bind.annotation.XmlNs(prefix = "oai-id", namespaceURI = "http://www.openarchives.org/OAI/2.0/oai-identifier"),
-        @jakarta.xml.bind.annotation.XmlNs(prefix = "schemaLocation", namespaceURI = "http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"),
 
         // OpenAIRE CERIF namespaces
         @jakarta.xml.bind.annotation.XmlNs(prefix = "cerif", namespaceURI = "https://www.openaire.eu/cerif-profile/1.1/"),

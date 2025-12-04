@@ -30,7 +30,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -62,7 +62,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private final MonographJPAServiceImpl monographJPAService;
 
-    private final LanguageTagService languageTagService;
+    private final LanguageService languageService;
 
     private final JournalService journalService;
 
@@ -100,7 +100,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 InvolvementRepository involvementRepository,
                                 OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                 MonographJPAServiceImpl monographJPAService,
-                                LanguageTagService languageTagService,
+                                LanguageService languageService,
                                 JournalService journalService,
                                 BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
@@ -115,7 +115,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService);
         this.monographJPAService = monographJPAService;
-        this.languageTagService = languageTagService;
+        this.languageService = languageService;
         this.journalService = journalService;
         this.bookSeriesService = bookSeriesService;
         this.researchAreaService = researchAreaService;
@@ -304,9 +304,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         monograph.setVolume(monographDTO.getVolume());
         monograph.setNumber(monographDTO.getNumber());
 
-        monographDTO.getLanguageTagIds().forEach(id -> {
-            monograph.getLanguages().add(languageTagService.findLanguageTagById(id));
-        });
+        if (Objects.nonNull(monographDTO.getLanguageIds())) {
+            monographDTO.getLanguageIds()
+                .forEach(id ->
+                    monograph.getLanguages().add(languageService.findLanguageById(id))
+                );
+        }
 
         if (Objects.nonNull(monographDTO.getPublicationSeriesId())) {
             var optionalJournal =

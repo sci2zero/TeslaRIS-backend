@@ -166,7 +166,7 @@ public class MonographServiceTest {
     void shouldCreateAndApproveMonographWhenDocumentApprovedByDefault() {
         // Given
         var monographDTO = new MonographDTO();
-        monographDTO.setLanguageTagIds(new ArrayList<>());
+        monographDTO.setLanguageIds(new ArrayList<>());
         var newMonograph = new Monograph();
         newMonograph.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -185,7 +185,7 @@ public class MonographServiceTest {
     void shouldCreateAndRequestMonographWhenDocumentNotApprovedByDefault() {
         // Given
         var monographDTO = new MonographDTO();
-        monographDTO.setLanguageTagIds(new ArrayList<>());
+        monographDTO.setLanguageIds(new ArrayList<>());
         var newMonograph = new Monograph();
         newMonograph.setApproveStatus(ApproveStatus.REQUESTED);
 
@@ -206,7 +206,7 @@ public class MonographServiceTest {
     void shouldNotIndexMonographWhenIndexIsFalse() {
         // Given
         var monographDTO = new MonographDTO();
-        monographDTO.setLanguageTagIds(new ArrayList<>());
+        monographDTO.setLanguageIds(new ArrayList<>());
         var newMonograph = new Monograph();
         newMonograph.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -226,7 +226,7 @@ public class MonographServiceTest {
         // Given
         var monographId = 1;
         var monographDTO = new MonographDTO();
-        monographDTO.setLanguageTagIds(new ArrayList<>());
+        monographDTO.setLanguageIds(new ArrayList<>());
         monographDTO.setDocumentDate("2025");
         var monographToUpdate = new Monograph();
         monographToUpdate.setId(monographId);
@@ -251,7 +251,7 @@ public class MonographServiceTest {
         // Given
         var monographId = 1;
         var monographDTO = new MonographDTO();
-        monographDTO.setLanguageTagIds(new ArrayList<>());
+        monographDTO.setLanguageIds(new ArrayList<>());
         monographDTO.setDocumentDate("2025");
         var monographToUpdate = new Monograph();
         monographToUpdate.setId(monographId);

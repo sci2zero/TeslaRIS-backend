@@ -20,7 +20,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
-import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
@@ -52,7 +52,7 @@ public abstract class PublicationSeries extends BaseEntity implements Mergeable 
     private Set<PersonPublicationSeriesContribution> contributions = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    private Set<LanguageTag> languages = new HashSet<>();
+    private Set<Language> languages = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> nameAbbreviation = new HashSet<>();
