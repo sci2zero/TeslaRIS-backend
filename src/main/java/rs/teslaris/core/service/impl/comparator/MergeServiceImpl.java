@@ -10,12 +10,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
+import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -151,6 +154,8 @@ public class MergeServiceImpl implements MergeService {
 
     private final IndexBulkUpdateService indexBulkUpdateService;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
     @Override
     public void switchJournalPublicationToOtherJournal(Integer targetJournalId,
@@ -247,7 +252,7 @@ public class MergeServiceImpl implements MergeService {
 
     @Override
     public void switchPersonToOtherOU(Integer sourceOUId, Integer targetOUId, Integer personId) {
-        performEmployeeSwitch(sourceOUId, targetOUId, personId);
+        performEmployeeSwitch(sourceOUId, targetOUId, personId, true);
     }
 
     @Override
@@ -255,12 +260,16 @@ public class MergeServiceImpl implements MergeService {
         processChunks(
             sourceOUId,
             (srcId, personIndex) -> performEmployeeSwitch(srcId, targetOUId,
-                personIndex.getDatabaseId()),
+                personIndex.getDatabaseId(), false),
             pageRequest -> personService.findPeopleForOrganisationUnit(sourceOUId, List.of("*"),
                     pageRequest,
                     false)
                 .getContent()
         );
+
+        // Bulk reindex bound entities (persons + publications)
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(targetOUId));
     }
 
     @Override
@@ -847,7 +856,8 @@ public class MergeServiceImpl implements MergeService {
         proceedingsService.indexProceedings(proceedings, index);
     }
 
-    private void performEmployeeSwitch(Integer sourceOUId, Integer targetOUId, Integer personId) {
+    private void performEmployeeSwitch(Integer sourceOUId, Integer targetOUId, Integer personId,
+                                       boolean reindexPersonEmploymentInformation) {
         var person = personService.findOne(personId);
 
         person.getInvolvements().forEach(involvement -> {
@@ -860,7 +870,13 @@ public class MergeServiceImpl implements MergeService {
         });
 
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
-        personService.indexPerson(person);
+
+        if (reindexPersonEmploymentInformation) {
+            personService.reindexPersonEmploymentDetails(person);
+            applicationEventPublisher.publishEvent(
+                new PersonEmploymentOUHierarchyStructureChangedEvent(
+                    person.getId()));
+        }
     }
 
     private <T> void processChunks(int sourceId,

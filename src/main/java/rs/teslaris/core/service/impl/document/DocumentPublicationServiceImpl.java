@@ -807,7 +807,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             entityChunk.forEach(document -> {
                 var index = indexMap.get(document.getId());
-                if (index != null) {
+                if (Objects.nonNull(index)) {
                     setEmploymentIndexInformation(
                         index,
                         new ArrayList<>(document.getContributors()),

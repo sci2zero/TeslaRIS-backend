@@ -91,6 +91,8 @@ public interface PersonService extends JPAService<Person> {
 
     void indexPerson(Person savedPerson);
 
+    void reindexPersonEmploymentDetails(Person savedPerson);
+
     Integer getPersonIdForUserId(Integer userId);
 
     List<Integer> findInstitutionIdsForPerson(Integer personId);

@@ -1068,6 +1068,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         reindexSubUnitRelationsAndTerminateClientStatus(
             relationToDelete.getSourceOrganisationUnit());
+
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(
+                relationToDelete.getSourceOrganisationUnit().getId()));
     }
 
     @Override
@@ -1086,6 +1090,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         reindexSubUnitRelationsAndTerminateClientStatus(subOu);
 
         organisationUnitsRelationRepository.delete(relations.getFirst());
+
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(subOu.getId()));
     }
 
     private void reindexSubUnitRelationsAndTerminateClientStatus(

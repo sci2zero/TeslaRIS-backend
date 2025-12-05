@@ -26,11 +26,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
+import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
@@ -207,6 +210,9 @@ public class MergeServiceTest {
 
     @Mock
     private ThesisRepository thesisRepository;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -431,7 +437,9 @@ public class MergeServiceTest {
         // then
         verify(personService).findOne(personId);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(personId);
-        verify(personService).indexPerson(person);
+        verify(personService).reindexPersonEmploymentDetails(person);
+        verify(applicationEventPublisher).publishEvent(any(
+            PersonEmploymentOUHierarchyStructureChangedEvent.class));
     }
 
     @Test
@@ -462,6 +470,9 @@ public class MergeServiceTest {
         // then
         verify(personService, atLeastOnce()).findPeopleForOrganisationUnit(eq(sourceOUId),
             eq(searchTokens), any(PageRequest.class), eq(false));
+        verify(applicationEventPublisher).publishEvent(
+            any(OrganisationUnitSignificantChangeEvent.class));
+        verify(personService, never()).reindexPersonEmploymentDetails(person);
     }
 
     @Test
