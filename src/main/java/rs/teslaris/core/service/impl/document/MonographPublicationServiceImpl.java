@@ -165,6 +165,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var monographPublicationToUpdate =
             monographPublicationJPAService.findOne(monographPublicationId);
 
+        clearCommonFields(monographPublicationToUpdate);
         setCommonFields(monographPublicationToUpdate, monographPublicationDTO);
         setMonographPublicationRelatedFields(monographPublicationToUpdate, monographPublicationDTO);
 
