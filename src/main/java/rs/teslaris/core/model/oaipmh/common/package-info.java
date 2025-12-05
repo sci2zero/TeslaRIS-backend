@@ -7,7 +7,6 @@
         @jakarta.xml.bind.annotation.XmlNs(prefix = "xs", namespaceURI = "http://www.w3.org/2001/XMLSchema"),
 
         // Main OAI-PMH namespaces
-        @jakarta.xml.bind.annotation.XmlNs(prefix = "oai", namespaceURI = "http://www.openarchives.org/OAI/2.0/"),
         @jakarta.xml.bind.annotation.XmlNs(prefix = "oai-id", namespaceURI = "http://www.openarchives.org/OAI/2.0/oai-identifier"),
 
         // OpenAIRE CERIF namespaces
