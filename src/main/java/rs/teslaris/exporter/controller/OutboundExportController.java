@@ -122,6 +122,9 @@ public class OutboundExportController {
                         break;
                     }
 
+                    response.getRequest().setSet(dataFromToken.set());
+                    response.getRequest().setMetadataPrefix(dataFromToken.format());
+
                     try {
                         setterMethod.accept(
                             outboundExportService.listRequestedRecords(handlerName,

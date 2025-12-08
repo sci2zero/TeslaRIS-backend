@@ -63,6 +63,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
@@ -89,6 +90,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.files.ImageUtil;
 import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 
@@ -1588,5 +1590,148 @@ public class PersonServiceTest {
 
         // Then
         verify(documentPublicationIndexRepository).countDocumentsWithAuthorInAnyRole(eq(personId));
+    }
+
+    @Test
+    public void shouldReindexPersonEmploymentDetailsWhenPersonIndexExists() {
+        // Given
+        Person savedPerson = new Person();
+        savedPerson.setId(1);
+
+        var employment = new Employment();
+        employment.setInvolvementType(InvolvementType.EMPLOYED_AT);
+        employment.setDateTo(null);
+
+        OrganisationUnit orgUnit = new OrganisationUnit();
+        orgUnit.setId(100);
+        Set<MultiLingualContent> orgName = new HashSet<>();
+        orgName.add(new MultiLingualContent(
+            new LanguageTag() {{
+                setLanguageTag(LanguageAbbreviations.SERBIAN);
+            }},
+            "Univerzitet u Beogradu", 1));
+        orgName.add(new MultiLingualContent(
+            new LanguageTag() {{
+                setLanguageTag(LanguageAbbreviations.ENGLISH);
+            }},
+            "University of Belgrade", 2));
+        orgUnit.setName(orgName);
+        orgUnit.setNameAbbreviation("UB");
+        employment.setOrganisationUnit(orgUnit);
+
+        savedPerson.setInvolvements(Set.of(employment));
+
+        PersonIndex personIndex = new PersonIndex();
+        personIndex.setDatabaseId(1);
+        personIndex.setEmploymentInstitutionsId(new ArrayList<>());
+        personIndex.setEmploymentInstitutionsIdHierarchy(new ArrayList<>());
+
+        when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.of(personIndex));
+        when(organisationUnitService.getSuperOUsHierarchyRecursive(100))
+            .thenReturn(Arrays.asList(50, 25));
+
+        // When
+        personService.reindexPersonEmploymentDetails(savedPerson);
+
+        // Then
+        verify(personIndexRepository, times(1)).findByDatabaseId(1);
+        verify(organisationUnitService, times(1)).getSuperOUsHierarchyRecursive(100);
+        verify(personIndexRepository, times(1)).save(personIndex);
+
+        assertThat(personIndex.getEmploymentInstitutionsId()).containsExactly(100);
+        assertThat(personIndex.getEmploymentInstitutionsIdHierarchy())
+            .containsExactly(100, 50, 25);
+        assertThat(personIndex.getEmploymentsSr()).contains("Univerzitet u Beogradu | UB");
+        assertThat(personIndex.getEmploymentsOther()).contains("University of Belgrade");
+    }
+
+    @Test
+    public void shouldNotReindexWhenPersonIndexDoesNotExist() {
+        // Given
+        Person savedPerson = new Person();
+        savedPerson.setId(1);
+
+        when(personIndexRepository.findByDatabaseId(1)).thenReturn(Optional.empty());
+
+        // When
+        personService.reindexPersonEmploymentDetails(savedPerson);
+
+        // Then
+        verify(personIndexRepository, times(1)).findByDatabaseId(1);
+        verify(personIndexRepository, never()).save(any(PersonIndex.class));
+    }
+
+    @Test
+    public void shouldHandlePastEmploymentsAndClearFieldsProperly() {
+        // Given
+        Person savedPerson = new Person();
+        savedPerson.setId(2);
+
+        var currentEmp = new Employment();
+        currentEmp.setInvolvementType(InvolvementType.EMPLOYED_AT);
+        currentEmp.setDateTo(null);
+        OrganisationUnit currentOrg = new OrganisationUnit();
+        currentOrg.setId(200);
+        var currentName = new HashSet<MultiLingualContent>();
+        currentName.add(new MultiLingualContent(
+            new LanguageTag() {{
+                setLanguageTag(LanguageAbbreviations.SERBIAN);
+            }},
+            "Univerzitet u Novom Sadu", 1));
+        currentName.add(new MultiLingualContent(
+            new LanguageTag() {{
+                setLanguageTag(LanguageAbbreviations.ENGLISH);
+            }},
+            "University of Novi Sad", 2));
+        currentOrg.setName(currentName);
+        currentEmp.setOrganisationUnit(currentOrg);
+
+        var pastEmp = new Employment();
+        pastEmp.setInvolvementType(InvolvementType.HIRED_BY);
+        pastEmp.setDateTo(LocalDate.now().minusYears(1));
+        OrganisationUnit pastOrg = new OrganisationUnit();
+        pastOrg.setId(300);
+        pastEmp.setOrganisationUnit(pastOrg);
+
+        var candidate = new Employment();
+        candidate.setInvolvementType(InvolvementType.CANDIDATE);
+        candidate.setDateTo(null);
+        OrganisationUnit candidateOrg = new OrganisationUnit();
+        candidateOrg.setId(400);
+        candidate.setOrganisationUnit(candidateOrg);
+
+        savedPerson.setInvolvements(Set.of(currentEmp, pastEmp, candidate));
+
+        PersonIndex personIndex = new PersonIndex();
+        personIndex.setDatabaseId(2);
+        personIndex.setEmploymentInstitutionsId(new ArrayList<>(List.of(999)));
+        personIndex.setEmploymentInstitutionsIdHierarchy(new ArrayList<>(List.of(999)));
+        personIndex.setEmploymentsSr("Old employment");
+        personIndex.setEmploymentsOther("Old other");
+
+        when(personIndexRepository.findByDatabaseId(2)).thenReturn(Optional.of(personIndex));
+        when(organisationUnitService.getSuperOUsHierarchyRecursive(200))
+            .thenReturn(List.of(100));
+        when(organisationUnitService.getSuperOUsHierarchyRecursive(400))
+            .thenReturn(List.of(150));
+
+        // When
+        personService.reindexPersonEmploymentDetails(savedPerson);
+
+        // Then
+        verify(personIndexRepository, times(1)).save(personIndex);
+
+        assertThat(personIndex.getEmploymentInstitutionsId()).doesNotContain(999);
+        assertThat(personIndex.getEmploymentInstitutionsIdHierarchy()).doesNotContain(999);
+        assertThat(personIndex.getEmploymentsSr()).doesNotContain("Old employment");
+
+        assertThat(personIndex.getEmploymentInstitutionsId()).containsExactly(200);
+
+        assertThat(personIndex.getEmploymentInstitutionsIdHierarchy())
+            .contains(200, 400, 100, 150);
+        assertThat(personIndex.getPastEmploymentInstitutionIds()).containsExactly(300);
+        assertThat(personIndex.getEmploymentsSr()).contains("Univerzitet u Novom Sadu");
+        assertThat(personIndex.getEmploymentsSrSortable()).isEqualTo(
+            personIndex.getEmploymentsSr());
     }
 }

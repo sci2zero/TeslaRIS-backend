@@ -47,14 +47,11 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingServic
 @Traceable
 public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReportingService {
 
+    public static final Object lock = new Object();
     private final ThesisRepository thesisRepository;
-
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
-
     private final OrganisationUnitService organisationUnitService;
-
     private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
-
     private final LoadingCache<ThesisReportRequestDTO, List<ThesisReportCountsDTO>>
         thesisReportCache =
         CacheBuilder.newBuilder()
@@ -66,7 +63,6 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
                     return fetchThesisCounts(request);
                 }
             });
-
 
     @Override
     public List<ThesisReportCountsDTO> createThesisCountsReport(ThesisReportRequestDTO request) {
@@ -187,15 +183,17 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
         }
 
         try {
-            var document = ReportTemplateEngine.loadDocumentTemplate("phdLibraryReport.docx");
-
             var reportCounts = createThesisCountsReport(request);
             var reportData = generateReportData(request, reportCounts, locale);
 
-            ReportTemplateEngine.insertFields(document, reportData.a);
-            ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
+            synchronized (lock) {
+                var document = ReportTemplateEngine.loadDocumentTemplate("phdLibraryReport.docx");
 
-            return ReportTemplateEngine.getReportAsResource(document);
+                ReportTemplateEngine.insertFields(document, reportData.a);
+                ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
+
+                return ReportTemplateEngine.getReportAsResource(document);
+            }
         } catch (IOException e) {
             throw new LoadingException(
                 "Unable to load report template file."); // Should never happen
