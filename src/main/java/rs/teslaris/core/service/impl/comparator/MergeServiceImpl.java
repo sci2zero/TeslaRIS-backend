@@ -854,6 +854,11 @@ public class MergeServiceImpl implements MergeService {
         var index = documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             proceedingsId).orElse(new DocumentPublicationIndex());
         proceedingsService.indexProceedings(proceedings, index);
+
+        proceedingsPublicationRepository.switchAllFromProceedingsToNewEvent(proceedingsId,
+            targetConference);
+        indexBulkUpdateService.setIdFieldForRecord("document_publication", "proceedings_id",
+            proceedingsId, "event_id", targetConferenceId);
     }
 
     private void performEmployeeSwitch(Integer sourceOUId, Integer targetOUId, Integer personId,

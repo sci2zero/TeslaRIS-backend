@@ -169,7 +169,7 @@ public class ReindexServiceImpl implements ReindexService {
         try {
             reindexOperation.run();
         } catch (Exception e) {
-            log.error(errorMessage + ": ", e);
+            log.error("Error during publication reindexing: {}", errorMessage, e);
         }
     }
 

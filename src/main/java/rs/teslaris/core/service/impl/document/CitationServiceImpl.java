@@ -111,7 +111,8 @@ public class CitationServiceImpl implements CitationService {
                                 " does not exist"));
                 itemBuilder
                     .containerTitle(
-                        getContent(proceedingsPublication.getEvent().getName(), languageCode))
+                        getContent(proceedingsPublication.getProceedings().getEvent().getName(),
+                            languageCode))
                     .number(proceedingsPublication.getArticleNumber())
                     .page(proceedingsPublication.getStartPage(),
                         proceedingsPublication.getEndPage());
@@ -123,7 +124,7 @@ public class CitationServiceImpl implements CitationService {
                 .ifPresent(publisher -> {
                     itemBuilder.publisher(getContent(publisher.getName(), languageCode));
 
-                    if (Objects.nonNull(publisher.getPlace())) {
+                    if (Objects.nonNull(publisher.getPlace()) && !publisher.getPlace().isEmpty()) {
                         itemBuilder.publisherPlace(getContent(publisher.getPlace(), languageCode));
                     }
                 });
