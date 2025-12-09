@@ -930,6 +930,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.getSubTitle(), false);
 
         StringUtil.removeTrailingDelimiters(contentSr, contentOther);
+        index.setHasSrContent(!contentSr.isEmpty());
+
         index.setTitleSr(!contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
         index.setTitleOther(
             !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
@@ -1121,8 +1123,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
             .limit(30)
             .map(entry -> new Pair<>(
-                language.endsWith("-CYR") ? SerbianTransliteration.toCyrillic(entry.getKey()) :
-                    entry.getKey(), entry.getValue()))
+                ((language.endsWith("-CYR") && document.getHasSrContent()) ?
+                    SerbianTransliteration.toCyrillic(entry.getKey()) : entry.getKey()),
+                entry.getValue()))
             .collect(Collectors.toList());
     }
 

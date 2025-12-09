@@ -3,17 +3,15 @@ package rs.teslaris.core.model.rocrate;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class MonographPublication extends PublicationBase {
 
-    private String additionalType = "Chapter";
+    private String additionalType;
 
     private String monographTitle;
 
@@ -22,4 +20,10 @@ public class MonographPublication extends PublicationBase {
     private String pageStart;
 
     private String pageEnd;
+
+
+    public MonographPublication() {
+        this.setType("Chapter");
+        this.additionalType = "ScholarlyArticle";
+    }
 }

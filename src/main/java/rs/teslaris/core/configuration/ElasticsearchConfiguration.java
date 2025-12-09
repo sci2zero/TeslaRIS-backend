@@ -20,7 +20,8 @@ public class ElasticsearchConfiguration
     extends org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration {
 
     private final int CONNECT_TIMEOUT_SECONDS = 10;
-    private final int SOCKET_TIMEOUT_SECONDS = 30;
+
+    private final int SOCKET_TIMEOUT_SECONDS = 120;
 
     @Value("${elasticsearch.host}")
     private String host;

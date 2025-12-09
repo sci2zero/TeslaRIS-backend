@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.commontypes.ContactFormContentDTO;
 import rs.teslaris.core.service.impl.commontypes.FeedbackServiceImpl;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.email.EmailUtil;
 
 @SpringBootTest
@@ -20,13 +21,16 @@ public class FeedbackServiceTest {
     @Mock
     private EmailUtil emailUtil;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private FeedbackServiceImpl feedbackService;
 
 
     @BeforeEach
     void setUp() {
-        feedbackService = new FeedbackServiceImpl(emailUtil);
+        feedbackService = new FeedbackServiceImpl(emailUtil, userService);
 
         Field feedbackEmailField;
         try {

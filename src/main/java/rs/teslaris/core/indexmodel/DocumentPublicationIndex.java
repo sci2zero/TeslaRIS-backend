@@ -250,4 +250,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "is_added_to_registry_book", store = true)
     private Boolean isAddedToRegistryBook;
+
+    @Field(type = FieldType.Boolean, name = "has_sr_content", store = true)
+    private Boolean hasSrContent;
 }

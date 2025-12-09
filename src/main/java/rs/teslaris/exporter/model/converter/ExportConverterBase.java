@@ -23,6 +23,7 @@ import rs.teslaris.core.model.oaipmh.dspaceinternal.DimField;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.publication.PublicationType;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
@@ -189,7 +190,10 @@ public class ExportConverterBase {
     }
 
     public static void applyCustomMappings(Object convertedEntity, ExportDataFormat format,
+                                           OrganisationUnitService organisationUnitService,
                                            ExportHandlersConfigurationLoader.Handler handler) {
+        var sourceInstitutionId = Integer.parseInt(handler.internalInstitutionId());
+
         if ((format.equals(ExportDataFormat.DUBLIN_CORE) ||
             format.equals(ExportDataFormat.ETD_MS))) {
             var typeKey = ((DC) convertedEntity).getType().getFirst().getValue().toUpperCase();
@@ -198,6 +202,10 @@ public class ExportConverterBase {
             ((DC) convertedEntity).getType().clear();
             ((DC) convertedEntity).getType()
                 .addAll(constructDCTypeFields(handler, typeKey, concreteTypeKey));
+
+            organisationUnitService.findOne(sourceInstitutionId).getName()
+                .forEach(name ->
+                    ((DC) convertedEntity).getSource().add(name.getContent()));
         } else if (format.equals(ExportDataFormat.DSPACE_INTERNAL_MODEL)) {
             var typeField = ((Dim) convertedEntity).getFields().stream()
                 .filter(field -> field.getElement().equals("type")).findFirst();
@@ -214,6 +222,16 @@ public class ExportConverterBase {
                 dcType -> ((Dim) convertedEntity).getFields().add(
                     new DimField("dc", "type", dcType.getScheme(), dcType.getLang(), null, null,
                         dcType.getValue())));
+
+            organisationUnitService.findOne(sourceInstitutionId).getName()
+                .forEach(name -> {
+                    var field = new DimField();
+                    field.setMdschema("dc");
+                    field.setElement("source");
+                    field.setLanguage(name.getLanguage().getLanguageTag());
+                    field.setValue(name.getContent());
+                    ((Dim) convertedEntity).getFields().add(field);
+                });
         }
     }
 

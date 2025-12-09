@@ -127,7 +127,7 @@ public class RegistryBookGenerationUtil {
                 personalInformation.getPlaceOfBrith() + "\n" +
                 getTableLabel("reporting.registry-book.municipality", lang) +
                 "\n" +
-                personalInformation.getMunicipalityOfBrith() + "\n";
+                Objects.requireNonNullElse(personalInformation.getMunicipalityOfBrith(), "") + "\n";
 
         if (Objects.nonNull(personalInformation.getCountryOfBirth())) {
             birthInformation +=

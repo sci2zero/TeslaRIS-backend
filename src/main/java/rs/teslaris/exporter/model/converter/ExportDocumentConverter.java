@@ -1,6 +1,7 @@
 package rs.teslaris.exporter.model.converter;
 
 import com.google.common.base.Functions;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -307,6 +308,15 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         commonExportDocument.setThesisType(thesis.getThesisType());
 
+        if (Objects.nonNull(thesis.getThesisDefenceDate())) {
+            commonExportDocument.setThesisDefenceDate(thesis.getThesisDefenceDate());
+        } else if (Objects.nonNull(thesis.getPublicReviewStartDates()) &&
+            !thesis.getPublicReviewStartDates().isEmpty()) {
+            var latestPublicReviewDate = thesis.getPublicReviewStartDates().stream()
+                .max(Comparator.naturalOrder()).stream().findFirst().get();
+            commonExportDocument.setThesisDefenceDate(latestPublicReviewDate);
+        }
+
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             commonExportDocument.setThesisGrantor(
                 ExportOrganisationUnitConverter.toCommonExportModel(thesis.getOrganisationUnit(),
@@ -373,6 +383,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 fileItem.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
                 commonExportDocument.getUris()
                     .add(baseFrontendUrl + "api/file/" + fileItem.getServerFilename());
+            }
+
+            if (fileItem.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION)) {
+                commonExportDocument.setOfficialFileName(fileItem.getServerFilename());
             }
         });
         document.getProofs().forEach(fileItem -> {
@@ -826,7 +840,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             }
             field.setMdschema("dc");
             field.setElement("creator");
-            field.setValue(author.getDisplayName());
+            field.setValue(StringUtil.formatNameToLastNameFirst(author.getDisplayName()));
             dimPublication.getFields().add(field);
         });
 
@@ -840,7 +854,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             field.setMdschema("dc");
             field.setElement("contributor");
             field.setQualifier("editor");
-            field.setValue(editor.getDisplayName());
+            field.setValue(StringUtil.formatNameToLastNameFirst(editor.getDisplayName()));
             dimPublication.getFields().add(field);
         });
 
@@ -854,7 +868,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             field.setMdschema("dc");
             field.setElement("contributor");
             field.setQualifier("advisor");
-            field.setValue(advisor.getDisplayName());
+            field.setValue(StringUtil.formatNameToLastNameFirst(advisor.getDisplayName()));
             dimPublication.getFields().add(field);
         });
 
@@ -868,7 +882,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             field.setMdschema("dc");
             field.setElement("contributor");
             field.setQualifier("board member");
-            field.setValue(boardMember.getDisplayName());
+            field.setValue(StringUtil.formatNameToLastNameFirst(boardMember.getDisplayName()));
             dimPublication.getFields().add(field);
         });
 
@@ -910,8 +924,27 @@ public class ExportDocumentConverter extends ExportConverterBase {
             dimPublication.getFields().add(field);
         });
 
-        dimPublication.getFields().add(new DimField("dc", "date", "issued", null, null, null,
-            exportDocument.getDocumentDate()));
+        if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
+            if (Objects.nonNull(exportDocument.getThesisDefenceDate())) {
+                var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+                dimPublication.getFields()
+                    .add(new DimField("dc", "date", "issued", null, null, null,
+                        exportDocument.getThesisDefenceDate().format(formatter)));
+            } else {
+                dimPublication.getFields()
+                    .add(new DimField("dc", "date", "issued", null, null, null,
+                        "1.1." + exportDocument.getDocumentDate() + "."));
+            }
+
+            if (StringUtil.valueExists(exportDocument.getOfficialFileName())) {
+                dimPublication.getFields().add(
+                    new DimField("dc", "identifier", "fulltext", null, null, null,
+                        baseFrontendUrl + "api/file/" + exportDocument.getOfficialFileName()));
+            }
+        } else {
+            dimPublication.getFields().add(new DimField("dc", "date", "issued", null, null, null,
+                exportDocument.getDocumentDate()));
+        }
 
         String qualifier = getConcreteTypeIfRelevant(exportDocument);
         dimPublication.getFields().add(
@@ -922,7 +955,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             exportDocument.getThesisGrantor().getName().forEach(mc -> {
                 var field = new DimField();
                 field.setMdschema("dc");
-                field.setElement("source");
+                field.setElement("publisher");
                 field.setLanguage(mc.getLanguageTag());
                 field.setValue(mc.getContent());
                 dimPublication.getFields().add(field);
@@ -931,7 +964,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             exportDocument.getExternalThesisGrantorName().forEach(mc -> {
                 var field = new DimField();
                 field.setMdschema("dc");
-                field.setElement("source");
+                field.setElement("publisher");
                 field.setLanguage(mc.getLanguageTag());
                 field.setValue(mc.getContent());
                 dimPublication.getFields().add(field);
@@ -988,7 +1021,23 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
     private static void setDCCommonFields(ExportDocument exportDocument, DC dcPublication,
                                           boolean supportLegacyIdentifiers) {
-        dcPublication.getDate().add(exportDocument.getDocumentDate());
+        if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
+            if (Objects.nonNull(exportDocument.getThesisDefenceDate())) {
+                var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
+                dcPublication.getDate()
+                    .add(exportDocument.getThesisDefenceDate().format(formatter));
+            } else {
+                dcPublication.getDate().add("1.1." + exportDocument.getDocumentDate() + ".");
+            }
+
+            if (StringUtil.valueExists(exportDocument.getOfficialFileName())) {
+                dcPublication.getIdentifier()
+                    .add(baseFrontendUrl + "api/file/" + exportDocument.getOfficialFileName());
+            }
+        } else {
+            dcPublication.getDate().add(exportDocument.getDocumentDate());
+        }
+
         dcPublication.getSource().add(repositoryName);
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
@@ -1002,12 +1051,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
         String scheme = getConcreteTypeIfRelevant(exportDocument);
         dcPublication.getType().add(new DCType(exportDocument.getType().name(), null, scheme));
 
-        clientLanguages.forEach(lang -> {
-            dcPublication.getIdentifier()
-                .add(baseFrontendUrl + lang + "/scientific-results/" +
-                    getConcreteEntityPath(exportDocument.getType()) + "/" +
-                    exportDocument.getDatabaseId());
-        });
+        clientLanguages.forEach(lang -> dcPublication.getIdentifier().add(
+            baseFrontendUrl + lang + "/scientific-results/" +
+                getConcreteEntityPath(exportDocument.getType()) + "/" +
+                exportDocument.getDatabaseId()));
 
         if (StringUtil.valueExists(exportDocument.getDoi())) {
             dcPublication.getIdentifier().add("DOI:" + exportDocument.getDoi());
@@ -1032,7 +1079,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         addContentToList(
             exportDocument.getAuthors(),
             ExportContribution::getDisplayName,
-            content -> dcPublication.getCreator().add(content)
+            content ->
+                dcPublication.getCreator().add(StringUtil.formatNameToLastNameFirst(content))
         );
 
         addContentToList(
@@ -1041,7 +1089,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             contribution -> Objects.nonNull(contribution.getPerson()) ?
                 Objects.requireNonNullElse(contribution.getPerson().getOrcid(), "") : "",
             (content, orcid) -> dcPublication.getContributor().add(
-                new Contributor(content, "editor",
+                new Contributor(StringUtil.formatNameToLastNameFirst(content), "editor",
                     (orcid.isBlank() ? "" : ("https://orcid.org/" + orcid))))
         );
 
@@ -1051,7 +1099,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             contribution -> Objects.nonNull(contribution.getPerson()) ?
                 Objects.requireNonNullElse(contribution.getPerson().getOrcid(), "") : "",
             (content, orcid) -> dcPublication.getContributor().add(
-                new Contributor(content, "advisor",
+                new Contributor(StringUtil.formatNameToLastNameFirst(content), "advisor",
                     (orcid.isBlank() ? "" : ("https://orcid.org/" + orcid))))
         );
 
@@ -1061,7 +1109,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             contribution -> Objects.nonNull(contribution.getPerson()) ?
                 Objects.requireNonNullElse(contribution.getPerson().getOrcid(), "") : "",
             (content, orcid) -> dcPublication.getContributor().add(
-                new Contributor(content, "board_member",
+                new Contributor(StringUtil.formatNameToLastNameFirst(content), "board_member",
                     (orcid.isBlank() ? "" : ("https://orcid.org/" + orcid))))
         );
 
@@ -1087,12 +1135,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
             content -> dcPublication.getLanguage().add(content.toLowerCase())
         );
 
-        exportDocument.getPublishers().forEach(publisher -> {
-            publisher.getName().forEach(name -> {
+        exportDocument.getPublishers().forEach(publisher ->
+            publisher.getName().forEach(name ->
                 dcPublication.getPublisher().add(new DCMultilingualContent(name.getContent(),
-                    name.getLanguageTag().toLowerCase()));
-            });
-        });
+                    name.getLanguageTag().toLowerCase()))));
 
         addContentToList(
             exportDocument.getFileFormats(),

@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import jakarta.annotation.Nullable;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -58,6 +59,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
+
+    @Value("${notifications.distribute-weekly-by-day}")
+    private Boolean distributeWeeklyNotifications;
 
 
     @Override
@@ -167,10 +171,18 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     @Scheduled(cron = "${notifications.schedule.daily}")
     protected void sendDailyNotifications() {
         sendNotifications(UserNotificationPeriod.DAILY);
+
+        if (distributeWeeklyNotifications) {
+            sendNotifications(UserNotificationPeriod.WEEKLY);
+        }
     }
 
     @Scheduled(cron = "${notifications.schedule.weekly}")
     protected void sendWeeklyNotifications() {
+        if (distributeWeeklyNotifications) {
+            return;
+        }
+
         sendNotifications(UserNotificationPeriod.WEEKLY);
     }
 
@@ -185,6 +197,11 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 .getContent();
 
             chunk.forEach(accountIndex -> {
+                if (notificationPeriod == UserNotificationPeriod.WEEKLY &&
+                    accountIndex.getDatabaseId() % 7 != LocalDate.now().getDayOfWeek().ordinal()) {
+                    return;
+                }
+
                 var notifications = fetchNotifications(notificationPeriod, accountIndex);
 
                 if (notifications.isEmpty()) {

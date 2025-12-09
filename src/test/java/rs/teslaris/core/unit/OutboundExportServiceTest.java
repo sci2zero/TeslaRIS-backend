@@ -27,6 +27,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -92,7 +93,7 @@ public class OutboundExportServiceTest {
         when(mongoTemplate.find(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(List.of(document));
         when(mongoTemplate.count(any(Query.class), eq(ExportDocument.class))).thenReturn(1L);
-
+        when(organisationUnitService.findOne(any())).thenReturn(new OrganisationUnit());
 
         // When
         var result = outboundExportService.listRequestedRecords("handler", "dim",
@@ -128,6 +129,7 @@ public class OutboundExportServiceTest {
         document.setJournalPublicationType(JournalPublicationType.REVIEW_ARTICLE);
         when(mongoTemplate.findOne(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(document);
+        when(organisationUnitService.findOne(any())).thenReturn(new OrganisationUnit());
 
         var response = new OAIPMHResponse();
 

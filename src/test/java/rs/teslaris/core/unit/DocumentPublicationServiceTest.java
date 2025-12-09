@@ -864,6 +864,7 @@ public class DocumentPublicationServiceTest {
                 documentId, DocumentPublicationType.PROCEEDINGS_PUBLICATION.name()))
             .thenReturn(Optional.of(mockDoc));
         when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
+        when(mockDoc.getHasSrContent()).thenReturn(true);
 
         // when
         var result = documentPublicationService.getWordCloudForSingleDocument(documentId,

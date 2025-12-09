@@ -395,7 +395,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             Object convertedEntity =
                 conversionMethod.invoke(null, requestedRecord, supportLegacyIdentifiers);
 
-            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat, handler);
+            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat,
+                organisationUnitService, handler);
 
             ExportConverterBase.performExceptionalHandlingWhereAbsolutelyNecessary(convertedEntity,
                 metadataFormat, recordClass, handler);
