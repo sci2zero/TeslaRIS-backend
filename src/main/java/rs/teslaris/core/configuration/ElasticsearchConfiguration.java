@@ -35,6 +35,7 @@ public class ElasticsearchConfiguration
     @Value("${elasticsearch.password}")
     private String password;
 
+
     @Override
     public ClientConfiguration clientConfiguration() {
         return ClientConfiguration.builder().connectedTo(host + ":" + port)

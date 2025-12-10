@@ -19,4 +19,18 @@ public class ContextualEntity {
 
     @JsonProperty("@type")
     private String type;
+
+    private ContextualEntity conformsTo;
+
+    private ContextualEntity about;
+
+
+    public ContextualEntity(String id) {
+        this.id = id;
+    }
+
+    public ContextualEntity(String id, String type) {
+        this.id = id;
+        this.type = type;
+    }
 }

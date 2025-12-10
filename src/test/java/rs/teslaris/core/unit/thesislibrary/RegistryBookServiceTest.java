@@ -183,7 +183,10 @@ class RegistryBookServiceTest {
         when(countryService.findOne(4)).thenReturn(new Country());
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
-        when(thesisService.getThesisById(1)).thenReturn(new Thesis());
+        when(thesisService.getThesisById(1)).thenReturn(new Thesis() {{
+            setThesisType(ThesisType.PHD_ART_PROJECT);
+            setThesisDefenceDate(LocalDate.of(2025, 6, 17));
+        }});
 
         when(registryBookEntryRepository.save(any(RegistryBookEntry.class))).thenAnswer(
             invocation -> invocation.getArgument(0));
@@ -318,6 +321,7 @@ class RegistryBookServiceTest {
         var advisorInstitution = new OrganisationUnit();
         advisorInstitution.setName(Set.of());
         advisorInstitution.setLocation(new GeoLocation());
+        advisorInstitution.setIsClientInstitutionDl(true);
         advisor.setInstitutions(Set.of(advisorInstitution));
 
         thesis.setContributors(Set.of(author, advisor));
@@ -340,11 +344,12 @@ class RegistryBookServiceTest {
     }
 
     @Test
-    void shouldThrowThesisExceptionWhenThesisDoesNotHaveDefenceDate() {
+    void shouldThrowThesisExceptionWhenThesisOUIsNotDLClient() {
         // Given
         var thesis = new Thesis();
-        thesis.setThesisType(ThesisType.PHD);
-        thesis.setThesisDefenceDate(null);
+        thesis.setOrganisationUnit(new OrganisationUnit() {{
+            setIsClientInstitutionDl(false);
+        }});
         when(thesisService.getThesisById(1)).thenReturn(thesis);
 
         // Then
@@ -353,11 +358,10 @@ class RegistryBookServiceTest {
     }
 
     @Test
-    void shouldThrowThesisExceptionWhenThesisTypeIsNotPHDOrArtProject() {
+    void shouldThrowThesisExceptionWhenThesisIsFromExternalOU() {
         // Given
         var thesis = new Thesis();
-        thesis.setThesisType(ThesisType.BACHELOR);
-        thesis.setThesisDefenceDate(LocalDate.of(2024, 6, 1));
+        thesis.setOrganisationUnit(null);
         when(thesisService.getThesisById(1)).thenReturn(thesis);
 
         // Then
@@ -578,8 +582,10 @@ class RegistryBookServiceTest {
         // Given
         var thesisId = 123;
         when(thesisService.getThesisById(thesisId)).thenReturn(new Thesis() {{
-            setPublicReviewCompleted(true);
-            setThesisDefenceDate(LocalDate.of(2020, 5, 1));
+            setOrganisationUnit(new OrganisationUnit() {{
+                setIsClientInstitutionDl(true);
+            }});
+            setThesisType(ThesisType.PHD);
         }});
         when(registryBookEntryRepository.hasThesisRegistryBookEntry(thesisId)).thenReturn(1);
 

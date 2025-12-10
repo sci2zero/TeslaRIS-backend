@@ -230,21 +230,21 @@
     },
     {
       "identifier": "OAIHandlerNaRDuS",
-      "internalInstitutionId": "14",
+      "internalInstitutionId": "1",
       "handlerName": "NaRDuS OAI Handler",
       "handlerDescription": "OAI handler for NaRDuS",
       "handlerLanguage": "sr",
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
+      "dateFormat": "dd.MM.yyyy.",
       "sets": [
         {
           "setSpec": "theses",
           "setName": "theses",
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS",
-          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
+          "publicationTypes": "THESIS"
         }
       ],
       "metadataFormats": [
@@ -318,6 +318,7 @@
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
+      "dateFormat": "dd.MM.yyyy.",
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -410,6 +411,7 @@
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
+      "dateFormat": "dd.MM.yyyy.",
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -499,6 +501,7 @@
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
+      "dateFormat": "dd.MM.yyyy.",
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",

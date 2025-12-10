@@ -61,6 +61,7 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty(value = "handlerDescription", required = true) String handlerDescription,
         @JsonProperty(value = "handlerLanguage", required = true) String handlerLanguage,
         @JsonProperty(value = "supportLegacyIdentifiers", required = true) boolean supportLegacyIdentifiers,
+        @JsonProperty(value = "dateFormat") String dateFormat,
         @JsonProperty(value = "sets", required = true) List<Set> sets,
         @JsonProperty(value = "metadataFormats", required = true) List<String> metadataFormats,
         @JsonProperty(value = "exportOnlyActiveEmployees", required = true) Boolean exportOnlyActiveEmployees,

@@ -118,8 +118,7 @@ public class DocumentPublicationController {
 
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
-        @RequestParam("tokens")
-        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "tokens", required = false) List<String> tokens,
         @RequestParam(required = false) Integer institutionId,
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
         @RequestParam(value = "authorReprint", defaultValue = "false") Boolean authorReprint,

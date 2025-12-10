@@ -1,10 +1,10 @@
 package rs.teslaris.exporter.service.interfaces;
 
+import java.io.OutputStream;
 import org.springframework.stereotype.Service;
-import rs.teslaris.core.model.rocrate.RoCrate;
 
 @Service
 public interface RoCrateExportService {
 
-    RoCrate createMetadataInfo(Integer documentId);
+    void createRoCrateZip(Integer documentId, OutputStream outputStream);
 }

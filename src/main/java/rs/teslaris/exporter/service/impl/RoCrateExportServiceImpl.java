@@ -1,9 +1,17 @@
 package rs.teslaris.exporter.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Objects;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -14,6 +22,8 @@ import rs.teslaris.core.model.rocrate.PublicationBase;
 import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.model.rocrate.RoCrateDataset;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.service.interfaces.RoCrateExportService;
@@ -24,24 +34,72 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
 
     private final DocumentPublicationService documentPublicationService;
 
+    private final FileService fileService;
+
+    private final ObjectMapper objectMapper;
+
     @Value("${export.internal-identifier.prefix}")
     private String identifierPrefix;
 
 
     @Override
-    public RoCrate createMetadataInfo(Integer documentId) {
-        var metadataInfo = new RoCrate();
+    @Transactional(readOnly = true)
+    public void createRoCrateZip(Integer documentId, OutputStream outputStream) {
+        try {
+            var document = fetchDocumentForPacking(documentId);
+            if (Objects.isNull(document)) {
+                return;
+            }
 
-        var document = fetchDocumentForPacking(documentId);
-        if (Objects.isNull(document)) {
-            return null;
+            var roCrate = createMetadataInfo(document);
+
+            var metadataJsonBytes = objectMapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsBytes(roCrate);
+
+            try (var zipOut = new ZipOutputStream(outputStream)) {
+                var metadataEntry = new ZipEntry("ro-crate-metadata.json");
+                zipOut.putNextEntry(metadataEntry);
+                zipOut.write(metadataJsonBytes);
+                zipOut.closeEntry();
+
+                for (var file : document.getFileItems()) {
+                    if (!file.getApproveStatus().equals(ApproveStatus.APPROVED) ||
+                        !file.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
+                        continue;
+                    }
+
+                    var entry = new ZipEntry("data/" + file.getFilename());
+                    zipOut.putNextEntry(entry);
+
+                    try (var resource = fileService.loadAsResource(file.getServerFilename())) {
+                        resource.transferTo(zipOut);
+                    }
+
+                    zipOut.closeEntry();
+                }
+
+                zipOut.finish();
+            } catch (IOException e) {
+                throw new RuntimeException(e); // will be caught in outer scope
+            }
+        } catch (IOException e) {
+            throw new LoadingException("Failed to create RO-Crate ZIP. Reason: " + e.getMessage());
         }
+    }
+
+    private RoCrate createMetadataInfo(Document document) {
+        var metadataInfo = new RoCrate();
+        addRequiredMetadataDescriptor(metadataInfo);
+
         var documentIdentifier = constructDocumentIdentifier(document);
 
         if (document instanceof Dataset) {
             var metadata = new RoCrateDataset();
             setCommonFields(metadata, document, documentIdentifier);
             setPublisherInfo(metadata, (PublisherPublishable) document);
+
+            metadataInfo.getGraph().add(metadata);
         } else if (document instanceof JournalPublication) {
             var metadata = new rs.teslaris.core.model.rocrate.JournalPublication();
             metadata.setIssn(
@@ -50,6 +108,8 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     ((JournalPublication) document).getJournal().getEISSN() :
                     ((JournalPublication) document).getJournal().getPrintISSN()
             );
+
+            metadataInfo.getGraph().add(metadata);
         } else if (document instanceof ProceedingsPublication) {
             var metadata = new rs.teslaris.core.model.rocrate.ProceedingsPublication();
             metadata.setIsbn(
@@ -58,6 +118,8 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     ((ProceedingsPublication) document).getProceedings().getEISBN() :
                     ((ProceedingsPublication) document).getProceedings().getPrintISBN()
             );
+
+            metadataInfo.getGraph().add(metadata);
         }
 
         return metadataInfo;
@@ -102,5 +164,14 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 new ContextualEntity(identifierPrefix + document.getPublisher().getId(),
                     "Publisher"));
         }
+    }
+
+    private void addRequiredMetadataDescriptor(RoCrate metadataInfo) {
+        metadataInfo.getGraph().add(
+            new ContextualEntity("ro-crate-metadata.json", "CreativeWork",
+                new ContextualEntity("https://w3id.org/ro/crate/1.2"),
+                new ContextualEntity("./")
+            )
+        );
     }
 }

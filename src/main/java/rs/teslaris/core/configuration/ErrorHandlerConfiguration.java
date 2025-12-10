@@ -47,6 +47,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.InvalidApiKeyException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidFileSectionException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.exceptionhandling.exception.MaintenanceModeException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NetworkException;
@@ -489,6 +490,14 @@ public class ErrorHandlerConfiguration {
     ErrorObject handleRegistrationException(HttpServletRequest request,
                                             RegistrationException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(MaintenanceModeException.class)
+    @ResponseBody
+    public ErrorObject handleMaintenanceModeException(HttpServletRequest request,
+                                                      MaintenanceModeException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

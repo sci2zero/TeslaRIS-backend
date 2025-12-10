@@ -57,7 +57,7 @@ public class OutboundExportServiceTest {
     public static void setup() {
         var handler =
             new ExportHandlersConfigurationLoader.Handler("handler", "1",
-                "name", "description", "en", true,
+                "name", "description", "en", true, null,
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",

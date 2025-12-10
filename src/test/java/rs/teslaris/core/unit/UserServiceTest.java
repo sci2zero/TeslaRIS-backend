@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.cache.Cache;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,8 +37,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
@@ -1858,5 +1862,290 @@ public class UserServiceTest {
         assertEquals("maintenanceInProgressMessage", exception.getMessage());
 
         verify(authenticationManager, never()).authenticate(any());
+    }
+
+    @Test
+    public void shouldGeneratePassword() throws Exception {
+        // given
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("test@example.com");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setPersonId(1);
+        registrationRequest.setOrganisationUnitId(1);
+
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>())
+        );
+
+        var authority = new Authority();
+        authority.setName(UserRole.RESEARCHER.toString());
+        when(authorityRepository.findByName(UserRole.RESEARCHER.toString()))
+            .thenReturn(Optional.of(authority));
+
+        when(personService.findOne(1)).thenReturn(new Person() {{
+            setName(new PersonName());
+        }});
+        when(organisationUnitService.findOrganisationUnitById(1))
+            .thenReturn(new OrganisationUnit());
+
+        var newUser = new User();
+        newUser.setAuthority(authority);
+        newUser.setLocked(false);
+        newUser.setPreferredUILanguage(new LanguageTag() {{
+            setLanguageTag(LanguageAbbreviations.SERBIAN);
+        }});
+        when(userRepository.save(any())).thenReturn(newUser);
+
+        when(userAccountActivationRepository.save(any()))
+            .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
+
+        when(userAccountIndexRepository.findByDatabaseId(anyInt()))
+            .thenReturn(Optional.of(new UserAccountIndex()));
+
+        when(organisationUnitService.findOne(anyInt()))
+            .thenReturn(new OrganisationUnit() {{
+                setIsClientInstitutionCris(true);
+                getCrisConfig().setValidateEmailDomain(false);
+            }});
+
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode())
+            .thenReturn(false);
+
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenReturn("subject", "body");
+
+        ArgumentCaptor<String> passwordCaptor = ArgumentCaptor.forClass(String.class);
+
+        // when
+        userService.registerResearcherAdmin(registrationRequest);
+
+        // then
+        verify(emailUtil, times(2)).sendSimpleEmail(any(), any(), passwordCaptor.capture());
+        assertNotNull(passwordCaptor.getValue());
+    }
+
+    @Test
+    public void shouldRegisterResearcherAdminSuccessfully() throws Exception {
+        // given
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("admin@example.com");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setPersonId(1);
+        registrationRequest.setOrganisationUnitId(1);
+
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>())
+        );
+
+        var authority = new Authority();
+        authority.setName(UserRole.RESEARCHER.toString());
+        when(authorityRepository.findByName(UserRole.RESEARCHER.toString()))
+            .thenReturn(Optional.of(authority));
+
+        var person = new Person();
+        person.setName(
+            new PersonName("Admin", null, "User", LocalDate.of(1990, 1, 1), null)
+        );
+        when(personService.findOne(1)).thenReturn(person);
+        when(organisationUnitService.findOrganisationUnitById(1))
+            .thenReturn(new OrganisationUnit());
+
+        var newUser = new User(
+            "admin@example.com",
+            "X",
+            "",
+            "Admin",
+            "User",
+            true,
+            false,
+            language,
+            language,
+            authority,
+            null,
+            new OrganisationUnit(),
+            null,
+            UserNotificationPeriod.NEVER
+        );
+        when(userRepository.save(any(User.class))).thenReturn(newUser);
+
+        when(userAccountActivationRepository.save(any())).thenReturn(
+            new UserAccountActivation(UUID.randomUUID().toString(), newUser)
+        );
+
+        when(userAccountIndexRepository.findByDatabaseId(anyInt()))
+            .thenReturn(Optional.of(new UserAccountIndex()));
+
+        when(organisationUnitService.findOne(anyInt()))
+            .thenReturn(new OrganisationUnit() {{
+                setIsClientInstitutionCris(true);
+                getCrisConfig().setValidateEmailDomain(false);
+            }});
+
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode())
+            .thenReturn(false);
+
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenReturn("subject", "body");
+
+        // when
+        var result = userService.registerResearcherAdmin(registrationRequest);
+
+        // then
+        assertNotNull(result);
+        verify(emailUtil, times(2)).sendSimpleEmail(eq("admin@example.com"), anyString(),
+            anyString());
+    }
+
+    @Test
+    public void shouldSendEmailWithCorrectLanguageAndContent() throws Exception {
+        // given
+        var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("user@example.com");
+        registrationRequest.setPreferredLanguageId(1);
+        registrationRequest.setPersonId(1);
+        registrationRequest.setOrganisationUnitId(1);
+
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.ENGLISH);
+        when(languageTagService.findOne(1)).thenReturn(language);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>())
+        );
+
+        when(authorityRepository.findByName(anyString()))
+            .thenReturn(Optional.of(new Authority()));
+
+        when(personService.findOne(anyInt())).thenReturn(new Person() {{
+            setName(new PersonName());
+        }});
+        when(organisationUnitService.findOrganisationUnitById(anyInt()))
+            .thenReturn(new OrganisationUnit());
+
+        var newUser = new User();
+        newUser.setPreferredUILanguage(language);
+        newUser.setEmail("user@example.com");
+        newUser.setAuthority(authority);
+        newUser.setLocked(false);
+        newUser.setPreferredUILanguage(new LanguageTag() {{
+            setLanguageTag(LanguageAbbreviations.SERBIAN);
+        }});
+        when(userRepository.save(any())).thenReturn(newUser);
+
+        when(userAccountActivationRepository.save(any()))
+            .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), newUser));
+
+        when(userAccountIndexRepository.findByDatabaseId(anyInt()))
+            .thenReturn(Optional.of(new UserAccountIndex()));
+
+        when(organisationUnitService.findOne(anyInt()))
+            .thenReturn(new OrganisationUnit() {{
+                setIsClientInstitutionCris(true);
+                getCrisConfig().setValidateEmailDomain(false);
+            }});
+
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode())
+            .thenReturn(false);
+
+        when(messageSource.getMessage(eq("firstLoginPassword.mailSubject"), any(),
+            any(Locale.class)))
+            .thenReturn("Welcome");
+        when(messageSource.getMessage(eq("firstLoginPassword.mailBody"), any(), any(Locale.class)))
+            .thenReturn("Body123");
+
+        // when
+        userService.registerResearcherAdmin(registrationRequest);
+
+        // then
+        verify(emailUtil).sendSimpleEmail(eq("user@example.com"), eq("Welcome"), eq("Body123"));
+    }
+
+    @Test
+    public void shouldPropagateSecureRandomException() throws Exception {
+        // given
+        var request = new ResearcherRegistrationRequestDTO();
+        request.setEmail("x@example.com");
+
+        try (MockedStatic<SecureRandom> secureRandomMock = mockStatic(SecureRandom.class)) {
+            secureRandomMock
+                .when(() -> SecureRandom.getInstance("SHA1PRNG"))
+                .thenThrow(new NoSuchAlgorithmException());
+
+            // when / then
+            assertThrows(NoSuchAlgorithmException.class,
+                () -> userService.registerResearcherAdmin(request));
+        }
+    }
+
+    @Test
+    public void shouldPassGeneratedPasswordToRegisterResearcher() throws Exception {
+        // given
+        var request = new ResearcherRegistrationRequestDTO();
+        request.setEmail("abc@example.com");
+        request.setPreferredLanguageId(1);
+        request.setPersonId(1);
+        request.setOrganisationUnitId(1);
+
+        var language = new LanguageTag();
+        language.setLanguageTag(LanguageAbbreviations.SERBIAN);
+        when(languageTagService.findOne(1)).thenReturn(language);
+
+        when(brandingInformationService.readBrandingInformation()).thenReturn(
+            new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>())
+        );
+
+        when(authorityRepository.findByName(anyString()))
+            .thenReturn(Optional.of(new Authority()));
+
+        when(personService.findOne(anyInt())).thenReturn(new Person() {{
+            setName(new PersonName());
+        }});
+        when(organisationUnitService.findOrganisationUnitById(anyInt()))
+            .thenReturn(new OrganisationUnit());
+
+        var saved = new User();
+        saved.setAuthority(authority);
+        saved.setLocked(false);
+        saved.setPreferredUILanguage(new LanguageTag() {{
+            setLanguageTag(LanguageAbbreviations.SERBIAN);
+        }});
+        when(userRepository.save(any())).thenReturn(saved);
+
+        when(userAccountActivationRepository.save(any()))
+            .thenReturn(new UserAccountActivation(UUID.randomUUID().toString(), saved));
+
+        when(userAccountIndexRepository.findByDatabaseId(anyInt()))
+            .thenReturn(Optional.of(new UserAccountIndex()));
+
+        when(organisationUnitService.findOne(anyInt()))
+            .thenReturn(new OrganisationUnit() {{
+                setIsClientInstitutionCris(true);
+                getCrisConfig().setValidateEmailDomain(false);
+            }});
+
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode())
+            .thenReturn(false);
+
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+            .thenReturn("s", "b");
+
+        ArgumentCaptor<ResearcherRegistrationRequestDTO> captor =
+            ArgumentCaptor.forClass(ResearcherRegistrationRequestDTO.class);
+
+        // when
+        userService.registerResearcherAdmin(request);
+
+        // then
+        verify(userRepository).save(any());
+        verify(emailUtil, times(2)).sendSimpleEmail(any(), any(), any());
+        assertNotNull(captor.getAllValues());
     }
 }

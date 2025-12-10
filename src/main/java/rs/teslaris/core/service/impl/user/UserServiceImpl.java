@@ -276,6 +276,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public AuthenticationResponseDTO finishOAuthWorkflow(String code, String identifier,
                                                          String fingerprint) {
+        if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
+            throw new MaintenanceModeException("maintenanceInProgressMessage");
+        }
+
         var oAuthCode = oAuthCodeRepository.getCodeForCodeAndIdentifier(code, identifier);
 
         if (oAuthCode.isEmpty()) {
@@ -467,6 +471,21 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         return saveAndNotifyUser(newUser, new UserAccountIndex());
     }
 
+    @Override
+    @Transactional
+    public User registerResearcherAdmin(ResearcherRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
+        var random = SecureRandom.getInstance("SHA1PRNG");
+        var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
+
+        registrationRequest.setPassword(new String(generatedPassword));
+        var savedUser = registerResearcher(registrationRequest);
+
+        sendGeneratedPasswordEmail(new String(generatedPassword), savedUser);
+
+        return savedUser;
+    }
+
     private Authority getResearcherAuthority() {
         return authorityRepository.findByName(UserRole.RESEARCHER.toString())
             .orElseThrow(() -> new NotFoundException("Default authority not initialized."));
@@ -568,6 +587,25 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var message = messageSource.getMessage(
             "accountActivation.mailBodyResearcher",
             new Object[] {systemName, activationLink},
+            Locale.forLanguageTag(language)
+        );
+        emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);
+    }
+
+    private void sendGeneratedPasswordEmail(String securePassword, User savedUser) {
+        var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
+
+        var subject = messageSource.getMessage(
+            "firstLoginPassword.mailSubject",
+            new Object[] {},
+            Locale.forLanguageTag(language)
+        );
+
+        var systemName = getSystemName(language);
+
+        var message = messageSource.getMessage(
+            "firstLoginPassword.mailBody",
+            new Object[] {systemName, securePassword},
             Locale.forLanguageTag(language)
         );
         emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);

@@ -385,7 +385,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
                     .add(baseFrontendUrl + "api/file/" + fileItem.getServerFilename());
             }
 
-            if (fileItem.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION)) {
+            if (fileItem.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) &&
+                fileItem.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
                 commonExportDocument.setOfficialFileName(fileItem.getServerFilename());
             }
         });
@@ -594,7 +595,9 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getDescription().stream()
             .min(Comparator.comparingInt(ExportMultilingualContent::getPriority))
-            .map(mc -> List.of(new MultilingualContent(mc.getLanguageTag(), mc.getContent())))
+            .map(mc ->
+                List.of(
+                    new MultilingualContent(mc.getLanguageTag().toLowerCase(), mc.getContent())))
             .ifPresent(openairePublication::set_abstract);
 
         openairePublication.set_abstract(
@@ -603,7 +606,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         openairePublication.setKeywords(new ArrayList<>());
         exportDocument.getKeywords().forEach(mc -> {
             openairePublication.getKeywords()
-                .add(new MultilingualContent(mc.getLanguageTag(),
+                .add(new MultilingualContent(mc.getLanguageTag().toLowerCase(),
                     mc.getContent().replace("\n", ";")));
         });
 
@@ -826,7 +829,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             var field = new DimField();
             field.setMdschema("dc");
             field.setElement("title");
-            field.setLanguage(mc.getLanguageTag());
+            field.setLanguage(mc.getLanguageTag().toLowerCase());
             field.setValue(mc.getContent());
             dimPublication.getFields().add(field);
         });
@@ -890,7 +893,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             var field = new DimField();
             field.setMdschema("dc");
             field.setElement("subject");
-            field.setLanguage(mc.getLanguageTag());
+            field.setLanguage(mc.getLanguageTag().toLowerCase());
             field.setValue(mc.getContent().replace("\n", ", "));
             dimPublication.getFields().add(field);
         });
@@ -899,7 +902,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             var field = new DimField();
             field.setMdschema("dc");
             field.setElement("description");
-            field.setLanguage(mc.getLanguageTag());
+            field.setLanguage(mc.getLanguageTag().toLowerCase());
             field.setValue(mc.getContent().replace("\n", ", "));
             dimPublication.getFields().add(field);
         });
@@ -909,7 +912,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 var field = new DimField();
                 field.setMdschema("dc");
                 field.setElement("publisher");
-                field.setLanguage(mc.getLanguageTag());
+                field.setLanguage(mc.getLanguageTag().toLowerCase());
                 field.setValue(mc.getContent());
                 dimPublication.getFields().add(field);
             });
@@ -926,14 +929,14 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
             if (Objects.nonNull(exportDocument.getThesisDefenceDate())) {
-                var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
                 dimPublication.getFields()
                     .add(new DimField("dc", "date", "issued", null, null, null,
-                        exportDocument.getThesisDefenceDate().format(formatter)));
+                        exportDocument.getThesisDefenceDate()
+                            .format(DateTimeFormatter.ISO_LOCAL_DATE)));
             } else {
                 dimPublication.getFields()
                     .add(new DimField("dc", "date", "issued", null, null, null,
-                        "1.1." + exportDocument.getDocumentDate() + "."));
+                        exportDocument.getDocumentDate() + "-01-01"));
             }
 
             if (StringUtil.valueExists(exportDocument.getOfficialFileName())) {
@@ -956,7 +959,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 var field = new DimField();
                 field.setMdschema("dc");
                 field.setElement("publisher");
-                field.setLanguage(mc.getLanguageTag());
+                field.setLanguage(mc.getLanguageTag().toLowerCase());
                 field.setValue(mc.getContent());
                 dimPublication.getFields().add(field);
             });
@@ -965,7 +968,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 var field = new DimField();
                 field.setMdschema("dc");
                 field.setElement("publisher");
-                field.setLanguage(mc.getLanguageTag());
+                field.setLanguage(mc.getLanguageTag().toLowerCase());
                 field.setValue(mc.getContent());
                 dimPublication.getFields().add(field);
             });
@@ -1023,11 +1026,11 @@ public class ExportDocumentConverter extends ExportConverterBase {
                                           boolean supportLegacyIdentifiers) {
         if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
             if (Objects.nonNull(exportDocument.getThesisDefenceDate())) {
-                var formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
                 dcPublication.getDate()
-                    .add(exportDocument.getThesisDefenceDate().format(formatter));
+                    .add(exportDocument.getThesisDefenceDate()
+                        .format(DateTimeFormatter.ISO_LOCAL_DATE));
             } else {
-                dcPublication.getDate().add("1.1." + exportDocument.getDocumentDate() + ".");
+                dcPublication.getDate().add(exportDocument.getDocumentDate() + "-01-01");
             }
 
             if (StringUtil.valueExists(exportDocument.getOfficialFileName())) {

@@ -3,6 +3,8 @@ package rs.teslaris.exporter.model.converter;
 import jakarta.annotation.PostConstruct;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -206,6 +208,18 @@ public class ExportConverterBase {
             organisationUnitService.findOne(sourceInstitutionId).getName()
                 .forEach(name ->
                     ((DC) convertedEntity).getSource().add(name.getContent()));
+
+            if (Objects.nonNull(handler.dateFormat())) {
+                var formatter = DateTimeFormatter.ofPattern(handler.dateFormat());
+                ((DC) convertedEntity).getDate().replaceAll(dateString -> {
+                    if (!dateString.contains("-")) {
+                        return dateString;
+                    }
+
+                    return LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE)
+                        .format(formatter);
+                });
+            }
         } else if (format.equals(ExportDataFormat.DSPACE_INTERNAL_MODEL)) {
             var typeField = ((Dim) convertedEntity).getFields().stream()
                 .filter(field -> field.getElement().equals("type")).findFirst();
@@ -228,10 +242,25 @@ public class ExportConverterBase {
                     var field = new DimField();
                     field.setMdschema("dc");
                     field.setElement("source");
-                    field.setLanguage(name.getLanguage().getLanguageTag());
+                    field.setLanguage(name.getLanguage().getLanguageTag().toLowerCase());
                     field.setValue(name.getContent());
                     ((Dim) convertedEntity).getFields().add(field);
                 });
+
+            if (Objects.nonNull(handler.dateFormat())) {
+                var formatter = DateTimeFormatter.ofPattern(handler.dateFormat());
+                ((Dim) convertedEntity).getFields().stream()
+                    .filter(field -> field.getElement().equals("date")).findFirst()
+                    .ifPresent(dateField -> {
+                        if (!dateField.getValue().contains("-")) {
+                            return;
+                        }
+
+                        dateField.setValue(
+                            LocalDate.parse(dateField.getValue(), DateTimeFormatter.ISO_LOCAL_DATE)
+                                .format(formatter));
+                    });
+            }
         }
     }
 

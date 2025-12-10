@@ -35,7 +35,7 @@ public class ExportMultilingualContentConverter extends ExportConverterBase {
 
         multilingualContent.forEach(mc -> {
             var openaireMC = new MultilingualContent();
-            openaireMC.setLang(mc.getLanguageTag());
+            openaireMC.setLang(mc.getLanguageTag().toLowerCase());
             openaireMC.setValue(mc.getContent());
             openaireMCList.add(openaireMC);
         });

@@ -104,6 +104,10 @@ public class StringUtil {
     }
 
     public static void sanitizeTokens(List<String> tokens) {
+        if (Objects.isNull(tokens)) {
+            tokens = new ArrayList<>(List.of("*"));
+        }
+
         tokens.replaceAll(
             token -> (token.equals("*") || token.equals(".")) ? "*" :
                 QueryParserBase.escape(token));
