@@ -194,7 +194,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setVolume(proceedings.getPublicationSeriesVolume());
         commonExportDocument.setIssue(proceedings.getPublicationSeriesIssue());
         proceedings.getLanguages().forEach(
-            language -> commonExportDocument.getLanguageTags().add(language.getLanguageCode()));
+            language -> commonExportDocument.getLanguageTags()
+                .add(language.getLanguageCode().toLowerCase()));
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             commonExportDocument.setJournal(ExportPublicationSeriesConverter.toCommonExportModel(
@@ -331,7 +332,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         }
 
         if (Objects.nonNull(thesis.getLanguage())) {
-            commonExportDocument.getLanguageTags().add(thesis.getLanguage().getLanguageCode());
+            commonExportDocument.getLanguageTags()
+                .add(thesis.getLanguage().getLanguageCode().toLowerCase());
         }
 
         if (Objects.nonNull(thesis.getPublisher())) {
@@ -523,7 +525,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (!exportDocument.getLanguageTags().isEmpty()) {
             openairePublication.setLanguage(
-                exportDocument.getLanguageTags().getFirst());
+                exportDocument.getLanguageTags().getFirst().toLowerCase());
         }
 
         setDocumentDate(exportDocument.getDocumentDate(), openairePublication::setPublicationDate);
@@ -741,9 +743,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
             ExportMultilingualContent::getContent, "a");
 
         if (Objects.nonNull(exportDocument.getLanguageTags())) {
-            exportDocument.getLanguageTags().forEach(tag -> {
-                marc21.getDataFields().add(createDataField("041", " ", " ", "a", tag));
-            });
+            exportDocument.getLanguageTags().forEach(tag -> marc21.getDataFields()
+                .add(createDataField("041", " ", " ", "a", tag.toLowerCase())));
         }
 
         if (Objects.nonNull(exportDocument.getPublishers())) {
@@ -923,7 +924,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             field.setMdschema("dc");
             field.setElement("language");
             field.setQualifier("iso");
-            field.setValue(languageTag);
+            field.setValue(languageTag.toLowerCase());
             dimPublication.getFields().add(field);
         });
 
@@ -1076,7 +1077,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             ExportMultilingualContent::getContent,
             ExportMultilingualContent::getLanguageTag,
             (content, languageTag) -> dcPublication.getTitle()
-                .add(new DCMultilingualContent(content, languageTag))
+                .add(new DCMultilingualContent(content, languageTag.toLowerCase()))
         );
 
         addContentToList(
@@ -1121,7 +1122,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             ExportMultilingualContent::getContent,
             ExportMultilingualContent::getLanguageTag,
             (content, languageTag) -> dcPublication.getDescription()
-                .add(new DCMultilingualContent(content, languageTag))
+                .add(new DCMultilingualContent(content, languageTag.toLowerCase()))
         );
 
         addContentToList(
@@ -1129,7 +1130,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
             ExportMultilingualContent::getContent,
             ExportMultilingualContent::getLanguageTag,
             (content, languageTag) -> dcPublication.getSubject()
-                .add(new DCMultilingualContent(content.replace("\n", "; "), languageTag))
+                .add(new DCMultilingualContent(content.replace("\n", "; "),
+                    languageTag.toLowerCase()))
         );
 
         addContentToList(

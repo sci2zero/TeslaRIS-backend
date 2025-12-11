@@ -134,6 +134,7 @@ public class EmailUtil {
     )
     public void sendUnhandledExceptionEmail(String exceptionId,
                                             String tracingContextId,
+                                            String requestMethod,
                                             String requestPath,
                                             Exception ex,
                                             boolean mustSend) {
@@ -169,8 +170,8 @@ public class EmailUtil {
 
         message.setText(MessageFormat.format(
             (importError ? "Import" : "Unhandled") +
-                " error (ID:{0}) occurred at: {2}.\nMessage: {1}\nRequest path: {3}\nTracing context id: {5}\n\nFull stack trace:\n{4}",
-            exceptionId, ex.getMessage(), LocalDateTime.now(), requestPath,
+                " error (ID:{0}) occurred at: {2}.\nMessage: {1}\nRequest path: ({3}) {4}\nTracing context id: {6}\n\nFull stack trace:\n{5}",
+            exceptionId, ex.getMessage(), LocalDateTime.now(), requestMethod, requestPath,
             stackTraceWriter.toString(), tracingContextId));
 
         try {

@@ -230,7 +230,7 @@
     },
     {
       "identifier": "OAIHandlerNaRDuS",
-      "internalInstitutionId": "1",
+      "internalInstitutionId": "17",
       "handlerName": "NaRDuS OAI Handler",
       "handlerDescription": "OAI handler for NaRDuS",
       "handlerLanguage": "sr",
@@ -244,7 +244,9 @@
           "setName": "theses",
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS"
+          "publicationTypes": "THESIS",
+          "concreteTypeFilters": "thesis_type:PHD",
+          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
       "metadataFormats": [

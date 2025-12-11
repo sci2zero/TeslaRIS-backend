@@ -151,7 +151,7 @@ public class CommonLoaderImpl implements CommonLoader {
                 emailUtil.sendUnhandledExceptionEmail(
                     "IMPORT ERROR",
                     MDC.get(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID),
-                    "/load-wizard", e, true);
+                    "GET", "/load-wizard", e, true);
                 skipRecord(userId, institutionId, true);
             }
 

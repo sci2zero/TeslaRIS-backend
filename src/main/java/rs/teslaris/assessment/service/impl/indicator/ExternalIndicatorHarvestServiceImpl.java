@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -30,7 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -90,10 +91,17 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     private final PersonIndexRepository personIndexRepository;
 
     private final Lock harvestLock = new ReentrantLock();
+
     private final int MAX_RETRY_COUNT = 1;
+
+    private final int PROCESS_BATCH_SIZE = 100;
+
     private Map<String, String> externalIndicatorMapping;
+
     private Map<String, Integer> harvestPeriodOffsets;
+
     private Map<String, Integer> rateLimits;
+
     @Value("${harvest-external-indicators.allowed}")
     private Boolean harvestAllowed;
 
@@ -103,7 +111,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
         var indicatorsToSave = new ArrayList<OrganisationUnitIndicator>();
         FunctionalUtil.forEachChunked(
-            PageRequest.of(0, 50),
+            PageRequest.of(0, PROCESS_BATCH_SIZE,
+                Sort.by(Sort.Direction.ASC, "databaseId")),
             organisationUnitIndexRepository::findAll,
             institutions -> institutions.forEach(
                 institution -> performInstitutionDeduction(
@@ -149,7 +158,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var harvestContext = preparePersonIndicatorHarvestContext();
 
         FunctionalUtil.forEachChunked(
-            PageRequest.of(0, 50),
+            PageRequest.of(0, PROCESS_BATCH_SIZE,
+                Sort.by(Sort.Direction.ASC, "id")),
             personService::findPersonsByLRUHarvest,
             people -> people.forEach(person -> {
                 performPersonHarvest(person, harvestContext);
@@ -254,7 +264,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     private void performInstitutionDeduction(List<EntityIndicatorSource> entityIndicatorSources,
                                              OrganisationUnitIndex institution,
                                              Indicator totalCitationsIndicator,
@@ -266,7 +276,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var totalPublicationsCount = new AtomicDouble(0);
 
             FunctionalUtil.forEachChunked(
-                PageRequest.of(0, 50),
+                PageRequest.of(0, PROCESS_BATCH_SIZE,
+                    Sort.by(Sort.Direction.ASC, "databaseId")),
                 page -> personService.findPeopleForOrganisationUnit(
                     institution.getDatabaseId(), List.of("*"),
                     page, false),
@@ -453,7 +464,9 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var harvestPeriodOffset = harvestPeriodOffsets.get("openCitations");
             var endYear = LocalDate.now().getYear();
             var startYear = endYear - harvestPeriodOffset;
-            FunctionalUtil.forEachChunked(PageRequest.of(0, 50),
+            FunctionalUtil.forEachChunked(
+                PageRequest.of(0, PROCESS_BATCH_SIZE,
+                    Sort.by(Sort.Direction.ASC, "databaseId")),
                 (pageable) -> documentPublicationIndexRepository.findByAuthorIdAndYearRangeOrUnknown(
                     person.getId(), startYear, endYear, pageable), (personDocuments) -> {
                     for (var doc : personDocuments) {
@@ -615,7 +628,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     private void persistPersonCitationIndicators(Person person, Map<String, Integer> counts,
                                                  Integer totalOutputCount,
                                                  List<Integer> citations,
@@ -769,14 +782,14 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     private void performDataEnrichment(Person person) {
-        var baseURL = "https://api.openalex.org/authors/";
+        var baseURL = "https://api.openalex.org/authors";
 
         if (StringUtil.valueExists(person.getOpenAlexId())) {
-            baseURL += person.getOpenAlexId();
+            baseURL += "/" + person.getOpenAlexId();
         } else if (StringUtil.valueExists(person.getOrcid())) {
-            baseURL += "orcid:" + person.getOrcid();
+            baseURL += "?filter=orcid:" + person.getOrcid();
         } else if (StringUtil.valueExists(person.getScopusAuthorId())) {
-            baseURL += "scopus:" + person.getScopusAuthorId();
+            baseURL += "?filter=scopus:" + person.getScopusAuthorId();
         } else {
             return;
         }
@@ -793,30 +806,35 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                 return;
             }
 
-            var results =
-                objectMapper.readValue(responseEntity.getBody(), PersonIdentifierResponse.class);
+            var response =
+                objectMapper.readValue(responseEntity.getBody(), OpenAlexResponse.class);
+            if (Objects.isNull(response) || Objects.isNull(response.results()) ||
+                response.results().isEmpty()) {
+                return;
+            }
 
+            var result = response.results.getFirst();
             if (!StringUtil.valueExists(person.getOpenAlexId()) &&
-                results.identifiers().containsKey("openalex")) {
+                result.identifiers().containsKey("openalex")) {
                 var identifier =
-                    results.identifiers().get("openalex").replace("https://openalex.org/", "");
+                    result.identifiers().get("openalex").replace("https://openalex.org/", "");
                 if (!personService.isIdentifierInUse(identifier, person.getId())) {
                     person.setOpenAlexId(identifier);
                 }
             }
 
             if (!StringUtil.valueExists(person.getOrcid()) &&
-                results.identifiers().containsKey("orcid")) {
+                result.identifiers().containsKey("orcid")) {
                 var identifier =
-                    results.identifiers().get("orcid").replace("https://orcid.org/", "");
+                    result.identifiers().get("orcid").replace("https://orcid.org/", "");
                 if (!personService.isIdentifierInUse(identifier, person.getId())) {
                     person.setOrcid(identifier);
                 }
             }
 
             if (!StringUtil.valueExists(person.getScopusAuthorId()) &&
-                results.identifiers().containsKey("scopus")) {
-                var identifier = results.identifiers().get("scopus").split("&")[0].replace(
+                result.identifiers().containsKey("scopus")) {
+                var identifier = result.identifiers().get("scopus").split("&")[0].replace(
                     "http://www.scopus.com/inward/authorDetails.url?authorID=", "");
                 if (!personService.isIdentifierInUse(identifier, person.getId())) {
                     person.setScopusAuthorId(identifier);
@@ -824,6 +842,14 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             }
 
             personService.save(person);
+            personIndexRepository.findByDatabaseId(person.getId())
+                .ifPresent(personIndex -> {
+                    personIndex.setOpenAlexId(person.getOpenAlexId());
+                    personIndex.setOrcid(person.getOrcid());
+                    personIndex.setScopusAuthorId(person.getScopusAuthorId());
+
+                    personIndexRepository.save(personIndex);
+                });
         } catch (Exception e) {
             log.warn("Unable to fetch author data from OpenAlex for {}. Reason: {}",
                 baseURL.replace("https://api.openalex.org/authors/", ""), e.getMessage());
@@ -941,7 +967,12 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     ) {
     }
 
-    public record PersonIdentifierResponse(
+    public record OpenAlexResponse(
+        @JsonProperty("results") List<IdentifierResult> results
+    ) {
+    }
+
+    public record IdentifierResult(
         @JsonProperty("ids") Map<String, String> identifiers
     ) {
     }

@@ -383,7 +383,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
         Integer sourceId) {
         return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(sourceId)
@@ -399,7 +399,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public RelationGraphDataDTO getOrganisationUnitsRelationsChain(
         Integer leafId) {
         var nodes = new ArrayList<OrganisationUnitDTO>();

@@ -17,5 +17,7 @@ public class NotificationDTO {
 
     private String notificationText;
 
+    private String displayValue;
+
     private List<NotificationAction> possibleActions;
 }

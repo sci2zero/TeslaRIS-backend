@@ -33,6 +33,7 @@ import rs.teslaris.core.util.notificationhandling.handlerimpl.AddedToPublication
 import rs.teslaris.core.util.notificationhandling.handlerimpl.AuthorRemovedByEditorNotificationHandler;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.EmployedResearcherUnbindedHandler;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotificationHandler;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -75,7 +76,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
         return notificationList.stream().map(
                 notification -> new NotificationDTO(notification.getId(),
-                    notification.getNotificationText(),
+                    notification.getNotificationText(), getDisplayValue(notification),
                     NotificationConfiguration.allowedActions.get(notification.getNotificationType())))
             .collect(
                 Collectors.toList());
@@ -267,5 +268,25 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         return notificationPeriod == UserNotificationPeriod.DAILY
             ? "notification.dailyMailSubject"
             : "notification.weeklyMailSubject";
+    }
+
+    private String getDisplayValue(Notification notification) {
+        return switch (notification.getNotificationType()) {
+            case ADDED_TO_PUBLICATION, AUTHOR_UNBINDED_BY_EDITOR,
+                 NEW_AUTHOR_UNBINDING, NEW_EMPLOYED_RESEARCHER_UNBINDED ->
+                notification.getValues().get("title");
+            case NEW_OTHER_NAME_DETECTED -> {
+                var middleName = notification.getValues().get("middlename");
+
+                if (StringUtil.valueExists(middleName)) {
+                    yield notification.getValues().get("firstname") + " (" + middleName + ") " +
+                        notification.getValues().get("lastname");
+                }
+
+                yield notification.getValues().get("firstname") + " " +
+                    notification.getValues().get("lastname");
+            }
+            default -> "";
+        };
     }
 }
