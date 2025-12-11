@@ -9,12 +9,12 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class Patent extends PublicationBase {
+public class RoCratePatent extends RoCratePublicationBase {
 
     private String patentNumber;
 
 
-    public Patent() {
+    public RoCratePatent() {
         this.setType("Patent");
     }
 }

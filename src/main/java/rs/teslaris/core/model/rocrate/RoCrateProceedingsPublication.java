@@ -9,14 +9,14 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class ProceedingsPublication extends PublicationBase {
+public class RoCrateProceedingsPublication extends RoCratePublicationBase {
 
     private String inProceedingsTitle;
 
     private ContextualEntity proceedings;
 
 
-    public ProceedingsPublication() {
+    public RoCrateProceedingsPublication() {
         this.setType("ScholarlyArticle");
     }
 }

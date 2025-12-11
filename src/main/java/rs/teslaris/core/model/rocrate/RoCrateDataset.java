@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class RoCrateDataset extends PublicationBase {
+public class RoCrateDataset extends RoCratePublicationBase {
 
     private String identifier;
 

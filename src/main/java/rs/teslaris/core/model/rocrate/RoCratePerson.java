@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Person extends ContextualEntity {
+public class RoCratePerson extends ContextualEntity {
 
     private String givenName;
 
@@ -25,7 +25,7 @@ public class Person extends ContextualEntity {
     private List<Organization> affiliations;
 
 
-    public Person() {
+    public RoCratePerson() {
         this.setType("Person");
     }
 }

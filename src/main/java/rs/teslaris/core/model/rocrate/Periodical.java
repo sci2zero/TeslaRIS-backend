@@ -9,13 +9,13 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Periodical extends ContextualEntity {
+public class Periodical extends ContextualEntity implements RoCratePublishable {
 
     private String name;
 
     private String issn;
 
-    private String publisher;
+    private ContextualEntity publisher;
 
 
     public Periodical() {

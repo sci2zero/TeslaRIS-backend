@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class JournalPublication extends PublicationBase {
+public class RoCrateJournalPublication extends RoCratePublicationBase {
 
     private String periodicalName;
 
@@ -21,12 +21,10 @@ public class JournalPublication extends PublicationBase {
 
     private String pageEnd;
 
-    private String journal;
-
     private ContextualEntity isPartOf;
 
 
-    public JournalPublication() {
+    public RoCrateJournalPublication() {
         this.setType("ScholarlyArticle");
     }
 }

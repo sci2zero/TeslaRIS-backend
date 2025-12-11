@@ -15,18 +15,21 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
-import rs.teslaris.core.model.document.PublisherPublishable;
+import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.rocrate.ContextualEntity;
-import rs.teslaris.core.model.rocrate.PublicationBase;
 import rs.teslaris.core.model.rocrate.RoCrate;
-import rs.teslaris.core.model.rocrate.RoCrateDataset;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.exporter.model.converter.RoCrateConverter;
 import rs.teslaris.exporter.service.interfaces.RoCrateExportService;
+import rs.teslaris.exporter.util.rocrate.Json2HtmlTable;
 
 @Service
 @RequiredArgsConstructor
@@ -57,10 +60,19 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsBytes(roCrate);
 
+            var htmlPreview = Json2HtmlTable.toHtmlTable(objectMapper.readTree(
+                objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(roCrate.getGraph()))).getBytes();
+
             try (var zipOut = new ZipOutputStream(outputStream)) {
                 var metadataEntry = new ZipEntry("ro-crate-metadata.json");
                 zipOut.putNextEntry(metadataEntry);
                 zipOut.write(metadataJsonBytes);
+                zipOut.closeEntry();
+
+                var previewEntry = new ZipEntry("ro-crate-preview.html");
+                zipOut.putNextEntry(previewEntry);
+                zipOut.write(htmlPreview);
                 zipOut.closeEntry();
 
                 for (var file : document.getFileItems()) {
@@ -94,34 +106,43 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
 
         var documentIdentifier = constructDocumentIdentifier(document);
 
-        if (document instanceof Dataset) {
-            var metadata = new RoCrateDataset();
-            setCommonFields(metadata, document, documentIdentifier);
-            setPublisherInfo(metadata, (PublisherPublishable) document);
-
-            metadataInfo.getGraph().add(metadata);
-        } else if (document instanceof JournalPublication) {
-            var metadata = new rs.teslaris.core.model.rocrate.JournalPublication();
-            metadata.setIssn(
-                StringUtil.valueExists(
-                    ((JournalPublication) document).getJournal().getEISSN()) ?
-                    ((JournalPublication) document).getJournal().getEISSN() :
-                    ((JournalPublication) document).getJournal().getPrintISSN()
-            );
-
-            metadataInfo.getGraph().add(metadata);
-        } else if (document instanceof ProceedingsPublication) {
-            var metadata = new rs.teslaris.core.model.rocrate.ProceedingsPublication();
-            metadata.setIsbn(
-                StringUtil.valueExists(
-                    ((ProceedingsPublication) document).getProceedings().getEISBN()) ?
-                    ((ProceedingsPublication) document).getProceedings().getEISBN() :
-                    ((ProceedingsPublication) document).getProceedings().getPrintISBN()
-            );
-
-            metadataInfo.getGraph().add(metadata);
+        switch (document) {
+            case Dataset dataset -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(dataset, documentIdentifier,
+                    metadataInfo));
+            case JournalPublication journalPublication -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(journalPublication, documentIdentifier,
+                    metadataInfo));
+            case ProceedingsPublication proceedingsPublication -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(proceedingsPublication,
+                    documentIdentifier,
+                    metadataInfo));
+            case Proceedings proceedings -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(proceedings,
+                    documentIdentifier,
+                    metadataInfo));
+            case Monograph monograph -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(monograph,
+                    documentIdentifier,
+                    metadataInfo));
+            case MonographPublication monographPublication -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(monographPublication,
+                    documentIdentifier,
+                    metadataInfo));
+            case Software software -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(software,
+                    documentIdentifier,
+                    metadataInfo));
+            case Patent patent -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(patent,
+                    documentIdentifier,
+                    metadataInfo));
+            // TODO: support theses
+            default -> {
+            }
         }
 
+        metadataInfo.setGraph(metadataInfo.getGraph().reversed());
         return metadataInfo;
     }
 
@@ -140,30 +161,6 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
         // TODO: WOS???
 
         return identifierPrefix + document.getId();
-    }
-
-    private void setCommonFields(PublicationBase metadata, Document document,
-                                 String primaryIdentifier) {
-        metadata.setId(primaryIdentifier);
-        metadata.setTitle(StringUtil.getStringContent(document.getTitle(),
-            LanguageAbbreviations.ENGLISH));
-        metadata.setAbstractText(StringUtil.getStringContent(document.getDescription(),
-            LanguageAbbreviations.ENGLISH));
-        metadata.setPublicationYear(document.getDocumentDate());
-
-        metadata.setDoi(document.getDoi());
-
-        if (primaryIdentifier.startsWith("http")) {
-            metadata.setCiteAs(primaryIdentifier);
-        }
-    }
-
-    private void setPublisherInfo(PublicationBase metadata, PublisherPublishable document) {
-        if (Objects.nonNull(document.getPublisher())) {
-            metadata.setPublisher(
-                new ContextualEntity(identifierPrefix + document.getPublisher().getId(),
-                    "Publisher"));
-        }
     }
 
     private void addRequiredMetadataDescriptor(RoCrate metadataInfo) {

@@ -9,17 +9,15 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class Monograph extends PublicationBase {
+public class RoCrateProceedings extends RoCratePublicationBase {
 
-    private String additionalType = "Book";
+    private String additionalType;
 
-    private Integer numberOfPages;
-
-    private String bookEdition;
+    private String conferenceName;
 
 
-    public Monograph() {
+    public RoCrateProceedings() {
         this.setType("Book");
+        additionalType = "Proceedings";
     }
 }
-

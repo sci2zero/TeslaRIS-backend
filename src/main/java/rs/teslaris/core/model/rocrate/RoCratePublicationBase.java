@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PublicationBase extends ContextualEntity {
+public class RoCratePublicationBase extends ContextualEntity implements RoCratePublishable {
 
     private String title;
 

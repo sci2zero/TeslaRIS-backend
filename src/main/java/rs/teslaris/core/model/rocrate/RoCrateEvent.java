@@ -2,20 +2,19 @@ package rs.teslaris.core.model.rocrate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-public class Event {
+public class RoCrateEvent {
 
     @JsonProperty("@type")
-    private final String type = "Event";
+    private final String type;
 
     @JsonProperty("@id")
     private String id;
@@ -30,11 +29,16 @@ public class Event {
 
     private String keywords;
 
-    private List<String> subEvents;
+    private List<ContextualEntity> subEvents = new ArrayList<>();
 
-    private List<String> superEvents;
+    private List<ContextualEntity> superEvents = new ArrayList<>();
 
     private String identifier;
 
     private String url;
+
+
+    public RoCrateEvent() {
+        this.type = "Event";
+    }
 }

@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class MonographPublication extends PublicationBase {
+public class RoCrateMonographPublication extends RoCratePublicationBase {
 
     private String additionalType;
 
@@ -22,7 +22,7 @@ public class MonographPublication extends PublicationBase {
     private String pageEnd;
 
 
-    public MonographPublication() {
+    public RoCrateMonographPublication() {
         this.setType("Chapter");
         this.additionalType = "ScholarlyArticle";
     }

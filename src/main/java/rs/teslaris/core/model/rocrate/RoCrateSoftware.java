@@ -9,11 +9,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class Software extends PublicationBase {
+public class RoCrateSoftware extends RoCratePublicationBase {
 
     private String identifier;
 
-    public Software() {
+    public RoCrateSoftware() {
         this.setType("SoftwareSourceCode");
     }
 }

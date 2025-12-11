@@ -17,6 +17,8 @@ public class Organization extends ContextualEntity {
 
     private String url;
 
+    private String foundingLocation;
+
 
     public Organization() {
         this.setType("Organization");
