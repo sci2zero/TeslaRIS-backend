@@ -436,6 +436,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 preliminaryFile -> addDocumentFileInformation(commonExportDocument,
                     preliminaryFile));
 
+            ((Thesis) document).getCommissionReports().forEach(
+                commissionReport -> addDocumentFileInformation(commonExportDocument,
+                    commissionReport));
+
             commonExportDocument.setResearchOutput(
                 thesisResearchOutputRepository.findResearchOutputIdsForThesis(document.getId()));
         }
@@ -451,6 +455,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         exportDocumentFile.setType(file.getResourceType());
         exportDocumentFile.setCreationDate(file.getCreateDate());
         exportDocumentFile.setLastUpdated(file.getLastModification());
+        exportDocumentFile.setServerFilename(file.getServerFilename());
+        exportDocumentFile.setFilename(file.getFilename());
 
         commonExportDocument.getDocumentFiles().add(exportDocumentFile);
     }
@@ -945,6 +951,20 @@ public class ExportDocumentConverter extends ExportConverterBase {
                     new DimField("dc", "identifier", "fulltext", null, null, null,
                         baseFrontendUrl + "api/file/" + exportDocument.getOfficialFileName()));
             }
+
+            if (StringUtil.valueExists(exportDocument.getOfficialFileName())) {
+                dimPublication.getFields().add(
+                    new DimField("dc", "identifier", "fulltext", null, null, null,
+                        baseFrontendUrl + "api/file/" + exportDocument.getOfficialFileName()));
+            }
+
+            exportDocument.getDocumentFiles().stream().filter(
+                    df -> df.getType().equals(ResourceType.STATEMENT) &&
+                        df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
+                .forEach(openAccessReport ->
+                    dimPublication.getFields().add(
+                        new DimField("dc", "identifier", "report", null, null, null,
+                            baseFrontendUrl + "api/file/" + openAccessReport.getServerFilename())));
         } else {
             dimPublication.getFields().add(new DimField("dc", "date", "issued", null, null, null,
                 exportDocument.getDocumentDate()));

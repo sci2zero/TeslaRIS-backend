@@ -388,7 +388,7 @@ public class DocumentPublicationServiceTest {
         documentPublicationService.deleteDocumentPublication(documentId);
 
         // Then
-        verify(documentRepository, times(1)).delete(any());
+        verify(documentRepository, times(1)).save(any());
         verify(documentPublicationIndexRepository, times(1)).delete(any());
     }
 
@@ -407,7 +407,7 @@ public class DocumentPublicationServiceTest {
         documentPublicationService.deleteDocumentPublication(documentId);
 
         // Then
-        verify(documentRepository, times(1)).delete(any());
+        verify(documentRepository, times(1)).save(any());
         verify(documentPublicationIndexRepository, never()).delete(any());
     }
 

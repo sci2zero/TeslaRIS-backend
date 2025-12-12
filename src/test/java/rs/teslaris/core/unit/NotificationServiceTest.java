@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -54,9 +55,11 @@ public class NotificationServiceTest {
 
         var notification1 =
             new Notification("Notification 1", values, NotificationType.NEW_PAPER_HARVESTED, user);
+        notification1.setCreateDate(new Date());
         var notification2 =
             new Notification("Notification 2", values, NotificationType.NEW_OTHER_NAME_DETECTED,
                 user);
+        notification2.setCreateDate(new Date());
         var notificationList = Arrays.asList(notification1, notification2);
         when(notificationRepository.getNotificationsForUser(userId)).thenReturn(notificationList);
 

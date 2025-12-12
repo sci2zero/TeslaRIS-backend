@@ -2,6 +2,7 @@ package rs.teslaris.core.service.impl.commontypes;
 
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -77,7 +78,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         return notificationList.stream().map(
                 notification -> new NotificationDTO(notification.getId(),
                     notification.getNotificationText(), getDisplayValue(notification),
-                    NotificationConfiguration.allowedActions.get(notification.getNotificationType())))
+                    NotificationConfiguration.allowedActions.get(notification.getNotificationType()),
+                    notification.getCreateDate()
+                        .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()))
             .collect(
                 Collectors.toList());
     }

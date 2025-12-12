@@ -19,7 +19,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
@@ -63,6 +62,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Slf4j
@@ -373,7 +373,7 @@ public class PersonAssessmentClassificationServiceImpl
         documentPublicationIndexRepository.save(publication);
     }
 
-    private void updatePublicationPoints(
+    private synchronized void updatePublicationPoints(
         DocumentPublicationIndex publication, Integer researcherId,
         Integer commissionId, Double points
     ) {
@@ -430,11 +430,12 @@ public class PersonAssessmentClassificationServiceImpl
             List<DocumentPublicationIndex> publications =
                 fetchPublications(personIndex, pageNumber, chunkSize, startYear, endYear);
 
-            for (DocumentPublicationIndex publication : publications) {
+            var isUserLoggedIn = SessionUtil.isUserLoggedIn();
+
+            publications.parallelStream().forEach(publication ->
                 processPublication(publication, commission, measures, pointsRuleEngine,
                     scalingRuleEngine, researchAreaCode, personIndex, assessmentResult,
-                    subOUsForTopLevelInstitution);
-            }
+                    subOUsForTopLevelInstitution, isUserLoggedIn));
 
             pageNumber++;
             hasNextPage = publications.size() == chunkSize;
@@ -457,7 +458,8 @@ public class PersonAssessmentClassificationServiceImpl
         AssessmentPointsScalingRuleEngine scalingRuleEngine,
         String researchAreaCode, PersonIndex personIndex,
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
-        List<Integer> subOUsForTopLevelInstitution) {
+        List<Integer> subOUsForTopLevelInstitution,
+        boolean isUserLoggedIn) {
 
         var assessment = publication.getCommissionAssessments().stream()
             .filter(ca -> ca.a.equals(commission.getId())).findFirst();
@@ -485,8 +487,8 @@ public class PersonAssessmentClassificationServiceImpl
 
         assessmentResult.getPublicationsPerCategory()
             .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(assessment.get().b),
-                k -> new ArrayList<>())
-            .add(new Triple<>(citation.getHarvard(), isUserLoggedIn() ? points : 0,
+                k -> Collections.synchronizedList(new ArrayList<>()))
+            .add(new Triple<>(citation.getHarvard(), isUserLoggedIn ? points : 0,
                 publication.getDatabaseId()));
 
         if (!subOUsForTopLevelInstitution.isEmpty()) {
@@ -608,13 +610,6 @@ public class PersonAssessmentClassificationServiceImpl
 
             return b;
         })))._toQuery();
-    }
-
-    private boolean isUserLoggedIn() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        return !(Objects.isNull(authentication) || !authentication.isAuthenticated() ||
-            (authentication.getPrincipal() instanceof String &&
-                authentication.getPrincipal().equals("anonymousUser")));
     }
 
     private Integer findDefaultRulebookId() {

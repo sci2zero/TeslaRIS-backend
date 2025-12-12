@@ -197,13 +197,11 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                 journalIndexRepository, publicationSeriesAssessmentClassificationRepository,
                 assessmentClassificationService);
 
-            classificationYears.forEach((classificationYear) -> {
-                if (journalIds.isEmpty()) {
-                    ruleEngine.startClassification(classificationYear, commission);
-                } else {
-                    ruleEngine.startClassification(classificationYear, commission, journalIds);
-                }
-            });
+            if (journalIds.isEmpty()) {
+                ruleEngine.startClassification(classificationYears, commission);
+            } else {
+                ruleEngine.startClassification(classificationYears, commission, journalIds);
+            }
         } catch (ClassNotFoundException e) {
             log.error("Class not found: {}", className);
         } catch (NoSuchMethodException e) {
@@ -396,12 +394,10 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         journalClassification.setCategoryIdentifier(category);
         journalClassification.setAssessmentClassification(classification);
 
-        // TODO: Is this one necessary, it is not adherent to the generic logic
-        //  but was also too much of a hassle to put into configuration file. What should we do?
         journalClassification.setClassificationReason(
             AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
-                classification.getCode().equals("journalM24") ? "M24MNO" : "MNO", year, category));
-
+                classification.getCode().equals("journalM24") ? "M24MNO" : "MNO", year, category)
+        );
 
         publicationSeriesAssessmentClassificationRepository.deleteClassificationReasonsForPublicationSeriesAndCategoryAndYearAndCommission(
             publicationSeries.getId(), category, year, commission.getId());

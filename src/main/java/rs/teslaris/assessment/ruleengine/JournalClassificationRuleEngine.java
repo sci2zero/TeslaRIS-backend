@@ -53,12 +53,10 @@ public abstract class JournalClassificationRuleEngine {
 
 
     @Transactional
-    public void startClassification(Integer classificationYear, Commission commission) {
+    public void startClassification(List<Integer> classificationYears, Commission commission) {
         int pageNumber = 0;
         int chunkSize = 500;
         boolean hasNextPage = true;
-
-        this.classificationYear = classificationYear;
 
         var batchClassifications = new ArrayList<PublicationSeriesAssessmentClassification>();
 
@@ -66,16 +64,19 @@ public abstract class JournalClassificationRuleEngine {
             List<JournalIndex> chunk =
                 journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((journalIndex) -> {
-                this.currentJournal =
-                    journalRepository.getReferenceById(journalIndex.getDatabaseId());
-                this.currentJournalIndicators =
-                    publicationSeriesIndicatorRepository.findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
-                        journalIndex.getDatabaseId(), classificationYear, source);
+            chunk.forEach((journalIndex) ->
+                classificationYears.forEach(classificationYear -> {
+                    this.classificationYear = classificationYear;
+                    this.currentJournal =
+                        journalRepository.getReferenceById(journalIndex.getDatabaseId());
+                    this.currentJournalIndicators =
+                        publicationSeriesIndicatorRepository
+                            .findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+                                journalIndex.getDatabaseId(), classificationYear, source);
 
-                performClassification(commission, batchClassifications);
-                reasoningProcess.clear();
-            });
+                    performClassification(commission, batchClassifications);
+                    reasoningProcess.clear();
+                }));
 
             assessmentClassificationRepository.saveAll(batchClassifications);
             batchClassifications.clear();
@@ -86,24 +87,28 @@ public abstract class JournalClassificationRuleEngine {
     }
 
     @Transactional
-    public void startClassification(Integer classificationYear, Commission commission,
+    public void startClassification(List<Integer> classificationYears, Commission commission,
                                     List<Integer> journalIds) {
-        this.classificationYear = classificationYear;
         var batchClassifications = new ArrayList<PublicationSeriesAssessmentClassification>();
 
-        journalIds.forEach((journalId) -> {
-            var journalIndexOptional =
-                journalIndexRepository.findJournalIndexByDatabaseId(journalId);
-            journalIndexOptional.ifPresent(journalIndex -> {
-                this.currentJournal =
-                    journalRepository.getReferenceById(journalIndex.getDatabaseId());
-                this.currentJournalIndicators =
-                    publicationSeriesIndicatorRepository.findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
-                        journalIndex.getDatabaseId(), classificationYear, source);
+        journalIds.forEach((journalId) ->
+            classificationYears.forEach(classificationYear -> {
+                this.classificationYear = classificationYear;
 
-                performClassification(commission, batchClassifications);
-            });
-        });
+                var journalIndexOptional =
+                    journalIndexRepository.findJournalIndexByDatabaseId(journalId);
+                journalIndexOptional.ifPresent(journalIndex -> {
+                    this.currentJournal =
+                        journalRepository.getReferenceById(journalIndex.getDatabaseId());
+                    this.currentJournalIndicators =
+                        publicationSeriesIndicatorRepository
+                            .findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+                                journalIndex.getDatabaseId(), classificationYear, source);
+
+                    performClassification(commission, batchClassifications);
+                    reasoningProcess.clear();
+                });
+            }));
 
         assessmentClassificationRepository.saveAll(batchClassifications);
         batchClassifications.clear();
@@ -159,7 +164,7 @@ public abstract class JournalClassificationRuleEngine {
         if (Objects.nonNull(assessmentClassification.a)) {
             classification.setCategoryIdentifier(assessmentClassification.b);
             classification.setAssessmentClassification(assessmentClassification.a);
-            classification.setClassificationReason(reasoningProcess);
+            classification.setClassificationReason(new HashSet<>(reasoningProcess));
 
             var existingClassification =
                 assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(

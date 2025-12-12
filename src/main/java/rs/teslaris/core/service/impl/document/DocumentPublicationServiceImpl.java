@@ -473,7 +473,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             personContributionService.save(contribution);
         });
 
-        documentRepository.delete(document);
+        document.setDeleted(true);
+        documentRepository.save(document);
 
         var index =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);

@@ -47,6 +47,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -426,8 +427,22 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     protected void indexEventCommonFields(EventIndex index, Event event) {
         indexMultilingualContent(index, event, Event::getName, EventIndex::setNameSr,
             EventIndex::setNameOther, false);
+        var abbreviationSr =
+            StringUtil.getStringContent(event.getNameAbbreviation(), LanguageAbbreviations.SERBIAN);
+
+        if (StringUtil.valueExists(abbreviationSr)) {
+            index.setNameSr(index.getNameSr() + " (" + abbreviationSr + ")");
+        }
+
+        var abbreviationOther =
+            StringUtil.getStringContent(event.getNameAbbreviation(), LanguageAbbreviations.ENGLISH);
+        if (StringUtil.valueExists(abbreviationOther)) {
+            index.setNameOther(index.getNameOther() + " (" + abbreviationOther + ")");
+        }
+
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());
+
         indexMultilingualContent(index, event, Event::getDescription, EventIndex::setDescriptionSr,
             EventIndex::setDescriptionOther, true);
         indexMultilingualContent(index, event, Event::getKeywords, EventIndex::setKeywordsSr,

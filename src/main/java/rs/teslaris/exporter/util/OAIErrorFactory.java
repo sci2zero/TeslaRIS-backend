@@ -38,6 +38,6 @@ public class OAIErrorFactory {
     }
 
     public static OAIError constructServiceUnavailableError() {
-        return new OAIError("badArgument", "TAn internal server error occurred.");
+        return new OAIError("badArgument", "An internal server error occurred.");
     }
 }

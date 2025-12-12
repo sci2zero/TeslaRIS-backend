@@ -170,34 +170,48 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         var journalInSameCategoryIds =
             publicationSeriesIndicatorRepository.findIndicatorsForCategoryAndYearAndSource(
                 categoryIdentifier, classificationYear, EntityIndicatorSource.WEB_OF_SCIENCE);
+
         var allIF5Values =
             publicationSeriesIndicatorRepository.findJournalIndicatorsForIdsAndCodeAndYearAndSource(
                 journalInSameCategoryIds, "fiveYearJIF", classificationYear,
                 EntityIndicatorSource.WEB_OF_SCIENCE);
 
         var sortedIF5Values = allIF5Values.stream()
-            .filter((indicator) -> Objects.nonNull(indicator.getNumericValue()))
-            .sorted(
-                Comparator.comparing(EntityIndicator::getNumericValue, Comparator.reverseOrder()))
+            .sorted(Comparator.comparing(
+                (EntityIndicator indicator) ->
+                    Objects.nonNull(indicator.getNumericValue()) ?
+                        indicator.getNumericValue() : 0.0,
+                Comparator.reverseOrder()))
             .toList();
 
         var rankMap = new HashMap<Double, Integer>();
-        AtomicInteger currentRank = new AtomicInteger(1);
+        int currentRank = 1;
 
-        // Build rank map based on value occurrences
-        sortedIF5Values.forEach(indicator ->
-            rankMap.computeIfAbsent(indicator.getNumericValue(), v -> currentRank.getAndIncrement())
-        );
+        for (int i = 0; i < sortedIF5Values.size(); i++) {
+            double currentValue = Objects.nonNull(sortedIF5Values.get(i).getNumericValue()) ?
+                sortedIF5Values.get(i).getNumericValue() : 0.0;
 
-        int rank = rankMap.getOrDefault(
-            sortedIF5Values.stream()
-                .filter(ind -> Objects.equals(ind.getPublicationSeries().getId(),
-                    currentJournal.getId()))
-                .map(EntityIndicator::getNumericValue)
-                .findFirst()
-                .orElse(Double.NaN),
-            sortedIF5Values.size()
-        );
+            if (!rankMap.containsKey(currentValue)) {
+                rankMap.put(currentValue, currentRank);
+            }
+
+            if (i + 1 < sortedIF5Values.size()) {
+                double nextValue = Objects.nonNull(sortedIF5Values.get(i + 1).getNumericValue()) ?
+                    sortedIF5Values.get(i + 1).getNumericValue() : 0.0;
+                if (nextValue != currentValue) {
+                    currentRank = i + 2; // Next rank = current position + 2 (1-based)
+                }
+            }
+        }
+
+        Double currentJournalValue = sortedIF5Values.stream()
+            .filter(ind -> Objects.equals(ind.getPublicationSeries().getId(),
+                currentJournal.getId()))
+            .map(ind -> Objects.nonNull(ind.getNumericValue()) ? ind.getNumericValue() : 0.0)
+            .findFirst()
+            .orElse(0.0);
+
+        int rank = rankMap.getOrDefault(currentJournalValue, sortedIF5Values.size());
 
         var if5Rank = new PublicationSeriesIndicator();
         if5Rank.setCategoryIdentifier(categoryIdentifier);

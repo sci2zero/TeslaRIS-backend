@@ -107,33 +107,7 @@
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD"
-        }
-      ],
-      "metadataFormats": [
-        "oai_dc"
-      ],
-      "typeMappings": {
-        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en"
-      }
-    },
-    {
-      "identifier": "OAIHandlerOATDPA",
-      "internalInstitutionId": "389",
-      "handlerName": "DOI Serbia OAI Handler for University Business Academy",
-      "handlerDescription": "OAI handler for University Business Academy for DOI Serbia",
-      "handlerLanguage": "sr",
-      "exportOnlyActiveEmployees": false,
-      "tokenExpirationTimeMinutes": 60,
-      "supportLegacyIdentifiers": true,
-      "sets": [
-        {
-          "setSpec": "theses",
-          "setName": "theses",
-          "identifierSetSpec": "Theses",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
@@ -141,7 +115,7 @@
         "oai_dc"
       ],
       "typeMappings": {
-        "THESIS": "(PHD)info:eu-repo/semantics/doctoralThesis;(PHD)info:eu-repo/semantics/publishedVersion"
+        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en"
       }
     },
     {
@@ -160,35 +134,7 @@
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
-          "additionalFilters": "open_access=bool:true;is_archived=bool:true"
-        }
-      ],
-      "metadataFormats": [
-        "oai_dc",
-        "oai_etdms"
-      ],
-      "typeMappings": {
-        "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en"
-      }
-    },
-    {
-      "identifier": "OAIHandlerNDLTDPA",
-      "internalInstitutionId": "389",
-      "handlerName": "NDLTD Business Academy OAI Handler",
-      "handlerDescription": "OAI handler for Business Academy for NDLTD",
-      "handlerLanguage": "sr",
-      "exportOnlyActiveEmployees": false,
-      "tokenExpirationTimeMinutes": 60,
-      "supportLegacyIdentifiers": true,
-      "sets": [
-        {
-          "setSpec": "theses",
-          "setName": "theses",
-          "identifierSetSpec": "Theses",
-          "commonEntityClass": "ExportDocument",
-          "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
@@ -216,7 +162,7 @@
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
@@ -230,7 +176,7 @@
     },
     {
       "identifier": "OAIHandlerNaRDuS",
-      "internalInstitutionId": "17",
+      "internalInstitutionId": "14",
       "handlerName": "NaRDuS OAI Handler",
       "handlerDescription": "OAI handler for NaRDuS",
       "handlerLanguage": "sr",
@@ -245,7 +191,7 @@
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
@@ -273,7 +219,7 @@
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
@@ -300,7 +246,7 @@
           "identifierSetSpec": "Theses",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "additionalFilters": "open_access=bool:true;is_archived=bool:true"
         }
       ],
@@ -380,7 +326,7 @@
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
       ],
@@ -473,7 +419,7 @@
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
       ],
@@ -563,7 +509,7 @@
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
           "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-          "concreteTypeFilters": "thesis_type:PHD",
+          "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
       ],
