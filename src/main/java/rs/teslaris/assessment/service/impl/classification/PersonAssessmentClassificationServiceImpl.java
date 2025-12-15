@@ -7,7 +7,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -286,7 +285,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public void reindexPublicationPointsForResearcher(PersonIndex index) {
         var assessmentMeasures = loadAssessmentMeasures();
         var commissionResearchAreas = resolveCommissionResearchAreas(index);
@@ -325,15 +324,34 @@ public class PersonAssessmentClassificationServiceImpl
         int chunkSize = 1000;
         boolean hasNextPage = true;
 
+        List<Integer> publicationIdsBatch = new ArrayList<>();
+        var pointsRuleEngine = new AssessmentPointsRuleEngine();
+        var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
+
         while (hasNextPage) {
             var publications = documentPublicationIndexRepository
                 .findAssessedByAuthorIds(index.getDatabaseId(),
                     PageRequest.of(pageNumber, chunkSize))
                 .getContent();
 
+            publications.forEach(pub ->
+                publicationIdsBatch.add(pub.getDatabaseId())
+            );
+
+            Map<Integer, List<DocumentIndicator>> indicatorsByDocumentId =
+                documentIndicatorRepository.findIndicatorsForDocumentsAndIndicatorAccessLevel(
+                        publicationIdsBatch, AccessLevel.ADMIN_ONLY).stream()
+                    .collect(Collectors.groupingBy(
+                        di -> di.getDocument().getId()
+                    ));
+
             publications.forEach(
                 publication -> updatePublicationAssessments(
-                    publication, index, commissionResearchAreas, assessmentMeasures));
+                    publication, index, commissionResearchAreas, assessmentMeasures,
+                    indicatorsByDocumentId.getOrDefault(publication.getDatabaseId(),
+                        Collections.emptyList()), pointsRuleEngine, scalingRuleEngine
+                )
+            );
 
             pageNumber++;
             hasNextPage = publications.size() == chunkSize;
@@ -344,12 +362,18 @@ public class PersonAssessmentClassificationServiceImpl
         DocumentPublicationIndex publication,
         PersonIndex index,
         List<Pair<Integer, String>> commissionResearchAreas,
-        List<AssessmentMeasure> assessmentMeasures
+        List<AssessmentMeasure> assessmentMeasures,
+        List<DocumentIndicator> indicators,
+        AssessmentPointsRuleEngine pointsRuleEngine,
+        AssessmentPointsScalingRuleEngine scalingRuleEngine
     ) {
-        commissionResearchAreas.forEach(commissionResearchArea -> {
-            var pointsRuleEngine = new AssessmentPointsRuleEngine();
-            var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
+        if (commissionResearchAreas.isEmpty()) {
+            publication.getAssessmentPoints().removeIf(
+                triple -> triple.a.equals(index.getDatabaseId())
+            );
+        }
 
+        commissionResearchAreas.forEach(commissionResearchArea -> {
             publication.getCommissionAssessments().stream()
                 .filter(assessment -> assessment.a.equals(commissionResearchArea.a))
                 .findFirst()
@@ -358,10 +382,6 @@ public class PersonAssessmentClassificationServiceImpl
                     if (applicableMeasure.isEmpty()) {
                         return;
                     }
-
-                    var indicators =
-                        documentIndicatorRepository.findIndicatorsForDocumentAndIndicatorAccessLevel(
-                            publication.getDatabaseId(), AccessLevel.ADMIN_ONLY);
 
                     var points = getPointsForPublication(
                         publication, pointsRuleEngine, scalingRuleEngine,
@@ -427,7 +447,6 @@ public class PersonAssessmentClassificationServiceImpl
 
         var isUserLoggedIn = SessionUtil.isUserLoggedIn();
         List<Integer> publicationIdsBatch = new ArrayList<>();
-        var publicationMap = new HashMap<Integer, DocumentPublicationIndex>();
 
         int pageNumber = 0;
         int chunkSize = 1000;
@@ -437,10 +456,9 @@ public class PersonAssessmentClassificationServiceImpl
             List<DocumentPublicationIndex> publications =
                 fetchPublications(personIndex, pageNumber, chunkSize, startYear, endYear);
 
-            publications.forEach(pub -> {
-                publicationIdsBatch.add(pub.getDatabaseId());
-                publicationMap.put(pub.getDatabaseId(), pub);
-            });
+            publications.forEach(pub ->
+                publicationIdsBatch.add(pub.getDatabaseId())
+            );
 
             Map<Integer, List<DocumentIndicator>> indicatorsByDocumentId =
                 documentIndicatorRepository.findIndicatorsForDocumentsAndIndicatorAccessLevel(
@@ -647,6 +665,7 @@ public class PersonAssessmentClassificationServiceImpl
 
     @Async
     @EventListener
+    @Transactional(readOnly = true)
     protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
         if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
             return;
@@ -658,6 +677,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @EventListener
+    @Transactional(readOnly = true)
     protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
         reindexPublicationPointsForAllResearchers();
     }

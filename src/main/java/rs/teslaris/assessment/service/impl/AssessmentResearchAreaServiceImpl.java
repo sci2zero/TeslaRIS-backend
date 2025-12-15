@@ -134,6 +134,9 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     public void deletePersonAssessmentResearchArea(Integer personId) {
         var researchAreaToDelete = assessmentResearchAreaRepository.findForPersonId(personId);
         researchAreaToDelete.ifPresent(assessmentResearchAreaRepository::delete);
+
+        applicationEventPublisher.publishEvent(
+            new ResearcherPointsReindexingEvent(List.of(personId)));
     }
 
     @Override
@@ -142,6 +145,9 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
         var commission = commissionService.findOne(commissionId);
         commission.getExcludedResearchers().add(personService.findOne(personId));
         commissionService.save(commission);
+
+        applicationEventPublisher.publishEvent(
+            new ResearcherPointsReindexingEvent(List.of(personId)));
     }
 
     @Override

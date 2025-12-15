@@ -236,7 +236,7 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "apa", index = false)
     private String apa;
 
-    @Field(type = FieldType.Object, name = "assessment_points")
+    @Field(type = FieldType.Nested, name = "assessment_points")
     private List<Triple<Integer, Integer, Double>> assessmentPoints = new ArrayList<>();
 
     @Field(type = FieldType.Long, name = "total_citations", store = true)

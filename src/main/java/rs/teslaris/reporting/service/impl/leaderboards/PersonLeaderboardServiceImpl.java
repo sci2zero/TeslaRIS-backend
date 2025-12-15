@@ -265,26 +265,31 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                                     .must(m -> m.term(t -> t.field("is_approved").value(true)))
                                     .must(QueryUtil.organisationUnitMatchQuery(
                                         allMergedOrganisationUnitIds,
-                                        searchFields))
-                                    .must(
-                                        m -> m.terms(t -> t.field("assessment_points.a").terms(ts -> ts
-                                            .value(eligiblePersonIds.stream()
-                                                .map(FieldValue::of)
-                                                .collect(Collectors.toList())))))
-                                    .must(m -> m.range(
-                                        r -> r.field("year").gte(JsonData.of(yearRange.a))
-                                            .lte(JsonData.of(yearRange.b))))
+                                        searchFields)
+                                    )
+                                    .must(m -> m.range(r -> r.field("year")
+                                        .gte(JsonData.of(yearRange.a))
+                                        .lte(JsonData.of(yearRange.b))))
                                     .mustNot(m -> m.term(t -> t.field("type").value("PROCEEDINGS")))
                                 )
                             )
                             .aggregations("by_person", a -> a
-                                .terms(t -> t.field("assessment_points.a")
-                                    .size(10)
-                                    .order(List.of(
-                                        NamedValue.of("total_points", SortOrder.Desc)
-                                    )))
-                                .aggregations("total_points", sum -> sum
-                                    .sum(v -> v.field("assessment_points.c"))
+                                .nested(n -> n.path("assessment_points"))
+                                .aggregations("filtered_by_person", fa -> fa
+                                    .filter(f -> f
+                                        .terms(t -> t.field("assessment_points.a").terms(ts -> ts
+                                            .value(eligiblePersonIds.stream()
+                                                .map(FieldValue::of)
+                                                .collect(Collectors.toList())))))
+                                    .aggregations("person_buckets", pa -> pa
+                                        .terms(t -> t.field("assessment_points.a")
+                                            .size(10)
+                                            .order(
+                                                List.of(NamedValue.of("total_points", SortOrder.Desc))))
+                                        .aggregations("total_points", sum -> sum
+                                            .sum(v -> v.field("assessment_points.c"))
+                                        )
+                                    )
                                 )
                             ),
                         Void.class
@@ -295,7 +300,26 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     return;
                 }
 
-                var termsAgg = publicationResponse.aggregations().get("by_person").lterms();
+                var nestedAgg = publicationResponse.aggregations()
+                    .get("by_person")
+                    .nested();
+
+                if (Objects.isNull(nestedAgg)) {
+                    return;
+                }
+
+                var filteredAgg = nestedAgg.aggregations()
+                    .get("filtered_by_person")
+                    .filter();
+
+                if (Objects.isNull(filteredAgg)) {
+                    return;
+                }
+
+                var termsAgg = filteredAgg.aggregations()
+                    .get("person_buckets")
+                    .lterms();
+
                 if (Objects.isNull(termsAgg)) {
                     return;
                 }

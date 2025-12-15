@@ -212,7 +212,7 @@ public class ExportConverterBase {
             if (Objects.nonNull(handler.dateFormat())) {
                 var formatter = DateTimeFormatter.ofPattern(handler.dateFormat());
                 ((DC) convertedEntity).getDate().replaceAll(dateString -> {
-                    if (!dateString.contains("-")) {
+                    if (Objects.isNull(dateString) || !dateString.contains("-")) {
                         return dateString;
                     }
 
@@ -252,7 +252,8 @@ public class ExportConverterBase {
                 ((Dim) convertedEntity).getFields().stream()
                     .filter(field -> field.getElement().equals("date")).findFirst()
                     .ifPresent(dateField -> {
-                        if (!dateField.getValue().contains("-")) {
+                        if (Objects.isNull(dateField.getValue()) ||
+                            !dateField.getValue().contains("-")) {
                             return;
                         }
 
