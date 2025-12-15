@@ -120,7 +120,7 @@ public class StringUtil {
 
     @Nonnull
     public static String performSimpleLatinPreprocessing(String input, boolean performFolding) {
-        if (input == null) {
+        if (Objects.isNull(input)) {
             return "";
         }
 

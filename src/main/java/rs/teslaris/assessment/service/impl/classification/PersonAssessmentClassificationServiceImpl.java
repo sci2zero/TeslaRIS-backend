@@ -7,8 +7,10 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -62,6 +64,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
@@ -142,7 +145,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<EnrichedResearcherAssessmentResponseDTO> assessResearchers(Integer commissionId,
                                                                            List<Integer> researcherIds,
                                                                            Integer startYear,
@@ -422,20 +425,36 @@ public class PersonAssessmentClassificationServiceImpl
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
         List<Integer> subOUsForTopLevelInstitution) {
 
+        var isUserLoggedIn = SessionUtil.isUserLoggedIn();
+        List<Integer> publicationIdsBatch = new ArrayList<>();
+        var publicationMap = new HashMap<Integer, DocumentPublicationIndex>();
+
         int pageNumber = 0;
-        int chunkSize = 500;
+        int chunkSize = 1000;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> publications =
                 fetchPublications(personIndex, pageNumber, chunkSize, startYear, endYear);
 
-            var isUserLoggedIn = SessionUtil.isUserLoggedIn();
+            publications.forEach(pub -> {
+                publicationIdsBatch.add(pub.getDatabaseId());
+                publicationMap.put(pub.getDatabaseId(), pub);
+            });
 
-            publications.parallelStream().forEach(publication ->
+            Map<Integer, List<DocumentIndicator>> indicatorsByDocumentId =
+                documentIndicatorRepository.findIndicatorsForDocumentsAndIndicatorAccessLevel(
+                        publicationIdsBatch, AccessLevel.ADMIN_ONLY).stream()
+                    .collect(Collectors.groupingBy(
+                        di -> di.getDocument().getId()
+                    ));
+
+            publications.forEach(publication ->
                 processPublication(publication, commission, measures, pointsRuleEngine,
                     scalingRuleEngine, researchAreaCode, personIndex, assessmentResult,
-                    subOUsForTopLevelInstitution, isUserLoggedIn));
+                    subOUsForTopLevelInstitution,
+                    indicatorsByDocumentId.getOrDefault(publication.getDatabaseId(),
+                        Collections.emptyList()), isUserLoggedIn));
 
             pageNumber++;
             hasNextPage = publications.size() == chunkSize;
@@ -459,6 +478,7 @@ public class PersonAssessmentClassificationServiceImpl
         String researchAreaCode, PersonIndex personIndex,
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
         List<Integer> subOUsForTopLevelInstitution,
+        List<DocumentIndicator> indicators,
         boolean isUserLoggedIn) {
 
         var assessment = publication.getCommissionAssessments().stream()
@@ -474,21 +494,19 @@ public class PersonAssessmentClassificationServiceImpl
         }
 
         var applicableMeasure = applicableMeasureOpt.get();
-        var indicators =
-            documentIndicatorRepository.findIndicatorsForDocumentAndIndicatorAccessLevel(
-                publication.getDatabaseId(), AccessLevel.ADMIN_ONLY);
 
         var points = getPointsForPublication(publication, pointsRuleEngine, scalingRuleEngine,
             researchAreaCode, assessment.get().b, applicableMeasure, indicators);
 
         log.info("{} more points for {}", points, personIndex.getName());
 
-        var citation = citationService.craftCitations(publication, "EN");
-
         assessmentResult.getPublicationsPerCategory()
             .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(assessment.get().b),
-                k -> Collections.synchronizedList(new ArrayList<>()))
-            .add(new Triple<>(citation.getHarvard(), isUserLoggedIn ? points : 0,
+                k -> new ArrayList<>())
+            .add(new Triple<>(
+                citationService.craftCitationInGivenStyle("apa", publication,
+                    LanguageAbbreviations.ENGLISH),
+                isUserLoggedIn ? points : 0,
                 publication.getDatabaseId()));
 
         if (!subOUsForTopLevelInstitution.isEmpty()) {

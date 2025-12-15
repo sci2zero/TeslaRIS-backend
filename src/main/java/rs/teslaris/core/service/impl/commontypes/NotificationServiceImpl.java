@@ -201,7 +201,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 .getContent();
 
             chunk.forEach(accountIndex -> {
-                if (notificationPeriod == UserNotificationPeriod.WEEKLY &&
+                if (distributeWeeklyNotifications &&
+                    notificationPeriod == UserNotificationPeriod.WEEKLY &&
                     accountIndex.getDatabaseId() % 7 != LocalDate.now().getDayOfWeek().ordinal()) {
                     return;
                 }
@@ -251,12 +252,13 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             stringBuilder.append(notification.getNotificationText()).append("\n\n");
         });
 
+        var notificationListAddress = clientAppAddress +
+            (clientAppAddress.endsWith("/") ? locale.toLanguageTag().toLowerCase() :
+                "/" + locale.toLanguageTag().toLowerCase()) + "/notifications";
+
         stringBuilder.append(
-                messageSource.getMessage("notification.forMoreInfoMailEnd", null, locale))
-            .append(" ")
-            .append(clientAppAddress)
-            .append(clientAppAddress.endsWith("/") ? locale.toLanguageTag().toLowerCase() :
-                "/" + locale.toLanguageTag().toLowerCase()).append("/notifications");
+            messageSource.getMessage("notification.forMoreInfoMailEnd",
+                new Object[] {notificationListAddress}, locale));
 
         return stringBuilder.toString();
     }

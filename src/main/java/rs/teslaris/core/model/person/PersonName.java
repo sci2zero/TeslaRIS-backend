@@ -57,21 +57,38 @@ public class PersonName extends BaseEntity {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        if (!super.equals(o)) {
-            return false;
+        if (this == o) {
+            return true;
         }
 
-        PersonName that = (PersonName) o;
+        if (!(o instanceof PersonName that)) {
+            return false;
+        }
 
-        String name = StringUtil.performSimpleLatinPreprocessing(firstname), surname =
-            StringUtil.performSimpleLatinPreprocessing(lastname);
-        String thatName = StringUtil.performSimpleLatinPreprocessing(that.firstname),
-            thatSurname = StringUtil.performSimpleLatinPreprocessing(that.lastname);
+        String name = StringUtil.performSimpleLatinPreprocessing(firstname);
+        String surname = StringUtil.performSimpleLatinPreprocessing(lastname);
+        String middleName = StringUtil.performSimpleLatinPreprocessing(otherName);
 
-        return (Objects.equals(name, thatName) && Objects.equals(surname, thatSurname)) ||
-            (Objects.equals(surname, thatName) && Objects.equals(name, thatSurname));
+        String thatName = StringUtil.performSimpleLatinPreprocessing(that.firstname);
+        String thatSurname = StringUtil.performSimpleLatinPreprocessing(that.lastname);
+        String thatMiddleName = StringUtil.performSimpleLatinPreprocessing(that.otherName);
+
+        return (Objects.equals(name, thatName) && Objects.equals(surname, thatSurname) &&
+            Objects.equals(middleName, thatMiddleName)) ||
+            (Objects.equals(name, thatSurname) && Objects.equals(surname, thatName) &&
+                Objects.equals(middleName, thatMiddleName));
+    }
+
+    @Override
+    public int hashCode() {
+        String name = StringUtil.performSimpleLatinPreprocessing(firstname);
+        String surname = StringUtil.performSimpleLatinPreprocessing(lastname);
+        String middleName = StringUtil.performSimpleLatinPreprocessing(otherName);
+
+        return Objects.hash(
+            name, surname, middleName
+        ) + Objects.hash(
+            surname, name, middleName
+        );
     }
 }

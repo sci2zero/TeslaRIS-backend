@@ -19,9 +19,9 @@ public class AssessmentPointsScalingRuleEngine {
     @Getter
     private Set<MultiLingualContent> reasoningProcess = new HashSet<>();
 
-    public synchronized double serbianScalingRulebook2025(Integer authorCount,
-                                                          String classificationCode,
-                                                          Double points) {
+    public double serbianScalingRulebook2025(Integer authorCount,
+                                             String classificationCode,
+                                             Double points) {
         reasoningProcess.clear();
 
         var revisedAuthorNumber = findIndicatorByCode("revisedAuthorCount");

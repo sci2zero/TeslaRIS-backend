@@ -1,6 +1,5 @@
 package rs.teslaris.assessment.dto;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +26,5 @@ public class EnrichedResearcherAssessmentResponseDTO extends ResearcherAssessmen
 
     private List<MultilingualContentDTO> institutionName;
 
-    private Map<Integer, List<Integer>> publicationToInstitution =
-        Collections.synchronizedMap(new HashMap<>());
+    private Map<Integer, List<Integer>> publicationToInstitution = new HashMap<>();
 }

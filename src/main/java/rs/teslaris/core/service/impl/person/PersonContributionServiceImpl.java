@@ -218,7 +218,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                 contributor.getName().getDateFrom(),
                 contributor.getName().getDateTo());
         } else if (Objects.nonNull(contributor)) {
-            if (contributor.getOtherNames().contains(personName)) {
+            if (contributor.getName().equals(personName) ||
+                contributor.getOtherNames().contains(personName)) {
                 return personName;
             }
 
@@ -234,6 +235,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                         userOptional.get()));
             }
         }
+
         return personName;
     }
 

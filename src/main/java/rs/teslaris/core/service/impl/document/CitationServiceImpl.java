@@ -98,10 +98,21 @@ public class CitationServiceImpl implements CitationService {
                             "Journal publication ID " + index.getDatabaseId() + " does not exist"));
                 itemBuilder
                     .containerTitle(
-                        getContent(journalPublication.getJournal().getTitle(), languageCode))
-                    .volume(journalPublication.getVolume())
-                    .issue(journalPublication.getIssue())
-                    .page(journalPublication.getStartPage(), journalPublication.getEndPage());
+                        getContent(journalPublication.getJournal().getTitle(), languageCode));
+
+                if (StringUtil.valueExists(journalPublication.getVolume())) {
+                    itemBuilder.volume(journalPublication.getVolume());
+                }
+
+                if (StringUtil.valueExists(journalPublication.getVolume())) {
+                    itemBuilder.issue(journalPublication.getIssue());
+                }
+
+                if (StringUtil.valueExists(journalPublication.getStartPage()) &&
+                    StringUtil.valueExists(journalPublication.getEndPage())) {
+                    itemBuilder.page(journalPublication.getStartPage(),
+                        journalPublication.getEndPage());
+                }
             }
             case "PROCEEDINGS_PUBLICATION" -> {
                 var proceedingsPublication =
@@ -112,10 +123,17 @@ public class CitationServiceImpl implements CitationService {
                 itemBuilder
                     .containerTitle(
                         getContent(proceedingsPublication.getProceedings().getEvent().getName(),
-                            languageCode))
-                    .number(proceedingsPublication.getArticleNumber())
-                    .page(proceedingsPublication.getStartPage(),
+                            languageCode));
+
+                if (StringUtil.valueExists(proceedingsPublication.getArticleNumber())) {
+                    itemBuilder.number(proceedingsPublication.getArticleNumber());
+                }
+
+                if (StringUtil.valueExists(proceedingsPublication.getStartPage()) &&
+                    StringUtil.valueExists(proceedingsPublication.getEndPage())) {
+                    itemBuilder.page(proceedingsPublication.getStartPage(),
                         proceedingsPublication.getEndPage());
+                }
             }
         }
 
