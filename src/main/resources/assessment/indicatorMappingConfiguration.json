@@ -1,5 +1,5 @@
 {
-  "ifTableContent": ["currentJIF", "currentJIFRank", "fiveYearJIF", "fiveYearJIFRank"],
+  "ifTableContent": ["currentJIF", "currentJIFRank", "fiveYearJIF", "fiveYearJIFRank", "jci", "jciPercentile"],
   "mappings": {
     "updateTotalViews": ["viewsTotal"],
     "updateTotalDownloads": ["downloadsTotal"],

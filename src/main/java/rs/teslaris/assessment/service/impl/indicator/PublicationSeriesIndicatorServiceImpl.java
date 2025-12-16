@@ -267,9 +267,11 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         var ifResponse = new IFTableResponseDTO();
         ifResponse.setIf2Values(extractIFValues(indicatorValues, contentIndicators.getFirst()));
         ifResponse.setIf5Values(extractIFValues(indicatorValues, contentIndicators.get(2)));
+        ifResponse.setJciValues(extractIFValues(indicatorValues, contentIndicators.get(4)));
+        ifResponse.setJciPercentiles(extractIFValues(indicatorValues, contentIndicators.getLast()));
 
         var groupedByCategory = indicatorValues.stream()
-            .filter(ind -> ind.getCategoryIdentifier() != null)
+            .filter(ind -> Objects.nonNull(ind.getCategoryIdentifier()))
             .collect(Collectors.groupingBy(PublicationSeriesIndicator::getCategoryIdentifier));
 
         var tableContent = groupedByCategory.entrySet().stream()
@@ -300,7 +302,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         categoryContent.setIf2Ranks(
             extractCategoryRanks(indicators, contentIndicators.get(1), category));
         categoryContent.setIf5Ranks(
-            extractCategoryRanks(indicators, contentIndicators.getLast(), category));
+            extractCategoryRanks(indicators, contentIndicators.get(3), category));
 
         return categoryContent;
     }

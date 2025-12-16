@@ -36,9 +36,9 @@
     },
     "journalClassificationRules": {
       "generalAssessmentRulePrefix": {
-        "sr": "Rad publikovan u časopisu dobija najpovoljniju kategoriju za godinu publikovanja iz perioda od tri godine (dve godine pre publikovanja i godine publikovanja) ako u tom periodu ima bar u jednoj godini dvogodišnji (IF2) ili petogodišnji (IF5) Impakt Faktor.",
-        "sr-cyr": "Рад публикован у часопису добија најповољнију категорију за годину публиковања из периода од три године (две године пре публиковања и године публиковања) ако у том периоду има бар у једној години двогодишњи (IF2) или петогодишњи (IF5) Импакт Фактор.",
-        "en": "A paper published in a journal receives the most favorable category for the year of publication from a three-year period (two years before publication and the year of publication) if, during that period, it has at least one year with either a two-year (IF2) or five-year (IF5) Impact Factor."
+        "sr": "Rad publikovan u časopisu dobija najpovoljniju kategoriju za godinu publikovanja iz perioda od tri godine (dve godine pre publikovanja i godine publikovanja) ako u tom periodu ima bar u jednoj godini dvogodišnji (IF2) ili petogodišnji (IF5) impakt faktor, ili ako ima indikator citiranosti časopisa (JCI).",
+        "sr-cyr": "Рад публикован у часопису добија најповољнију категорију за годину публиковања из периода од три године (две године пре публиковања и године публиковања) ако у том периоду има бар у једној години двогодишњи (IF2) или петогодишњи (IF5) Импакт Фактор, или аки има индикатор цитираности часописа (JCI).",
+        "en": "A paper published in a journal receives the most favorable category for the year of publication from a three-year period (two years before publication and the year of publication) if, during that period, it has at least one year with either a two-year (IF2), five-year (IF5) Impact Factor or a Journal Citation Index (JCI)."
       },
       "mnoAssessmentRulePrefix": {
         "sr": "Rad publikovan u časopisu dobija najpovoljniju kategoriju za godinu publikovanja iz perioda od tri godine (dve godine pre publikovanja i godine publikovanja) ako u tom periodu ima klasifikaciju od nekog MNO-a.",

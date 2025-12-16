@@ -50,6 +50,7 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
         WHERE rbe.registryBookInstitution.id IN :institutionIds
           AND rbe.promotion.finished = true
           AND rbe.promotion.promotionDate BETWEEN :from AND :to
+          AND (:promotionId IS NULL OR rbe.promotion.id = :promotionId)
           AND (
             (
                 LOWER(CONCAT(rbe.personalInformation.authorName.firstname, ' ', rbe.personalInformation.authorName.lastname)) LIKE LOWER(CONCAT('%', :authorNameLat, '%')) AND
@@ -80,6 +81,7 @@ public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookE
         String authorTitleLat,
         String authorNameCyr,
         String authorTitleCyr,
+        Integer promotionId,
         Pageable pageable);
 
     @Query("SELECT COUNT(rbe) FROM RegistryBookEntry rbe WHERE " +

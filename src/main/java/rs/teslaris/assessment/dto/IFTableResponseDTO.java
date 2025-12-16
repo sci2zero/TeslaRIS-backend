@@ -17,5 +17,9 @@ public class IFTableResponseDTO {
 
     private List<Pair<Integer, String>> if5Values;
 
+    private List<Pair<Integer, String>> jciValues;
+
+    private List<Pair<Integer, String>> jciPercentiles;
+
     private List<IFCategoryRanksDTO> ifTableContent;
 }

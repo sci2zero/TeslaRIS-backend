@@ -533,7 +533,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         validateThesisForPublicReview(thesis);
 
         thesis.setIsOnPublicReview(true);
-        updatePublicReviewDates(thesis, continueLastReview);
+        updatePublicReviewDates(thesis, continueLastReview, false);
 
         thesis.setIsOnPublicReviewPause(false);
         thesisJPAService.save(thesis);
@@ -572,13 +572,19 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesis.getThesisType() == ThesisType.PHD_ART_PROJECT;
     }
 
-    private void updatePublicReviewDates(Thesis thesis, Boolean continueLastReview) {
-        if (thesis.getIsOnPublicReviewPause() && !continueLastReview) {
+    private void updatePublicReviewDates(Thesis thesis, Boolean continueLastReview,
+                                         Boolean removeLastPublicReviewStartDate) {
+        if (!thesis.getIsOnPublicReviewPause() || continueLastReview) {
+            return;
+        }
+
+        if (removeLastPublicReviewStartDate) {
             thesis.getPublicReviewStartDates()
                 .stream()
                 .max(Comparator.naturalOrder())
                 .ifPresent(thesis.getPublicReviewStartDates()::remove);
         }
+
         thesis.getPublicReviewStartDates().add(LocalDate.now());
     }
 

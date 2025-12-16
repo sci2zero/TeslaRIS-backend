@@ -90,7 +90,7 @@ public class AssessmentRulesConfigurationLoader {
                 if (ruleGroupCode.equals("journalClassificationRules")) {
                     content = assessmentRulesConfiguration.ruleDescriptions.get(ruleGroupCode)
                         .get(ruleCode.endsWith("MNO") ? "mnoAssessmentRulePrefix" :
-                            "generalAssessmentRulePrefix").get(languageCode) + " " + content;
+                            "generalAssessmentRulePrefix").get(languageCode) + "§" + content;
                 }
 
                 mc.setContent(MessageFormat.format(content, processedParams));

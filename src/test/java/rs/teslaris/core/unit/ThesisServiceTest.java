@@ -442,7 +442,7 @@ public class ThesisServiceTest {
         verify(thesisJPAService).findOne(thesisId);
         verify(thesis).setIsOnPublicReview(true);
         verify(thesisJPAService).save(thesis);
-        assertEquals(2, thesis.getPublicReviewStartDates().size());
+        assertEquals(1, thesis.getPublicReviewStartDates().size());
         assertTrue(thesis.getPublicReviewStartDates().contains(lastReviewDate));
     }
 
@@ -475,7 +475,7 @@ public class ThesisServiceTest {
         verify(thesisJPAService).findOne(thesisId);
         verify(thesis).setIsOnPublicReview(true);
         verify(thesisJPAService).save(thesis);
-        assertEquals(2, thesis.getPublicReviewStartDates().size());
+        assertEquals(1, thesis.getPublicReviewStartDates().size());
         assertTrue(thesis.getPublicReviewStartDates().contains(lastReviewDate));
     }
 

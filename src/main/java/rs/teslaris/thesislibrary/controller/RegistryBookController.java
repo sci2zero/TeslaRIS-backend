@@ -244,13 +244,16 @@ public class RegistryBookController {
                                                              String authorName,
                                                              @RequestParam(required = false, defaultValue = "")
                                                              String authorTitle,
+                                                             @RequestParam(required = false)
+                                                             Integer promotionId,
                                                              Pageable pageable,
                                                              @RequestHeader("Authorization")
                                                              String bearerToken) {
         return registryBookService.getRegistryBookForInstitutionAndPeriod(
             tokenUtil.extractUserIdFromToken(bearerToken), institutionId,
             Objects.requireNonNullElse(from, LocalDate.of(1000, 1, 1)),
-            Objects.requireNonNullElse(to, LocalDate.now()), authorName, authorTitle, pageable);
+            Objects.requireNonNullElse(to, LocalDate.now()), authorName, authorTitle, promotionId,
+            pageable);
     }
 
     @PatchMapping("/allow-single-update/{registryBookEntryId}")

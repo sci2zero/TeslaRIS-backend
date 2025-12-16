@@ -25,7 +25,8 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @AllArgsConstructor
 @Entity
 @Table(name = "indicators", indexes = {
-    @Index(name = "idx_indicator_code", columnList = "code")
+    @Index(name = "idx_indicator_code", columnList = "code"),
+    @Index(name = "idx_indicator_access_level", columnList = "access_level")
 })
 @SQLRestriction("deleted=false")
 public class Indicator extends BaseEntity {

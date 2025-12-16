@@ -36,7 +36,8 @@ import rs.teslaris.core.model.user.User;
         @Index(name = "idx_entity_type_pubseries_source_fromdate", columnList = "entity_type, publication_series_id, source, from_date"),
         @Index(name = "idx_entity_type_pubseries_source_from_to", columnList = "entity_type, publication_series_id, source, from_date, to_date"),
         @Index(name = "idx_entity_type_category_source_fromdate", columnList = "entity_type, category_identifier, source, from_date"),
-        @Index(name = "idx_entity_type_pubseries_source_date_category", columnList = "entity_type, publication_series_id, source, from_date, category_identifier")
+        @Index(name = "idx_entity_type_pubseries_source_date_category", columnList = "entity_type, publication_series_id, source, from_date, category_identifier"),
+        @Index(name = "idx_ei_type_document", columnList = "entity_type, document_id")
     }
 )
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

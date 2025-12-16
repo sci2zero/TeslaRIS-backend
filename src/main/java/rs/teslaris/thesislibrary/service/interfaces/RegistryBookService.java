@@ -57,6 +57,7 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
                                                                       LocalDate from, LocalDate to,
                                                                       String authorName,
                                                                       String authorTitle,
+                                                                      Integer promotionId,
                                                                       Pageable pageable);
 
     List<InstitutionCountsReportDTO> institutionCountsReport(Integer userId,

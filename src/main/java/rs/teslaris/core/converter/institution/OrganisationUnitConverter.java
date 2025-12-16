@@ -78,6 +78,17 @@ public class OrganisationUnitConverter {
         return dto;
     }
 
+    public static OrganisationUnitDTO toDTO(OrganisationUnit organisationUnit,
+                                            OrganisationUnit superOrganisationUnit) {
+        var response = toDTO(organisationUnit);
+        response.setSuperInstitutionId(superOrganisationUnit.getId());
+        response.setSuperInstitutionName(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                superOrganisationUnit.getName()));
+
+        return response;
+    }
+
     private static void filterSensitiveData(OrganisationUnitDTO organisationUnitResponse) {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 

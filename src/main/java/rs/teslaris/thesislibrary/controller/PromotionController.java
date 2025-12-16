@@ -51,7 +51,16 @@ public class PromotionController {
     @PreAuthorize("hasAnyAuthority('MANAGE_PROMOTIONS', 'READ_PROMOTIONS')")
     public List<PromotionDTO> getNonFinishedPromotionList(
         @RequestHeader("Authorization") String bearerToken) {
-        return promotionService.getNonFinishedPromotions(getBelongingInstitution(bearerToken));
+        return promotionService.getPromotionsBasedOnStatus(
+            getBelongingInstitution(bearerToken), false);
+    }
+
+    @GetMapping("/finished")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PROMOTIONS', 'READ_PROMOTIONS')")
+    public List<PromotionDTO> getFinishedPromotions(
+        @RequestHeader("Authorization") String bearerToken) {
+        return promotionService.getPromotionsBasedOnStatus(
+            getBelongingInstitution(bearerToken), true);
     }
 
     @PostMapping

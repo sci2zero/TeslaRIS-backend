@@ -28,4 +28,6 @@ public class PromotionDTO {
     private Integer institutionId;
 
     private Boolean finished;
+
+    private List<MultilingualContentDTO> institutionName;
 }

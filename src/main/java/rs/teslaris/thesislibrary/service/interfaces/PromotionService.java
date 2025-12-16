@@ -13,7 +13,7 @@ public interface PromotionService extends JPAService<Promotion> {
 
     Page<PromotionDTO> getAllPromotions(Integer institutionId, Pageable pageable);
 
-    List<PromotionDTO> getNonFinishedPromotions(Integer institutionId);
+    List<PromotionDTO> getPromotionsBasedOnStatus(Integer institutionId, boolean finished);
 
     Promotion createPromotion(PromotionDTO promotionDTO);
 

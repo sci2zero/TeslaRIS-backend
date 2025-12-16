@@ -654,7 +654,12 @@ public class PersonLeaderboardServiceTest {
             when(bucket2.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg2));
 
             var byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-            when(byPersonAgg.lterms().buckets().array()).thenReturn(List.of(bucket1, bucket2));
+            when(byPersonAgg.nested()
+                .aggregations().get("filtered_by_person")
+                .filter()
+                .aggregations().get("person_buckets")
+                .lterms().buckets().array()
+            ).thenReturn(List.of(bucket1, bucket2));
 
             var topAggs = Map.of("by_person", byPersonAgg);
 

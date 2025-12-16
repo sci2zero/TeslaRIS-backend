@@ -657,6 +657,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                                                                              LocalDate to,
                                                                              String authorName,
                                                                              String authorTitle,
+                                                                             Integer promotionId,
                                                                              Pageable pageable) {
         var userEmploymentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
         if (Objects.nonNull(userEmploymentInstitutionId) && userEmploymentInstitutionId > 0 &&
@@ -671,7 +672,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         return registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
                 institutionIds, from, to, authorName, authorTitle,
                 SerbianTransliteration.toCyrillic(authorName),
-                SerbianTransliteration.toCyrillic(authorTitle), pageable)
+                SerbianTransliteration.toCyrillic(authorTitle),
+                promotionId, pageable)
             .map(RegistryBookEntryConverter::toDTO);
     }
 

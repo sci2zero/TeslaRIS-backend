@@ -22,6 +22,7 @@ import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
@@ -391,6 +392,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 fileItem.getAccessRights().equals(AccessRights.OPEN_ACCESS)) {
                 commonExportDocument.setOfficialFileName(fileItem.getServerFilename());
             }
+
+            if (fileItem.getResourceType().equals(ResourceType.SUPPLEMENT)) {
+                addDocumentFileInformation(commonExportDocument, fileItem);
+            }
         });
         document.getProofs().forEach(fileItem -> {
             if (fileItem.getIsVerifiedData() &&
@@ -435,6 +440,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
             ((Thesis) document).getPreliminaryFiles().forEach(
                 preliminaryFile -> addDocumentFileInformation(commonExportDocument,
                     preliminaryFile));
+
+            ((Thesis) document).getPreliminarySupplements().forEach(
+                preliminarySupplement -> addDocumentFileInformation(commonExportDocument,
+                    preliminarySupplement));
 
             ((Thesis) document).getCommissionReports().forEach(
                 commissionReport -> addDocumentFileInformation(commonExportDocument,
@@ -952,18 +961,21 @@ public class ExportDocumentConverter extends ExportConverterBase {
                         baseFrontendUrl + "api/file/" + exportDocument.getOfficialFileName()));
             }
 
-            if (StringUtil.valueExists(exportDocument.getOfficialFileName())) {
-                dimPublication.getFields().add(
-                    new DimField("dc", "identifier", "fulltext", null, null, null,
-                        baseFrontendUrl + "api/file/" + exportDocument.getOfficialFileName()));
-            }
-
             exportDocument.getDocumentFiles().stream().filter(
                     df -> df.getType().equals(ResourceType.STATEMENT) &&
-                        df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
+                        df.getAccessRights().equals(AccessRights.OPEN_ACCESS) &&
+                        df.getLicense().equals(License.BY_NC_ND))
                 .forEach(openAccessReport ->
                     dimPublication.getFields().add(
                         new DimField("dc", "identifier", "report", null, null, null,
+                            baseFrontendUrl + "api/file/" + openAccessReport.getServerFilename())));
+
+            exportDocument.getDocumentFiles().stream().filter(
+                    df -> df.getType().equals(ResourceType.SUPPLEMENT) &&
+                        df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
+                .forEach(openAccessReport ->
+                    dimPublication.getFields().add(
+                        new DimField("dc", "identifier", "supplement", null, null, null,
                             baseFrontendUrl + "api/file/" + openAccessReport.getServerFilename())));
         } else {
             dimPublication.getFields().add(new DimField("dc", "date", "issued", null, null, null,
