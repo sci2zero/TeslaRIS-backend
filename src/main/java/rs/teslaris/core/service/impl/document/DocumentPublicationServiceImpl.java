@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import jakarta.annotation.Nullable;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -609,7 +610,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     .forEach(employment -> {
                         var orgId = employment.getOrganisationUnit().getId();
 
-                        if (Objects.isNull(employment.getDateTo())) {
+                        if (Objects.isNull(employment.getDateTo()) ||
+                            employment.getDateTo().isAfter(LocalDate.now())) {
                             // Ongoing employment (dateFrom may be null or set)
                             activeEmploymentInstitutions.add(orgId);
                             var superIds =

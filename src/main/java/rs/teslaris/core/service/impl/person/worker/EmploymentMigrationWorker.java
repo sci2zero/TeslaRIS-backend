@@ -227,7 +227,8 @@ public class EmploymentMigrationWorker {
                 involvement.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) &&
                     involvement.getOrganisationUnit().getId().equals(organisationUnitId) &&
                     involvement != newEmployment &&
-                    Objects.isNull(involvement.getDateTo()))
+                    (Objects.isNull(involvement.getDateTo()) ||
+                        involvement.getDateTo().isAfter(LocalDate.now())))
             .forEach(involvement -> involvement.setDateTo(newEmployment.getDateFrom()));
     }
 
