@@ -186,7 +186,8 @@ public class ThesisConverter extends DocumentPublicationConverter {
             thesisDTO.setNumberOfAppendices(physicalDescription.getNumberOfAppendices());
         }
 
-        if (thesisDTO.getIsOnPublicReview()) {
+        if (thesisDTO.getIsOnPublicReview() && Objects.nonNull(thesisDTO.getPublicReviewDates()) &&
+            !thesisDTO.getPublicReviewDates().isEmpty()) {
             thesisDTO.setPublicReviewEnd(
                 thesisDTO.getPublicReviewDates().getLast().plusDays(daysOnPublicReview));
         }

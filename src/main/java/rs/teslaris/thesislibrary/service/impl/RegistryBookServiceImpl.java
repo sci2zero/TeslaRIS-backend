@@ -677,6 +677,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             .map(RegistryBookEntryConverter::toDTO);
     }
 
+    @Override
     public List<InstitutionCountsReportDTO> institutionCountsReport(
         Integer userId,
         LocalDate from,
@@ -726,6 +727,62 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
         return Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
             !entry.getAllowSingleEdit();
+    }
+
+    @Override
+    @Transactional
+    public void removeFromFinishedPromotion(Integer registryBookEntryId) {
+        var entry = findOne(registryBookEntryId);
+
+        var promotion = entry.getPromotion();
+        if (!promotion.getFinished()) {
+            throw new PromotionException("Can un-promote only from finished promotions.");
+        }
+
+        entry.setPromotion(null);
+        entry.setAllowSingleEdit(false);
+
+        if (promotionService.isPromotionEmpty(promotion.getId())) {
+            promotion.setDeleted(true);
+            promotionService.save(promotion);
+        }
+
+        save(entry);
+    }
+
+    @Override
+    @Transactional
+    public void removeAllFromFinishedPromotion(Integer promotionId, boolean deletePromotion) {
+        var promotion = promotionService.findOne(promotionId);
+
+        if (!promotion.getFinished()) {
+            throw new PromotionException("Can un-promote only from finished promotions.");
+        }
+
+        var promotableEntries =
+            registryBookEntryRepository.getBookEntriesForFinishedPromotion(promotionId,
+                Pageable.unpaged()).getContent();
+
+        if (deletePromotion) {
+            promotableEntries.forEach(entry -> {
+                entry.setPromotion(null);
+                entry.setRegistryBookNumber(null);
+                entry.setSchoolYearOrdinalNumber(null);
+                save(entry);
+            });
+
+            promotion.setDeleted(true);
+            promotionService.save(promotion);
+        } else {
+            promotableEntries.forEach(entry -> {
+                entry.setRegistryBookNumber(null);
+                entry.setSchoolYearOrdinalNumber(null);
+                save(entry);
+            });
+
+            promotion.setFinished(false);
+            promotionService.save(promotion);
+        }
     }
 
     private List<Integer> getInstitutionIdsForUser(Integer userId) {

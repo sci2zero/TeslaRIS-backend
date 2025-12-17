@@ -401,7 +401,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         user.setEmail(newEmail);
 
         var index = userAccountIndexRepository.findByDatabaseId(userId);
-        saveAndNotifyUser(user, index.orElse(new UserAccountIndex()));
+        saveAndNotifyUser(user, index.orElse(new UserAccountIndex()), null);
     }
 
     @Override
@@ -413,12 +413,17 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "Activation email can only be sent to deactivated users.");
         }
 
-        sendActivationEmail(user);
+        sendActivationEmail(user, null);
     }
 
     @Override
     @Transactional
     public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
+        return registerResearcher(registrationRequest, false);
+    }
+
+    private User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest,
+                                    boolean generatedPassword) {
         if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
             throw new MaintenanceModeException("maintenanceInProgressMessage");
         }
@@ -441,7 +446,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         personService.indexPerson(person);
-        return saveAndNotifyUser(newUser, new UserAccountIndex());
+        return saveAndNotifyUser(newUser, new UserAccountIndex(),
+            generatedPassword ? registrationRequest.getPassword() : null);
     }
 
     @Override
@@ -468,7 +474,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         Arrays.fill(generatedPassword, '\0');
-        return saveAndNotifyUser(newUser, new UserAccountIndex());
+        return saveAndNotifyUser(newUser, new UserAccountIndex(), null);
     }
 
     @Override
@@ -479,11 +485,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
 
         registrationRequest.setPassword(new String(generatedPassword));
-        var savedUser = registerResearcher(registrationRequest);
 
-        sendGeneratedPasswordEmail(new String(generatedPassword), savedUser);
-
-        return savedUser;
+        return registerResearcher(registrationRequest, true);
     }
 
     private Authority getResearcherAuthority() {
@@ -556,16 +559,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
     }
 
-    private User saveAndNotifyUser(User newUser, UserAccountIndex index) {
+    private User saveAndNotifyUser(User newUser, UserAccountIndex index, String generatedPassword) {
         var savedUser = userRepository.save(newUser);
         indexUser(savedUser, index);
 
-        sendActivationEmail(savedUser);
+        sendActivationEmail(savedUser, generatedPassword);
 
         return savedUser;
     }
 
-    private void sendActivationEmail(User savedUser) {
+    private void sendActivationEmail(User savedUser, String generatedPassword) {
         userAccountActivationRepository.deleteAllByUserId(savedUser.getId());
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), savedUser);
@@ -585,27 +588,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var systemName = getSystemName(language);
 
         var message = messageSource.getMessage(
-            "accountActivation.mailBodyResearcher",
-            new Object[] {systemName, activationLink},
-            Locale.forLanguageTag(language)
-        );
-        emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);
-    }
-
-    private void sendGeneratedPasswordEmail(String securePassword, User savedUser) {
-        var language = savedUser.getPreferredUILanguage().getLanguageTag().toLowerCase();
-
-        var subject = messageSource.getMessage(
-            "firstLoginPassword.mailSubject",
-            new Object[] {},
-            Locale.forLanguageTag(language)
-        );
-
-        var systemName = getSystemName(language);
-
-        var message = messageSource.getMessage(
-            "firstLoginPassword.mailBody",
-            new Object[] {systemName, securePassword},
+            StringUtil.valueExists(generatedPassword) ? "accountActivation.mailBodyEmployee" :
+                "accountActivation.mailBodyResearcher",
+            new Object[] {systemName, activationLink, generatedPassword},
             Locale.forLanguageTag(language)
         );
         emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);

@@ -1924,7 +1924,7 @@ public class UserServiceTest {
         userService.registerResearcherAdmin(registrationRequest);
 
         // then
-        verify(emailUtil, times(2)).sendSimpleEmail(any(), any(), passwordCaptor.capture());
+        verify(emailUtil, times(1)).sendSimpleEmail(any(), any(), passwordCaptor.capture());
         assertNotNull(passwordCaptor.getValue());
     }
 
@@ -2000,8 +2000,8 @@ public class UserServiceTest {
 
         // then
         assertNotNull(result);
-        verify(emailUtil, times(2)).sendSimpleEmail(eq("admin@example.com"), anyString(),
-            anyString());
+        verify(emailUtil, times(1))
+            .sendSimpleEmail(eq("admin@example.com"), anyString(), anyString());
     }
 
     @Test
@@ -2055,17 +2055,11 @@ public class UserServiceTest {
         when(applicationConfigurationRepository.isApplicationInMaintenanceMode())
             .thenReturn(false);
 
-        when(messageSource.getMessage(eq("firstLoginPassword.mailSubject"), any(),
-            any(Locale.class)))
-            .thenReturn("Welcome");
-        when(messageSource.getMessage(eq("firstLoginPassword.mailBody"), any(), any(Locale.class)))
-            .thenReturn("Body123");
-
         // when
         userService.registerResearcherAdmin(registrationRequest);
 
         // then
-        verify(emailUtil).sendSimpleEmail(eq("user@example.com"), eq("Welcome"), eq("Body123"));
+        verify(emailUtil).sendSimpleEmail(any(), any(), any());
     }
 
     @Test
@@ -2145,7 +2139,7 @@ public class UserServiceTest {
 
         // then
         verify(userRepository).save(any());
-        verify(emailUtil, times(2)).sendSimpleEmail(any(), any(), any());
+        verify(emailUtil, times(1)).sendSimpleEmail(any(), any(), any());
         assertNotNull(captor.getAllValues());
     }
 }

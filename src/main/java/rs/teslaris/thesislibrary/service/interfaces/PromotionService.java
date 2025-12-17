@@ -22,4 +22,6 @@ public interface PromotionService extends JPAService<Promotion> {
     void updatePromotion(Integer promotionId, PromotionDTO promotionDTO);
 
     void deletePromotion(Integer promotionId);
+
+    boolean isPromotionEmpty(Integer promotionId);
 }

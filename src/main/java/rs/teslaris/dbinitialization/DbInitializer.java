@@ -209,6 +209,7 @@ public class DbInitializer implements ApplicationRunner {
         var readPromotions = new Privilege("READ_PROMOTIONS");
         var configureAppSettings = new Privilege("CONFIGURE_APP_SETTINGS");
         var registerResearcher = new Privilege("REGISTER_RESEARCHER");
+        var unpromoteRbEntries = new Privilege("UNPROMOTE_RB_ENTRIES");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -246,7 +247,8 @@ public class DbInitializer implements ApplicationRunner {
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
-                performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher));
+                performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
+                unpromoteRbEntries));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -283,7 +285,7 @@ public class DbInitializer implements ApplicationRunner {
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
                 forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
-                registerResearcher
+                registerResearcher, unpromoteRbEntries
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

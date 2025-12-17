@@ -574,7 +574,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private void updatePublicReviewDates(Thesis thesis, Boolean continueLastReview,
                                          Boolean removeLastPublicReviewStartDate) {
-        if (!thesis.getIsOnPublicReviewPause() || continueLastReview) {
+        if ((!thesis.getIsOnPublicReviewPause() && !thesis.getPublicReviewStartDates().isEmpty()) ||
+            continueLastReview) {
             return;
         }
 

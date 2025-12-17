@@ -12,11 +12,15 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -915,5 +919,156 @@ class RegistryBookServiceTest {
 
         // Then
         assertFalse(result);
+    }
+
+    @Test
+    void shouldRemoveFromFinishedPromotion() {
+        // Given
+        var entryId = 1;
+        var promotion = new Promotion();
+        promotion.setId(1);
+        promotion.setFinished(true);
+
+        var entry = new RegistryBookEntry();
+        entry.setId(entryId);
+        entry.setPromotion(promotion);
+
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+        when(promotionService.isPromotionEmpty(1)).thenReturn(false);
+
+        // When
+        registryBookService.removeFromFinishedPromotion(entryId);
+
+        // Then
+        assertNull(entry.getPromotion());
+        assertFalse(entry.getAllowSingleEdit());
+        verify(registryBookEntryRepository, times(1)).save(entry);
+    }
+
+    @Test
+    void shouldRemoveFromFinishedPromotionAndDeleteEmptyPromotion() {
+        // Given
+        var entryId = 1;
+        var promotion = new Promotion();
+        promotion.setId(1);
+        promotion.setFinished(true);
+
+        var entry = new RegistryBookEntry();
+        entry.setId(entryId);
+        entry.setPromotion(promotion);
+
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+        when(promotionService.isPromotionEmpty(1)).thenReturn(true);
+
+        // When
+        registryBookService.removeFromFinishedPromotion(entryId);
+
+        // Then
+        assertNull(entry.getPromotion());
+        assertTrue(promotion.getDeleted());
+        verify(promotionService, times(1)).save(promotion);
+        verify(registryBookEntryRepository, times(1)).save(entry);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRemovingFromUnfinishedPromotion() {
+        // Given
+        var entryId = 1;
+        var promotion = new Promotion();
+        promotion.setFinished(false);
+
+        var entry = new RegistryBookEntry();
+        entry.setId(entryId);
+        entry.setPromotion(promotion);
+
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When & Then
+        PromotionException exception = assertThrows(PromotionException.class,
+            () -> registryBookService.removeFromFinishedPromotion(entryId));
+
+        assertEquals("Can un-promote only from finished promotions.", exception.getMessage());
+        verify(registryBookEntryRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldRemoveAllFromFinishedPromotionWithDeletion() {
+        // Given
+        var promotionId = 1;
+        var deletePromotion = true;
+
+        var promotion = new Promotion();
+        promotion.setId(promotionId);
+        promotion.setFinished(true);
+
+        var entry1 = new RegistryBookEntry();
+        entry1.setId(1);
+        entry1.setPromotion(promotion);
+        entry1.setRegistryBookNumber(1);
+        entry1.setSchoolYearOrdinalNumber(1);
+
+        var entry2 = new RegistryBookEntry();
+        entry2.setId(2);
+        entry2.setPromotion(promotion);
+        entry2.setRegistryBookNumber(2);
+        entry2.setSchoolYearOrdinalNumber(2);
+
+        var entries = Arrays.asList(entry1, entry2);
+
+        when(promotionService.findOne(promotionId)).thenReturn(promotion);
+        when(registryBookEntryRepository.getBookEntriesForFinishedPromotion(
+            eq(promotionId), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(entries));
+
+        // When
+        registryBookService.removeAllFromFinishedPromotion(promotionId, deletePromotion);
+
+        // Then
+        assertNull(entry1.getPromotion());
+        assertNull(entry1.getRegistryBookNumber());
+        assertNull(entry1.getSchoolYearOrdinalNumber());
+
+        assertNull(entry2.getPromotion());
+        assertNull(entry2.getRegistryBookNumber());
+        assertNull(entry2.getSchoolYearOrdinalNumber());
+
+        assertTrue(promotion.getDeleted());
+        verify(promotionService, times(1)).save(promotion);
+        verify(registryBookEntryRepository, times(2)).save(any(RegistryBookEntry.class));
+    }
+
+    @Test
+    void shouldRemoveAllFromFinishedPromotionWithoutDeletion() {
+        // Given
+        var promotionId = 1;
+        var deletePromotion = false;
+
+        var promotion = new Promotion();
+        promotion.setId(promotionId);
+        promotion.setFinished(true);
+
+        var entry = new RegistryBookEntry();
+        entry.setId(1);
+        entry.setPromotion(promotion);
+        entry.setRegistryBookNumber(1);
+        entry.setSchoolYearOrdinalNumber(1);
+
+        var entries = Collections.singletonList(entry);
+
+        when(promotionService.findOne(promotionId)).thenReturn(promotion);
+        when(registryBookEntryRepository.getBookEntriesForFinishedPromotion(
+            eq(promotionId), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(entries));
+
+        // When
+        registryBookService.removeAllFromFinishedPromotion(promotionId, deletePromotion);
+
+        // Then
+        assertEquals(promotion, entry.getPromotion());
+        assertNull(entry.getRegistryBookNumber());
+        assertNull(entry.getSchoolYearOrdinalNumber());
+        assertFalse(promotion.getFinished());
+        verify(promotionService, times(1)).save(promotion);
+        verify(registryBookEntryRepository, times(1)).save(entry);
     }
 }

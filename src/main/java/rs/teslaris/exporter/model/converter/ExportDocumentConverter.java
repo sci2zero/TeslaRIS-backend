@@ -1029,13 +1029,12 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 );
             });
 
-        clientLanguages.forEach(lang -> {
+        clientLanguages.forEach(lang ->
             dimPublication.getFields()
                 .add(new DimField("dc", "identifier", "uri", lang, null, null,
                     baseFrontendUrl + lang + "/scientific-results/" +
                         getConcreteEntityPath(exportDocument.getType()) + "/" +
-                        exportDocument.getDatabaseId()));
-        });
+                        exportDocument.getDatabaseId())));
 
         if (Objects.nonNull(exportDocument.getEIssn()) && !exportDocument.getEIssn().isBlank()) {
             dimPublication.getFields()

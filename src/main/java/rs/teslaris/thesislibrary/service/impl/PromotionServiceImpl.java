@@ -112,4 +112,9 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
 
         promotionRepository.delete(findOne(promotionId));
     }
+
+    @Override
+    public boolean isPromotionEmpty(Integer promotionId) {
+        return promotionRepository.hasPromotableEntries(promotionId);
+    }
 }
