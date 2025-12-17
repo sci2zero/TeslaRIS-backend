@@ -295,7 +295,7 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     return;
                 }
 
-                var termsAgg = publicationResponse.aggregations().get("by_person").sterms();
+                var termsAgg = publicationResponse.aggregations().get("by_person").lterms();
                 if (Objects.isNull(termsAgg)) {
                     return;
                 }
@@ -309,7 +309,7 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     .map(bucket -> {
                         int personId;
                         try {
-                            personId = Integer.parseInt(bucket.key().stringValue());
+                            personId = (int) bucket.key();
                         } catch (NumberFormatException ignored) {
                             personId = 0;
                         }
