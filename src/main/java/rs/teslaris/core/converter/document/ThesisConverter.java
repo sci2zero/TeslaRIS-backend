@@ -190,7 +190,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
             thesisDTO.setPublicReviewEnd(
                 thesisDTO.getPublicReviewDates().getLast()
                     .plusDays(PublicReviewConfigurationLoader.getLengthInDays(
-                        thesis.getIsShortenedReview()))
+                        Objects.requireNonNullElse(thesis.getIsShortenedReview(), false)))
             );
         }
 
@@ -215,7 +215,8 @@ public class ThesisConverter extends DocumentPublicationConverter {
         thesisDTO.setTypeOfTitle(
             MultilingualContentConverter.getMultilingualContentDTO(thesis.getTypeOfTitle()));
         thesisDTO.setPublicReviewCompleted(thesis.getPublicReviewCompleted());
-        thesisDTO.setIsShortenedReview(thesis.getIsShortenedReview());
+        thesisDTO.setIsShortenedReview(
+            Objects.requireNonNullElse(thesis.getIsShortenedReview(), false));
 
         if (Objects.nonNull(thesis.getPublisher())) {
             thesisDTO.setPublisherId(thesis.getPublisher().getId());
