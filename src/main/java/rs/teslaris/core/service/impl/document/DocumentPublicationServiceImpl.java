@@ -508,6 +508,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     public void indexCommonFields(Document document, DocumentPublicationIndex index) {
         var oldYear = index.getYear();
         var oldAuthors = index.getAuthorIds().stream().sorted().toList();
+        var isOldIndex = Objects.nonNull(index.getId());
 
         clearCommonIndexFields(index);
 
@@ -519,7 +520,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             document.getApproveStatus().equals(ApproveStatus.APPROVED));
         index.setAreFilesValid(document.getAreFilesValid());
 
-        if (Objects.nonNull(index.getId()) && (!index.getYear().equals(oldYear) ||
+        if (isOldIndex && (!index.getYear().equals(oldYear) ||
             !index.getAuthorIds().stream().sorted().toList().equals(oldAuthors))) {
             applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
                 index.getAuthorIds().stream().filter(id -> id > 0).toList()));

@@ -608,6 +608,25 @@ public class AssessmentDataInitializer {
         jciPercentile.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         jciPercentile.setContentType(IndicatorContentType.NUMBER);
 
+        var jciRank = new Indicator();
+        jciRank.setCode("jciRank");
+        jciRank.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "JCI Rank", 1),
+                new MultiLingualContent(serbianTag, "JCI Rank", 2),
+                new MultiLingualContent(serbianCyrillicTag, "JCI Rank", 3)));
+        jciRank.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "JCI Rank",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "JCI Rank",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "JCI Rank",
+                    3)));
+        jciRank.setAccessLevel(AccessLevel.CLOSED);
+        jciRank.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        jciRank.setContentType(IndicatorContentType.TEXT);
+
         var jcr = new Indicator();
         jcr.setCode("jcr");
         jcr.setTitle(
@@ -923,7 +942,7 @@ public class AssessmentDataInitializer {
                 yearlyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
                 hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile,
-                numParticipants, organizedByScientificInstitution, slavistiCategory,
+                numParticipants, organizedByScientificInstitution, slavistiCategory, jciRank,
                 numCountriesInScientificCommittee, numParticipantCountries, numPresentations,
                 lectureInvitation, isTheoretical, isExperimental, isSimulation, authorCount,
                 yearlyCitations, totalOutputCount));

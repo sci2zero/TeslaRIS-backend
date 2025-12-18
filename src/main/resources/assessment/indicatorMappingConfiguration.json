@@ -78,7 +78,7 @@
         },
         "19": {
           "mapsTo": "jciPercentile",
-          "type": "INDEPENDENT"
+          "type": "BY_CATEGORY"
         },
         "21": {
           "mapsTo": "eigenFactorNorm",
