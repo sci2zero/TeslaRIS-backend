@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -16,7 +15,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -34,11 +32,6 @@ class ThesisLibraryDissertationReportServiceTest {
     @InjectMocks
     private ThesisLibraryDissertationReportServiceImpl service;
 
-
-    @BeforeEach
-    void setup() {
-        ReflectionTestUtils.setField(service, "daysOnPublicReview", 30);
-    }
 
     @Test
     void testFetchPublicReviewDissertations_WithInstitutionAndYear() {

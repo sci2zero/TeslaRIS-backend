@@ -49,7 +49,7 @@ public class AssessmentRulesConfigurationLoader {
                 externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
-                "Failed to reload classification mapping configuration: " + e.getMessage());
+                "Failed to reload assessment rules configuration: " + e.getMessage());
         }
     }
 

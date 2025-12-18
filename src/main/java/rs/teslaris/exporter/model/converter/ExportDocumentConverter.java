@@ -961,22 +961,27 @@ public class ExportDocumentConverter extends ExportConverterBase {
                         baseFrontendUrl + "api/file/" + exportDocument.getOfficialFileName()));
             }
 
-            exportDocument.getDocumentFiles().stream().filter(
-                    df -> df.getType().equals(ResourceType.STATEMENT) &&
-                        df.getAccessRights().equals(AccessRights.OPEN_ACCESS) &&
-                        df.getLicense().equals(License.BY_NC_ND))
-                .forEach(openAccessReport ->
-                    dimPublication.getFields().add(
-                        new DimField("dc", "identifier", "report", null, null, null,
-                            baseFrontendUrl + "api/file/" + openAccessReport.getServerFilename())));
+            if (Objects.nonNull(exportDocument.getDocumentFiles()) &&
+                !exportDocument.getDocumentFiles().isEmpty()) {
+                exportDocument.getDocumentFiles().stream().filter(
+                        df -> df.getType().equals(ResourceType.STATEMENT) &&
+                            df.getAccessRights().equals(AccessRights.OPEN_ACCESS) &&
+                            df.getLicense().equals(License.BY_NC_ND))
+                    .forEach(openAccessReport ->
+                        dimPublication.getFields().add(
+                            new DimField("dc", "identifier", "report", null, null, null,
+                                baseFrontendUrl + "api/file/" +
+                                    openAccessReport.getServerFilename())));
 
-            exportDocument.getDocumentFiles().stream().filter(
-                    df -> df.getType().equals(ResourceType.SUPPLEMENT) &&
-                        df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
-                .forEach(openAccessReport ->
-                    dimPublication.getFields().add(
-                        new DimField("dc", "identifier", "supplement", null, null, null,
-                            baseFrontendUrl + "api/file/" + openAccessReport.getServerFilename())));
+                exportDocument.getDocumentFiles().stream().filter(
+                        df -> df.getType().equals(ResourceType.SUPPLEMENT) &&
+                            df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
+                    .forEach(openAccessReport ->
+                        dimPublication.getFields().add(
+                            new DimField("dc", "identifier", "supplement", null, null, null,
+                                baseFrontendUrl + "api/file/" +
+                                    openAccessReport.getServerFilename())));
+            }
         } else {
             dimPublication.getFields().add(new DimField("dc", "date", "issued", null, null, null,
                 exportDocument.getDocumentDate()));
@@ -1010,24 +1015,28 @@ public class ExportDocumentConverter extends ExportConverterBase {
         dimPublication.getFields().add(new DimField("dc", "source", null, null, null, null,
             repositoryName + " (" + baseFrontendUrl + ")"));
 
-        exportDocument.getDocumentFiles().stream().filter(file -> file.getType().equals(
-                ResourceType.OFFICIAL_PUBLICATION) && Objects.nonNull(file.getLicense())).findFirst()
-            .ifPresent(officialPublication -> {
-                var license = switch (officialPublication.getLicense()) {
-                    case BY -> "Attribution";
-                    case BY_SA -> "Attribution-ShareAlike";
-                    case BY_NC -> "Attribution-NonCommercial";
-                    case BY_NC_SA -> "Attribution-NonCommercial-ShareAlike";
-                    case BY_ND -> "Attribution-NoDerivs";
-                    case BY_NC_ND -> "Attribution-NonCommercial-NoDerivs";
-                    case CC0 -> "PublicDomain";
-                };
+        if (Objects.nonNull(exportDocument.getDocumentFiles()) &&
+            !exportDocument.getDocumentFiles().isEmpty()) {
+            exportDocument.getDocumentFiles().stream().filter(file -> file.getType().equals(
+                    ResourceType.OFFICIAL_PUBLICATION) && Objects.nonNull(file.getLicense()))
+                .findFirst()
+                .ifPresent(officialPublication -> {
+                    var license = switch (officialPublication.getLicense()) {
+                        case BY -> "Attribution";
+                        case BY_SA -> "Attribution-ShareAlike";
+                        case BY_NC -> "Attribution-NonCommercial";
+                        case BY_NC_SA -> "Attribution-NonCommercial-ShareAlike";
+                        case BY_ND -> "Attribution-NoDerivs";
+                        case BY_NC_ND -> "Attribution-NonCommercial-NoDerivs";
+                        case CC0 -> "PublicDomain";
+                    };
 
-                dimPublication.getFields().add(
-                    new DimField("dc", "rights", null,
-                        null, null, null, license)
-                );
-            });
+                    dimPublication.getFields().add(
+                        new DimField("dc", "rights", null,
+                            null, null, null, license)
+                    );
+                });
+        }
 
         clientLanguages.forEach(lang ->
             dimPublication.getFields()
@@ -1068,6 +1077,26 @@ public class ExportDocumentConverter extends ExportConverterBase {
             if (StringUtil.valueExists(exportDocument.getOfficialFileName())) {
                 dcPublication.getIdentifier()
                     .add(baseFrontendUrl + "api/file/" + exportDocument.getOfficialFileName());
+            }
+
+            if (Objects.nonNull(exportDocument.getDocumentFiles()) &&
+                !exportDocument.getDocumentFiles().isEmpty()) {
+                exportDocument.getDocumentFiles().stream().filter(
+                        df -> df.getType().equals(ResourceType.STATEMENT) &&
+                            df.getAccessRights().equals(AccessRights.OPEN_ACCESS) &&
+                            df.getLicense().equals(License.BY_NC_ND))
+                    .forEach(openAccessReport ->
+                        dcPublication.getIdentifier()
+                            .add(baseFrontendUrl + "api/file/" +
+                                openAccessReport.getServerFilename()));
+
+                exportDocument.getDocumentFiles().stream().filter(
+                        df -> df.getType().equals(ResourceType.SUPPLEMENT) &&
+                            df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
+                    .forEach(openAccessReport ->
+                        dcPublication.getIdentifier()
+                            .add(baseFrontendUrl + "api/file/" +
+                                openAccessReport.getServerFilename()));
             }
         } else {
             dcPublication.getDate().add(exportDocument.getDocumentDate());

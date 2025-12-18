@@ -1,0 +1,10 @@
+{
+  "regularPublicReviewLength": {
+    "timeUnit": "DAYS",
+    "value": 30
+  },
+  "shortenedPublicReviewLength": {
+    "timeUnit": "DAYS",
+    "value": 10
+  }
+}

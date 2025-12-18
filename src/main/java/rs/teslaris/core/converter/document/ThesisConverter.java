@@ -34,6 +34,7 @@ import rs.teslaris.core.model.oaipmh.marc21.DataField;
 import rs.teslaris.core.model.oaipmh.marc21.Marc21;
 import rs.teslaris.core.model.oaipmh.marc21.SubField;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -41,8 +42,6 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Component
 public class ThesisConverter extends DocumentPublicationConverter {
-
-    private static Integer daysOnPublicReview;
 
     private static String repositoryName;
 
@@ -189,7 +188,10 @@ public class ThesisConverter extends DocumentPublicationConverter {
         if (thesisDTO.getIsOnPublicReview() && Objects.nonNull(thesisDTO.getPublicReviewDates()) &&
             !thesisDTO.getPublicReviewDates().isEmpty()) {
             thesisDTO.setPublicReviewEnd(
-                thesisDTO.getPublicReviewDates().getLast().plusDays(daysOnPublicReview));
+                thesisDTO.getPublicReviewDates().getLast()
+                    .plusDays(PublicReviewConfigurationLoader.getLengthInDays(
+                        thesis.getIsShortenedReview()))
+            );
         }
 
         if (Objects.nonNull(thesis.getLanguage())) {
@@ -213,6 +215,7 @@ public class ThesisConverter extends DocumentPublicationConverter {
         thesisDTO.setTypeOfTitle(
             MultilingualContentConverter.getMultilingualContentDTO(thesis.getTypeOfTitle()));
         thesisDTO.setPublicReviewCompleted(thesis.getPublicReviewCompleted());
+        thesisDTO.setIsShortenedReview(thesis.getIsShortenedReview());
 
         if (Objects.nonNull(thesis.getPublisher())) {
             thesisDTO.setPublisherId(thesis.getPublisher().getId());
@@ -529,11 +532,6 @@ public class ThesisConverter extends DocumentPublicationConverter {
         var dataField = new DataField(tag, ind1, ind2, new ArrayList<>());
         dataField.getSubFields().add(new SubField(subfieldCode, value));
         return dataField;
-    }
-
-    @Value("${thesis.public-review.duration-days}")
-    public void setConfigValue(Integer value) {
-        ThesisConverter.daysOnPublicReview = value;
     }
 
     @Value("${export.repo.name}")

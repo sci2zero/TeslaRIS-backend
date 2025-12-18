@@ -776,6 +776,23 @@ public class DocumentAssessmentClassificationServiceImpl
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(sb -> sb.range(r -> r.field("last_edited").gt(JsonData.of(date))));
             b.must(sb -> sb.term(t -> t.field("type").value(type)));
+            b.must(sb -> sb.terms(t -> t
+                .field("publication_type")
+                .terms(terms -> terms
+                    .value(type.equals(DocumentPublicationType.JOURNAL_PUBLICATION.name()) ?
+                        List.of(
+                            FieldValue.of("REVIEW_ARTICLE"),
+                            FieldValue.of("RESEARCH_ARTICLE")
+                        ) :
+                        List.of(
+                            FieldValue.of("REGULAR_FULL_ARTICLE"),
+                            FieldValue.of("INVITED_FULL_ARTICLE"),
+                            FieldValue.of("REGULAR_ABSTRACT_ARTICLE"),
+                            FieldValue.of("INVITED_ABSTRACT_ARTICLE")
+                        )
+                    )
+                )
+            ));
 
             if (!authorIds.isEmpty()) {
                 var authorIdTerms = new TermsQueryField.Builder()

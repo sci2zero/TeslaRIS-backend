@@ -350,7 +350,7 @@ public class ThesisServiceTest {
             new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
-        thesisService.putOnPublicReview(thesisId, false);
+        thesisService.putOnPublicReview(thesisId, false, false);
 
         // then
         verify(thesisJPAService).findOne(thesisId);
@@ -368,7 +368,8 @@ public class ThesisServiceTest {
         when(thesis.getIsOnPublicReview()).thenReturn(true);
 
         // when / then
-        assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId, false));
+        assertThrows(ThesisException.class,
+            () -> thesisService.putOnPublicReview(thesisId, false, false));
         verify(thesisJPAService).findOne(thesisId);
         verify(thesis, never()).setIsOnPublicReview(true);
         verify(thesisJPAService, never()).save(any());
@@ -384,7 +385,8 @@ public class ThesisServiceTest {
         when(thesis.getThesisType()).thenReturn(ThesisType.BACHELOR);
 
         // when / then
-        assertThrows(ThesisException.class, () -> thesisService.putOnPublicReview(thesisId, false));
+        assertThrows(ThesisException.class,
+            () -> thesisService.putOnPublicReview(thesisId, false, false));
         verify(thesisJPAService).findOne(thesisId);
         verify(thesis, never()).setIsOnPublicReview(true);
         verify(thesisJPAService, never()).save(any());
@@ -436,7 +438,7 @@ public class ThesisServiceTest {
             new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
-        thesisService.putOnPublicReview(thesisId, true);
+        thesisService.putOnPublicReview(thesisId, true, false);
 
         // then
         verify(thesisJPAService).findOne(thesisId);
@@ -469,7 +471,7 @@ public class ThesisServiceTest {
             new HashSet<>(List.of(mock(MultiLingualContent.class))));
 
         // when
-        thesisService.putOnPublicReview(thesisId, true);
+        thesisService.putOnPublicReview(thesisId, true, false);
 
         // then
         verify(thesisJPAService).findOne(thesisId);
@@ -571,7 +573,7 @@ public class ThesisServiceTest {
         // When & Then
         ThesisException exception =
             assertThrows(ThesisException.class,
-                () -> thesisService.putOnPublicReview(thesisId, false));
+                () -> thesisService.putOnPublicReview(thesisId, false, false));
         assertEquals("noAttachmentsMessage", exception.getMessage());
     }
 
@@ -599,7 +601,7 @@ public class ThesisServiceTest {
         // When & Then
         ThesisException exception =
             assertThrows(ThesisException.class,
-                () -> thesisService.putOnPublicReview(thesisId, false));
+                () -> thesisService.putOnPublicReview(thesisId, false, false));
         assertEquals("missingAttachmentsMessage", exception.getMessage());
     }
 
