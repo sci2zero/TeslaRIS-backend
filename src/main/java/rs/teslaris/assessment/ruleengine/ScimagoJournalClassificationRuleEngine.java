@@ -73,7 +73,7 @@ public class ScimagoJournalClassificationRuleEngine extends JournalClassificatio
                 sjr.getTextualValue().equals("Q3"))) {
             reasoningProcess =
                 AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
-                    "M24PlusSJR", this.classificationYear, category);
+                    "M24PlusSJR", sjr.getTextualValue(), this.classificationYear, category);
             return assessmentClassificationService.readAssessmentClassificationByCode(
                 "journalM24Plus");
         }

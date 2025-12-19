@@ -65,7 +65,7 @@ public class ErihPlusJournalClassificationRuleEngine extends JournalClassificati
         if (erihPlusConditionPassed) {
             reasoningProcess =
                 AssessmentRulesConfigurationLoader.getRuleDescription("journalClassificationRules",
-                    "m23e", this.classificationYear, category);
+                    "m23e", this.classificationYear);
             return assessmentClassificationService.readAssessmentClassificationByCode(
                 "journalM23e");
         }

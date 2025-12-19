@@ -30,7 +30,12 @@ import rs.teslaris.core.model.user.User;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = false, exclude = {"timestamp", "proofs", "user"})
+@EqualsAndHashCode(
+    callSuper = false,
+    exclude = {
+        "timestamp", "proofs", "user", "numericValue", "booleanValue", "textualValue"
+    }
+)
 @Entity
 @Table(
     name = "entity_indicators",
