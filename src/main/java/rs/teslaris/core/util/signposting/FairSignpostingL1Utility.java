@@ -326,7 +326,7 @@ public class FairSignpostingL1Utility {
             .filter(df -> df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
             .forEach(file ->
                 headers.add(HttpHeaders.LINK,
-                    "<" + buildSafeUri(baseUrl + "/api/file/" + file.getFileName()) +
+                    "<" + buildSafeUri(baseUrl + "/api/file/" + file.getServerFilename()) +
                         ">; rel=\"item\" type=\"" + file.getMimeType() + "\"")
             );
     }

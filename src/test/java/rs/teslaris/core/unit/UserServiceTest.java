@@ -1161,7 +1161,7 @@ public class UserServiceTest {
         verify(userRepository).deleteAllAccountActivationsForUser(3);
         verify(userRepository).deleteAllPasswordResetsForUser(3);
         verify(userRepository).deleteRefreshTokenForUser(3);
-        verify(userRepository).delete(any());
+        verify(userRepository).save(any());
     }
 
     @Test

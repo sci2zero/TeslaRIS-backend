@@ -3,6 +3,7 @@ package rs.teslaris.exporter.model.converter;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
@@ -14,7 +15,10 @@ import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.PublisherPublishable;
+import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.rocrate.ContextualEntity;
 import rs.teslaris.core.model.rocrate.Organization;
 import rs.teslaris.core.model.rocrate.Periodical;
@@ -30,6 +34,7 @@ import rs.teslaris.core.model.rocrate.RoCrateProceedingsPublication;
 import rs.teslaris.core.model.rocrate.RoCratePublicationBase;
 import rs.teslaris.core.model.rocrate.RoCratePublishable;
 import rs.teslaris.core.model.rocrate.RoCrateSoftware;
+import rs.teslaris.core.model.rocrate.RoCrateThesis;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
@@ -182,6 +187,58 @@ public class RoCrateConverter {
         return metadata;
     }
 
+    public static RoCrateThesis toRoCrateModel(Thesis document, String documentIdentifier,
+                                               RoCrate metadataInfo) {
+        var metadata = new RoCrateThesis();
+        setCommonFields(metadata, document, documentIdentifier);
+        setPublisherInfo(metadataInfo, metadata, document);
+
+        if (Objects.nonNull(document.getOrganisationUnit())) {
+            var ouId = getOrganizationUnitIdentifier(document.getOrganisationUnit());
+            metadata.setSourceOrganization(new ContextualEntity(ouId, "Organization"));
+
+            metadataInfo.getGraph().add(new Organization(
+                StringUtil.getStringContent(document.getOrganisationUnit().getName(),
+                    DEFAULT_RO_CRATE_LANGUAGE),
+                document.getOrganisationUnit().getNameAbbreviation(),
+                document.getOrganisationUnit().getUris().stream().findFirst().orElse(null),
+                Objects.nonNull(document.getOrganisationUnit().getLocation()) ?
+                    document.getOrganisationUnit().getLocation().getAddress() : null
+            ));
+        } else {
+            metadata.setSourceOrganization(new ContextualEntity(
+                StringUtil.getStringContent(document.getExternalOrganisationUnitName(),
+                    DEFAULT_RO_CRATE_LANGUAGE),
+                "Organization")
+            );
+        }
+
+        metadata.setDisplayLocation(
+            StringUtil.getStringContent(document.getPlaceOfKeeping(), DEFAULT_RO_CRATE_LANGUAGE));
+
+        document.getFileItems().stream().filter(
+                file -> file.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION) &&
+                    file.getAccessRights().equals(AccessRights.OPEN_ACCESS)).findFirst()
+            .ifPresent(officialPublication -> {
+                metadata.setArchivedAt(
+                    baseUrl + "/api/file/" + officialPublication.getServerFilename());
+
+                metadata.setLicense("https://spdx.org/licenses/CC-" +
+                    officialPublication.getLicense().name().replace("_", "-") + "-4.0");
+
+                metadata.setIsAccessibleForFree(true);
+            });
+
+        metadata.setEducationalLevel(document.getThesisType().name());
+        metadata.setInSupportOf(
+            StringUtil.getStringContent(document.getTypeOfTitle(), DEFAULT_RO_CRATE_LANGUAGE)
+        );
+
+        metadata.setInLanguage(document.getLanguage().getLanguageCode().toLowerCase());
+
+        return metadata;
+    }
+
     private static void setCommonFields(RoCratePublicationBase metadata, Document document,
                                         String primaryIdentifier) {
         metadata.setId(primaryIdentifier);
@@ -281,6 +338,14 @@ public class RoCrateConverter {
             return "https://confid.org/conf/" + conference.getConfId();
         } else {
             return baseUrl + "en/events/conference/" + conference.getId();
+        }
+    }
+
+    private static String getOrganizationUnitIdentifier(OrganisationUnit organisationUnit) {
+        if (StringUtil.valueExists(organisationUnit.getRor())) {
+            return "https://ror.org/" + organisationUnit.getRor();
+        } else {
+            return baseUrl + "en/organisation-units/" + organisationUnit.getId();
         }
     }
 

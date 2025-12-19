@@ -97,7 +97,8 @@ public class FairSignpostingL2Utility {
 
     public static String addLinksForDocumentFileItems(DocumentFile file, LinksetFormat format) {
         var anchor =
-            FairSignpostingL1Utility.buildSafeUri(baseUrl + "/api/file/" + file.getFilename());
+            FairSignpostingL1Utility.buildSafeUri(
+                baseUrl + "/api/file/" + file.getServerFilename());
         var linkEntries = new ArrayList<FairSignpostingLinksetUtility.LinkEntry>();
 
         linkEntries.add(
@@ -408,7 +409,7 @@ public class FairSignpostingL2Utility {
             .filter(df -> df.getAccessRights().equals(AccessRights.OPEN_ACCESS))
             .forEach(file -> {
                 var fileUri = FairSignpostingL1Utility.buildSafeUri(
-                    baseUrl + "/api/file/" + file.getFileName());
+                    baseUrl + "/api/file/" + file.getServerFilename());
                 linkEntries.add(
                     new FairSignpostingLinksetUtility.LinkEntry(fileUri, "item", file.getMimeType(),
                         anchor)

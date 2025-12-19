@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Software;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.rocrate.ContextualEntity;
 import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -33,6 +35,7 @@ import rs.teslaris.exporter.util.rocrate.Json2HtmlTable;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RoCrateExportServiceImpl implements RoCrateExportService {
 
     private final DocumentPublicationService documentPublicationService;
@@ -137,9 +140,12 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 RoCrateConverter.toRoCrateModel(patent,
                     documentIdentifier,
                     metadataInfo));
-            // TODO: support theses
-            default -> {
-            }
+            case Thesis thesis -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(thesis,
+                    documentIdentifier,
+                    metadataInfo));
+            default -> log.error("Unexpected document type: {}. ID: {}.", document.getClass(),
+                document.getId()); // Should never happen
         }
 
         metadataInfo.setGraph(metadataInfo.getGraph().reversed());

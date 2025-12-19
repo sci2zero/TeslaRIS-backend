@@ -13,11 +13,9 @@ public class RoCrateThesis extends RoCratePublicationBase {
 
     private ContextualEntity sourceOrganization;
 
-    private ContextualEntity about;
-
     private String archivedAt;
 
-    private ContextualEntity displayLocation;
+    private String displayLocation;
 
     private String inSupportOf;
 
@@ -25,7 +23,7 @@ public class RoCrateThesis extends RoCratePublicationBase {
 
     private String inLanguage;
 
-    private Boolean isAccessibleForFree;
+    private Boolean isAccessibleForFree = false;
 
     private String license;
 

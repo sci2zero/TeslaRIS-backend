@@ -38,6 +38,16 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
         Integer publicationSeriesId, String category, Integer classificationYear,
         Integer commissionId);
 
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM PublicationSeriesAssessmentClassification psac WHERE " +
+        "psac.publicationSeries.id IN :publicationSeriesIds AND " +
+        "psac.classificationYear IN :classificationYears AND " +
+        "psac.commission.id = :commissionId")
+    void deleteByPublicationSeriesAndYearsAndCommission(List<Integer> publicationSeriesIds,
+                                                        List<Integer> classificationYears,
+                                                        Integer commissionId);
+
     @Transactional
     @Modifying
     @Query(value = """

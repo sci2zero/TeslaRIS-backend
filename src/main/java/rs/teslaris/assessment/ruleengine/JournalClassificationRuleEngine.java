@@ -64,6 +64,11 @@ public abstract class JournalClassificationRuleEngine {
             List<JournalIndex> chunk =
                 journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
+            assessmentClassificationRepository.deleteByPublicationSeriesAndYearsAndCommission(
+                chunk.stream().map(JournalIndex::getDatabaseId).toList(),
+                classificationYears, commission.getId()
+            );
+
             chunk.forEach((journalIndex) ->
                 classificationYears.forEach(classificationYear -> {
                     this.classificationYear = classificationYear;
@@ -165,12 +170,6 @@ public abstract class JournalClassificationRuleEngine {
             classification.setCategoryIdentifier(assessmentClassification.b);
             classification.setAssessmentClassification(assessmentClassification.a);
             classification.setClassificationReason(new HashSet<>(reasoningProcess));
-
-            var existingClassification =
-                assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
-                    classification.getPublicationSeries().getId(), assessmentClassification.b,
-                    classificationYear, classification.getCommission().getId());
-            existingClassification.ifPresent(assessmentClassificationRepository::delete);
 
             batchClassifications.add(classification);
             return true;

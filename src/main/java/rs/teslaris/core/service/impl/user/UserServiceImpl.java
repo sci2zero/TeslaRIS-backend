@@ -1063,7 +1063,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         userToDelete.setPerson(null);
         userToDelete.setLocked(true);
-        userRepository.delete(userToDelete);
+        userToDelete.setDeleted(true);
+        userRepository.save(userToDelete);
+
         userAccountIndexRepository.findByDatabaseId(userId)
             .ifPresent(userAccountIndexRepository::delete);
     }
