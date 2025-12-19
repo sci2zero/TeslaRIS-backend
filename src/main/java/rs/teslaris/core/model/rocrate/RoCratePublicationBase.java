@@ -2,6 +2,7 @@ package rs.teslaris.core.model.rocrate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,7 +35,7 @@ public class RoCratePublicationBase extends ContextualEntity implements RoCrateP
 
     private ContextualEntity publisher;
 
-    private List<ContextualEntity> files;
+    private List<ContextualEntity> files = new ArrayList<>();
 
     private String citeAs;
 }

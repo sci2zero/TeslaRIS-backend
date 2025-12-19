@@ -1,7 +1,6 @@
 package rs.teslaris.exporter.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
@@ -95,10 +94,10 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 }
 
                 zipOut.finish();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e); // will be caught in outer scope
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new LoadingException("Failed to create RO-Crate ZIP. Reason: " + e.getMessage());
         }
     }

@@ -25,7 +25,7 @@ public class RoCrateThesis extends RoCratePublicationBase {
 
     private Boolean isAccessibleForFree = false;
 
-    private String license;
+    private ContextualEntity license;
 
     public RoCrateThesis() {
         this.setType("Thesis");

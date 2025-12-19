@@ -98,6 +98,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
+    private final int CHUNK_SIZE = 1000;
+
 
     @Autowired
     public PersonAssessmentClassificationServiceImpl(
@@ -176,7 +178,7 @@ public class PersonAssessmentClassificationServiceImpl
         for (int pageNumber = 0; ; pageNumber++) {
             List<PersonIndex> chunk = searchService
                 .runQuery(findAllPersonsByFilters(researcherIds, List.of(organisationUnit.getId())),
-                    PageRequest.of(pageNumber, 10), PersonIndex.class, "person")
+                    PageRequest.of(pageNumber, CHUNK_SIZE), PersonIndex.class, "person")
                 .getContent();
 
             if (chunk.isEmpty()) {
@@ -271,16 +273,16 @@ public class PersonAssessmentClassificationServiceImpl
     @Transactional
     public synchronized void reindexPublicationPointsForAllResearchers() {
         int pageNumber = 0;
-        int chunkSize = 1000;
+
         boolean hasNextPage = true;
 
         while (hasNextPage) {
             var persons =
-                personIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+                personIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE)).getContent();
             persons.forEach(this::reindexPublicationPointsForResearcher);
 
             pageNumber++;
-            hasNextPage = persons.size() == chunkSize;
+            hasNextPage = persons.size() == CHUNK_SIZE;
         }
     }
 
@@ -321,7 +323,6 @@ public class PersonAssessmentClassificationServiceImpl
         List<AssessmentMeasure> assessmentMeasures
     ) {
         int pageNumber = 0;
-        int chunkSize = 1000;
         boolean hasNextPage = true;
 
         List<Integer> publicationIdsBatch = new ArrayList<>();
@@ -331,7 +332,7 @@ public class PersonAssessmentClassificationServiceImpl
         while (hasNextPage) {
             var publications = documentPublicationIndexRepository
                 .findAssessedByAuthorIds(index.getDatabaseId(),
-                    PageRequest.of(pageNumber, chunkSize))
+                    PageRequest.of(pageNumber, CHUNK_SIZE))
                 .getContent();
 
             publications.forEach(pub ->
@@ -354,7 +355,7 @@ public class PersonAssessmentClassificationServiceImpl
             );
 
             pageNumber++;
-            hasNextPage = publications.size() == chunkSize;
+            hasNextPage = publications.size() == CHUNK_SIZE;
         }
     }
 
@@ -449,12 +450,11 @@ public class PersonAssessmentClassificationServiceImpl
         List<Integer> publicationIdsBatch = new ArrayList<>();
 
         int pageNumber = 0;
-        int chunkSize = 1000;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> publications =
-                fetchPublications(personIndex, pageNumber, chunkSize, startYear, endYear);
+                fetchPublications(personIndex, pageNumber, CHUNK_SIZE, startYear, endYear);
 
             publications.forEach(pub ->
                 publicationIdsBatch.add(pub.getDatabaseId())
@@ -475,7 +475,7 @@ public class PersonAssessmentClassificationServiceImpl
                         Collections.emptyList()), isUserLoggedIn));
 
             pageNumber++;
-            hasNextPage = publications.size() == chunkSize;
+            hasNextPage = publications.size() == CHUNK_SIZE;
         }
     }
 

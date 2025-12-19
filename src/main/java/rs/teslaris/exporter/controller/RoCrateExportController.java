@@ -14,20 +14,20 @@ import rs.teslaris.exporter.service.interfaces.RoCrateExportService;
 @RestController
 @RequestMapping("/api/ro-crate")
 @RequiredArgsConstructor
-public class RoCrateController {
+public class RoCrateExportController {
 
     private final RoCrateExportService roCrateExportService;
 
 
-    @GetMapping("/document/{id}")
-    public ResponseEntity<StreamingResponseBody> downloadRoCrate(@PathVariable Integer id) {
+    @GetMapping("/document/{documentId}")
+    public ResponseEntity<StreamingResponseBody> downloadRoCrate(@PathVariable Integer documentId) {
 
         StreamingResponseBody body =
-            outputStream -> roCrateExportService.createRoCrateZip(id, outputStream);
+            outputStream -> roCrateExportService.createRoCrateZip(documentId, outputStream);
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"ro-crate-" + id + ".zip\"")
+                "attachment; filename=\"ro-crate-" + documentId + ".zip\"")
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .body(body);
     }

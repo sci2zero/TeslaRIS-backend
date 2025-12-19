@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.rocrate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +23,7 @@ public class RoCratePerson extends ContextualEntity {
 
     private String description;
 
-    private List<Organization> affiliations;
+    private List<ContextualEntity> affiliations = new ArrayList<>();
 
 
     public RoCratePerson() {
