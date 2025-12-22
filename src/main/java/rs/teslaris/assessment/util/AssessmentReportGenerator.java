@@ -80,7 +80,7 @@ public class AssessmentReportGenerator {
 
         List<List<String>> tableData = new ArrayList<>();
         publicationsPerGroup.forEach((groupCode, publicationCount) -> {
-            tableData.add(List.of(String.valueOf(tableData.size() + 1),
+            tableData.add(List.of((tableData.size() + 1) + ".",
                 ClassificationPriorityMapping.getGroupNameBasedOnCode(groupCode, locale), groupCode,
                 String.valueOf(publicationCount)));
         });
@@ -122,7 +122,7 @@ public class AssessmentReportGenerator {
                     if (!handledPublicationIds.contains(publication.c) &&
                         ClassificationPriorityMapping.isOnSciList(code)) {
                         tableData.add(
-                            List.of(String.valueOf(tableData.size() + 1), publication.a, code));
+                            List.of((tableData.size() + 1) + ".", publication.a, code));
                         handledPublicationIds.add(publication.c);
                     }
                 });
@@ -165,7 +165,7 @@ public class AssessmentReportGenerator {
                     numberOfSciPublications.addAndGet(publications.size());
                 }
             });
-            tableData.add(List.of(String.valueOf(tableData.size() + 1), "",
+            tableData.add(List.of((tableData.size() + 1) + ".", "",
                 (locale.equalsIgnoreCase(LanguageAbbreviations.SERBIAN) ||
                     locale.equalsIgnoreCase(LanguageAbbreviations.SERBIAN_CYRILLIC)) ?
                     SerbianTransliteration.toCyrillic(assessmentResponse.getPersonName()) :
@@ -216,7 +216,7 @@ public class AssessmentReportGenerator {
                     numberOfSciPublications.addAndGet(publications.size());
                 }
             });
-            tableData.add(List.of(String.valueOf(tableData.size() + 1), "",
+            tableData.add(List.of((tableData.size() + 1) + ".", "",
                 (locale.equalsIgnoreCase(LanguageAbbreviations.SERBIAN) ||
                     locale.equalsIgnoreCase(LanguageAbbreviations.SERBIAN_CYRILLIC)) ?
                     SerbianTransliteration.toCyrillic(assessmentResponse.getPersonName()) :
@@ -302,7 +302,7 @@ public class AssessmentReportGenerator {
                         }
 
                         tableData.add(
-                            List.of(String.valueOf(tableData.size() + 1),
+                            List.of((tableData.size() + 1) + ".",
                                 institutionName.toString(),
                                 publication.a, code));
                         handledPublicationIds.add(publication.c);
@@ -410,7 +410,7 @@ public class AssessmentReportGenerator {
 
         categoryToSums.forEach((category, sums) -> {
             List<String> rowData = new ArrayList<>();
-            rowData.add(String.valueOf(tableData.size() + 1));
+            rowData.add((tableData.size() + 1) + ".");
             rowData.add(category);
             Arrays.stream(sums).mapToObj(String::valueOf).forEach(rowData::add);
             tableData.add(rowData);
@@ -482,7 +482,7 @@ public class AssessmentReportGenerator {
                         var color = determineRowColor(new HashSet<>(institutionIds), subOUs);
 
                         tableData.add(List.of(
-                            String.valueOf(tableData.size() + 1),
+                            (tableData.size() + 1) + ".",
                             publication.a + "§" + color,
                             code
                         ));
@@ -549,7 +549,7 @@ public class AssessmentReportGenerator {
 
         List<List<String>> tableData = new ArrayList<>();
         publicationsPerGroup.forEach((code, titlesAndCount) -> {
-            tableData.add(List.of(String.valueOf(tableData.size() + 1), code,
+            tableData.add(List.of((tableData.size() + 1) + ".", code,
                 String.valueOf(titlesAndCount.b),
                 titlesAndCount.a));
         });
