@@ -32,11 +32,16 @@ import rs.teslaris.core.model.institution.Commission;
 @Table(
     name = "entity_assessment_classifications",
     indexes = {
-        @Index(name = "idx_pub_series_comm_year", columnList = "publication_series_id, commission_id, classification_year"),
-        @Index(name = "idx_pub_series_category_year_comm", columnList = "publication_series_id, category_identifier, classification_year, commission_id"),
+        @Index(name = "idx_pub_series_comm_year",
+            columnList = "publication_series_id, commission_id, classification_year"),
+        @Index(name = "idx_pub_series_category_year_comm",
+            columnList = "publication_series_id, category_identifier, classification_year, commission_id"),
         @Index(name = "idx_doc_comm", columnList = "document_id, commission_id"),
         @Index(name = "idx_doc_comm_manual", columnList = "document_id, commission_id, manual"),
-        @Index(name = "idx_event_comm_year", columnList = "event_id, commission_id, classification_year")
+        @Index(name = "idx_event_comm_year", columnList = "event_id, commission_id, classification_year"),
+        @Index(
+            name = "idx_psac_comm_type_series_year",
+            columnList = "commission_id, entity_type, publication_series_id, classification_year")
     }
 )
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

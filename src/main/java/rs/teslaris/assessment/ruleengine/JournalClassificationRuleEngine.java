@@ -24,6 +24,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 
 @Transactional
@@ -64,20 +65,34 @@ public abstract class JournalClassificationRuleEngine {
             List<JournalIndex> chunk =
                 journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            assessmentClassificationRepository.deleteByPublicationSeriesAndYearsAndCommission(
-                chunk.stream().map(JournalIndex::getDatabaseId).toList(),
-                classificationYears, commission.getId()
-            );
+            FunctionalUtil.batch(chunk.stream().map(JournalIndex::getDatabaseId), 100)
+                .forEach(idBatch ->
+                    assessmentClassificationRepository
+                        .deleteByPublicationSeriesAndYearsAndCommission(
+                            idBatch,
+                            classificationYears,
+                            commission.getId()
+                        )
+                );
+
+            var chunkDatabaseIds = chunk.stream().map(JournalIndex::getDatabaseId).toList();
+            var chunkIndicators = new HashSet<PublicationSeriesIndicator>();
+            classificationYears.forEach(classificationYear -> {
+                chunkIndicators.addAll(publicationSeriesIndicatorRepository
+                    .findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+                        chunkDatabaseIds, classificationYear, source));
+            });
 
             chunk.forEach((journalIndex) ->
                 classificationYears.forEach(classificationYear -> {
                     this.classificationYear = classificationYear;
                     this.currentJournal =
                         journalRepository.getReferenceById(journalIndex.getDatabaseId());
-                    this.currentJournalIndicators =
-                        publicationSeriesIndicatorRepository
-                            .findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
-                                journalIndex.getDatabaseId(), classificationYear, source);
+                    this.currentJournalIndicators = chunkIndicators.stream().filter(ind ->
+                        ind.getPublicationSeries().getId().equals(journalIndex.getDatabaseId()) &&
+                            (ind.getFromDate().getYear() == classificationYear ||
+                                (ind.getFromDate().getYear() < classificationYear &&
+                                    Objects.isNull(ind.getToDate())))).toList();
 
                     performClassification(commission, batchClassifications);
                     reasoningProcess.clear();

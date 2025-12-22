@@ -7,8 +7,8 @@ public record ThesisReportCountsDTO(
     Integer institutionId,
     List<MultilingualContentDTO> institutionName,
     Integer defendedCount,
-    Integer putOnPublicReviewCount,
-    Integer topicsAcceptedCount,
-    Integer publiclyAvailableCount
+    Integer notDefendedCount,
+    Integer publiclyAvailableCount,
+    Integer closedAccessCount
 ) {
 }

@@ -1,9 +1,14 @@
 package rs.teslaris.core.util.functional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -35,5 +40,22 @@ public class FunctionalUtil {
 
             pageable = pageable.next();
         }
+    }
+
+    public static <T> Stream<List<T>> batch(Stream<T> stream, int size) {
+        var iterator = stream.iterator();
+
+        return StreamSupport.stream(
+            Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),
+            false
+        ).map(e -> {
+            var batch = new ArrayList<T>(size);
+            batch.add(e);
+
+            for (int i = 1; i < size && iterator.hasNext(); i++) {
+                batch.add(iterator.next());
+            }
+            return batch;
+        });
     }
 }

@@ -40,36 +40,61 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
     @Query("SELECT COUNT(t) FROM Thesis t WHERE " +
         "t.thesisDefenceDate >= :startDate AND " +
         "t.thesisDefenceDate <= :endDate AND " +
-        "t.thesisType = :type AND " +
+        "t.thesisType IN :types AND " +
         "t.organisationUnit.id IN :institutionIds")
-    Integer countDefendedThesesInPeriod(LocalDate startDate, LocalDate endDate, ThesisType type,
+    Integer countDefendedThesesInPeriod(LocalDate startDate, LocalDate endDate,
+                                        List<ThesisType> types,
                                         List<Integer> institutionIds);
 
     @Query("SELECT COUNT(t) FROM Thesis t WHERE " +
         "t.topicAcceptanceDate >= :startDate AND " +
         "t.topicAcceptanceDate <= :endDate AND " +
-        "t.thesisType = :type AND " +
+        "t.thesisType IN :types AND " +
         "t.organisationUnit.id IN :institutionIds")
-    Integer countAcceptedThesesInPeriod(LocalDate startDate, LocalDate endDate, ThesisType type,
+    Integer countAcceptedThesesInPeriod(LocalDate startDate, LocalDate endDate,
+                                        List<ThesisType> types,
                                         List<Integer> institutionIds);
 
     @Query("SELECT COUNT(DISTINCT t) FROM Thesis t JOIN t.publicReviewStartDates d " +
         "WHERE d >= :startDate AND " +
         "d <= :endDate AND " +
-        "t.thesisType = :type AND " +
+        "t.thesisType IN :types AND " +
         "t.organisationUnit.id IN :institutionIds")
     Integer countThesesWithPublicReviewInPeriod(LocalDate startDate, LocalDate endDate,
-                                                ThesisType type, List<Integer> institutionIds);
+                                                List<ThesisType> types,
+                                                List<Integer> institutionIds);
+
+    @Query("SELECT COUNT(DISTINCT t) FROM Thesis t JOIN t.publicReviewStartDates d " +
+        "WHERE d >= :startDate AND " +
+        "d <= :endDate AND " +
+        "t.thesisDefenceDate IS NULL AND " +
+        "t.thesisType IN :types AND " +
+        "t.organisationUnit.id IN :institutionIds")
+    Integer countNotDefendedThesesInPeriod(LocalDate startDate, LocalDate endDate,
+                                           List<ThesisType> types,
+                                           List<Integer> institutionIds);
 
     @Query("SELECT COUNT(DISTINCT t) FROM Thesis t JOIN t.fileItems fi " +
         "WHERE fi.accessRights = 2 AND " +
         "t.thesisDefenceDate >= :startDate AND " +
         "t.thesisDefenceDate <= :endDate AND " +
-        "t.thesisType = :type AND " +
+        "t.thesisType IN :types AND " +
         "t.organisationUnit.id IN :institutionIds")
     Integer countPubliclyAvailableDefendedThesesThesesInPeriod(LocalDate startDate,
-                                                               LocalDate endDate, ThesisType type,
+                                                               LocalDate endDate,
+                                                               List<ThesisType> types,
                                                                List<Integer> institutionIds);
+
+    @Query("SELECT COUNT(DISTINCT t) FROM Thesis t JOIN t.fileItems fi " +
+        "WHERE fi.accessRights != 2 AND " +
+        "t.thesisDefenceDate >= :startDate AND " +
+        "t.thesisDefenceDate <= :endDate AND " +
+        "t.thesisType IN :types AND " +
+        "t.organisationUnit.id IN :institutionIds")
+    Integer countClosedAccessDefendedThesesThesesInPeriod(LocalDate startDate,
+                                                          LocalDate endDate,
+                                                          List<ThesisType> types,
+                                                          List<Integer> institutionIds);
 
     @Query("SELECT DISTINCT t FROM Thesis t " +
         "LEFT JOIN FETCH t.contributors " +

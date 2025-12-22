@@ -19,6 +19,9 @@ public interface ThesisLibraryReportingService {
     Page<DocumentPublicationIndex> fetchDefendedThesesInPeriod(ThesisReportRequestDTO request,
                                                                Pageable pageable);
 
+    Page<DocumentPublicationIndex> fetchNotDefendedThesesInPeriod(ThesisReportRequestDTO request,
+                                                                  Pageable pageable);
+
     Page<DocumentPublicationIndex> fetchAcceptedThesesInPeriod(ThesisReportRequestDTO request,
                                                                Pageable pageable);
 
@@ -28,6 +31,9 @@ public interface ThesisLibraryReportingService {
     Page<DocumentPublicationIndex> fetchPubliclyAvailableThesesInPeriod(
         ThesisReportRequestDTO request,
         Pageable pageable);
+
+    Page<DocumentPublicationIndex> fetchClosedAccessThesesInPeriod(ThesisReportRequestDTO request,
+                                                                   Pageable pageable);
 
     Pair<InputStreamResource, Integer> generatePhdLibraryReportDocument(
         ThesisReportRequestDTO request,

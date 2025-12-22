@@ -17,6 +17,6 @@ public record ThesisReportRequestDTO(
     List<Integer> topLevelInstitutionIds,
 
     @NotNull(message = "You have to provide thesis type.")
-    ThesisType thesisType
+    List<ThesisType> thesisTypes
 ) {
 }
