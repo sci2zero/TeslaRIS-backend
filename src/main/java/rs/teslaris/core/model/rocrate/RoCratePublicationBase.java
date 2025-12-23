@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,6 +14,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RoCratePublicationBase extends ContextualEntity implements RoCratePublishable {
 
@@ -29,9 +31,7 @@ public class RoCratePublicationBase extends ContextualEntity implements RoCrateP
 
     private String issn;
 
-    private List<ContextualEntity> authors;
-
-    private List<ContextualEntity> editors;
+    private List<ContextualEntity> authors = new ArrayList<>();
 
     private ContextualEntity publisher;
 

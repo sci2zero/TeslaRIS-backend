@@ -490,7 +490,7 @@ public class RoCrateConverter {
         }
     }
 
-    private static String getPersonIdentifier(Person person) {
+    public static String getPersonIdentifier(Person person) {
         if (StringUtil.valueExists(person.getOrcid())) {
             return "https://orcid.org/" + person.getOrcid();
         } else if (StringUtil.valueExists(person.getScopusAuthorId())) {
@@ -507,11 +507,11 @@ public class RoCrateConverter {
         }
     }
 
-    public static String getFileIdentifier(DocumentFile documentFile) {
+    private static String getFileIdentifier(DocumentFile documentFile) {
         return baseUrl + "api/file/" + documentFile.getServerFilename();
     }
 
-    public static String getLicenseUrl(License license) {
+    private static String getLicenseUrl(License license) {
         return "https://spdx.org/licenses/CC-" + license.name().replace("_", "-") + "-4.0";
     }
 

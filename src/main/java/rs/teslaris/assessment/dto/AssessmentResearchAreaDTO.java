@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 
 @Getter
 @Setter
@@ -16,4 +17,6 @@ public class AssessmentResearchAreaDTO {
     private List<MultilingualContentDTO> name;
 
     private String code;
+
+    private List<ResearchAreaHierarchyDTO> researchSubAreas;
 }

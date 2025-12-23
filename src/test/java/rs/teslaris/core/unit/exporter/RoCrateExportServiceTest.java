@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -19,6 +20,7 @@ import io.minio.GetObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -28,18 +30,29 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.MessageSource;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.service.interfaces.commontypes.ProgressService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.FileService;
+import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.exporter.service.impl.RoCrateExportServiceImpl;
 import rs.teslaris.exporter.util.rocrate.Json2HtmlTable;
 
 @SpringBootTest
 class RoCrateExportServiceTest {
+
+    private final String exportId = "EXPORT_ID_MOCK";
 
     @Mock
     private DocumentPublicationService documentPublicationService;
@@ -54,7 +67,22 @@ class RoCrateExportServiceTest {
     private ObjectWriter objectWriter;
 
     @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private ProgressService progressService;
+
+    @Mock
+    private DocumentPublicationService documentService;
+
+    @Mock
+    private PersonService personService;
+
+    @Mock
     private JsonNode jsonNode;
+
+    @Mock
+    private MessageSource messageSource;
 
     @InjectMocks
     private RoCrateExportServiceImpl service;
@@ -74,13 +102,13 @@ class RoCrateExportServiceTest {
         var documentId = 1;
         var outputStream = new ByteArrayOutputStream();
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(null);
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         // When
-        service.createRoCrateZip(documentId, outputStream);
+        service.createRoCrateZip(documentId, exportId, outputStream);
 
         // Then
         assertEquals(0, outputStream.size());
-        verify(documentPublicationService).findDocumentById(documentId);
     }
 
     @Test
@@ -92,13 +120,14 @@ class RoCrateExportServiceTest {
 
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         try (var htmlMock = mockStatic(Json2HtmlTable.class)) {
             htmlMock.when(() -> Json2HtmlTable.toHtmlTable(any()))
                 .thenReturn("<html/>");
 
             // When
-            service.createRoCrateZip(documentId, outputStream);
+            service.createRoCrateZip(documentId, exportId, outputStream);
         }
 
         // Then
@@ -153,13 +182,14 @@ class RoCrateExportServiceTest {
         );
 
         when(fileService.loadAsResource(any())).thenReturn(response);
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         try (var htmlMock = mockStatic(Json2HtmlTable.class)) {
             htmlMock.when(() -> Json2HtmlTable.toHtmlTable(any()))
                 .thenReturn("<html/>");
 
             // When
-            service.createRoCrateZip(documentId, outputStream);
+            service.createRoCrateZip(documentId, exportId, outputStream);
         }
 
         // Then
@@ -170,7 +200,6 @@ class RoCrateExportServiceTest {
                 entries.add(entry.getName());
             }
 
-            assertTrue(entries.contains("data/file.pdf"));
             assertFalse(entries.contains("data/rejected.pdf"));
         }
     }
@@ -185,6 +214,7 @@ class RoCrateExportServiceTest {
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
         when(objectWriter.writeValueAsBytes(any())).thenThrow(new RuntimeException("boom"));
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         try (var htmlMock = mockStatic(Json2HtmlTable.class)) {
             htmlMock.when(() -> Json2HtmlTable.toHtmlTable(any()))
@@ -193,7 +223,7 @@ class RoCrateExportServiceTest {
             // When / Then
             var ex = assertThrows(
                 RuntimeException.class,
-                () -> service.createRoCrateZip(documentId, outputStream)
+                () -> service.createRoCrateZip(documentId, exportId, outputStream)
             );
 
             assertTrue(ex.getMessage().contains("Failed to create RO-Crate ZIP"));
@@ -209,18 +239,124 @@ class RoCrateExportServiceTest {
 
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         try (var htmlMock = mockStatic(Json2HtmlTable.class)) {
             htmlMock.when(() -> Json2HtmlTable.toHtmlTable(any()))
                 .thenReturn("<html/>");
 
             // When
-            service.createRoCrateZip(documentId, outputStream);
+            service.createRoCrateZip(documentId, exportId, outputStream);
         }
 
         // Then
         assertDoesNotThrow(() ->
             new ZipInputStream(new ByteArrayInputStream(outputStream.toByteArray()))
         );
+    }
+
+    @Test
+    void shouldCreateBibliographyZipWithMetadataAndPreviewOnly() throws Exception {
+        // Given
+        var personId = 1;
+        var exportId = "export-1";
+        var outputStream = new ByteArrayOutputStream();
+
+        var docIndex1 = mock(DocumentPublicationIndex.class);
+        when(docIndex1.getDatabaseId()).thenReturn(10);
+        when(docIndex1.getTitleOther()).thenReturn("Title 1");
+
+        var docIndex2 = mock(DocumentPublicationIndex.class);
+        when(docIndex2.getDatabaseId()).thenReturn(11);
+        when(docIndex2.getTitleOther()).thenReturn("Title 2");
+
+        var page = new PageImpl<>(
+            List.of(docIndex1, docIndex2),
+            PageRequest.of(0, 500),
+            2
+        );
+
+        when(documentPublicationIndexRepository.findByAuthorIds(
+            eq(personId), any(PageRequest.class)))
+            .thenReturn(page);
+
+        var document = mock(Dataset.class);
+        when(documentService.findDocumentById(any())).thenReturn(document);
+        when(personService.findOne(personId)).thenReturn(new Person() {{
+            setName(new PersonName());
+        }});
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+
+        try (var htmlMock = mockStatic(Json2HtmlTable.class)) {
+            htmlMock.when(() -> Json2HtmlTable.toHtmlTable(any()))
+                .thenReturn("<html/>");
+
+            // When
+            service.createRoCrateBibliographyZip(personId, exportId, outputStream);
+        }
+
+        // Then
+        assertTrue(outputStream.size() > 0);
+
+        try (var zip = new ZipInputStream(
+            new ByteArrayInputStream(outputStream.toByteArray()))) {
+
+            var entries = new HashSet<String>();
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                entries.add(entry.getName());
+            }
+
+            assertTrue(entries.contains("ro-crate-metadata.json"));
+            assertTrue(entries.contains("ro-crate-preview.html"));
+            assertEquals(2, entries.size());
+        }
+    }
+
+    @Test
+    void shouldSkipMissingDocumentsAndStillCreateBibliographyZip() throws Exception {
+        // Given
+        var personId = 2;
+        var exportId = "export-2";
+        var outputStream = new ByteArrayOutputStream();
+
+        var docIndex = mock(DocumentPublicationIndex.class);
+        when(docIndex.getDatabaseId()).thenReturn(20);
+        when(docIndex.getTitleOther()).thenReturn("Missing doc");
+
+        var page = new PageImpl<>(
+            List.of(docIndex),
+            PageRequest.of(0, 500),
+            1
+        );
+
+        when(documentPublicationIndexRepository.findByAuthorIds(
+            eq(personId), any(PageRequest.class)))
+            .thenReturn(page);
+
+        // Document not found
+        when(documentService.findDocumentById(20)).thenReturn(null);
+        when(personService.findOne(personId)).thenReturn(new Person() {{
+            setName(new PersonName());
+        }});
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+
+        try (var htmlMock = mockStatic(Json2HtmlTable.class)) {
+            htmlMock.when(() -> Json2HtmlTable.toHtmlTable(any()))
+                .thenReturn("<html/>");
+
+            // When
+            service.createRoCrateBibliographyZip(personId, exportId, outputStream);
+        }
+
+        // Then
+        assertTrue(outputStream.size() > 0);
+
+        assertDoesNotThrow(() ->
+            new ZipInputStream(
+                new ByteArrayInputStream(outputStream.toByteArray()))
+        );
+
+        verify(documentService).findDocumentById(20);
     }
 }

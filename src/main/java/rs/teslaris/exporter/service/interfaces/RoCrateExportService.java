@@ -6,5 +6,7 @@ import org.springframework.stereotype.Service;
 @Service
 public interface RoCrateExportService {
 
-    void createRoCrateZip(Integer documentId, OutputStream outputStream);
+    void createRoCrateZip(Integer documentId, String exportId, OutputStream outputStream);
+
+    void createRoCrateBibliographyZip(Integer personId, String exportId, OutputStream outputStream);
 }

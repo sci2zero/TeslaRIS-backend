@@ -24,6 +24,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
+import rs.teslaris.core.service.interfaces.commontypes.ApplicationConfigurationService;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
@@ -50,6 +51,8 @@ public class ScheduledTasksRestorer {
 
     private final ThesisService thesisService;
 
+    private final ApplicationConfigurationService applicationConfigurationService;
+
     private final ObjectMapper objectMapper;
 
 
@@ -60,7 +63,8 @@ public class ScheduledTasksRestorer {
                 ScheduledTaskType.DOCUMENT_BACKUP,
                 ScheduledTaskType.REINDEXING,
                 ScheduledTaskType.UNMANAGED_DOCUMENTS_DELETION,
-                ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK
+                ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK,
+                ScheduledTaskType.MAINTENANCE
             ));
 
         for (ScheduledTaskMetadata metadata : allMetadata) {
@@ -83,6 +87,8 @@ public class ScheduledTasksRestorer {
             restoreUnmanagedDocumentsDeletion(metadata);
         } else if (metadata.getType().equals(ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK)) {
             restorePublicReviewEndDateCheck(metadata);
+        } else if (metadata.getType().equals(ScheduledTaskType.MAINTENANCE)) {
+            restoreMaintenanceMode(metadata);
         }
 
         metadataRepository.deleteTaskForTaskId(metadata.getTaskId());
@@ -203,6 +209,16 @@ public class ScheduledTasksRestorer {
 
         thesisService.schedulePublicReviewEndCheck(timeToRun, types, publicReviewLengthDays, userId,
             metadata.getRecurrenceType());
+    }
+
+    private void restoreMaintenanceMode(ScheduledTaskMetadata metadata) {
+        Map<String, Object> data = metadata.getMetadata();
+
+        var userId = (Integer) data.get("userId");
+        var approximateEndMoment = String.valueOf(data.get("approximateEndMoment"));
+
+        applicationConfigurationService.scheduleMaintenanceMode(metadata.getTimeToRun(),
+            approximateEndMoment, userId);
     }
 }
 

@@ -1,5 +1,6 @@
 package rs.teslaris.core.configuration;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -358,6 +359,12 @@ public class SecurityConfiguration {
                 // APPLICATION CONFIGURATION
                 .requestMatchers(HttpMethod.GET, "/api/app-configuration/maintenance/next").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/app-configuration/maintenance/check").permitAll()
+
+                // SSE
+                .requestMatchers(request ->
+                    request.getDispatcherType() == DispatcherType.ASYNC &&
+                    request.getRequestURI().startsWith("/api/sse/")
+                ).permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

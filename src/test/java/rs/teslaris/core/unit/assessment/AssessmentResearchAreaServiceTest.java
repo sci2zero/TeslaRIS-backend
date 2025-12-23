@@ -30,6 +30,7 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -51,6 +52,9 @@ public class AssessmentResearchAreaServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ResearchAreaRepository researchAreaRepository;
 
     @Mock
     private CommissionService commissionService;
@@ -103,7 +107,8 @@ public class AssessmentResearchAreaServiceTest {
             Optional.of(researchArea));
 
         // When
-        assessmentResearchAreaService.setPersonAssessmentResearchArea(personId, researchAreaCode);
+        assessmentResearchAreaService.setPersonAssessmentResearchArea(personId, researchAreaCode,
+            null);
 
         // Then
         assertEquals(researchAreaCode, researchArea.getResearchAreaCode());
@@ -118,7 +123,8 @@ public class AssessmentResearchAreaServiceTest {
         when(personService.findOne(personId)).thenReturn(new Person());
 
         // When
-        assessmentResearchAreaService.setPersonAssessmentResearchArea(personId, researchAreaCode);
+        assessmentResearchAreaService.setPersonAssessmentResearchArea(personId, researchAreaCode,
+            List.of());
 
         // Then
         verify(assessmentResearchAreaRepository).save(any(AssessmentResearchArea.class));

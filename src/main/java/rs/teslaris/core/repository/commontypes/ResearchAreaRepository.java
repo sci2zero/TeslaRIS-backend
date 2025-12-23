@@ -1,6 +1,7 @@
 package rs.teslaris.core.repository.commontypes;
 
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,9 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
     @Query("SELECT ra FROM ResearchArea ra WHERE ra.superResearchArea IS NOT NULL " +
         "AND ra.id NOT IN (SELECT r.superResearchArea.id FROM ResearchArea r WHERE r.superResearchArea IS NOT NULL)")
     List<ResearchArea> getAllLeafs();
+
+    @Query("SELECT ra FROM ResearchArea ra WHERE ra.id IN :researchAreaIds")
+    List<ResearchArea> getResearchAreaByIdsIn(Set<Integer> researchAreaIds);
 
     @Query("SELECT ra FROM ResearchArea ra WHERE ra.superResearchArea.id = :parentId")
     List<ResearchArea> getChildResearchAreas(Integer parentId);
