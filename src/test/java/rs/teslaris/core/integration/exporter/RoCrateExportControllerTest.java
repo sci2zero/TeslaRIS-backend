@@ -15,12 +15,13 @@ public class RoCrateExportControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void textExportDocumentRoCrate() throws Exception {
+    public void testExportDocumentRoCrate() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/ro-crate/document/{documentId}?exportId=TEST", 4)
+                        "http://localhost:8081/api/ro-crate/document/{documentId}?exportId=TEST_RO_CRATE",
+                        4)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());
@@ -28,12 +29,12 @@ public class RoCrateExportControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void textExportBibliographyRoCrate() throws Exception {
+    public void testExportBibliographyRoCrate() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/ro-crate/person/{personId}?exportId=TEST", 4)
+                        "http://localhost:8081/api/ro-crate/person/{personId}?exportId=TEST_RO_CRATE", 4)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

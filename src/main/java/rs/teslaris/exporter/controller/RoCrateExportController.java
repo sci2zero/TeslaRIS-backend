@@ -3,6 +3,7 @@ package rs.teslaris.exporter.controller;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import lombok.RequiredArgsConstructor;
+import org.apache.http.auth.AuthenticationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import rs.teslaris.core.annotation.PersonEditCheck;
+import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.files.StreamingUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.exporter.service.interfaces.RoCrateExportService;
 
 @RestController
@@ -27,7 +30,12 @@ public class RoCrateExportController {
     @GetMapping("/document/{documentId}")
     public ResponseEntity<StreamingResponseBody> downloadRoCrate(
         @PathVariable Integer documentId,
-        @RequestParam String exportId) {
+        @RequestParam String exportId) throws AuthenticationException {
+        if (!SessionUtil.isUserLoggedIn()) {
+            throw new LoadingException(
+                "You have to log in to be able to download Ro-Crates.");
+        }
+
         var byteArrayOutputStream = new ByteArrayOutputStream();
         roCrateExportService.createRoCrateZip(documentId, exportId, byteArrayOutputStream);
 

@@ -3,6 +3,7 @@ package rs.teslaris.assessment.util;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -107,7 +108,17 @@ public class ClassificationPriorityMapping {
         if (documentCode.equals("M24") ||
             assessmentConfig.classificationPriorities.get(classificationCode) <
                 assessmentConfig.classificationPriorities.get("journalM24")) {
-            return journalPublicationRepository.findById(documentId).flatMap(
+            var journalPublicationOptional = journalPublicationRepository.findById(documentId);
+
+            if (journalPublicationOptional.isEmpty()) {
+                var proceedingsPublicationOptional =
+                    proceedingsPublicationRepository.findById(documentId);
+
+                return proceedingsPublicationOptional.isPresent() ? Optional.of(documentCode) :
+                    Optional.empty();
+            }
+
+            return journalPublicationOptional.flatMap(
                 journalPublication -> getMappedCode(documentCode,
                     journalPublication.getJournalPublicationType()));
         }
@@ -230,13 +241,22 @@ public class ClassificationPriorityMapping {
             .getOrDefault(locale, "");
     }
 
+    public static boolean canPublicationTypeBeClassifiedAsCode(String publicationType,
+                                                               String documentClassificationCode) {
+        var mapping = assessmentConfig.typeToSupportedClassifications.getOrDefault(publicationType,
+            new ArrayList<>());
+
+        return mapping.contains(documentClassificationCode) || mapping.contains("ALL");
+    }
+
     private record AssessmentConfig(
         @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
         @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping,
         @JsonProperty("groupToNameMapping") Map<String, Map<String, String>> groupToNameMapping,
         @JsonProperty("sciList") List<String> sciList,
-        @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities
+        @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities,
+        @JsonProperty("typeToSupportedClassifications") Map<String, List<String>> typeToSupportedClassifications
     ) {
     }
 }

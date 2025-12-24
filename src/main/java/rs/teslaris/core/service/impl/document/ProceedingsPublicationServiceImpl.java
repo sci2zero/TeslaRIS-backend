@@ -232,6 +232,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         if (Objects.nonNull(publication.getProceedings())) {
             index.setProceedingsId(publication.getProceedings().getId());
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                publication.getProceedings().getId()).ifPresent(proceedingsIndex -> {
+                if (Objects.nonNull(proceedingsIndex.getJournalId())) {
+                    index.setJournalId(proceedingsIndex.getJournalId());
+                }
+            });
         }
 
         index.setApa(

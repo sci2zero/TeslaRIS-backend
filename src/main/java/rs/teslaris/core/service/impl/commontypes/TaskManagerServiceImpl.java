@@ -248,7 +248,7 @@ public class TaskManagerServiceImpl implements TaskManagerService {
             candidate = candidate.plus(STEP);
         }
 
-        return candidate;
+        return scheduledTimes.isEmpty() ? candidate : Collections.max(scheduledTimes).plusHours(1);
     }
 
     @Override

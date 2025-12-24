@@ -136,9 +136,9 @@
         "en": "The journal is in the field of humanities and is listed in MKS - Category I in {0}."
       },
       "m23e": {
-        "sr": "Časopis je iz oblasti društvenih i humanističkih nauka i nalazi se na listi ERIH Plus, na predlog matičnog naučnog odbora u {0}. godini.",
-        "sr-cyr": "Часопис је из области друштвених и хуманистичких наука и налази се на листи ERIH Plus, на предлог матичног научног одбора у {0}. години.",
-        "en": "The journal is in the field of social and humanities sciences and is listed in ERIH Plus, as proposed by the relevant scientific committee in {0}."
+        "sr": "Časopis je iz oblasti društvenih i humanističkih nauka i nalazi se na listi ERIH Plus u {0}. godini.",
+        "sr-cyr": "Часопис је из области друштвених и хуманистичких наука и налази се на листи ERIH Plus у {0}. години.",
+        "en": "The journal is in the field of social and humanities sciences and is listed in ERIH Plus list, in {0}."
       },
       "M24PlusSJR": {
         "sr": "Međunarodni časopis je referisan na SJR-u u {0} u {1}. godini za oblast {2}.",

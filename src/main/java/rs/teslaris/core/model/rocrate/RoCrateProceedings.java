@@ -10,12 +10,14 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class RoCrateProceedings extends RoCratePublicationBase {
 
     private String additionalType;
 
     private String conferenceName;
+
+    private ContextualEntity partOf;
 
 
     public RoCrateProceedings() {

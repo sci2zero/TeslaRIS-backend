@@ -99,5 +99,13 @@
     "M23e": 6,
     "M24Plus": 7,
     "M24": 8
+  },
+  "typeToSupportedClassifications": {
+    "REVIEW_ARTICLE": ["ALL"],
+    "RESEARCH_ARTICLE": ["ALL"],
+    "REGULAR_FULL_ARTICLE": ["M21APlus", "M21A", "M21", "M22", "M23", "M23e", "M24Plus", "M24"],
+    "SCIENTIFIC_CRITIC": ["M21APlus", "M21A", "M21"],
+    "POLEMICS": ["M21APlus", "M21A", "M21"],
+    "COMMENT": ["M21APlus", "M21A", "M21"]
   }
 }

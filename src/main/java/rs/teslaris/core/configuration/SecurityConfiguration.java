@@ -1,6 +1,5 @@
 package rs.teslaris.core.configuration;
 
-import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -355,16 +354,15 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/registry-book/report/download/{reportFileName}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/thesis-library/report/download/{lang}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/assessment/report/download/{reportFileName}/{commissionId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/ro-crate/document/{documentId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/ro-crate/person/{personId}").permitAll()
 
                 // APPLICATION CONFIGURATION
                 .requestMatchers(HttpMethod.GET, "/api/app-configuration/maintenance/next").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/app-configuration/maintenance/check").permitAll()
 
                 // SSE
-                .requestMatchers(request ->
-                    request.getDispatcherType() == DispatcherType.ASYNC &&
-                    request.getRequestURI().startsWith("/api/sse/")
-                ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/sse/progress/{exportId}").permitAll()
 
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()

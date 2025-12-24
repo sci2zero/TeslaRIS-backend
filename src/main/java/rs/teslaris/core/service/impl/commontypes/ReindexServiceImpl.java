@@ -145,6 +145,7 @@ public class ReindexServiceImpl implements ReindexService {
 
     @Async("reindexExecutor")
     public CompletableFuture<Void> reindexPublications() {
+        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
         safeReindex(documentPublicationService::deleteIndexes,
             "Error deleting document publication indexes");
         safeReindex(journalPublicationService::reindexJournalPublications,
@@ -157,7 +158,6 @@ public class ReindexServiceImpl implements ReindexService {
         safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
         safeReindex(monographPublicationService::reindexMonographPublications,
             "Error reindexing monograph publications");
-        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
         safeReindex(thesisService::reindexTheses, "Error reindexing theses");
 
         applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());

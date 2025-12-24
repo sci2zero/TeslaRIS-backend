@@ -8,7 +8,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -60,9 +59,6 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
     private final MessageSource messageSource;
 
     private final ObjectMapper objectMapper;
-
-    @Value("${export.internal-identifier.prefix}")
-    private String identifierPrefix;
 
 
     @Override
@@ -264,9 +260,12 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
         } else if (StringUtil.valueExists(document.getOpenAlexId())) {
             return "https://openalex.org/" + document.getOpenAlexId();
         }
-        // TODO: WOS???
 
-        return identifierPrefix + document.getId();
+        if (document instanceof Proceedings) {
+            return RoCrateConverter.baseUrl + "en/proceedings/" + document.getId();
+        }
+
+        return RoCrateConverter.baseUrl + "en/scientific-results/DOC_TYPE/" + document.getId();
     }
 
     private void addRequiredMetadataDescriptor(RoCrate metadataInfo, Person person) {

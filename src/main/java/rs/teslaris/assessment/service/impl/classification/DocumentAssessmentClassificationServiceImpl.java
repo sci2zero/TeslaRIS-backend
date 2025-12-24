@@ -306,20 +306,22 @@ public class DocumentAssessmentClassificationServiceImpl
                                              List<Integer> authorIds, List<Integer> orgUnitIds,
                                              List<Integer> journalIds) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, journalIds,
-            DocumentPublicationType.JOURNAL_PUBLICATION, this::assessJournalPublication);
+            List.of(DocumentPublicationType.JOURNAL_PUBLICATION,
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION), this::assessJournalPublication);
     }
 
     private void classifyProceedingsPublications(LocalDate fromDate, Integer commissionId,
                                                  List<Integer> authorIds, List<Integer> orgUnitIds,
                                                  List<Integer> eventIds) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
-            DocumentPublicationType.PROCEEDINGS_PUBLICATION, this::assessProceedingsPublication);
+            List.of(DocumentPublicationType.PROCEEDINGS_PUBLICATION),
+            this::assessProceedingsPublication);
     }
 
     private void classifyPublications(LocalDate fromDate, Integer commissionId,
                                       List<Integer> authorIds, List<Integer> orgUnitIds,
                                       List<Integer> entityIds,
-                                      DocumentPublicationType publicationType,
+                                      List<DocumentPublicationType> publicationTypes,
                                       QuadConsumer<DocumentPublicationIndex, Integer, Commission, ArrayList<DocumentAssessmentClassification>> assessFunction) {
         int pageNumber = 0;
         int chunkSize = 500;
@@ -334,7 +336,7 @@ public class DocumentAssessmentClassificationServiceImpl
         while (hasNextPage) {
             List<DocumentPublicationIndex> chunk = searchService
                 .runQuery(findAllDocumentPublicationsByFilters(fromDate.toString(),
-                        publicationType.name(),
+                        publicationTypes.stream().map(Enum::name).toList(),
                         authorIds, orgUnitIds, entityIds),
                     PageRequest.of(pageNumber, chunkSize), DocumentPublicationIndex.class,
                     "document_publication").getContent();
@@ -360,10 +362,14 @@ public class DocumentAssessmentClassificationServiceImpl
         personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
     }
 
-    private void assessJournalPublication(DocumentPublicationIndex journalPublicationIndex,
+    private void assessJournalPublication(DocumentPublicationIndex publicationIndex,
                                           Integer organisationUnitId, Commission presetCommission,
                                           ArrayList<DocumentAssessmentClassification> batchedClassifications) {
-        List<Commission> commissions = (presetCommission != null)
+        if (Objects.isNull(publicationIndex.getJournalId())) {
+            return;
+        }
+
+        List<Commission> commissions = Objects.nonNull(presetCommission)
             ? List.of(presetCommission)
             : findCommissionInHierarchy(organisationUnitId);
 
@@ -375,12 +381,13 @@ public class DocumentAssessmentClassificationServiceImpl
 
         commissions.forEach(commission -> {
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
-                journalPublicationIndex.getDatabaseId(), commission.getId(), false);
+                publicationIndex.getDatabaseId(), commission.getId(), false);
 
-            performPublicationAssessment((year, classifications, commissionObj) -> {
+            performPublicationAssessment(
+                (year, classifications, commissionObj) -> {
                     var classificationList = publicationSeriesAssessmentClassificationRepository
                         .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
-                            journalPublicationIndex.getJournalId(), commission.getId(), year);
+                            publicationIndex.getJournalId(), commission.getId(), year);
 
                     var manualClassification = classificationList.stream()
                         .filter(EntityAssessmentClassification::getManual)
@@ -405,8 +412,9 @@ public class DocumentAssessmentClassificationServiceImpl
                                 var relatedClassifications =
                                     publicationSeriesAssessmentClassificationRepository
                                         .findAssessmentClassificationsForPublicationSeriesAndCommissionAndYear(
-                                            journalPublicationIndex.getJournalId(), targetCommissionId,
-                                            year);
+                                            publicationIndex.getJournalId(),
+                                            targetCommissionId, year
+                                        );
 
                                 return relatedClassifications.stream()
                                     .filter(EntityAssessmentClassification::getManual)
@@ -416,10 +424,15 @@ public class DocumentAssessmentClassificationServiceImpl
                         ).ifPresent(classifications::add);
                     }
                 },
-                journalPublicationIndex.getYear(), journalPublicationIndex.getDatabaseId(),
-                commission,
-                List.of(journalPublicationIndex.getYear(), journalPublicationIndex.getYear() - 1,
-                    journalPublicationIndex.getYear() - 2), batchedClassifications);
+                publicationIndex.getYear(), publicationIndex.getDatabaseId(),
+                publicationIndex.getPublicationType(), commission,
+                List.of(
+                    publicationIndex.getYear(),
+                    publicationIndex.getYear() - 1,
+                    publicationIndex.getYear() - 2
+                ),
+                batchedClassifications
+            );
         });
     }
 
@@ -466,7 +479,10 @@ public class DocumentAssessmentClassificationServiceImpl
                     }
                 },
                 proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
-                commission, List.of(proceedingsPublicationIndex.getYear()), batchedClassifications);
+                null, commission,
+                List.of(proceedingsPublicationIndex.getYear()),
+                batchedClassifications
+            );
         });
     }
 
@@ -575,7 +591,7 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private void performPublicationAssessment(
         TriConsumer<Integer, ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>, Commission> yearHandler,
-        Integer classificationYear, Integer documentId,
+        Integer classificationYear, Integer documentId, String documentPublicationType,
         Commission commission, List<Integer> yearsToConsider,
         ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         var classifications =
@@ -590,8 +606,11 @@ public class DocumentAssessmentClassificationServiceImpl
                 ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
                     ResultCalculationMethod.BEST_VALUE);
             bestClassification.ifPresent((documentClassification) -> {
-                handleClassification(documentClassification.a, commission, documentId,
-                    classificationYear, batchedClassifications);
+                handleClassification(
+                    documentClassification.a, commission,
+                    documentId, documentPublicationType,
+                    classificationYear, batchedClassifications
+                );
             });
         }
     }
@@ -705,12 +724,18 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     private void handleClassification(AssessmentClassification classification,
-                                      Commission commission,
-                                      Integer documentId, Integer classificationYear,
+                                      Commission commission, Integer documentId,
+                                      String documentPublicationType, Integer classificationYear,
                                       ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         var mappedCode = ClassificationPriorityMapping.getDocClassificationCodeBasedOnCode(
             classification.getCode(), documentId);
         if (mappedCode.isEmpty()) {
+            return;
+        }
+
+        if (Objects.nonNull(documentPublicationType) &&
+            !ClassificationPriorityMapping.canPublicationTypeBeClassifiedAsCode(
+                documentPublicationType, mappedCode.get())) {
             return;
         }
 
@@ -768,21 +793,26 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     public Query findAllDocumentPublicationsByFilters(
-        String date, String type,
+        String date, List<String> types,
         List<Integer> authorIds,
         List<Integer> organisationUnitIds,
         List<Integer> publishedInIds) {
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(sb -> sb.range(r -> r.field("last_edited").gt(JsonData.of(date))));
-            b.must(sb -> sb.term(t -> t.field("type").value(type)));
+            b.must(sb -> sb.terms(t -> t.field("type")
+                .terms(terms -> terms.value(types.stream().map(FieldValue::of).toList()))));
             b.must(sb -> sb.terms(t -> t
                 .field("publication_type")
                 .terms(terms -> terms
-                    .value(type.equals(DocumentPublicationType.JOURNAL_PUBLICATION.name()) ?
+                    .value(types.contains(DocumentPublicationType.JOURNAL_PUBLICATION.name()) ?
                         List.of(
                             FieldValue.of("REVIEW_ARTICLE"),
-                            FieldValue.of("RESEARCH_ARTICLE")
+                            FieldValue.of("RESEARCH_ARTICLE"),
+                            FieldValue.of("COMMENT"),
+                            FieldValue.of("REGULAR_FULL_ARTICLE"),
+                            FieldValue.of("SCIENTIFIC_CRITIC"),
+                            FieldValue.of("POLEMICS")
                         ) :
                         List.of(
                             FieldValue.of("REGULAR_FULL_ARTICLE"),
@@ -813,8 +843,8 @@ public class DocumentAssessmentClassificationServiceImpl
                     .value(publishedInIds.stream().map(FieldValue::of).toList())
                     .build();
                 b.must(sb -> sb.terms(t -> t.field(
-                    type.equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name()) ?
-                        "event_id" : "journal_id").terms(publishedInIdTerms)));
+                    types.contains(DocumentPublicationType.JOURNAL_PUBLICATION.name()) ?
+                        "journal_id" : "event_id").terms(publishedInIdTerms)));
             }
 
             return b;

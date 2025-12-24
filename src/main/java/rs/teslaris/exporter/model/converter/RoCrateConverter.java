@@ -4,6 +4,7 @@ import com.google.common.hash.Hashing;
 import java.time.LocalDate;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.Monograph;
@@ -57,11 +59,7 @@ import rs.teslaris.core.util.search.StringUtil;
 public class RoCrateConverter {
 
     private static final String DEFAULT_RO_CRATE_LANGUAGE = LanguageAbbreviations.ENGLISH;
-
-    private static String identifierPrefix;
-
-    private static String baseUrl;
-
+    public static String baseUrl;
     private static EventsRelationRepository eventsRelationRepository;
 
     private static FileService fileService;
@@ -71,6 +69,8 @@ public class RoCrateConverter {
 
     public static RoCrateDataset toRoCrateModel(Dataset document, String documentIdentifier,
                                                 RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "dataset");
+
         var metadata = new RoCrateDataset();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
@@ -83,6 +83,8 @@ public class RoCrateConverter {
 
     public static RoCratePatent toRoCrateModel(Patent document, String documentIdentifier,
                                                RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "patent");
+
         var metadata = new RoCratePatent();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
@@ -93,6 +95,8 @@ public class RoCrateConverter {
 
     public static RoCrateSoftware toRoCrateModel(Software document, String documentIdentifier,
                                                  RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "software");
+
         var metadata = new RoCrateSoftware();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
@@ -103,6 +107,8 @@ public class RoCrateConverter {
 
     public static RoCrateMonograph toRoCrateModel(Monograph document, String documentIdentifier,
                                                   RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "monograph");
+
         var metadata = new RoCrateMonograph();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
@@ -111,18 +117,22 @@ public class RoCrateConverter {
 
         if (Objects.nonNull(document.getPublicationSeries())) {
             var issn = getIssn(document.getPublicationSeries());
-            if (StringUtil.valueExists(issn)) {
-                metadata.setIsPartOf(new ContextualEntity("https://issn.org/issn/"));
+            var pubSeriesIdentifier = StringUtil.valueExists(issn) ? ("https://issn.org/" + issn) :
+                (baseUrl + "en/journals/" + document.getPublicationSeries().getId());
 
-                var periodical = new Periodical(
-                    StringUtil.getStringContent(document.getPublicationSeries().getTitle(),
-                        DEFAULT_RO_CRATE_LANGUAGE),
-                    issn,
-                    null
-                );
-                setPublisherInfo(metadataInfo, periodical, document);
-                metadataInfo.getGraph().add(periodical);
-            }
+            metadata.setIsPartOf(new ContextualEntity(pubSeriesIdentifier));
+
+            var periodical = new Periodical(
+                StringUtil.getStringContent(document.getPublicationSeries().getTitle(),
+                    DEFAULT_RO_CRATE_LANGUAGE),
+                issn,
+                null
+            );
+            periodical.setId(pubSeriesIdentifier);
+            periodical.setType("Periodical");
+            metadataInfo.getGraph().add(periodical);
+
+            setPublisherInfo(metadataInfo, periodical, document);
         }
 
         return metadata;
@@ -131,6 +141,8 @@ public class RoCrateConverter {
     public static RoCrateMonographPublication toRoCrateModel(MonographPublication document,
                                                              String documentIdentifier,
                                                              RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "monograph-publication");
+
         var metadata = new RoCrateMonographPublication();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document.getMonograph());
@@ -153,9 +165,11 @@ public class RoCrateConverter {
             metadata.setConferenceName(StringUtil.getStringContent(document.getEvent().getName(),
                 DEFAULT_RO_CRATE_LANGUAGE));
 
-            if (StringUtil.valueExists(((Conference) document.getEvent()).getConfId())) {
-                getEventMetadata((Conference) document.getEvent(), metadataInfo);
-            }
+            var event = Hibernate.unproxy(document.getEvent(), Event.class);
+            metadata.setPartOf((new ContextualEntity(getEventIdentifier((Conference) event))));
+
+            metadataInfo.getGraph()
+                .add(getEventMetadata((Conference) event, metadataInfo, true, true));
         }
 
         return metadata;
@@ -164,6 +178,8 @@ public class RoCrateConverter {
     public static RoCrateProceedingsPublication toRoCrateModel(ProceedingsPublication document,
                                                                String documentIdentifier,
                                                                RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "proceedings-publication");
+
         var metadata = new RoCrateProceedingsPublication();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document.getProceedings());
@@ -173,10 +189,11 @@ public class RoCrateConverter {
                 DEFAULT_RO_CRATE_LANGUAGE));
 
         var isbn = getIsbn(document.getProceedings());
-        if (StringUtil.valueExists(isbn)) {
-            metadata.setProceedings(new ContextualEntity("https://isbn.org/" + isbn, "Book"));
-            toRoCrateModel(document.getProceedings(), isbn, metadataInfo);
-        }
+        var proceedingsIdentifier = StringUtil.valueExists(isbn) ? ("https://isbn.org/" + isbn) :
+            (baseUrl + "en/proceedings/" + document.getProceedings().getId());
+
+        metadata.setProceedings(new ContextualEntity(proceedingsIdentifier));
+        toRoCrateModel(document.getProceedings(), proceedingsIdentifier, metadataInfo);
 
         return metadata;
     }
@@ -184,6 +201,8 @@ public class RoCrateConverter {
     public static RoCrateJournalPublication toRoCrateModel(JournalPublication document,
                                                            String documentIdentifier,
                                                            RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "journal-publication");
+
         var metadata = new RoCrateJournalPublication();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         metadata.setVolume(document.getVolume());
@@ -195,22 +214,28 @@ public class RoCrateConverter {
             DEFAULT_RO_CRATE_LANGUAGE));
 
         var issn = getIssn(document.getJournal());
-        if (StringUtil.valueExists(issn)) {
-            metadata.setIsPartOf(new ContextualEntity("https://issn.org/" + issn, "Periodical"));
+        var journalIdentifier = StringUtil.valueExists(issn) ? ("https://issn.org/" + issn) :
+            (baseUrl + "en/journals/" + document.getJournal().getId());
 
-            metadataInfo.getGraph().add(new Periodical(
-                StringUtil.getStringContent(document.getJournal().getTitle(),
-                    DEFAULT_RO_CRATE_LANGUAGE),
-                issn,
-                null
-            ));
-        }
+        metadata.setIsPartOf(new ContextualEntity(journalIdentifier));
+
+        var periodical = new Periodical(
+            StringUtil.getStringContent(document.getJournal().getTitle(),
+                DEFAULT_RO_CRATE_LANGUAGE),
+            issn,
+            null
+        );
+        periodical.setId(journalIdentifier);
+        periodical.setType("Periodical");
+        metadataInfo.getGraph().add(periodical);
 
         return metadata;
     }
 
     public static RoCrateThesis toRoCrateModel(Thesis document, String documentIdentifier,
                                                RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "thesis");
+
         var metadata = new RoCrateThesis();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
@@ -400,18 +425,20 @@ public class RoCrateConverter {
                                          RoCratePublishable publicationMetadata,
                                          PublisherPublishable document) {
         if (Objects.nonNull(document.getPublisher())) {
-            publicationMetadata.setPublisher(
-                new ContextualEntity(identifierPrefix + document.getPublisher().getId(),
-                    "Publisher"));
+            var publisherIdentifier = baseUrl + "en/publishers/" + document.getPublisher().getId();
+            publicationMetadata.setPublisher(new ContextualEntity(publisherIdentifier));
 
-            metadataInfo.getGraph().add(new Organization(
+            var publisherMetadata = new Organization(
                 StringUtil.getStringContent(document.getPublisher().getName(),
                     DEFAULT_RO_CRATE_LANGUAGE),
                 null,
                 null,
                 StringUtil.getStringContent(document.getPublisher().getPlace(),
                     DEFAULT_RO_CRATE_LANGUAGE)
-            ));
+            );
+            publisherMetadata.setId(publisherIdentifier);
+
+            metadataInfo.getGraph().add(publisherMetadata);
         }
     }
 
@@ -425,7 +452,8 @@ public class RoCrateConverter {
             proceedings.getEISBN() : proceedings.getPrintISBN();
     }
 
-    private static RoCrateEvent getEventMetadata(Conference conference, RoCrate metadataInfo) {
+    private static RoCrateEvent getEventMetadata(Conference conference, RoCrate metadataInfo,
+                                                 boolean checkSuperEvents, boolean checkSubEvents) {
         var event = new RoCrateEvent();
 
         event.setId(getEventIdentifier(conference));
@@ -454,21 +482,31 @@ public class RoCrateConverter {
         }
 
         if (!conference.getSerialEvent()) {
-            eventsRelationRepository.getSuperEventsForEvent(conference.getId())
-                .forEach(superEvent -> {
-                    event.getSuperEvents().add(
-                        new ContextualEntity(getEventIdentifier((Conference) superEvent), "Event"));
-                    metadataInfo.getGraph()
-                        .add(getEventMetadata((Conference) superEvent, metadataInfo));
-                });
+            if (checkSuperEvents) {
+                eventsRelationRepository.getSuperEventsForEvent(conference.getId())
+                    .forEach(superEvent -> {
+                        var eventUnproxied = Hibernate.unproxy(superEvent, Event.class);
 
-            eventsRelationRepository.getSubEventsForEvent(conference.getId())
-                .forEach(subEvent -> {
-                    event.getSubEvents().add(
-                        new ContextualEntity(getEventIdentifier((Conference) subEvent), "Event"));
-                    metadataInfo.getGraph()
-                        .add(getEventMetadata((Conference) subEvent, metadataInfo));
-                });
+                        event.getSuperEvents().add(
+                            new ContextualEntity(getEventIdentifier((Conference) eventUnproxied)));
+                        metadataInfo.getGraph()
+                            .add(getEventMetadata((Conference) eventUnproxied, metadataInfo, true,
+                                false));
+                    });
+            }
+
+            if (checkSubEvents) {
+                eventsRelationRepository.getSubEventsForEvent(conference.getId())
+                    .forEach(subEvent -> {
+                        var eventUnproxied = Hibernate.unproxy(subEvent, Event.class);
+
+                        event.getSubEvents().add(
+                            new ContextualEntity(getEventIdentifier((Conference) eventUnproxied)));
+                        metadataInfo.getGraph()
+                            .add(getEventMetadata((Conference) eventUnproxied, metadataInfo, false,
+                                true));
+                    });
+            }
         }
 
         return event;
@@ -519,11 +557,6 @@ public class RoCrateConverter {
     public void setBaseUrl(String baseUrl) {
         var hasEndSlash = baseUrl.endsWith("/");
         RoCrateConverter.baseUrl = baseUrl + (hasEndSlash ? "" : "/");
-    }
-
-    @Value("${export.internal-identifier.prefix}")
-    public void setIdentifierPrefix(String identifierPrefix) {
-        RoCrateConverter.identifierPrefix = identifierPrefix;
     }
 
     @Value("${export.include-rocrate-file-hashes}")

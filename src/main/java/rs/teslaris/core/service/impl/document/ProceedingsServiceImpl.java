@@ -258,9 +258,16 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             index.setPublicationSeriesId(proceedings.getPublicationSeries().getId());
             if (proceedings.getPublicationSeries() instanceof Journal journal) {
                 index.setJournalId(journal.getId());
+
+                indexBulkUpdateService.setIdFieldForRecord("document_publication",
+                    "proceedings_id", proceedings.getId(),
+                    "journal_id", journal.getId());
             }
         } else {
             index.setPublicationSeriesId(null);
+            indexBulkUpdateService.setIdFieldForRecord("document_publication",
+                "proceedings_id", proceedings.getId(),
+                "journal_id", null);
         }
 
         index.setApa(
