@@ -26,7 +26,7 @@ public class SKGIFHarvestConfigurationLoader {
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
-    private static void reloadConfiguration() {
+    protected static void reloadConfiguration() {
         try {
             skgifHarvestConfiguration = ConfigurationLoaderUtil.loadConfiguration(
                 SKGIFHarvestConfiguration.class,

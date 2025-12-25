@@ -240,8 +240,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             });
         }
 
+        calculateNumberOfPages(publication, index);
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
+
         documentPublicationIndexRepository.save(index);
     }
 

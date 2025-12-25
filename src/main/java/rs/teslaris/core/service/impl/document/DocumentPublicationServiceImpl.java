@@ -62,6 +62,7 @@ import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.PrintedPageable;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -524,6 +525,21 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             !index.getAuthorIds().stream().sorted().toList().equals(oldAuthors))) {
             applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
                 index.getAuthorIds().stream().filter(id -> id > 0).toList()));
+        }
+    }
+
+    protected void calculateNumberOfPages(PrintedPageable publication,
+                                          DocumentPublicationIndex index) {
+        if (Objects.nonNull(publication.getNumberOfPages())) {
+            index.setNumberOfPages(publication.getNumberOfPages());
+        } else if (StringUtil.valueExists(publication.getStartPage()) &&
+            StringUtil.valueExists(publication.getEndPage())) {
+            try {
+                index.setNumberOfPages(Integer.parseInt(publication.getEndPage()) -
+                    Integer.parseInt(publication.getStartPage()));
+            } catch (Exception ignored) {
+                // pass
+            }
         }
     }
 

@@ -183,7 +183,6 @@
       "exportOnlyActiveEmployees": false,
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
-      "dateFormat": "dd.MM.yyyy.",
       "sets": [
         {
           "setSpec": "theses",

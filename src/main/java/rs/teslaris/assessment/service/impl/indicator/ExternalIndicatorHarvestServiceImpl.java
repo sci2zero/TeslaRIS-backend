@@ -154,12 +154,17 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Override
+    @Async
+    public void harvestAllManually() {
+        performIndicatorHarvest();
+    }
+
+    @Override
     public void performPersonIndicatorHarvest() {
         var harvestContext = preparePersonIndicatorHarvestContext();
 
         FunctionalUtil.forEachChunked(
-            PageRequest.of(0, PROCESS_BATCH_SIZE,
-                Sort.by(Sort.Direction.ASC, "id")),
+            PageRequest.of(0, PROCESS_BATCH_SIZE),
             personService::findPersonsByLRUHarvest,
             people -> people.forEach(person -> {
                 performPersonHarvest(person, harvestContext);
@@ -233,6 +238,9 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                       AtomicInteger openAlexRateLimit,
                                       AtomicInteger scopusRateLimit,
                                       AtomicInteger openCitationsRateLimit) {
+        person.setDateOfLastIndicatorHarvest(LocalDate.now());
+        personService.save(person);
+
         if (openAlexRateLimit.getAndDecrement() > 0) {
             harvestFromOpenAlex(
                 person,

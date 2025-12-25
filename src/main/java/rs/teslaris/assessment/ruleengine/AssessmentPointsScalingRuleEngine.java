@@ -16,8 +16,11 @@ public class AssessmentPointsScalingRuleEngine {
 
     private List<DocumentIndicator> currentEntityIndicators;
 
+    private String publicationType;
+
     @Getter
     private Set<MultiLingualContent> reasoningProcess = new HashSet<>();
+
 
     public double serbianScalingRulebook2025(Integer authorCount,
                                              String classificationCode,
@@ -43,6 +46,11 @@ public class AssessmentPointsScalingRuleEngine {
                 AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
                     "m10OrM40Results");
             return points;
+        }
+
+        if (Objects.nonNull(publicationType) &&
+            List.of("SCIENTIFIC_CRITIC", "POLEMICS", "COMMENT").contains(publicationType)) {
+            return points * 0.25;
         }
 
         // Theoretical works (up to 3 authors, otherwise scale)

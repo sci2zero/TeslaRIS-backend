@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.Commission;
@@ -46,6 +47,7 @@ import rs.teslaris.core.model.institution.Commission;
 )
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "entity_type", discriminatorType = DiscriminatorType.STRING)
+@SQLRestriction("deleted=false")
 public class EntityAssessmentClassification extends BaseEntity {
 
     @Column(name = "timestamp")

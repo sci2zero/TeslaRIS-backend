@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -55,7 +56,7 @@ public class ClassificationPriorityMapping {
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
-    private static void reloadConfiguration() {
+    protected static void reloadConfiguration() {
         try {
             assessmentConfig = ConfigurationLoaderUtil.loadConfiguration(AssessmentConfig.class,
                 "src/main/resources/assessment/assessmentConfiguration.json",
@@ -249,6 +250,21 @@ public class ClassificationPriorityMapping {
         return mapping.contains(documentClassificationCode) || mapping.contains("ALL");
     }
 
+    public static boolean meetsPageRequirements(DocumentPublicationIndex document) {
+        var minimumPageCount = assessmentConfig.minimumPageRequirements
+            .getOrDefault(document.getPublicationType(), 0);
+
+        if (minimumPageCount == 0) {
+            return true;
+        }
+
+        if (Objects.isNull(document.getNumberOfPages())) {
+            return false;
+        }
+
+        return document.getNumberOfPages() >= minimumPageCount;
+    }
+
     private record AssessmentConfig(
         @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
@@ -256,7 +272,8 @@ public class ClassificationPriorityMapping {
         @JsonProperty("groupToNameMapping") Map<String, Map<String, String>> groupToNameMapping,
         @JsonProperty("sciList") List<String> sciList,
         @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities,
-        @JsonProperty("typeToSupportedClassifications") Map<String, List<String>> typeToSupportedClassifications
+        @JsonProperty("typeToSupportedClassifications") Map<String, List<String>> typeToSupportedClassifications,
+        @JsonProperty("minimumPageRequirements") Map<String, Integer> minimumPageRequirements
     ) {
     }
 }

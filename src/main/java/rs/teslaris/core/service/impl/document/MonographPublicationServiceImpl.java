@@ -249,6 +249,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         }
 
         index.setMonographId(monographPublication.getMonograph().getId());
+        index.setNumberOfPages(monographPublication.getNumberOfPages());
+        calculateNumberOfPages(monographPublication, index);
 
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));

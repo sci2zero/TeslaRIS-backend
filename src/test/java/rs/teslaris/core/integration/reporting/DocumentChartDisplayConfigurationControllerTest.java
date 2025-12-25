@@ -37,7 +37,7 @@ public class DocumentChartDisplayConfigurationControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/chart-display-configuration/document/{documentId}",
-                        1)
+                        13)
                     .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }

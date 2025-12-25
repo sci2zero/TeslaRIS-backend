@@ -76,6 +76,9 @@ public class ExportDocument extends BaseExportEntity {
     @Field("open_alex")
     private String openAlex;
 
+    @Field("web_of_science")
+    private String webOfScience;
+
     @Field("e_isbn")
     private String eIsbn;
 

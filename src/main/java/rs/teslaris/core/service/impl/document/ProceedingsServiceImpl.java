@@ -253,6 +253,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         index.setAuthorReprint(proceedings.getAuthorReprint());
 
         index.setType(DocumentPublicationType.PROCEEDINGS.name());
+        index.setNumberOfPages(proceedings.getNumberOfPages());
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             index.setPublicationSeriesId(proceedings.getPublicationSeries().getId());

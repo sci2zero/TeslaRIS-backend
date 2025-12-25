@@ -253,4 +253,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "has_sr_content", store = true)
     private Boolean hasSrContent;
+
+    @Field(type = FieldType.Integer, name = "number_of_pages", store = true)
+    private Integer numberOfPages;
 }

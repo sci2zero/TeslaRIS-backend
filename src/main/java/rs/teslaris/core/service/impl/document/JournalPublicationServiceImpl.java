@@ -204,6 +204,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         }
 
         index.setJournalId(publication.getJournal().getId());
+        calculateNumberOfPages(publication, index);
 
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));

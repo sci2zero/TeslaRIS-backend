@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 @Service
 public interface ExternalIndicatorHarvestService {
 
+    void harvestAllManually();
+
     void performPersonIndicatorHarvest();
 
     void performOUIndicatorDeduction();

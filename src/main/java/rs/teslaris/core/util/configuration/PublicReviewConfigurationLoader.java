@@ -28,7 +28,7 @@ public class PublicReviewConfigurationLoader {
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
-    private static void reloadConfiguration() {
+    protected static void reloadConfiguration() {
         try {
             publicReviewConfiguration = ConfigurationLoaderUtil.loadConfiguration(
                 PublicReviewConfiguration.class,

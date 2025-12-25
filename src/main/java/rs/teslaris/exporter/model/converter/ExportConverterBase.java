@@ -16,6 +16,7 @@ import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -55,6 +56,8 @@ public class ExportConverterBase {
     protected static String legacyIdentifierPrefix;
 
     protected static String identifierPrefix;
+
+    protected static String defaultLocale;
 
     @Autowired
     private Environment environment;
@@ -205,9 +208,11 @@ public class ExportConverterBase {
             ((DC) convertedEntity).getType()
                 .addAll(constructDCTypeFields(handler, typeKey, concreteTypeKey));
 
-            organisationUnitService.findOne(sourceInstitutionId).getName()
-                .forEach(name ->
-                    ((DC) convertedEntity).getSource().add(name.getContent()));
+            if (typeKey.equals(DocumentPublicationType.THESIS.name())) {
+                organisationUnitService.findOne(sourceInstitutionId).getName()
+                    .forEach(name ->
+                        ((DC) convertedEntity).getSource().add(name.getContent()));
+            }
 
             if (Objects.nonNull(handler.dateFormat())) {
                 var formatter = DateTimeFormatter.ofPattern(handler.dateFormat());
@@ -237,15 +242,17 @@ public class ExportConverterBase {
                     new DimField("dc", "type", dcType.getScheme(), dcType.getLang(), null, null,
                         dcType.getValue())));
 
-            organisationUnitService.findOne(sourceInstitutionId).getName()
-                .forEach(name -> {
-                    var field = new DimField();
-                    field.setMdschema("dc");
-                    field.setElement("source");
-                    field.setLanguage(name.getLanguage().getLanguageTag().toLowerCase());
-                    field.setValue(name.getContent());
-                    ((Dim) convertedEntity).getFields().add(field);
-                });
+            if (typeKey.equals(DocumentPublicationType.THESIS.name())) {
+                organisationUnitService.findOne(sourceInstitutionId).getName()
+                    .forEach(name -> {
+                        var field = new DimField();
+                        field.setMdschema("dc");
+                        field.setElement("source");
+                        field.setLanguage(name.getLanguage().getLanguageTag().toLowerCase());
+                        field.setValue(name.getContent());
+                        ((Dim) convertedEntity).getFields().add(field);
+                    });
+            }
 
             if (Objects.nonNull(handler.dateFormat())) {
                 var formatter = DateTimeFormatter.ofPattern(handler.dateFormat());
@@ -333,5 +340,6 @@ public class ExportConverterBase {
                 .split(",")));
         legacyIdentifierPrefix = environment.getProperty("legacy-identifier.prefix");
         identifierPrefix = environment.getProperty("export.internal-identifier.prefix");
+        defaultLocale = environment.getProperty("export.default-locale");
     }
 }

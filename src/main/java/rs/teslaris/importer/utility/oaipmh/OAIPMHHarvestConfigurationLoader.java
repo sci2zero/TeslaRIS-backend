@@ -26,7 +26,7 @@ public class OAIPMHHarvestConfigurationLoader {
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
-    private static void reloadConfiguration() {
+    protected static void reloadConfiguration() {
         try {
             oaipmhHarvestConfiguration = ConfigurationLoaderUtil.loadConfiguration(
                 OAIPMHHarvestConfiguration.class,

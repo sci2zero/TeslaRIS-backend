@@ -15,7 +15,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Table(name = "journal_publications")
 @SQLRestriction("deleted=false")
-public class JournalPublication extends Document {
+public class JournalPublication extends Document implements PrintedPageable {
 
     @Column(name = "journal_publication_type")
     private JournalPublicationType journalPublicationType;

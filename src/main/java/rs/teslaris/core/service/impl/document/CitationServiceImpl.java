@@ -90,6 +90,10 @@ public class CitationServiceImpl implements CitationService {
     private void populatePublicationDetails(CSLItemDataBuilder itemBuilder,
                                             DocumentPublicationIndex index,
                                             String languageCode) {
+        if (Objects.isNull(index.getType())) {
+            return;
+        }
+
         switch (index.getType()) {
             case "JOURNAL_PUBLICATION" -> {
                 var journalPublication =

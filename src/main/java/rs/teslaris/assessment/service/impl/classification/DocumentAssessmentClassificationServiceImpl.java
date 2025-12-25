@@ -306,8 +306,7 @@ public class DocumentAssessmentClassificationServiceImpl
                                              List<Integer> authorIds, List<Integer> orgUnitIds,
                                              List<Integer> journalIds) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, journalIds,
-            List.of(DocumentPublicationType.JOURNAL_PUBLICATION,
-                DocumentPublicationType.PROCEEDINGS_PUBLICATION), this::assessJournalPublication);
+            List.of(DocumentPublicationType.JOURNAL_PUBLICATION), this::assessJournalPublication);
     }
 
     private void classifyProceedingsPublications(LocalDate fromDate, Integer commissionId,
@@ -315,7 +314,15 @@ public class DocumentAssessmentClassificationServiceImpl
                                                  List<Integer> eventIds) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
             List.of(DocumentPublicationType.PROCEEDINGS_PUBLICATION),
-            this::assessProceedingsPublication);
+            (publicationIndex, organisationUnitId,
+             presetCommission, batchClassifications) -> {
+                Runnable assessment = Objects.nonNull(publicationIndex.getJournalId()) ?
+                    () -> this.assessJournalPublication(publicationIndex, organisationUnitId,
+                        presetCommission, batchClassifications) :
+                    () -> this.assessProceedingsPublication(publicationIndex, organisationUnitId,
+                        presetCommission, batchClassifications);
+                assessment.run();
+            });
     }
 
     private void classifyPublications(LocalDate fromDate, Integer commissionId,
@@ -365,7 +372,8 @@ public class DocumentAssessmentClassificationServiceImpl
     private void assessJournalPublication(DocumentPublicationIndex publicationIndex,
                                           Integer organisationUnitId, Commission presetCommission,
                                           ArrayList<DocumentAssessmentClassification> batchedClassifications) {
-        if (Objects.isNull(publicationIndex.getJournalId())) {
+        if (Objects.isNull(publicationIndex.getJournalId()) ||
+            !ClassificationPriorityMapping.meetsPageRequirements(publicationIndex)) {
             return;
         }
 
@@ -661,7 +669,8 @@ public class DocumentAssessmentClassificationServiceImpl
         var pointsRuleEngine = new AssessmentPointsRuleEngine();
         var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
 
-        applyIndicatorScalingRule(scalingRuleEngine, isExperimental, isTheoretical, isSimulation);
+        applyIndicatorScalingRule(scalingRuleEngine, isExperimental, isTheoretical, isSimulation,
+            publicationType);
 
         var rawPoints = pointsRuleEngine.serbianPointsRulebook2025(researchArea, mappedCode);
         response.setRawPoints(rawPoints);
@@ -677,7 +686,7 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private void applyIndicatorScalingRule(AssessmentPointsScalingRuleEngine scalingRuleEngine,
                                            boolean isExperimental, boolean isTheoretical,
-                                           boolean isSimulation) {
+                                           boolean isSimulation, PublicationType publicationType) {
 
         String indicatorCode = null;
 
@@ -689,7 +698,9 @@ public class DocumentAssessmentClassificationServiceImpl
             indicatorCode = "isSimulation";
         }
 
-        if (indicatorCode != null) {
+        scalingRuleEngine.setPublicationType(((Enum<?>) publicationType).name());
+
+        if (Objects.nonNull(indicatorCode)) {
             var indicator = new DocumentIndicator();
             indicator.setIndicator(indicatorRepository.findByCode(indicatorCode));
             scalingRuleEngine.setCurrentEntityIndicators(List.of(indicator));
@@ -809,16 +820,15 @@ public class DocumentAssessmentClassificationServiceImpl
                         List.of(
                             FieldValue.of("REVIEW_ARTICLE"),
                             FieldValue.of("RESEARCH_ARTICLE"),
-                            FieldValue.of("COMMENT"),
-                            FieldValue.of("REGULAR_FULL_ARTICLE"),
-                            FieldValue.of("SCIENTIFIC_CRITIC"),
-                            FieldValue.of("POLEMICS")
+                            FieldValue.of("COMMENT")
                         ) :
                         List.of(
                             FieldValue.of("REGULAR_FULL_ARTICLE"),
                             FieldValue.of("INVITED_FULL_ARTICLE"),
                             FieldValue.of("REGULAR_ABSTRACT_ARTICLE"),
-                            FieldValue.of("INVITED_ABSTRACT_ARTICLE")
+                            FieldValue.of("INVITED_ABSTRACT_ARTICLE"),
+                            FieldValue.of("SCIENTIFIC_CRITIC"),
+                            FieldValue.of("POLEMICS")
                         )
                     )
                 )

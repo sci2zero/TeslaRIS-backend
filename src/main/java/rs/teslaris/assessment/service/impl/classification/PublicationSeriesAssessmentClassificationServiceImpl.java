@@ -19,6 +19,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
@@ -399,10 +401,12 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
                 classification.getCode().equals("journalM24") ? "M24MNO" : "MNO", year, category)
         );
 
-        publicationSeriesAssessmentClassificationRepository.deleteClassificationReasonsForPublicationSeriesAndCategoryAndYearAndCommission(
-            publicationSeries.getId(), category, year, commission.getId());
-        publicationSeriesAssessmentClassificationRepository.deleteClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
-            publicationSeries.getId(), category, year, commission.getId());
+        publicationSeriesAssessmentClassificationRepository
+            .deleteClassificationReasonsForPublicationSeriesAndCategoryAndYearAndCommission(
+                publicationSeries.getId(), category, year, commission.getId());
+        publicationSeriesAssessmentClassificationRepository
+            .deleteClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
+                publicationSeries.getId(), category, year, commission.getId());
 
         publicationSeriesAssessmentClassificationRepository.save(journalClassification);
     }
@@ -426,5 +430,32 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         }
 
         return issn.toUpperCase();
+    }
+
+    @Scheduled(cron = ("0 0 0 * * *")) // Every day at 00:00 AM
+    protected void cleanupStaleAssessments() {
+        long start = System.nanoTime();
+        int chunkSize = 100;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            var chunk =
+                publicationSeriesAssessmentClassificationRepository.findIdsOfDeletedAssessments(
+                    PageRequest.of(0, chunkSize));
+            var reasonIds =
+                publicationSeriesAssessmentClassificationRepository.findReasonIdsForDeletion(
+                    chunk.getContent());
+            publicationSeriesAssessmentClassificationRepository.deleteClassificationReasonsForDeleted(
+                chunk.getContent());
+            publicationSeriesAssessmentClassificationRepository.hardDeleteMarkedAsDeleted(
+                chunk.getContent());
+            publicationSeriesAssessmentClassificationRepository.deleteReasonsMarkedAsDeleted(
+                reasonIds);
+
+            hasNextPage = chunk.hasNext();
+        }
+
+        log.info("Stale journal assessments cleanup took {} ms",
+            (System.nanoTime() - start) / 1_000_000.0);
     }
 }

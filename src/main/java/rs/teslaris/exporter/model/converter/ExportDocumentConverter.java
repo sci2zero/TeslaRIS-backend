@@ -409,6 +409,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setDoi(document.getDoi());
         commonExportDocument.setScopus(document.getScopusId());
         commonExportDocument.setOpenAlex(document.getOpenAlexId());
+        commonExportDocument.setWebOfScience(document.getWebOfScienceId());
         commonExportDocument.getOldIds().addAll(document.getOldIds());
 
         if (Objects.nonNull(document.getEvent())) {
@@ -855,10 +856,14 @@ public class ExportDocumentConverter extends ExportConverterBase {
             if (Objects.nonNull(author.getPerson()) &&
                 Objects.nonNull(author.getPerson().getOrcid()) &&
                 !author.getPerson().getOrcid().isBlank()) {
-                field.setAuthority(author.getPerson().getOrcid());
+                field.setAuthority("orcid::" + author.getPerson().getOrcid());
+                field.setConfidence("-1");
             }
             field.setMdschema("dc");
-            field.setElement("creator");
+            field.setElement(
+                exportDocument.getType().equals(ExportPublicationType.THESIS) ? "creator" :
+                    "contributor");
+            field.setQualifier("author");
             field.setValue(StringUtil.formatNameToLastNameFirst(author.getDisplayName()));
             dimPublication.getFields().add(field);
         });
@@ -868,7 +873,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
             if (Objects.nonNull(editor.getPerson()) &&
                 Objects.nonNull(editor.getPerson().getOrcid()) &&
                 !editor.getPerson().getOrcid().isBlank()) {
-                field.setAuthority(editor.getPerson().getOrcid());
+                field.setAuthority("orcid::" + editor.getPerson().getOrcid());
+                field.setConfidence("-1");
             }
             field.setMdschema("dc");
             field.setElement("contributor");
@@ -882,7 +888,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
             if (Objects.nonNull(advisor.getPerson()) &&
                 Objects.nonNull(advisor.getPerson().getOrcid()) &&
                 !advisor.getPerson().getOrcid().isBlank()) {
-                field.setAuthority(advisor.getPerson().getOrcid());
+                field.setAuthority("orcid::" + advisor.getPerson().getOrcid());
+                field.setConfidence("-1");
             }
             field.setMdschema("dc");
             field.setElement("contributor");
@@ -896,7 +903,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
             if (Objects.nonNull(boardMember.getPerson()) &&
                 Objects.nonNull(boardMember.getPerson().getOrcid()) &&
                 !boardMember.getPerson().getOrcid().isBlank()) {
-                field.setAuthority(boardMember.getPerson().getOrcid());
+                field.setAuthority("orcid::" + boardMember.getPerson().getOrcid());
+                field.setConfidence("-1");
             }
             field.setMdschema("dc");
             field.setElement("contributor");
@@ -933,6 +941,22 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 dimPublication.getFields().add(field);
             });
         });
+
+        if (Objects.nonNull(exportDocument.getJournal())) {
+            dimPublication.getFields().add(
+                new DimField("dc", "source", null,
+                    null, null, null,
+                    exportDocument.getJournal().getTitle().getFirst().getContent()
+                )
+            );
+        } else if (Objects.nonNull(exportDocument.getEvent())) {
+            dimPublication.getFields().add(
+                new DimField("dc", "source", null,
+                    null, null, null,
+                    exportDocument.getEvent().getName().getFirst().getContent()
+                )
+            );
+        }
 
         exportDocument.getLanguageTags().forEach(languageTag -> {
             var field = new DimField();
@@ -1012,9 +1036,6 @@ public class ExportDocumentConverter extends ExportConverterBase {
             });
         }
 
-        dimPublication.getFields().add(new DimField("dc", "source", null, null, null, null,
-            repositoryName + " (" + baseFrontendUrl + ")"));
-
         if (Objects.nonNull(exportDocument.getDocumentFiles()) &&
             !exportDocument.getDocumentFiles().isEmpty()) {
             exportDocument.getDocumentFiles().stream().filter(file -> file.getType().equals(
@@ -1058,7 +1079,64 @@ public class ExportDocumentConverter extends ExportConverterBase {
         dimPublication.getFields().add(new DimField("dc", "citation", "volume", null, null, null,
             exportDocument.getVolume()));
 
-        // TODO: add rank when (e.g. M21) we add support for it!
+        if (StringUtil.valueExists(exportDocument.getDoi())) {
+            dimPublication.getFields().add(
+                new DimField("dc", "identifier", "doi",
+                    null, null, null,
+                    exportDocument.getDoi()
+                )
+            );
+        }
+
+        if (StringUtil.valueExists(exportDocument.getScopus())) {
+            dimPublication.getFields().add(
+                new DimField("dc", "identifier", "scopus",
+                    null, null, null,
+                    exportDocument.getScopus().startsWith("2-s2.0-") ? exportDocument.getScopus() :
+                        ("2-s2.0-" + exportDocument.getScopus())
+                )
+            );
+        }
+
+        if (StringUtil.valueExists(exportDocument.getOpenAlex())) {
+            dimPublication.getFields().add(
+                new DimField("dc", "identifier", "openalex",
+                    null, null, null,
+                    exportDocument.getOpenAlex()
+                )
+            );
+        }
+
+        if (StringUtil.valueExists(exportDocument.getWebOfScience())) {
+            dimPublication.getFields().add(
+                new DimField("dc", "identifier", "wos",
+                    null, null, null,
+                    exportDocument.getWebOfScience()
+                )
+            );
+        }
+
+        var issn =
+            StringUtil.valueExists(exportDocument.getEIssn()) ?
+                exportDocument.getEIssn() : exportDocument.getPrintIssn();
+        if (StringUtil.valueExists(issn)) {
+            dimPublication.getFields().add(
+                new DimField("dc", "identifier", "issn",
+                    null, null, null, issn
+                )
+            );
+        }
+
+        var isbn =
+            StringUtil.valueExists(exportDocument.getEIsbn()) ?
+                exportDocument.getEIssn() : exportDocument.getPrintIsbn();
+        if (StringUtil.valueExists(isbn)) {
+            dimPublication.getFields().add(
+                new DimField("dc", "identifier", "isbn",
+                    null, null, null, isbn
+                )
+            );
+        }
 
         return dimPublication;
     }
@@ -1121,15 +1199,33 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 exportDocument.getDatabaseId()));
 
         if (StringUtil.valueExists(exportDocument.getDoi())) {
-            dcPublication.getIdentifier().add("DOI:" + exportDocument.getDoi());
+            dcPublication.getIdentifier().add("doi:" + exportDocument.getDoi());
         }
 
         if (StringUtil.valueExists(exportDocument.getScopus())) {
-            dcPublication.getIdentifier().add("SCOPUS:" + exportDocument.getScopus());
+            dcPublication.getIdentifier().add("scopus:" + exportDocument.getScopus());
         }
 
         if (StringUtil.valueExists(exportDocument.getOpenAlex())) {
-            dcPublication.getIdentifier().add("OPENALEX:" + exportDocument.getOpenAlex());
+            dcPublication.getIdentifier().add("openalex:" + exportDocument.getOpenAlex());
+        }
+
+        if (StringUtil.valueExists(exportDocument.getWebOfScience())) {
+            dcPublication.getIdentifier().add("wos:" + exportDocument.getWebOfScience());
+        }
+
+        var issn =
+            StringUtil.valueExists(exportDocument.getEIssn()) ?
+                exportDocument.getEIssn() : exportDocument.getPrintIssn();
+        if (StringUtil.valueExists(issn)) {
+            dcPublication.getIdentifier().add("issn:" + issn);
+        }
+
+        var isbn =
+            StringUtil.valueExists(exportDocument.getEIsbn()) ?
+                exportDocument.getEIssn() : exportDocument.getPrintIsbn();
+        if (StringUtil.valueExists(isbn)) {
+            dcPublication.getIdentifier().add("isbn:" + isbn);
         }
 
         addContentToList(
@@ -1140,12 +1236,24 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 .add(new DCMultilingualContent(content, languageTag.toLowerCase()))
         );
 
-        addContentToList(
-            exportDocument.getAuthors(),
-            ExportContribution::getDisplayName,
-            content ->
-                dcPublication.getCreator().add(StringUtil.formatNameToLastNameFirst(content))
-        );
+        if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
+            addContentToList(
+                exportDocument.getAuthors(),
+                ExportContribution::getDisplayName,
+                content ->
+                    dcPublication.getCreator().add(StringUtil.formatNameToLastNameFirst(content))
+            );
+        } else {
+            addContentToList(
+                exportDocument.getAuthors(),
+                ExportContribution::getDisplayName,
+                contribution -> Objects.nonNull(contribution.getPerson()) ?
+                    Objects.requireNonNullElse(contribution.getPerson().getOrcid(), "") : "",
+                (content, orcid) -> dcPublication.getContributor().add(
+                    new Contributor(StringUtil.formatNameToLastNameFirst(content), "author",
+                        (orcid.isBlank() ? "" : ("https://orcid.org/" + orcid))))
+            );
+        }
 
         addContentToList(
             exportDocument.getEditors(),
