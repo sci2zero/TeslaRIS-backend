@@ -234,6 +234,14 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             .equals(MonographPublicationType.CHAPTER)) {
             monographPublication.setDocumentDate(monograph.getDocumentDate());
         }
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            monographPublicationDTO.getMonographId()).ifPresent(index -> {
+                index.setHasPublications((documentPublicationIndexRepository.countByMonographId(
+                    monographPublicationDTO.getMonographId()) > 0));
+                documentPublicationIndexRepository.save(index);
+            }
+        );
     }
 
     @Override

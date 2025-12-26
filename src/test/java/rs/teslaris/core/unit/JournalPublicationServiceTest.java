@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -15,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,12 +47,15 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.ProceedingsPublication;
+import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.JournalPublicationServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
@@ -101,6 +106,9 @@ public class JournalPublicationServiceTest {
 
     @Mock
     private CitationService citationService;
+
+    @Mock
+    private ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     @InjectMocks
     private JournalPublicationServiceImpl journalPublicationService;
@@ -322,5 +330,69 @@ public class JournalPublicationServiceTest {
         verify(journalPublicationJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(documentPublicationIndexRepository, atLeastOnce()).save(
             any(DocumentPublicationIndex.class));
+    }
+
+    @Test
+    public void shouldTransferProceedingsPublicationToJournal() {
+        // Given
+        var proceedingsPublicationId = 1;
+        var journalId = 100;
+        var expectedSavedId = 200;
+
+        var proceedingsPublication = new ProceedingsPublication();
+        proceedingsPublication.setId(proceedingsPublicationId);
+        proceedingsPublication.setProceedingsPublicationType(ProceedingsPublicationType.POLEMICS);
+        var journal = new Journal();
+        journal.setId(journalId);
+
+        var savedJournalPublication = new JournalPublication();
+        savedJournalPublication.setId(expectedSavedId);
+        savedJournalPublication.setJournal(journal);
+
+        var documentIndex = new DocumentPublicationIndex();
+        documentIndex.setDatabaseId(proceedingsPublicationId);
+
+        when(proceedingsPublicationRepository.findById(proceedingsPublicationId))
+            .thenReturn(Optional.of(proceedingsPublication));
+        when(journalService.findJournalById(journalId)).thenReturn(journal);
+        when(journalPublicationJPAService.save(any(JournalPublication.class)))
+            .thenReturn(savedJournalPublication);
+        when(documentPublicationIndexRepository
+            .findDocumentPublicationIndexByDatabaseId(proceedingsPublicationId))
+            .thenReturn(Optional.of(documentIndex));
+
+        // When
+        var resultId = journalPublicationService.transferProceedingsPublicationToJournal(
+            proceedingsPublicationId, journalId);
+
+        // Then
+        assertEquals(expectedSavedId, resultId);
+        verify(proceedingsPublicationRepository).findById(proceedingsPublicationId);
+        verify(journalService).findJournalById(journalId);
+        verify(proceedingsPublicationRepository).delete(proceedingsPublication);
+        verify(documentPublicationIndexRepository).delete(documentIndex);
+        verify(journalPublicationJPAService).save(argThat(jp ->
+            jp.getJournal().getId().equals(journalId)));
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenProceedingsPublicationNotFound() {
+        // Given
+        var nonExistentId = 999;
+        var journalId = 100;
+
+        when(proceedingsPublicationRepository.findById(nonExistentId))
+            .thenReturn(Optional.empty());
+
+        // When/Then
+        assertThrows(NotFoundException.class, () ->
+            journalPublicationService.transferProceedingsPublicationToJournal(nonExistentId,
+                journalId));
+
+        verify(proceedingsPublicationRepository).findById(nonExistentId);
+        verify(journalService, never()).findJournalById(any());
+        verify(proceedingsPublicationRepository, never()).delete(any());
+        verify(documentPublicationIndexRepository, never()).delete(any());
+        verify(journalPublicationJPAService, never()).save(any());
     }
 }

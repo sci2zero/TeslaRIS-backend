@@ -103,7 +103,10 @@
   "typeToSupportedClassifications": {
     "REVIEW_ARTICLE": ["ALL"],
     "RESEARCH_ARTICLE": ["ALL"],
-    "REGULAR_FULL_ARTICLE": ["M21APlus", "M21A", "M21", "M22", "M23", "M23e", "M24Plus", "M24", "M51", "M52", "M53", "M54", "M56", "M57"],
+    "REGULAR_FULL_ARTICLE": ["ALL"],
+    "INVITED_FULL_ARTICLE": ["ALL"],
+    "REGULAR_ABSTRACT_ARTICLE": ["ALL"],
+    "INVITED_ABSTRACT_ARTICLE": ["ALL"],
     "SCIENTIFIC_CRITIC": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
     "POLEMICS": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
     "COMMENT": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"]
@@ -111,6 +114,8 @@
   "minimumPageRequirements": {
     "SCIENTIFIC_CRITIC": 2,
     "POLEMICS": 2,
-    "COMMENT": 2
+    "COMMENT": 2,
+    "REGULAR_ABSTRACT_ARTICLE": 2,
+    "INVITED_ABSTRACT_ARTICLE": 2
   }
 }

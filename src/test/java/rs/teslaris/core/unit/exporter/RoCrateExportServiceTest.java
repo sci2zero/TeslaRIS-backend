@@ -10,8 +10,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -44,6 +46,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.service.interfaces.commontypes.ProgressService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -107,18 +110,18 @@ class RoCrateExportServiceTest {
     @BeforeEach
     void setUp() throws Exception {
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
         when(objectWriter.writeValueAsString(any())).thenReturn("{}");
         when(objectMapper.readTree(anyString())).thenReturn(jsonNode);
     }
 
     @Test
-    void shouldReturnSilentlyWhenDocumentDoesNotExist() {
+    void shouldReturnSilentlyWhenDocumentDoesNotExist() throws JsonProcessingException {
         // Given
         var documentId = 1;
         var outputStream = new ByteArrayOutputStream();
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(null);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
         service.createRoCrateZip(documentId, exportId, outputStream);
@@ -137,6 +140,7 @@ class RoCrateExportServiceTest {
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
         service.createRoCrateZip(documentId, exportId, outputStream);
@@ -166,6 +170,7 @@ class RoCrateExportServiceTest {
 
         when(document.getFileItems()).thenReturn(Set.of(approvedFile, rejectedFile));
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
+        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // Given
         var body = new ByteArrayInputStream("data".getBytes());
@@ -209,7 +214,8 @@ class RoCrateExportServiceTest {
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
-        when(objectWriter.writeValueAsBytes(any()))
+        reset(objectWriter);
+        when(objectWriter.writeValueAsBytes(any(RoCrate.class)))
             .thenAnswer(invocation -> {
                 throw new RuntimeException("boom");
             });
@@ -224,7 +230,7 @@ class RoCrateExportServiceTest {
     }
 
     @Test
-    void shouldWriteValidZipStructure() {
+    void shouldWriteValidZipStructure() throws JsonProcessingException {
         // Given
         var documentId = 5;
         var outputStream = new ByteArrayOutputStream();
@@ -233,6 +239,7 @@ class RoCrateExportServiceTest {
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
         service.createRoCrateZip(documentId, exportId, outputStream);
@@ -274,6 +281,7 @@ class RoCrateExportServiceTest {
             setName(new PersonName());
         }});
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
         service.createRoCrateBibliographyZip(personId, exportId, outputStream);
@@ -323,6 +331,7 @@ class RoCrateExportServiceTest {
             setName(new PersonName());
         }});
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
         service.createRoCrateBibliographyZip(personId, exportId, outputStream);

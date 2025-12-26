@@ -536,7 +536,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             StringUtil.valueExists(publication.getEndPage())) {
             try {
                 index.setNumberOfPages(Integer.parseInt(publication.getEndPage()) -
-                    Integer.parseInt(publication.getStartPage()));
+                    Integer.parseInt(publication.getStartPage()) + 1);
             } catch (Exception ignored) {
                 // pass
             }

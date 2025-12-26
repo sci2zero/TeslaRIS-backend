@@ -433,18 +433,18 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         if (identifier.contains(IdentifierUtil.legacyIdentifierPrefix)) {
             query.addCriteria(
-                Criteria.where("oldId").is(OAIPMHParseUtility.parseBISISID(identifier)));
-        } else if (identifier.contains(identifier)) {
+                Criteria.where("old_id").in(OAIPMHParseUtility.parseBISISID(identifier)));
+        } else if (identifier.contains(IdentifierUtil.identifierPrefix)) {
             query.addCriteria(
-                Criteria.where("databaseId").is(OAIPMHParseUtility.parseBISISID(identifier)));
+                Criteria.where("database_id").is(OAIPMHParseUtility.parseBISISID(identifier)));
         }
 
         if (handlerConfiguration.exportOnlyActiveEmployees()) {
-            query.addCriteria(Criteria.where("activelyRelatedInstitutionIds")
+            query.addCriteria(Criteria.where("actively_related_institution_ids")
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         } else {
-            query.addCriteria(Criteria.where("relatedInstitutionIds")
+            query.addCriteria(Criteria.where("related_institution_ids")
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         }
@@ -467,11 +467,11 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 LocalDate.parse(until, DateTimeFormatter.ISO_DATE))));
 
         if (handlerConfiguration.exportOnlyActiveEmployees()) {
-            query.addCriteria(Criteria.where("activelyRelatedInstitutionIds")
+            query.addCriteria(Criteria.where("actively_related_institution_ids")
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         } else {
-            query.addCriteria(Criteria.where("relatedInstitutionIds")
+            query.addCriteria(Criteria.where("related_institution_ids")
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         }
@@ -682,9 +682,10 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             ? matchedSet.identifierSetSpec() + "/"
             : "";
 
-        String identifierPrefix = handlerConfig.supportLegacyIdentifiers()
-            ? IdentifierUtil.legacyIdentifierPrefix
-            : IdentifierUtil.identifierPrefix;
+        String identifierPrefix =
+            (handlerConfig.supportLegacyIdentifiers() && !entity.getOldIds().isEmpty())
+                ? IdentifierUtil.legacyIdentifierPrefix
+                : IdentifierUtil.identifierPrefix;
 
         var entityId = getEntityIdentifier(handlerConfig, entity);
 

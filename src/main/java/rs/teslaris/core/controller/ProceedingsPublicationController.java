@@ -7,8 +7,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -100,5 +102,14 @@ public class ProceedingsPublicationController {
     @PublicationEditCheck
     public void deleteProceedingsPublication(@PathVariable Integer documentId) {
         proceedingsPublicationService.deleteProceedingsPublication(documentId);
+    }
+
+    @PatchMapping("/transfer/{documentId}/{proceedingsId}")
+    @PreAuthorize("hasAuthority('CHANGE_PUBLICATION_TYPE')")
+    @PublicationEditCheck
+    public Integer transferJournalPublicationToProceedings(@PathVariable Integer documentId,
+                                                           @PathVariable Integer proceedingsId) {
+        return proceedingsPublicationService.transferJournalPublicationToProceedings(documentId,
+            proceedingsId);
     }
 }

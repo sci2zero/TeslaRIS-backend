@@ -116,6 +116,45 @@ public abstract class Document extends BaseEntity implements Mergeable {
     private Set<String> internalIdentifiers = new HashSet<>();
 
 
+    protected Document(Document other) {
+        this.documentDate = other.documentDate;
+        this.approveStatus = other.approveStatus;
+        this.doi = other.doi;
+        this.scopusId = other.scopusId;
+        this.openAlexId = other.openAlexId;
+        this.webOfScienceId = other.webOfScienceId;
+        this.isMetadataValid = other.isMetadataValid;
+        this.areFilesValid = other.areFilesValid;
+        this.isArchived = other.isArchived;
+
+        this.title = new HashSet<>(other.title);
+        other.title.clear();
+        this.subTitle = new HashSet<>(other.subTitle);
+        other.subTitle.clear();
+        this.description = new HashSet<>(other.description);
+        other.description.clear();
+        this.remark = new HashSet<>(other.remark);
+        other.remark.clear();
+        this.keywords = new HashSet<>(other.keywords);
+        other.keywords.clear();
+
+        this.contributors = new HashSet<>(other.contributors);
+        other.contributors.clear();
+        this.fileItems = new HashSet<>(other.fileItems);
+        other.fileItems.clear();
+        this.proofs = new HashSet<>(other.proofs);
+        other.proofs.clear();
+
+        this.uris = new HashSet<>(other.uris);
+        other.uris.clear();
+        this.oldIds = new HashSet<>(other.oldIds);
+        other.oldIds.clear();
+        this.mergedIds = new HashSet<>(other.mergedIds);
+        other.mergedIds.clear();
+        this.internalIdentifiers = new HashSet<>(other.internalIdentifiers);
+        other.internalIdentifiers.clear();
+    }
+
     public void addDocumentContribution(PersonDocumentContribution contribution) {
         contribution.setDocument(this);
         contributors.add(contribution);

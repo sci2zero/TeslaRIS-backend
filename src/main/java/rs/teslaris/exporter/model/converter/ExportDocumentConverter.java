@@ -1117,8 +1117,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         }
 
         var issn =
-            StringUtil.valueExists(exportDocument.getEIssn()) ?
-                exportDocument.getEIssn() : exportDocument.getPrintIssn();
+            Objects.nonNull(exportDocument.getJournal()) ? getIssn(exportDocument.getJournal()) :
+                getIssn(exportDocument);
         if (StringUtil.valueExists(issn)) {
             dimPublication.getFields().add(
                 new DimField("dc", "identifier", "issn",
@@ -1215,8 +1215,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         }
 
         var issn =
-            StringUtil.valueExists(exportDocument.getEIssn()) ?
-                exportDocument.getEIssn() : exportDocument.getPrintIssn();
+            Objects.nonNull(exportDocument.getJournal()) ? getIssn(exportDocument.getJournal()) :
+                getIssn(exportDocument);
         if (StringUtil.valueExists(issn)) {
             dcPublication.getIdentifier().add("issn:" + issn);
         }
@@ -1340,5 +1340,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
             case THESIS -> exportDocument.getThesisType().name();
             default -> null;
         };
+    }
+
+    private static String getIssn(ExportDocument exportDocument) {
+        return StringUtil.valueExists(exportDocument.getEIssn()) ?
+            exportDocument.getEIssn() : exportDocument.getPrintIssn();
     }
 }

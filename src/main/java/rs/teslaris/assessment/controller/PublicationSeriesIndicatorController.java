@@ -72,10 +72,14 @@ public class PublicationSeriesIndicatorController {
                                              LocalDateTime timestamp,
                                              @RequestParam("classificationYears")
                                              List<Integer> classificationYears,
+                                             @RequestParam boolean calculateIF5Rank,
+                                             @RequestParam boolean calculateJciRank,
                                              @RequestHeader("Authorization")
                                              String bearerToken) {
         publicationSeriesIndicatorService.scheduleIF5AndJCIRankComputation(timestamp,
-            classificationYears, tokenUtil.extractUserIdFromToken(bearerToken));
+            classificationYears, calculateIF5Rank, calculateJciRank,
+            tokenUtil.extractUserIdFromToken(bearerToken)
+        );
     }
 
     @GetMapping("/if-table/{publicationSeriesId}")

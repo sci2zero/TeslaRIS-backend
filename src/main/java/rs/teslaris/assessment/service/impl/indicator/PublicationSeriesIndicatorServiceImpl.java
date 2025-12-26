@@ -124,7 +124,9 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
-    public void computeFiveYearIFAndJciRank(List<Integer> classificationYears) {
+    public void computeFiveYearIFAndJciRank(List<Integer> classificationYears,
+                                            boolean calculateIF5,
+                                            boolean calculateJci) {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -158,17 +160,21 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                                 categoryIdentifier, classificationYear,
                                 EntityIndicatorSource.WEB_OF_SCIENCE);
 
-                        performIF5RankComputation(
-                            classificationYear, currentJournal, categoryIdentifier,
-                            currentJournalRankIndicators.getFirst().getEdition(),
-                            journalInSameCategoryIds
-                        );
+                        if (calculateIF5) {
+                            performIF5RankComputation(
+                                classificationYear, currentJournal, categoryIdentifier,
+                                currentJournalRankIndicators.getFirst().getEdition(),
+                                journalInSameCategoryIds
+                            );
+                        }
 
-                        performJCIRankComputation(
-                            classificationYear, currentJournal, categoryIdentifier,
-                            currentJournalRankIndicators.getFirst().getEdition(),
-                            journalInSameCategoryIds
-                        );
+                        if (calculateJci) {
+                            performJCIRankComputation(
+                                classificationYear, currentJournal, categoryIdentifier,
+                                currentJournalRankIndicators.getFirst().getEdition(),
+                                journalInSameCategoryIds
+                            );
+                        }
                     });
                 });
             });
@@ -292,20 +298,27 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     @Override
     public void scheduleIF5AndJCIRankComputation(LocalDateTime timeToRun,
                                                  List<Integer> classificationYears,
+                                                 boolean calculateIF5,
+                                                 boolean calculateJci,
                                                  Integer userId) {
 
         var taskId = taskManagerService.scheduleTask(
             "Publication_Series_IF5_JCI_Rank_Compute-" +
-                EntityIndicatorSource.WEB_OF_SCIENCE.name() +
-                "-" + StringUtils.join(classificationYears, "_") +
+                EntityIndicatorSource.WEB_OF_SCIENCE.name() + "-" +
+                (calculateIF5 ? "IF5-" : "") + (calculateJci ? "JCI-" : "") +
+                StringUtils.join(classificationYears, "_") +
                 "-" + UUID.randomUUID(),
-            timeToRun, () -> computeFiveYearIFAndJciRank(classificationYears), userId,
+            timeToRun,
+            () -> computeFiveYearIFAndJciRank(classificationYears, calculateIF5, calculateJci),
+            userId,
             RecurrenceType.ONCE);
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, timeToRun,
                 ScheduledTaskType.IF5_JCI_RANK_COMPUTATION, new HashMap<>() {{
                 put("classificationYears", classificationYears);
+                put("calculateIF5", String.valueOf(calculateIF5));
+                put("calculateJci", String.valueOf(calculateJci));
                 put("userId", userId);
             }}, RecurrenceType.ONCE));
     }

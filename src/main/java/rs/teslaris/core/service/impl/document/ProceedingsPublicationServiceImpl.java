@@ -22,6 +22,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -57,6 +58,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     private final ConferenceService conferenceService;
 
+    private final JournalPublicationRepository journalPublicationRepository;
+
 
     @Autowired
     public ProceedingsPublicationServiceImpl(MultilingualContentService multilingualContentService,
@@ -78,7 +81,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository,
-                                             ConferenceService conferenceService) {
+                                             ConferenceService conferenceService,
+                                             JournalPublicationRepository journalPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -89,6 +93,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
         this.conferenceService = conferenceService;
+        this.journalPublicationRepository = journalPublicationRepository;
     }
 
     @Override
@@ -257,6 +262,34 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Override
     @Transactional
+    public Integer transferJournalPublicationToProceedings(Integer journalPublicationId,
+                                                           Integer proceedingsId) {
+        var journalPublication = journalPublicationRepository.findById(journalPublicationId);
+
+        if (journalPublication.isEmpty()) {
+            throw new NotFoundException("Journal publication with given ID does not exist.");
+        }
+
+        var proceedingsPublication = new ProceedingsPublication(journalPublication.get());
+
+        proceedingsPublication.setProceedings(
+            proceedingsService.findProceedingsById(proceedingsId));
+        proceedingsPublication.setEvent(proceedingsPublication.getProceedings().getEvent());
+        proceedingsPublication.setDocumentDate(
+            proceedingsPublication.getProceedings().getDocumentDate());
+
+        journalPublicationRepository.delete(journalPublication.get());
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            journalPublicationId).ifPresent(documentPublicationIndexRepository::delete);
+
+        var saved = proceedingsPublicationRepository.save(proceedingsPublication);
+        indexProceedingsPublication(saved, new DocumentPublicationIndex());
+
+        return saved.getId();
+    }
+
+    @Override
+    @Transactional
     public Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId,
                                                                   Pageable pageable) {
         return documentPublicationIndexRepository.findByTypeAndEventId(
@@ -301,5 +334,13 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         if (Objects.nonNull(publication.getProceedings())) {
             publication.setDocumentDate(publication.getProceedings().getDocumentDate());
         }
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            publicationDTO.getProceedingsId()).ifPresent(index -> {
+                index.setHasPublications((documentPublicationIndexRepository.countByProceedingsId(
+                    publicationDTO.getProceedingsId()) > 0));
+                documentPublicationIndexRepository.save(index);
+            }
+        );
     }
 }

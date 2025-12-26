@@ -430,4 +430,22 @@ public interface DocumentPublicationIndexRepository extends
     long countDocumentsWithAuthorInAnyRole(Integer authorId);
 
     void deleteByType(String type);
+
+    @CountQuery("""
+        {
+          "term": {
+              "proceedings_id": ?0
+            }
+        }
+        """)
+    long countByProceedingsId(Integer proceedingsId);
+
+    @CountQuery("""
+        {
+          "term": {
+              "monograph_id": ?0
+            }
+        }
+        """)
+    long countByMonographId(Integer monographId);
 }

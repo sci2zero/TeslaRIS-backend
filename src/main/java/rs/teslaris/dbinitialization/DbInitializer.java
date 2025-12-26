@@ -210,6 +210,7 @@ public class DbInitializer implements ApplicationRunner {
         var configureAppSettings = new Privilege("CONFIGURE_APP_SETTINGS");
         var registerResearcher = new Privilege("REGISTER_RESEARCHER");
         var unpromoteRbEntries = new Privilege("UNPROMOTE_RB_ENTRIES");
+        var changePublicationType = new Privilege("CHANGE_PUBLICATION_TYPE");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -248,7 +249,7 @@ public class DbInitializer implements ApplicationRunner {
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
-                unpromoteRbEntries));
+                unpromoteRbEntries, changePublicationType));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -285,7 +286,7 @@ public class DbInitializer implements ApplicationRunner {
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
                 forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
-                registerResearcher, unpromoteRbEntries
+                registerResearcher, unpromoteRbEntries, changePublicationType
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -294,7 +295,7 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
                 createBookSeries, createPublisher, performLoading, harvestIdfMetadata,
-                getTopCollaborators)));
+                getTopCollaborators, changePublicationType)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -310,7 +311,7 @@ public class DbInitializer implements ApplicationRunner {
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
                     scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
                     saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
-                    saveChartDisplayConfiguration, getTopCollaborators)));
+                    saveChartDisplayConfiguration, getTopCollaborators, changePublicationType)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

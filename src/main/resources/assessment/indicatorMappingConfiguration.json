@@ -76,6 +76,10 @@
           "mapsTo": "currentJIF",
           "type": "INDEPENDENT"
         },
+        "17": {
+          "mapsTo": "jciRank",
+          "type": "BY_CATEGORY"
+        },
         "19": {
           "mapsTo": "jciPercentile",
           "type": "BY_CATEGORY"

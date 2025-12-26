@@ -50,7 +50,10 @@ public class AssessmentPointsScalingRuleEngine {
 
         if (Objects.nonNull(publicationType) &&
             List.of("SCIENTIFIC_CRITIC", "POLEMICS", "COMMENT").contains(publicationType)) {
-            return points * 0.25;
+            reasoningProcess =
+                AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
+                    "notFullResults");
+            points = points * 0.25;
         }
 
         // Theoretical works (up to 3 authors, otherwise scale)

@@ -271,6 +271,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                 "journal_id", null);
         }
 
+        index.setHasPublications(Objects.nonNull(proceedings.getId()) &&
+            (documentPublicationIndexRepository.countByProceedingsId(proceedings.getId()) > 0));
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
