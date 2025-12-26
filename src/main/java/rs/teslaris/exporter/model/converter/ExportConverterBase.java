@@ -57,8 +57,6 @@ public class ExportConverterBase {
 
     protected static String identifierPrefix;
 
-    protected static String defaultLocale;
-
     @Autowired
     private Environment environment;
 
@@ -340,6 +338,5 @@ public class ExportConverterBase {
                 .split(",")));
         legacyIdentifierPrefix = environment.getProperty("legacy-identifier.prefix");
         identifierPrefix = environment.getProperty("export.internal-identifier.prefix");
-        defaultLocale = environment.getProperty("export.default-locale");
     }
 }
