@@ -11,6 +11,7 @@ import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.patent.Patent;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
@@ -68,7 +69,8 @@ public class ExportPatentConverter extends ExportConverterBase {
         return openairePatent;
     }
 
-    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
+    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers,
+                               List<String> supportedLanguages) {
         var dcPatent = new DC();
         dcPatent.getType().add(new DCType("model", null, null));
         dcPatent.getSource().add(repositoryName);
@@ -81,22 +83,26 @@ public class ExportPatentConverter extends ExportConverterBase {
 
         dcPatent.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());
 
-        clientLanguages.forEach(lang -> {
+        CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang -> {
             dcPatent.getIdentifier()
                 .add(baseFrontendUrl + lang + "/scientific-results/patent/" +
                     exportDocument.getDatabaseId());
         });
 
         if (StringUtil.valueExists(exportDocument.getDoi())) {
-            dcPatent.getIdentifier().add("DOI:" + exportDocument.getDoi());
+            dcPatent.getIdentifier().add("doi:" + exportDocument.getDoi());
         }
 
         if (StringUtil.valueExists(exportDocument.getScopus())) {
-            dcPatent.getIdentifier().add("SCOPUS:" + exportDocument.getScopus());
+            dcPatent.getIdentifier().add("scopus:" + exportDocument.getScopus());
         }
 
         if (StringUtil.valueExists(exportDocument.getOpenAlex())) {
-            dcPatent.getIdentifier().add("OPENALEX:" + exportDocument.getOpenAlex());
+            dcPatent.getIdentifier().add("openalex:" + exportDocument.getOpenAlex());
+        }
+
+        if (StringUtil.valueExists(exportDocument.getWebOfScience())) {
+            dcPatent.getIdentifier().add("wos:" + exportDocument.getWebOfScience());
         }
 
         addContentToList(

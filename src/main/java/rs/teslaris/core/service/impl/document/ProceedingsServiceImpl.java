@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Proceedings;
@@ -76,6 +78,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     private final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
+    private final EventIndexRepository eventIndexRepository;
+
 
     @Autowired
     public ProceedingsServiceImpl(MultilingualContentService multilingualContentService,
@@ -102,7 +106,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1,
                                   IndexBulkUpdateService indexBulkUpdateService,
-                                  ProceedingsPublicationRepository proceedingsPublicationRepository) {
+                                  ProceedingsPublicationRepository proceedingsPublicationRepository,
+                                  EventIndexRepository eventIndexRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -119,6 +124,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
         this.indexBulkUpdateService = indexBulkUpdateService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
+        this.eventIndexRepository = eventIndexRepository;
     }
 
     @Override
@@ -243,7 +249,14 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Override
     @Transactional(readOnly = true)
     public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
+        var eventIds = new ArrayList<>(List.of(proceedings.getEvent().getId()));
+        if (Objects.nonNull(index.getEventId()) && !eventIds.contains(index.getEventId())) {
+            eventIds.add(index.getEventId());
+        }
+
         indexCommonFields(proceedings, index);
+
+        index.setType(DocumentPublicationType.PROCEEDINGS.name());
 
         if (Objects.nonNull(proceedings.getPublisher())) {
             index.setPublisherId(proceedings.getPublisher().getId());
@@ -252,7 +265,6 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
         }
         index.setAuthorReprint(proceedings.getAuthorReprint());
 
-        index.setType(DocumentPublicationType.PROCEEDINGS.name());
         index.setNumberOfPages(proceedings.getNumberOfPages());
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
@@ -273,9 +285,19 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         index.setHasPublications(Objects.nonNull(proceedings.getId()) &&
             (documentPublicationIndexRepository.countByProceedingsId(proceedings.getId()) > 0));
+
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
+
         documentPublicationIndexRepository.save(index);
+
+        eventIds.forEach(eventId -> eventIndexRepository.findByDatabaseId(eventId)
+            .ifPresent(eventIndex -> {
+                eventIndex.setHasProceedings(Objects.nonNull(eventId) &&
+                    (documentPublicationIndexRepository.countByEventId(eventId) > 0));
+
+                eventIndexRepository.save(eventIndex);
+            }));
     }
 
     @Override

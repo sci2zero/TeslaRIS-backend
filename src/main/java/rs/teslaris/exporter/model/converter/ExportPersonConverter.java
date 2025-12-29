@@ -2,6 +2,7 @@ package rs.teslaris.exporter.model.converter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEmployment;
 import rs.teslaris.exporter.model.common.ExportPerson;
@@ -152,7 +154,8 @@ public class ExportPersonConverter extends ExportConverterBase {
         return openairePerson;
     }
 
-    public static DC toDCModel(ExportPerson exportPerson, boolean supportLegacyIdentifiers) {
+    public static DC toDCModel(ExportPerson exportPerson, boolean supportLegacyIdentifiers,
+                               List<String> supportedLanguages) {
         var dcPerson = new DC();
         dcPerson.getType().add(new DCType("PERSON", null, null));
         dcPerson.getSource().add(repositoryName);
@@ -170,22 +173,22 @@ public class ExportPersonConverter extends ExportConverterBase {
         }
 
         if (StringUtil.valueExists(exportPerson.getScopusAuthorId())) {
-            dcPerson.getIdentifier().add("SCOPUS:" + exportPerson.getScopusAuthorId());
+            dcPerson.getIdentifier().add("scopus:" + exportPerson.getScopusAuthorId());
         }
 
         if (StringUtil.valueExists(exportPerson.getENaukaId())) {
-            dcPerson.getIdentifier().add("ENAUKA:" + exportPerson.getENaukaId());
+            dcPerson.getIdentifier().add("enauka:" + exportPerson.getENaukaId());
         }
 
         if (StringUtil.valueExists(exportPerson.getECrisId())) {
-            dcPerson.getIdentifier().add("ECRIS:" + exportPerson.getECrisId());
+            dcPerson.getIdentifier().add("ecris:" + exportPerson.getECrisId());
         }
 
         if (StringUtil.valueExists(exportPerson.getApvnt())) {
-            dcPerson.getIdentifier().add("APVNT:" + exportPerson.getApvnt());
+            dcPerson.getIdentifier().add("apvnt:" + exportPerson.getApvnt());
         }
 
-        clientLanguages.forEach(lang -> {
+        CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang -> {
             dcPerson.getIdentifier()
                 .add(baseFrontendUrl + lang + "/persons/" +
                     exportPerson.getDatabaseId());

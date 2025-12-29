@@ -158,7 +158,9 @@ public class MonographPublicationServiceTest {
         var monographPublicationDTO = new MonographPublicationDTO();
         monographPublicationDTO.setMonographPublicationType(MonographPublicationType.CHAPTER);
         var newMonographPublication = new MonographPublication();
-        newMonographPublication.setMonograph(new Monograph());
+        newMonographPublication.setMonograph(new Monograph() {{
+            setId(1);
+        }});
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
@@ -241,11 +243,15 @@ public class MonographPublicationServiceTest {
         var monographPublicationToUpdate = new MonographPublication();
         monographPublicationToUpdate.setId(monographPublicationId);
         monographPublicationToUpdate.setApproveStatus(ApproveStatus.APPROVED);
+        monographPublicationToUpdate.setMonograph(new Monograph() {{
+            setId(2);
+        }});
 
         when(monographPublicationJPAService.findOne(monographPublicationId)).thenReturn(
             monographPublicationToUpdate);
         when(monographService.findMonographById(anyInt())).thenReturn(new Monograph() {{
             setMonographType(MonographType.BOOK);
+            setId(3);
         }});
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             monographPublicationId)).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -268,11 +274,17 @@ public class MonographPublicationServiceTest {
         var monographPublicationToUpdate = new MonographPublication();
         monographPublicationToUpdate.setId(monographPublicationId);
         monographPublicationToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
+        monographPublicationToUpdate.setMonograph(new Monograph() {{
+            setId(2);
+        }});
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
             setMonographType(MonographType.BOOK);
+            setId(3);
         }});
         when(monographPublicationJPAService.findOne(monographPublicationId)).thenReturn(
+            monographPublicationToUpdate);
+        when(monographPublicationJPAService.save(any(MonographPublication.class))).thenReturn(
             monographPublicationToUpdate);
 
         // When
@@ -352,11 +364,17 @@ public class MonographPublicationServiceTest {
     public void shouldReindexMonographPublications() {
         // Given
         var monographPublication1 = new MonographPublication();
-        monographPublication1.setMonograph(new Monograph());
+        monographPublication1.setMonograph(new Monograph() {{
+            setId(1);
+        }});
         var monographPublication2 = new MonographPublication();
-        monographPublication2.setMonograph(new Monograph());
+        monographPublication2.setMonograph(new Monograph() {{
+            setId(2);
+        }});
         var monographPublication3 = new MonographPublication();
-        monographPublication3.setMonograph(new Monograph());
+        monographPublication3.setMonograph(new Monograph() {{
+            setId(3);
+        }});
         var monographPublications =
             Arrays.asList(monographPublication1, monographPublication2, monographPublication3);
         var page1 =

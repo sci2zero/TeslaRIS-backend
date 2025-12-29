@@ -57,19 +57,19 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  PersonContributionService personContributionService,
                                  EventRepository eventRepository,
                                  IndexBulkUpdateService indexBulkUpdateService,
+                                 CommissionRepository commissionRepository,
                                  EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService,
                                  CountryService countryService,
-                                 CommissionRepository commissionRepository,
-                                 ConferenceJPAServiceImpl conferenceJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 ConferenceJPAServiceImpl conferenceJPAService,
+                                 DocumentPublicationIndexRepository documentPublicationIndexRepository1,
                                  ConferenceRepository conferenceRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
-            eventRepository, indexBulkUpdateService, commissionRepository,
-            eventsRelationRepository,
-            searchService, countryService);
+            eventRepository, indexBulkUpdateService, commissionRepository, eventsRelationRepository,
+            searchService, countryService, documentPublicationIndexRepository);
         this.conferenceJPAService = conferenceJPAService;
-        this.documentPublicationIndexRepository = documentPublicationIndexRepository;
+        this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
         this.conferenceRepository = conferenceRepository;
     }
 
@@ -92,9 +92,10 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                               Boolean returnOnlyNonSerialEvents,
                                               Boolean returnOnlySerialEvents,
                                               Integer commissionInstitutionId,
-                                              Integer commissionId) {
+                                              Integer commissionId,
+                                              Boolean emptyEventsOnly) {
         return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, commissionInstitutionId, commissionId);
+            returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
     }
 
     @Override

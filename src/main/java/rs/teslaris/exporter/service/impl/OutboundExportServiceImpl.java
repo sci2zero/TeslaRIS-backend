@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,6 +59,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
@@ -387,13 +389,19 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         try {
             var conversionMethod =
-                converterClass.getMethod(conversionFunctionName, recordClass, boolean.class);
+                converterClass.getMethod(conversionFunctionName, recordClass, boolean.class,
+                    List.class);
 
-            boolean supportLegacyIdentifiers =
-                Objects.nonNull(handler.supportLegacyIdentifiers()) &&
-                    handler.supportLegacyIdentifiers();
+            boolean supportLegacyIdentifiers = handler.supportLegacyIdentifiers();
+            List<String> supportedLanguages =
+                CollectionOperations.containsValues(handler.supportedLanguages()) ?
+                    handler.supportedLanguages().stream().map(String::toLowerCase).toList() :
+                    Collections.emptyList();
+
             Object convertedEntity =
-                conversionMethod.invoke(null, requestedRecord, supportLegacyIdentifiers);
+                conversionMethod.invoke(
+                    null, requestedRecord, supportLegacyIdentifiers, supportedLanguages
+                );
 
             ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat,
                 organisationUnitService, handler);

@@ -38,12 +38,14 @@ import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -114,6 +116,9 @@ public class ProceedingsPublicationServiceTest {
     @Mock
     private JournalPublicationRepository journalPublicationRepository;
 
+    @Mock
+    private JournalIndexRepository journalIndexRepository;
+
     @InjectMocks
     private ProceedingsPublicationServiceImpl proceedingsPublicationService;
 
@@ -146,6 +151,7 @@ public class ProceedingsPublicationServiceTest {
         document.setEvent(conference);
         document.setProceedings(new Proceedings() {{
             setEvent(conference);
+            setId(1);
         }});
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
@@ -167,6 +173,7 @@ public class ProceedingsPublicationServiceTest {
             proceedingsPublicationService.createProceedingsPublication(publicationDTO, true);
 
         // Then
+        assertNotNull(result);
         verify(multilingualContentService, times(5)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(publicationDTO));
@@ -192,6 +199,7 @@ public class ProceedingsPublicationServiceTest {
         when(proceedingsService.findProceedingsById(publicationDTO.getProceedingsId())).thenReturn(
             new Proceedings() {{
                 setEvent(conference);
+                setId(2);
             }});
         when(eventService.findOne(publicationDTO.getProceedingsId())).thenReturn(conference);
         when(proceedingPublicationJPAService.save(any())).thenReturn(publicationToUpdate);
@@ -316,6 +324,7 @@ public class ProceedingsPublicationServiceTest {
         proceedingsPublication.setDocumentDate("2024");
         var proceedings = new Proceedings();
         proceedings.setEvent(new Conference());
+        proceedings.setId(1);
         proceedingsPublication.setProceedings(proceedings);
         var peroceedingsPublications = List.of(proceedingsPublication);
         var page1 = new PageImpl<>(peroceedingsPublications.subList(0, 1), PageRequest.of(0, 10),
@@ -343,6 +352,9 @@ public class ProceedingsPublicationServiceTest {
         var journalPublication = new JournalPublication();
         journalPublication.setId(journalPublicationId);
         journalPublication.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
+        journalPublication.setJournal(new Journal() {{
+            setId(1);
+        }});
 
         var proceedings = mock(Proceedings.class);
         var conference = mock(Conference.class);

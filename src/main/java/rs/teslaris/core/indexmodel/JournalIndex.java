@@ -52,4 +52,7 @@ public class JournalIndex {
 
     @Field(type = FieldType.Integer, name = "classified_by", store = true)
     private List<Integer> classifiedBy = new ArrayList<>();
+
+    @Field(type = FieldType.Boolean, name = "has_publications", store = true)
+    private Boolean hasPublications;
 }

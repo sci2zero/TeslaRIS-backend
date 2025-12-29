@@ -448,4 +448,22 @@ public interface DocumentPublicationIndexRepository extends
         }
         """)
     long countByMonographId(Integer monographId);
+
+    @CountQuery("""
+        {
+          "term": {
+              "event_id": ?0
+            }
+        }
+        """)
+    long countByEventId(Integer eventId);
+
+    @CountQuery("""
+        {
+          "term": {
+              "journal_id": ?0
+            }
+        }
+        """)
+    long countByJournalId(Integer journalId);
 }

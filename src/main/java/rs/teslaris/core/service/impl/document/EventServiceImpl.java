@@ -27,6 +27,7 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Event;
@@ -75,6 +76,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private final SearchService<EventIndex> searchService;
 
     private final CountryService countryService;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
 
     @Override
@@ -162,10 +165,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                          EventType eventType, Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId,
-                                         Integer commissionId) {
+                                         Integer commissionId, Boolean emptyEventsOnly) {
         return searchService.runQuery(
             buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId, commissionId),
+                returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly),
             pageable, EventIndex.class, "events");
     }
 
@@ -314,8 +317,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                          Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId,
-                                         Integer commissionId) {
-        boolean onlyYearTokens = tokens.stream().allMatch(token -> token.matches("\\d{4}"));
+                                         Integer commissionId, Boolean emptyEventsOnly) {
+        boolean onlyYearTokens =
+            tokens.stream().allMatch(token -> token.matches("\\d{4}"));
 
         // If only searching by years, disable minimum_should_match, otherwise set it
         var minShouldMatch = onlyYearTokens ? 1 : (int) Math.ceil(tokens.size() * 0.8);
@@ -389,24 +393,24 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 return bq;
             });
 
-            b.must(sb -> {
-                sb.match(m -> m.field("event_type").query(eventType.name()));
+            b.must(sb -> sb.match(m -> m.field("event_type").query(eventType.name())));
 
-                if (returnOnlyNonSerialEvents) {
-                    sb.match(m -> m.field("is_serial_event").query(false));
-                }
+            if (returnOnlyNonSerialEvents) {
+                b.must(sb -> sb.match(m -> m.field("is_serial_event").query(false)));
+            }
 
-                if (returnOnlySerialEvents) {
-                    sb.match(m -> m.field("is_serial_event").query(true));
-                }
+            if (returnOnlySerialEvents) {
+                b.must(sb -> sb.match(m -> m.field("is_serial_event").query(true)));
+            }
 
-                if (Objects.nonNull(commissionInstitutionId) && commissionInstitutionId > 0) {
-                    sb.term(
-                        m -> m.field("related_institution_ids").value(commissionInstitutionId));
-                }
+            if (Objects.nonNull(commissionInstitutionId) && commissionInstitutionId > 0) {
+                b.must(sb -> sb.term(
+                    m -> m.field("related_institution_ids").value(commissionInstitutionId)));
+            }
 
-                return sb;
-            });
+            if (Objects.nonNull(emptyEventsOnly) && emptyEventsOnly) {
+                b.must(sb -> sb.match(m -> m.field("has_proceedings").query(false)));
+            }
 
             if (Objects.nonNull(commissionId)) {
                 b.mustNot(mnb -> {
@@ -471,6 +475,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 .toList());
         index.setClassifiedBy(
             commissionRepository.findCommissionsThatClassifiedEvent(event.getId()));
+        index.setHasProceedings(Objects.nonNull(event.getId()) &&
+            (documentPublicationIndexRepository.countByEventId(event.getId()) > 0));
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,

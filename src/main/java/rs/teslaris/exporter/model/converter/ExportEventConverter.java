@@ -20,6 +20,7 @@ import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportEvent;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
@@ -157,7 +158,8 @@ public class ExportEventConverter extends ExportConverterBase {
         return openaireEvent;
     }
 
-    public static DC toDCModel(ExportEvent exportEvent, boolean supportLegacyIdentifiers) {
+    public static DC toDCModel(ExportEvent exportEvent, boolean supportLegacyIdentifiers,
+                               List<String> supportedLanguages) {
         var dcEvent = new DC();
         dcEvent.getSource().add(repositoryName);
         dcEvent.getType().add(new DCType("EVENT", null, null));
@@ -173,10 +175,10 @@ public class ExportEventConverter extends ExportConverterBase {
         dcEvent.getIdentifier().add(identifierPrefix + exportEvent.getDatabaseId());
 
         if (StringUtil.valueExists(exportEvent.getConfId())) {
-            dcEvent.getIdentifier().add("CONFID:" + exportEvent.getConfId());
+            dcEvent.getIdentifier().add("confid:" + exportEvent.getConfId());
         }
 
-        clientLanguages.forEach(lang -> {
+        CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang -> {
             dcEvent.getIdentifier()
                 .add(baseFrontendUrl + lang + "/events/conference/" + exportEvent.getDatabaseId());
         });

@@ -47,6 +47,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.person.Contact;
@@ -342,6 +343,9 @@ public class JournalPublicationServiceTest {
         var proceedingsPublication = new ProceedingsPublication();
         proceedingsPublication.setId(proceedingsPublicationId);
         proceedingsPublication.setProceedingsPublicationType(ProceedingsPublicationType.POLEMICS);
+        proceedingsPublication.setProceedings(new Proceedings() {{
+            setId(1);
+        }});
         var journal = new Journal();
         journal.setId(journalId);
 

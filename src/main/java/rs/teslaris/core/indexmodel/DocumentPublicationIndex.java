@@ -257,6 +257,6 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Integer, name = "number_of_pages", store = true)
     private Integer numberOfPages;
 
-    @Field(type = FieldType.Integer, name = "has_publications", store = true)
+    @Field(type = FieldType.Boolean, name = "has_publications", store = true)
     private Boolean hasPublications;
 }

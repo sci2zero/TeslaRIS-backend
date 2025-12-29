@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -234,20 +235,18 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             .equals(MonographPublicationType.CHAPTER)) {
             monographPublication.setDocumentDate(monograph.getDocumentDate());
         }
-
-        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            monographPublicationDTO.getMonographId()).ifPresent(index -> {
-                index.setHasPublications((documentPublicationIndexRepository.countByMonographId(
-                    monographPublicationDTO.getMonographId()) > 0));
-                documentPublicationIndexRepository.save(index);
-            }
-        );
     }
 
     @Override
     @Transactional(readOnly = true)
     public void indexMonographPublication(MonographPublication monographPublication,
                                           DocumentPublicationIndex index) {
+        var monographIds = new ArrayList<>(List.of(monographPublication.getMonograph().getId()));
+        if (Objects.nonNull(index.getMonographId()) &&
+            !monographIds.contains(index.getMonographId())) {
+            monographIds.add(index.getMonographId());
+        }
+
         indexCommonFields(monographPublication, index);
 
         index.setType(DocumentPublicationType.MONOGRAPH_PUBLICATION.name());
@@ -263,6 +262,18 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        monographIds.forEach(
+            monographId ->
+                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                        monographId)
+                    .ifPresent(monographIndex -> {
+                        monographIndex.setHasPublications(Objects.nonNull(monographId) &&
+                            (documentPublicationIndexRepository
+                                .countByMonographId(monographId) > 0));
+
+                        documentPublicationIndexRepository.save(monographIndex);
+                    }));
     }
 
     @Override

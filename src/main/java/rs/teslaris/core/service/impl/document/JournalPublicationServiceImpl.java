@@ -173,12 +173,18 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         setJournalPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
         var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
+
         indexJournalPublication(publicationToUpdate, indexToUpdate);
         journalService.reindexJournalVolatileInformation(publicationToUpdate.getJournal().getId());
 
         journalPublicationJPAService.save(publicationToUpdate);
 
         sendNotifications(publicationToUpdate);
+
+        if (Objects.nonNull(publicationDTO.getJournalId()) &&
+            !publicationDTO.getJournalId().equals(indexToUpdate.getJournalId())) {
+            journalService.reindexJournalVolatileInformation(indexToUpdate.getJournalId());
+        }
     }
 
     @Override
@@ -235,6 +241,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             throw new NotFoundException("Proceedings publication with given ID does not exist.");
         }
 
+        var proceedingsId = proceedingsPublication.get().getProceedings().getId();
         var journalPublication = new JournalPublication(proceedingsPublication.get());
         journalPublication.setJournal(journalService.findJournalById(journalId));
 
@@ -244,6 +251,15 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         var saved = journalPublicationJPAService.save(journalPublication);
         indexJournalPublication(saved, new DocumentPublicationIndex());
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            proceedingsId).ifPresent(proceedingsIndex -> {
+                proceedingsIndex.setHasPublications(
+                    (documentPublicationIndexRepository.countByProceedingsId(proceedingsId) > 0)
+                );
+                documentPublicationIndexRepository.save(proceedingsIndex);
+            }
+        );
 
         return saved.getId();
     }

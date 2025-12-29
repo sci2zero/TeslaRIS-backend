@@ -8,8 +8,10 @@ import co.elastic.clients.json.JsonData;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,6 +69,7 @@ import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
@@ -85,6 +88,7 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.QuadConsumer;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 @Service
 @Transactional
@@ -252,8 +256,9 @@ public class DocumentAssessmentClassificationServiceImpl
                             publishedInIds);
                     case PROCEEDINGS_PUBLICATION ->
                         classifyProceedingsPublications(fromDate, commissionId, authorIds,
-                            orgUnitIds,
-                            publishedInIds);
+                            orgUnitIds, publishedInIds);
+                    case THESIS -> classifyTheses(fromDate, commissionId, authorIds, orgUnitIds,
+                        publishedInIds);
                 }
             }, userId, RecurrenceType.ONCE);
 
@@ -325,6 +330,14 @@ public class DocumentAssessmentClassificationServiceImpl
             });
     }
 
+    private void classifyTheses(LocalDate fromDate, Integer commissionId,
+                                List<Integer> authorIds, List<Integer> orgUnitIds,
+                                List<Integer> eventIds) {
+        classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
+            List.of(DocumentPublicationType.THESIS),
+            this::assessThesis);
+    }
+
     private void classifyPublications(LocalDate fromDate, Integer commissionId,
                                       List<Integer> authorIds, List<Integer> orgUnitIds,
                                       List<Integer> entityIds,
@@ -349,7 +362,10 @@ public class DocumentAssessmentClassificationServiceImpl
                     "document_publication").getContent();
 
             chunk.forEach(publicationIndex -> {
-                if (Objects.nonNull(presetCommission)) {
+                if (publicationIndex.getType().equals(DocumentPublicationType.THESIS.name())) {
+                    assessFunction.accept(publicationIndex,
+                        publicationIndex.getThesisInstitutionId(), null, batchClassifications);
+                } else if (Objects.nonNull(presetCommission)) {
                     assessFunction.accept(publicationIndex, null, presetCommission,
                         batchClassifications);
                 } else {
@@ -368,6 +384,74 @@ public class DocumentAssessmentClassificationServiceImpl
 
         personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
     }
+
+    private void assessThesis(DocumentPublicationIndex thesisIndex,
+                              Integer defenceOrganisationUnitId, Commission presetCommission,
+                              ArrayList<DocumentAssessmentClassification> batchedClassifications) {
+        var commissions = new HashSet<Commission>();
+        if (Objects.nonNull(defenceOrganisationUnitId)) {
+            commissions.addAll(findCommissionInHierarchy(defenceOrganisationUnitId));
+        }
+
+        collectCommissionsIfPresent(
+            thesisIndex.getOrganisationUnitIdsSpecified(),
+            commissions
+        );
+
+        if (commissions.isEmpty()) {
+            collectCommissionsIfPresent(
+                thesisIndex.getOrganisationUnitIdsYearOfPublication(),
+                commissions
+            );
+        }
+
+        if (commissions.isEmpty()) {
+            collectCommissionsIfPresent(
+                thesisIndex.getOrganisationUnitIdsActive(),
+                commissions
+            );
+        }
+
+        if (commissions.isEmpty()) {
+            log.info("No commission found for thesis with ID {}.",
+                thesisIndex.getDatabaseId());
+            return;
+        }
+
+        var assessmentCode = ClassificationPriorityMapping.getAssessmentCodeForThesisType(
+            ThesisType.valueOf(thesisIndex.getPublicationType()));
+        if (Objects.isNull(assessmentCode)) {
+            log.info("No assessment code configured for thesis type {}.",
+                thesisIndex.getPublicationType());
+            return;
+        }
+
+        var assessmentClassification =
+            assessmentClassificationService.readAssessmentClassificationByCode(assessmentCode);
+
+        commissions.forEach(commission -> {
+            documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
+                thesisIndex.getDatabaseId(), commission.getId(), false);
+
+
+            handleClassification(
+                assessmentClassification, commission,
+                thesisIndex.getDatabaseId(), thesisIndex.getPublicationType(),
+                thesisIndex.getYear(), batchedClassifications
+            );
+        });
+    }
+
+    private void collectCommissionsIfPresent(Collection<Integer> institutionIds,
+                                             Set<Commission> commissions
+    ) {
+        if (CollectionOperations.containsValues(institutionIds)) {
+            institutionIds.forEach(
+                id -> commissions.addAll(findCommissionInHierarchy(id))
+            );
+        }
+    }
+
 
     private void assessJournalPublication(DocumentPublicationIndex publicationIndex,
                                           Integer organisationUnitId, Commission presetCommission,
@@ -605,9 +689,9 @@ public class DocumentAssessmentClassificationServiceImpl
         var classifications =
             new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
 
-        yearsToConsider.forEach(year -> {
-            yearHandler.accept(year, classifications, commission);
-        });
+        yearsToConsider.forEach(year ->
+            yearHandler.accept(year, classifications, commission)
+        );
 
         if (!classifications.isEmpty()) {
             var bestClassification =

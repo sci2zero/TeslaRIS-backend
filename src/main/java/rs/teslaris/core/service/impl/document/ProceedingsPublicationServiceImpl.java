@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import rs.teslaris.core.dto.document.ProceedingsPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
@@ -60,6 +62,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     private final JournalPublicationRepository journalPublicationRepository;
 
+    private final JournalIndexRepository journalIndexRepository;
+
 
     @Autowired
     public ProceedingsPublicationServiceImpl(MultilingualContentService multilingualContentService,
@@ -82,7 +86,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository,
                                              ConferenceService conferenceService,
-                                             JournalPublicationRepository journalPublicationRepository) {
+                                             JournalPublicationRepository journalPublicationRepository,
+                                             JournalIndexRepository journalIndexRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -94,6 +99,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
         this.conferenceService = conferenceService;
         this.journalPublicationRepository = journalPublicationRepository;
+        this.journalIndexRepository = journalIndexRepository;
     }
 
     @Override
@@ -226,6 +232,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Transactional(readOnly = true)
     public void indexProceedingsPublication(ProceedingsPublication publication,
                                             DocumentPublicationIndex index) {
+        var proceedingsIds = new ArrayList<>(List.of(publication.getProceedings().getId()));
+        if (Objects.nonNull(index.getProceedingsId()) &&
+            !proceedingsIds.contains(index.getProceedingsId())) {
+            proceedingsIds.add(index.getProceedingsId());
+        }
+
         indexCommonFields(publication, index);
 
         index.setEventId(publication.getProceedings().getEvent().getId());
@@ -250,6 +262,17 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
 
         documentPublicationIndexRepository.save(index);
+
+        proceedingsIds.forEach(proceedingsId -> {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                proceedingsId).ifPresent(proceedingsIndex -> {
+                    proceedingsIndex.setHasPublications(
+                        (documentPublicationIndexRepository.countByProceedingsId(proceedingsId) > 0)
+                    );
+                    documentPublicationIndexRepository.save(proceedingsIndex);
+                }
+            );
+        });
     }
 
     @Override
@@ -270,6 +293,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             throw new NotFoundException("Journal publication with given ID does not exist.");
         }
 
+        var journalId = journalPublication.get().getJournal().getId();
         var proceedingsPublication = new ProceedingsPublication(journalPublication.get());
 
         proceedingsPublication.setProceedings(
@@ -284,6 +308,15 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         var saved = proceedingsPublicationRepository.save(proceedingsPublication);
         indexProceedingsPublication(saved, new DocumentPublicationIndex());
+
+        journalIndexRepository.findJournalIndexByDatabaseId(
+            journalId).ifPresent(journalIndex -> {
+                journalIndex.setHasPublications(
+                    (documentPublicationIndexRepository.countByJournalId(journalId) > 0)
+                );
+                journalIndexRepository.save(journalIndex);
+            }
+        );
 
         return saved.getId();
     }
@@ -334,13 +367,5 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         if (Objects.nonNull(publication.getProceedings())) {
             publication.setDocumentDate(publication.getProceedings().getDocumentDate());
         }
-
-        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            publicationDTO.getProceedingsId()).ifPresent(index -> {
-                index.setHasPublications((documentPublicationIndexRepository.countByProceedingsId(
-                    publicationDTO.getProceedingsId()) > 0));
-                documentPublicationIndexRepository.save(index);
-            }
-        );
     }
 }

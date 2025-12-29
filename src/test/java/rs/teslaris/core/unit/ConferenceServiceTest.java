@@ -99,10 +99,10 @@ public class ConferenceServiceTest {
 
     static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery() {
         return Stream.of(
-            Arguments.of(true, true, null, null),
-            Arguments.of(true, false, 1, null),
-            Arguments.of(false, true, null, 1),
-            Arguments.of(false, false, 1, 1)
+            Arguments.of(true, true, null, null, null),
+            Arguments.of(true, false, 1, null, null),
+            Arguments.of(false, true, null, 1, true),
+            Arguments.of(false, false, 1, 1, false)
         );
     }
 
@@ -307,7 +307,8 @@ public class ConferenceServiceTest {
     public void shouldFindConferenceWhenSearchingWithSimpleQuery(boolean returnOnlyNonSerialEvents,
                                                                  boolean returnOnlySerialEvents,
                                                                  Integer commissionInstitutionId,
-                                                                 Integer commissionId) {
+                                                                 Integer commissionId,
+                                                                 Boolean emptyEventsOnly) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -318,7 +319,7 @@ public class ConferenceServiceTest {
         // When
         var result =
             conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId, commissionId);
+                returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

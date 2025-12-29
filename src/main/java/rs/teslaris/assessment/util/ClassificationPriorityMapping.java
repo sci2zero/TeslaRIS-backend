@@ -23,6 +23,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
@@ -265,6 +266,11 @@ public class ClassificationPriorityMapping {
         return document.getNumberOfPages() >= minimumPageCount;
     }
 
+    @Nullable
+    public static String getAssessmentCodeForThesisType(ThesisType thesisType) {
+        return assessmentConfig.defendedThesesMapping().getOrDefault(thesisType, null);
+    }
+
     private record AssessmentConfig(
         @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
@@ -273,7 +279,8 @@ public class ClassificationPriorityMapping {
         @JsonProperty("sciList") List<String> sciList,
         @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities,
         @JsonProperty("typeToSupportedClassifications") Map<String, List<String>> typeToSupportedClassifications,
-        @JsonProperty("minimumPageRequirements") Map<String, Integer> minimumPageRequirements
+        @JsonProperty("minimumPageRequirements") Map<String, Integer> minimumPageRequirements,
+        @JsonProperty("defendedThesesMapping") Map<ThesisType, String> defendedThesesMapping
     ) {
     }
 }

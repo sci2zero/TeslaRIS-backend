@@ -80,6 +80,7 @@ public class ConferenceController {
         @RequestParam(value = "forMyInstitution", defaultValue = "false") Boolean forMyInstitution,
         @RequestParam(value = "commissionId", required = false) Integer commissionId,
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
+        @RequestParam(value = "emptyEventsOnly", defaultValue = "false") Boolean emptyEventsOnly,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
@@ -89,7 +90,7 @@ public class ConferenceController {
                 return conferenceService.searchConferences(tokens, pageable,
                     returnOnlyNonSerialEvents,
                     returnOnlySerialEvents, null,
-                    unclassified ? commissionId : null);
+                    unclassified ? commissionId : null, emptyEventsOnly);
             } else if (tokenUtil.extractUserRoleFromToken(bearerToken)
                 .equals(UserRole.COMMISSION.name())) {
                 var userId = tokenUtil.extractUserIdFromToken(bearerToken);
@@ -98,12 +99,12 @@ public class ConferenceController {
                     returnOnlyNonSerialEvents,
                     returnOnlySerialEvents,
                     forMyInstitution ? userService.getUserOrganisationUnitId(userId) : null,
-                    unclassified ? userService.getUserCommissionId(userId) : null);
+                    unclassified ? userService.getUserCommissionId(userId) : null, false);
             }
         }
 
         return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, null, null);
+            returnOnlySerialEvents, null, null, false);
     }
 
     @GetMapping("/import-search")

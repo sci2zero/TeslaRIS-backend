@@ -117,5 +117,9 @@
     "COMMENT": 2,
     "REGULAR_ABSTRACT_ARTICLE": 2,
     "INVITED_ABSTRACT_ARTICLE": 2
+  },
+  "defendedThesesMapping": {
+    "PHD": "M70",
+    "PHD_ART_PROJECT": "M70"
   }
 }

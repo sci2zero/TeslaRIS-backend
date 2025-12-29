@@ -56,6 +56,7 @@ import rs.teslaris.core.model.oaipmh.publication.PublishedIn;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
@@ -672,19 +673,22 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return openairePublication;
     }
 
-    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
+    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers,
+                               List<String> supportedLanguages) {
         var dcPublication = new DC();
 
-        setDCCommonFields(exportDocument, dcPublication, supportLegacyIdentifiers);
+        setDCCommonFields(exportDocument, dcPublication, supportLegacyIdentifiers,
+            supportedLanguages);
 
         return dcPublication;
     }
 
     public static ETDMSThesis toETDMSModel(ExportDocument exportDocument,
-                                           boolean supportLegacyIdentifiers) {
+                                           boolean supportLegacyIdentifiers,
+                                           List<String> supportedLanguages) {
         var thesisType = new ThesisType();
 
-        setDCCommonFields(exportDocument, thesisType, supportLegacyIdentifiers);
+        setDCCommonFields(exportDocument, thesisType, supportLegacyIdentifiers, supportedLanguages);
 
         if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
             var degree = new Degree();
@@ -715,7 +719,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
     }
 
     public static Marc21 toMARC21Model(ExportDocument exportDocument,
-                                       boolean supportLegacyIdentifiers) {
+                                       boolean supportLegacyIdentifiers,
+                                       List<String> supportedLanguages) {
         Marc21 marc21 = new Marc21();
         marc21.setLeader("ca a2 n");
 
@@ -734,7 +739,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 .add(createDataField("024", "7", " ", "a", exportDocument.getDoi()));
         }
 
-        clientLanguages.forEach(lang ->
+        CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang ->
             marc21.getDataFields().add(createDataField("856", "4", "1", "u",
                 baseFrontendUrl + lang + "/scientific-results/thesis/" + exportDocument.getId()))
         );
@@ -827,7 +832,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return dataField;
     }
 
-    public static Dim toDIMModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
+    public static Dim toDIMModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers,
+                                 List<String> supportedLanguages) {
         var dimPublication = new Dim();
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
@@ -1059,7 +1065,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 });
         }
 
-        clientLanguages.forEach(lang ->
+        CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang ->
             dimPublication.getFields()
                 .add(new DimField("dc", "identifier", "uri", lang, null, null,
                     baseFrontendUrl + lang + "/scientific-results/" +
@@ -1142,7 +1148,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
     }
 
     private static void setDCCommonFields(ExportDocument exportDocument, DC dcPublication,
-                                          boolean supportLegacyIdentifiers) {
+                                          boolean supportLegacyIdentifiers,
+                                          List<String> supportedLanguages) {
         if (exportDocument.getType().equals(ExportPublicationType.THESIS)) {
             if (Objects.nonNull(exportDocument.getThesisDefenceDate())) {
                 dcPublication.getDate()
@@ -1193,10 +1200,11 @@ public class ExportDocumentConverter extends ExportConverterBase {
         String scheme = getConcreteTypeIfRelevant(exportDocument);
         dcPublication.getType().add(new DCType(exportDocument.getType().name(), null, scheme));
 
-        clientLanguages.forEach(lang -> dcPublication.getIdentifier().add(
-            baseFrontendUrl + lang + "/scientific-results/" +
-                getConcreteEntityPath(exportDocument.getType()) + "/" +
-                exportDocument.getDatabaseId()));
+        CollectionOperations.getIntersection(clientLanguages, supportedLanguages)
+            .forEach(lang -> dcPublication.getIdentifier().add(
+                baseFrontendUrl + lang + "/scientific-results/" +
+                    getConcreteEntityPath(exportDocument.getType()) + "/" +
+                    exportDocument.getDatabaseId()));
 
         if (StringUtil.valueExists(exportDocument.getDoi())) {
             dcPublication.getIdentifier().add("doi:" + exportDocument.getDoi());

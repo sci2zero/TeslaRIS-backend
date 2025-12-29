@@ -208,7 +208,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         var simpleSearchQuery =
-            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes, null);
+            buildSimpleSearchQuery(tokens, null, null, null,
+                null, allowedTypes, null,
+                null, null);
 
         var contributionFilter = TermQuery.of(t -> t
             .field(getContributionField(contributionType))
@@ -285,7 +287,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         }
 
         var simpleSearchQuery =
-            buildSimpleSearchQuery(tokens, null, null, null, null, allowedTypes, notArchivedOnly);
+            buildSimpleSearchQuery(tokens, null, null, null,
+                null, allowedTypes, notArchivedOnly,
+                null, null);
 
         var outputConfiguration =
             organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
@@ -861,7 +865,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 null,
                 null,
                 true,
-                List.of(), false
+                List.of(), false,
+                null, null
             );
 
             pageResult.getContent().forEach(documentIndex ->
@@ -1224,18 +1229,22 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      Boolean authorReprint,
                                                                      Boolean unmanaged,
                                                                      List<DocumentPublicationType> allowedTypes,
-                                                                     Boolean notArchivedOnly) {
+                                                                     Boolean notArchivedOnly,
+                                                                     Boolean showProceedings,
+                                                                     Boolean emptyProceedingsOnly) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, institutionId, commissionId, authorReprint,
-                    unmanaged, allowedTypes, notArchivedOnly),
+                    unmanaged, allowedTypes, notArchivedOnly,
+                    showProceedings, emptyProceedingsOnly),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
 
         return searchService.runQuery(
             buildAdvancedSearchQuery(tokens, institutionId, commissionId, authorReprint,
-                unmanaged, allowedTypes, notArchivedOnly), pageable,
+                unmanaged, allowedTypes, notArchivedOnly,
+                showProceedings, emptyProceedingsOnly), pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -1726,7 +1735,9 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                          Boolean authorReprint,
                                          Boolean unmanaged,
                                          List<DocumentPublicationType> allowedTypes,
-                                         Boolean notArchivedOnly) {
+                                         Boolean notArchivedOnly,
+                                         Boolean showProceedings,
+                                         Boolean emptyProceedingsOnly) {
         String minShouldMatch;
         if (tokens.size() <= 2) {
             minShouldMatch = "1"; // Allow partial match for very short queries
@@ -1738,8 +1749,20 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
                 allowedTypes, notArchivedOnly));
             b.must(buildSimpleTokenQuery(tokens, minShouldMatch));
-            b.mustNot(sb -> sb.match(
-                m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
+
+            if (Objects.isNull(showProceedings) || !showProceedings) {
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
+            } else {
+                b.must(sb -> sb.match(
+                    m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
+
+                if (Objects.nonNull(emptyProceedingsOnly) && emptyProceedingsOnly) {
+                    b.must(sb -> sb.match(
+                        m -> m.field("has_publications").query(false)));
+                }
+            }
+
             return b;
         })))._toQuery();
     }
@@ -1750,13 +1773,26 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                           Boolean authorReprint,
                                           Boolean unmanaged,
                                           List<DocumentPublicationType> allowedTypes,
-                                          Boolean notArchivedOnly) {
+                                          Boolean notArchivedOnly,
+                                          Boolean showProceedings,
+                                          Boolean emptyProceedingsOnly) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
                 allowedTypes, notArchivedOnly));
             b.must(expressionTransformer.parseAdvancedQuery(tokens));
-            b.mustNot(sb -> sb.match(
-                m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
+
+            if (Objects.isNull(showProceedings) || !showProceedings) {
+                b.mustNot(sb -> sb.match(
+                    m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
+            } else {
+                b.must(sb -> sb.match(
+                    m -> m.field("type").query(DocumentPublicationType.PROCEEDINGS.name())));
+
+                if (Objects.nonNull(emptyProceedingsOnly) && emptyProceedingsOnly) {
+                    b.must(sb -> sb.match(
+                        m -> m.field("has_publications").query(false)));
+                }
+            }
 
             return b;
         })))._toQuery();

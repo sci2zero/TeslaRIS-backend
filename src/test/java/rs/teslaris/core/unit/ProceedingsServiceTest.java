@@ -36,6 +36,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Conference;
@@ -110,6 +111,9 @@ public class ProceedingsServiceTest {
     @Mock
     private IndexBulkUpdateService indexBulkUpdateService;
 
+    @Mock
+    private EventIndexRepository eventIndexRepository;
+
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
 
@@ -168,7 +172,9 @@ public class ProceedingsServiceTest {
         proceedingsDTO.setLanguageIds(new ArrayList<>());
         var document = new Proceedings();
         document.setDocumentDate("MOCK DATE");
-        document.setEvent(new Conference());
+        document.setEvent(new Conference() {{
+            setId(1);
+        }});
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
@@ -199,9 +205,15 @@ public class ProceedingsServiceTest {
         proceedingsDTO.setDocumentDate("2025");
         var proceedingsToUpdate = new Proceedings();
         proceedingsToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
+        proceedingsToUpdate.setEvent(new Conference() {{
+            setId(1);
+        }});
 
         when(proceedingsJPAService.findOne(proceedingsId)).thenReturn(proceedingsToUpdate);
         when(proceedingsJPAService.save(any())).thenReturn(proceedingsToUpdate);
+        when(eventService.findOne(any())).thenReturn(new Conference() {{
+            setId(2);
+        }});
 
         var authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
@@ -255,8 +267,17 @@ public class ProceedingsServiceTest {
     public void shouldReindexProceedings() {
         // Given
         var proceedings1 = new Proceedings();
+        proceedings1.setEvent(new Conference() {{
+            setId(1);
+        }});
         var proceedings2 = new Proceedings();
+        proceedings2.setEvent(new Conference() {{
+            setId(2);
+        }});
         var proceedings3 = new Proceedings();
+        proceedings3.setEvent(new Conference() {{
+            setId(1);
+        }});
         var proceedings = Arrays.asList(proceedings1, proceedings2, proceedings3);
         var page1 =
             new PageImpl<>(proceedings.subList(0, 2), PageRequest.of(0, 10), proceedings.size());
