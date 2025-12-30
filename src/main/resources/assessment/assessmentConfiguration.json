@@ -109,7 +109,9 @@
     "INVITED_ABSTRACT_ARTICLE": ["ALL"],
     "SCIENTIFIC_CRITIC": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
     "POLEMICS": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
-    "COMMENT": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"]
+    "COMMENT": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
+    "PHD": ["M70"],
+    "PHD_ART_PROJECT": ["M70"]
   },
   "minimumPageRequirements": {
     "SCIENTIFIC_CRITIC": 2,

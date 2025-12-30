@@ -46,4 +46,24 @@ public interface ResearchAreaRepository extends JpaRepository<ResearchArea, Inte
                 "ra.processedName LIKE CONCAT('%', :searchExpression, '%')))")
     Page<ResearchArea> searchResearchAreas(String searchExpression, String languageTag,
                                            Pageable pageable);
+
+    @Query(
+        value = """
+            WITH RECURSIVE research_area_tree AS (
+                SELECT ra.id
+                FROM research_area ra
+                WHERE ra.id = :topLevelResearchAreaId
+            
+                UNION ALL
+            
+                SELECT child.id
+                FROM research_area child
+                JOIN research_area_tree parent
+                  ON child.super_research_area_id = parent.id
+            )
+            SELECT id FROM research_area_tree
+            """,
+        nativeQuery = true
+    )
+    Set<Integer> findAllIdsInHierarchy(Integer topLevelResearchAreaId);
 }

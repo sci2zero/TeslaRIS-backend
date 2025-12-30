@@ -37,6 +37,7 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.institution.Commission;
+import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.util.functional.Triple;
 
@@ -60,6 +61,9 @@ public class PersonAssessmentClassificationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ResearchAreaRepository researchAreaRepository;
 
     @Mock
     private AssessmentResearchAreaRepository assessmentResearchAreaRepository;

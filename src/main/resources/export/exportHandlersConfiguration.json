@@ -266,7 +266,7 @@
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
       "dateFormat": "dd.MM.yyyy.",
-      "supportedLanguages": ["SR"],
+      "supportedLanguages": ["EN"],
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -360,7 +360,7 @@
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
       "dateFormat": "dd.MM.yyyy.",
-      "supportedLanguages": ["SR"],
+      "supportedLanguages": ["EN"],
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -451,7 +451,7 @@
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
       "dateFormat": "dd.MM.yyyy.",
-      "supportedLanguages": ["SR"],
+      "supportedLanguages": ["EN"],
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",

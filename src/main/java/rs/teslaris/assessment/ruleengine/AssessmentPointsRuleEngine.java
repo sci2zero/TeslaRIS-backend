@@ -1,8 +1,43 @@
 package rs.teslaris.assessment.ruleengine;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
+import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.util.functional.Triple;
+
 public class AssessmentPointsRuleEngine {
 
-    public double serbianPointsRulebook2025(String researchArea, String classificationCode) {
+    private final Map<String, Triple<Set<Integer>, List<String>, String>>
+        areaCodeToAllowedAssessmentsMapping = new HashMap<>();
+
+
+    public AssessmentPointsRuleEngine(ResearchAreaRepository researchAreaRepository) {
+        ResearchAreasConfigurationLoader.getResearchAreaClassificationsMappings()
+            .forEach(mapping ->
+                areaCodeToAllowedAssessmentsMapping.put(mapping.a,
+                    new Triple<>(
+                        researchAreaRepository.findAllIdsInHierarchy(mapping.b.a), mapping.b.b,
+                        mapping.b.c
+                    ))
+            );
+    }
+
+    public double serbianPointsRulebook2025(String researchArea,
+                                            HashSet<Integer> researchSubAreaIds,
+                                            String classificationCode) {
+        if (areaCodeToAllowedAssessmentsMapping.containsKey(researchArea) &&
+            areaCodeToAllowedAssessmentsMapping.get(researchArea).a.containsAll(
+                researchSubAreaIds)) {
+            if (!areaCodeToAllowedAssessmentsMapping.get(researchArea).b.contains(
+                classificationCode)) {
+                classificationCode = areaCodeToAllowedAssessmentsMapping.get(researchArea).c;
+            }
+        }
+
         switch (classificationCode) {
             case "M21APlus":
                 return 20;

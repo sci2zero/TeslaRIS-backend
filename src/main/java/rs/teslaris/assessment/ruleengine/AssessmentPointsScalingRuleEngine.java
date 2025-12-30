@@ -48,12 +48,18 @@ public class AssessmentPointsScalingRuleEngine {
             return points;
         }
 
-        if (Objects.nonNull(publicationType) &&
+        if (classificationCode.startsWith("M21") && Objects.nonNull(publicationType) &&
             List.of("SCIENTIFIC_CRITIC", "POLEMICS", "COMMENT").contains(publicationType)) {
             reasoningProcess =
                 AssessmentRulesConfigurationLoader.getRuleDescription("scalingRules",
                     "notFullResults");
-            points = points * 0.25;
+
+            // If is part of medical science researcher's output,
+            // it had to be assessed m21a+, else it's looked at as M26
+            // hence 1 point and no scaling for that edge-case
+            if (points > 1) {
+                points = points * 0.25;
+            }
         }
 
         // Theoretical works (up to 3 authors, otherwise scale)

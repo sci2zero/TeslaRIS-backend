@@ -181,17 +181,23 @@ public class ClassificationPriorityMapping {
 
     private static Optional<String> getMappedCode(String baseCode,
                                                   JournalPublicationType type) {
+        if (baseCode.startsWith("M21")) {
+            return Optional.of(baseCode);
+        }
+
         Map<JournalPublicationType, String> mappingM26 = Map.of(
-            JournalPublicationType.SCIENTIFIC_CRITIC, "M26"
+            JournalPublicationType.SCIENTIFIC_CRITIC, "M26",
+            JournalPublicationType.POLEMICS, "M26"
         );
 
         Map<JournalPublicationType, String> mappingM27 = Map.of(
-            JournalPublicationType.SCIENTIFIC_CRITIC, "M27"
+            JournalPublicationType.SCIENTIFIC_CRITIC, "M27",
+            JournalPublicationType.POLEMICS, "M27"
         );
 
         return Optional.ofNullable(
-            baseCode.equals("M24") ? mappingM26.getOrDefault(type, baseCode) :
-                mappingM27.getOrDefault(type, baseCode)
+            baseCode.equals("M24") ? mappingM27.getOrDefault(type, baseCode) :
+                mappingM26.getOrDefault(type, baseCode)
         );
     }
 

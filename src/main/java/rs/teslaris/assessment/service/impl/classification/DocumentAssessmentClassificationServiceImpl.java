@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +37,7 @@ import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.DocumentAssessmentClassification;
 import rs.teslaris.assessment.model.classification.EntityAssessmentClassification;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
+import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.repository.classification.DocumentAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.EventAssessmentClassificationRepository;
@@ -73,9 +75,11 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
+import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -128,6 +132,10 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final PersonAssessmentClassificationService personAssessmentClassificationService;
 
+    private final AssessmentResearchAreaRepository assessmentResearchAreaRepository;
+
+    private final ResearchAreaRepository researchAreaRepository;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -146,7 +154,9 @@ public class DocumentAssessmentClassificationServiceImpl
         IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository,
         DocumentClassificationJPAServiceImpl documentClassificationJPAService,
         NotificationService notificationService,
-        PersonAssessmentClassificationService personAssessmentClassificationService) {
+        PersonAssessmentClassificationService personAssessmentClassificationService,
+        AssessmentResearchAreaRepository assessmentResearchAreaRepository,
+        ResearchAreaRepository researchAreaRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -165,6 +175,8 @@ public class DocumentAssessmentClassificationServiceImpl
         this.documentClassificationJPAService = documentClassificationJPAService;
         this.notificationService = notificationService;
         this.personAssessmentClassificationService = personAssessmentClassificationService;
+        this.assessmentResearchAreaRepository = assessmentResearchAreaRepository;
+        this.researchAreaRepository = researchAreaRepository;
     }
 
     @Override
@@ -363,6 +375,10 @@ public class DocumentAssessmentClassificationServiceImpl
 
             chunk.forEach(publicationIndex -> {
                 if (publicationIndex.getType().equals(DocumentPublicationType.THESIS.name())) {
+                    if (Objects.isNull(publicationIndex.getThesisDefenceDate())) {
+                        return;
+                    }
+
                     assessFunction.accept(publicationIndex,
                         publicationIndex.getThesisInstitutionId(), null, batchClassifications);
                 } else if (Objects.nonNull(presetCommission)) {
@@ -433,11 +449,11 @@ public class DocumentAssessmentClassificationServiceImpl
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
                 thesisIndex.getDatabaseId(), commission.getId(), false);
 
-
             handleClassification(
                 assessmentClassification, commission,
                 thesisIndex.getDatabaseId(), thesisIndex.getPublicationType(),
-                thesisIndex.getYear(), batchedClassifications
+                thesisIndex.getYear(), batchedClassifications,
+                false
             );
         });
     }
@@ -701,7 +717,8 @@ public class DocumentAssessmentClassificationServiceImpl
                 handleClassification(
                     documentClassification.a, commission,
                     documentId, documentPublicationType,
-                    classificationYear, batchedClassifications
+                    classificationYear, batchedClassifications,
+                    true
                 );
             });
         }
@@ -750,13 +767,15 @@ public class DocumentAssessmentClassificationServiceImpl
         response.setAssessmentReason(
             MultilingualContentConverter.getMultilingualContentDTO(classification.b));
 
-        var pointsRuleEngine = new AssessmentPointsRuleEngine();
+        var pointsRuleEngine = new AssessmentPointsRuleEngine(researchAreaRepository);
         var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
 
         applyIndicatorScalingRule(scalingRuleEngine, isExperimental, isTheoretical, isSimulation,
             publicationType);
 
-        var rawPoints = pointsRuleEngine.serbianPointsRulebook2025(researchArea, mappedCode);
+        var rawPoints =
+            pointsRuleEngine.serbianPointsRulebook2025(researchArea, new HashSet<>(),
+                mappedCode);
         response.setRawPoints(rawPoints);
         response.setRawPointsReason(getPointsReason(mappedCode, researchArea, rawPoints));
 
@@ -821,9 +840,12 @@ public class DocumentAssessmentClassificationServiceImpl
     private void handleClassification(AssessmentClassification classification,
                                       Commission commission, Integer documentId,
                                       String documentPublicationType, Integer classificationYear,
-                                      ArrayList<DocumentAssessmentClassification> batchedClassifications) {
-        var mappedCode = ClassificationPriorityMapping.getDocClassificationCodeBasedOnCode(
-            classification.getCode(), documentId);
+                                      ArrayList<DocumentAssessmentClassification> batchedClassifications,
+                                      boolean fetchDocumentCodeFromMapping) {
+        var mappedCode = fetchDocumentCodeFromMapping ?
+            ClassificationPriorityMapping.getDocClassificationCodeBasedOnCode(
+                classification.getCode(), documentId) : Optional.of(classification.getCode());
+
         if (mappedCode.isEmpty()) {
             return;
         }
@@ -834,8 +856,8 @@ public class DocumentAssessmentClassificationServiceImpl
             return;
         }
 
-        var documentClassification = assessmentClassificationService
-            .readAssessmentClassificationByCode(mappedCode.get());
+        var documentClassification = fetchDocumentCodeFromMapping ? assessmentClassificationService
+            .readAssessmentClassificationByCode(mappedCode.get()) : classification;
         saveDocumentClassification(documentClassification, commission, documentId,
             classificationYear, batchedClassifications);
     }
@@ -905,15 +927,19 @@ public class DocumentAssessmentClassificationServiceImpl
                             FieldValue.of("REVIEW_ARTICLE"),
                             FieldValue.of("RESEARCH_ARTICLE"),
                             FieldValue.of("COMMENT")
-                        ) :
-                        List.of(
+                        ) : (
+                        types.contains(DocumentPublicationType.THESIS.name()) ?
+                            List.of(
+                                FieldValue.of("PHD"),
+                                FieldValue.of("PHD_ART_PROJECT")
+                            ) : List.of(
                             FieldValue.of("REGULAR_FULL_ARTICLE"),
                             FieldValue.of("INVITED_FULL_ARTICLE"),
                             FieldValue.of("REGULAR_ABSTRACT_ARTICLE"),
                             FieldValue.of("INVITED_ABSTRACT_ARTICLE"),
                             FieldValue.of("SCIENTIFIC_CRITIC"),
                             FieldValue.of("POLEMICS")
-                        )
+                        ))
                     )
                 )
             ));

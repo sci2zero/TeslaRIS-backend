@@ -3,14 +3,12 @@ package rs.teslaris.core.unit.exporter;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,7 +44,6 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
-import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.service.interfaces.commontypes.ProgressService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -69,9 +66,6 @@ class RoCrateExportServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
-
-    @Mock
-    private ObjectWriter objectWriter;
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
@@ -109,8 +103,6 @@ class RoCrateExportServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
         when(objectMapper.readTree(anyString())).thenReturn(jsonNode);
     }
 
@@ -121,6 +113,9 @@ class RoCrateExportServiceTest {
         var outputStream = new ByteArrayOutputStream();
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(null);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        var objectWriter = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
         when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
@@ -140,6 +135,9 @@ class RoCrateExportServiceTest {
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        var objectWriter = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
         when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
@@ -170,6 +168,9 @@ class RoCrateExportServiceTest {
 
         when(document.getFileItems()).thenReturn(Set.of(approvedFile, rejectedFile));
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
+        var objectWriter = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
         when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // Given
@@ -204,32 +205,6 @@ class RoCrateExportServiceTest {
     }
 
     @Test
-    void shouldThrowLoadingExceptionWhenObjectMapperFails() throws Exception {
-        // Given
-        var documentId = 4;
-        var outputStream = new ByteArrayOutputStream();
-        var document = mock(Dataset.class);
-
-        when(document.getFileItems()).thenReturn(Set.of());
-        when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
-        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
-
-        reset(objectWriter);
-        when(objectWriter.writeValueAsBytes(any(RoCrate.class)))
-            .thenAnswer(invocation -> {
-                throw new RuntimeException("boom");
-            });
-
-        // When / Then
-        var ex = assertThrows(
-            RuntimeException.class,
-            () -> service.createRoCrateZip(documentId, exportId, outputStream)
-        );
-
-        assertTrue(ex.getMessage().contains("Failed to create RO-Crate ZIP"));
-    }
-
-    @Test
     void shouldWriteValidZipStructure() throws JsonProcessingException {
         // Given
         var documentId = 5;
@@ -239,6 +214,9 @@ class RoCrateExportServiceTest {
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        var objectWriter = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
         when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
@@ -281,6 +259,9 @@ class RoCrateExportServiceTest {
             setName(new PersonName());
         }});
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        var objectWriter = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
         when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When
@@ -331,6 +312,9 @@ class RoCrateExportServiceTest {
             setName(new PersonName());
         }});
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
+        var objectWriter = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
         when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
         // When

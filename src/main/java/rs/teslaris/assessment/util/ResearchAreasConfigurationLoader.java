@@ -16,6 +16,8 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.files.ConfigurationLoaderUtil;
+import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 
 @Component
 public class ResearchAreasConfigurationLoader {
@@ -119,14 +121,32 @@ public class ResearchAreasConfigurationLoader {
         return Optional.of(researchAreaResponse);
     }
 
+    public static List<Pair<String, Triple<Integer, List<String>, String>>> getResearchAreaClassificationsMappings() {
+        return researchAreaConfiguration.researchAreaClassificationsMappings.stream().map(
+            mapping ->
+                new Pair<>(mapping.code, new Triple<>(mapping.topLevelSubAreaId,
+                    mapping.allowedClassifications, mapping.fallback))).toList();
+    }
+
     private record ResearchAreaConfiguration(
-        @JsonProperty(value = "researchAreas", required = true) List<ResearchArea> researchAreas
+        @JsonProperty(value = "researchAreas", required = true) List<ResearchArea> researchAreas,
+
+        @JsonProperty(value = "researchAreaClassificationsMappings", required = true)
+        List<ResearchAreaClassificationsMapping> researchAreaClassificationsMappings
     ) {
     }
 
     private record ResearchArea(
         @JsonProperty(value = "name", required = true) Map<String, String> name,
         @JsonProperty(value = "code", required = true) String code
+    ) {
+    }
+
+    private record ResearchAreaClassificationsMapping(
+        @JsonProperty(value = "code", required = true) String code,
+        @JsonProperty(value = "topLevelSubAreaId", required = true) Integer topLevelSubAreaId,
+        @JsonProperty(value = "allowedClassifications", required = true) List<String> allowedClassifications,
+        @JsonProperty(value = "fallback", required = true) String fallback
     ) {
     }
 }

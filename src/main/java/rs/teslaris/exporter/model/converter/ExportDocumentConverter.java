@@ -949,19 +949,33 @@ public class ExportDocumentConverter extends ExportConverterBase {
         });
 
         if (Objects.nonNull(exportDocument.getJournal())) {
-            dimPublication.getFields().add(
-                new DimField("dc", "source", null,
-                    null, null, null,
-                    exportDocument.getJournal().getTitle().getFirst().getContent()
-                )
-            );
+            exportDocument.getJournal().getTitle().forEach(title ->
+                dimPublication.getFields().add(
+                    new DimField("dc", "source", null,
+                        title.getLanguageTag().toLowerCase(), null, null,
+                        title.getContent()
+                    )
+                ));
         } else if (Objects.nonNull(exportDocument.getEvent())) {
-            dimPublication.getFields().add(
-                new DimField("dc", "source", null,
-                    null, null, null,
-                    exportDocument.getEvent().getName().getFirst().getContent()
+            exportDocument.getEvent().getName().forEach(eventName ->
+                dimPublication.getFields().add(
+                    new DimField("dc", "source", "conference",
+                        eventName.getLanguageTag().toLowerCase(), null, null,
+                        eventName.getContent()
+                    )
                 )
             );
+
+            if (Objects.nonNull(exportDocument.getProceedings())) {
+                exportDocument.getProceedings().getTitle().forEach(title ->
+                    dimPublication.getFields().add(
+                        new DimField("dc", "source", null,
+                            title.getLanguageTag().toLowerCase(), null, null,
+                            title.getContent()
+                        )
+                    )
+                );
+            }
         }
 
         exportDocument.getLanguageTags().forEach(languageTag -> {

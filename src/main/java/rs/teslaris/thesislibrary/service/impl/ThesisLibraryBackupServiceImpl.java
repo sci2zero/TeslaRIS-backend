@@ -137,6 +137,9 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
         int chunkSize = 100;
         boolean hasNextPage = true;
 
+        var institutionIds =
+            organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
+
         BackupZipBuilder zipBuilder = null;
         try {
             zipBuilder = new BackupZipBuilder("thesis-backup");
@@ -144,7 +147,7 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             var processedThesisIds = new ArrayList<Integer>();
             while (hasNextPage) {
                 List<Thesis> chunk = thesisRepository
-                    .findThesesForBackup(from, to, types, institutionId, defended, putOnReview,
+                    .findThesesForBackup(from, to, types, institutionIds, defended, putOnReview,
                         PageRequest.of(pageNumber, chunkSize)).getContent();
 
                 for (var thesis : chunk) {

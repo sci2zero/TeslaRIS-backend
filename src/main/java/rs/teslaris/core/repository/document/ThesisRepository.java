@@ -86,13 +86,15 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
                                                                List<ThesisType> types,
                                                                List<Integer> institutionIds);
 
-    @Query("SELECT COUNT(DISTINCT t) FROM Thesis t JOIN t.fileItems fi " +
-        "WHERE fi.resourceType = 1 AND " +
-        "fi.accessRights != 2 AND " +
-        "t.thesisDefenceDate >= :startDate AND " +
-        "t.thesisDefenceDate <= :endDate AND " +
-        "t.thesisType IN :types AND " +
-        "t.organisationUnit.id IN :institutionIds")
+    @Query("SELECT COUNT(DISTINCT t) FROM Thesis t " +
+        "LEFT JOIN t.fileItems fi " +
+        "WHERE (fi IS NULL OR " +
+        "       (fi.resourceType = 1 AND " +
+        "        fi.accessRights != 2)) AND " +
+        "      t.thesisDefenceDate >= :startDate AND " +
+        "      t.thesisDefenceDate <= :endDate AND " +
+        "      t.thesisType IN :types AND " +
+        "      t.organisationUnit.id IN :institutionIds")
     Integer countClosedAccessDefendedThesesThesesInPeriod(LocalDate startDate,
                                                           LocalDate endDate,
                                                           List<ThesisType> types,
@@ -106,7 +108,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
         "LEFT JOIN FETCH t.preliminarySupplements " +
         "LEFT JOIN FETCH t.commissionReports " +
         "LEFT JOIN t.publicReviewStartDates d " +
-        "WHERE t.organisationUnit.id = :institutionId " +
+        "WHERE t.organisationUnit.id IN :institutionIds " +
         "AND t.thesisType in :types " +
         "AND (" +
         "(:defended IS NULL OR " +
@@ -122,7 +124,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
     Slice<Thesis> findThesesForBackup(LocalDate startDate,
                                       LocalDate endDate,
                                       List<ThesisType> types,
-                                      Integer institutionId,
+                                      List<Integer> institutionIds,
                                       Boolean defended,
                                       Boolean putOnReview,
                                       Pageable pageable);

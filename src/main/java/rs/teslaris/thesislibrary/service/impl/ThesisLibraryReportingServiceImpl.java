@@ -6,6 +6,7 @@ import com.google.common.cache.LoadingCache;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -76,7 +77,7 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
     }
 
     private List<ThesisReportCountsDTO> fetchThesisCounts(ThesisReportRequestDTO request) {
-        var facultyIds = new HashSet<Integer>();
+        var facultyIds = new LinkedHashSet<Integer>();
 
         request.topLevelInstitutionIds().forEach(institutionId -> {
             facultyIds.add(institutionId);

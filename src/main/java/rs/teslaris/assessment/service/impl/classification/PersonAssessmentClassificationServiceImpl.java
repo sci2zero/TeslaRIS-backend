@@ -52,6 +52,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -79,9 +80,6 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
-    private final DocumentAssessmentClassificationRepository
-        documentAssessmentClassificationRepository;
-
     private final DocumentIndicatorRepository documentIndicatorRepository;
 
     private final AssessmentResearchAreaRepository assessmentResearchAreaRepository;
@@ -98,6 +96,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
 
+    private final ResearchAreaRepository researchAreaRepository;
+
     private final int CHUNK_SIZE = 1000;
 
 
@@ -111,20 +111,18 @@ public class PersonAssessmentClassificationServiceImpl
         PersonAssessmentClassificationRepository personAssessmentClassificationRepository,
         SearchService<PersonIndex> searchService,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository,
         DocumentIndicatorRepository documentIndicatorRepository,
         AssessmentResearchAreaRepository assessmentResearchAreaRepository,
         AssessmentRulebookRepository assessmentRulebookRepository,
         PersonIndexRepository personIndexRepository, UserRepository userRepository,
         CitationService citationService, InvolvementRepository involvementRepository,
-        OrganisationUnitsRelationRepository organisationUnitsRelationRepository) {
+        OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
+        ResearchAreaRepository researchAreaRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.personAssessmentClassificationRepository = personAssessmentClassificationRepository;
         this.searchService = searchService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
-        this.documentAssessmentClassificationRepository =
-            documentAssessmentClassificationRepository;
         this.documentIndicatorRepository = documentIndicatorRepository;
         this.assessmentResearchAreaRepository = assessmentResearchAreaRepository;
         this.assessmentRulebookRepository = assessmentRulebookRepository;
@@ -133,6 +131,7 @@ public class PersonAssessmentClassificationServiceImpl
         this.citationService = citationService;
         this.involvementRepository = involvementRepository;
         this.organisationUnitsRelationRepository = organisationUnitsRelationRepository;
+        this.researchAreaRepository = researchAreaRepository;
     }
 
     @Override
@@ -170,7 +169,7 @@ public class PersonAssessmentClassificationServiceImpl
             .readAssessmentMeasuresForRulebook(Pageable.unpaged(), findDefaultRulebookId())
             .getContent();
 
-        var pointsRuleEngine = new AssessmentPointsRuleEngine();
+        var pointsRuleEngine = new AssessmentPointsRuleEngine(researchAreaRepository);
         var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
 
         var responses = new ArrayList<EnrichedResearcherAssessmentResponseDTO>();
@@ -251,7 +250,7 @@ public class PersonAssessmentClassificationServiceImpl
         var commissions = userRepository.findUserCommissionForOrganisationUnits(institutionIds);
 
         commissions.forEach(commission -> {
-            var pointsRuleEngine = new AssessmentPointsRuleEngine();
+            var pointsRuleEngine = new AssessmentPointsRuleEngine(researchAreaRepository);
             var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
 
             var assessmentResult = new EnrichedResearcherAssessmentResponseDTO();
@@ -301,32 +300,36 @@ public class PersonAssessmentClassificationServiceImpl
             .getContent();
     }
 
-    private List<Pair<Integer, String>> resolveCommissionResearchAreas(PersonIndex index) {
+    private List<Pair<Integer, AssessmentResearchArea>> resolveCommissionResearchAreas(
+        PersonIndex index) {
         var institutionIds = index.getEmploymentInstitutionsIdHierarchy();
         var commissions = userRepository.findUserCommissionForOrganisationUnits(institutionIds);
 
-        var commissionResearchArea = new ArrayList<Pair<Integer, String>>();
+        var commissionResearchArea = new ArrayList<Pair<Integer, AssessmentResearchArea>>();
         commissions.forEach(commission -> {
             var researchArea = getResearchArea(index.getDatabaseId(), commission);
-            researchArea.ifPresent(areaCode -> {
-                if (commission.getRecognisedResearchAreas().contains(areaCode)) {
-                    commissionResearchArea.add(new Pair<>(commission.getId(), areaCode));
+            researchArea.ifPresent(assessmentResearchArea -> {
+                if (commission.getRecognisedResearchAreas()
+                    .contains(assessmentResearchArea.getResearchAreaCode())) {
+                    commissionResearchArea.add(
+                        new Pair<>(commission.getId(), assessmentResearchArea));
                 }
             });
         });
+
         return commissionResearchArea;
     }
 
     private void processPublicationsInChunks(
         PersonIndex index,
-        List<Pair<Integer, String>> commissionResearchAreas,
+        List<Pair<Integer, AssessmentResearchArea>> commissionResearchAreas,
         List<AssessmentMeasure> assessmentMeasures
     ) {
         int pageNumber = 0;
         boolean hasNextPage = true;
 
         List<Integer> publicationIdsBatch = new ArrayList<>();
-        var pointsRuleEngine = new AssessmentPointsRuleEngine();
+        var pointsRuleEngine = new AssessmentPointsRuleEngine(researchAreaRepository);
         var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
 
         while (hasNextPage) {
@@ -362,7 +365,7 @@ public class PersonAssessmentClassificationServiceImpl
     private void updatePublicationAssessments(
         DocumentPublicationIndex publication,
         PersonIndex index,
-        List<Pair<Integer, String>> commissionResearchAreas,
+        List<Pair<Integer, AssessmentResearchArea>> commissionResearchAreas,
         List<AssessmentMeasure> assessmentMeasures,
         List<DocumentIndicator> indicators,
         AssessmentPointsRuleEngine pointsRuleEngine,
@@ -417,23 +420,24 @@ public class PersonAssessmentClassificationServiceImpl
         var researchArea = getResearchArea(personIndex.getDatabaseId(), commission);
 
         researchArea.ifPresent(
-            areaCode -> {
-                if (!commission.getRecognisedResearchAreas().contains(areaCode)) {
+            assessmentResearchArea -> {
+                if (!commission.getRecognisedResearchAreas()
+                    .contains(assessmentResearchArea.getResearchAreaCode())) {
                     return;
                 }
 
                 assessResearcherPublication(personIndex, commission, assessmentMeasures,
-                    pointsRuleEngine, scalingRuleEngine, areaCode, startYear, endYear,
+                    pointsRuleEngine, scalingRuleEngine,
+                    assessmentResearchArea, startYear, endYear,
                     assessmentResult, subOUsForTopLevelInstitution);
             });
     }
 
-    private Optional<String> getResearchArea(Integer personId, Commission commission) {
+    private Optional<AssessmentResearchArea> getResearchArea(Integer personId,
+                                                             Commission commission) {
         return assessmentResearchAreaRepository
             .findForPersonIdAndCommissionId(personId, commission.getId())
-            .map(AssessmentResearchArea::getResearchAreaCode)
-            .or(() -> assessmentResearchAreaRepository.findForPersonId(personId)
-                .map(AssessmentResearchArea::getResearchAreaCode));
+            .or(() -> assessmentResearchAreaRepository.findForPersonId(personId));
     }
 
     private void assessResearcherPublication(
@@ -442,7 +446,8 @@ public class PersonAssessmentClassificationServiceImpl
         List<AssessmentMeasure> measures,
         AssessmentPointsRuleEngine pointsRuleEngine,
         AssessmentPointsScalingRuleEngine scalingRuleEngine,
-        String researchAreaCode, int startYear, int endYear,
+        AssessmentResearchArea assessmentResearchArea,
+        int startYear, int endYear,
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
         List<Integer> subOUsForTopLevelInstitution) {
 
@@ -469,7 +474,7 @@ public class PersonAssessmentClassificationServiceImpl
 
             publications.forEach(publication ->
                 processPublication(publication, commission, measures, pointsRuleEngine,
-                    scalingRuleEngine, researchAreaCode, personIndex, assessmentResult,
+                    scalingRuleEngine, assessmentResearchArea, personIndex, assessmentResult,
                     subOUsForTopLevelInstitution,
                     indicatorsByDocumentId.getOrDefault(publication.getDatabaseId(),
                         Collections.emptyList()), isUserLoggedIn));
@@ -493,7 +498,7 @@ public class PersonAssessmentClassificationServiceImpl
         List<AssessmentMeasure> measures,
         AssessmentPointsRuleEngine pointsRuleEngine,
         AssessmentPointsScalingRuleEngine scalingRuleEngine,
-        String researchAreaCode, PersonIndex personIndex,
+        AssessmentResearchArea researchArea, PersonIndex personIndex,
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
         List<Integer> subOUsForTopLevelInstitution,
         List<DocumentIndicator> indicators,
@@ -514,7 +519,7 @@ public class PersonAssessmentClassificationServiceImpl
         var applicableMeasure = applicableMeasureOpt.get();
 
         var points = getPointsForPublication(publication, pointsRuleEngine, scalingRuleEngine,
-            researchAreaCode, assessment.get().b, applicableMeasure, indicators);
+            researchArea, assessment.get().b, applicableMeasure, indicators);
 
         log.info("{} more points for {}", points, personIndex.getName());
 
@@ -536,25 +541,27 @@ public class PersonAssessmentClassificationServiceImpl
     private double getPointsForPublication(DocumentPublicationIndex publication,
                                            AssessmentPointsRuleEngine pointsRuleEngine,
                                            AssessmentPointsScalingRuleEngine scalingRuleEngine,
-                                           String researchAreaCode, String classificationCode,
+                                           AssessmentResearchArea researchArea,
+                                           String classificationCode,
                                            AssessmentMeasure applicableMeasure,
                                            List<DocumentIndicator> indicators) {
         scalingRuleEngine.setCurrentEntityIndicators(indicators);
         scalingRuleEngine.setPublicationType(publication.getPublicationType());
         return calculatePoints(applicableMeasure, pointsRuleEngine, scalingRuleEngine,
-            researchAreaCode, classificationCode, publication);
+            researchArea, classificationCode, publication);
     }
 
     private double calculatePoints(
         AssessmentMeasure measure,
         AssessmentPointsRuleEngine pointsRuleEngine,
         AssessmentPointsScalingRuleEngine scalingRuleEngine,
-        String researchAreaCode,
+        AssessmentResearchArea researchArea,
         String classificationCode,
         DocumentPublicationIndex publication) {
 
         double basePoints = invokeRule(AssessmentPointsRuleEngine.class, measure.getPointRule(),
-            pointsRuleEngine, researchAreaCode, classificationCode);
+            pointsRuleEngine, researchArea.getResearchAreaCode(),
+            researchArea.getResearchSubAreaIds(), classificationCode);
 
         return invokeRule(AssessmentPointsScalingRuleEngine.class, measure.getScalingRule(),
             scalingRuleEngine, publication.getAuthorIds().size(), classificationCode, basePoints);
