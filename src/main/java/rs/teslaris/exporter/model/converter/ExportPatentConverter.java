@@ -20,7 +20,8 @@ import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 public class ExportPatentConverter extends ExportConverterBase {
 
     public static Patent toOpenaireModel(ExportDocument exportDocument,
-                                         boolean supportLegacyIdentifiers) {
+                                         boolean supportLegacyIdentifiers,
+                                         List<String> supportedLanguages) {
         var openairePatent = new Patent();
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
@@ -60,7 +61,7 @@ public class ExportPatentConverter extends ExportConverterBase {
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
                         ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
-                            supportLegacyIdentifiers));
+                            supportLegacyIdentifiers, supportedLanguages));
                 }
 
                 openairePatent.getInventor().add(personAttributes);

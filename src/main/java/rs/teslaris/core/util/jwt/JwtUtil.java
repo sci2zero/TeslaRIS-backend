@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
@@ -189,6 +190,10 @@ public class JwtUtil {
     }
 
     public Boolean validateToken(String token, UserDetails userDetails, String cookieValue) {
+        if (Objects.isNull(token) || Objects.isNull(userDetails) || Objects.isNull(cookieValue)) {
+            return false;
+        }
+
         final String username = extractUsernameFromToken(token);
         String jwtSecurityHash = this.generateJWTSecurityFingerprintHash(cookieValue);
         String jwtSecurity = this.extractJWTSecurity(token);

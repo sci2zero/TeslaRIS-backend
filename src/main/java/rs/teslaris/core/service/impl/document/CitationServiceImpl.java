@@ -114,7 +114,7 @@ public class CitationServiceImpl implements CitationService {
 
                 if (StringUtil.valueExists(journalPublication.getStartPage()) &&
                     StringUtil.valueExists(journalPublication.getEndPage())) {
-                    itemBuilder.page(journalPublication.getStartPage(),
+                    itemBuilder.page(journalPublication.getStartPage() + "-" +
                         journalPublication.getEndPage());
                 }
             }

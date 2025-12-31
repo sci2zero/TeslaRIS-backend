@@ -520,7 +520,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
     }
 
     public static Publication toOpenaireModel(ExportDocument exportDocument,
-                                              boolean supportLegacyIdentifiers) {
+                                              boolean supportLegacyIdentifiers,
+                                              List<String> supportedLanguages) {
         var openairePublication = new Publication();
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
@@ -585,7 +586,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         if (Objects.nonNull(exportDocument.getJournal())) {
             openairePublication.setPublishedIn(new PublishedIn(
                 ExportDocumentConverter.toOpenaireModel(exportDocument.getJournal(),
-                    supportLegacyIdentifiers)));
+                    supportLegacyIdentifiers, supportedLanguages)));
         }
 
         if (Objects.nonNull(exportDocument.getProceedings())) {
@@ -597,7 +598,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             );
             partOf.setPublication(
                 ExportDocumentConverter.toOpenaireModel(exportDocument.getProceedings(),
-                    supportLegacyIdentifiers));
+                    supportLegacyIdentifiers, supportedLanguages));
             openairePublication.setPartOf(partOf);
         } else if (Objects.nonNull(exportDocument.getMonograph())) {
             var partOf = new PartOf();
@@ -608,7 +609,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             );
             partOf.setPublication(
                 ExportDocumentConverter.toOpenaireModel(exportDocument.getMonograph(),
-                    supportLegacyIdentifiers));
+                    supportLegacyIdentifiers, supportedLanguages));
             openairePublication.setPartOf(partOf);
         }
 
@@ -638,7 +639,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
                         ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
-                            supportLegacyIdentifiers));
+                            supportLegacyIdentifiers, supportedLanguages));
                 }
 
                 openairePublication.getAuthors().add(personAttributes);
@@ -653,7 +654,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
                         ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
-                            supportLegacyIdentifiers));
+                            supportLegacyIdentifiers, supportedLanguages));
                 }
 
                 openairePublication.getEditors().add(personAttributes);

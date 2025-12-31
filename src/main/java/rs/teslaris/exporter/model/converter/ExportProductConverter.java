@@ -20,7 +20,8 @@ import rs.teslaris.exporter.model.common.ExportPublicationType;
 public class ExportProductConverter extends ExportConverterBase {
 
     public static Product toOpenaireModel(
-        ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
+        ExportDocument exportDocument, boolean supportLegacyIdentifiers,
+        List<String> supportedLanguages) {
         var openaireProduct = new Product();
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
@@ -66,7 +67,7 @@ public class ExportProductConverter extends ExportConverterBase {
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
                         ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
-                            supportLegacyIdentifiers));
+                            supportLegacyIdentifiers, supportedLanguages));
                 }
 
                 openaireProduct.getCreators().add(personAttributes);

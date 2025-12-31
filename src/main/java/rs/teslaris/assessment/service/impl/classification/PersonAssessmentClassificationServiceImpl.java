@@ -31,7 +31,6 @@ import rs.teslaris.assessment.model.AssessmentResearchArea;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
 import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
-import rs.teslaris.assessment.repository.classification.DocumentAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.PersonAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;

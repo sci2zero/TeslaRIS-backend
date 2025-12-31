@@ -116,7 +116,8 @@ public class ExportPersonConverter extends ExportConverterBase {
     }
 
     public static rs.teslaris.core.model.oaipmh.person.Person toOpenaireModel(
-        ExportPerson exportPerson, boolean supportLegacyIdentifiers) {
+        ExportPerson exportPerson, boolean supportLegacyIdentifiers,
+        List<String> supportedLanguages) {
         var openairePerson = new rs.teslaris.core.model.oaipmh.person.Person();
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportPerson.getOldIds()) &&
@@ -148,7 +149,8 @@ public class ExportPersonConverter extends ExportConverterBase {
             exportPerson.getEmployments().forEach(employment ->
                 openairePerson.getAffiliation().getOrgUnits().add(
                     ExportOrganisationUnitConverter.toOpenaireModel(
-                        employment.getEmploymentInstitution(), supportLegacyIdentifiers)));
+                        employment.getEmploymentInstitution(), supportLegacyIdentifiers,
+                        supportedLanguages)));
         }
 
         return openairePerson;

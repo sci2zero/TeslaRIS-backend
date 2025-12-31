@@ -107,7 +107,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
     }
 
     public static OrgUnit toOpenaireModel(ExportOrganisationUnit organisationUnit,
-                                          boolean supportLegacyIdentifiers) {
+                                          boolean supportLegacyIdentifiers,
+                                          List<String> supportedLanguages) {
         var orgUnit = new OrgUnit();
 
         if (supportLegacyIdentifiers && Objects.nonNull(organisationUnit.getOldIds()) &&
@@ -124,7 +125,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         if (Objects.nonNull(organisationUnit.getSuperOU())) {
             orgUnit.setPartOf(new PartOf(
                 ExportOrganisationUnitConverter.toOpenaireModel(organisationUnit.getSuperOU(),
-                    supportLegacyIdentifiers)));
+                    supportLegacyIdentifiers, supportedLanguages)));
         }
 
         orgUnit.setType(new ArrayList<>(List.of(
