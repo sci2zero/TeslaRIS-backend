@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
@@ -77,6 +78,8 @@ public class ReindexServiceImpl implements ReindexService {
     private final MonographPublicationService monographPublicationService;
 
     private final ThesisService thesisService;
+
+    private final MaterialProductService materialProductService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -159,6 +162,8 @@ public class ReindexServiceImpl implements ReindexService {
         safeReindex(monographPublicationService::reindexMonographPublications,
             "Error reindexing monograph publications");
         safeReindex(thesisService::reindexTheses, "Error reindexing theses");
+        safeReindex(materialProductService::reindexMaterialProducts,
+            "Error reindexing material products");
 
         applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());
 
@@ -188,6 +193,7 @@ public class ReindexServiceImpl implements ReindexService {
             case DATASET -> datasetService.reindexDatasets();
             case MONOGRAPH_PUBLICATION ->
                 monographPublicationService.reindexMonographPublications();
+            case MATERIAL_PRODUCT -> materialProductService.reindexMaterialProducts();
             case THESIS -> {
                 thesisService.reindexTheses();
                 applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());

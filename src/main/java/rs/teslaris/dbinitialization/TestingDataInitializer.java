@@ -55,6 +55,8 @@ import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.MaterialProduct;
+import rs.teslaris.core.model.document.MaterialProductType;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.MonographPublicationType;
@@ -95,6 +97,7 @@ import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
@@ -182,6 +185,8 @@ public class TestingDataInitializer {
     private final PublicReviewPageContentRepository publicReviewPageContentRepository;
 
     private final ScheduledTaskMetadataRepository scheduledTaskMetadataRepository;
+
+    private final MaterialProductRepository materialProductRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1113,5 +1118,15 @@ public class TestingDataInitializer {
 
         thesis7.getContributors().add(thesisContribution5);
         thesisRepository.save(thesis7);
+
+        var materialProduct = new MaterialProduct();
+        materialProduct.setTitle(Set.of(new MultiLingualContent(serbianTag,
+            "Most na adi", 1)));
+        materialProduct.setInternalNumber("12398745");
+        materialProduct.setApproveStatus(ApproveStatus.APPROVED);
+        materialProduct.setDocumentDate("2011-7-2");
+        materialProduct.setNumberProduced(1L);
+        materialProduct.setMaterialProductType(MaterialProductType.INFRASTRUCTURE_OBJECT);
+        materialProductRepository.save(materialProduct);
     }
 }

@@ -47,6 +47,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConf
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -275,22 +276,13 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public void reindexMonographs() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Monograph> chunk =
-                monographJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((monograph) -> indexMonograph(monograph, new DocumentPublicationIndex()));
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            monographJPAService::findAll,
+            monograph ->
+                indexMonograph(monograph, new DocumentPublicationIndex())
+        );
     }
 
     private void setMonographRelatedFields(Monograph monograph,

@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +44,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConf
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ProceedingsReferenceConstraintViolationException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -313,23 +313,13 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     public void reindexProceedings() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Proceedings> chunk =
-                proceedingsJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach(
-                (proceedings) -> indexProceedings(proceedings, new DocumentPublicationIndex()));
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            proceedingsJPAService::findAll,
+            proceedings ->
+                indexProceedings(proceedings, new DocumentPublicationIndex())
+        );
     }
 
     private void setProceedingsRelatedFields(Proceedings proceedings,

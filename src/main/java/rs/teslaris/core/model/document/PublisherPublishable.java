@@ -1,7 +1,7 @@
 package rs.teslaris.core.model.document;
 
 public sealed interface PublisherPublishable
-    permits Proceedings, Dataset, Software, Patent, Thesis, Monograph {
+    permits Dataset, MaterialProduct, Monograph, Patent, Proceedings, Software, Thesis {
 
     Publisher getPublisher();
 

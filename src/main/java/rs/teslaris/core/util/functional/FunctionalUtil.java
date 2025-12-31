@@ -9,9 +9,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import rs.teslaris.core.model.commontypes.BaseEntity;
 
+@Slf4j
 public class FunctionalUtil {
 
     public static <T> void forEachWithCounter(Iterable<T> source, BiConsumer<Integer, T> consumer) {
@@ -57,5 +62,42 @@ public class FunctionalUtil {
             }
             return batch;
         });
+    }
+
+    public static <T extends BaseEntity> void processAllPages(
+        int chunkSize,
+        Sort sort,
+        Function<PageRequest, Page<T>> pageSupplier,
+        Consumer<T> itemProcessor
+    ) {
+        int pageNumber = 0;
+
+        while (true) {
+            Page<T> page = pageSupplier.apply(
+                PageRequest.of(pageNumber, chunkSize, sort)
+            );
+
+            try {
+                page.getContent().forEach(entity -> {
+                    try {
+                        itemProcessor.accept(entity);
+                    } catch (Exception e) {
+                        log.warn("Error processing {} ID {}: {}",
+                            entity.getClass().getSimpleName(),
+                            entity.getId(), e.getMessage(), e
+                        );
+                    }
+                });
+            } catch (Exception e) {
+                log.warn("Skipping entire page {} due to error: {}",
+                    pageNumber, e.getMessage());
+            }
+
+            if (!page.hasNext()) {
+                break;
+            }
+
+            pageNumber++;
+        }
     }
 }

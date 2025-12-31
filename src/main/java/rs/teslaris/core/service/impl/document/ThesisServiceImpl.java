@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -90,6 +89,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -324,28 +324,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void reindexTheses() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Thesis> chunk =
-                thesisJPAService.findAll(PageRequest.of(pageNumber, chunkSize,
-                    Sort.by(Sort.Direction.ASC, "id"))).getContent();
-
-            chunk.forEach(thesis -> {
-                try {
-                    indexThesis(thesis, new DocumentPublicationIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping THESIS {} due to indexing error: {}", thesis.getId(),
-                        e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            thesisJPAService::findAll,
+            thesis -> indexThesis(thesis, new DocumentPublicationIndex())
+        );
     }
 
     @Override
