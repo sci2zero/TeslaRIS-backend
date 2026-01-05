@@ -18,6 +18,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
@@ -39,6 +40,7 @@ import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.model.rocrate.RoCrateDataset;
 import rs.teslaris.core.model.rocrate.RoCrateEvent;
 import rs.teslaris.core.model.rocrate.RoCrateJournalPublication;
+import rs.teslaris.core.model.rocrate.RoCrateMaterialProduct;
 import rs.teslaris.core.model.rocrate.RoCrateMonograph;
 import rs.teslaris.core.model.rocrate.RoCrateMonographPublication;
 import rs.teslaris.core.model.rocrate.RoCratePatent;
@@ -101,6 +103,27 @@ public class RoCrateConverter {
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
         metadata.setIdentifier(document.getInternalNumber());
+
+        return metadata;
+    }
+
+    public static RoCrateMaterialProduct toRoCrateModel(MaterialProduct document,
+                                                        String documentIdentifier,
+                                                        RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "product");
+
+        var metadata = new RoCrateMaterialProduct();
+        setCommonFields(metadata, document, documentIdentifier, metadataInfo);
+
+        setPublisherInfo(metadataInfo, metadata, document);
+        metadata.setBrand(metadata.getPublisher());
+        metadata.setPublisher(null);
+
+        metadata.setIdentifier(document.getInternalNumber());
+        metadata.setCategory(document.getMaterialProductType().name());
+        metadata.setAudience(new ContextualEntity(null, "audience",
+            StringUtil.getStringContent(document.getProductUsers(), DEFAULT_RO_CRATE_LANGUAGE),
+            null, null, null, null));
 
         return metadata;
     }

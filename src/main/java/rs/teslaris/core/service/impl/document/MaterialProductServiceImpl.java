@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.HashSet;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MaterialProductJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -47,6 +49,8 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
 
     private final PublisherService publisherService;
 
+    private final ResearchAreaService researchAreaService;
+
 
     @Autowired
     public MaterialProductServiceImpl(
@@ -67,7 +71,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         InvolvementRepository involvementRepository,
         OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
         MaterialProductJPAServiceImpl materialProductJPAService,
-        PublisherService publisherService) {
+        PublisherService publisherService, ResearchAreaService researchAreaService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -76,6 +80,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             involvementRepository, organisationUnitOutputConfigurationService);
         this.materialProductJPAService = materialProductJPAService;
         this.publisherService = publisherService;
+        this.researchAreaService = researchAreaService;
     }
 
     @Override
@@ -136,6 +141,8 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         checkForDocumentDate(materialProductDTO);
         clearCommonFields(materialProductToUpdate);
         setCommonFields(materialProductToUpdate, materialProductDTO);
+
+        materialProductToUpdate.getResearchAreas().clear();
         setMaterialProductRelatedFields(materialProductToUpdate, materialProductDTO);
 
         materialProductJPAService.save(materialProductToUpdate);
@@ -202,6 +209,10 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             materialProduct.setPublisher(
                 publisherService.findOne(materialProductDTO.getPublisherId()));
         }
+
+        var researchAreas = researchAreaService.getResearchAreasByIds(
+            materialProductDTO.getResearchAreasId().stream().toList());
+        materialProduct.setResearchAreas(new HashSet<>(researchAreas));
     }
 
     private void indexMaterialProduct(MaterialProduct materialProduct,

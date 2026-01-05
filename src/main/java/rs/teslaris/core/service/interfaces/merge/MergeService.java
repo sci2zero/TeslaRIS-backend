@@ -7,6 +7,7 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
@@ -90,6 +91,10 @@ public interface MergeService {
 
     void saveMergedSoftwareMetadata(Integer leftId, Integer rightId, SoftwareDTO leftData,
                                     SoftwareDTO rightData);
+
+    void saveMergedMaterialProductMetadata(Integer leftId, Integer rightId,
+                                           MaterialProductDTO leftData,
+                                           MaterialProductDTO rightData);
 
     void saveMergedDatasetsMetadata(Integer leftId, Integer rightId, DatasetDTO leftData,
                                     DatasetDTO rightData);

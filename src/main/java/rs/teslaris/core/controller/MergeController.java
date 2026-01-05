@@ -22,6 +22,7 @@ import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalsDTO;
+import rs.teslaris.core.dto.deduplication.MergedMaterialProductDTO;
 import rs.teslaris.core.dto.deduplication.MergedMonographPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedMonographsDTO;
 import rs.teslaris.core.dto.deduplication.MergedOrganisationUnitsDTO;
@@ -317,6 +318,21 @@ public class MergeController {
             mergedSoftware.getLeftSoftware(), mergedSoftware.getRightSoftware());
 
         mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedSoftware);
+    }
+
+    @PatchMapping("/material-product/metadata/{leftDocumentId}/{rightDocumentId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedMaterialProductMetadata(
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
+        @NotNull @RequestBody MergedMaterialProductDTO mergedMaterialProduct) {
+        mergeService.saveMergedMaterialProductMetadata(leftDocumentId, rightDocumentId,
+            mergedMaterialProduct.getLeftMaterialProduct(),
+            mergedMaterialProduct.getRightMaterialProduct());
+
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedMaterialProduct);
     }
 
     @PatchMapping("/dataset/metadata/{leftDocumentId}/{rightDocumentId}")

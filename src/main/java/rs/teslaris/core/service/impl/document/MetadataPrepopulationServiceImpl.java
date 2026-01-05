@@ -157,10 +157,11 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
     private void setPublishedInAndEntity(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
         metadata.setPublishedInName(getStringField(bibEntry, BibTeXEntry.KEY_JOURNAL));
 
-        if (metadata.getDocumentPublicationType() == DocumentPublicationType.JOURNAL_PUBLICATION) {
+        if (metadata.getDocumentPublicationType()
+            .equals(DocumentPublicationType.JOURNAL_PUBLICATION)) {
             handleJournalPublication(metadata, bibEntry);
-        } else if (metadata.getDocumentPublicationType() ==
-            DocumentPublicationType.PROCEEDINGS_PUBLICATION) {
+        } else if (metadata.getDocumentPublicationType()
+            .equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION)) {
             handleProceedingsPublication(metadata, bibEntry);
         }
     }
@@ -329,10 +330,11 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
             case "manual" -> DocumentPublicationType.SOFTWARE; // Closest guess; could be custom
             case "masterthesis", "phdthesis" -> DocumentPublicationType.THESIS;
             case "proceedings" -> DocumentPublicationType.PROCEEDINGS;
-            case "techreport" -> DocumentPublicationType.DATASET; // or SOFTWARE if more accurate
-            case "misc" -> null; // catch-all; choose based on context
+            case "techreport" -> DocumentPublicationType.MATERIAL_PRODUCT;
+            case "misc" ->
+                DocumentPublicationType.MATERIAL_PRODUCT; // catch-all, material product for now
             case "unpublished" -> DocumentPublicationType.JOURNAL_PUBLICATION; // assumption
-            default -> null; // or throw an exception if needed
+            default -> null; // or throw an exception if needed, should never happen
         };
     }
 }

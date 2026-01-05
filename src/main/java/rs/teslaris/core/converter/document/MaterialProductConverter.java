@@ -1,10 +1,9 @@
 package rs.teslaris.core.converter.document;
 
 import java.util.Objects;
-import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
-import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.MaterialProduct;
 
 public class MaterialProductConverter extends DocumentPublicationConverter {
@@ -20,8 +19,11 @@ public class MaterialProductConverter extends DocumentPublicationConverter {
 
         materialProductDTO.setProductUsers(MultilingualContentConverter.getMultilingualContentDTO(
             materialProduct.getProductUsers()));
-        materialProductDTO.setResearchAreasId(materialProduct.getResearchAreas().stream().map(
-            BaseEntity::getId).collect(Collectors.toSet()));
+
+        materialProduct.getResearchAreas().forEach(researchArea -> {
+            materialProductDTO.getResearchAreasId().add(researchArea.getId());
+            materialProductDTO.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+        });
 
         if (Objects.nonNull(materialProduct.getPublisher())) {
             materialProductDTO.setPublisherId(materialProduct.getPublisher().getId());

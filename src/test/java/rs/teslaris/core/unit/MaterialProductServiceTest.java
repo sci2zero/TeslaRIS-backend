@@ -43,6 +43,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.MaterialProductServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.MaterialProductJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
@@ -87,8 +88,12 @@ public class MaterialProductServiceTest {
     @Mock
     private CommissionRepository commissionRepository;
 
+    @Mock
+    private ResearchAreaService researchAreaService;
+
     @InjectMocks
     private MaterialProductServiceImpl materialProductService;
+
 
     private static Stream<Arguments> provideMaterialProductTypes() {
         return Stream.of(
