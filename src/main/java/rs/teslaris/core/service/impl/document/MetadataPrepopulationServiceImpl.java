@@ -21,6 +21,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.PrepopulatedMetadataDTO;
@@ -65,6 +66,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         }
     }
 
+    @Nullable
     private String fetchBibTexFromDoi(String doi) {
         var url = "https://doi.org/" + doi;
 
@@ -74,10 +76,15 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         HttpEntity<String> entity = new HttpEntity<>(headers);
         var restTemplate = restTemplateProvider.provideRestTemplate();
 
-        var response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-        var body = response.getBody();
+        try {
+            var response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
-        return body;
+            return response.getBody();
+        } catch (HttpClientErrorException e) {
+            log.warn("Unable to fetch metadata for DOI: {}. Response code: {}", doi,
+                e.getStatusCode().value());
+            return null;
+        }
     }
 
     private PrepopulatedMetadataDTO parseBibTexContent(String bibtexContent, Integer importPersonId)

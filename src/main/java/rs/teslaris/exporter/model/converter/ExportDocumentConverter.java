@@ -21,8 +21,10 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
@@ -30,6 +32,7 @@ import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
+import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
@@ -101,11 +104,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         setCommonFields(commonExportDocument, dataset, computeRelations);
 
         commonExportDocument.setNumber(dataset.getInternalNumber());
-        if (Objects.nonNull(dataset.getPublisher())) {
-            commonExportDocument.getPublishers().add(new ExportPublisher(
-                ExportMultilingualContentConverter.toCommonExportModel(
-                    dataset.getPublisher().getName())));
-        }
+        addPublisherInfo(commonExportDocument, dataset.getPublisher());
 
         return commonExportDocument;
     }
@@ -122,11 +121,47 @@ public class ExportDocumentConverter extends ExportConverterBase {
         setCommonFields(commonExportDocument, software, computeRelations);
 
         commonExportDocument.setNumber(software.getInternalNumber());
-        if (Objects.nonNull(software.getPublisher())) {
-            commonExportDocument.getPublishers().add(new ExportPublisher(
-                ExportMultilingualContentConverter.toCommonExportModel(
-                    software.getPublisher().getName())));
+        addPublisherInfo(commonExportDocument, software.getPublisher());
+
+        return commonExportDocument;
+    }
+
+    public static ExportDocument toCommonExportModel(MaterialProduct materialProduct,
+                                                     boolean computeRelations) {
+        var commonExportDocument = new ExportDocument();
+        commonExportDocument.setType(ExportPublicationType.MATERIAL_PRODUCT);
+
+        setBaseFields(commonExportDocument, materialProduct);
+        if (commonExportDocument.getDeleted()) {
+            return commonExportDocument;
         }
+
+        setCommonFields(commonExportDocument, materialProduct, computeRelations);
+
+        commonExportDocument.setNumber(materialProduct.getInternalNumber());
+        commonExportDocument.setMaterialProductType(materialProduct.getMaterialProductType());
+
+        addPublisherInfo(commonExportDocument, materialProduct.getPublisher());
+
+        return commonExportDocument;
+    }
+
+    public static ExportDocument toCommonExportModel(GeneticMaterial geneticMaterial,
+                                                     boolean computeRelations) {
+        var commonExportDocument = new ExportDocument();
+        commonExportDocument.setType(ExportPublicationType.GENETIC_MATERIAL);
+
+        setBaseFields(commonExportDocument, geneticMaterial);
+        if (commonExportDocument.getDeleted()) {
+            return commonExportDocument;
+        }
+
+        setCommonFields(commonExportDocument, geneticMaterial, computeRelations);
+
+        commonExportDocument.setNumber(geneticMaterial.getInternalNumber());
+        commonExportDocument.setGeneticMaterialType(geneticMaterial.getGeneticMaterialType());
+
+        addPublisherInfo(commonExportDocument, geneticMaterial.getPublisher());
 
         return commonExportDocument;
     }
@@ -143,11 +178,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
         setCommonFields(commonExportDocument, patent, computeRelations);
 
         commonExportDocument.setNumber(patent.getNumber());
-        if (Objects.nonNull(patent.getPublisher())) {
-            commonExportDocument.getPublishers().add(new ExportPublisher(
-                ExportMultilingualContentConverter.toCommonExportModel(
-                    patent.getPublisher().getName())));
-        }
+        addPublisherInfo(commonExportDocument, patent.getPublisher());
 
         return commonExportDocument;
     }
@@ -205,11 +236,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
             commonExportDocument.setEdition(proceedings.getPublicationSeries().getTitle().stream()
                 .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get().getContent());
         }
-        if (Objects.nonNull(proceedings.getPublisher())) {
-            commonExportDocument.getPublishers().add(new ExportPublisher(
-                ExportMultilingualContentConverter.toCommonExportModel(
-                    proceedings.getPublisher().getName())));
-        }
+
+        addPublisherInfo(commonExportDocument, proceedings.getPublisher());
 
         return commonExportDocument;
     }
@@ -338,11 +366,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 .add(thesis.getLanguage().getLanguageCode().toLowerCase());
         }
 
-        if (Objects.nonNull(thesis.getPublisher())) {
-            commonExportDocument.getPublishers().add(new ExportPublisher(
-                ExportMultilingualContentConverter.toCommonExportModel(
-                    thesis.getPublisher().getName())));
-        }
+        addPublisherInfo(commonExportDocument, thesis.getPublisher());
 
         return commonExportDocument;
     }
@@ -517,6 +541,13 @@ public class ExportDocumentConverter extends ExportConverterBase {
         }
 
         return relations;
+    }
+
+    private static void addPublisherInfo(ExportDocument commonExportDocument, Publisher publisher) {
+        if (Objects.nonNull(publisher)) {
+            commonExportDocument.getPublishers().add(new ExportPublisher(
+                ExportMultilingualContentConverter.toCommonExportModel(publisher.getName())));
+        }
     }
 
     public static Publication toOpenaireModel(ExportDocument exportDocument,

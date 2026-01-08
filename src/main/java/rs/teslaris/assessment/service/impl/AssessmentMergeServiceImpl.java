@@ -69,13 +69,11 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         journalIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    var existingIndicatorValue =
-                        publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
-                            targetId, journalIndicator.getSource(), journalIndicator.getFromDate(),
-                            journalIndicator.getCategoryIdentifier(),
-                            journalIndicator.getIndicator().getCode());
+                    publicationSeriesIndicatorRepository.deleteByPublicationSeriesIdAndSourceAndYearAndCategory(
+                        targetId, journalIndicator.getSource(), journalIndicator.getFromDate(),
+                        journalIndicator.getCategoryIdentifier(),
+                        journalIndicator.getIndicator().getCode());
 
-                    existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
                     journalIndicator.setPublicationSeries(journalService.findJournalById(targetId));
                 }
             },
@@ -115,11 +113,9 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         eventIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    var existingIndicatorValue =
-                        eventIndicatorRepository.existsByEventIdAndSourceAndYear(
-                            targetId, eventIndicator.getSource(), eventIndicator.getFromDate(),
-                            eventIndicator.getIndicator().getCode());
-                    existingIndicatorValue.ifPresent(eventIndicatorRepository::delete);
+                    eventIndicatorRepository.deleteByEventIdAndSourceAndYear(
+                        targetId, eventIndicator.getSource(), eventIndicator.getFromDate(),
+                        eventIndicator.getIndicator().getCode());
 
                     eventIndicator.setEvent(conferenceService.findConferenceById(targetId));
                 }
@@ -158,10 +154,8 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         personIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    var existingIndicatorValue =
-                        personIndicatorRepository.findIndicatorForCodeAndPersonId(
-                            personIndicator.getIndicator().getCode(), targetId);
-                    existingIndicatorValue.ifPresent(personIndicatorRepository::delete);
+                    personIndicatorRepository.deleteIndicatorsForCodeAndPersonId(
+                        personIndicator.getIndicator().getCode(), targetId);
 
                     personIndicator.setPerson(personService.findOne(targetId));
                 }
@@ -181,10 +175,8 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         organisationUnitIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    var existingIndicatorValue =
-                        organisationUnitIndicatorRepository.findIndicatorForCodeAndOrganisationUnitId(
-                            organisationUnitIndicator.getIndicator().getCode(), targetId);
-                    existingIndicatorValue.ifPresent(organisationUnitIndicatorRepository::delete);
+                    organisationUnitIndicatorRepository.deleteIndicatorsForCodeAndOrganisationUnitId(
+                        organisationUnitIndicator.getIndicator().getCode(), targetId);
 
                     organisationUnitIndicator.setOrganisationUnit(
                         organisationUnitService.findOne(targetId));
@@ -205,10 +197,8 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         documentIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    var existingIndicatorValue =
-                        documentIndicatorRepository.findIndicatorForCodeAndDocumentId(
-                            documentIndicator.getIndicator().getCode(), targetId);
-                    existingIndicatorValue.ifPresent(documentIndicatorRepository::delete);
+                    documentIndicatorRepository.deleteIndicatorsForCodeAndDocumentId(
+                        documentIndicator.getIndicator().getCode(), targetId);
 
                     documentIndicator.setDocument(documentPublicationService.findOne(targetId));
                 }

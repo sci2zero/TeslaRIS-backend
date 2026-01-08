@@ -24,7 +24,7 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "material_product")
+@Table(name = "material_products")
 @SQLRestriction("deleted=false")
 public non-sealed class MaterialProduct extends Document implements PublisherPublishable {
 

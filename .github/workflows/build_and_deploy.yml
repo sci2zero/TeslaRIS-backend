@@ -30,8 +30,8 @@ jobs:
     strategy:
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest] # CONTAINER SERVICE IS NOT SUPPORTED FOR MACOS AND WINDOWS
-        os: [ubuntu-22.04]
-        java: [21] # If you change make sure taht this version is set as default in "Upload primary build artifact to teslaris.jar" step
+        os: [ ubuntu-22.04 ]
+        java: [ 21 ] # If you change make sure taht this version is set as default in "Upload primary build artifact to teslaris.jar" step
     runs-on: ${{ matrix.os }}
 
     services:
@@ -67,7 +67,7 @@ jobs:
     env:
       REPO_URL: ${{ github.server_url }}/${{ github.repository }}
     steps:
-    
+
       - uses: actions/checkout@v4
 
       - name: Set up JDK ${{matrix.java}}
@@ -157,7 +157,7 @@ jobs:
 
   start-new-backend:
     runs-on: ubuntu-latest
-    if : ${{ !inputs.without_deploy }}
+    if: ${{ !inputs.without_deploy }}
 
     needs: deploy-backend
     environment:

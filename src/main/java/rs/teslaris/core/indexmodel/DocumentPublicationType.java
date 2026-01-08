@@ -10,5 +10,6 @@ public enum DocumentPublicationType {
     DATASET,
     MONOGRAPH_PUBLICATION,
     THESIS,
-    MATERIAL_PRODUCT
+    MATERIAL_PRODUCT,
+    GENETIC_MATERIAL
 }

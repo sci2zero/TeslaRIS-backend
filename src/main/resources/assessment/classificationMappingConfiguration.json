@@ -22,7 +22,10 @@
       "discriminators": [
         {
           "columnId": 5,
-          "acceptedValues": ["FIZIKA", "HEMIJA"]
+          "acceptedValues": [
+            "FIZIKA",
+            "HEMIJA"
+          ]
         }
       ]
     }

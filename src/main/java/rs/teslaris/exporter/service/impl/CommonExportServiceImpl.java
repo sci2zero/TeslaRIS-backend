@@ -23,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
@@ -36,8 +38,10 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
@@ -93,6 +97,10 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final MonographPublicationRepository monographPublicationRepository;
 
     private final ThesisRepository thesisRepository;
+
+    private final GeneticMaterialRepository geneticMaterialRepository;
+
+    private final MaterialProductRepository materialProductRepository;
 
     private final ReentrantLock organisationUnitExportLock = new ReentrantLock();
 
@@ -290,6 +298,22 @@ public class CommonExportServiceImpl implements CommonExportService {
                     Thesis::getId,
                     allTime,
                     ExportPublicationType.THESIS
+                );
+                case MATERIAL_PRODUCT -> exportEntitiesAsync(
+                    materialProductRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    MaterialProduct::getId,
+                    allTime,
+                    ExportPublicationType.MATERIAL_PRODUCT
+                );
+                case GENETIC_MATERIAL -> exportEntitiesAsync(
+                    geneticMaterialRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    GeneticMaterial::getId,
+                    allTime,
+                    ExportPublicationType.GENETIC_MATERIAL
                 );
             };
         } catch (Exception e) {

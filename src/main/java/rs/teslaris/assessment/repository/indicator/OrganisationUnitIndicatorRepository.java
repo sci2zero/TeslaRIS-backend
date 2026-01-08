@@ -3,6 +3,7 @@ package rs.teslaris.assessment.repository.indicator;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,12 @@ public interface OrganisationUnitIndicatorRepository
         "WHERE oui.indicator.code = :code AND oui.organisationUnit.id = :organisationUnitId")
     Optional<OrganisationUnitIndicator> findIndicatorForCodeAndOrganisationUnitId(String code,
                                                                                   Integer organisationUnitId);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM OrganisationUnitIndicator oui " +
+        "WHERE oui.indicator.code = :code AND oui.organisationUnit.id = :organisationUnitId")
+    void deleteIndicatorsForCodeAndOrganisationUnitId(String code, Integer organisationUnitId);
 
     @Query("SELECT oui FROM OrganisationUnitIndicator oui " +
         "WHERE oui.indicator.code = :code AND " +

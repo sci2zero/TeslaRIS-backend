@@ -41,6 +41,7 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
@@ -106,6 +107,7 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
@@ -227,9 +229,88 @@ public class MergeServiceTest {
     @Mock
     private MaterialProductService materialProductService;
 
+    @Mock
+    private GeneticMaterialService geneticMaterialService;
+
     @InjectMocks
     private MergeServiceImpl mergeService;
 
+    private static Stream<Arguments> provideDocumentPublicationsForMigration() {
+        return Stream.of(
+            Arguments.of(
+                new Software() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Software(),
+                Software.class,
+                EntityType.PUBLICATION
+            ),
+            Arguments.of(
+                new MaterialProduct() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new MaterialProduct(),
+                MaterialProduct.class,
+                EntityType.PUBLICATION
+            ),
+            Arguments.of(
+                new Patent() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Patent(),
+                Patent.class,
+                EntityType.PUBLICATION
+            ),
+            Arguments.of(
+                new Dataset() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Dataset(),
+                Dataset.class,
+                EntityType.PUBLICATION
+            ),
+            Arguments.of(
+                new OrganisationUnit() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new OrganisationUnit(),
+                OrganisationUnit.class,
+                EntityType.ORGANISATION_UNIT
+            ),
+            Arguments.of(
+                new Person() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Person(),
+                Person.class,
+                EntityType.PERSON
+            ),
+            Arguments.of(
+                new Journal() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Journal(),
+                Journal.class,
+                EntityType.JOURNAL
+            ),
+            Arguments.of(
+                new Publisher() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Publisher(),
+                Publisher.class,
+                EntityType.PUBLISHER
+            )
+        );
+    }
 
     @Test
     void switchJournalPublicationToOtherJournal_shouldPerformSwitch() {
@@ -945,6 +1026,31 @@ public class MergeServiceTest {
     }
 
     @Test
+    public void shouldSaveMergedGeneticMaterialMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new GeneticMaterialDTO();
+        var rightData = new GeneticMaterialDTO();
+
+        // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        mergeService.saveMergedGeneticMaterialMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(geneticMaterialService, atLeastOnce()).editGeneticMaterial(leftId, leftData);
+        verify(geneticMaterialService).editGeneticMaterial(rightId, rightData);
+        verify(geneticMaterialService, times(2)).editGeneticMaterial(leftId, leftData);
+    }
+
+    @Test
     public void shouldSaveMergedDatasetsMetadata() {
         // given
         var leftId = 1;
@@ -1413,8 +1519,10 @@ public class MergeServiceTest {
         assertThat(mergedEntity.getOldIds()).containsExactly(203);
 
         if (deletionEntity instanceof Document) {
-            verify(documentPublicationService, atLeastOnce()).save(argThat(entityClass::isInstance));
-            verify(documentPublicationService, atLeastOnce()).save(argThat(entityClass::isInstance));
+            verify(documentPublicationService, atLeastOnce()).save(
+                argThat(entityClass::isInstance));
+            verify(documentPublicationService, atLeastOnce()).save(
+                argThat(entityClass::isInstance));
         } else if (deletionEntity instanceof OrganisationUnit) {
             verify(organisationUnitService, atLeastOnce()).save(argThat(entityClass::isInstance));
             verify(organisationUnitService, atLeastOnce()).save(argThat(entityClass::isInstance));
@@ -1428,83 +1536,6 @@ public class MergeServiceTest {
             verify(personService, atLeastOnce()).save(argThat(entityClass::isInstance));
             verify(personService, atLeastOnce()).save(argThat(entityClass::isInstance));
         }
-    }
-
-    private static Stream<Arguments> provideDocumentPublicationsForMigration() {
-        return Stream.of(
-            Arguments.of(
-                new Software() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new Software(),
-                Software.class,
-                EntityType.PUBLICATION
-            ),
-            Arguments.of(
-                new MaterialProduct() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new MaterialProduct(),
-                MaterialProduct.class,
-                EntityType.PUBLICATION
-            ),
-            Arguments.of(
-                new Patent() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new Patent(),
-                Patent.class,
-                EntityType.PUBLICATION
-            ),
-            Arguments.of(
-                new Dataset() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new Dataset(),
-                Dataset.class,
-                EntityType.PUBLICATION
-            ),
-            Arguments.of(
-                new OrganisationUnit() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new OrganisationUnit(),
-                OrganisationUnit.class,
-                EntityType.ORGANISATION_UNIT
-            ),
-            Arguments.of(
-                new Person() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new Person(),
-                Person.class,
-                EntityType.PERSON
-            ),
-            Arguments.of(
-                new Journal() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new Journal(),
-                Journal.class,
-                EntityType.JOURNAL
-            ),
-            Arguments.of(
-                new Publisher() {{
-                    getMergedIds().add(103);
-                    getOldIds().add(203);
-                }},
-                new Publisher(),
-                Publisher.class,
-                EntityType.PUBLISHER
-            )
-        );
     }
 
     @Test

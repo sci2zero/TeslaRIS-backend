@@ -48,10 +48,17 @@ public class NavigationBackwardCompatibilityServiceImpl implements
     @Nullable
     public Pair<String, Integer> readResourceByOldId(Integer oldId, String source,
                                                      String language) {
-        var documentOpt = documentRepository.findDocumentByOldIdsContains(oldId);
-        if (documentOpt.isPresent()) {
-            var documentId = documentOpt.get();
-            var document = documentRepository.findById(documentId).get();
+        var documentIdOpt = documentRepository.findDocumentByOldIdsContains(oldId);
+        if (documentIdOpt.isPresent()) {
+            var documentId = documentIdOpt.get();
+            var documentOpt = documentRepository.findById(documentId);
+
+            if (documentOpt.isEmpty()) {
+                return new Pair<>("DELETED", documentId);
+            }
+
+            var document = documentOpt.get();
+
             switch (document) {
                 case JournalPublication ignored -> {
                     log.info("NAVIGATION SUCCESS - JOURNAL_PUBLICATION {} from {} in LANGUAGE {}",

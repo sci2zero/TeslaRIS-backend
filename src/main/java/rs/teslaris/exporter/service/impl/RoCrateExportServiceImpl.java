@@ -17,6 +17,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
@@ -246,6 +247,10 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     metadataInfo));
             case MaterialProduct materialProduct -> metadataInfo.getGraph().add(
                 RoCrateConverter.toRoCrateModel(materialProduct,
+                    documentIdentifier,
+                    metadataInfo));
+            case GeneticMaterial geneticMaterial -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(geneticMaterial,
                     documentIdentifier,
                     metadataInfo));
             default -> log.error("Unexpected document type: {}. ID: {}.", document.getClass(),

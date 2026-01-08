@@ -16,6 +16,7 @@ import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Event;
+import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -39,6 +40,7 @@ import rs.teslaris.core.model.rocrate.Periodical;
 import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.model.rocrate.RoCrateDataset;
 import rs.teslaris.core.model.rocrate.RoCrateEvent;
+import rs.teslaris.core.model.rocrate.RoCrateGeneticMaterial;
 import rs.teslaris.core.model.rocrate.RoCrateJournalPublication;
 import rs.teslaris.core.model.rocrate.RoCrateMaterialProduct;
 import rs.teslaris.core.model.rocrate.RoCrateMonograph;
@@ -110,7 +112,7 @@ public class RoCrateConverter {
     public static RoCrateMaterialProduct toRoCrateModel(MaterialProduct document,
                                                         String documentIdentifier,
                                                         RoCrate metadataInfo) {
-        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "product");
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "material-product");
 
         var metadata = new RoCrateMaterialProduct();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
@@ -124,6 +126,21 @@ public class RoCrateConverter {
         metadata.setAudience(new ContextualEntity(null, "audience",
             StringUtil.getStringContent(document.getProductUsers(), DEFAULT_RO_CRATE_LANGUAGE),
             null, null, null, null));
+
+        return metadata;
+    }
+
+    public static RoCrateGeneticMaterial toRoCrateModel(GeneticMaterial document,
+                                                        String documentIdentifier,
+                                                        RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "genetic-material");
+
+        var metadata = new RoCrateGeneticMaterial();
+        setCommonFields(metadata, document, documentIdentifier, metadataInfo);
+        setPublisherInfo(metadataInfo, metadata, document);
+        metadata.setIdentifier(document.getInternalNumber());
+
+        metadata.setAdditionalType(document.getGeneticMaterialType().name());
 
         return metadata;
     }
@@ -298,7 +315,9 @@ public class RoCrateConverter {
             StringUtil.getStringContent(document.getTypeOfTitle(), DEFAULT_RO_CRATE_LANGUAGE)
         );
 
-        metadata.setInLanguage(document.getLanguage().getLanguageCode().toLowerCase());
+        if (Objects.nonNull(document.getLanguage())) {
+            metadata.setInLanguage(document.getLanguage().getLanguageCode().toLowerCase());
+        }
 
         return metadata;
     }

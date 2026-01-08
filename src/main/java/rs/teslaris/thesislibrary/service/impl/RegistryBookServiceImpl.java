@@ -50,6 +50,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
@@ -514,6 +515,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     promotion.getPromotionDate().format(DATE_FORMATTER),
                     promotion.getPromotionTime(), cancellationLink},
                 Locale.forLanguageTag(lang));
+
+            emailBody =
+                emailUtil.constructBodyWithSignature(emailBody,
+                    BrandingInformationUtil.getSystemName(lang), lang);
         } else {
             emailSubject = messageSource.getMessage(
                 "promotion.cancelConfirmationSubject",
@@ -527,6 +532,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     promotion.getPromotionDate().format(DATE_FORMATTER),
                     promotion.getPromotionTime()},
                 Locale.forLanguageTag(lang));
+
+            emailBody =
+                emailUtil.constructBodyWithSignature(emailBody, lang, lang);
         }
 
         emailUtil.sendSimpleEmail(entry.getContactInformation().getContact().getContactEmail(),

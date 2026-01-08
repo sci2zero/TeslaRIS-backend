@@ -1,6 +1,7 @@
 package rs.teslaris.core.converter.document;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonContributionConverter;
 import rs.teslaris.core.dto.document.BookSeriesResponseDTO;
@@ -53,7 +54,7 @@ public class PublicationSeriesConverter {
             MultilingualContentConverter.getMultilingualContentDTO(
                 publicationSeries.getNameAbbreviation()));
 
-        responseDTO.setLanguageIds(new ArrayList<>());
+        responseDTO.setLanguageIds(new HashSet<>());
         publicationSeries.getLanguages()
             .forEach(language -> responseDTO.getLanguageIds().add(language.getId()));
 

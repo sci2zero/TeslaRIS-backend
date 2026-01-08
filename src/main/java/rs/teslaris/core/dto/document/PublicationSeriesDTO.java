@@ -33,7 +33,7 @@ public class PublicationSeriesDTO {
     private List<PersonPublicationSeriesContributionDTO> contributions;
 
     @NotNull(message = "You have to provide languages.")
-    private List<Integer> languageIds;
+    private Set<Integer> languageIds;
 
     @NotNull(message = "You have to provide name abbreviations.")
     private List<MultilingualContentDTO> nameAbbreviation;

@@ -53,6 +53,8 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
+import rs.teslaris.core.model.document.GeneticMaterial;
+import rs.teslaris.core.model.document.GeneticMaterialType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -96,6 +98,7 @@ import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
+import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
@@ -187,6 +190,8 @@ public class TestingDataInitializer {
     private final ScheduledTaskMetadataRepository scheduledTaskMetadataRepository;
 
     private final MaterialProductRepository materialProductRepository;
+
+    private final GeneticMaterialRepository geneticMaterialRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1128,5 +1133,14 @@ public class TestingDataInitializer {
         materialProduct.setNumberProduced(1L);
         materialProduct.setMaterialProductType(MaterialProductType.INFRASTRUCTURE_OBJECT);
         materialProductRepository.save(materialProduct);
+
+        var geneticMaterial = new GeneticMaterial();
+        geneticMaterial.setTitle(Set.of(new MultiLingualContent(serbianTag,
+            "New Wheat Seed", 1)));
+        geneticMaterial.setInternalNumber("WH-12345-1");
+        geneticMaterial.setApproveStatus(ApproveStatus.APPROVED);
+        geneticMaterial.setDocumentDate("2025-1-1");
+        geneticMaterial.setGeneticMaterialType(GeneticMaterialType.STRAIN);
+        geneticMaterialRepository.save(geneticMaterial);
     }
 }

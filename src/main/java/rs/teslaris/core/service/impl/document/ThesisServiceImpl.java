@@ -84,6 +84,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -1006,13 +1007,18 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 preferredLocale.toLowerCase());
 
             var applicationTitle = brandingInformationService.readBrandingInformation().title();
+            var locale = preferredLocale.toLowerCase();
+
             var body = getMessage("public-review-end.email.body",
                 new Object[] {
                     thesesList.toString(),
                     getLocalisedContentString(applicationTitle, preferredLocale),
                     feedbackEmail
-                },
-                preferredLocale.toLowerCase());
+                }, locale);
+
+            body =
+                emailUtil.constructBodyWithSignature(body,
+                    BrandingInformationUtil.getSystemName(locale), locale);
 
             emailUtil.sendHTMLSupportedEmail(librarianUser.getEmail(), subject, body);
         });

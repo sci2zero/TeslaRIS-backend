@@ -1,10 +1,31 @@
 {
-  "ifTableContent": ["currentJIF", "currentJIFRank", "fiveYearJIF", "fiveYearJIFRank", "jci", "jciPercentile"],
+  "ifTableContent": [
+    "currentJIF",
+    "currentJIFRank",
+    "fiveYearJIF",
+    "fiveYearJIFRank",
+    "jci",
+    "jciPercentile"
+  ],
   "mappings": {
-    "updateTotalViews": ["viewsTotal"],
-    "updateTotalDownloads": ["downloadsTotal"],
-    "updatePeriodViews": ["viewsWeek", "viewsMonth", "viewsYear", "viewsTotal"],
-    "updatePeriodDownloads": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"]
+    "updateTotalViews": [
+      "viewsTotal"
+    ],
+    "updateTotalDownloads": [
+      "downloadsTotal"
+    ],
+    "updatePeriodViews": [
+      "viewsWeek",
+      "viewsMonth",
+      "viewsYear",
+      "viewsTotal"
+    ],
+    "updatePeriodDownloads": [
+      "downloadsWeek",
+      "downloadsMonth",
+      "downloadsYear",
+      "downloadsTotal"
+    ]
   },
   "statisticOffsets": {
     "views": {
@@ -21,9 +42,24 @@
     }
   },
   "statisticExclusions": {
-    "Journal": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"],
-    "BookSeries": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"],
-    "Conference": ["downloadsWeek", "downloadsMonth", "downloadsYear", "downloadsTotal"]
+    "Journal": [
+      "downloadsWeek",
+      "downloadsMonth",
+      "downloadsYear",
+      "downloadsTotal"
+    ],
+    "BookSeries": [
+      "downloadsWeek",
+      "downloadsMonth",
+      "downloadsYear",
+      "downloadsTotal"
+    ],
+    "Conference": [
+      "downloadsWeek",
+      "downloadsMonth",
+      "downloadsYear",
+      "downloadsTotal"
+    ]
   },
   "externalMappings": {
     "hIndex": "hIndex",

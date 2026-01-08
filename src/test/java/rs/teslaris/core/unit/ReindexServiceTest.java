@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
@@ -102,6 +103,9 @@ public class ReindexServiceTest {
 
     @Mock
     private MaterialProductService materialProductService;
+
+    @Mock
+    private GeneticMaterialService geneticMaterialService;
 
     @InjectMocks
     private ReindexServiceImpl reindexService;

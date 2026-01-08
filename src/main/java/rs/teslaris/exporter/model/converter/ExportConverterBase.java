@@ -155,6 +155,8 @@ public class ExportConverterBase {
                 exportDocument.getThesisType().equals(ThesisType.PHD_ART_PROJECT)) ?
                 "http://purl.org/coar/resource_type/c_db06" :
                 "http://purl.org/coar/resource_type/c_46ec";
+            case MATERIAL_PRODUCT -> "http://purl.org/coar/resource_type/JBNF-DYAD";
+            case GENETIC_MATERIAL -> "http://purl.org/coar/resource_type/S7R1-K5P0";
         };
 
         return new PublicationType(coarType, null, scheme);
@@ -325,6 +327,8 @@ public class ExportConverterBase {
             case JOURNAL -> "journal";
             case MONOGRAPH_PUBLICATION -> "monograph-publication";
             case THESIS -> "thesis";
+            case MATERIAL_PRODUCT -> "material-product";
+            case GENETIC_MATERIAL -> "genetic-material";
         };
     }
 

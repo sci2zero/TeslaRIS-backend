@@ -783,7 +783,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setLanguageIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new HashSet<>());
 
         synchronized (journalLock) {
             potentialMatch = searchPotentialMatches(documentImport);

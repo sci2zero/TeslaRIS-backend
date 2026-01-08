@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
@@ -64,6 +65,7 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
@@ -129,6 +131,8 @@ public class MergeServiceImpl implements MergeService {
     private final SoftwareService softwareService;
 
     private final MaterialProductService materialProductService;
+
+    private final GeneticMaterialService geneticMaterialService;
 
     private final DatasetService datasetService;
 
@@ -520,6 +524,26 @@ public class MergeServiceImpl implements MergeService {
         updateAndRestoreMetadata(materialProductService::editMaterialProduct,
             materialProductService::indexMaterialProduct,
             materialProductService::findMaterialProductById, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
+                dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            (dto, values) -> {
+                dto.setInternalNumber(values[0]);
+                dto.setDoi(values[1]);
+                dto.setScopusId(values[2]);
+                dto.setOpenAlexId(values[3]);
+                dto.setWebOfScienceId(values[4]);
+            });
+    }
+
+    @Override
+    public void saveMergedGeneticMaterialMetadata(Integer leftId, Integer rightId,
+                                                  GeneticMaterialDTO leftData,
+                                                  GeneticMaterialDTO rightData) {
+        handleNoAuthorsRemaining(leftData, rightData);
+        updateAndRestoreMetadata(geneticMaterialService::editGeneticMaterial,
+            geneticMaterialService::indexGeneticMaterial,
+            geneticMaterialService::findGeneticMaterialById, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
                 dto.getOpenAlexId(), dto.getWebOfScienceId()},

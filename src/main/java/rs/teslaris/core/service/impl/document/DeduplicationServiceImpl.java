@@ -15,9 +15,12 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -104,12 +107,18 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
 
     @Override
+    @Retryable(retryFor = {OptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 300, multiplier = 2))
     public void deleteSuggestion(String suggestionId) {
         deduplicationSuggestionRepository.delete(
             findDeduplicationSuggestionById(suggestionId));
     }
 
     @Override
+    @Retryable(retryFor = {OptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 300, multiplier = 2))
     public void deleteSuggestion(Integer deletedEntityId, EntityType entityType) {
         deduplicationSuggestionRepository.deleteAll(
             deduplicationSuggestionRepository.findByEntityIdAndEntityType(deletedEntityId,
