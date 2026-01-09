@@ -41,7 +41,7 @@ public class RoCrateExportControllerTest extends BaseTest {
     public void testExportBibliographyRoCrate() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var request = new ReindexRequestDTO(List.of(EntityType.PUBLICATION));
+        var request = new ReindexRequestDTO(List.of(EntityType.PERSON));
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
@@ -49,7 +49,7 @@ public class RoCrateExportControllerTest extends BaseTest {
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                    .header("Idempotency-Key", "MOCK_KEY_REINDEX2"))
+                    .header("Idempotency-Key", "MOCK_KEY_REINDEX3"))
             .andExpect(status().isOk());
 
         mockMvc.perform(
