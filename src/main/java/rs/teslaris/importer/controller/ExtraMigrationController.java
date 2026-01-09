@@ -16,10 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import rs.teslaris.core.dto.commontypes.LanguageMigrationDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -37,6 +40,10 @@ public class ExtraMigrationController {
     private final DocumentPublicationService documentPublicationService;
 
     private final OrganisationUnitService organisationUnitService;
+
+    private final LanguageService languageService;
+
+    private final LanguageTagService languageTagService;
 
 
     @PatchMapping("/event")
@@ -87,5 +94,19 @@ public class ExtraMigrationController {
         involvementService.migrateEmployment(employmentMigrationDTO,
             LocalDate.of(2025, 11, 6),
             institutionId);
+    }
+
+    @PostMapping("/migrate-languages")
+    @PreAuthorize("hasAuthority('PERFORM_EXTRA_MIGRATION_OPERATIONS')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void migrateLanguages(
+        @Valid @RequestBody List<LanguageMigrationDTO> languageList) {
+        languageList.forEach(languageService::migrateLanguage);
+    }
+
+    @GetMapping("/migrate-languages/{languageTag}")
+    @PreAuthorize("hasAuthority('PERFORM_EXTRA_MIGRATION_OPERATIONS')")
+    public Integer getLanguageTagByValue(@PathVariable String languageTag) {
+        return languageTagService.findLanguageTagByValue(languageTag).getId();
     }
 }

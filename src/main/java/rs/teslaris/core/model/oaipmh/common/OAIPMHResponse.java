@@ -2,6 +2,7 @@ package rs.teslaris.core.model.oaipmh.common;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
@@ -31,6 +32,13 @@ import lombok.ToString;
 @ToString
 public class OAIPMHResponse {
 
+    @XmlAttribute(name = "schemaLocation", namespace = "http://www.w3.org/2001/XMLSchema-instance")
+    private String schemaLocation =
+        "http://www.openarchives.org/OAI/2.0/ " +
+            "http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd " +
+            "https://www.openaire.eu/cerif-profile/ " +
+            "https://www.openaire.eu/schema/oai_cerif_openaire.xsd";
+
     @XmlElement(name = "Identify")
     private Identify identify;
 
@@ -41,7 +49,7 @@ public class OAIPMHResponse {
     private ListMetadataFormats listMetadataFormats;
 
     @XmlElement(name = "ListIdentifiers")
-    private ListMetadataFormats listIdentifiers;
+    private ListRecords listIdentifiers;
 
     @XmlElement(name = "ListRecords")
     private ListRecords listRecords;

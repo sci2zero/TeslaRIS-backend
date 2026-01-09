@@ -73,6 +73,10 @@
           "serbian_cyrillic_to_latinic",
           "asciifolding"
         ]
+      },
+      "doi_normalizer": {
+        "type": "custom",
+        "filter": ["lowercase", "trim"]
       }
     }
   }

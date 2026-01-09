@@ -211,7 +211,7 @@ public class OAIPMHHarvesterImpl implements OAIPMHHarvester {
                     }
 
                     var embedding = CommonImportUtility.generateEmbedding(documentImport);
-                    if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+                    if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
                         return;
                     }
 

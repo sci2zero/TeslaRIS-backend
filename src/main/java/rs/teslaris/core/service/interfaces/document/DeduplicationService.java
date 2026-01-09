@@ -20,4 +20,6 @@ public interface DeduplicationService {
     void deleteSuggestion(Integer deletedEntityId, EntityType entityType);
 
     void flagAsNotDuplicate(String suggestionId);
+
+    String getSuggestionId(Integer leftId, Integer rightId, EntityType entityType);
 }

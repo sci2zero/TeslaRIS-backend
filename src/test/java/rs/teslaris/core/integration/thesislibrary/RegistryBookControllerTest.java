@@ -181,6 +181,23 @@ public class RegistryBookControllerTest extends BaseTest {
     }
 
     @Test
+    @Order(4)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testCanAllowSingleEdit() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/registry-book/can-allow-single-edit/{registryBookEntryId}",
+                        1)
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
     @Order(10)
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testDeleteRegistryBookEntry() throws Exception {

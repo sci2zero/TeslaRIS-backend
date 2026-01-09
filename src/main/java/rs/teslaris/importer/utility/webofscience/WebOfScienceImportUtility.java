@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import rs.teslaris.core.util.session.RestTemplateProvider;
@@ -79,12 +80,20 @@ public class WebOfScienceImportUtility {
             headers.set("X-ApiKey", apiKey);
             HttpEntity<Void> request = new HttpEntity<>(headers);
 
-            ResponseEntity<String> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                request,
-                String.class
-            );
+            ResponseEntity<String> response;
+            try {
+                response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    request,
+                    String.class
+                );
+            } catch (ResourceAccessException e) {
+                log.warn(
+                    "Unable to access WoS service while performing harvest, aborting... Reason: {}",
+                    e.getMessage());
+                return allPublications;
+            }
 
             if (response.getStatusCode().is2xxSuccessful() && Objects.nonNull(response.getBody())) {
                 WoSResults results;

@@ -51,7 +51,7 @@ public class JournalControllerTest extends BaseTest {
         contribution.setPersonName(
             new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
         journalDTO.setContributions(List.of(contribution));
-        journalDTO.setLanguageTagIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new ArrayList<>());
 
         return journalDTO;
     }

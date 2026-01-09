@@ -107,7 +107,6 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                                             OAIPMHResponse response, int page,
                                             boolean identifiersOnly) {
         if (Objects.isNull(metadataPrefix) || metadataPrefix.isBlank() ||
-            Objects.isNull(requestedSet) || requestedSet.isBlank() ||
             Objects.isNull(from) || from.isBlank() ||
             Objects.isNull(until) || until.isBlank()) {
             response.setError(OAIErrorFactory.constructBadArgumentError());
@@ -116,7 +115,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         var handlerConfiguration =
             ExportHandlersConfigurationLoader.getHandlerByIdentifier(handler);
-        if (handlerConfiguration.isEmpty()) {
+        if (handlerConfiguration.isEmpty() || handlerConfiguration.get().sets().isEmpty()) {
             throw new LoadingException("No handler with identifier " + handler);
         }
 
@@ -126,8 +125,18 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             return null;
         }
 
+        if (Objects.isNull(requestedSet) || requestedSet.isBlank()) {
+            requestedSet = handlerConfiguration.get().sets().stream()
+                .filter(
+                    set -> Objects.nonNull(set.isDefaultSet()) && set.isDefaultSet().equals(true))
+                .findFirst().orElse(
+                    handlerConfiguration.get().sets().getFirst()
+                ).setSpec();
+        }
+
+        String finalRequestedSet = requestedSet;
         var matchedSet = handlerConfiguration.get().sets().stream()
-            .filter(set -> set.setSpec().equals(requestedSet))
+            .filter(set -> set.setSpec().equals(finalRequestedSet))
             .findFirst();
 
         if (matchedSet.isEmpty() || Objects.isNull(matchedSet.get().commonEntityClass()) ||
@@ -153,7 +162,11 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         }
 
         var listRecords = new ListRecords();
-        listRecords.setRecords(new ArrayList<>());
+        if (identifiersOnly) {
+            listRecords.setHeader(new ArrayList<>());
+        } else {
+            listRecords.setRecords(new ArrayList<>());
+        }
 
         var publicationTypeFilters = new ArrayList<ExportPublicationType>();
         if (Objects.nonNull(matchedSet.get().publicationTypes())) {
@@ -192,11 +205,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         }
 
         for (var fetchedRecordEntity : recordsPage.getContent()) {
-            var record = new Record();
-            listRecords.getRecords().add(record);
-            var metadata = new Metadata();
-
-            record.setHeader(constructOaiResponseHeader(
+            var header = constructOaiResponseHeader(
                 handlerConfiguration.get(),
                 (BaseExportEntity) fetchedRecordEntity,
                 constructRecordIdentifier(
@@ -206,14 +215,21 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                     matchedSet.get()
                 ),
                 matchedSet.get().identifierSetSpec()
-            ));
+            );
 
-            if (Objects.nonNull(record.getHeader().getStatus()) &&
-                record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
-                return listRecords;
-            }
+            if (identifiersOnly) {
+                listRecords.getHeader().add(header);
+            } else {
+                var record = new Record();
+                listRecords.getRecords().add(record);
+                record.setHeader(header);
 
-            if (!identifiersOnly) {
+                if (Objects.nonNull(record.getHeader().getStatus()) &&
+                    record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
+                    return listRecords;
+                }
+
+                var metadata = new Metadata();
                 try {
                     setMetadataFieldsInGivenFormat(matchedSet.get().identifierSetSpec(),
                         recordClass,
@@ -223,6 +239,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                     response.setError(OAIErrorFactory.constructNoRecordsMatchError());
                     return null;
                 }
+
                 record.setMetadata(metadata);
             }
         }
@@ -544,8 +561,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var toolkit = new Toolkit();
         toolkit.setTitle("Sci2Zero Alliance Custom implementation");
         toolkit.setAuthor(
-            new Toolkit.Author("Sci2Zero team", "chenejac@uns.ac.rs", "Science 2.0 Alliance"));
-        toolkit.setVersion("1.0.0");
+            new Toolkit.Author("Sci2Zero team", "info@sci2zero.org", "Science 2.0 Alliance"));
+        toolkit.setVersion("1.1.0");
 
         var serviceDescription = new Description();
         serviceDescription.setService(service);

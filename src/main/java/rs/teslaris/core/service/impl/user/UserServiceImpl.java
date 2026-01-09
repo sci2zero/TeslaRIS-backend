@@ -64,6 +64,7 @@ import rs.teslaris.core.indexmodel.UserAccountIndex;
 import rs.teslaris.core.indexrepository.UserAccountIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.Commission;
+import rs.teslaris.core.model.institution.EmailConfiguration;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
@@ -77,6 +78,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.commontypes.ApplicationConfigurationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
@@ -97,6 +99,7 @@ import rs.teslaris.core.util.email.EmailDomainChecker;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
+import rs.teslaris.core.util.exceptionhandling.exception.MaintenanceModeException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
@@ -154,6 +157,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private final OAuthCodeRepository oAuthCodeRepository;
 
     private final BrandingInformationService brandingInformationService;
+
+    private final ApplicationConfigurationRepository applicationConfigurationRepository;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -247,6 +252,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     public AuthenticationResponseDTO authenticateUser(AuthenticationManager authenticationManager,
                                                       AuthenticationRequestDTO authenticationRequest,
                                                       String fingerprint) {
+        if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
+            var user = userRepository.findByEmail(authenticationRequest.getEmail());
+            if (user.isEmpty() ||
+                !user.get().getAuthority().getName().equals(UserRole.ADMIN.name())) {
+                throw new MaintenanceModeException("maintenanceInProgressMessage");
+            }
+        }
+
         var authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(authenticationRequest.getEmail(),
                 authenticationRequest.getPassword()));
@@ -294,7 +307,6 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             () -> new NonExistingRefreshTokenException("Non existing refresh token provided."));
 
         var newRefreshToken = createAndSaveRefreshTokenForUser(refreshToken.getUser());
-        refreshTokenRepository.delete(refreshToken);
 
         return new AuthenticationResponseDTO(
             tokenUtil.generateToken(refreshToken.getUser(), fingerprint), newRefreshToken);
@@ -403,6 +415,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Override
     @Transactional
     public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
+        if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
+            throw new MaintenanceModeException("maintenanceInProgressMessage");
+        }
+
         validateEmailUniqueness(registrationRequest.getEmail());
         validatePasswordStrength(registrationRequest.getPassword());
 
@@ -671,8 +687,14 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "Institution is not a client. Unable to perform registration.");
         }
 
-        var configuration =
-            checkCrisConfig ? specifiedOU.getCrisConfig() : specifiedOU.getDlConfig();
+        EmailConfiguration configuration;
+
+        if (Objects.isNull(specifiedOU.getEmailConfigurations())) {
+            configuration = new EmailConfiguration();
+        } else {
+            configuration =
+                checkCrisConfig ? specifiedOU.getCrisConfig() : specifiedOU.getDlConfig();
+        }
 
         if (Objects.nonNull(configuration.getValidateEmailDomain()) &&
             configuration.getValidateEmailDomain()) {
@@ -1101,9 +1123,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var hashedRefreshToken =
             Hashing.sha256().hashString(refreshTokenValue, StandardCharsets.UTF_8).toString();
 
-        var oldRefreshToken = refreshTokenRepository.findByUserId(user.getId());
-        oldRefreshToken.ifPresent(refreshTokenRepository::delete);
-
+        refreshTokenRepository.deleteAllByUserId(user.getId());
         refreshTokenRepository.save(new RefreshToken(hashedRefreshToken, user));
 
         return refreshTokenValue;

@@ -11,6 +11,7 @@ import ai.djl.translate.TranslateException;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -19,6 +20,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.importer.model.common.DocumentImport;
 
 @Component
@@ -26,13 +28,13 @@ public class DeduplicationUtil {
 
     private static final String DJL_MODEL = "sentence-transformers/all-MiniLM-L6-v2";
     private static final String DJL_PATH = "djl://ai.djl.huggingface.pytorch/" + DJL_MODEL;
-
-    public static Double MIN_SIMILARITY_THRESHOLD = 0.95;
-
+    private static final Double MIN_SIMILARITY_THRESHOLD = 0.95;
+    private static DocumentPublicationService documentPublicationService;
     private static Predictor<String, float[]> predictor;
 
     @Autowired
-    public DeduplicationUtil() throws ModelNotFoundException, MalformedModelException, IOException {
+    public DeduplicationUtil(DocumentPublicationService documentPublicationService)
+        throws ModelNotFoundException, MalformedModelException, IOException {
         Criteria<String, float[]> criteria =
             Criteria.builder()
                 .setTypes(String.class, float[].class)
@@ -44,6 +46,7 @@ public class DeduplicationUtil {
 
         ZooModel<String, float[]> model = criteria.loadModel();
         DeduplicationUtil.predictor = model.newPredictor();
+        DeduplicationUtil.documentPublicationService = documentPublicationService;
     }
 
     public static String flattenJson(String json) {
@@ -63,13 +66,22 @@ public class DeduplicationUtil {
         return Nd4j.create(predictor.predict(text));
     }
 
-    public static boolean isDuplicate(DocumentImport backup, INDArray newEmbedding) {
-        if (Objects.isNull(backup) || Objects.isNull(newEmbedding) ||
-            Objects.isNull(backup.getEmbedding())) {
+    public static boolean isDuplicate(DocumentImport existingRecord, INDArray newEmbedding,
+                                      DocumentImport entry) {
+        if (Objects.isNull(existingRecord) &&
+            !documentPublicationService.findDocumentDuplicates(Collections.emptyList(),
+                    entry.getDoi(), entry.getScopusId(), entry.getOpenAlexId(),
+                    entry.getWebOfScienceId(), entry.getInternalIdentifiers().stream().toList())
+                .getContent().isEmpty()) {
+            return true;
+        }
+
+        if (Objects.isNull(existingRecord) || Objects.isNull(newEmbedding) ||
+            Objects.isNull(existingRecord.getEmbedding())) {
             return false;
         }
 
-        var oldEmbedding = Nd4j.create(backup.getEmbedding());
+        var oldEmbedding = Nd4j.create(existingRecord.getEmbedding());
         var similarity = DeduplicationUtil.cosineSimilarity(newEmbedding, oldEmbedding);
         return similarity > DeduplicationUtil.MIN_SIMILARITY_THRESHOLD;
     }

@@ -16,4 +16,7 @@ public interface IndexBulkUpdateService {
 
     void setIdFieldForRecord(String indexName, String fieldMappingName, Integer queryValue,
                              String idField, Integer idToSet);
+
+    void setYearForAggregatedRecord(String fieldMappingName, Integer queryValue,
+                                    Integer year);
 }

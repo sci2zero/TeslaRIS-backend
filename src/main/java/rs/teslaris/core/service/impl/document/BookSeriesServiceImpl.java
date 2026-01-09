@@ -29,7 +29,7 @@ import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.BookSeriesJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -58,7 +58,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     @Autowired
     public BookSeriesServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
                                  MultilingualContentService multilingualContentService,
-                                 LanguageTagService languageTagService,
+                                 LanguageService languageService,
                                  PersonContributionService personContributionService,
                                  IndexBulkUpdateService indexBulkUpdateService,
                                  BookSeriesJPAServiceImpl bookSeriesJPAService,
@@ -66,7 +66,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                                  SearchService<BookSeriesIndex> searchService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                  BookSeriesRepository bookSeriesRepository) {
-        super(publicationSeriesRepository, multilingualContentService, languageTagService,
+        super(publicationSeriesRepository, multilingualContentService, languageService,
             personContributionService, indexBulkUpdateService);
         this.bookSeriesJPAService = bookSeriesJPAService;
         this.bookSeriesIndexRepository = bookSeriesIndexRepository;

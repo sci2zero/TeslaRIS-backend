@@ -121,7 +121,7 @@ public class TaggedBibliographicFormatUtility {
         }
 
         var embedding = CommonImportUtility.generateEmbedding(doc);
-        if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+        if (DeduplicationUtil.isDuplicate(existingImport, embedding, doc)) {
             return;
         }
 

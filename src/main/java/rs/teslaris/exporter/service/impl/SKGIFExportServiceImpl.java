@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,8 @@ import rs.teslaris.exporter.model.converter.skgif.VenueConverter;
 import rs.teslaris.exporter.model.skgif.SKGIFListResponse;
 import rs.teslaris.exporter.model.skgif.SKGIFMeta;
 import rs.teslaris.exporter.model.skgif.SKGIFSingleResponse;
+import rs.teslaris.exporter.model.skgif.SearchResultPage;
+import rs.teslaris.exporter.model.skgif.SearchResultPartOf;
 import rs.teslaris.exporter.service.interfaces.SKGIFExportService;
 import rs.teslaris.exporter.util.skgif.OrganisationFilteringUtil;
 import rs.teslaris.exporter.util.skgif.PersonFilteringUtil;
@@ -80,7 +83,8 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
         SKGIFFilterCriteria criteria,
         LocalDate dateFrom,
         LocalDate dateTo,
-        Pageable pageable) {
+        Pageable pageable,
+        String requestUrl) {
         var conversionMethod = getConversionMethod(entityClass, isVenue);
 
         var query = new Query();
@@ -106,10 +110,9 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
             }
         }).filter(Objects::nonNull).toList();
 
-        var response = new SKGIFListResponse<>();
-        response.setMeta(
-            new SKGIFMeta(totalCount, pageable.getPageNumber(), pageable.getPageSize()));
-        response.setResults(convertedRecords);
+        var response = new SKGIFListResponse<>(baseUrl);
+        response.setMeta(getMetaInformation(requestUrl, pageable, totalCount));
+        response.setGraph(convertedRecords);
         return response;
     }
 
@@ -185,5 +188,62 @@ public class SKGIFExportServiceImpl implements SKGIFExportService {
             default:
                 throw new IllegalArgumentException("No filter handler for: " + entityClass);
         }
+    }
+
+    private SKGIFMeta getMetaInformation(String requestUrl, Pageable pageable, Long totalCount) {
+        var meta = new SKGIFMeta();
+
+        Pattern pagePattern = Pattern.compile("[&?]page=(\\d+)");
+        Pattern pageSizePattern = Pattern.compile("[&?]page_size=(\\d+)");
+        var pageMatcher = pagePattern.matcher(requestUrl);
+        var pageSizeMatcher = pageSizePattern.matcher(requestUrl);
+
+        if (pageMatcher.find() && pageSizeMatcher.find()) {
+            var pageParam = pageMatcher.group(0);
+            var pageSizeParam = pageSizeMatcher.group(0);
+            var pageParamNoValue = pageParam.split("=")[0] + "=";
+
+            var currentPage = Integer.parseInt(pageMatcher.group(1));
+            var pageSize = Integer.parseInt(pageSizeMatcher.group(1));
+
+            var lastPage = ((int) Math.ceil((double) totalCount / pageSize)) - 1;
+            var hasPrevPage = currentPage > 0;
+            var hasNextPage = currentPage < lastPage;
+
+            meta.setLocalIdentifier(requestUrl);
+
+            if (hasNextPage) {
+                meta.setNextPage(new SearchResultPage(
+                    requestUrl.replace(pageParam,
+                        pageParamNoValue + (pageable.getPageNumber() + 1))));
+            }
+
+            if (hasPrevPage) {
+                meta.setPrevPage(new SearchResultPage(
+                    requestUrl.replace(pageSizeParam,
+                        pageParamNoValue + (pageable.getPageNumber() - 1))));
+            }
+
+            var partOf = new SearchResultPartOf();
+
+            var partOfIdentifier =
+                requestUrl.replace(pageParam, "").replace(pageSizeParam, "");
+            if (!partOfIdentifier.contains("?")) {
+                partOfIdentifier = partOfIdentifier.replaceFirst("&", "?");
+            }
+            partOf.setLocalIdentifier(partOfIdentifier);
+
+            partOf.setTotalItems(totalCount);
+            partOf.setFirstPage(new SearchResultPage(
+                requestUrl.replace(pageSizeParam,
+                    pageParamNoValue + "0")));
+            partOf.setLastPage(new SearchResultPage(
+                requestUrl.replace(pageSizeParam,
+                    pageParamNoValue + lastPage)));
+
+            meta.setPartOf(partOf);
+        }
+
+        return meta;
     }
 }

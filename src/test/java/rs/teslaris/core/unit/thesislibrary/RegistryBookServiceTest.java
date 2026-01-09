@@ -38,6 +38,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -78,6 +79,7 @@ import rs.teslaris.thesislibrary.model.RegistryBookPersonalInformation;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
 import rs.teslaris.thesislibrary.service.impl.RegistryBookServiceImpl;
 import rs.teslaris.thesislibrary.service.interfaces.PromotionService;
+import rs.teslaris.thesislibrary.service.interfaces.RegistryBookDraftService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
 @SpringBootTest
@@ -109,6 +111,12 @@ class RegistryBookServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private RegistryBookDraftService registryBookDraftService;
 
     @InjectMocks
     private RegistryBookServiceImpl registryBookService;
@@ -186,6 +194,7 @@ class RegistryBookServiceTest {
         // Then
         assertNotNull(result);
         verify(registryBookEntryRepository).save(any());
+        verify(registryBookDraftService).deleteDraftsForThesis(1);
     }
 
     @ParameterizedTest
@@ -227,6 +236,9 @@ class RegistryBookServiceTest {
         // Given
         var id = 10;
         RegistryBookEntry entry = new RegistryBookEntry();
+        entry.setThesis(new Thesis() {{
+            setId(1);
+        }});
         when(registryBookEntryRepository.findById(id)).thenReturn(Optional.of(entry));
 
         // When
@@ -322,7 +334,7 @@ class RegistryBookServiceTest {
         // Then
         assertEquals(LocalDate.of(1990, 1, 1), result.getLocalBirthDate());
         assertEquals("Novi Sad", result.getPlaceOfBirth());
-        assertEquals("мр Mentor Prezime, ванр. проф.", result.getMentor());
+        assertEquals("мр Ментор Презиме, ванр. проф.", result.getMentor());
         assertEquals("email@example.com", result.getContact().getContactEmail());
         assertEquals("+381111111", result.getContact().getPhoneNumber());
     }
@@ -837,6 +849,63 @@ class RegistryBookServiceTest {
 
         // When
         var result = registryBookService.isAttendanceNotCancelled(identifier);
+
+        // Then
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnTrueWhenPromotionFinishedAndAllowSingleEditFalse() {
+        // Given
+        var entryId = 1;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(true);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(entry.getAllowSingleEdit()).thenReturn(false);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canAllowSingleEdit(entryId);
+
+        // Then
+        assertTrue(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenPromotionFinishedButAllowSingleEditTrue() {
+        // Given
+        var entryId = 2;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(true);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(entry.getAllowSingleEdit()).thenReturn(true);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canAllowSingleEdit(entryId);
+
+        // Then
+        assertFalse(result);
+    }
+
+    @Test
+    void shouldReturnFalseWhenPromotionNotFinished() {
+        // Given
+        var entryId = 3;
+        var promotion = mock(Promotion.class);
+        when(promotion.getFinished()).thenReturn(false);
+
+        var entry = mock(RegistryBookEntry.class);
+        when(entry.getPromotion()).thenReturn(promotion);
+        when(entry.getAllowSingleEdit()).thenReturn(false);
+        when(registryBookEntryRepository.findById(entryId)).thenReturn(Optional.of(entry));
+
+        // When
+        var result = registryBookService.canAllowSingleEdit(entryId);
 
         // Then
         assertFalse(result);

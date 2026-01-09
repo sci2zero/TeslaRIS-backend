@@ -36,6 +36,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.language.SerbianTransliteration;
+import rs.teslaris.thesislibrary.dto.NotAddedToPromotionThesesRequestDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingService;
@@ -46,14 +47,11 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingServic
 @Traceable
 public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReportingService {
 
+    public static final Object lock = new Object();
     private final ThesisRepository thesisRepository;
-
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
-
     private final OrganisationUnitService organisationUnitService;
-
     private final OrganisationUnitIndexRepository organisationUnitIndexRepository;
-
     private final LoadingCache<ThesisReportRequestDTO, List<ThesisReportCountsDTO>>
         thesisReportCache =
         CacheBuilder.newBuilder()
@@ -65,7 +63,6 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
                     return fetchThesisCounts(request);
                 }
             });
-
 
     @Override
     public List<ThesisReportCountsDTO> createThesisCountsReport(ThesisReportRequestDTO request) {
@@ -125,6 +122,28 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
     }
 
     @Override
+    public Page<DocumentPublicationIndex> fetchDefendedThesesInPeriodNotSentToPromotion(
+        NotAddedToPromotionThesesRequestDTO request, Integer libraryInstitutionId,
+        Pageable pageable) {
+        List<Integer> institutionIds;
+        if (Objects.nonNull(libraryInstitutionId)) {
+            institutionIds =
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                    libraryInstitutionId);
+        } else {
+            institutionIds = getAllSubInstitutionsForTopLevelOnes(request.topLevelInstitutionIds());
+        }
+
+        return documentPublicationIndexRepository.fetchDefendedThesesNotSentToPromotionInPeriod(
+            request.fromDate(),
+            request.toDate(), institutionIds,
+            request.thesisTypes().isEmpty() ?
+                List.of(ThesisType.PHD.name(), ThesisType.PHD_ART_PROJECT.name()) :
+                request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable);
+    }
+
+    @Override
     public Page<DocumentPublicationIndex> fetchAcceptedThesesInPeriod(
         ThesisReportRequestDTO request, Pageable pageable) {
         var institutionIds = getAllSubInstitutionsForTopLevelOnes(request.topLevelInstitutionIds());
@@ -164,15 +183,17 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
         }
 
         try {
-            var document = ReportTemplateEngine.loadDocumentTemplate("phdLibraryReport.docx");
-
             var reportCounts = createThesisCountsReport(request);
             var reportData = generateReportData(request, reportCounts, locale);
 
-            ReportTemplateEngine.insertFields(document, reportData.a);
-            ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
+            synchronized (lock) {
+                var document = ReportTemplateEngine.loadDocumentTemplate("phdLibraryReport.docx");
 
-            return ReportTemplateEngine.getReportAsResource(document);
+                ReportTemplateEngine.insertFields(document, reportData.a);
+                ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
+
+                return ReportTemplateEngine.getReportAsResource(document);
+            }
         } catch (IOException e) {
             throw new LoadingException(
                 "Unable to load report template file."); // Should never happen

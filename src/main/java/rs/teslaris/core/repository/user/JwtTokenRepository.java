@@ -12,7 +12,7 @@ import rs.teslaris.core.model.user.JwtToken;
 @Repository
 public interface JwtTokenRepository extends JpaRepository<JwtToken, Integer> {
 
-    Optional<JwtToken> findByJti(String jti);
+    Optional<JwtToken> findByJtiAndRevokedFalse(String jti);
 
     List<JwtToken> findByUserIdAndRevokedFalse(Integer userId);
 
@@ -26,4 +26,10 @@ public interface JwtTokenRepository extends JpaRepository<JwtToken, Integer> {
     @Query("DELETE FROM JwtToken t WHERE t.revoked = true OR t.expiresAt < CURRENT_TIMESTAMP")
     void deleteRevokedAndExpiredTokens();
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE JwtToken t SET t.revoked = true " +
+        "WHERE EXISTS " +
+        "(SELECT u FROM User u JOIN u.authority a WHERE u.id = t.user.id AND a.name <> 'ADMIN')")
+    void revokeAllNonAdminTokens();
 }

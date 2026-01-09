@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -21,7 +21,7 @@ import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
 public class MonographConverter extends DocumentConverter
     implements RecordConverter<Publication, MonographDTO> {
 
-    private final LanguageTagService languageTagService;
+    private final LanguageService languageService;
 
 
     @Autowired
@@ -30,10 +30,10 @@ public class MonographConverter extends DocumentConverter
                               BookSeriesService bookSeriesService,
                               JournalService journalService,
                               PersonContributionConverter personContributionConverter,
-                              LanguageTagService languageTagService) {
+                              LanguageService languageService) {
         super(multilingualContentConverter, publisherConverter, bookSeriesService, journalService,
             personContributionConverter);
-        this.languageTagService = languageTagService;
+        this.languageService = languageService;
     }
 
     @Override
@@ -51,17 +51,17 @@ public class MonographConverter extends DocumentConverter
         // TODO: what to do with research area, we get them here as string but in our model they are separate entities
 
         if (Objects.nonNull(record.getLanguage())) {
-            var languageTagValue = deduceLanguageTagValue(record);
+            var languageCode = deduceLanguageCode(record);
 
-            var languageTag = languageTagService.findLanguageTagByValue(languageTagValue);
-            if (Objects.nonNull(languageTag.getId())) {
-                dto.setLanguageTagIds(List.of(languageTag.getId()));
+            var language = languageService.findLanguageByCode(languageCode);
+            if (Objects.nonNull(language.getId())) {
+                dto.setLanguageIds(List.of(language.getId()));
             } else {
-                log.warn("No saved language with tag: {}", languageTagValue);
+                log.warn("No saved language with code: {}", languageCode);
                 return null;
             }
         } else {
-            dto.setLanguageTagIds(Collections.emptyList());
+            dto.setLanguageIds(Collections.emptyList());
         }
 
         if (Objects.nonNull(record.getPublisher())) {

@@ -77,7 +77,8 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty("publicationTypes") String publicationTypes,
         @JsonProperty(value = "concreteTypeFilters") String concreteTypeFilters,
         @JsonProperty("converterClass") String converterClass,
-        @JsonProperty("additionalFilters") String additionalFilters
+        @JsonProperty("additionalFilters") String additionalFilters,
+        @JsonProperty(value = "default", defaultValue = "false") Boolean isDefaultSet
     ) {
     }
 }

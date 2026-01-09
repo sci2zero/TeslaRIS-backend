@@ -355,6 +355,10 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/thesis-library/report/download/{lang}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/assessment/report/download/{reportFileName}/{commissionId}").permitAll()
 
+                // APPLICATION CONFIGURATION
+                .requestMatchers(HttpMethod.GET, "/api/app-configuration/maintenance/next").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/app-configuration/maintenance/check").permitAll()
+
                 // EVERYTHING ELSE
                 .anyRequest().authenticated()
             );

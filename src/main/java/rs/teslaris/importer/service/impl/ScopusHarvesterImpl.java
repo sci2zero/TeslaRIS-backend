@@ -1,8 +1,5 @@
 package rs.teslaris.importer.service.impl;
 
-import ai.djl.translate.TranslateException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -13,8 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -206,16 +201,18 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                     continue;
                 }
 
-                var existingImport = findExistingImport(entry.identifier());
-                var embedding = generateEmbedding(entry);
-                if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
-                    continue;
-                }
-
                 var optionalDocument =
                     ScopusConverter.toCommonImportModel(entry, scopusImportUtility);
                 if (optionalDocument.isEmpty()) {
                     log.info("Harvested entry is retracted: {}", entry.title());
+                    continue;
+                }
+
+                var existingImport =
+                    CommonImportUtility.findExistingImport(optionalDocument.get().getIdentifier());
+                var embedding = CommonImportUtility.generateEmbedding(optionalDocument.get());
+                if (DeduplicationUtil.isDuplicate(existingImport, embedding,
+                    optionalDocument.get())) {
                     continue;
                 }
 
@@ -234,22 +231,6 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
 
                 mongoTemplate.save(documentImport, "documentImports");
             }
-        }
-    }
-
-    private DocumentImport findExistingImport(String identifier) {
-        var query = new Query(Criteria.where("identifier").is(identifier));
-        return mongoTemplate.findOne(query, DocumentImport.class, "documentImports");
-    }
-
-    private INDArray generateEmbedding(ScopusImportUtility.Entry entry) {
-        try {
-            var json = new ObjectMapper().writeValueAsString(entry);
-            var flattened = DeduplicationUtil.flattenJson(json);
-            return DeduplicationUtil.getEmbedding(flattened);
-        } catch (JsonProcessingException | TranslateException e) {
-            log.error("Error generating embedding: {}", e.getMessage());
-            return null;
         }
     }
 

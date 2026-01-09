@@ -1,5 +1,6 @@
 package rs.teslaris.exporter.model.skgif;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,14 +11,21 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SKGIFMeta {
 
-    @JsonProperty("count")
-    private long count;
+    @JsonProperty("local_identifier")
+    private String localIdentifier;
 
-    @JsonProperty("page")
-    private int page;
+    @JsonProperty("entity_type")
+    private String entityType = "search_result_page";
 
-    @JsonProperty("page_size")
-    private int size;
+    @JsonProperty("next_page")
+    private SearchResultPage nextPage;
+
+    @JsonProperty("prev_page")
+    private SearchResultPage prevPage;
+
+    @JsonProperty("part_of")
+    private SearchResultPartOf partOf;
 }

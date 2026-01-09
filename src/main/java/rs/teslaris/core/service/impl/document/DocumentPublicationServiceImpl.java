@@ -7,10 +7,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import jakarta.annotation.Nullable;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,6 +48,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
+import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -533,7 +530,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             ? document.getLastModification()
             : new Date());
         index.setDatabaseId(document.getId());
-        index.setYear(parseYear(document.getDocumentDate()));
+        index.setYear(StringUtil.parseYear(document.getDocumentDate()));
         indexTitle(document, index);
         index.setTitleSrSortable(index.getTitleSr());
         index.setTitleOtherSortable(index.getTitleOther());
@@ -810,7 +807,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             entityChunk.forEach(document -> {
                 var index = indexMap.get(document.getId());
-                if (index != null) {
+                if (Objects.nonNull(index)) {
                     setEmploymentIndexInformation(
                         index,
                         new ArrayList<>(document.getContributors()),
@@ -904,12 +901,23 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 return;
             }
 
-            var file = documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId());
-            index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
-            index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
+            documentFileService.findDocumentFileIndexByDatabaseId(documentFile.getId())
+                .ifPresentOrElse(file -> setFullTextFields(index, file),
+                    () -> {
+                        // Simple retry logic
+                        var file = documentFileService.reindexDocumentFile(documentFile);
+                        if (Objects.nonNull(file)) {
+                            setFullTextFields(index, file);
+                        }
+                    });
         });
 
         documentPublicationIndexRepository.save(index);
+    }
+
+    private void setFullTextFields(DocumentPublicationIndex index, DocumentFileIndex file) {
+        index.setFullTextSr(index.getFullTextSr() + file.getPdfTextSr());
+        index.setFullTextOther(index.getFullTextOther() + " " + file.getPdfTextOther());
     }
 
     private void indexTitle(Document document, DocumentPublicationIndex index) {
@@ -953,36 +961,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             !contentSr.isEmpty() ? contentSr.toString() : contentOther.toString());
         index.setKeywordsOther(
             !contentOther.isEmpty() ? contentOther.toString() : contentSr.toString());
-    }
-
-    private int parseYear(String dateString) {
-        if (Objects.isNull(dateString)) {
-            return -1;
-        }
-
-        DateTimeFormatter[] formatters = {
-            DateTimeFormatter.ofPattern("yyyy"), // Year only
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy"),
-            DateTimeFormatter.ofPattern("dd.MM.yyyy.")
-        };
-
-        for (var formatter : formatters) {
-            try {
-                TemporalAccessor parsed = formatter.parse(dateString);
-
-                if (parsed.isSupported(ChronoField.YEAR)) {
-                    return parsed.get(ChronoField.YEAR);
-                }
-            } catch (DateTimeParseException e) {
-                // Parsing failed, try the next formatter
-            }
-        }
-
-        return -1;
     }
 
     protected void setCommonFields(Document document, DocumentDTO documentDTO) {
@@ -1197,11 +1175,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setEditorNames("");
         index.setReviewerNames("");
         index.setAdvisorNames("");
+        index.setBoardMemberNames("");
 
         index.getAuthorIds().clear();
         index.getEditorIds().clear();
         index.getReviewerIds().clear();
         index.getAdvisorIds().clear();
+        index.getBoardMemberIds().clear();
     }
 
     protected void deleteProofsAndFileItems(Document publicationToDelete) {
@@ -1244,6 +1224,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                  String openAlexId,
                                                                  String webOfScienceId,
                                                                  List<String> internalIdentifiers) {
+        if ((Objects.isNull(titles) || titles.isEmpty()) &&
+            (Objects.isNull(internalIdentifiers) || internalIdentifiers.isEmpty()) &&
+            !StringUtil.valueExists(doi) && !StringUtil.valueExists(scopusId) &&
+            !StringUtil.valueExists(openAlexId) && !StringUtil.valueExists(webOfScienceId)) {
+            return Page.empty();
+        }
+
         var query =
             buildDeduplicationSearchQuery(titles, doi, scopusId, openAlexId, webOfScienceId,
                 internalIdentifiers);

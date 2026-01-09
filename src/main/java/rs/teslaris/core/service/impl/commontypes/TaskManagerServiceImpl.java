@@ -214,6 +214,11 @@ public class TaskManagerServiceImpl implements TaskManagerService {
         return listScheduledTasks(userId, role, this::isRegistryBookTask);
     }
 
+    @Override
+    public List<ScheduledTaskResponseDTO> listScheduledMaintenanceTasks() {
+        return listScheduledTasks(null, UserRole.ADMIN.name(), this::isMaintenanceTask);
+    }
+
     private List<ScheduledTaskResponseDTO> listScheduledTasks(Integer userId, String role,
                                                               Function<String, Boolean> taskFilter) {
         boolean isAdmin = UserRole.ADMIN.name().equals(role);
@@ -274,6 +279,10 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
     private boolean isRegistryBookTask(String taskId) {
         return taskId.startsWith("Registry_Book-");
+    }
+
+    private boolean isMaintenanceTask(String taskId) {
+        return taskId.startsWith("Maintenance-");
     }
 
     private boolean isTaskInSubOU(String taskId, List<Integer> subOUs) {

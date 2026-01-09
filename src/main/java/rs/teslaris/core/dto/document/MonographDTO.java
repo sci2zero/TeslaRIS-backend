@@ -30,7 +30,7 @@ public class MonographDTO extends DocumentDTO implements PublishableDTO, InSerie
 
     private Integer publicationSeriesId;
 
-    private List<Integer> languageTagIds;
+    private List<Integer> languageIds;
 
     private Integer researchAreaId;
 

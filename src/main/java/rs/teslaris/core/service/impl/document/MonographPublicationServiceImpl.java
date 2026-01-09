@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
@@ -18,6 +19,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -163,6 +165,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var monographPublicationToUpdate =
             monographPublicationJPAService.findOne(monographPublicationId);
 
+        clearCommonFields(monographPublicationToUpdate);
         setCommonFields(monographPublicationToUpdate, monographPublicationDTO);
         setMonographPublicationRelatedFields(monographPublicationToUpdate, monographPublicationDTO);
 
@@ -198,7 +201,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         while (hasNextPage) {
 
             List<MonographPublication> chunk =
-                monographPublicationJPAService.findAll(PageRequest.of(pageNumber, chunkSize))
+                monographPublicationJPAService.findAll(
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
                     .getContent();
 
             chunk.forEach((monographPublication) -> indexMonographPublication(monographPublication,
@@ -226,6 +230,10 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         }
 
         monographPublication.setMonograph(monograph);
+        if (monographPublication.getMonographPublicationType()
+            .equals(MonographPublicationType.CHAPTER)) {
+            monographPublication.setDocumentDate(monograph.getDocumentDate());
+        }
     }
 
     @Override

@@ -30,7 +30,7 @@ public class MonographConverter extends DocumentPublicationConverter {
         monographResponseDTO.setNumber(monograph.getNumber());
         monographResponseDTO.setVolume(monograph.getVolume());
 
-        monographResponseDTO.setLanguageTagIds(new ArrayList<>());
+        monographResponseDTO.setLanguageIds(new ArrayList<>());
 
         if (Objects.nonNull(monograph.getResearchArea())) {
             monographResponseDTO.setResearchAreaId(monograph.getResearchArea().getId());
@@ -48,8 +48,8 @@ public class MonographConverter extends DocumentPublicationConverter {
 
     private static void setLanguageInfo(Monograph monograph,
                                         MonographDTO monographResponseDTO) {
-        monograph.getLanguages().forEach(languageTag -> {
-            monographResponseDTO.getLanguageTagIds().add(languageTag.getId());
+        monograph.getLanguages().forEach(language -> {
+            monographResponseDTO.getLanguageIds().add(language.getId());
         });
     }
 

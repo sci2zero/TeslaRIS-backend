@@ -72,7 +72,8 @@ public class CSVHarvesterImpl implements CSVHarvester {
                                 documentImport.getIdentifier());
                             var embedding = CommonImportUtility.generateEmbedding(documentImport);
 
-                            if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+                            if (DeduplicationUtil.isDuplicate(existingImport, embedding,
+                                documentImport)) {
                                 return;
                             }
 

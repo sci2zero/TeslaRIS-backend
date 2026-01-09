@@ -30,7 +30,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
-import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -38,7 +38,7 @@ import rs.teslaris.core.repository.document.PublicationSeriesRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -68,7 +68,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     @Autowired
     public JournalServiceImpl(PublicationSeriesRepository publicationSeriesRepository,
                               MultilingualContentService multilingualContentService,
-                              LanguageTagService languageTagService,
+                              LanguageService languageService,
                               PersonContributionService personContributionService,
                               IndexBulkUpdateService indexBulkUpdateService,
                               JournalJPAServiceImpl journalJPAService,
@@ -77,7 +77,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
                               JournalRepository journalRepository,
                               DocumentPublicationIndexRepository documentPublicationIndexRepository,
                               CommissionRepository commissionRepository) {
-        super(publicationSeriesRepository, multilingualContentService, languageTagService,
+        super(publicationSeriesRepository, multilingualContentService, languageService,
             personContributionService, indexBulkUpdateService);
         this.journalJPAService = journalJPAService;
         this.searchService = searchService;
@@ -359,7 +359,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
 
         if (Objects.isNull(publicationSeries)) {
             var defaultLanguage =
-                languageTagService.findLanguageTagByValue(defaultLanguageTag);
+                languageService.findLanguageByCode(defaultLanguageTag);
             publicationSeries =
                 findJournalByJournalName(journalName, defaultLanguage, eIssn, printIssn);
         }
@@ -378,7 +378,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     @Override
     @Transactional
     public Journal findJournalByJournalName(String journalName,
-                                            LanguageTag defaultLanguage,
+                                            Language defaultLanguage,
                                             String eIssn, String printIssn) {
         var potentialHits = searchJournals(
             Arrays.stream(journalName.split(" ")).toList(), PageRequest.of(0, 2),
@@ -411,16 +411,16 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         return createNewJournal(journalName, defaultLanguage, eIssn, printIssn);
     }
 
-    private Journal createNewJournal(String journalName, LanguageTag defaultLanguage,
+    private Journal createNewJournal(String journalName, Language defaultLanguage,
                                      String eIssn, String printIssn) {
         var newJournal = new JournalDTO();
         newJournal.setTitle(List.of(new MultilingualContentDTO(defaultLanguage.getId(),
-            defaultLanguage.getLanguageTag(), StringEscapeUtils.unescapeHtml4(journalName), 1)));
+            defaultLanguage.getLanguageCode(), StringEscapeUtils.unescapeHtml4(journalName), 1)));
         newJournal.setNameAbbreviation(new ArrayList<>());
         newJournal.setContributions(new ArrayList<>());
         newJournal.setEissn(eIssn);
         newJournal.setPrintISSN(printIssn);
-        newJournal.setLanguageTagIds(List.of(defaultLanguage.getId()));
+        newJournal.setLanguageIds(List.of(defaultLanguage.getId()));
 
         return createJournal(newJournal, true);
     }

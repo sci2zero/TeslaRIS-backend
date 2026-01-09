@@ -1,0 +1,95 @@
+databaseChangeLog:
+- changeSet:
+    id: 1764891258324-4
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: proceedings_languages
+        constraintName: fk18j4bv85xemc26x272nr86nb1
+    - sql:
+        dbms: postgresql
+        stripComments: true
+        sql: |
+            UPDATE proceedings_languages ml
+            SET languages_id = l.id
+            FROM language_tag lt
+            JOIN languages l ON l.language_code = lt.language_tag
+            WHERE ml.languages_id = lt.id;
+- changeSet:
+    id: 1764891258324-5
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: monographs_languages
+        constraintName: fkbe8lvxp7lnk7edlm1s34lbg33
+    - sql:
+        dbms: postgresql
+        stripComments: true
+        sql: |
+            UPDATE monographs_languages ml
+            SET languages_id = l.id
+            FROM language_tag lt
+            JOIN languages l ON l.language_code = lt.language_tag
+            WHERE ml.languages_id = lt.id;
+- changeSet:
+    id: 1764891258324-6
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: publication_series_languages
+        constraintName: fksgawywb79cdljnn9x7ga6wquf
+    - sql:
+        dbms: postgresql
+        stripComments: true
+        sql: |
+            UPDATE publication_series_languages ml
+            SET languages_id = l.id
+            FROM language_tag lt
+            JOIN languages l ON l.language_code = lt.language_tag
+            WHERE ml.languages_id = lt.id;
+- changeSet:
+    id: 1764891258324-1
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: languages_id
+        baseTableName: proceedings_languages
+        constraintName: fk7dqivo74qqhyjc423txaoo1kb
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: languages
+        validate: true
+- changeSet:
+    id: 1764891258324-2
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: languages_id
+        baseTableName: monographs_languages
+        constraintName: fk9dmyyfnu0gd8eykp7flxvvepq
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: languages
+        validate: true
+- changeSet:
+    id: 1764891258324-3
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: languages_id
+        baseTableName: publication_series_languages
+        constraintName: fkpd2qn0f49onjj7dsda9ql6hji
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: languages
+        validate: true
+

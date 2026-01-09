@@ -77,6 +77,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserAccountActivation;
 import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.commontypes.ApplicationConfigurationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.EmailUpdateRequestRepository;
@@ -95,6 +96,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
+import rs.teslaris.core.util.exceptionhandling.exception.MaintenanceModeException;
 import rs.teslaris.core.util.exceptionhandling.exception.NonExistingRefreshTokenException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PasswordException;
@@ -165,6 +167,9 @@ public class UserServiceTest {
 
     @Mock
     private BrandingInformationService brandingInformationService;
+
+    @Mock
+    private ApplicationConfigurationRepository applicationConfigurationRepository;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -289,6 +294,7 @@ public class UserServiceTest {
             setIsClientInstitutionCris(true);
             getCrisConfig().setValidateEmailDomain(false);
         }});
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
 
         // when
         var savedUser = userService.registerResearcher(registrationRequest);
@@ -537,6 +543,7 @@ public class UserServiceTest {
         var registrationRequest = new ResearcherRegistrationRequestDTO();
         registrationRequest.setPassword("Password123");
 
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
         when(authorityRepository.findByName(anyString())).thenReturn(Optional.empty());
 
         // when
@@ -553,12 +560,25 @@ public class UserServiceTest {
         registrationRequest.setPassword("weak_password");
 
         when(authorityRepository.findById(2)).thenReturn(Optional.empty());
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
 
         // when
         assertThrows(PasswordException.class,
             () -> userService.registerResearcher(registrationRequest));
 
         // then (PasswordException should be thrown)
+    }
+
+    @Test
+    public void shouldThrowMaintenanceModeExceptionWhenMaintenanceIsInProgress() {
+        // given
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(true);
+
+        // when
+        assertThrows(MaintenanceModeException.class,
+            () -> userService.registerResearcher(new ResearcherRegistrationRequestDTO()));
+
+        // then (MaintenanceModeException should be thrown)
     }
 
     @Test
@@ -604,6 +624,7 @@ public class UserServiceTest {
         var requestDTO = new ResearcherRegistrationRequestDTO();
         requestDTO.setEmail("admin@admin.com");
         when(userRepository.findByEmail(requestDTO.getEmail())).thenReturn(Optional.of(new User()));
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
 
         // When
         assertThrows(UserAlreadyExistsException.class,
@@ -788,6 +809,7 @@ public class UserServiceTest {
         when(authenticationManager.authenticate(
             any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(user);
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
 
         when(tokenUtil.generateToken(any(Authentication.class), eq(fingerprint))).thenReturn(
             "access_token");
@@ -809,6 +831,7 @@ public class UserServiceTest {
         var authenticationRequest =
             new AuthenticationRequestDTO("test@example.com", "password");
 
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
         when(authenticationManager.authenticate(
             any(UsernamePasswordAuthenticationToken.class))).thenThrow(
             new BadCredentialsException("Invalid credentials"));
@@ -1785,5 +1808,55 @@ public class UserServiceTest {
             eq(Locale.forLanguageTag("de")));
         verify(messageSource).getMessage(eq("accountActivation.mailBodyResearcher"), any(),
             eq(Locale.forLanguageTag("de")));
+    }
+
+    @Test
+    void ShouldThrowMaintenanceModeExceptionWhenMaintenanceModeAndUserIsNotAdmin() {
+        // Given
+        var authenticationManager = mock(AuthenticationManager.class);
+        var authRequest = new AuthenticationRequestDTO("user@example.com", "password");
+        var fingerprint = "test-fingerprint";
+
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(true);
+
+        var regularUser = new User();
+        regularUser.setEmail("user@example.com");
+        Authority userAuthority = new Authority();
+        userAuthority.setName("RESEARCHER");
+        regularUser.setAuthority(userAuthority);
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(regularUser));
+
+        // When & Then
+        MaintenanceModeException exception = assertThrows(
+            MaintenanceModeException.class,
+            () -> userService.authenticateUser(authenticationManager, authRequest, fingerprint)
+        );
+
+        assertEquals("maintenanceInProgressMessage", exception.getMessage());
+
+        verify(authenticationManager, never()).authenticate(any());
+    }
+
+    @Test
+    void ShouldThrowMaintenanceModeExceptionWhenMaintenanceModeAndUserNotFound() {
+        // Given
+        var authenticationManager = mock(AuthenticationManager.class);
+        var authRequest = new AuthenticationRequestDTO("nonexistent@example.com", "password");
+        var fingerprint = "test-fingerprint";
+
+        when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(true);
+
+        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+
+        // When & Then
+        MaintenanceModeException exception = assertThrows(
+            MaintenanceModeException.class,
+            () -> userService.authenticateUser(authenticationManager, authRequest, fingerprint)
+        );
+
+        assertEquals("maintenanceInProgressMessage", exception.getMessage());
+
+        verify(authenticationManager, never()).authenticate(any());
     }
 }

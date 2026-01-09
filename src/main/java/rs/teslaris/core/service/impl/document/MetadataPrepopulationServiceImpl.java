@@ -69,7 +69,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         var url = "https://doi.org/" + doi;
 
         var headers = new HttpHeaders();
-        headers.set("Accept", "text/bibliography; style=bibtex");
+        headers.set("Accept", "application/x-bibtex");
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
         var restTemplate = restTemplateProvider.provideRestTemplate();
@@ -120,6 +120,22 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
             var english = languageTagService.findLanguageTagByValue("EN");
             metadata.getTitle().add(new MultilingualContentDTO(
                 english.getId(), english.getLanguageTag(), title, 1));
+        }
+    }
+
+    private void setKeywords(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
+        var keywordsValue = bibEntry.getField(new Key("keywords"));
+        if (Objects.nonNull(keywordsValue)) {
+            var keywords = keywordsValue.toUserString();
+            var english = languageTagService.findLanguageTagByValue("EN");
+            metadata.getKeywords().add(
+                new MultilingualContentDTO(
+                    english.getId(),
+                    english.getLanguageTag(),
+                    keywords.replace(", ", "\n"),
+                    1
+                )
+            );
         }
     }
 
@@ -219,6 +235,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         metadata.setDoi(getStringField(bibEntry, BibTeXEntry.KEY_DOI));
 
         setPageInfo(metadata, bibEntry.getField(new Key("pages")));
+        setKeywords(metadata, bibEntry);
     }
 
     private String getStringField(BibTeXEntry entry, Key key) {

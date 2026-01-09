@@ -155,13 +155,24 @@ public class ScopusConverter {
         person.setScopusAuthorId(author.authId());
         person.setImportId(author.authId());
 
-        var authorName = author.authName().split(" ");
-        if (authorName.length == 2) {
-            person.setName(new PersonName(authorName[0], "", authorName[1]));
-        } else if (authorName.length == 3) {
-            person.setName(new PersonName(authorName[0], authorName[1], authorName[2]));
+        if (StringUtil.valueExists(author.givenName()) &&
+            StringUtil.valueExists(author.surname())) {
+            var givenNameParts = author.givenName().split(" ", 2);
+            if (givenNameParts.length == 1) {
+                person.setName(new PersonName(author.givenName(), "", author.surname()));
+            } else {
+                person.setName(
+                    new PersonName(givenNameParts[0], givenNameParts[1], author.surname()));
+            }
         } else {
-            person.setName(new PersonName(author.givenName(), "", author.surname()));
+            var authorName = author.authName().split(" ");
+            if (authorName.length == 2) {
+                person.setName(new PersonName(authorName[0], "", authorName[1]));
+            } else if (authorName.length == 3) {
+                person.setName(new PersonName(authorName[0], authorName[1], authorName[2]));
+            } else {
+                person.setName(new PersonName(author.authName(), "", ""));
+            }
         }
         return person;
     }

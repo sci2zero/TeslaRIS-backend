@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
 import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.RegistryBookInfoReindexEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
@@ -159,6 +160,8 @@ public class ReindexServiceImpl implements ReindexService {
         safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
         safeReindex(thesisService::reindexTheses, "Error reindexing theses");
 
+        applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());
+
         return CompletableFuture.completedFuture(null);
     }
 
@@ -185,7 +188,10 @@ public class ReindexServiceImpl implements ReindexService {
             case DATASET -> datasetService.reindexDatasets();
             case MONOGRAPH_PUBLICATION ->
                 monographPublicationService.reindexMonographPublications();
-            case THESIS -> thesisService.reindexTheses();
+            case THESIS -> {
+                thesisService.reindexTheses();
+                applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());
+            }
         }
 
         return CompletableFuture.completedFuture(null);

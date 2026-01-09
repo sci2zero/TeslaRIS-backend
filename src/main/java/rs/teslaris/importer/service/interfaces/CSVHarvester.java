@@ -12,5 +12,5 @@ public interface CSVHarvester {
                                                         MultipartFile csvFile,
                                                         HashMap<Integer, Integer> newEntriesCount);
 
-    public Pair<String, String> getFormatDescription(String language);
+    Pair<String, String> getFormatDescription(String language);
 }

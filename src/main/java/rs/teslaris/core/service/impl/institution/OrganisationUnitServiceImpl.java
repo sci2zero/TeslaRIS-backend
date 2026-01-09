@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -629,6 +630,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             updateDlConfiguration(organisationUnit, organisationUnitDTO);
         }
 
+        if (Objects.isNull(organisationUnit.getEmailConfigurations())) {
+            organisationUnit.setEmailConfigurations(new HashMap<>());
+        }
+
         organisationUnit.getCrisConfig()
             .setValidateEmailDomain(organisationUnitDTO.isValidatingEmailDomainCris());
         organisationUnit.getCrisConfig()
@@ -1063,6 +1068,10 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         reindexSubUnitRelationsAndTerminateClientStatus(
             relationToDelete.getSourceOrganisationUnit());
+
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(
+                relationToDelete.getSourceOrganisationUnit().getId()));
     }
 
     @Override
@@ -1081,6 +1090,9 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         reindexSubUnitRelationsAndTerminateClientStatus(subOu);
 
         organisationUnitsRelationRepository.delete(relations.getFirst());
+
+        applicationEventPublisher.publishEvent(
+            new OrganisationUnitSignificantChangeEvent(subOu.getId()));
     }
 
     private void reindexSubUnitRelationsAndTerminateClientStatus(
@@ -1100,6 +1112,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnitId -> {
                 var subOU = findOne(organisationUnitId);
                 subOU.setIsClientInstitutionCris(false);
+
+                if (Objects.isNull(subOU.getEmailConfigurations())) {
+                    subOU.setEmailConfigurations(new HashMap<>());
+                }
+
                 subOU.getCrisConfig().setValidateEmailDomain(false);
                 subOU.getCrisConfig().setAllowSubdomains(false);
                 save(subOU);
@@ -1141,6 +1158,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                     var subOU = findOne(organisationUnitId);
                     subOU.setIsClientInstitutionCris(
                         relation.getTargetOrganisationUnit().getIsClientInstitutionCris());
+
+                    if (Objects.isNull(subOU.getEmailConfigurations())) {
+                        subOU.setEmailConfigurations(new HashMap<>());
+                    }
+
                     subOU.getCrisConfig().setValidateEmailDomain(
                         relation.getTargetOrganisationUnit().getCrisConfig()
                             .getValidateEmailDomain());
@@ -1332,6 +1354,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                                             OrganisationUnitIndex subOUIndex,
                                             OrganisationUnitRequestDTO dto) {
         subOU.setIsClientInstitutionCris(dto.isClientInstitutionCris());
+
+        if (Objects.isNull(subOU.getEmailConfigurations())) {
+            subOU.setEmailConfigurations(new HashMap<>());
+        }
+
         subOU.getCrisConfig().setValidateEmailDomain(dto.isValidatingEmailDomainCris());
         subOU.getCrisConfig().setAllowSubdomains(dto.isAllowingSubdomainsCris());
         subOU.getCrisConfig().setInstitutionEmailDomain(dto.getInstitutionEmailDomainCris());
@@ -1352,6 +1379,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         }
 
         subOU.setIsClientInstitutionDl(dto.isClientInstitutionDl());
+
+        if (Objects.isNull(subOU.getEmailConfigurations())) {
+            subOU.setEmailConfigurations(new HashMap<>());
+        }
+
         subOU.getDlConfig().setValidateEmailDomain(dto.isValidatingEmailDomainDl());
         subOU.getDlConfig().setAllowSubdomains(dto.isAllowingSubdomainsDl());
         subOU.getDlConfig().setInstitutionEmailDomain(dto.getInstitutionEmailDomainDl());

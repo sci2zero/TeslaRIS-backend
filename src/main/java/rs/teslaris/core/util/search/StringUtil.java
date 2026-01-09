@@ -9,6 +9,10 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.Normalizer;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +39,9 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Slf4j
 public class StringUtil {
 
-    private static final Pattern CLEAN_PATTERN = Pattern.compile("(\\b\\d+\\b)|[\\p{Punct}]+");
+    private static final Pattern CLEAN_PATTERN = Pattern.compile("(^\\d+$)|[\\p{Punct}&&[^-]]+");
+
+    private static final int MIN_WORD_LENGTH = 3;
 
     private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
 
@@ -236,14 +242,18 @@ public class StringUtil {
             tokenStream.reset();
             while (tokenStream.incrementToken()) {
                 String rawToken = attr.toString().toLowerCase(Locale.ROOT);
+
                 String cleaned = CLEAN_PATTERN.matcher(rawToken).replaceAll("");
-                if (!cleaned.isBlank() && !stopwords.contains(cleaned)) {
+
+                if (!cleaned.isBlank() &&
+                    !stopwords.contains(cleaned) &&
+                    cleaned.length() >= MIN_WORD_LENGTH) {
                     tokens.add(cleaned);
                 }
             }
             tokenStream.end();
         } catch (IOException e) {
-            throw new RuntimeException("Error during tokenization", e); // should never happen
+            throw new RuntimeException("Error during tokenization", e);
         }
         return tokens;
     }
@@ -322,5 +332,35 @@ public class StringUtil {
         }
 
         return identifier;
+    }
+
+    public static int parseYear(String dateString) {
+        if (Objects.isNull(dateString)) {
+            return -1;
+        }
+
+        DateTimeFormatter[] formatters = {
+            DateTimeFormatter.ofPattern("yyyy"), // Year only
+            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
+            DateTimeFormatter.ofPattern("dd.MM.yyyy"),
+            DateTimeFormatter.ofPattern("dd.MM.yyyy.")
+        };
+
+        for (var formatter : formatters) {
+            try {
+                TemporalAccessor parsed = formatter.parse(dateString);
+
+                if (parsed.isSupported(ChronoField.YEAR)) {
+                    return parsed.get(ChronoField.YEAR);
+                }
+            } catch (DateTimeParseException e) {
+                // Parsing failed, try the next formatter
+            }
+        }
+
+        return -1;
     }
 }

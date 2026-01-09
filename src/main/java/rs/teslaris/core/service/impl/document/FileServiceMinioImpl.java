@@ -57,7 +57,7 @@ public class FileServiceMinioImpl implements FileService {
                 .object(serverFilename + "." + extension)
                 .headers(Collections.singletonMap("Content-Disposition",
                     "attachment; filename=\"" + file.getOriginalFilename() + "\""))
-                .stream(file.getInputStream(), file.getInputStream().available(), -1)
+                .stream(file.getInputStream(), file.getSize(), 0)
                 .build();
             minioClient.putObject(args);
         } catch (Exception e) {

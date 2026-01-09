@@ -16,20 +16,28 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.RegistryBookInfoReindexEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Thesis;
@@ -67,12 +75,14 @@ import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 import rs.teslaris.thesislibrary.model.RegistryBookPersonalInformation;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryRepository;
 import rs.teslaris.thesislibrary.service.interfaces.PromotionService;
+import rs.teslaris.thesislibrary.service.interfaces.RegistryBookDraftService;
 import rs.teslaris.thesislibrary.service.interfaces.RegistryBookService;
 import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     implements RegistryBookService {
 
@@ -93,6 +103,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     private final NotificationService notificationService;
 
     private final MessageSource messageSource;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    private final RegistryBookDraftService registryBookDraftService;
 
     private final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.GERMANY);
@@ -153,7 +167,16 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             newEntry.getDissertationInformation().setOrganisationUnit(thesis.getOrganisationUnit());
         }
 
-        return save(newEntry);
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+            .ifPresent(index -> {
+                index.setIsAddedToRegistryBook(true);
+                documentPublicationIndexRepository.save(index);
+            });
+
+        var savedEntry = save(newEntry);
+        registryBookDraftService.deleteDraftsForThesis(thesisId);
+
+        return savedEntry;
     }
 
     @Override
@@ -175,6 +198,12 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             newEntry.getDissertationInformation()
                 .setOrganisationUnit(thesis.getOrganisationUnit());
         }
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+            .ifPresent(index -> {
+                index.setIsAddedToRegistryBook(true);
+                documentPublicationIndexRepository.save(index);
+            });
 
         return save(newEntry);
     }
@@ -229,7 +258,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                                         boolean editedByLibrarian) {
         var entry = findOne(registryBookEntryId);
 
-        if (editedByLibrarian && Objects.nonNull(entry.getPromotion())) {
+        if (editedByLibrarian && Objects.nonNull(entry.getPromotion()) &&
+            !entry.getAllowSingleEdit()) {
             throw new RegistryBookException("Can't update a promoted or in-promotion entry.");
         } else if (Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
             !entry.getAllowSingleEdit()) {
@@ -251,6 +281,13 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         if (Objects.nonNull(entry.getPromotion())) {
             throw new RegistryBookException("Can't delete entry that has a promotion.");
         }
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                entry.getThesis().getId())
+            .ifPresent(index -> {
+                index.setIsAddedToRegistryBook(false);
+                documentPublicationIndexRepository.save(index);
+            });
 
         registryBookEntryRepository.delete(entry);
     }
@@ -663,11 +700,20 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var entry = findOne(registryBookEntryId);
 
         if (librarianCheck) {
-            return Objects.isNull(entry.getPromotion());
+            return Objects.isNull(entry.getPromotion()) || entry.getAllowSingleEdit();
         }
 
         return Objects.isNull(entry.getPromotion()) || !entry.getPromotion().getFinished() ||
             entry.getAllowSingleEdit();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canAllowSingleEdit(Integer registryBookEntryId) {
+        var entry = findOne(registryBookEntryId);
+
+        return Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
+            !entry.getAllowSingleEdit();
     }
 
     private List<Integer> getInstitutionIdsForUser(Integer userId) {
@@ -758,7 +804,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             .ifPresent(mentor -> {
                 StringBuilder sb = new StringBuilder();
                 sb.append(mentor.getPersonalTitle().getValue()).append(" ")
-                    .append(mentor.getAffiliationStatement().getDisplayPersonName())
+                    .append(SerbianTransliteration.toCyrillic(
+                        mentor.getAffiliationStatement().getDisplayPersonName().toString()))
                     .append(", ").append(mentor.getEmploymentTitle().getValue());
 
                 mentor.getInstitutions().stream().findFirst()
@@ -780,7 +827,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     sb.append("\n");
                 }
                 sb.append(member.getPersonalTitle().getValue()).append(" ")
-                    .append(member.getAffiliationStatement().getDisplayPersonName())
+                    .append(SerbianTransliteration.toCyrillic(
+                        member.getAffiliationStatement().getDisplayPersonName().toString()))
                     .append(", ").append(member.getEmploymentTitle().getValue());
 
                 member.getInstitutions().stream().findFirst()
@@ -815,5 +863,39 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             fallback = content;
         }
         return fallback != null ? fallback.getContent() : "";
+    }
+
+    @EventListener
+    protected void handleThesisRegistryBookInfoReindexEventEvent(
+        RegistryBookInfoReindexEvent ignored) {
+        int pageNumber = 0;
+        int chunkSize = 100;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            List<DocumentPublicationIndex> chunk =
+                documentPublicationIndexRepository.findByTypeIn(
+                        List.of(DocumentPublicationType.THESIS.name()),
+                        PageRequest.of(pageNumber, chunkSize,
+                            Sort.by(Sort.Direction.ASC, "databaseId")))
+                    .getContent();
+
+            chunk.forEach(thesisIndex -> {
+                try {
+                    thesisIndex.setIsAddedToRegistryBook(
+                        registryBookEntryRepository.isThesisInRegistryBook(
+                            thesisIndex.getDatabaseId()));
+                    documentPublicationIndexRepository.save(thesisIndex);
+                } catch (Exception e) {
+                    log.warn(
+                        "Skipping indexing registry book info for THESIS {} due to indexing error: {}",
+                        thesisIndex.getDatabaseId(),
+                        e.getMessage());
+                }
+            });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
     }
 }

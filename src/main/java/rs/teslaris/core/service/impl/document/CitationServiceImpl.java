@@ -21,6 +21,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
+import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
@@ -37,6 +38,8 @@ public class CitationServiceImpl implements CitationService {
     public final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     public final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    public final PublisherRepository publisherRepository;
 
 
     @Override
@@ -113,6 +116,17 @@ public class CitationServiceImpl implements CitationService {
                     .page(proceedingsPublication.getStartPage(),
                         proceedingsPublication.getEndPage());
             }
+        }
+
+        if (Objects.nonNull(index.getPublisherId())) {
+            publisherRepository.findById(index.getPublisherId())
+                .ifPresent(publisher -> {
+                    itemBuilder.publisher(getContent(publisher.getName(), languageCode));
+
+                    if (Objects.nonNull(publisher.getPlace())) {
+                        itemBuilder.publisherPlace(getContent(publisher.getPlace(), languageCode));
+                    }
+                });
         }
     }
 

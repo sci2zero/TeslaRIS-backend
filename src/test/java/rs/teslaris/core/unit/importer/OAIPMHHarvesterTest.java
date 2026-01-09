@@ -18,15 +18,18 @@ public class OAIPMHHarvesterTest {
     private OAIPMHHarvesterImpl oaipmhHarvester;
 
     @Test
-    void testGetSources_shouldReturnSourceNames() {
+    void shouldReturnSourceNames() {
         try (MockedStatic<OAIPMHHarvestConfigurationLoader> mocked = mockStatic(
+            // Given
             OAIPMHHarvestConfigurationLoader.class)) {
             List<String> mockSources = List.of("source1", "source2");
             mocked.when(OAIPMHHarvestConfigurationLoader::getAllSourceNames)
                 .thenReturn(mockSources);
 
+            // When
             var result = oaipmhHarvester.getSources();
 
+            // Then
             assertEquals(mockSources, result);
             mocked.verify(OAIPMHHarvestConfigurationLoader::getAllSourceNames);
         }

@@ -881,6 +881,16 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public void reindexPersonEmploymentDetails(Person savedPerson) {
+        personIndexRepository.findByDatabaseId(savedPerson.getId())
+            .ifPresent(personIndex -> {
+                setPersonIndexEmploymentDetails(personIndex, savedPerson);
+                personIndexRepository.save(personIndex);
+            });
+    }
+
+    @Override
     @Transactional
     public Integer getPersonIdForUserId(Integer userId) {
         return personRepository.findPersonIdForUserId(userId).orElse(null);

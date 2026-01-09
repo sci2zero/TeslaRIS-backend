@@ -192,9 +192,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setPrintIsbn(proceedings.getPrintISBN());
         commonExportDocument.setVolume(proceedings.getPublicationSeriesVolume());
         commonExportDocument.setIssue(proceedings.getPublicationSeriesIssue());
-        proceedings.getLanguages().forEach(languageTag -> {
-            commonExportDocument.getLanguageTags().add(languageTag.getLanguageTag());
-        });
+        proceedings.getLanguages().forEach(
+            language -> commonExportDocument.getLanguageTags().add(language.getLanguageCode()));
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             commonExportDocument.setJournal(ExportPublicationSeriesConverter.toCommonExportModel(
@@ -262,9 +261,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
                 .max(Comparator.comparingInt(MultiLingualContent::getPriority)).get().getContent());
         }
 
-        monograph.getLanguages().forEach(languageTag -> {
-            commonExportDocument.getLanguageTags().add(languageTag.getLanguageTag());
-        });
+        monograph.getLanguages().forEach(languageTag -> commonExportDocument.getLanguageTags()
+            .add(languageTag.getLanguageCode()));
 
         return commonExportDocument;
     }
@@ -821,7 +819,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getAuthors().forEach(author -> {
             var field = new DimField();
-            if (Objects.nonNull(author.getPerson().getOrcid()) &&
+            if (Objects.nonNull(author.getPerson()) &&
+                Objects.nonNull(author.getPerson().getOrcid()) &&
                 !author.getPerson().getOrcid().isBlank()) {
                 field.setAuthority(author.getPerson().getOrcid());
             }
@@ -833,7 +832,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getEditors().forEach(editor -> {
             var field = new DimField();
-            if (Objects.nonNull(editor.getPerson().getOrcid()) &&
+            if (Objects.nonNull(editor.getPerson()) &&
+                Objects.nonNull(editor.getPerson().getOrcid()) &&
                 !editor.getPerson().getOrcid().isBlank()) {
                 field.setAuthority(editor.getPerson().getOrcid());
             }
@@ -846,7 +846,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getAdvisors().forEach(advisor -> {
             var field = new DimField();
-            if (Objects.nonNull(advisor.getPerson().getOrcid()) &&
+            if (Objects.nonNull(advisor.getPerson()) &&
+                Objects.nonNull(advisor.getPerson().getOrcid()) &&
                 !advisor.getPerson().getOrcid().isBlank()) {
                 field.setAuthority(advisor.getPerson().getOrcid());
             }
@@ -859,7 +860,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         exportDocument.getBoardMembers().forEach(boardMember -> {
             var field = new DimField();
-            if (Objects.nonNull(boardMember.getPerson().getOrcid()) &&
+            if (Objects.nonNull(boardMember.getPerson()) &&
+                Objects.nonNull(boardMember.getPerson().getOrcid()) &&
                 !boardMember.getPerson().getOrcid().isBlank()) {
                 field.setAuthority(boardMember.getPerson().getOrcid());
             }
@@ -1036,7 +1038,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         addContentToList(
             exportDocument.getEditors(),
             ExportContribution::getDisplayName,
-            contribution -> Objects.requireNonNullElse(contribution.getPerson().getOrcid(), ""),
+            contribution -> Objects.nonNull(contribution.getPerson()) ?
+                Objects.requireNonNullElse(contribution.getPerson().getOrcid(), "") : "",
             (content, orcid) -> dcPublication.getContributor().add(
                 new Contributor(content, "editor",
                     (orcid.isBlank() ? "" : ("https://orcid.org/" + orcid))))
@@ -1045,7 +1048,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         addContentToList(
             exportDocument.getAdvisors(),
             ExportContribution::getDisplayName,
-            contribution -> Objects.requireNonNullElse(contribution.getPerson().getOrcid(), ""),
+            contribution -> Objects.nonNull(contribution.getPerson()) ?
+                Objects.requireNonNullElse(contribution.getPerson().getOrcid(), "") : "",
             (content, orcid) -> dcPublication.getContributor().add(
                 new Contributor(content, "advisor",
                     (orcid.isBlank() ? "" : ("https://orcid.org/" + orcid))))
@@ -1054,7 +1058,8 @@ public class ExportDocumentConverter extends ExportConverterBase {
         addContentToList(
             exportDocument.getBoardMembers(),
             ExportContribution::getDisplayName,
-            contribution -> Objects.requireNonNullElse(contribution.getPerson().getOrcid(), ""),
+            contribution -> Objects.nonNull(contribution.getPerson()) ?
+                Objects.requireNonNullElse(contribution.getPerson().getOrcid(), "") : "",
             (content, orcid) -> dcPublication.getContributor().add(
                 new Contributor(content, "board_member",
                     (orcid.isBlank() ? "" : ("https://orcid.org/" + orcid))))

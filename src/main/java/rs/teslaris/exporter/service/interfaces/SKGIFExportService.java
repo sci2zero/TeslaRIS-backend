@@ -21,5 +21,6 @@ public interface SKGIFExportService {
                                                                           SKGIFFilterCriteria criteria,
                                                                           LocalDate dateFrom,
                                                                           LocalDate dateTo,
-                                                                          Pageable pageable);
+                                                                          Pageable pageable,
+                                                                          String requestUrl);
 }

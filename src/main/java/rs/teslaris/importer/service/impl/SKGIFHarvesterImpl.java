@@ -117,13 +117,13 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                             new TypeReference<SKGIFListResponse<ResearchProduct>>() {
                             });
 
-                    if (Objects.nonNull(results.getResults())) {
-                        processParsedRecords(results.getResults(), sourceConfiguration,
+                    if (Objects.nonNull(results.getGraph())) {
+                        processParsedRecords(results.getGraph(), sourceConfiguration,
                             newEntriesCount,
                             userId, adminUserIds);
                     }
 
-                    shouldContinue = results.getResults().size() == PAGE_SIZE;
+                    shouldContinue = results.getGraph().size() == PAGE_SIZE;
                 }
 
                 break;
@@ -240,7 +240,7 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                     }
 
                     var embedding = CommonImportUtility.generateEmbedding(documentImport);
-                    if (DeduplicationUtil.isDuplicate(existingImport, embedding)) {
+                    if (DeduplicationUtil.isDuplicate(existingImport, embedding, documentImport)) {
                         return;
                     }
 
@@ -322,12 +322,12 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                         .constructParametricType(SKGIFListResponse.class, Venue.class)
                 );
 
-                if (result.getResults().isEmpty()) {
+                if (result.getGraph().isEmpty()) {
                     return null;
                 }
 
                 identifierFilter = "relevant_organisations:" +
-                    ((Venue) result.getResults().getFirst()).getLocalIdentifier();
+                    ((Venue) result.getGraph().getFirst()).getLocalIdentifier();
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }

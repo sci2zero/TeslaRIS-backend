@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.interfaces.commontypes;
 
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.LanguageMigrationDTO;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.service.interfaces.JPAService;
 
@@ -10,4 +11,6 @@ public interface LanguageService extends JPAService<Language> {
     Language findLanguageById(Integer id);
 
     Language findLanguageByCode(String languageCode);
+
+    void migrateLanguage(LanguageMigrationDTO languageMigrationDTO);
 }

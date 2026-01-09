@@ -3,7 +3,9 @@ package rs.teslaris.core.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +40,7 @@ import rs.teslaris.core.dto.person.PersonalInfoDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DeduplicationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.Pair;
@@ -302,9 +305,21 @@ public class PersonController {
     @GetMapping("/top-collaborators")
     @PreAuthorize("hasAuthority('GET_TOP_COLLABORATORS')")
     public List<Pair<String, Integer>> getTopCollaborators(
+        @RequestParam(required = false) Integer researcherId,
         @RequestHeader("Authorization") String bearerToken) {
-        var personId =
-            personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken));
+        Integer personId;
+
+        if (!tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.RESEARCHER.name())) {
+            if (Objects.isNull(researcherId)) {
+                return Collections.emptyList();
+            }
+
+            personId = researcherId;
+        } else {
+            personId =
+                personService.getPersonIdForUserId(tokenUtil.extractUserIdFromToken(bearerToken));
+        }
+
         return personService.getTopCoauthorsForPerson(personId);
     }
 }

@@ -21,10 +21,12 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.session.SessionUtil;
+import rs.teslaris.thesislibrary.dto.NotAddedToPromotionThesesRequestDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingService;
@@ -36,6 +38,8 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryReportingServic
 public class ThesisLibraryReportingController {
 
     private final ThesisLibraryReportingService thesisLibraryReportingService;
+
+    private final UserService userService;
 
     private final JwtUtil tokenUtil;
 
@@ -97,5 +101,23 @@ public class ThesisLibraryReportingController {
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.docx")
             .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(document.b))
             .body(StreamingUtil.createStreamingBody(document.a.getInputStream()));
+    }
+
+    @PostMapping("/not-added-to-registry-book")
+    public Page<DocumentPublicationIndex> getThesesNotAddedToPromotion(
+        @RequestBody @Valid NotAddedToPromotionThesesRequestDTO reportRequest,
+        @RequestHeader("Authorization") String bearerToken,
+        Pageable pageable) {
+        var userRole = tokenUtil.extractUserRoleFromToken(bearerToken);
+        Integer libraryInstitutionId = null;
+
+        if (userRole.equals(UserRole.HEAD_OF_LIBRARY.name()) ||
+            userRole.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name())) {
+            libraryInstitutionId = userService.getUserOrganisationUnitId(
+                tokenUtil.extractUserIdFromToken(bearerToken));
+        }
+
+        return thesisLibraryReportingService.fetchDefendedThesesInPeriodNotSentToPromotion(
+            reportRequest, libraryInstitutionId, pageable);
     }
 }

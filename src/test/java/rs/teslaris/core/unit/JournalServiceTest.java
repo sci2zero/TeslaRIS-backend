@@ -37,7 +37,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
-import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
@@ -45,7 +45,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.JournalServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -66,7 +66,7 @@ public class JournalServiceTest {
     private MultilingualContentService multilingualContentService;
 
     @Mock
-    private LanguageTagService languageTagService;
+    private LanguageService languageService;
 
     @Mock
     private PersonContributionService personContributionService;
@@ -118,7 +118,7 @@ public class JournalServiceTest {
         journalDTO.setEissn("8765-4322");
         journalDTO.setPrintISSN("8765-4322");
         journalDTO.setContributions(new ArrayList<>());
-        journalDTO.setLanguageTagIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new ArrayList<>());
 
         when(journalJPAService.save(any())).thenReturn(new Journal());
 
@@ -161,7 +161,7 @@ public class JournalServiceTest {
         journalDTO.setEissn("1234-5678");
         journalDTO.setPrintISSN("1234-5678");
         journalDTO.setContributions(new ArrayList<>());
-        journalDTO.setLanguageTagIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new ArrayList<>());
 
         var journal = new Journal();
         var journalIndex = new JournalIndex();
@@ -189,7 +189,7 @@ public class JournalServiceTest {
         journalDTO.setEissn("8765-4321");
         journalDTO.setPrintISSN("8765-4321");
         journalDTO.setContributions(new ArrayList<>());
-        journalDTO.setLanguageTagIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new ArrayList<>());
 
         var journal = new Journal();
 
@@ -490,9 +490,9 @@ public class JournalServiceTest {
         var printIssn = "8765-4321";
         var issnSpecified = false;
 
-        var defaultLanguage = new LanguageTag();
+        var defaultLanguage = new Language();
         defaultLanguage.setId(1);
-        when(languageTagService.findLanguageTagByValue(defaultLanguageTag)).thenReturn(
+        when(languageService.findLanguageByCode(defaultLanguageTag)).thenReturn(
             defaultLanguage);
 
         when(searchService.runQuery(any(), any(), any(), anyString()))
@@ -507,7 +507,7 @@ public class JournalServiceTest {
 
         // Then
         assertNotNull(result);
-        verify(languageTagService).findLanguageTagByValue(defaultLanguageTag);
+        verify(languageService).findLanguageByCode(defaultLanguageTag);
         verify(journalRepository, never()).save(any());
         verify(commissionRepository).findCommissionsThatClassifiedJournal(any());
     }
@@ -519,7 +519,7 @@ public class JournalServiceTest {
         var eIssn = "1234-5678";
         var printIssn = "8765-4321";
 
-        var defaultLanguage = new LanguageTag();
+        var defaultLanguage = new Language();
         var potentialHit = new JournalIndex();
         potentialHit.setTitleOther("Test Journal|Dummy Journal");
         potentialHit.setDatabaseId(1);
@@ -552,7 +552,7 @@ public class JournalServiceTest {
         var eIssn = "1234-5678";
         var printIssn = "8765-4321";
 
-        var defaultLanguage = new LanguageTag();
+        var defaultLanguage = new Language();
         defaultLanguage.setId(1);
         when(searchService.runQuery(any(), any(), any(), anyString()))
             .thenReturn(new PageImpl<>(List.of()));

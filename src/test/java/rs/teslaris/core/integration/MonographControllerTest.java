@@ -39,7 +39,7 @@ public class MonographControllerTest extends BaseTest {
         monographDTO.setSubTitle(dummyMC);
         monographDTO.setDescription(dummyMC);
         monographDTO.setKeywords(dummyMC);
-        monographDTO.setLanguageTagIds(new ArrayList<>());
+        monographDTO.setLanguageIds(new ArrayList<>());
         monographDTO.setMonographType(MonographType.BOOK);
         monographDTO.setDocumentDate("2004-11-06");
 

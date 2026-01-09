@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
@@ -23,11 +24,13 @@ import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
+import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
+import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -59,7 +62,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     private final MonographJPAServiceImpl monographJPAService;
 
-    private final LanguageTagService languageTagService;
+    private final LanguageService languageService;
 
     private final JournalService journalService;
 
@@ -70,6 +73,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     private final MonographRepository monographRepository;
 
     private final PublisherService publisherService;
+
+    private final IndexBulkUpdateService indexBulkUpdateService;
+
+    private final MonographPublicationRepository monographPublicationRepository;
 
     private final Pattern issnPattern =
         Pattern.compile("^10\\.\\d{4,9}\\/[-,._;()/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
@@ -93,12 +100,14 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 InvolvementRepository involvementRepository,
                                 OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                 MonographJPAServiceImpl monographJPAService,
-                                LanguageTagService languageTagService,
+                                LanguageService languageService,
                                 JournalService journalService,
                                 BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
                                 MonographRepository monographRepository,
-                                PublisherService publisherService) {
+                                PublisherService publisherService,
+                                IndexBulkUpdateService indexBulkUpdateService,
+                                MonographPublicationRepository monographPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -106,12 +115,14 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService);
         this.monographJPAService = monographJPAService;
-        this.languageTagService = languageTagService;
+        this.languageService = languageService;
         this.journalService = journalService;
         this.bookSeriesService = bookSeriesService;
         this.researchAreaService = researchAreaService;
         this.monographRepository = monographRepository;
         this.publisherService = publisherService;
+        this.indexBulkUpdateService = indexBulkUpdateService;
+        this.monographPublicationRepository = monographPublicationRepository;
     }
 
     @Override
@@ -204,6 +215,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
 
+        var updatePublicationDates =
+            !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());
+
         monographToUpdate.getLanguages().clear();
         clearCommonFields(monographToUpdate);
 
@@ -214,6 +228,14 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         indexMonograph(monographToUpdate, monographIndex);
 
         monographJPAService.save(monographToUpdate);
+
+        if (updatePublicationDates) {
+            monographPublicationRepository.setDateToAggregatedPublications(
+                monographToUpdate.getId(), monographToUpdate.getDocumentDate());
+            indexBulkUpdateService.setYearForAggregatedRecord("monograph_id",
+                monographToUpdate.getId(),
+                StringUtil.parseYear(monographToUpdate.getDocumentDate()));
+        }
 
         sendNotifications(monographToUpdate);
     }
@@ -260,7 +282,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         while (hasNextPage) {
 
             List<Monograph> chunk =
-                monographJPAService.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+                monographJPAService.findAll(
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
+                    .getContent();
 
             chunk.forEach((monograph) -> indexMonograph(monograph, new DocumentPublicationIndex()));
 
@@ -280,9 +304,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         monograph.setVolume(monographDTO.getVolume());
         monograph.setNumber(monographDTO.getNumber());
 
-        monographDTO.getLanguageTagIds().forEach(id -> {
-            monograph.getLanguages().add(languageTagService.findLanguageTagById(id));
-        });
+        if (Objects.nonNull(monographDTO.getLanguageIds())) {
+            monographDTO.getLanguageIds()
+                .forEach(id ->
+                    monograph.getLanguages().add(languageService.findLanguageById(id))
+                );
+        }
 
         if (Objects.nonNull(monographDTO.getPublicationSeriesId())) {
             var optionalJournal =

@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,10 +17,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import rs.teslaris.core.dto.commontypes.LanguageMigrationDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.person.EmploymentPosition;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 public class ExtraMigrationControllerTest extends BaseTest {
@@ -90,5 +94,38 @@ public class ExtraMigrationControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.employmentPosition").value("ASSISTANT_PROFESSOR"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"EN", "SR"})
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetLanguageTagByValue(String languageTag) throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/extra-migration/migrate-languages/{languageTag}",
+                        languageTag)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testMigrateLanguages() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var request =
+            List.of(new LanguageMigrationDTO(LanguageAbbreviations.GERMAN, new ArrayList<>()));
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/extra-migration/migrate-languages")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isCreated());
     }
 }

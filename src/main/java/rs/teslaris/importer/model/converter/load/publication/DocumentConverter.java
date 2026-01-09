@@ -89,22 +89,22 @@ public class DocumentConverter {
         });
     }
 
-    protected static String deduceLanguageTagValue(Publication record) {
-        var languageTagValue = record.getLanguage().trim().toUpperCase();
-        if (languageTagValue.isEmpty()) {
-            languageTagValue = LanguageAbbreviations.ENGLISH;
+    protected static String deduceLanguageCode(Publication record) {
+        var languageCode = record.getLanguage().trim().toUpperCase();
+        if (languageCode.isEmpty()) {
+            languageCode = LanguageAbbreviations.ENGLISH;
         }
 
         // Common language tag mistakes
-        if (languageTagValue.equals("GE")) {
-            languageTagValue = LanguageAbbreviations.GERMAN;
-        } else if (languageTagValue.equals("SP")) {
-            languageTagValue = LanguageAbbreviations.SPANISH;
-        } else if (languageTagValue.equals("RS")) {
-            languageTagValue = LanguageAbbreviations.SERBIAN;
+        if (languageCode.equals("GE")) {
+            languageCode = LanguageAbbreviations.GERMAN;
+        } else if (languageCode.equals("SP")) {
+            languageCode = LanguageAbbreviations.SPANISH;
+        } else if (languageCode.equals("RS")) {
+            languageCode = LanguageAbbreviations.SERBIAN;
         }
 
-        return languageTagValue;
+        return languageCode;
     }
 
     protected void setCommonFields(Publication record, DocumentDTO dto) {
@@ -357,7 +357,7 @@ public class DocumentConverter {
             var bookSeriesDTO = new BookSeriesDTO();
             bookSeriesDTO.setTitle(multilingualContentConverter.toDTO(bookSeries.getTitle()));
             bookSeriesDTO.setContributions(new ArrayList<>());
-            bookSeriesDTO.setLanguageTagIds(new ArrayList<>());
+            bookSeriesDTO.setLanguageIds(new ArrayList<>());
             bookSeriesDTO.setNameAbbreviation(new ArrayList<>());
             bookSeriesDTO.setUris(new HashSet<>());
 
