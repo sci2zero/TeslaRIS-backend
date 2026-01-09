@@ -15,11 +15,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
-import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.SumAggregate;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -638,16 +636,16 @@ public class PersonLeaderboardServiceTest {
                 eq(PersonIndex.class)
             )).thenReturn(personIdResponse);
 
-            var bucket1 = mock(StringTermsBucket.class);
-            when(bucket1.key()).thenReturn(FieldValue.of("1"));
+            var bucket1 = mock(LongTermsBucket.class);
+            when(bucket1.key()).thenReturn(1L);
             var totalPointsAgg1 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
             var sumAgg1 = mock(SumAggregate.class);
             when(sumAgg1.value()).thenReturn(150.5);
             when(totalPointsAgg1.sum()).thenReturn(sumAgg1);
             when(bucket1.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg1));
 
-            var bucket2 = mock(StringTermsBucket.class);
-            when(bucket2.key()).thenReturn(FieldValue.of("2"));
+            var bucket2 = mock(LongTermsBucket.class);
+            when(bucket2.key()).thenReturn(2L);
             var totalPointsAgg2 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
             var sumAgg2 = mock(SumAggregate.class);
             when(sumAgg2.value()).thenReturn(75.0);
@@ -655,7 +653,7 @@ public class PersonLeaderboardServiceTest {
             when(bucket2.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg2));
 
             var byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
-            when(byPersonAgg.sterms().buckets().array()).thenReturn(List.of(bucket1, bucket2));
+            when(byPersonAgg.lterms().buckets().array()).thenReturn(List.of(bucket1, bucket2));
 
             var topAggs = Map.of("by_person", byPersonAgg);
 
