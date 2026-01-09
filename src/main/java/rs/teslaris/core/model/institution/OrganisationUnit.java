@@ -50,6 +50,7 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     @Transient
     private static final String DL_KEY = "digital_library";
 
+
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
 
@@ -79,6 +80,7 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")
+
     private Set<Integer> oldIds = new HashSet<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
