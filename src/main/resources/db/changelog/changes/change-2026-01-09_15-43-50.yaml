@@ -1,0 +1,327 @@
+databaseChangeLog:
+- changeSet:
+    id: 1767973478542-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: approve_status
+            type: SMALLINT
+        - column:
+            name: are_files_valid
+            type: BOOLEAN
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            name: event_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: genetic_materials_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: is_archived
+            type: BOOLEAN
+        - column:
+            name: is_metadata_valid
+            type: BOOLEAN
+        - column:
+            name: publisher_id
+            type: INTEGER
+        - column:
+            name: type
+            type: SMALLINT
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: document_date
+            type: VARCHAR(255)
+        - column:
+            name: doi
+            type: VARCHAR(255)
+        - column:
+            name: internal_number
+            type: VARCHAR(255)
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        - column:
+            name: scopus_id
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        - column:
+            name: web_of_science_id
+            type: VARCHAR(255)
+        - column:
+            name: internal_identifiers
+            type: JSONB
+        - column:
+            name: merged_ids
+            type: JSONB
+        - column:
+            name: old_ids
+            type: JSONB
+        - column:
+            name: uris
+            type: JSONB
+        tableName: genetic_materials
+- changeSet:
+    id: 1767973478542-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: approve_status
+            type: SMALLINT
+        - column:
+            name: are_files_valid
+            type: BOOLEAN
+        - column:
+            name: author_reprint
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            name: event_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: material_products_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: is_archived
+            type: BOOLEAN
+        - column:
+            name: is_metadata_valid
+            type: BOOLEAN
+        - column:
+            name: publisher_id
+            type: INTEGER
+        - column:
+            name: type
+            type: SMALLINT
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: number_produced
+            type: BIGINT
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: document_date
+            type: VARCHAR(255)
+        - column:
+            name: doi
+            type: VARCHAR(255)
+        - column:
+            name: internal_number
+            type: VARCHAR(255)
+        - column:
+            name: open_alex_id
+            type: VARCHAR(255)
+        - column:
+            name: scopus_id
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        - column:
+            name: web_of_science_id
+            type: VARCHAR(255)
+        - column:
+            name: internal_identifiers
+            type: JSONB
+        - column:
+            name: merged_ids
+            type: JSONB
+        - column:
+            name: old_ids
+            type: JSONB
+        - column:
+            name: uris
+            type: JSONB
+        tableName: material_products
+- changeSet:
+    id: 1767973478542-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: material_products_product_users_pkey
+            name: material_product_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: material_products_product_users_pkey
+            name: product_users_id
+            type: INTEGER
+        tableName: material_products_product_users
+- changeSet:
+    id: 1767973478542-4
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: product_users_id
+        constraintName: material_products_product_users_product_users_id_key
+        tableName: material_products_product_users
+- changeSet:
+    id: 1767973478542-5
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: material_products_research_areas_pkey
+            name: material_product_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: material_products_research_areas_pkey
+            name: research_areas_id
+            type: INTEGER
+        tableName: material_products_research_areas
+- changeSet:
+    id: 1767973478542-6
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: material_product_id
+        baseTableName: material_products_research_areas
+        constraintName: fkdmjw16s5ytxtna1fghftr92fl
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: material_products
+        validate: true
+- changeSet:
+    id: 1767973478542-7
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: material_product_id
+        baseTableName: material_products_product_users
+        constraintName: fklt77th81ab0rms6jvxxdu75v2
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: material_products
+        validate: true
+- changeSet:
+    id: 1767973478542-8
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: research_areas_id
+        baseTableName: material_products_research_areas
+        constraintName: fkpefuw6x4f1yrrtj7o919gubwc
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: research_area
+        validate: true
+- changeSet:
+    id: 1767973478542-9
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: publisher_id
+        baseTableName: material_products
+        constraintName: fkpftthn8ed3a3rb1k4aelgfdpv
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: publishers
+        validate: true
+- changeSet:
+    id: 1767973478542-10
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: product_users_id
+        baseTableName: material_products_product_users
+        constraintName: fkr2fl60xmahnup6u9i07eeluu8
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1767973478542-11
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: publisher_id
+        baseTableName: genetic_materials
+        constraintName: fks4k5uuwmdm6ix10bxr2x0dh4l
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: publishers
+        validate: true
+
