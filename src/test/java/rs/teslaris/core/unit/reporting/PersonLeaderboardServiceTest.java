@@ -660,6 +660,12 @@ public class PersonLeaderboardServiceTest {
                 .aggregations().get("filtered_by_person")
                 .filter()
                 .aggregations().get("person_buckets")
+                .isLterms()
+            ).thenReturn(true);
+            when(byPersonAgg.nested()
+                .aggregations().get("filtered_by_person")
+                .filter()
+                .aggregations().get("person_buckets")
                 .lterms().buckets().array()
             ).thenReturn(List.of(bucket1, bucket2));
 

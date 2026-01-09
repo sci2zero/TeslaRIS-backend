@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
@@ -420,7 +421,7 @@ public class CommonLoaderTest {
         var institution = new OrganisationUnit();
         institution.setImportId(scopusAfid);
         var contribution = new PersonDocumentContribution();
-        contribution.setInstitutions(List.of(institution));
+        contribution.setInstitutions(Set.of(institution));
         currentlyLoadedEntity.setContributions(List.of(contribution));
 
         var progressReport = new LoadProgressReport();
@@ -856,7 +857,7 @@ public class CommonLoaderTest {
         var institution = new OrganisationUnit();
         institution.setImportId(scopusAfid);
         var contribution = new PersonDocumentContribution();
-        contribution.setInstitutions(List.of(institution));
+        contribution.setInstitutions(Set.of(institution));
         currentlyLoadedEntity.setContributions(List.of(contribution));
 
         var progressReport = new LoadProgressReport();

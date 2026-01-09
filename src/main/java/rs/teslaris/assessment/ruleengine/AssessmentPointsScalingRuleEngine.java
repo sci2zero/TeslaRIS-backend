@@ -139,7 +139,7 @@ public class AssessmentPointsScalingRuleEngine {
 
             if (Objects.nonNull(existing)) {
                 existing.setContent(
-                    existing.getContent() + " " + current.getContent()
+                    existing.getContent().trim() + " " + current.getContent().trim()
                 );
             } else {
                 oldContent.add(current);

@@ -33,8 +33,37 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         SELECT id FROM monograph_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
         UNION ALL
         SELECT id FROM theses WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM material_products WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        UNION ALL
+        SELECT id FROM genetic_materials WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
         """, nativeQuery = true)
     Optional<Integer> findDocumentByOldIdsContains(Integer oldId);
+
+    @Query(value = """
+        SELECT id FROM datasets WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM software WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM monographs WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM patents WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM proceedings WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM journal_publications WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM proceedings_publications WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM monograph_publications WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM theses WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM material_products WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        UNION ALL
+        SELECT id FROM genetic_materials WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        """, nativeQuery = true)
+    Optional<Integer> findDocumentByMergedIdsContains(Integer documentId);
 
     @Query(value = """
         SELECT id FROM datasets WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
@@ -54,6 +83,10 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         SELECT id FROM monograph_publications WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
         SELECT id FROM theses WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM material_products WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        UNION ALL
+        SELECT id FROM genetic_materials WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         """, nativeQuery = true)
     Optional<Integer> findDocumentByInternalIdentifiersContains(String internalId);
 

@@ -592,20 +592,41 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 getTitleOtherFunction.apply(similarEntity));
 
             currentSessionCounter.incrementAndGet();
-            deduplicationSuggestionRepository.save(
-                new DeduplicationSuggestion(
-                    getIdFunction.apply(entity),
-                    getIdFunction.apply(similarEntity),
-                    getTitleSrFunction.apply(entity),
-                    getTitleOtherFunction.apply(entity),
-                    getTitleSrFunction.apply(similarEntity),
-                    getTitleOtherFunction.apply(similarEntity),
-                    indexType == EntityType.PUBLICATION ?
-                        DocumentPublicationType.valueOf(getTypeFunction.apply(entity)) :
-                        null,
-                    indexType
-                )
-            );
+
+            if (indexType.equals(EntityType.PUBLICATION)) {
+                var leftDocument = (DocumentPublicationIndex) entity;
+                var rightDocument = (DocumentPublicationIndex) similarEntity;
+                deduplicationSuggestionRepository.save(
+                    new DeduplicationSuggestion(
+                        getIdFunction.apply(entity),
+                        getIdFunction.apply(similarEntity),
+                        getTitleSrFunction.apply(entity),
+                        getTitleOtherFunction.apply(entity),
+                        getTitleSrFunction.apply(similarEntity),
+                        getTitleOtherFunction.apply(similarEntity),
+                        DocumentPublicationType.valueOf(getTypeFunction.apply(entity)), indexType,
+                        leftDocument.getYear(), rightDocument.getYear(),
+                        leftDocument.getAuthorNames(), rightDocument.getAuthorNames(),
+                        leftDocument.getAuthorIds(), rightDocument.getAuthorIds(),
+                        leftDocument.getPublicationType(), rightDocument.getPublicationType(),
+                        leftDocument.getType()// can be right also, they are always same type ATP
+                    )
+                );
+            } else {
+                deduplicationSuggestionRepository.save(
+                    new DeduplicationSuggestion(
+                        getIdFunction.apply(entity),
+                        getIdFunction.apply(similarEntity),
+                        getTitleSrFunction.apply(entity),
+                        getTitleOtherFunction.apply(entity),
+                        getTitleSrFunction.apply(similarEntity),
+                        getTitleOtherFunction.apply(similarEntity),
+                        null, indexType, null, null,
+                        null, null, null, null,
+                        null, null, null
+                    )
+                );
+            }
         }
     }
 

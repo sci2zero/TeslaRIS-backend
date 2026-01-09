@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
@@ -54,7 +56,12 @@ public class NavigationBackwardCompatibilityServiceImpl implements
             var documentOpt = documentRepository.findById(documentId);
 
             if (documentOpt.isEmpty()) {
-                return new Pair<>("DELETED", documentId);
+                documentIdOpt = documentRepository.findDocumentByMergedIdsContains(documentId);
+                if (documentIdOpt.isEmpty()) {
+                    return new Pair<>("DELETED", documentId);
+                }
+
+                documentOpt = documentRepository.findById(documentId);
             }
 
             var document = documentOpt.get();
@@ -105,6 +112,16 @@ public class NavigationBackwardCompatibilityServiceImpl implements
                     log.info("NAVIGATION SUCCESS - SOFTWARE {} from {} in LANGUAGE {}",
                         document.getId(), source, language);
                     return new Pair<>("SOFTWARE", document.getId());
+                }
+                case MaterialProduct ignored -> {
+                    log.info("NAVIGATION SUCCESS - MATERIAL_PRODUCT {} from {} in LANGUAGE {}",
+                        document.getId(), source, language);
+                    return new Pair<>("MATERIAL_PRODUCT", document.getId());
+                }
+                case GeneticMaterial ignored -> {
+                    log.info("NAVIGATION SUCCESS - GENETIC_MATERIAL {} from {} in LANGUAGE {}",
+                        document.getId(), source, language);
+                    return new Pair<>("GENETIC_MATERIAL", document.getId());
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + document);
             }

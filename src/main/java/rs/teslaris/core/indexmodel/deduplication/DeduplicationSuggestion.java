@@ -1,6 +1,7 @@
 package rs.teslaris.core.indexmodel.deduplication;
 
 import jakarta.persistence.Id;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
+import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 
 @Getter
 @Setter
@@ -47,12 +49,43 @@ public class DeduplicationSuggestion {
     @Field(type = FieldType.Keyword, store = true, name = "entity_type")
     private EntityType entityType;
 
+    @Field(type = FieldType.Integer, store = true, name = "left_year")
+    private Integer leftYear;
+
+    @Field(type = FieldType.Integer, store = true, name = "right_year")
+    private Integer rightYear;
+
+    @Field(type = FieldType.Keyword, store = true, name = "left_authors")
+    private String leftAuthors;
+
+    @Field(type = FieldType.Keyword, store = true, name = "right_authors")
+    private String rightAuthors;
+
+    @Field(type = FieldType.Integer, store = true, name = "left_author_ids")
+    private List<Integer> leftAuthorIds;
+
+    @Field(type = FieldType.Integer, store = true, name = "right_author_ids")
+    private List<Integer> rightAuthorIds;
+
+    @Field(type = FieldType.Keyword, store = true, name = "left_concrete_type")
+    private String leftConcreteType;
+
+    @Field(type = FieldType.Keyword, store = true, name = "right_concrete_type")
+    private String rightConcreteType;
+
+    @Field(type = FieldType.Keyword, store = true, name = "publication_type")
+    private String publicationType;
+
 
     public DeduplicationSuggestion(Integer leftEntityId, Integer rightEntityId, String leftTitleSr,
                                    String leftTitleOther, String rightTitleSr,
                                    String rightTitleOther,
                                    DocumentPublicationType documentPublicationType,
-                                   EntityType entityType) {
+                                   EntityType entityType, Integer leftYear, Integer rightYear,
+                                   String leftAuthors, String rightAuthors,
+                                   List<Integer> leftAuthorIds,
+                                   List<Integer> rightAuthorIds, String leftConcreteType,
+                                   String rightConcreteType, String publicationType) {
         this.leftEntityId = leftEntityId;
         this.rightEntityId = rightEntityId;
         this.leftTitleSr = leftTitleSr;
@@ -61,5 +94,14 @@ public class DeduplicationSuggestion {
         this.rightTitleOther = rightTitleOther;
         this.documentPublicationType = documentPublicationType;
         this.entityType = entityType;
+        this.leftYear = leftYear;
+        this.rightYear = rightYear;
+        this.leftAuthors = leftAuthors;
+        this.rightAuthors = rightAuthors;
+        this.leftAuthorIds = leftAuthorIds;
+        this.rightAuthorIds = rightAuthorIds;
+        this.leftConcreteType = leftConcreteType;
+        this.rightConcreteType = rightConcreteType;
+        this.publicationType = publicationType;
     }
 }

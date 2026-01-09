@@ -4,6 +4,8 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.TermsBucketBase;
 import co.elastic.clients.elasticsearch._types.aggregations.TermsInclude;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -316,15 +318,26 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                     return;
                 }
 
-                var termsAgg = filteredAgg.aggregations()
-                    .get("person_buckets")
-                    .lterms();
+                var personBucketsAgg = filteredAgg.aggregations().get("person_buckets");
 
-                if (Objects.isNull(termsAgg)) {
+                List<? extends TermsBucketBase> buckets;
+
+                if (personBucketsAgg.isLterms()) {
+                    if (Objects.isNull(personBucketsAgg.lterms())) {
+                        return;
+                    }
+
+                    buckets = personBucketsAgg.lterms().buckets().array();
+                } else if (personBucketsAgg.isSterms()) {
+                    if (Objects.isNull(personBucketsAgg.sterms())) {
+                        return;
+                    }
+
+                    buckets = personBucketsAgg.sterms().buckets().array();
+                } else {
                     return;
                 }
 
-                var buckets = termsAgg.buckets().array();
                 if (Objects.isNull(buckets) || buckets.isEmpty()) {
                     return;
                 }
@@ -332,17 +345,25 @@ public class PersonLeaderboardServiceImpl implements PersonLeaderboardService {
                 var personPoints = buckets.stream()
                     .map(bucket -> {
                         int personId;
+
                         try {
-                            personId = (int) bucket.key();
-                        } catch (NumberFormatException ignored) {
-                            personId = 0;
+                            if (bucket instanceof LongTermsBucket ltb) {
+                                personId = (int) ltb.key();
+                            } else if (bucket instanceof StringTermsBucket stb) {
+                                personId = Integer.parseInt(stb.key().stringValue());
+                            } else {
+                                return null;
+                            }
+                        } catch (Exception e) {
+                            return null;
                         }
 
                         double totalPoints =
                             bucket.aggregations().get("total_points").sum().value();
+
                         return new Pair<>(personId, totalPoints);
                     })
-                    .filter(p -> p.a > 0)
+                    .filter(Objects::nonNull)
                     .sorted((p1, p2) -> Double.compare(p2.b, p1.b))
                     .toList();
 
