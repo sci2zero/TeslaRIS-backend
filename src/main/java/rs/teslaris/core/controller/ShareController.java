@@ -90,6 +90,7 @@ public class ShareController {
             case DATASET -> "dataset";
             case MONOGRAPH_PUBLICATION -> "monograph-publication";
             case THESIS -> "thesis";
+            case MATERIAL_PRODUCT -> "material-product";
         };
     }
 }
