@@ -8,7 +8,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -1143,16 +1142,47 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var nameAndEmploymentQuery = buildNameAndEmploymentQuery(tokens, false, null, false);
 
-        var institutionFilter = TermsQuery.of(t -> t
-            .field(fetchAlumni
-                ? "past_employment_institution_ids"
-                : "employment_institutions_id_hierarchy")
-            .terms(v -> v.value(
-                ouHierarchyIds.stream()
-                    .map(String::valueOf)
-                    .map(FieldValue::of)
-                    .toList()))
-        )._toQuery();
+        var institutionFilter = Query.of(q -> q
+            .bool(b -> {
+                if (fetchAlumni) {
+                    b.must(m -> m
+                        .terms(t -> t
+                            .field("past_employment_institution_ids")
+                            .terms(v -> v.value(
+                                ouHierarchyIds.stream()
+                                    .map(String::valueOf)
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                        )
+                    );
+                    b.mustNot(m -> m
+                        .terms(t -> t
+                            .field("employment_institutions_id_hierarchy")
+                            .terms(v -> v.value(
+                                ouHierarchyIds.stream()
+                                    .map(String::valueOf)
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                        )
+                    );
+                } else {
+                    b.must(m -> m
+                        .terms(t -> t
+                            .field("employment_institutions_id_hierarchy")
+                            .terms(v -> v.value(
+                                ouHierarchyIds.stream()
+                                    .map(String::valueOf)
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                        )
+                    );
+                }
+                return b;
+            })
+        );
 
         var combinedQuery = BoolQuery.of(bq -> bq
             .must(nameAndEmploymentQuery)

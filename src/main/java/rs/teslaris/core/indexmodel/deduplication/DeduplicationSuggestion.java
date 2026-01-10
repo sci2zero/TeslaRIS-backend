@@ -12,7 +12,6 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
-import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 
 @Getter
 @Setter
