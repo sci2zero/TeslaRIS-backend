@@ -560,7 +560,8 @@ public class PersonAssessmentClassificationServiceImpl
 
         double basePoints = invokeRule(AssessmentPointsRuleEngine.class, measure.getPointRule(),
             pointsRuleEngine, researchArea.getResearchAreaCode(),
-            researchArea.getResearchSubAreaIds(), classificationCode);
+            Objects.nonNull(researchArea.getResearchSubAreaIds()) ?
+                researchArea.getResearchSubAreaIds() : Collections.emptySet(), classificationCode);
 
         return invokeRule(AssessmentPointsScalingRuleEngine.class, measure.getScalingRule(),
             scalingRuleEngine, publication.getAuthorIds().size(), classificationCode, basePoints);

@@ -1173,9 +1173,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private void indexUserEmployment(UserAccountIndex index, OrganisationUnit employment) {
         var orgUnitNameSr = new StringBuilder();
         var orgUnitNameOther = new StringBuilder();
+
         if (Objects.nonNull(employment)) {
             multilingualContentService.buildLanguageStrings(orgUnitNameSr, orgUnitNameOther,
                 employment.getName(), true);
+            index.setOrganisationUnitId(employment.getId());
         }
 
         StringUtil.removeTrailingDelimiters(orgUnitNameSr, orgUnitNameOther);

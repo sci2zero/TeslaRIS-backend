@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.GeneticMaterial;
@@ -36,6 +37,7 @@ import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
@@ -85,6 +87,8 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final PatentRepository patentRepository;
 
     private final JournalRepository journalRepository;
+
+    private final BookSeriesRepository bookSeriesRepository;
 
     private final JournalPublicationRepository journalPublicationRepository;
 
@@ -250,6 +254,14 @@ public class CommonExportServiceImpl implements CommonExportService {
                     Journal::getId,
                     allTime,
                     ExportPublicationType.JOURNAL
+                );
+                case BOOK_SERIES -> exportEntitiesAsync(
+                    bookSeriesRepository::findAllModified,
+                    ExportPublicationSeriesConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    BookSeries::getId,
+                    allTime,
+                    ExportPublicationType.BOOK_SERIES
                 );
                 case JOURNAL_PUBLICATION -> exportEntitiesAsync(
                     journalPublicationRepository::findAllModified,

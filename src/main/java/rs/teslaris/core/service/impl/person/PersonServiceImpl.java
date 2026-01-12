@@ -930,6 +930,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
             personIndex.setBirthdate(
                 savedPerson.getPersonalInfo().getLocalBirthDate().toString());
+        } else {
+            personIndex.setBirthdate(null);
         }
         personIndex.setBirthdateSortable(personIndex.getBirthdate());
 
@@ -1041,7 +1043,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             name.stream()
                 .filter(mc -> mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
-                .forEach(mc -> institutionNameSr.append(mc.getContent()));
+                .forEach(mc -> institutionNameSr.append(mc.getContent()).append(" | "));
             name.stream()
                 .filter(mc -> !mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
@@ -1061,7 +1063,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             if (Objects.nonNull(employment.getOrganisationUnit()) &&
                 Objects.nonNull(employment.getOrganisationUnit().getNameAbbreviation()) &&
                 !employment.getOrganisationUnit().getNameAbbreviation().isBlank()) {
-                employmentsSr.append(" | ")
+                employmentsSr
                     .append(employment.getOrganisationUnit().getNameAbbreviation().trim())
                     .append("; ");
             } else {

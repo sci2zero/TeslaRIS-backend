@@ -3,6 +3,7 @@ package rs.teslaris.exporter.model.converter;
 import com.google.common.base.Functions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
@@ -21,16 +22,19 @@ public class ExportProductConverter extends ExportConverterBase {
 
     public static Product toOpenaireModel(
         ExportDocument exportDocument, boolean supportLegacyIdentifiers,
-        List<String> supportedLanguages) {
+        List<String> supportedLanguages, Map<String, String> typeToIdentifierSuffixMapping) {
         var openaireProduct = new Product();
 
+        var identifierTypeSuffix =
+            typeToIdentifierSuffixMapping.getOrDefault(exportDocument.getType().name(), "");
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
             openaireProduct.setOldId("Products/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
             openaireProduct.setOldId(
-                "Products/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId());
+                "Products/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId() +
+                    identifierTypeSuffix);
         }
 
         openaireProduct.setName(
@@ -77,7 +81,8 @@ public class ExportProductConverter extends ExportConverterBase {
     }
 
     public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers,
-                               List<String> supportedLanguages) {
+                               List<String> supportedLanguages,
+                               Map<String, String> typeToIdentifierSuffixMapping) {
         var dcProduct = new DC();
         dcProduct.getType().add(new DCType(
             exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" : "software",
@@ -90,7 +95,10 @@ public class ExportProductConverter extends ExportConverterBase {
                 exportDocument.getOldIds().stream().findFirst().get());
         }
 
-        dcProduct.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());
+        var identifierTypeSuffix =
+            typeToIdentifierSuffixMapping.getOrDefault(exportDocument.getType().name(), "");
+        dcProduct.getIdentifier()
+            .add(identifierPrefix + exportDocument.getDatabaseId() + identifierTypeSuffix);
 
         CollectionOperations.getIntersection(clientLanguages, supportedLanguages)
             .forEach(lang -> dcProduct.getIdentifier().add(

@@ -2,7 +2,7 @@
   "handlers": [
     {
       "identifier": "OAIHandlerOpenAIRECRIS",
-      "internalInstitutionId": "17",
+      "internalInstitutionId": "1",
       "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
       "handlerDescription": "CERIF compliant CRIS system developed by Science 2.0 Alliance for Faculty of Sciences, University of Novi Sad",
       "handlerLanguage": "sr",
@@ -67,7 +67,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT;proceedings_publication_type:REGULAR_FULL_ARTICLE,REGULAR_ABSTRACT_ARTICLE",
           "default": true
         }
@@ -76,6 +76,9 @@
         "oai_dc",
         "oai_cerif_openaire"
       ],
+      "typeIdentifierSuffixes": {
+        "JOURNAL": "ps"
+      },
       "typeMappings": {
         "EVENT": "(DEFAULT)https://w3id.org/cerif/vocab/EventTypes#Conference§https://w3id.org/cerif/vocab/EventTypes",
         "ORGANISATION_UNIT": "(DEFAULT)https://w3id.org/cerif/vocab/OrganisationTypes#HigherEducation§https://w3id.org/cerif/vocab/OrganisationTypes",

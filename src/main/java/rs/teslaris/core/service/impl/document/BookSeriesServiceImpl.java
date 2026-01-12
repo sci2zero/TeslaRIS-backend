@@ -283,6 +283,13 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
             bookSeries.getTitle(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
             bookSeries.getNameAbbreviation(), false);
 

@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -17,6 +18,7 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
 
     private static JournalRepository journalRepository;
 
+
     @Autowired
     public ExportPublicationSeriesConverter(JournalRepository journalRepository) {
         ExportPublicationSeriesConverter.journalRepository = journalRepository;
@@ -25,7 +27,12 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
     public static ExportDocument toCommonExportModel(
         PublicationSeries publicationSeries, boolean computeRelations) {
         var commonExportPublicationSeries = new ExportDocument();
-        commonExportPublicationSeries.setType(ExportPublicationType.JOURNAL);
+
+        if (publicationSeries instanceof Journal) {
+            commonExportPublicationSeries.setType(ExportPublicationType.JOURNAL);
+        } else {
+            commonExportPublicationSeries.setType(ExportPublicationType.BOOK_SERIES);
+        }
 
         setBaseFields(commonExportPublicationSeries, publicationSeries);
         if (commonExportPublicationSeries.getDeleted()) {

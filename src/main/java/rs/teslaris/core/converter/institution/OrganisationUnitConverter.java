@@ -26,7 +26,7 @@ public class OrganisationUnitConverter {
             organisationUnit.getKeyword()));
         dto.setResearchAreas(
             organisationUnit.getResearchAreas().stream().map(ResearchAreaConverter::toDTO)
-                .collect(Collectors.toList())
+                .collect(Collectors.toSet())
         );
 
         dto.setLocation(GeoLocationConverter.toDTO(organisationUnit.getLocation()));
