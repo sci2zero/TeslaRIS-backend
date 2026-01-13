@@ -141,9 +141,6 @@ public class PersonAssessmentClassificationServiceTest {
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setCode("M1");
 
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
-
         var commission = new Commission();
         commission.setId(10);
         commission.setRecognisedResearchAreas(Set.of("CS"));
@@ -173,10 +170,10 @@ public class PersonAssessmentClassificationServiceTest {
             }}));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            List.of(assessmentMeasure));
 
         // Then
-        verify(assessmentRulebookRepository).readAssessmentMeasuresForRulebook(any(), any());
         verify(userRepository).findUserCommissionForOrganisationUnits(List.of(1, 2, 3));
         verify(documentPublicationIndexRepository, times(1)).findAssessedByAuthorIds(eq(42), any());
         verify(documentPublicationIndexRepository).save(publication);
@@ -191,9 +188,6 @@ public class PersonAssessmentClassificationServiceTest {
 
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setCode("M1");
-
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
 
         var commission = new Commission();
         commission.setId(10);
@@ -214,7 +208,8 @@ public class PersonAssessmentClassificationServiceTest {
             }}));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            List.of(assessmentMeasure));
 
         // Then
         verify(documentPublicationIndexRepository, never()).save(any());
@@ -230,9 +225,6 @@ public class PersonAssessmentClassificationServiceTest {
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setCode("M1");
 
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
-
         var commission = new Commission();
         commission.setId(10);
         commission.setRecognisedResearchAreas(Set.of("CS"));
@@ -243,7 +235,6 @@ public class PersonAssessmentClassificationServiceTest {
         publication.setDatabaseId(100);
         publication.setCommissionAssessments(List.of(new Triple<>(10, "CS", false)));
 
-        // Existing points for same researcher and commission
         var existingPoints = new Triple<>(42, 10, 5.0);
         publication.setAssessmentPoints(new ArrayList<>(List.of(existingPoints)));
 
@@ -264,7 +255,8 @@ public class PersonAssessmentClassificationServiceTest {
             }}));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            List.of(assessmentMeasure));
 
         // Then
         verify(documentPublicationIndexRepository).save(publication);
@@ -280,15 +272,14 @@ public class PersonAssessmentClassificationServiceTest {
         when(documentPublicationIndexRepository.findAssessedByAuthorIds(any(), any()))
             .thenReturn(
                 new PageImpl<>(List.of(), PageRequest.of(0, 1), 0));
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(Collections.emptyList()));
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
             .thenReturn(Collections.emptyList());
         when(assessmentRulebookRepository.findDefaultRulebook()).thenReturn(
             Optional.of(new AssessmentRulebook()));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            Collections.emptyList());
 
         // Then
         verify(documentPublicationIndexRepository, never()).save(any());
@@ -303,9 +294,6 @@ public class PersonAssessmentClassificationServiceTest {
 
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setCode("M1");
-
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
 
         var commission1 = new Commission();
         commission1.setId(10);
@@ -346,7 +334,8 @@ public class PersonAssessmentClassificationServiceTest {
             }}));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            List.of(assessmentMeasure));
 
         // Then
         verify(documentPublicationIndexRepository).save(publication);
@@ -359,6 +348,11 @@ public class PersonAssessmentClassificationServiceTest {
             .thenReturn(new PageImpl<>(Collections.emptyList()));
         when(assessmentRulebookRepository.findDefaultRulebook()).thenReturn(
             Optional.of(new AssessmentRulebook()));
+
+        var assessmentMeasure = new AssessmentMeasure();
+        assessmentMeasure.setCode("M1");
+        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
+            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
 
         // When
         personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();

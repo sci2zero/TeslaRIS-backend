@@ -603,7 +603,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personContributionRepository.deletePersonEventContributions(personId);
         personContributionRepository.deletePersonPublicationsSeriesContributions(personId);
 
-        deletePersonPublications(personId, false);
+        deletePersonPublications(personId, true);
 
         delete(personId);
 
@@ -710,6 +710,33 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
                 if (switchToUnmanaged) {
                     contribution.setPerson(null);
+                    if (Objects.nonNull(contribution.getAffiliationStatement())) {
+                        if (Objects.nonNull(contribution.getAffiliationStatement().getContact())) {
+                            contribution.getAffiliationStatement().getContact()
+                                .setPhoneNumber(null);
+                            contribution.getAffiliationStatement().getContact()
+                                .setContactEmail(null);
+                        }
+
+                        if (Objects.nonNull(
+                            contribution.getAffiliationStatement().getPostalAddress())) {
+                            contribution.getAffiliationStatement().getPostalAddress()
+                                .setCountry(null);
+                            if (Objects.nonNull(
+                                contribution.getAffiliationStatement().getPostalAddress()
+                                    .getCity())) {
+                                contribution.getAffiliationStatement().getPostalAddress().getCity()
+                                    .clear();
+                            }
+
+                            if (Objects.nonNull(
+                                contribution.getAffiliationStatement().getPostalAddress()
+                                    .getStreetAndNumber())) {
+                                contribution.getAffiliationStatement().getPostalAddress()
+                                    .getStreetAndNumber().clear();
+                            }
+                        }
+                    }
 
                     BiConsumer<List<Integer>, Integer> replaceIdWithUnmanaged =
                         (list, idToReplace) ->

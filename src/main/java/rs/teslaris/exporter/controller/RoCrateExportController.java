@@ -16,6 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.files.StreamingUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.exporter.service.interfaces.RoCrateExportService;
 
@@ -45,7 +46,8 @@ public class RoCrateExportController {
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"ro-crate-" + documentId + ".zip\"")
+                StringUtil.contentDisposition(
+                    "attachment; filename=\"ro-crate-" + documentId + ".zip\""))
             .header(HttpHeaders.CONTENT_TYPE, "application/zip")
             .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(bytes.length))
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -67,7 +69,8 @@ public class RoCrateExportController {
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"ro-crate-" + personId + ".zip\"")
+                StringUtil.contentDisposition(
+                    "attachment; filename=\"ro-crate-" + personId + ".zip\""))
             .header(HttpHeaders.CONTENT_TYPE, "application/zip")
             .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(bytes.length))
             .contentType(MediaType.APPLICATION_OCTET_STREAM)

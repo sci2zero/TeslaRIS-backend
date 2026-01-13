@@ -77,7 +77,8 @@
         "oai_cerif_openaire"
       ],
       "typeIdentifierSuffixes": {
-        "JOURNAL": "ps"
+        "JOURNAL": "ps",
+        "BOOK_SERIES": "ps"
       },
       "typeMappings": {
         "EVENT": "(DEFAULT)https://w3id.org/cerif/vocab/EventTypes#Conference§https://w3id.org/cerif/vocab/EventTypes",
@@ -340,7 +341,8 @@
         "dim"
       ],
       "typeIdentifierSuffixes": {
-        "JOURNAL": "ps"
+        "JOURNAL": "ps",
+        "BOOK_SERIES": "ps"
       },
       "typeMappings": {
         "PERSON": "(DEFAULT)Osoba@sr;(DEFAULT)Person@en",
@@ -439,7 +441,8 @@
         "dim"
       ],
       "typeIdentifierSuffixes": {
-        "JOURNAL": "ps"
+        "JOURNAL": "ps",
+        "BOOK_SERIES": "ps"
       },
       "typeMappings": {
         "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",
@@ -535,7 +538,8 @@
         "dim"
       ],
       "typeIdentifierSuffixes": {
-        "JOURNAL": "ps"
+        "JOURNAL": "ps",
+        "BOOK_SERIES": "ps"
       },
       "typeMappings": {
         "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",

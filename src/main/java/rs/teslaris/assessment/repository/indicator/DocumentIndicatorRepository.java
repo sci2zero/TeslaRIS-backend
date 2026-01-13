@@ -3,7 +3,6 @@ package rs.teslaris.assessment.repository.indicator;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,12 +31,6 @@ public interface DocumentIndicatorRepository extends JpaRepository<DocumentIndic
     @Query("SELECT di FROM DocumentIndicator di " +
         "WHERE di.indicator.code = :code AND di.document.id = :documentId")
     Optional<DocumentIndicator> findIndicatorForCodeAndDocumentId(String code, Integer documentId);
-
-    @Transactional
-    @Modifying
-    @Query("DELETE FROM DocumentIndicator di " +
-        "WHERE di.indicator.code = :code AND di.document.id = :documentId")
-    void deleteIndicatorsForCodeAndDocumentId(String code, Integer documentId);
 
     @Query("SELECT di FROM DocumentIndicator di " +
         "WHERE di.indicator.code = :code AND " +

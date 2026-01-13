@@ -7,14 +7,17 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tika.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
@@ -60,6 +63,47 @@ public class FileServiceMinioImpl implements FileService {
                 .stream(file.getInputStream(), file.getSize(), 0)
                 .build();
             minioClient.putObject(args);
+        } catch (Exception e) {
+            throw new StorageException(
+                "Error while storing file in Minio. Reason: " + e.getMessage());
+        }
+
+        return serverFilename + "." + extension;
+    }
+
+    @Override
+    public String store(Resource resource, String serverFilename,
+                        String originalFilename) {
+        if (Objects.isNull(resource) || !resource.exists()) {
+            throw new StorageException("Failed to store empty file.");
+        }
+
+        var originalFilenameTokens = originalFilename.split("\\.");
+        var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
+
+        try {
+            long size;
+            try {
+                size = resource.contentLength();
+            } catch (IOException e) {
+                size = -1;
+            }
+
+            PutObjectArgs.Builder builder = PutObjectArgs.builder()
+                .bucket(bucketName)
+                .object(serverFilename + "." + extension)
+                .headers(Map.of(
+                    "Content-Disposition",
+                    "attachment; filename=\"" + originalFilename + "\""
+                ));
+
+            if (size >= 0) {
+                builder.stream(resource.getInputStream(), size, -1);
+            } else {
+                builder.stream(resource.getInputStream(), -1, 5 * 1024 * 1024);
+            }
+
+            minioClient.putObject(builder.build());
         } catch (Exception e) {
             throw new StorageException(
                 "Error while storing file in Minio. Reason: " + e.getMessage());

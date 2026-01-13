@@ -28,6 +28,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentBackupService;
 import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @RestController
@@ -87,7 +88,8 @@ public class DocumentBackupController {
         Runnable deleteCallback = () -> documentBackupService.deleteBackupFile(backupFileName);
 
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
             .header(HttpHeaders.CONTENT_TYPE, "application/zip")
             .header(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"))
             .body(StreamingUtil.createStreamingBody(file, deleteCallback));

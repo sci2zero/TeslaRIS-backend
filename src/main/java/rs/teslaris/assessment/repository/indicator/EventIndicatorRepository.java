@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,14 +39,4 @@ public interface EventIndicatorRepository extends JpaRepository<EventIndicator, 
     Optional<EventIndicator> existsByEventIdAndSourceAndYear(Integer eventId,
                                                              EntityIndicatorSource source,
                                                              LocalDate date, String indicatorCode);
-
-    @Transactional
-    @Modifying
-    @Query("DELETE FROM EventIndicator ei " +
-        "WHERE ei.event.id = :eventId " +
-        "AND ei.indicator.code = :indicatorCode " +
-        "AND ei.source = :source " +
-        "AND ei.fromDate = :date")
-    void deleteByEventIdAndSourceAndYear(Integer eventId, EntityIndicatorSource source,
-                                         LocalDate date, String indicatorCode);
 }

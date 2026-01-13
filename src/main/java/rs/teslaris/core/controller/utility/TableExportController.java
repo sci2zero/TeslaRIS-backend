@@ -16,6 +16,7 @@ import rs.teslaris.core.dto.commontypes.DocumentExportRequestDTO;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.dto.commontypes.TableExportRequestDTO;
 import rs.teslaris.core.service.interfaces.commontypes.TableExportService;
+import rs.teslaris.core.util.search.StringUtil;
 
 @RestController
 @RequestMapping("/api/table-export")
@@ -56,7 +57,8 @@ public class TableExportController {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=export" + exportFileType.getValue())
+                StringUtil.contentDisposition(
+                    "attachment; filename=export" + exportFileType.getValue()))
             .body(exportDocument);
     }
 }

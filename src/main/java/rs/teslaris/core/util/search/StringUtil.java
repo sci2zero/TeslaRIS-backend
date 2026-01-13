@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -433,4 +434,12 @@ public class StringUtil {
             }
         });
     }
+
+    public static String contentDisposition(String filename) {
+        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8)
+            .replace("+", "%20");
+
+        return "attachment; filename=\"file\"; filename*=UTF-8''" + encoded;
+    }
+
 }

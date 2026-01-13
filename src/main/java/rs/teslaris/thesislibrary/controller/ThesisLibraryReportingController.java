@@ -25,6 +25,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.dto.NotAddedToPromotionThesesRequestDTO;
 import rs.teslaris.thesislibrary.dto.ThesisReportCountsDTO;
@@ -114,7 +115,8 @@ public class ThesisLibraryReportingController {
 
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.docx")
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                StringUtil.contentDisposition("attachment; filename=report.docx"))
             .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(document.b))
             .body(StreamingUtil.createStreamingBody(document.a.getInputStream()));
     }

@@ -78,11 +78,18 @@ public class ExportHandlersConfigurationLoader {
                 return Collections.emptyMap();
             }
 
-
             return this.typeIdentifierSuffixes.entrySet().stream()
+                .collect(Collectors.groupingBy(
+                    Map.Entry::getValue,
+                    Collectors.mapping(
+                        Map.Entry::getKey,
+                        Collectors.joining(",")
+                    )
+                ))
+                .entrySet().stream()
                 .collect(Collectors.toMap(
-                    entry -> "_" + entry.getValue(),
-                    Map.Entry::getKey
+                    entry -> "_" + entry.getKey(),
+                    Map.Entry::getValue
                 ));
         }
 

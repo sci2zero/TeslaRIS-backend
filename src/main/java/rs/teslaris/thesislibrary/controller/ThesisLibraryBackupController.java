@@ -31,6 +31,7 @@ import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidFileSectionException;
 import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.model.ThesisFileSection;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
@@ -98,7 +99,8 @@ public class ThesisLibraryBackupController {
         Runnable deleteCallback = () -> thesisLibraryBackupService.deleteBackupFile(backupFileName);
 
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
             .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
             .header(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"))
             .body(StreamingUtil.createStreamingBody(file, deleteCallback));

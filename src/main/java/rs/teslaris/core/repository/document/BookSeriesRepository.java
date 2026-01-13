@@ -12,7 +12,7 @@ import rs.teslaris.core.model.document.BookSeries;
 public interface BookSeriesRepository extends JpaRepository<BookSeries, Integer> {
 
     @Query(value = "SELECT *, 0 AS clazz_ FROM book_series WHERE " +
-        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+        "old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE", nativeQuery = true)
     Optional<BookSeries> findBookSeriesByOldIdsContains(Integer oldId);
 
     @Query(value = "SELECT * FROM book_series bs WHERE bs.id = :bookSeriesId",

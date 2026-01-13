@@ -1,5 +1,6 @@
 package rs.teslaris.assessment.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -7,6 +8,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.model.classification.EventAssessmentClassification;
+import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
+import rs.teslaris.assessment.model.indicator.DocumentIndicator;
+import rs.teslaris.assessment.model.indicator.EventIndicator;
+import rs.teslaris.assessment.model.indicator.OrganisationUnitIndicator;
+import rs.teslaris.assessment.model.indicator.PersonIndicator;
+import rs.teslaris.assessment.model.indicator.PublicationSeriesIndicator;
 import rs.teslaris.assessment.repository.classification.EventAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;
@@ -61,6 +69,8 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
 
     @Override
     public void switchAllIndicatorsToOtherJournal(Integer sourceId, Integer targetId) {
+        var indicatorsToDelete = new ArrayList<PublicationSeriesIndicator>();
+
         processChunks(
             sourceId,
             (srcId, journalIndicator) -> {
@@ -69,10 +79,13 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         journalIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    publicationSeriesIndicatorRepository.deleteByPublicationSeriesIdAndSourceAndYearAndCategory(
+                    if (publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
                         targetId, journalIndicator.getSource(), journalIndicator.getFromDate(),
                         journalIndicator.getCategoryIdentifier(),
-                        journalIndicator.getIndicator().getCode());
+                        journalIndicator.getIndicator().getCode()).isPresent()) {
+                        indicatorsToDelete.add(journalIndicator);
+                        return;
+                    }
 
                     journalIndicator.setPublicationSeries(journalService.findJournalById(targetId));
                 }
@@ -80,20 +93,24 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
             pageRequest -> publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeries(
                 sourceId, pageRequest).getContent()
         );
+
+        publicationSeriesIndicatorRepository.deleteAll(indicatorsToDelete);
     }
 
     @Override
     public void switchAllClassificationsToOtherJournal(Integer sourceId, Integer targetId) {
+        var classificationsToDelete = new ArrayList<PublicationSeriesAssessmentClassification>();
+
         processChunks(
             sourceId,
             (srcId, journalClassification) -> {
-                var existingClassificationValue =
-                    publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
-                        targetId, journalClassification.getCategoryIdentifier(),
-                        journalClassification.getClassificationYear(),
-                        journalClassification.getCommission().getId());
-                existingClassificationValue.ifPresent(
-                    publicationSeriesAssessmentClassificationRepository::delete);
+                if (publicationSeriesAssessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
+                    targetId, journalClassification.getCategoryIdentifier(),
+                    journalClassification.getClassificationYear(),
+                    journalClassification.getCommission().getId()).isPresent()) {
+                    classificationsToDelete.add(journalClassification);
+                    return;
+                }
 
                 journalClassification.setPublicationSeries(
                     journalService.findJournalById(targetId));
@@ -101,10 +118,14 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
             pageRequest -> publicationSeriesAssessmentClassificationRepository.findClassificationsForPublicationSeries(
                 sourceId, pageRequest).getContent()
         );
+
+        publicationSeriesAssessmentClassificationRepository.deleteAll(classificationsToDelete);
     }
 
     @Override
     public void switchAllIndicatorsToOtherEvent(Integer sourceId, Integer targetId) {
+        var indicatorsToDelete = new ArrayList<EventIndicator>();
+
         processChunks(
             sourceId,
             (srcId, eventIndicator) -> {
@@ -113,9 +134,12 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         eventIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    eventIndicatorRepository.deleteByEventIdAndSourceAndYear(
+                    if (eventIndicatorRepository.existsByEventIdAndSourceAndYear(
                         targetId, eventIndicator.getSource(), eventIndicator.getFromDate(),
-                        eventIndicator.getIndicator().getCode());
+                        eventIndicator.getIndicator().getCode()).isPresent()) {
+                        indicatorsToDelete.add(eventIndicator);
+                        return;
+                    }
 
                     eventIndicator.setEvent(conferenceService.findConferenceById(targetId));
                 }
@@ -123,10 +147,14 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
             pageRequest -> eventIndicatorRepository.findIndicatorsForEvent(sourceId, pageRequest)
                 .getContent()
         );
+
+        eventIndicatorRepository.deleteAll(indicatorsToDelete);
     }
 
     @Override
     public void switchAllClassificationsToOtherEvent(Integer sourceId, Integer targetId) {
+        var classificationsToDelete = new ArrayList<EventAssessmentClassification>();
+
         processChunks(
             sourceId,
             (srcId, eventClassification) -> {
@@ -134,18 +162,24 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                     eventAssessmentClassificationRepository.findAssessmentClassificationsForEventAndCommissionAndYear(
                         targetId, eventClassification.getCommission().getId(),
                         eventClassification.getClassificationYear());
-                existingClassificationValue.ifPresent(
-                    eventAssessmentClassificationRepository::delete);
+                if (existingClassificationValue.isPresent()) {
+                    classificationsToDelete.add(eventClassification);
+                    return;
+                }
 
                 eventClassification.setEvent(conferenceService.findConferenceById(targetId));
             },
             pageRequest -> eventAssessmentClassificationRepository.findAssessmentClassificationsForEvent(
                 sourceId, pageRequest).getContent()
         );
+
+        eventAssessmentClassificationRepository.deleteAll(classificationsToDelete);
     }
 
     @Override
     public void switchAllIndicatorsToOtherPerson(Integer sourceId, Integer targetId) {
+        var indicatorsToDelete = new ArrayList<PersonIndicator>();
+
         processChunks(
             sourceId,
             (srcId, personIndicator) -> {
@@ -154,8 +188,11 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         personIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    personIndicatorRepository.deleteIndicatorsForCodeAndPersonId(
-                        personIndicator.getIndicator().getCode(), targetId);
+                    if (personIndicatorRepository.indicatorsExistForCodeAndPersonId(
+                        personIndicator.getIndicator().getCode(), targetId)) {
+                        indicatorsToDelete.add(personIndicator);
+                        return;
+                    }
 
                     personIndicator.setPerson(personService.findOne(targetId));
                 }
@@ -163,10 +200,14 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
             pageRequest -> personIndicatorRepository.findIndicatorsForPersonAndIndicatorAccessLevel(
                 sourceId, AccessLevel.ADMIN_ONLY)
         );
+
+        personIndicatorRepository.deleteAll(indicatorsToDelete);
     }
 
     @Override
     public void switchAllIndicatorsToOtherOrganisationUnit(Integer sourceId, Integer targetId) {
+        var indicatorsToDelete = new ArrayList<OrganisationUnitIndicator>();
+
         processChunks(
             sourceId,
             (srcId, organisationUnitIndicator) -> {
@@ -175,8 +216,11 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         organisationUnitIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    organisationUnitIndicatorRepository.deleteIndicatorsForCodeAndOrganisationUnitId(
-                        organisationUnitIndicator.getIndicator().getCode(), targetId);
+                    if (organisationUnitIndicatorRepository.findIndicatorForCodeAndOrganisationUnitId(
+                        organisationUnitIndicator.getIndicator().getCode(), targetId).isPresent()) {
+                        indicatorsToDelete.add(organisationUnitIndicator);
+                        return;
+                    }
 
                     organisationUnitIndicator.setOrganisationUnit(
                         organisationUnitService.findOne(targetId));
@@ -185,10 +229,14 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
             pageRequest -> organisationUnitIndicatorRepository.findIndicatorsForOrganisationUnitAndIndicatorAccessLevel(
                 sourceId, AccessLevel.ADMIN_ONLY)
         );
+
+        organisationUnitIndicatorRepository.deleteAll(indicatorsToDelete);
     }
 
     @Override
     public void switchAllIndicatorsToOtherDocument(Integer sourceId, Integer targetId) {
+        var indicatorsToDelete = new ArrayList<DocumentIndicator>();
+
         processChunks(
             sourceId,
             (srcId, documentIndicator) -> {
@@ -197,8 +245,11 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         documentIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    documentIndicatorRepository.deleteIndicatorsForCodeAndDocumentId(
-                        documentIndicator.getIndicator().getCode(), targetId);
+                    if (documentIndicatorRepository.findIndicatorForCodeAndDocumentId(
+                        documentIndicator.getIndicator().getCode(), targetId).isPresent()) {
+                        indicatorsToDelete.add(documentIndicator);
+                        return;
+                    }
 
                     documentIndicator.setDocument(documentPublicationService.findOne(targetId));
                 }
@@ -206,10 +257,14 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
             pageRequest -> documentIndicatorRepository.findIndicatorsForDocumentAndIndicatorAccessLevel(
                 sourceId, AccessLevel.ADMIN_ONLY)
         );
+
+        documentIndicatorRepository.deleteAll(indicatorsToDelete);
     }
 
     @Override
     public void switchAllIndicatorsToOtherBookSeries(Integer sourceId, Integer targetId) {
+        var indicatorsToDelete = new ArrayList<PublicationSeriesIndicator>();
+
         processChunks(
             sourceId,
             (srcId, bookSeriesIndicator) -> {
@@ -218,14 +273,16 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         bookSeriesIndicator.getIndicator().getCode());
 
                 if (!isStatisticIndicator) {
-                    var existingIndicatorValue =
-                        publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
-                            targetId, bookSeriesIndicator.getSource(),
-                            bookSeriesIndicator.getFromDate(),
-                            bookSeriesIndicator.getCategoryIdentifier(),
-                            bookSeriesIndicator.getIndicator().getCode());
+                    if (publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                        targetId, bookSeriesIndicator.getSource(),
+                        bookSeriesIndicator.getFromDate(),
+                        bookSeriesIndicator.getCategoryIdentifier(),
+                        bookSeriesIndicator.getIndicator().getCode()).isPresent()) {
+                        indicatorsToDelete.add(bookSeriesIndicator);
+                        return;
+                    }
 
-                    existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
+
                     bookSeriesIndicator.setPublicationSeries(
                         bookSeriesService.findBookSeriesById(targetId));
                 }
@@ -233,6 +290,8 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
             pageRequest -> publicationSeriesIndicatorRepository.findIndicatorsForPublicationSeries(
                 sourceId, pageRequest).getContent()
         );
+
+        publicationSeriesIndicatorRepository.deleteAll(indicatorsToDelete);
     }
 
     private <T> void processChunks(int sourceId,

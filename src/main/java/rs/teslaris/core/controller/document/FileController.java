@@ -51,6 +51,7 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
 import rs.teslaris.core.util.signposting.LinksetFormat;
@@ -245,7 +246,8 @@ public class FileController {
                 person.getProfilePhoto().getHeight()).toOutputStream(outputStream);
 
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .body(fullSize ? new InputStreamResource(fileService.loadAsResource(filename)) :
@@ -328,7 +330,8 @@ public class FileController {
         ImageIO.write(canvas, "png", outputStream);
 
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
             .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(Path.of(filename)))
             .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
             .body(fullSize ? new InputStreamResource(fileService.loadAsResource(filename)) :
@@ -390,7 +393,8 @@ public class FileController {
             headers.set(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"));
         }
 
-        headers.set(HttpHeaders.CONTENT_DISPOSITION, contentDisposition);
+        headers.set(HttpHeaders.CONTENT_DISPOSITION,
+            StringUtil.contentDisposition(contentDisposition));
         headers.set(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"));
         return headers;
     }

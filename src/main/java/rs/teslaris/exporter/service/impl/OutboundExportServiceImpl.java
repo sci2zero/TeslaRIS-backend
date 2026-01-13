@@ -454,7 +454,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             if (Objects.nonNull(requiredType)) {
                 query.addCriteria(
                     Criteria.where("type")
-                        .is(ExportPublicationType.fromStringValue(requiredType)));
+                        .in(Arrays.stream(requiredType.split(","))
+                            .map(ExportPublicationType::fromStringValue).toList()));
             }
         } else {
             var excludedTypes = handlerConfiguration

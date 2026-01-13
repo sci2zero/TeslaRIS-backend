@@ -56,6 +56,7 @@ public class NavigationBackwardCompatibilityServiceImpl implements
             var documentOpt = documentRepository.findById(documentId);
 
             if (documentOpt.isEmpty()) {
+                // Should not happen anymore but leave it JIC
                 documentIdOpt = documentRepository.findDocumentByMergedIdsContains(documentId);
                 if (documentIdOpt.isEmpty()) {
                     return new Pair<>("DELETED", documentId);
@@ -125,6 +126,13 @@ public class NavigationBackwardCompatibilityServiceImpl implements
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + document);
             }
+        }
+
+        if (documentRepository.countDocumentsByOldIdsContains(oldId) > 0) {
+            log.info(
+                "NAVIGATION FAILED - DOCUMENT with legacy ID {} from {} in LANGUAGE {} is deleted",
+                oldId, source, language);
+            return new Pair<>("DELETED", oldId);
         }
 
         var journalOpt = journalRepository.findByOldIdsContains(oldId);

@@ -16,29 +16,56 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findBulkDocuments(List<Integer> ids);
 
     @Query(value = """
-        SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM software WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM software WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM journal_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM journal_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM proceedings_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM proceedings_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM monograph_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM monograph_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM theses WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM theses WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM material_products WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM material_products WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM genetic_materials WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        SELECT id FROM genetic_materials WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         """, nativeQuery = true)
     Optional<Integer> findDocumentByOldIdsContains(Integer oldId);
+
+    @Query(value = """
+        SELECT COUNT(*) FROM (
+            SELECT 1 FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM software WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM patents WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM proceedings WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM journal_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM proceedings_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM monograph_publications WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM theses WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM material_products WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            UNION ALL
+            SELECT 1 FROM genetic_materials WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+        ) AS document_counts
+        """, nativeQuery = true)
+    Integer countDocumentsByOldIdsContains(Integer oldId);
 
     @Query(value = """
         SELECT id FROM datasets WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE

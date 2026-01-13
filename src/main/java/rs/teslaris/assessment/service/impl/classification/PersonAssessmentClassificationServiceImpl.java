@@ -270,14 +270,18 @@ public class PersonAssessmentClassificationServiceImpl
     @Override
     @Transactional
     public synchronized void reindexPublicationPointsForAllResearchers() {
-        int pageNumber = 0;
+        var assessmentMeasures = loadAssessmentMeasures();
 
+        int pageNumber = 0;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
             var persons =
                 personIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE)).getContent();
-            persons.forEach(this::reindexPublicationPointsForResearcher);
+
+            persons.forEach(personIndex ->
+                reindexPublicationPointsForResearcher(personIndex, assessmentMeasures)
+            );
 
             pageNumber++;
             hasNextPage = persons.size() == CHUNK_SIZE;
@@ -286,8 +290,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public void reindexPublicationPointsForResearcher(PersonIndex index) {
-        var assessmentMeasures = loadAssessmentMeasures();
+    public void reindexPublicationPointsForResearcher(PersonIndex index,
+                                                      List<AssessmentMeasure> assessmentMeasures) {
         var commissionResearchAreas = resolveCommissionResearchAreas(index);
 
         processPublicationsInChunks(index, commissionResearchAreas, assessmentMeasures);
@@ -679,9 +683,13 @@ public class PersonAssessmentClassificationServiceImpl
             return;
         }
 
+        var assessmentMeasures = loadAssessmentMeasures();
+
         event.personIds()
             .forEach(personId -> personIndexRepository.findByDatabaseId(personId)
-                .ifPresent(this::reindexPublicationPointsForResearcher));
+                .ifPresent(personIndex ->
+                    reindexPublicationPointsForResearcher(personIndex, assessmentMeasures))
+            );
     }
 
     @EventListener

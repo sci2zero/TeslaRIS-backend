@@ -17,6 +17,7 @@ import okhttp3.Headers;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tika.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
@@ -59,6 +60,41 @@ public class FileServiceFileSystemImpl implements FileService {
         }
 
         try (var inputStream = file.getInputStream()) {
+            Files.copy(inputStream, destinationFilePath,
+                StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException("Failed to store file.");
+        }
+
+        return serverFilename + "." + extension;
+    }
+
+    @Override
+    public String store(Resource resource, String serverFilename,
+                        String originalFilename) {
+        if (Objects.isNull(resource) || !resource.exists()) {
+            throw new StorageException("Failed to store empty file.");
+        }
+
+        var sanitizedOriginalFilename = FilenameUtils.normalize(
+            Objects.requireNonNullElse(originalFilename, ""));
+        if (sanitizedOriginalFilename.isEmpty()) {
+            throw new StorageException("Failed to store file with empty file name.");
+        }
+
+        var originalFilenameTokens =
+            Objects.requireNonNull(StringEscapeUtils.escapeHtml4(sanitizedOriginalFilename))
+                .split("\\.");
+        var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
+        var destinationFilePath = Paths.get(rootLocation, serverFilename + "." + extension)
+            .normalize().toAbsolutePath();
+
+        if (!destinationFilePath.getParent().endsWith(rootLocation)) {
+            throw new StorageException(
+                "Cannot store file outside current directory.");
+        }
+
+        try (var inputStream = resource.getInputStream()) {
             Files.copy(inputStream, destinationFilePath,
                 StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
