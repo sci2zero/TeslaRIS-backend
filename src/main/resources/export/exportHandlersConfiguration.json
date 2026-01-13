@@ -2,7 +2,7 @@
   "handlers": [
     {
       "identifier": "OAIHandlerOpenAIRECRIS",
-      "internalInstitutionId": "1",
+      "internalInstitutionId": "17",
       "handlerName": "CRIS of Faculty of Sciences, University of Novi Sad",
       "handlerDescription": "CERIF compliant CRIS system developed by Science 2.0 Alliance for Faculty of Sciences, University of Novi Sad",
       "handlerLanguage": "sr",
@@ -330,7 +330,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
@@ -339,6 +339,9 @@
         "oai_dc",
         "dim"
       ],
+      "typeIdentifierSuffixes": {
+        "JOURNAL": "ps"
+      },
       "typeMappings": {
         "PERSON": "(DEFAULT)Osoba@sr;(DEFAULT)Person@en",
         "EVENT": "(DEFAULT)Konferencija@sr;(DEFAULT)Conference@en",
@@ -426,7 +429,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
@@ -435,6 +438,9 @@
         "oai_dc",
         "dim"
       ],
+      "typeIdentifierSuffixes": {
+        "JOURNAL": "ps"
+      },
       "typeMappings": {
         "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",
         "PROCEEDINGS_PUBLICATION": "(DEFAULT)Rad u zborniku@sr;(DEFAULT)Conference Paper@en",
@@ -519,7 +525,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
@@ -528,6 +534,9 @@
         "oai_dc",
         "dim"
       ],
+      "typeIdentifierSuffixes": {
+        "JOURNAL": "ps"
+      },
       "typeMappings": {
         "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",
         "PROCEEDINGS_PUBLICATION": "(DEFAULT)Rad u zborniku@sr;(DEFAULT)Conference Paper@en",
