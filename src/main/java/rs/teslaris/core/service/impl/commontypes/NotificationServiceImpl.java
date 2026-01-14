@@ -26,6 +26,7 @@ import rs.teslaris.core.model.user.UserNotificationPeriod;
 import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
@@ -74,13 +75,27 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     @Override
     public List<NotificationDTO> getUserNotifications(Integer userId) {
         var notificationList = notificationRepository.getNotificationsForUser(userId);
+        var locale = getLocale(notificationList);
 
         return notificationList.stream().map(
-                notification -> new NotificationDTO(notification.getId(),
-                    notification.getNotificationText(), getDisplayValue(notification),
-                    NotificationConfiguration.allowedActions.get(notification.getNotificationType()),
-                    notification.getCreateDate()
-                        .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()))
+                notification -> {
+                    var isAddedToPublicationNotification = notification.getNotificationType()
+                        .equals(NotificationType.ADDED_TO_PUBLICATION);
+
+                    var notificationText = notification.getNotificationText();
+                    if (isAddedToPublicationNotification) {
+                        notificationText += " " +
+                            messageSource.getMessage("notification.addedToPublicationAction",
+                                null, locale);
+                    }
+
+                    return new NotificationDTO(notification.getId(),
+                        notificationText, getDisplayValue(notification),
+                        NotificationConfiguration.allowedActions.get(
+                            notification.getNotificationType()),
+                        notification.getCreateDate()
+                            .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                })
             .collect(
                 Collectors.toList());
     }
@@ -245,7 +260,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         var stringBuilder = new StringBuilder();
 
         stringBuilder.append(
-                messageSource.getMessage(getStartKey(notificationPeriod), null, locale))
+                messageSource.getMessage(getStartKey(notificationPeriod), new Object[] {
+                    BrandingInformationUtil.getSystemName(locale.toLanguageTag())}, locale))
             .append("\n\n");
 
         notifications.forEach(notification -> {

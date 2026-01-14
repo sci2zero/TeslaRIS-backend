@@ -19,6 +19,7 @@ import rs.teslaris.core.dto.document.CitationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.PrintedPageable;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
@@ -112,11 +113,7 @@ public class CitationServiceImpl implements CitationService {
                     itemBuilder.issue(journalPublication.getIssue());
                 }
 
-                if (StringUtil.valueExists(journalPublication.getStartPage()) &&
-                    StringUtil.valueExists(journalPublication.getEndPage())) {
-                    itemBuilder.page(journalPublication.getStartPage() + "-" +
-                        journalPublication.getEndPage());
-                }
+                setPageInformation(itemBuilder, journalPublication);
             }
             case "PROCEEDINGS_PUBLICATION" -> {
                 var proceedingsPublication =
@@ -133,11 +130,7 @@ public class CitationServiceImpl implements CitationService {
                     itemBuilder.number(proceedingsPublication.getArticleNumber());
                 }
 
-                if (StringUtil.valueExists(proceedingsPublication.getStartPage()) &&
-                    StringUtil.valueExists(proceedingsPublication.getEndPage())) {
-                    itemBuilder.page(proceedingsPublication.getStartPage(),
-                        proceedingsPublication.getEndPage());
-                }
+                setPageInformation(itemBuilder, proceedingsPublication);
             }
         }
 
@@ -218,5 +211,13 @@ public class CitationServiceImpl implements CitationService {
             case "PROCEEDINGS" -> CSLType.ARTICLE_MAGAZINE;
             default -> CSLType.ARTICLE; // Should never return
         };
+    }
+
+    private static void setPageInformation(CSLItemDataBuilder itemBuilder,
+                                           PrintedPageable document) {
+        if (StringUtil.valueExists(document.getStartPage()) &&
+            StringUtil.valueExists(document.getEndPage())) {
+            itemBuilder.page(document.getStartPage() + "-" + document.getEndPage());
+        }
     }
 }

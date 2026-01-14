@@ -20,12 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.commontypes.NotificationRepository;
 import rs.teslaris.core.service.impl.commontypes.NotificationServiceImpl;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotificationHandler;
 
@@ -47,6 +49,7 @@ public class NotificationServiceTest {
         var userId = 1;
         var user = new User();
         user.setId(userId);
+        user.setPreferredUILanguage(new LanguageTag(LanguageAbbreviations.SERBIAN, "Srpski"));
 
         var values = new HashMap<String, String>();
         values.put("fisrtname", "Ivan");

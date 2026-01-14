@@ -82,6 +82,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputCon
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -1828,6 +1829,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 notificationValues.put("contributionId", contribution.getId().toString());
                 notificationValues.put("documentId", document.getId().toString());
                 notificationValues.put("personId", contribution.getPerson().getId().toString());
+                notificationValues.put("systemName", BrandingInformationUtil.getSystemName(
+                    userOptional.get().getPreferredUILanguage().getLanguageTag()));
                 personContributionService.notifyContributor(
                     NotificationFactory.contructAddedToPublicationNotification(notificationValues,
                         userOptional.get()), NotificationType.ADDED_TO_PUBLICATION);
