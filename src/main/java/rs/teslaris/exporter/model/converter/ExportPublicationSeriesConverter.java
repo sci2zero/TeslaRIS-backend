@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
+import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
@@ -18,10 +19,14 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
 
     private static JournalRepository journalRepository;
 
+    private static BookSeriesRepository bookSeriesRepository;
+
 
     @Autowired
-    public ExportPublicationSeriesConverter(JournalRepository journalRepository) {
+    public ExportPublicationSeriesConverter(JournalRepository journalRepository,
+                                            BookSeriesRepository bookSeriesRepository) {
         ExportPublicationSeriesConverter.journalRepository = journalRepository;
+        ExportPublicationSeriesConverter.bookSeriesRepository = bookSeriesRepository;
     }
 
     public static ExportDocument toCommonExportModel(
@@ -95,8 +100,14 @@ public class ExportPublicationSeriesConverter extends ExportConverterBase {
             });
         });
 
-        relations.addAll(journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(
-            publicationSeries.getId()));
+        if (publicationSeries instanceof Journal) {
+            relations.addAll(journalRepository.findInstitutionIdsByJournalIdAndAuthorContribution(
+                publicationSeries.getId()));
+        } else {
+            relations.addAll(
+                bookSeriesRepository.findInstitutionIdsByBookSeriesIdAndAuthorContribution(
+                    publicationSeries.getId()));
+        }
 
         return relations;
     }

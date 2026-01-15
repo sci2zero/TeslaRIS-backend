@@ -1,6 +1,7 @@
 package rs.teslaris.core.repository.document;
 
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,4 +25,26 @@ public interface BookSeriesRepository extends JpaRepository<BookSeries, Integer>
         " ORDER BY bs.id",
         nativeQuery = true)
     Page<BookSeries> findAllModified(Pageable pageable, boolean allTime);
+
+    @Query("""
+        SELECT DISTINCT inst.id FROM OrganisationUnit inst 
+        WHERE inst.id IN (
+            SELECT DISTINCT inst.id 
+            FROM Monograph m 
+            JOIN m.publicationSeries ps 
+            JOIN m.contributors pc 
+            JOIN pc.institutions inst 
+            WHERE ps.id = :bookSeriesId 
+            AND pc.contributionType = 0
+        ) OR inst.id IN (
+            SELECT DISTINCT inst.id 
+            FROM Proceedings p 
+            JOIN p.publicationSeries ps 
+            JOIN p.contributors pc 
+            JOIN pc.institutions inst 
+            WHERE ps.id = :bookSeriesId 
+            AND pc.contributionType = 0
+        )
+        """)
+    Set<Integer> findInstitutionIdsByBookSeriesIdAndAuthorContribution(Integer bookSeriesId);
 }
