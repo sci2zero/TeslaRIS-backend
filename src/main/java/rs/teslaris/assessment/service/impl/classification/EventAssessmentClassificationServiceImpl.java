@@ -183,6 +183,14 @@ public class EventAssessmentClassificationServiceImpl
                         instanceClassification.setClassificationYear(
                             eventInstance.getDateFrom().getYear());
                         instanceClassification.setEvent(eventInstance);
+
+                        instanceClassification.setClassificationReason(
+                            AssessmentRulesConfigurationLoader.getRuleDescription(
+                                "eventClassificationRules",
+                                "manual", MultilingualContentConverter.getMultilingualContentDTO(
+                                    instanceClassification.getAssessmentClassification()
+                                        .getTitle())));
+
                         eventAssessmentClassificationJPAService.save(instanceClassification);
                         conferenceService.reindexVolatileConferenceInformation(
                             eventInstance.getId());
@@ -193,6 +201,12 @@ public class EventAssessmentClassificationServiceImpl
             eventAssessmentClassificationToUpdate.setClassificationYear(classificationYear);
         }
 
+        eventAssessmentClassificationToUpdate.setClassificationReason(
+            AssessmentRulesConfigurationLoader.getRuleDescription(
+                "eventClassificationRules",
+                "manual", MultilingualContentConverter.getMultilingualContentDTO(
+                    eventAssessmentClassificationToUpdate.getAssessmentClassification()
+                        .getTitle())));
         eventAssessmentClassificationJPAService.save(eventAssessmentClassificationToUpdate);
         conferenceService.reindexVolatileConferenceInformation(
             eventAssessmentClassificationToUpdate.getEvent().getId());

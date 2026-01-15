@@ -51,12 +51,11 @@ public class CommonLoadController {
     public void markRecordAsLoaded(
         @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
         @RequestParam(required = false) Integer oldDocumentId,
-        @RequestParam(required = false) Boolean deleteOldDocument,
         @RequestParam(required = false) Integer newDocumentId,
         @RequestHeader("Authorization") String bearerToken) {
         loader.markRecordAsLoaded(tokenUtil.extractUserIdFromToken(bearerToken),
             getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId), oldDocumentId,
-            deleteOldDocument, newDocumentId);
+            newDocumentId);
     }
 
     @GetMapping("/load-wizard/count-remaining")

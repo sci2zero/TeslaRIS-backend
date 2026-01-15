@@ -22,6 +22,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.InvolvementConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
@@ -172,5 +173,11 @@ public class InvolvementController {
     @GetMapping("/employment-title/{personId}")
     public EmploymentTitle getCurrentEmploymentTitle(@PathVariable Integer personId) {
         return involvementService.getCurrentEmploymentTitle(personId);
+    }
+
+    @GetMapping("/external-institution-suggestion/{personId}")
+    public List<List<MultilingualContentDTO>> getExternalInstitutionSuggestions(
+        @PathVariable Integer personId) {
+        return involvementService.getExternalInstitutionSuggestions(personId);
     }
 }

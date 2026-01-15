@@ -768,6 +768,7 @@ public class DocumentAssessmentClassificationServiceImpl
         var pointsRuleEngine = new AssessmentPointsRuleEngine(researchAreaRepository);
         var scalingRuleEngine = new AssessmentPointsScalingRuleEngine();
 
+        pointsRuleEngine.setPublicationType(((Enum<?>) publicationType).name());
         applyIndicatorScalingRule(scalingRuleEngine, isExperimental, isTheoretical, isSimulation,
             publicationType);
 

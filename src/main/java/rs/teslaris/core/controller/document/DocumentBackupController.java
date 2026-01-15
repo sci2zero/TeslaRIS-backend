@@ -72,19 +72,17 @@ public class DocumentBackupController {
     @GetMapping("/download/{backupFileName}")
     @ResponseBody
     public ResponseEntity<StreamingResponseBody> serveAndDeleteBackupFile(
-        HttpServletRequest request,
-        @PathVariable String backupFileName,
-        @RequestHeader(value = "Authorization")
-        String bearerToken) throws IOException {
-        if (!SessionUtil.isSessionValid(request, bearerToken) ||
-            !SessionUtil.hasAnyRole(bearerToken,
-                List.of(UserRole.ADMIN, UserRole.INSTITUTIONAL_EDITOR))) {
+        HttpServletRequest request, @PathVariable String backupFileName) throws IOException {
+        if (!SessionUtil.isUserLoggedIn() ||
+            !List.of(UserRole.ADMIN, UserRole.INSTITUTIONAL_EDITOR)
+                .contains(
+                    UserRole.valueOf(SessionUtil.getLoggedInUser().getAuthority().getName()))) {
             return ErrorResponseUtil.buildUnauthorisedStreamingResponse(request,
                 "unauthorisedToViewDocumentMessage");
         }
 
         var file = documentBackupService.serveBackupFile(backupFileName,
-            tokenUtil.extractUserIdFromToken(bearerToken));
+            SessionUtil.getLoggedInUser().getId());
         Runnable deleteCallback = () -> documentBackupService.deleteBackupFile(backupFileName);
 
         return ResponseEntity.ok()

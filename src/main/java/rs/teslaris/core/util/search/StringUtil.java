@@ -441,5 +441,4 @@ public class StringUtil {
 
         return "attachment; filename=\"file\"; filename*=UTF-8''" + encoded;
     }
-
 }

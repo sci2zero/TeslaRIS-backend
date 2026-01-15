@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
@@ -17,6 +18,7 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.person.InvolvementConverter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
@@ -27,11 +29,13 @@ import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.dto.person.involvement.MembershipDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.EmploymentTitle;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.Involvement;
+import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.repository.person.EmploymentRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -44,6 +48,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 @Slf4j
 @Service
@@ -194,12 +199,14 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public Employment addEmployment(Integer personId, EmploymentDTO employment) {
         var personInvolved = personService.findOne(personId);
 
-        var role = multilingualContentService.getMultilingualContent(employment.getRole());
-
         var newEmployment = new Employment();
         setCommonFields(newEmployment, employment);
         newEmployment.setEmploymentPosition(employment.getEmploymentPosition());
-        newEmployment.setRole(role);
+
+        if (Objects.nonNull(employment.getRole())) {
+            newEmployment.setRole(
+                multilingualContentService.getMultilingualContent(employment.getRole()));
+        }
 
         personInvolved.addInvolvement(newEmployment);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
@@ -491,5 +498,39 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     private void clearCommonCollections(Involvement involvement) {
         involvement.getAffiliationStatement().clear();
         involvement.getProofs().clear();
+    }
+
+    @Async
+    @Transactional
+    public void addExternalInvolvementToBoardMember(Integer personId,
+                                                    List<MultilingualContentDTO> externalInstitutionName,
+                                                    String employmentTitle) {
+        if (employmentRepository.findExternalByPersonInvolvedId(personId).stream()
+            .anyMatch(employment ->
+                CollectionOperations.hasCaseInsensitiveMatch(
+                    externalInstitutionName.stream().map(MultilingualContentDTO::getContent)
+                        .collect(Collectors.toSet()), employment.getAffiliationStatement().stream()
+                        .map(MultiLingualContent::getContent).collect(Collectors.toSet())))) {
+            return;
+        }
+
+        if (employmentTitle.equals("ACADEMICIAN")) {
+            employmentTitle = "FULL_PROFESSOR";
+        }
+
+        var finalEmploymentTitle = employmentTitle;
+        addEmployment(personId, new EmploymentDTO() {{
+            setInvolvementType(InvolvementType.EMPLOYED_AT);
+            setAffiliationStatement(externalInstitutionName);
+            setEmploymentPosition(EmploymentPosition.valueOf(finalEmploymentTitle));
+        }});
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<List<MultilingualContentDTO>> getExternalInstitutionSuggestions(Integer personId) {
+        return employmentRepository.findExternalByPersonInvolvedId(personId).stream().map(
+            employment -> MultilingualContentConverter.getMultilingualContentDTO(
+                employment.getAffiliationStatement())).toList();
     }
 }

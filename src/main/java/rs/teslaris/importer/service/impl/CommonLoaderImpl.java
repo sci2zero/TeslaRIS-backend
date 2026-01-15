@@ -230,7 +230,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
     @Override
     public void markRecordAsLoaded(Integer userId, Integer institutionId, Integer oldDocumentId,
-                                   Boolean deleteOldDocument, Integer newDocumentId) {
+                                   Integer newDocumentId) {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
@@ -266,7 +266,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
         updatePersonInvolvements((DocumentImport) updatedRecord);
 
-        handleDeduplication(oldDocumentId, deleteOldDocument, (DocumentImport) updatedRecord,
+        handleDeduplication(oldDocumentId, (DocumentImport) updatedRecord,
             progressReport);
 
         migrateInternalIdentifiers(newDocumentId, (DocumentImport) updatedRecord);
@@ -414,24 +414,19 @@ public class CommonLoaderImpl implements CommonLoader {
         }
     }
 
-    private void handleDeduplication(Integer oldDocumentId, Boolean deleteOldDocument,
+    private void handleDeduplication(Integer oldDocumentId,
                                      DocumentImport updatedRecord,
                                      LoadProgressReport progressReport) {
-        if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0 &&
-            Objects.nonNull(deleteOldDocument)) {
+        if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0) {
             var potentialDuplicateIds = fetchPotentialDuplicateIds(updatedRecord);
 
             if (!potentialDuplicateIds.contains(oldDocumentId)) {
                 return;
             }
 
-            if (deleteOldDocument) {
-                documentPublicationService.deleteDocumentPublication(oldDocumentId);
-            } else {
-                var oldDocument = documentPublicationService.findDocumentById(oldDocumentId);
-                oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
-                documentPublicationService.save(oldDocument);
-            }
+            var oldDocument = documentPublicationService.findDocumentById(oldDocumentId);
+            oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
+            documentPublicationService.save(oldDocument);
         }
     }
 
@@ -520,10 +515,19 @@ public class CommonLoaderImpl implements CommonLoader {
         var potentialDuplicateIds = fetchPotentialDuplicateIds(currentlyLoadedEntity);
         if (potentialDuplicateIds.contains(oldDocumentId)) {
             var document = documentPublicationService.findOne(oldDocumentId);
-            document.setDoi("");
-            document.setScopusId("");
-            document.setOpenAlexId("");
-            document.setWebOfScienceId("");
+
+            switch (currentlyLoadedEntity.getSource()) {
+                case "SCOPUS":
+                    document.setScopusId("");
+                    break;
+                case "OPEN_ALEX":
+                    document.setOpenAlexId("");
+                    break;
+                case "WEB_OF_SCIENCE":
+                    document.setWebOfScienceId("");
+                    break;
+            }
+
             documentPublicationService.save(document);
         }
     }

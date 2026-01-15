@@ -12,6 +12,12 @@ public interface EmploymentRepository extends JpaRepository<Employment, Integer>
     @Query("SELECT e FROM Employment e WHERE e.personInvolved.id = :personId ORDER BY e.id")
     List<Employment> findByPersonInvolvedId(Integer personId);
 
+    @Query("SELECT e FROM Employment e WHERE " +
+        "e.personInvolved.id = :personId AND " +
+        "e.organisationUnit IS NULL " +
+        "ORDER BY e.id")
+    List<Employment> findExternalByPersonInvolvedId(Integer personId);
+
     @Query("SELECT e FROM Employment e JOIN FETCH e.personInvolved pe " +
         "WHERE e.organisationUnit.id = :institutionId " +
         "ORDER BY e.id")

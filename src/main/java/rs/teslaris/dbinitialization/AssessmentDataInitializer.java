@@ -1352,6 +1352,146 @@ public class AssessmentDataInitializer {
                     1)));
         m70.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
+        var m13 = new AssessmentClassification();
+        m13.setFormalDescriptionOfRule("handleM13");
+        m13.setCode("M13");
+        m13.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M13",
+                    1)));
+        m13.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION));
+
+        var m14 = new AssessmentClassification();
+        m14.setFormalDescriptionOfRule("handleM14");
+        m14.setCode("M14");
+        m14.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M14",
+                    1)));
+        m14.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION));
+
+        var m15 = new AssessmentClassification();
+        m15.setFormalDescriptionOfRule("handleM15");
+        m15.setCode("M15");
+        m15.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M15",
+                    1)));
+        m15.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION));
+
+        var m16 = new AssessmentClassification();
+        m16.setFormalDescriptionOfRule("handleM16");
+        m16.setCode("M16");
+        m16.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M16",
+                    1)));
+        m16.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION));
+
+        var m44 = new AssessmentClassification();
+        m44.setFormalDescriptionOfRule("handleM44");
+        m44.setCode("M44");
+        m44.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M44",
+                    1)));
+        m44.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION));
+
+        var m45 = new AssessmentClassification();
+        m45.setFormalDescriptionOfRule("handleM45");
+        m45.setCode("M45");
+        m45.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M45",
+                    1)));
+        m45.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION));
+
+        var m46 = new AssessmentClassification();
+        m46.setFormalDescriptionOfRule("handleM46");
+        m46.setCode("M46");
+        m46.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M46",
+                    1)));
+        m46.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION));
+
+        var m47 = new AssessmentClassification();
+        m47.setFormalDescriptionOfRule("handleM47");
+        m47.setCode("M47");
+        m47.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M47",
+                    1)));
+        m47.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION));
+
+        var m11 = new AssessmentClassification();
+        m11.setFormalDescriptionOfRule("handleM11");
+        m11.setCode("M11");
+        m11.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M11",
+                    1)));
+        m11.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH));
+
+        var m12 = new AssessmentClassification();
+        m12.setFormalDescriptionOfRule("handleM12");
+        m12.setCode("M12");
+        m12.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M12",
+                    1)));
+        m12.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH));
+
+        var m41 = new AssessmentClassification();
+        m41.setFormalDescriptionOfRule("handleM41");
+        m41.setCode("M41");
+        m41.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M41",
+                    1)));
+        m41.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH));
+
+        var m42 = new AssessmentClassification();
+        m42.setFormalDescriptionOfRule("handleM42");
+        m42.setCode("M42");
+        m42.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M42",
+                    1)));
+        m42.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH));
+
+        var m43 = new AssessmentClassification();
+        m43.setFormalDescriptionOfRule("handleM43");
+        m43.setCode("M43");
+        m43.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M43",
+                    1)));
+        m43.setApplicableTypes(Set.of(ApplicableEntityType.MONOGRAPH));
+
+        var m103 = new AssessmentClassification();
+        m103.setFormalDescriptionOfRule("handleM103");
+        m103.setCode("M103");
+        m103.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M103",
+                    1)));
+        m103.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
         assessmentClassificationRepository.saveAll(
             List.of(journalM21APlus, journalM21A, journalM21, journalM22, journalM23, journalM23e,
                 journalM24plus, multinationalConf, nationalConf,
@@ -1361,7 +1501,9 @@ public class AssessmentDataInitializer {
                 M26, M27,
                 m31, m32, m33, m34,
                 m61, m62, m63, m64, m69,
-                m70)
+                m70,
+                m13, m14, m15, m16, m44, m45, m46, m47,
+                m11, m12, m41, m42, m43, m103)
         );
     }
 

@@ -42,6 +42,13 @@ public class CitationServiceImpl implements CitationService {
 
     public final PublisherRepository publisherRepository;
 
+    private static void setPageInformation(CSLItemDataBuilder itemBuilder,
+                                           PrintedPageable document) {
+        if (StringUtil.valueExists(document.getStartPage()) &&
+            StringUtil.valueExists(document.getEndPage())) {
+            itemBuilder.page(document.getStartPage() + "-" + document.getEndPage());
+        }
+    }
 
     @Override
     public CitationResponseDTO craftCitations(DocumentPublicationIndex index, String languageCode) {
@@ -211,13 +218,5 @@ public class CitationServiceImpl implements CitationService {
             case "PROCEEDINGS" -> CSLType.ARTICLE_MAGAZINE;
             default -> CSLType.ARTICLE; // Should never return
         };
-    }
-
-    private static void setPageInformation(CSLItemDataBuilder itemBuilder,
-                                           PrintedPageable document) {
-        if (StringUtil.valueExists(document.getStartPage()) &&
-            StringUtil.valueExists(document.getEndPage())) {
-            itemBuilder.page(document.getStartPage() + "-" + document.getEndPage());
-        }
     }
 }

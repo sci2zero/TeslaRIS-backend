@@ -548,8 +548,10 @@ public class PersonAssessmentClassificationServiceImpl
                                            String classificationCode,
                                            AssessmentMeasure applicableMeasure,
                                            List<DocumentIndicator> indicators) {
+        pointsRuleEngine.setPublicationType(publication.getPublicationType());
         scalingRuleEngine.setCurrentEntityIndicators(indicators);
         scalingRuleEngine.setPublicationType(publication.getPublicationType());
+
         return calculatePoints(applicableMeasure, pointsRuleEngine, scalingRuleEngine,
             researchArea, classificationCode, publication);
     }

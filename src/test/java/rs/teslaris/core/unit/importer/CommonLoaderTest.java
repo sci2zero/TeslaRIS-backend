@@ -119,11 +119,8 @@ public class CommonLoaderTest {
 
     private static Stream<Arguments> argumentSources() {
         return Stream.of(
-            Arguments.of(1, true),
-            Arguments.of(1, false),
-            Arguments.of(null, true),
-            Arguments.of(null, false),
-            Arguments.of(null, null)
+            Arguments.of(1),
+            Arguments.of((Object) null)
         );
     }
 
@@ -242,8 +239,7 @@ public class CommonLoaderTest {
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    void shouldMarkRecordAsLoadedSuccessfully(Integer oldPublicationId,
-                                              Boolean deleteOldPublication) {
+    void shouldMarkRecordAsLoadedSuccessfully(Integer oldPublicationId) {
         // Given
         var userId = 1;
         var lastLoadedId = "someId";
@@ -253,7 +249,7 @@ public class CommonLoaderTest {
         when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId, null,
             mongoTemplate)).thenReturn(progressReport);
 
-        if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
+        if (Objects.nonNull(oldPublicationId)) {
             when(documentPublicationService.findDocumentDuplicates(any(), any(), any(),
                 any(), any(), any())).thenReturn(
                 new PageImpl<>(List.of(new DocumentPublicationIndex() {{
@@ -278,24 +274,20 @@ public class CommonLoaderTest {
                 any(FindAndModifyOptions.class), eq(entityClass));
 
         // When
-        commonLoader.markRecordAsLoaded(userId, null, oldPublicationId, deleteOldPublication, null);
+        commonLoader.markRecordAsLoaded(userId, null, oldPublicationId, null);
 
-        if (Objects.nonNull(oldPublicationId) && Objects.nonNull(deleteOldPublication)) {
+        if (Objects.nonNull(oldPublicationId)) {
             verify(documentPublicationService, times(1)).findDocumentDuplicates(any(), any(),
                 any(), any(), any(), any());
-            if (deleteOldPublication) {
-                verify(documentPublicationService, times(1)).deleteDocumentPublication(1);
-            } else {
-                verify(documentPublicationService, times(1)).findDocumentById(1);
-                verify(documentPublicationService, times(1)).save(any());
-            }
+
+            verify(documentPublicationService, times(1)).findDocumentById(1);
+            verify(documentPublicationService, times(1)).save(any());
         }
     }
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    void shouldThrowExceptionWhenRecordAlreadyLoaded(Integer oldPublicationId,
-                                                     Boolean deleteOldPublication) {
+    void shouldThrowExceptionWhenRecordAlreadyLoaded(Integer oldPublicationId) {
         // Given
         var userId = 1;
         var lastLoadedId = "someId";
@@ -321,8 +313,7 @@ public class CommonLoaderTest {
 
         // When
         assertThrows(RecordAlreadyLoadedException.class,
-            () -> commonLoader.markRecordAsLoaded(userId, null, oldPublicationId,
-                deleteOldPublication, null));
+            () -> commonLoader.markRecordAsLoaded(userId, null, oldPublicationId, null));
 
         // Then (RecordAlreadyLoadedException should be thrown)
     }
@@ -1008,6 +999,7 @@ public class CommonLoaderTest {
         var lastLoadedId = "54321";
 
         var currentlyLoadedEntity = new DocumentImport();
+        currentlyLoadedEntity.setSource("SCOPUS");
 
         var progressReport = new LoadProgressReport();
         progressReport.setLastLoadedIdentifier(lastLoadedId);
@@ -1042,9 +1034,7 @@ public class CommonLoaderTest {
         commonLoader.prepareOldDocumentForOverwriting(userId, institutionId, oldDocumentId);
 
         // Then
-        assertEquals("", mockDoc.getDoi());
         assertEquals("", mockDoc.getScopusId());
-        assertEquals("", mockDoc.getOpenAlexId());
         verify(documentPublicationService).save(mockDoc);
     }
 
