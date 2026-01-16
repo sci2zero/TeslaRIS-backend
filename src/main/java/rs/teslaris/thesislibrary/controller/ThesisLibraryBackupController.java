@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,7 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
 @RequestMapping("/api/thesis-library/backup")
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class ThesisLibraryBackupController {
 
     private final ThesisLibraryBackupService thesisLibraryBackupService;
@@ -95,6 +97,9 @@ public class ThesisLibraryBackupController {
         var file = thesisLibraryBackupService.serveBackupFile(backupFileName,
             SessionUtil.getLoggedInUser().getId());
         Runnable deleteCallback = () -> thesisLibraryBackupService.deleteBackupFile(backupFileName);
+
+        log.info("=== DEBUG LOGGING - DOWNLOAD REQUEST START ===");
+        log.info("Content-Length: {}", file.headers().get("Content-Length"));
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,

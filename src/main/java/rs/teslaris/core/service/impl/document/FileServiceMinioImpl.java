@@ -5,6 +5,8 @@ import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,9 +16,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tika.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +33,7 @@ import rs.teslaris.core.util.functional.Pair;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class FileServiceMinioImpl implements FileService {
 
     private final MinioClient minioClient;
@@ -84,7 +89,13 @@ public class FileServiceMinioImpl implements FileService {
         try {
             long size;
             try {
-                size = resource.contentLength();
+                if (resource instanceof FileSystemResource fileRes) {
+                    log.info("=== DEBUG LOGGING - CONTENT LENGTH CALCULATION ===");
+                    log.info("{} {}", resource.contentLength(), fileRes.getFile().length());
+                    size = fileRes.getFile().length();
+                } else {
+                    size = resource.contentLength();
+                }
             } catch (IOException e) {
                 size = -1;
             }
@@ -130,6 +141,16 @@ public class FileServiceMinioImpl implements FileService {
     @Override
     public GetObjectResponse loadAsResource(String serverFilename) {
         try {
+            StatObjectResponse stat = minioClient.statObject(
+                StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(serverFilename)
+                    .build()
+            );
+
+            log.info("=== DEBUG LOGGING - ACTUAL CONTENT LENGTH ===");
+            log.info("{} {}", serverFilename, stat.size());
+
             var args = GetObjectArgs.builder()
                 .bucket(bucketName)
                 .object(serverFilename)
