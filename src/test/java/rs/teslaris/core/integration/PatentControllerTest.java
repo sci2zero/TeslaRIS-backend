@@ -105,4 +105,12 @@ public class PatentControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadPatentByOldId() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get("http://localhost:8081/api/patent/old-id/{oldId}", 992)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
 }

@@ -442,5 +442,52 @@ public class MonographPublicationServiceTest {
             .findByTypeAndMonographIdAndAuthorIds(
                 DocumentPublicationType.MONOGRAPH_PUBLICATION.name(), monographId, authorId);
     }
+
+    @Test
+    void shouldThrowNotFoundWhenMonographPublicationDoesNotExist() {
+        // Given
+        var oldId = 123;
+        when(monographPublicationRepository.findMonographPublicationByOldIdsContains(
+            oldId)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThrows(NotFoundException.class,
+            () -> monographPublicationService.readMonographPublicationByOldId(oldId));
+        verify(monographPublicationRepository).findMonographPublicationByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenMonographPublicationIsNotApproved() {
+        // Given
+        var oldId = 456;
+        var monographPublication = new MonographPublication();
+        monographPublication.setApproveStatus(ApproveStatus.REQUESTED);
+        when(monographPublicationRepository.findMonographPublicationByOldIdsContains(
+            oldId)).thenReturn(Optional.of(monographPublication));
+
+        // When / Then
+        assertThrows(NotFoundException.class,
+            () -> monographPublicationService.readMonographPublicationByOldId(oldId));
+        verify(monographPublicationRepository).findMonographPublicationByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldReturnDtoWhenMonographPublicationIsApproved() {
+        // Given
+        var oldId = 789;
+        var monographPublication = new MonographPublication();
+        monographPublication.setApproveStatus(ApproveStatus.APPROVED);
+        monographPublication.setMonograph(new Monograph());
+
+        when(monographPublicationRepository.findMonographPublicationByOldIdsContains(
+            oldId)).thenReturn(Optional.of(monographPublication));
+
+        // When
+        var result = monographPublicationService.readMonographPublicationByOldId(oldId);
+
+        // Then
+        assertNotNull(result);
+        verify(monographPublicationRepository).findMonographPublicationByOldIdsContains(oldId);
+    }
 }
 

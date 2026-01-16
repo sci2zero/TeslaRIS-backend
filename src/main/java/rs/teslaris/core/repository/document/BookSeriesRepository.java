@@ -27,24 +27,38 @@ public interface BookSeriesRepository extends JpaRepository<BookSeries, Integer>
     Page<BookSeries> findAllModified(Pageable pageable, boolean allTime);
 
     @Query("""
-        SELECT DISTINCT inst.id FROM OrganisationUnit inst 
-        WHERE inst.id IN (
-            SELECT DISTINCT inst.id 
-            FROM Monograph m 
-            JOIN m.publicationSeries ps 
-            JOIN m.contributors pc 
-            JOIN pc.institutions inst 
-            WHERE ps.id = :bookSeriesId 
-            AND pc.contributionType = 0
-        ) OR inst.id IN (
-            SELECT DISTINCT inst.id 
-            FROM Proceedings p 
-            JOIN p.publicationSeries ps 
-            JOIN p.contributors pc 
-            JOIN pc.institutions inst 
-            WHERE ps.id = :bookSeriesId 
-            AND pc.contributionType = 0
-        )
+            SELECT DISTINCT inst.id
+            FROM OrganisationUnit inst
+            WHERE inst.id IN (
+                SELECT DISTINCT inst.id
+                FROM Monograph m
+                JOIN m.publicationSeries ps
+                JOIN m.contributors pc
+                JOIN pc.institutions inst
+                WHERE ps.id = :bookSeriesId
+                  AND pc.contributionType = 0
+            )
+            OR inst.id IN (
+                SELECT DISTINCT inst.id
+                FROM Proceedings p
+                JOIN p.publicationSeries ps
+                JOIN p.contributors pc
+                JOIN pc.institutions inst
+                WHERE ps.id = :bookSeriesId
+                  AND pc.contributionType = 1
+            )
+            OR inst.id IN (
+                SELECT DISTINCT inst.id
+                FROM ProceedingsPublication pp
+                JOIN pp.proceedings p
+                JOIN p.publicationSeries ps
+                JOIN pp.contributors pc
+                JOIN pc.institutions inst
+                WHERE ps.id = :bookSeriesId
+                  AND pc.contributionType = 0
+            )
         """)
-    Set<Integer> findInstitutionIdsByBookSeriesIdAndAuthorContribution(Integer bookSeriesId);
+    Set<Integer> findInstitutionIdsByBookSeriesIdAndAuthorContribution(
+        Integer bookSeriesId
+    );
 }

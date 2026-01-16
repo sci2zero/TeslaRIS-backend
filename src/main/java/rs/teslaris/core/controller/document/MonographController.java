@@ -49,6 +49,11 @@ public class MonographController {
             .body(dto);
     }
 
+    @GetMapping("/old-id/{oldId}")
+    public MonographDTO readMonographByOldId(@PathVariable Integer oldId) {
+        return monographService.readMonographByOldId(oldId);
+    }
+
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
         @RequestParam("tokens")

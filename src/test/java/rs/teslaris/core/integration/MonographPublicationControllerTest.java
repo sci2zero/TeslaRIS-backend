@@ -109,4 +109,13 @@ public class MonographPublicationControllerTest extends BaseTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadMonographPublicationByOldId() throws Exception {
+        mockMvc.perform(
+            MockMvcRequestBuilders.get(
+                    "http://localhost:8081/api/monograph-publication/old-id/{oldId}", 991)
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+    }
 }

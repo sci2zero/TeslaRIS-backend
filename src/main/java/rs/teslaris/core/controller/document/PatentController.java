@@ -38,6 +38,11 @@ public class PatentController {
             .body(dto);
     }
 
+    @GetMapping("/old-id/{oldId}")
+    public PatentDTO readPatentByOldId(@PathVariable Integer oldId) {
+        return patentService.readPatentByOldId(oldId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")

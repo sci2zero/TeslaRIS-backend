@@ -140,9 +140,8 @@ public class DocumentAssessmentClassificationController {
     @PreAuthorize("hasAuthority('EDIT_DOCUMENT_ASSESSMENT')")
     @ResponseStatus(HttpStatus.CREATED)
     public EntityAssessmentClassificationResponseDTO createDocumentClassification(
-        @RequestHeader("Authorization") String bearerToken,
-        @RequestBody
-        DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
+        @RequestBody DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO,
+        @RequestHeader("Authorization") String bearerToken) {
         if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
             var user = userService.findOne(tokenUtil.extractUserIdFromToken(bearerToken));
             documentAssessmentClassificationDTO.setCommissionId(user.getCommission().getId());

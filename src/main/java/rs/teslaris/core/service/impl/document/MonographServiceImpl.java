@@ -134,6 +134,18 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     @Override
     @Transactional
+    public MonographDTO readMonographByOldId(Integer oldId) {
+        var monograph = monographRepository.findMonographByOldIdsContains(oldId);
+        if (monograph.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
+            !monograph.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return MonographConverter.toDTO(monograph.get());
+    }
+
+    @Override
+    @Transactional
     public Monograph findRaw(Integer monographId) {
         return monographRepository.findRaw(monographId)
             .orElseThrow(() -> new NotFoundException("Monograph with given ID does not exist."));

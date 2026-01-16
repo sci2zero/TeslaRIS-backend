@@ -50,6 +50,11 @@ public class MonographPublicationController {
             .body(dto);
     }
 
+    @GetMapping("/old-id/{oldId}")
+    public MonographPublicationDTO readMonographPublicationByOldId(@PathVariable Integer oldId) {
+        return monographPublicationService.readMonographPublicationByOldId(oldId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")

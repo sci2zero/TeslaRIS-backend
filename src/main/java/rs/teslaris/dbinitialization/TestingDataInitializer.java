@@ -361,6 +361,11 @@ public class TestingDataInitializer {
         var patent = new Patent();
         patent.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Patent", 1)));
         patent.setApproveStatus(ApproveStatus.APPROVED);
+
+        if (addOldIdData) {
+            patent.getOldIds().add(992);
+        }
+
         patentRepository.save(patent);
 
         var dataset = new Dataset();
@@ -506,6 +511,11 @@ public class TestingDataInitializer {
 
         var monograph2 = new Monograph();
         monograph2.setApproveStatus(ApproveStatus.APPROVED);
+
+        if (addOldIdData) {
+            monograph2.getOldIds().add(990);
+        }
+
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
         monograph2.setMonographType(MonographType.BOOK);
@@ -600,6 +610,11 @@ public class TestingDataInitializer {
         monographPublication2.setMonographPublicationType(MonographPublicationType.CHAPTER);
         monographPublication2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Rad u monografiji 2", 1)));
+
+        if (addOldIdData) {
+            monographPublication2.getOldIds().add(991);
+        }
+
         monographPublicationRepository.save(monographPublication2);
 
         var thesis1 = new Thesis();
@@ -1025,6 +1040,7 @@ public class TestingDataInitializer {
         thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
         thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
         thesis6.setPublicReviewCompleted(true);
+
         if (addOldIdData) {
             thesis6.getOldIds().add(998);
         }

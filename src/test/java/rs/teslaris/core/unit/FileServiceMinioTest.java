@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.InsufficientDataException;
 import io.minio.errors.InternalException;
@@ -90,6 +91,8 @@ public class FileServiceMinioTest {
 
         when(minioClient.getObject(any())).thenReturn(
             new GetObjectResponse(null, null, null, null, null));
+
+        when(minioClient.statObject(any())).thenReturn(mock(StatObjectResponse.class));
 
         // when
         var resource = fileService.loadAsResource(filename);

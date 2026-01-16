@@ -16,6 +16,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
@@ -46,6 +47,8 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
 
     private final PublisherService publisherService;
 
+    private final PatentRepository patentRepository;
+
 
     @Autowired
     public PatentServiceImpl(MultilingualContentService multilingualContentService,
@@ -64,7 +67,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              InvolvementRepository involvementRepository,
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                              PatentJPAServiceImpl patentJPAService,
-                             PublisherService publisherService) {
+                             PublisherService publisherService, PatentRepository patentRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -73,6 +76,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             involvementRepository, organisationUnitOutputConfigurationService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
+        this.patentRepository = patentRepository;
     }
 
     @Override
@@ -99,6 +103,18 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         return PatentConverter.toDTO(patent);
+    }
+
+    @Override
+    @Transactional
+    public PatentDTO readPatentByOldId(Integer oldId) {
+        var patent = patentRepository.findPatentByOldIdsContains(oldId);
+        if (patent.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
+            !patent.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return PatentConverter.toDTO(patent.get());
     }
 
     @Override

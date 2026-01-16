@@ -1267,7 +1267,9 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         CollectionOperations.getIntersection(clientLanguages, supportedLanguages)
             .forEach(lang -> dcPublication.getIdentifier().add(
-                baseFrontendUrl + lang + "/scientific-results/" +
+                baseFrontendUrl + lang +
+                    (!exportDocument.getType().equals(ExportPublicationType.PROCEEDINGS) ?
+                        "/scientific-results/" : "") +
                     getConcreteEntityPath(exportDocument.getType()) + "/" +
                     exportDocument.getDatabaseId()));
 

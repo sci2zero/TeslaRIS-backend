@@ -645,4 +645,47 @@ public class MonographServiceTest {
         // Then
         assertFalse(result);
     }
+
+    @Test
+    void shouldThrowNotFoundWhenMonographDoesNotExist() {
+        // Given
+        var oldId = 123;
+        when(monographRepository.findMonographByOldIdsContains(oldId)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThrows(NotFoundException.class, () -> monographService.readMonographByOldId(oldId));
+        verify(monographRepository).findMonographByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenMonographIsNotApproved() {
+        // Given
+        var oldId = 456;
+        var monograph = new Monograph();
+        monograph.setApproveStatus(ApproveStatus.REQUESTED);
+        when(monographRepository.findMonographByOldIdsContains(oldId)).thenReturn(
+            Optional.of(monograph));
+
+        // When / Then
+        assertThrows(NotFoundException.class, () -> monographService.readMonographByOldId(oldId));
+        verify(monographRepository).findMonographByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldReturnDtoWhenMonographIsApproved() {
+        // Given
+        var oldId = 789;
+        var monograph = new Monograph();
+        monograph.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(monographRepository.findMonographByOldIdsContains(oldId)).thenReturn(
+            Optional.of(monograph));
+
+        // When
+        var result = monographService.readMonographByOldId(oldId);
+
+        // Then
+        assertNotNull(result);
+        verify(monographRepository).findMonographByOldIdsContains(oldId);
+    }
 }
