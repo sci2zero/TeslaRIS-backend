@@ -30,4 +30,9 @@ public interface DocumentAssessmentClassificationRepository
     void deleteByDocumentIdAndCommissionId(Integer documentId, Integer commissionId,
                                            Boolean isManual);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE DocumentAssessmentClassification dac SET dac.classificationYear = :year " +
+        "WHERE dac.document.id = :documentId OR dac.document.monograph.id = :documentId")
+    void setUpdatedYearForDocumentAssessments(Integer documentId, Integer year);
 }

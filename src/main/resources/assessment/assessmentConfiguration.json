@@ -198,7 +198,11 @@
       "M53",
       "M54",
       "M56",
-      "M57"
+      "M57",
+      "M13",
+      "M14",
+      "M44",
+      "M45"
     ],
     "POLEMICS": [
       "M21APlus",
@@ -209,7 +213,29 @@
       "M53",
       "M54",
       "M56",
-      "M57"
+      "M57",
+      "M13",
+      "M14",
+      "M44",
+      "M45"
+    ],
+    "LEXICOGRAPHIC_UNIT": [
+      "M13",
+      "M14",
+      "M44",
+      "M45"
+    ],
+    "CHAPTER": [
+      "M13",
+      "M14",
+      "M44",
+      "M45"
+    ],
+    "PREFACE": [
+      "M13",
+      "M14",
+      "M44",
+      "M45"
     ],
     "COMMENT": [
       "M21APlus",
@@ -239,5 +265,11 @@
   "defendedThesesMapping": {
     "PHD": "M70",
     "PHD_ART_PROJECT": "M70"
+  },
+  "monographCodeToPublicationMapping": {
+    "M11": "M13",
+    "M12": "M14",
+    "M41": "M44",
+    "M42": "M45"
   }
 }

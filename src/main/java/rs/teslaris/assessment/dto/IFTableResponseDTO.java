@@ -21,5 +21,5 @@ public class IFTableResponseDTO {
 
     private List<Pair<Integer, String>> jciPercentiles;
 
-    private List<IFCategoryRanksDTO> ifTableContent;
+    private List<IFCategoryAndJCIRanksDTO> ifTableContent;
 }

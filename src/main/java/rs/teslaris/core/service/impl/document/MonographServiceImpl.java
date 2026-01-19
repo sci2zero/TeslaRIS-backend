@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.MonographDateChanged;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -245,9 +246,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         if (updatePublicationDates) {
             monographPublicationRepository.setDateToAggregatedPublications(
                 monographToUpdate.getId(), monographToUpdate.getDocumentDate());
+
+            var year = StringUtil.parseYear(monographToUpdate.getDocumentDate());
             indexBulkUpdateService.setYearForAggregatedRecord("monograph_id",
-                monographToUpdate.getId(),
-                StringUtil.parseYear(monographToUpdate.getDocumentDate()));
+                monographToUpdate.getId(), year);
+
+            applicationEventPublisher.publishEvent(new MonographDateChanged(monographId, year));
         }
 
         sendNotifications(monographToUpdate);

@@ -20,7 +20,7 @@ public interface MonographPublicationRepository
 
     @Modifying
     @Query("UPDATE MonographPublication mp SET mp.documentDate = :date " +
-        "WHERE mp.monograph.id = :monographId AND mp.monographPublicationType = 0")
+        "WHERE mp.monograph.id = :monographId")
     void setDateToAggregatedPublications(Integer monographId, String date);
 
     @Query(value = "SELECT *, 0 AS clazz_ FROM monograph_publications WHERE " +

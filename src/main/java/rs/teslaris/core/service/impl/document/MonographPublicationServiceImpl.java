@@ -20,7 +20,6 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
@@ -249,10 +248,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         }
 
         monographPublication.setMonograph(monograph);
-        if (monographPublication.getMonographPublicationType()
-            .equals(MonographPublicationType.CHAPTER)) {
-            monographPublication.setDocumentDate(monograph.getDocumentDate());
-        }
+        monographPublication.setDocumentDate(
+            Objects.nonNull(monograph.getDocumentDate()) ? monograph.getDocumentDate() :
+                monographPublicationDTO.getDocumentDate());
     }
 
     @Override

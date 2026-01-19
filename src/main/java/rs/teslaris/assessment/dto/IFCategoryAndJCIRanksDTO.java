@@ -11,11 +11,13 @@ import rs.teslaris.core.util.functional.Pair;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class IFCategoryRanksDTO {
+public class IFCategoryAndJCIRanksDTO {
 
     private String category;
 
     private List<Pair<Integer, String>> if2Ranks;
 
     private List<Pair<Integer, String>> if5Ranks;
+
+    private List<Pair<Integer, String>> jciRanks;
 }

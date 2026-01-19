@@ -33,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,9 +42,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
-import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
-import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -999,7 +995,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
-    private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
+    @Override
+    public void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
         if (Objects.isNull(savedPerson)) {
             return;
         }
@@ -1578,44 +1575,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         personIndex.getBirthdateSortable().substring(0, 4));
                 }
             });
-        }
-    }
-
-    @Async
-    @EventListener
-    protected void handleOUSignificantChange(OrganisationUnitSignificantChangeEvent event) {
-        reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
-    }
-
-    @Async
-    @EventListener
-    protected void handleOUDeletion(OrganisationUnitDeletedEvent event) {
-        reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
-    }
-
-    private void reindexInstitutionEmployeesEmployments(Integer organisationUnitId) {
-        int pageNumber = 0;
-        int chunkSize = 500;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-            List<PersonIndex> chunk = personIndexRepository.findByInstitutionId(organisationUnitId,
-                PageRequest.of(pageNumber, chunkSize)).getContent();
-
-            chunk.forEach(
-                index -> {
-                    setPersonIndexEmploymentDetails(index,
-                        personRepository.findOneWithInvolvements(index.getDatabaseId())
-                            .orElse(null));
-                    personIndexRepository.save(index);
-
-                    applicationEventPublisher.publishEvent(
-                        new PersonEmploymentOUHierarchyStructureChangedEvent(
-                            index.getDatabaseId()));
-                });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
         }
     }
 }

@@ -30,12 +30,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.applicationevent.MonographDateChanged;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -110,6 +112,9 @@ public class MonographServiceTest {
 
     @Mock
     private IndexBulkUpdateService indexBulkUpdateService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private MonographServiceImpl monographService;
@@ -244,6 +249,7 @@ public class MonographServiceTest {
         verify(monographJPAService, times(1)).save(monographToUpdate);
         verify(monographPublicationRepository).setDateToAggregatedPublications(any(), any());
         verify(indexBulkUpdateService).setYearForAggregatedRecord(any(), any(), any());
+        verify(applicationEventPublisher).publishEvent(any(MonographDateChanged.class));
     }
 
     @Test
@@ -267,6 +273,7 @@ public class MonographServiceTest {
         verify(monographJPAService, times(1)).save(monographToUpdate);
         verify(monographPublicationRepository).setDateToAggregatedPublications(any(), any());
         verify(indexBulkUpdateService).setYearForAggregatedRecord(any(), any(), any());
+        verify(applicationEventPublisher).publishEvent(any(MonographDateChanged.class));
     }
 
     @Test

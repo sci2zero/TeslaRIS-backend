@@ -16,10 +16,8 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
@@ -41,8 +39,6 @@ import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassi
 import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
-import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -675,28 +671,5 @@ public class PersonAssessmentClassificationServiceImpl
             .filter(measure -> ClassificationPriorityMapping.existsInGroup(
                 measure.getCode(), assessmentArea))
             .findFirst();
-    }
-
-    @Async
-    @EventListener
-    @Transactional(readOnly = true)
-    protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
-        if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
-            return;
-        }
-
-        var assessmentMeasures = loadAssessmentMeasures();
-
-        event.personIds()
-            .forEach(personId -> personIndexRepository.findByDatabaseId(personId)
-                .ifPresent(personIndex ->
-                    reindexPublicationPointsForResearcher(personIndex, assessmentMeasures))
-            );
-    }
-
-    @EventListener
-    @Transactional(readOnly = true)
-    protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
-        reindexPublicationPointsForAllResearchers();
     }
 }

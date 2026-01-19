@@ -5,7 +5,8 @@
     "fiveYearJIF",
     "fiveYearJIFRank",
     "jci",
-    "jciPercentile"
+    "jciPercentile",
+    "jciRank"
   ],
   "mappings": {
     "updateTotalViews": [

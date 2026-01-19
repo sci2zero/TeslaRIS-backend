@@ -28,18 +28,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -121,7 +119,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected final CitationService citationService;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    protected final ApplicationEventPublisher applicationEventPublisher;
 
     private final PersonContributionService personContributionService;
 
@@ -822,7 +820,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         while (hasNextPage) {
             var indexChunk = documentPublicationIndexRepository.findByAuthorIds(personId,
-                PageRequest.of(pageNumber, chunkSize)).getContent();
+                    PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+                .getContent();
 
             var entityChunk = documentRepository.findBulkDocuments(
                 indexChunk.stream().map(DocumentPublicationIndex::getDatabaseId).toList());
@@ -839,6 +838,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         new HashSet<>(index.getOrganisationUnitIdsSpecified()),
                         document instanceof Thesis
                     );
+
+                    if (Objects.nonNull(document.getEvent())) {
+                        eventService.indexActiveEmploymentRelations(null,
+                            document.getEvent().getId());
+                    }
+
                     documentPublicationIndexRepository.save(index);
                 }
             });
@@ -1900,12 +1905,5 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
             .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
                 !configuration.trustNewDocumentFiles());
-    }
-
-    @Async
-    @EventListener
-    protected void handlePersonEmploymentOUHierarchyStructureChangedEvent(
-        PersonEmploymentOUHierarchyStructureChangedEvent event) {
-        reindexEmploymentInformationForAllPersonPublications(event.getPersonId());
     }
 }

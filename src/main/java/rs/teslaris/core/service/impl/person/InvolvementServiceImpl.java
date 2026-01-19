@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
@@ -532,5 +533,13 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         return employmentRepository.findExternalByPersonInvolvedId(personId).stream().map(
             employment -> MultilingualContentConverter.getMultilingualContentDTO(
                 employment.getAffiliationStatement())).toList();
+    }
+
+    @Scheduled(cron = "0 0 3 * * ?") // Every day at 03:00 AM
+    protected void reindexEmploymentInformationForEmploymentsThatExpireToday() {
+        employmentRepository.findEmploymentsExpiringToday().forEach(
+            employment -> applicationEventPublisher.publishEvent(
+                new PersonEmploymentOUHierarchyStructureChangedEvent(
+                    employment.getPersonInvolved().getId())));
     }
 }

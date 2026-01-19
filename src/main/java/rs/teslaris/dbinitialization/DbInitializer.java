@@ -480,7 +480,7 @@ public class DbInitializer implements ApplicationRunner {
                 viceDeanForScienceAuthority, institutionalEditorAuthority,
                 institutionalLibrarianAuthority, headOfLibraryAuthority,
                 promotionRegistryAdministratorAuthority, commissions.a, commissions.b,
-                false);
+                true);
         }
     }
 

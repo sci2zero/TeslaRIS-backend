@@ -26,7 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityIndicatorConverter;
-import rs.teslaris.assessment.dto.IFCategoryRanksDTO;
+import rs.teslaris.assessment.dto.IFCategoryAndJCIRanksDTO;
 import rs.teslaris.assessment.dto.IFTableResponseDTO;
 import rs.teslaris.assessment.dto.indicator.PublicationSeriesIndicatorResponseDTO;
 import rs.teslaris.assessment.model.indicator.EntityIndicator;
@@ -338,7 +338,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         ifResponse.setIf2Values(extractIFValues(indicatorValues, contentIndicators.getFirst()));
         ifResponse.setIf5Values(extractIFValues(indicatorValues, contentIndicators.get(2)));
         ifResponse.setJciValues(extractIFValues(indicatorValues, contentIndicators.get(4)));
-        ifResponse.setJciPercentiles(extractIFValues(indicatorValues, contentIndicators.getLast()));
+        ifResponse.setJciPercentiles(extractIFValues(indicatorValues, contentIndicators.get(5)));
 
         var groupedByCategory = indicatorValues.stream()
             .filter(ind -> Objects.nonNull(ind.getCategoryIdentifier()))
@@ -363,16 +363,18 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
             .toList();
     }
 
-    private IFCategoryRanksDTO createCategoryContent(String category,
-                                                     List<PublicationSeriesIndicator> indicators,
-                                                     List<String> contentIndicators) {
-        var categoryContent = new IFCategoryRanksDTO();
+    private IFCategoryAndJCIRanksDTO createCategoryContent(String category,
+                                                           List<PublicationSeriesIndicator> indicators,
+                                                           List<String> contentIndicators) {
+        var categoryContent = new IFCategoryAndJCIRanksDTO();
         categoryContent.setCategory(category);
 
         categoryContent.setIf2Ranks(
             extractCategoryRanks(indicators, contentIndicators.get(1), category));
         categoryContent.setIf5Ranks(
             extractCategoryRanks(indicators, contentIndicators.get(3), category));
+        categoryContent.setJciRanks(
+            extractCategoryRanks(indicators, contentIndicators.getLast(), category));
 
         return categoryContent;
     }

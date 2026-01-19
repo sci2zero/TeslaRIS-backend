@@ -432,7 +432,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         return issn.toUpperCase();
     }
 
-    @Scheduled(cron = ("0 0 0 * * *")) // Every day at 00:00 AM
+    @Scheduled(cron = ("0 0 0 * * ?")) // Every day at 00:00 AM
     protected void cleanupStaleAssessments() {
         long start = System.nanoTime();
         int chunkSize = 100;

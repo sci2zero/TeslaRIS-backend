@@ -269,6 +269,9 @@ public class DocumentAssessmentClassificationServiceImpl
                             orgUnitIds, publishedInIds);
                     case THESIS -> classifyTheses(fromDate, commissionId, authorIds, orgUnitIds,
                         publishedInIds);
+                    case MONOGRAPH_PUBLICATION ->
+                        classifyMonographPublications(fromDate, commissionId, authorIds, orgUnitIds,
+                            publishedInIds);
                 }
             }, userId, RecurrenceType.ONCE);
 
@@ -346,6 +349,14 @@ public class DocumentAssessmentClassificationServiceImpl
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
             List.of(DocumentPublicationType.THESIS),
             this::assessThesis);
+    }
+
+    private void classifyMonographPublications(LocalDate fromDate, Integer commissionId,
+                                               List<Integer> authorIds, List<Integer> orgUnitIds,
+                                               List<Integer> monographIds) {
+        classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, monographIds,
+            List.of(DocumentPublicationType.MONOGRAPH_PUBLICATION),
+            this::assessMonographPublication);
     }
 
     private void classifyPublications(LocalDate fromDate, Integer commissionId,
@@ -451,6 +462,57 @@ public class DocumentAssessmentClassificationServiceImpl
                 assessmentClassification, commission,
                 thesisIndex.getDatabaseId(), thesisIndex.getPublicationType(),
                 thesisIndex.getYear(), batchedClassifications,
+                false
+            );
+        });
+    }
+
+    private void assessMonographPublication(DocumentPublicationIndex monographPublicationIndex,
+                                            Integer organisationUnitId, Commission presetCommission,
+                                            ArrayList<DocumentAssessmentClassification> batchedClassifications) {
+        List<Commission> commissions = Objects.nonNull(presetCommission)
+            ? List.of(presetCommission)
+            : findCommissionInHierarchy(organisationUnitId);
+
+        if (commissions.isEmpty()) {
+            log.info("No commission found for organisation unit {} or its hierarchy.",
+                organisationUnitId);
+            return;
+        }
+
+        commissions.forEach(commission -> {
+            var monographAssessmentClassification =
+                documentAssessmentClassificationRepository.findAssessmentClassificationsForDocumentAndCommission(
+                    monographPublicationIndex.getMonographId(), commission.getId());
+
+            if (monographAssessmentClassification.isEmpty()) {
+                return;
+            }
+
+            var classificationCode = monographAssessmentClassification.stream()
+                .map(EntityAssessmentClassification::getAssessmentClassification).findFirst().get()
+                .getCode();
+
+            var assessmentClassificationCode =
+                ClassificationPriorityMapping.getPublicationCodeFromMonographAssessment(
+                    classificationCode);
+
+            if (Objects.isNull(assessmentClassificationCode)) {
+                return;
+            }
+
+            var assessmentClassification =
+                assessmentClassificationService.readAssessmentClassificationByCode(
+                    assessmentClassificationCode);
+
+            documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
+                monographPublicationIndex.getDatabaseId(), commission.getId(), false);
+
+            handleClassification(
+                assessmentClassification, commission,
+                monographPublicationIndex.getDatabaseId(),
+                monographPublicationIndex.getPublicationType(),
+                monographPublicationIndex.getYear(), batchedClassifications,
                 false
             );
         });
@@ -849,7 +911,7 @@ public class DocumentAssessmentClassificationServiceImpl
             return;
         }
 
-        if (Objects.nonNull(documentPublicationType) &&
+        if (Objects.isNull(documentPublicationType) ||
             !ClassificationPriorityMapping.canPublicationTypeBeClassifiedAsCode(
                 documentPublicationType, mappedCode.get())) {
             return;
@@ -915,31 +977,14 @@ public class DocumentAssessmentClassificationServiceImpl
         List<Integer> publishedInIds) {
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            b.must(sb -> sb.range(r -> r.field("last_edited").gt(JsonData.of(date))));
+            b.must(sb -> sb.range(r -> r.field("last_edited").gte(JsonData.of(date))));
             b.must(sb -> sb.terms(t -> t.field("type")
                 .terms(terms -> terms.value(types.stream().map(FieldValue::of).toList()))));
+
             b.must(sb -> sb.terms(t -> t
                 .field("publication_type")
-                .terms(terms -> terms
-                    .value(types.contains(DocumentPublicationType.JOURNAL_PUBLICATION.name()) ?
-                        List.of(
-                            FieldValue.of("REVIEW_ARTICLE"),
-                            FieldValue.of("RESEARCH_ARTICLE"),
-                            FieldValue.of("COMMENT")
-                        ) : (
-                        types.contains(DocumentPublicationType.THESIS.name()) ?
-                            List.of(
-                                FieldValue.of("PHD"),
-                                FieldValue.of("PHD_ART_PROJECT")
-                            ) : List.of(
-                            FieldValue.of("REGULAR_FULL_ARTICLE"),
-                            FieldValue.of("INVITED_FULL_ARTICLE"),
-                            FieldValue.of("REGULAR_ABSTRACT_ARTICLE"),
-                            FieldValue.of("INVITED_ABSTRACT_ARTICLE"),
-                            FieldValue.of("SCIENTIFIC_CRITIC"),
-                            FieldValue.of("POLEMICS")
-                        ))
-                    )
+                .terms(terms -> terms.value(
+                    getSupportedPublicationTypesForAssessmentDocumentTypes(types))
                 )
             ));
 
@@ -961,13 +1006,56 @@ public class DocumentAssessmentClassificationServiceImpl
                 var publishedInIdTerms = new TermsQueryField.Builder()
                     .value(publishedInIds.stream().map(FieldValue::of).toList())
                     .build();
-                b.must(sb -> sb.terms(t -> t.field(
-                    types.contains(DocumentPublicationType.JOURNAL_PUBLICATION.name()) ?
-                        "journal_id" : "event_id").terms(publishedInIdTerms)));
+                b.must(sb -> sb.terms(
+                    t -> t.field(getAggregationTypeField(types)).terms(publishedInIdTerms)));
             }
 
             return b;
         })))._toQuery();
+    }
+
+    private String getAggregationTypeField(List<String> types) {
+        if (types.contains(DocumentPublicationType.JOURNAL_PUBLICATION.name())) {
+            return "journal_id";
+        } else if (types.contains(DocumentPublicationType.MONOGRAPH_PUBLICATION.name())) {
+            return "monograph_id";
+        }
+
+        return "event_id";
+    }
+
+    private List<FieldValue> getSupportedPublicationTypesForAssessmentDocumentTypes(
+        List<String> types) {
+        if (types.contains(DocumentPublicationType.JOURNAL_PUBLICATION.name())) {
+            return List.of(
+                FieldValue.of("REVIEW_ARTICLE"),
+                FieldValue.of("RESEARCH_ARTICLE"),
+                FieldValue.of("COMMENT")
+            );
+        } else if (types.contains(DocumentPublicationType.THESIS.name())) {
+            return List.of(
+                FieldValue.of("PHD"),
+                FieldValue.of("PHD_ART_PROJECT")
+            );
+        } else if (types.contains(DocumentPublicationType.MONOGRAPH_PUBLICATION.name())) {
+            return List.of(
+                FieldValue.of("CHAPTER"),
+                FieldValue.of("RESEARCH_ARTICLE"),
+                FieldValue.of("PREFACE"),
+                FieldValue.of("LEXICOGRAPHIC_UNIT"),
+                FieldValue.of("POLEMICS"),
+                FieldValue.of("SCIENTIFIC_CRITIC")
+            );
+        }
+
+        return List.of(
+            FieldValue.of("REGULAR_FULL_ARTICLE"),
+            FieldValue.of("INVITED_FULL_ARTICLE"),
+            FieldValue.of("REGULAR_ABSTRACT_ARTICLE"),
+            FieldValue.of("INVITED_ABSTRACT_ARTICLE"),
+            FieldValue.of("SCIENTIFIC_CRITIC"),
+            FieldValue.of("POLEMICS")
+        );
     }
 
     private void saveDocumentClassification(AssessmentClassification assessmentClassification,
