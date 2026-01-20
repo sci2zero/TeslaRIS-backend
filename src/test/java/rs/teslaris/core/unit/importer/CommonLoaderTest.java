@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit.importer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,14 +10,17 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.bson.types.ObjectId;
@@ -35,17 +39,23 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.Proceedings;
+import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
+import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -112,6 +122,15 @@ public class CommonLoaderTest {
 
     @Mock
     private DocumentPublicationService documentPublicationService;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private JournalPublicationRepository journalPublicationRepository;
+
+    @Mock
+    private ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     @InjectMocks
     private CommonLoaderImpl commonLoader;
@@ -1047,5 +1066,127 @@ public class CommonLoaderTest {
         // Then
         assertThrows(NotFoundException.class, () ->
             commonLoader.prepareOldDocumentForOverwriting(1, 2, 100));
+    }
+
+    @Test
+    void shouldReturnEmptyJournalPublicationWhenIndexNotFound() {
+        // Given
+        var documentId = 1;
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // When
+        var result = commonLoader.readEnrichmentMetadata(documentId);
+
+        // Then
+        assertNotNull(result);
+        assertInstanceOf(JournalPublicationResponseDTO.class, result);
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            documentId);
+        verifyNoInteractions(journalPublicationRepository);
+        verifyNoInteractions(proceedingsPublicationRepository);
+    }
+
+    @Test
+    void shouldReturnJournalPublicationWhenJournalPublicationType() {
+        // Given
+        var documentId = 1;
+        var index = mock(DocumentPublicationIndex.class);
+        when(index.getType()).thenReturn(DocumentPublicationType.JOURNAL_PUBLICATION.name());
+
+        var journalPublication = mock(JournalPublication.class);
+        when(journalPublication.getJournal()).thenReturn(new Journal());
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(index));
+        when(journalPublicationRepository.findById(documentId))
+            .thenReturn(Optional.of(journalPublication));
+
+        // When
+        var result = commonLoader.readEnrichmentMetadata(documentId);
+
+        // Then
+        assertNotNull(result);
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            documentId);
+        verify(journalPublicationRepository).findById(documentId);
+        verifyNoInteractions(proceedingsPublicationRepository);
+    }
+
+    @Test
+    void shouldReturnProceedingsPublicationWhenProceedingsPublicationType() {
+        // Given
+        var documentId = 2;
+        var index = mock(DocumentPublicationIndex.class);
+        when(index.getType()).thenReturn(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
+
+        var proceedingsPublication = mock(ProceedingsPublication.class);
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(index));
+        when(proceedingsPublicationRepository.findById(documentId))
+            .thenReturn(Optional.of(proceedingsPublication));
+        when(proceedingsPublication.getProceedings()).thenReturn(new Proceedings() {{
+            setEvent(new Conference());
+        }});
+        when(proceedingsPublication.getEvent()).thenReturn(new Conference());
+
+        // When
+        var result = commonLoader.readEnrichmentMetadata(documentId);
+
+        // Then
+        assertNotNull(result);
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            documentId);
+        verify(proceedingsPublicationRepository).findById(documentId);
+        verifyNoInteractions(journalPublicationRepository);
+    }
+
+    @Test
+    void shouldReturnDefaultProceedingsPublicationWhenUnknownPublicationType() {
+        // Given
+        var documentId = 3;
+        var index = mock(DocumentPublicationIndex.class);
+        when(index.getType()).thenReturn("UNKNOWN_TYPE");
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(index));
+
+        // When
+        var result = commonLoader.readEnrichmentMetadata(documentId);
+
+        // Then
+        assertNotNull(result);
+        assertInstanceOf(ProceedingsPublicationDTO.class, result);
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            documentId);
+        verifyNoInteractions(journalPublicationRepository);
+        verifyNoInteractions(proceedingsPublicationRepository);
+    }
+
+    @Test
+    void shouldReturnEmptyJournalPublicationWhenJournalPublicationNotFound() {
+        // Given
+        var documentId = 4;
+        var index = mock(DocumentPublicationIndex.class);
+        when(index.getType()).thenReturn(DocumentPublicationType.JOURNAL_PUBLICATION.name());
+
+        when(
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(index));
+        when(journalPublicationRepository.findById(documentId))
+            .thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(RuntimeException.class, () -> {
+            commonLoader.readEnrichmentMetadata(documentId);
+        });
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            documentId);
+        verify(journalPublicationRepository).findById(documentId);
     }
 }

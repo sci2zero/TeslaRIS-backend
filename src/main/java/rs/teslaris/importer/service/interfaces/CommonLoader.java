@@ -1,6 +1,7 @@
 package rs.teslaris.importer.service.interfaces;
 
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.Importable;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
@@ -46,4 +47,6 @@ public interface CommonLoader {
 
     void prepareOldDocumentForOverwriting(Integer userId, Integer institutionId,
                                           Integer oldDocumentId);
+
+    Importable readEnrichmentMetadata(Integer documentId);
 }

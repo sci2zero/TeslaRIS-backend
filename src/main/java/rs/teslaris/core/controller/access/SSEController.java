@@ -40,6 +40,7 @@ public class SSEController {
                 "You need to provide valid accessToken + exportId combination.");
         }
 
+        tokenStore.remove(accessToken);
         return progressService.register(exportId);
     }
 
