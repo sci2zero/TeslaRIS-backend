@@ -22,4 +22,6 @@ public class IFTableResponseDTO {
     private List<Pair<Integer, String>> jciPercentiles;
 
     private List<IFCategoryAndJCIRanksDTO> ifTableContent;
+
+    private List<String> editions;
 }

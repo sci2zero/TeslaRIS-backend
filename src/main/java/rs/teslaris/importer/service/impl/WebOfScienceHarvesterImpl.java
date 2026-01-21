@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.model.converter.harvest.WebOfScienceConverter;
 import rs.teslaris.importer.service.interfaces.OrganisationUnitImportSourceConfigurationService;
 import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
@@ -169,6 +171,14 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
         }
 
         return newEntriesCount;
+    }
+
+    @Override
+    public Optional<DocumentImport> harvestDocumentForDoi(String doi) {
+        var harvestedDocument = webOfScienceImportUtility.getPublicationByDoi(doi);
+        return Objects.nonNull(harvestedDocument) ?
+            WebOfScienceConverter.toCommonImportModel(harvestedDocument) :
+            Optional.of(new DocumentImport());
     }
 
     private void processHarvestedRecords(

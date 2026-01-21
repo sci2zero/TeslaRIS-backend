@@ -1,14 +1,18 @@
 package rs.teslaris.thesislibrary.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,7 +32,6 @@ import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidFileSectionException;
 import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -47,6 +50,11 @@ public class ThesisLibraryBackupController {
     private final ThesisLibraryBackupService thesisLibraryBackupService;
 
     private final JwtUtil tokenUtil;
+
+    private final Cache<String, Integer> tokenStore =
+        CacheBuilder.newBuilder()
+            .expireAfterWrite(5, TimeUnit.SECONDS)
+            .build();
 
 
     @PostMapping("/schedule-generation")
@@ -82,24 +90,37 @@ public class ThesisLibraryBackupController {
             tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
-    @GetMapping("/download/{backupFileName}")
+    @GetMapping("/access-token")
     @ResponseBody
-    public ResponseEntity<StreamingResponseBody> serveAndDeleteBackupFile(
-        HttpServletRequest request, @PathVariable String backupFileName) throws IOException {
+    public String initializeBackupFileDownload() {
         if (!SessionUtil.isUserLoggedIn() ||
             !List.of(UserRole.ADMIN, UserRole.INSTITUTIONAL_LIBRARIAN,
                 UserRole.HEAD_OF_LIBRARY).contains(
                 UserRole.valueOf(SessionUtil.getLoggedInUser().getAuthority().getName()))) {
-            return ErrorResponseUtil.buildUnauthorisedStreamingResponse(request,
-                "unauthorisedToViewDocumentMessage");
+            throw new AccessDeniedException("unauthorisedToViewDocumentMessage");
+        }
+
+        var token = UUID.randomUUID().toString();
+
+        tokenStore.put(token, SessionUtil.getLoggedInUser().getId());
+
+        return token;
+    }
+
+    @GetMapping("/download/{backupFileName}")
+    @ResponseBody
+    public ResponseEntity<StreamingResponseBody> serveAndDeleteBackupFile(
+        @PathVariable String backupFileName, @RequestParam String accessToken) throws IOException {
+        if (!tokenStore.asMap().containsKey(accessToken)) {
+            throw new AccessDeniedException(
+                "You need to provide valid accessToken.");
         }
 
         var file = thesisLibraryBackupService.serveBackupFile(backupFileName,
-            SessionUtil.getLoggedInUser().getId());
+            tokenStore.asMap().get(accessToken));
         Runnable deleteCallback = () -> thesisLibraryBackupService.deleteBackupFile(backupFileName);
 
-        log.info("=== DEBUG LOGGING - DOWNLOAD REQUEST START ===");
-        log.info("Content-Length: {}", file.headers().get("Content-Length"));
+        tokenStore.asMap().remove(accessToken);
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,

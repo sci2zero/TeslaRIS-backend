@@ -90,8 +90,6 @@ public class FileServiceMinioImpl implements FileService {
             long size;
             try {
                 if (resource instanceof FileSystemResource fileRes) {
-                    log.info("=== DEBUG LOGGING - CONTENT LENGTH CALCULATION ===");
-                    log.info("{} {}", resource.contentLength(), fileRes.getFile().length());
                     size = fileRes.getFile().length();
                 } else {
                     size = resource.contentLength();
@@ -147,9 +145,6 @@ public class FileServiceMinioImpl implements FileService {
                     .object(serverFilename)
                     .build()
             );
-
-            log.info("=== DEBUG LOGGING - ACTUAL CONTENT LENGTH ===");
-            log.info("{} {}", serverFilename, stat.size());
 
             var args = GetObjectArgs.builder()
                 .bucket(bucketName)

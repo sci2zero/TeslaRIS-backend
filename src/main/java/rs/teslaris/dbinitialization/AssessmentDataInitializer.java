@@ -1299,7 +1299,7 @@ public class AssessmentDataInitializer {
             Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m32 = new AssessmentClassification();
-        m32.setFormalDescriptionOfRule("handleM31");
+        m32.setFormalDescriptionOfRule("handleM32");
         m32.setCode("M32");
         m32.setTitle(
             Set.of(
@@ -1310,7 +1310,7 @@ public class AssessmentDataInitializer {
             Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m33 = new AssessmentClassification();
-        m33.setFormalDescriptionOfRule("handleM31");
+        m33.setFormalDescriptionOfRule("handleM33");
         m33.setCode("M33");
         m33.setTitle(
             Set.of(
@@ -1321,7 +1321,7 @@ public class AssessmentDataInitializer {
             Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m34 = new AssessmentClassification();
-        m34.setFormalDescriptionOfRule("handleM31");
+        m34.setFormalDescriptionOfRule("handleM34");
         m34.setCode("M34");
         m34.setTitle(
             Set.of(

@@ -339,6 +339,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         ifResponse.setIf5Values(extractIFValues(indicatorValues, contentIndicators.get(2)));
         ifResponse.setJciValues(extractIFValues(indicatorValues, contentIndicators.get(4)));
         ifResponse.setJciPercentiles(extractIFValues(indicatorValues, contentIndicators.get(5)));
+        ifResponse.setEditions(
+            publicationSeriesIndicatorRepository.getEditionsJournalIsListedIn(publicationSeriesId));
 
         var groupedByCategory = indicatorValues.stream()
             .filter(ind -> Objects.nonNull(ind.getCategoryIdentifier()))

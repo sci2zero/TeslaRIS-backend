@@ -29,6 +29,7 @@ import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
 import rs.teslaris.core.util.notificationhandling.NotificationConfiguration;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.AddedToPublicationNotificationHandler;
@@ -79,18 +80,11 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
         return notificationList.stream().map(
                 notification -> {
-                    var isAddedToPublicationNotification = notification.getNotificationType()
-                        .equals(NotificationType.ADDED_TO_PUBLICATION);
-
-                    var notificationText = notification.getNotificationText();
-                    if (isAddedToPublicationNotification) {
-                        notificationText += " " +
-                            messageSource.getMessage("notification.addedToPublicationAction",
-                                null, locale);
-                    }
+                    var notificationText = notification.getNotificationText() + " " +
+                        getNotificationActionIfExists(notification.getNotificationType(), locale);
 
                     return new NotificationDTO(notification.getId(),
-                        notificationText, getDisplayValue(notification),
+                        notificationText.trim(), getDisplayValue(notification),
                         NotificationConfiguration.allowedActions.get(
                             notification.getNotificationType()),
                         notification.getCreateDate()
@@ -98,6 +92,27 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 })
             .collect(
                 Collectors.toList());
+    }
+
+    private String getNotificationActionIfExists(NotificationType notificationType, Locale locale) {
+        return switch (notificationType) {
+            case ADDED_TO_PUBLICATION ->
+                messageSource.getMessage("notification.addedToPublicationAction",
+                    null, locale);
+            case NEW_OTHER_NAME_DETECTED ->
+                messageSource.getMessage("notification.newOtherNameDetectedAction",
+                    null, locale);
+            case NEW_AUTHOR_UNBINDING ->
+                messageSource.getMessage("notification.unbindedFromPublicationAction",
+                    null, locale);
+            case NEW_EMPLOYED_RESEARCHER_UNBINDED ->
+                messageSource.getMessage("notification.researcherUnbindedFromPublicationAction",
+                    null, locale);
+            case AUTHOR_UNBINDED_BY_EDITOR ->
+                messageSource.getMessage("notification.unbindedByEditorAction",
+                    null, locale);
+            default -> "";
+        };
     }
 
     @Override
@@ -249,6 +264,10 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     private Locale getLocale(List<Notification> notifications) {
+        if (notifications.isEmpty()) {
+            return Locale.forLanguageTag(LanguageAbbreviations.ENGLISH);
+        }
+
         var language =
             notifications.getFirst().getUser().getPreferredUILanguage().getLanguageTag()
                 .toLowerCase();

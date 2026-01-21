@@ -16,6 +16,7 @@ import org.apache.tika.Tika;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
@@ -211,6 +213,12 @@ public class CommonHarvestController {
         }
 
         return newDocumentImportCountByUser.getOrDefault(userId, 0);
+    }
+
+    @GetMapping("/enriched-metadata/{documentId}")
+    @PublicationEditCheck
+    public void getEnrichedDocumentMetadata(@PathVariable Integer documentId) {
+        commonHarvester.performDocumentCentricHarvest(documentId);
     }
 
     private void validateFileMetadata(MultipartFile file) {

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.MessageSource;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.commontypes.NotificationType;
@@ -40,8 +41,12 @@ public class NotificationServiceTest {
     @Mock
     private NewOtherNameNotificationHandler newOtherNameNotificationHandler;
 
+    @Mock
+    private MessageSource messageSource;
+
     @InjectMocks
     private NotificationServiceImpl notificationService;
+
 
     @Test
     void testGetUserNotifications() {
@@ -65,6 +70,7 @@ public class NotificationServiceTest {
         notification2.setCreateDate(new Date());
         var notificationList = Arrays.asList(notification1, notification2);
         when(notificationRepository.getNotificationsForUser(userId)).thenReturn(notificationList);
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("action");
 
         // When
         var result = notificationService.getUserNotifications(userId);
@@ -72,7 +78,7 @@ public class NotificationServiceTest {
         // Then
         assertEquals(2, result.size());
         assertEquals("Notification 1", result.get(0).getNotificationText());
-        assertEquals("Notification 2", result.get(1).getNotificationText());
+        assertEquals("Notification 2 action", result.get(1).getNotificationText());
     }
 
     @Test
