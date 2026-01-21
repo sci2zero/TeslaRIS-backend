@@ -1,15 +1,18 @@
 package rs.teslaris.core.util.persistence;
 
+import java.net.URI;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.functional.BiPredicate;
 
 @Component
+@Slf4j
 public class IdentifierUtil {
 
     public static String identifierPrefix;
@@ -47,17 +50,26 @@ public class IdentifierUtil {
     }
 
     public static void setUris(Set<String> uriSet, Set<String> dtoUriSet) {
-        var uriPattern =
-            "^(?:(?:http|https)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?$";
-        var pattern = Pattern.compile(uriPattern, Pattern.CASE_INSENSITIVE);
+        if (Objects.isNull(dtoUriSet)) {
+            return;
+        }
 
-        uriSet.clear();
-        if (Objects.nonNull(dtoUriSet)) {
-            dtoUriSet.forEach(str -> {
-                if (str.length() <= 2048 && pattern.matcher(str).matches()) {
+        for (String str : dtoUriSet) {
+            if (Objects.isNull(str) || str.length() > 2048) {
+                continue;
+            }
+
+            try {
+                var uri = URI.create(str);
+
+                if ("http".equalsIgnoreCase(uri.getScheme()) ||
+                    "https".equalsIgnoreCase(uri.getScheme())) {
                     uriSet.add(str);
                 }
-            });
+            } catch (IllegalArgumentException ex) {
+                // invalid URI → ignore
+                log.warn("Invalid URI save attempted. Exception: {}", ex.getMessage());
+            }
         }
     }
 

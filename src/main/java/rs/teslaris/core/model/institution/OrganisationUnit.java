@@ -50,69 +50,70 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     @Transient
     private static final String DL_KEY = "digital_library";
 
+  
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
-
+  
     @Column(name = "name_abbreviation", nullable = false)
     private String nameAbbreviation;
-
+  
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> keyword = new HashSet<>();
-
+  
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
-
+  
     @Column(name = "scopus_afid")
     private String scopusAfid;
-
+  
     @Column(name = "open_alex_id")
     private String openAlexId;
-
+  
     @Column(name = "ror")
     private String ror;
-
+  
     @Embedded
     private GeoLocation location;
-
+  
     @Column(name = "approve_status", nullable = false)
     private ApproveStatus approveStatus;
-
+  
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")
     private Set<Integer> oldIds = new HashSet<>();
-
+  
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "merged_ids")
     private Set<Integer> mergedIds = new HashSet<>();
-
+  
     @Embedded
     private Contact contact;
-
+  
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
-
+  
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "accounting_ids")
     private Set<String> accountingIds = new HashSet<>();
-
+  
     @Embedded
     private ProfilePhotoOrLogo logo;
-
+  
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "allowed_thesis_types")
     private Set<String> allowedThesisTypes = new HashSet<>();
-
+  
     @Column(name = "is_client_institution_cris", nullable = false)
     private Boolean isClientInstitutionCris = false;
-
+  
     @Column(name = "is_client_institution_dl", nullable = false)
     private Boolean isClientInstitutionDl = false;
-
+  
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "email_configurations")
     private Map<String, EmailConfiguration> emailConfigurations = new HashMap<>();
-
+  
     @Column(name = "legal_entity", nullable = false)
     private Boolean legalEntity = false;
 
