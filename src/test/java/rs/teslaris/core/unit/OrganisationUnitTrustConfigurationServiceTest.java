@@ -33,8 +33,8 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitTrustConfiguration;
@@ -155,7 +155,7 @@ public class OrganisationUnitTrustConfigurationServiceTest {
     @Test
     public void shouldApproveMetadataAndIndexWhenFilesValid() {
         // Given
-        var document = new Software();
+        var document = new IntangibleProduct();
         document.setId(1);
         document.setAreFilesValid(true);
         document.setIsMetadataValid(false);
@@ -338,7 +338,8 @@ public class OrganisationUnitTrustConfigurationServiceTest {
     void shouldBuildQueryWithInstitutionAndTypeFilter() {
         // Given
         var subOrgIds = List.of(10, 20);
-        var types = List.of(DocumentPublicationType.DATASET, DocumentPublicationType.SOFTWARE);
+        var types =
+            List.of(DocumentPublicationType.DATASET, DocumentPublicationType.INTANGIBLE_PRODUCT);
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(5)).thenReturn(
             subOrgIds);
 

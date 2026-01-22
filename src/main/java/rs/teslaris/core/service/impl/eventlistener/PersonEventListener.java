@@ -28,13 +28,13 @@ public class PersonEventListener {
     private final ApplicationEventPublisher applicationEventPublisher;
 
 
-    @Async
+    @Async("taskExecutor")
     @EventListener
     protected void handleOUSignificantChange(OrganisationUnitSignificantChangeEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
     }
 
-    @Async
+    @Async("taskExecutor")
     @EventListener
     protected void handleOUDeletion(OrganisationUnitDeletedEvent event) {
         reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());

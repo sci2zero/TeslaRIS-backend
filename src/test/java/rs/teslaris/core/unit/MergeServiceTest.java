@@ -42,6 +42,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
@@ -52,7 +53,6 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
-import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -68,6 +68,7 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -78,7 +79,6 @@ import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Publisher;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
@@ -94,12 +94,12 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
-import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.service.impl.comparator.MergeServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -108,6 +108,7 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
+import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
@@ -117,7 +118,6 @@ import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
@@ -179,7 +179,7 @@ public class MergeServiceTest {
     private InvolvementService involvementService;
 
     @Mock
-    private SoftwareService softwareService;
+    private IntangibleProductService intangibleProductService;
 
     @Mock
     private DatasetService datasetService;
@@ -212,7 +212,7 @@ public class MergeServiceTest {
     private IndexBulkUpdateService indexBulkUpdateService;
 
     @Mock
-    private SoftwareRepository softwareRepository;
+    private IntangibleProductRepository intangibleProductRepository;
 
     @Mock
     private DatasetRepository datasetRepository;
@@ -238,12 +238,12 @@ public class MergeServiceTest {
     private static Stream<Arguments> provideDocumentPublicationsForMigration() {
         return Stream.of(
             Arguments.of(
-                new Software() {{
+                new IntangibleProduct() {{
                     getMergedIds().add(103);
                     getOldIds().add(203);
                 }},
-                new Software(),
-                Software.class,
+                new IntangibleProduct(),
+                IntangibleProduct.class,
                 EntityType.PUBLICATION
             ),
             Arguments.of(
@@ -976,12 +976,12 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void shouldSaveMergedSoftwareMetadata() {
+    public void shouldSaveMergedIntangibleProductMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
-        var leftData = new SoftwareDTO();
-        var rightData = new SoftwareDTO();
+        var leftData = new IntangibleProductDTO();
+        var rightData = new IntangibleProductDTO();
 
         // when
         var authentication = mock(Authentication.class);
@@ -992,12 +992,12 @@ public class MergeServiceTest {
         var securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
-        mergeService.saveMergedSoftwareMetadata(leftId, rightId, leftData, rightData);
+        mergeService.saveMergedIntangibleProductMetadata(leftId, rightId, leftData, rightData);
 
         // then
-        verify(softwareService, atLeastOnce()).editSoftware(leftId, leftData);
-        verify(softwareService).editSoftware(rightId, rightData);
-        verify(softwareService, times(2)).editSoftware(leftId, leftData);
+        verify(intangibleProductService, atLeastOnce()).editIntangibleProduct(leftId, leftData);
+        verify(intangibleProductService).editIntangibleProduct(rightId, rightData);
+        verify(intangibleProductService, times(2)).editIntangibleProduct(leftId, leftData);
     }
 
     @Test

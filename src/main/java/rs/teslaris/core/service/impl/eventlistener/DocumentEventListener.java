@@ -14,7 +14,7 @@ public class DocumentEventListener {
     private final DocumentPublicationService documentPublicationService;
 
 
-    @Async
+    @Async("taskExecutor")
     @EventListener
     protected void handlePersonEmploymentOUHierarchyStructureChangedEvent(
         PersonEmploymentOUHierarchyStructureChangedEvent event) {

@@ -18,7 +18,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @Query(value = """
         SELECT id FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM software WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        SELECT id FROM intangible_products WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
         SELECT id FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
@@ -44,7 +44,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
         SELECT COUNT(*) FROM (
             SELECT 1 FROM datasets WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
-            SELECT 1 FROM software WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
+            SELECT 1 FROM intangible_products WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
             SELECT 1 FROM monographs WHERE old_ids @> to_jsonb(array[cast(?1 as int)])
             UNION ALL
@@ -70,7 +70,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @Query(value = """
         SELECT id FROM datasets WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
-        SELECT id FROM software WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
+        SELECT id FROM intangible_products WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
         SELECT id FROM monographs WHERE merged_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE
         UNION ALL
@@ -95,7 +95,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     @Query(value = """
         SELECT id FROM datasets WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
-        SELECT id FROM software WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
+        SELECT id FROM intangible_products WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL
         SELECT id FROM monographs WHERE internal_identifiers @> to_jsonb(array[cast(?1 as text)])
         UNION ALL

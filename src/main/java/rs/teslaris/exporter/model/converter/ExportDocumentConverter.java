@@ -23,6 +23,7 @@ import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.GeneticMaterial;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -35,7 +36,6 @@ import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.ResourceType;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.oaipmh.common.MultilingualContent;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
@@ -110,19 +110,20 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return commonExportDocument;
     }
 
-    public static ExportDocument toCommonExportModel(Software software, boolean computeRelations) {
+    public static ExportDocument toCommonExportModel(IntangibleProduct intangibleProduct,
+                                                     boolean computeRelations) {
         var commonExportDocument = new ExportDocument();
-        commonExportDocument.setType(ExportPublicationType.SOFTWARE);
+        commonExportDocument.setType(ExportPublicationType.INTANGIBLE_PRODUCT);
 
-        setBaseFields(commonExportDocument, software);
+        setBaseFields(commonExportDocument, intangibleProduct);
         if (commonExportDocument.getDeleted()) {
             return commonExportDocument;
         }
 
-        setCommonFields(commonExportDocument, software, computeRelations);
+        setCommonFields(commonExportDocument, intangibleProduct, computeRelations);
 
-        commonExportDocument.setNumber(software.getInternalNumber());
-        addPublisherInfo(commonExportDocument, software.getPublisher());
+        commonExportDocument.setNumber(intangibleProduct.getInternalNumber());
+        addPublisherInfo(commonExportDocument, intangibleProduct.getPublisher());
 
         return commonExportDocument;
     }

@@ -25,6 +25,7 @@ import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
+import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
@@ -34,7 +35,6 @@ import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -84,7 +84,7 @@ public class ReindexServiceTest {
     private PatentService patentService;
 
     @Mock
-    private SoftwareService softwareService;
+    private IntangibleProductService intangibleProductService;
 
     @Mock
     private DatasetService datasetService;
@@ -183,7 +183,7 @@ public class ReindexServiceTest {
             verify(journalPublicationService).reindexJournalPublications();
             verify(proceedingsPublicationService).reindexProceedingsPublications();
             verify(patentService).reindexPatents();
-            verify(softwareService).reindexSoftware();
+            verify(intangibleProductService).reindexIntangibleProduct();
             verify(datasetService).reindexDatasets();
             verify(monographService).reindexMonographs();
             verify(monographPublicationService).reindexMonographPublications();
@@ -203,7 +203,7 @@ public class ReindexServiceTest {
             verify(journalPublicationService, never()).reindexJournalPublications();
             verify(proceedingsPublicationService, never()).reindexProceedingsPublications();
             verify(patentService, never()).reindexPatents();
-            verify(softwareService, never()).reindexSoftware();
+            verify(intangibleProductService, never()).reindexIntangibleProduct();
             verify(datasetService, never()).reindexDatasets();
             verify(monographService, never()).reindexMonographs();
             verify(monographPublicationService, never()).reindexMonographPublications();

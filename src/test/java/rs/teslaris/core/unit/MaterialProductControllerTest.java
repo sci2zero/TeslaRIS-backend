@@ -82,7 +82,7 @@ public class MaterialProductControllerTest extends BaseTest {
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/material-product")
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY_SOFTWARE"))
+                .header("Idempotency-Key", "MOCK_KEY_MATERIAL_PRODUCT"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.documentDate").value("2014-10-24"));
     }

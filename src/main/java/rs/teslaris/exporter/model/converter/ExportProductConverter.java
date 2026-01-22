@@ -85,7 +85,7 @@ public class ExportProductConverter extends ExportConverterBase {
                                Map<String, String> typeToIdentifierSuffixMapping) {
         var dcProduct = new DC();
         dcProduct.getType().add(new DCType(
-            exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" : "software",
+            exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" : "product",
             null, null));
         dcProduct.getSource().add(repositoryName);
 
@@ -104,7 +104,7 @@ public class ExportProductConverter extends ExportConverterBase {
             .forEach(lang -> dcProduct.getIdentifier().add(
                 baseFrontendUrl + lang + "/scientific-result/" +
                     (exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
-                        "software") + "/" + exportDocument.getDatabaseId()));
+                        "product") + "/" + exportDocument.getDatabaseId()));
 
         if (StringUtil.valueExists(exportDocument.getDoi())) {
             dcProduct.getIdentifier().add("doi:" + exportDocument.getDoi());

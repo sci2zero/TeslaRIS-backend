@@ -17,6 +17,7 @@ import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.GeneticMaterial;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -28,7 +29,6 @@ import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.document.PublisherPublishable;
 import rs.teslaris.core.model.document.ResourceType;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -41,6 +41,7 @@ import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.model.rocrate.RoCrateDataset;
 import rs.teslaris.core.model.rocrate.RoCrateEvent;
 import rs.teslaris.core.model.rocrate.RoCrateGeneticMaterial;
+import rs.teslaris.core.model.rocrate.RoCrateIntangibleProduct;
 import rs.teslaris.core.model.rocrate.RoCrateJournalPublication;
 import rs.teslaris.core.model.rocrate.RoCrateMaterialProduct;
 import rs.teslaris.core.model.rocrate.RoCrateMonograph;
@@ -51,7 +52,6 @@ import rs.teslaris.core.model.rocrate.RoCrateProceedings;
 import rs.teslaris.core.model.rocrate.RoCrateProceedingsPublication;
 import rs.teslaris.core.model.rocrate.RoCratePublicationBase;
 import rs.teslaris.core.model.rocrate.RoCratePublishable;
-import rs.teslaris.core.model.rocrate.RoCrateSoftware;
 import rs.teslaris.core.model.rocrate.RoCrateThesis;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.service.interfaces.document.FileService;
@@ -97,11 +97,12 @@ public class RoCrateConverter {
         return metadata;
     }
 
-    public static RoCrateSoftware toRoCrateModel(Software document, String documentIdentifier,
-                                                 RoCrate metadataInfo) {
-        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "software");
+    public static RoCrateIntangibleProduct toRoCrateModel(IntangibleProduct document,
+                                                          String documentIdentifier,
+                                                          RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "product");
 
-        var metadata = new RoCrateSoftware();
+        var metadata = new RoCrateIntangibleProduct();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
         setPublisherInfo(metadataInfo, metadata, document);
         metadata.setIdentifier(document.getInternalNumber());

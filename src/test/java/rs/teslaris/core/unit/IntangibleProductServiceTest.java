@@ -29,7 +29,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
-import rs.teslaris.core.dto.document.SoftwareDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
@@ -37,17 +37,18 @@ import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
-import rs.teslaris.core.service.impl.document.SoftwareServiceImpl;
-import rs.teslaris.core.service.impl.document.cruddelegate.SoftwareJPAServiceImpl;
+import rs.teslaris.core.service.impl.document.IntangibleProductServiceImpl;
+import rs.teslaris.core.service.impl.document.cruddelegate.IntangibleProductJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
@@ -55,7 +56,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConf
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 
 @SpringBootTest
-public class SoftwareServiceTest {
+public class IntangibleProductServiceTest {
 
     @Mock
     private DocumentRepository documentRepository;
@@ -73,7 +74,7 @@ public class SoftwareServiceTest {
     private PersonContributionService personContributionService;
 
     @Mock
-    private SoftwareJPAServiceImpl softwareJPAService;
+    private IntangibleProductJPAServiceImpl intangibleProductJPAService;
 
     @Mock
     private DocumentPublicationIndexRepository documentPublicationIndexRepository;
@@ -87,8 +88,11 @@ public class SoftwareServiceTest {
     @Mock
     private CitationService citationService;
 
+    @Mock
+    private ResearchAreaService researchAreaService;
+
     @InjectMocks
-    private SoftwareServiceImpl softwareService;
+    private IntangibleProductServiceImpl intangibleProductService;
 
 
     private static Stream<Arguments> argumentSources() {
@@ -105,23 +109,23 @@ public class SoftwareServiceTest {
 
     @BeforeEach
     public void setUp() {
-        ReflectionTestUtils.setField(softwareService, "documentApprovedByDefault", true);
+        ReflectionTestUtils.setField(intangibleProductService, "documentApprovedByDefault", true);
     }
 
     @Test
-    public void shouldCreateSoftware() {
+    public void shouldCreateIntangibleProduct() {
         // Given
-        var dto = new SoftwareDTO();
+        var dto = new IntangibleProductDTO();
         dto.setDocumentDate("2020-03-02");
-        var software = new Software();
-        software.setId(1);
-        software.setInternalNumber("123");
-        var document = new Software();
+        var intangibleProduct = new IntangibleProduct();
+        intangibleProduct.setId(1);
+        intangibleProduct.setInternalNumber("123");
+        var document = new IntangibleProduct();
         document.setDocumentDate("2023");
 
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(
             Set.of(new MultiLingualContent()));
-        when(softwareJPAService.save(any())).thenReturn(document);
+        when(intangibleProductJPAService.save(any())).thenReturn(document);
 
         var authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
@@ -130,27 +134,28 @@ public class SoftwareServiceTest {
         SecurityContextHolder.setContext(securityContext);
 
         // When
-        var result = softwareService.createSoftware(dto, true);
+        var result = intangibleProductService.createIntangibleProduct(dto, true);
 
         // Then
-        verify(multilingualContentService, times(5)).getMultilingualContent(any());
+        verify(multilingualContentService, times(6)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
-        verify(softwareJPAService).save(eq(document));
+        verify(intangibleProductJPAService).save(eq(document));
     }
 
     @Test
-    public void shouldEditSoftware() {
+    public void shouldEditIntangibleProduct() {
         // Given
-        var softwareId = 1;
-        var softwareDTO = new SoftwareDTO();
-        softwareDTO.setDocumentDate("2024");
-        var softwareToUpdate = new Software();
-        softwareToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
-        softwareToUpdate.setDocumentDate("2023");
+        var intangibleProductId = 1;
+        var intangibleProductDTO = new IntangibleProductDTO();
+        intangibleProductDTO.setDocumentDate("2024");
+        var intangibleProductToUpdate = new IntangibleProduct();
+        intangibleProductToUpdate.setApproveStatus(ApproveStatus.REQUESTED);
+        intangibleProductToUpdate.setDocumentDate("2023");
 
-        when(softwareJPAService.findOne(softwareId)).thenReturn(softwareToUpdate);
-        when(softwareJPAService.save(any())).thenReturn(softwareToUpdate);
+        when(intangibleProductJPAService.findOne(intangibleProductId)).thenReturn(
+            intangibleProductToUpdate);
+        when(intangibleProductJPAService.save(any())).thenReturn(intangibleProductToUpdate);
 
         var authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(new User());
@@ -159,22 +164,22 @@ public class SoftwareServiceTest {
         SecurityContextHolder.setContext(securityContext);
 
         // When
-        softwareService.editSoftware(softwareId, softwareDTO);
+        intangibleProductService.editIntangibleProduct(intangibleProductId, intangibleProductDTO);
 
         // Then
-        verify(softwareJPAService).findOne(eq(softwareId));
+        verify(intangibleProductJPAService).findOne(eq(intangibleProductId));
         verify(personContributionService).setPersonDocumentContributionsForDocument(
-            eq(softwareToUpdate), eq(softwareDTO));
+            eq(intangibleProductToUpdate), eq(intangibleProductDTO));
     }
 
     @ParameterizedTest
     @MethodSource("argumentSources")
-    public void shouldReadSoftware(DocumentContributionType type, Boolean isMainAuthor,
-                                   Boolean isCorrespondingAuthor, Country country) {
+    public void shouldReadIntangibleProduct(DocumentContributionType type, Boolean isMainAuthor,
+                                            Boolean isCorrespondingAuthor, Country country) {
         // Given
-        var softwareId = 1;
-        var software = new Software();
-        software.setApproveStatus(ApproveStatus.APPROVED);
+        var intangibleProductId = 1;
+        var intangibleProduct = new IntangibleProduct();
+        intangibleProduct.setApproveStatus(ApproveStatus.APPROVED);
 
         var contribution = new PersonDocumentContribution();
         contribution.setContributionType(type);
@@ -187,36 +192,37 @@ public class SoftwareServiceTest {
         affiliationStatement.setPostalAddress(
             new PostalAddress(country, new HashSet<>(), new HashSet<>()));
         contribution.setAffiliationStatement(affiliationStatement);
-        software.setContributors(Set.of(contribution));
+        intangibleProduct.setContributors(Set.of(contribution));
 
-        when(softwareJPAService.findOne(softwareId)).thenReturn(software);
+        when(intangibleProductJPAService.findOne(intangibleProductId)).thenReturn(
+            intangibleProduct);
 
         // When
-        var result = softwareService.readSoftwareById(softwareId);
+        var result = intangibleProductService.readIntangibleProductById(intangibleProductId);
 
         // Then
-        verify(softwareJPAService).findOne(eq(softwareId));
+        verify(intangibleProductJPAService).findOne(eq(intangibleProductId));
         assertNotNull(result);
         assertEquals(1, result.getContributions().size());
     }
 
     @Test
-    public void shouldReindexSoftwares() {
+    public void shouldReindexIntangibleProducts() {
         // Given
-        var software = new Software();
-        software.setDocumentDate("2024");
-        var softwares = List.of(software);
-        var page1 = new PageImpl<>(softwares.subList(0, 1), PageRequest.of(0, 10),
-            softwares.size());
+        var intangibleProduct = new IntangibleProduct();
+        intangibleProduct.setDocumentDate("2024");
+        var intangibleProducts = List.of(intangibleProduct);
+        var page1 = new PageImpl<>(intangibleProducts.subList(0, 1), PageRequest.of(0, 10),
+            intangibleProducts.size());
 
-        when(softwareJPAService.findAll(any(PageRequest.class))).thenReturn(page1);
+        when(intangibleProductJPAService.findAll(any(PageRequest.class))).thenReturn(page1);
 
         // When
-        softwareService.reindexSoftware();
+        intangibleProductService.reindexIntangibleProduct();
 
         // Then
         verify(documentPublicationIndexRepository, never()).deleteAll();
-        verify(softwareJPAService, atLeastOnce()).findAll(any(PageRequest.class));
+        verify(intangibleProductJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(documentPublicationIndexRepository, atLeastOnce()).save(
             any(DocumentPublicationIndex.class));
     }

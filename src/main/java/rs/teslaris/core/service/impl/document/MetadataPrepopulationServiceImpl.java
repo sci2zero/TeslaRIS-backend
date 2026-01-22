@@ -334,7 +334,8 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
             case "conference", "inproceedings", "inbook" ->
                 DocumentPublicationType.PROCEEDINGS_PUBLICATION;
             case "incollection" -> DocumentPublicationType.MONOGRAPH_PUBLICATION;
-            case "manual" -> DocumentPublicationType.SOFTWARE; // Closest guess; could be custom
+            case "manual" ->
+                DocumentPublicationType.INTANGIBLE_PRODUCT; // Closest guess; could be custom
             case "masterthesis", "phdthesis" -> DocumentPublicationType.THESIS;
             case "proceedings" -> DocumentPublicationType.PROCEEDINGS;
             case "techreport" -> DocumentPublicationType.MATERIAL_PRODUCT;

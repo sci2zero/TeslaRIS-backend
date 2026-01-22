@@ -21,6 +21,7 @@ import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedGeneticMaterialDTO;
+import rs.teslaris.core.dto.deduplication.MergedIntangibleProductDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalsDTO;
 import rs.teslaris.core.dto.deduplication.MergedMaterialProductDTO;
@@ -32,7 +33,6 @@ import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPublishersDTO;
-import rs.teslaris.core.dto.deduplication.MergedSoftwareDTO;
 import rs.teslaris.core.dto.deduplication.MergedThesesDTO;
 import rs.teslaris.core.dto.person.involvement.PersonCollectionEntitySwitchListDTO;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -307,18 +307,19 @@ public class MergeController {
             mergedBookSeries.getLeftBookSeries(), mergedBookSeries.getRightBookSeries());
     }
 
-    @PatchMapping("/software/metadata/{leftDocumentId}/{rightDocumentId}")
+    @PatchMapping("/intangible-product/metadata/{leftDocumentId}/{rightDocumentId}")
     @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
     @PublicationMergeCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveMergedSoftwareMetadata(
+    public void saveMergedIntangibleProductMetadata(
         @PathVariable Integer leftDocumentId,
         @PathVariable Integer rightDocumentId,
-        @NotNull @RequestBody MergedSoftwareDTO mergedSoftware) {
-        mergeService.saveMergedSoftwareMetadata(leftDocumentId, rightDocumentId,
-            mergedSoftware.getLeftSoftware(), mergedSoftware.getRightSoftware());
+        @NotNull @RequestBody MergedIntangibleProductDTO mergedIntangibleProduct) {
+        mergeService.saveMergedIntangibleProductMetadata(leftDocumentId, rightDocumentId,
+            mergedIntangibleProduct.getLeftIntangibleProduct(),
+            mergedIntangibleProduct.getRightIntangibleProduct());
 
-        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedSoftware);
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedIntangibleProduct);
     }
 
     @PatchMapping("/material-product/metadata/{leftDocumentId}/{rightDocumentId}")

@@ -152,7 +152,7 @@ public class ExportConverterBase {
                 "http://purl.org/coar/resource_type/c_c94f";
             case MONOGRAPH, BOOK_SERIES -> "http://purl.org/coar/resource_type/c_2f33"; // book
             case PATENT -> "http://purl.org/coar/resource_type/c_15cd";
-            case SOFTWARE -> "http://purl.org/coar/resource_type/c_5ce6";
+            case INTANGIBLE_PRODUCT -> "http://purl.org/coar/resource_type/c_5ce6";
             case DATASET -> "http://purl.org/coar/resource_type/c_ddb1";
             case JOURNAL -> "http://purl.org/coar/resource_type/c_0640";
             case MONOGRAPH_PUBLICATION -> "http://purl.org/coar/resource_type/c_3248"; // book part
@@ -327,7 +327,7 @@ public class ExportConverterBase {
             case PROCEEDINGS_PUBLICATION -> "proceedings-publication";
             case MONOGRAPH -> "monograph";
             case PATENT -> "patent";
-            case SOFTWARE -> "software";
+            case INTANGIBLE_PRODUCT -> "intangible-product";
             case DATASET -> "dataset";
             case JOURNAL -> "journal";
             case MONOGRAPH_PUBLICATION -> "monograph-publication";

@@ -781,7 +781,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
             DocumentPublicationType.MONOGRAPH_PUBLICATION.name());
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
-            DocumentPublicationType.SOFTWARE.name());
+            DocumentPublicationType.INTANGIBLE_PRODUCT.name());
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
             DocumentPublicationType.DATASET.name());
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,

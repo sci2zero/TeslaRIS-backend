@@ -128,9 +128,9 @@ public class BeanConfiguration {
     public Executor defaultTaskExecutor() {
         var threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
         threadPoolTaskExecutor.setThreadNamePrefix("Async-");
-        threadPoolTaskExecutor.setCorePoolSize(3);
-        threadPoolTaskExecutor.setMaxPoolSize(3);
-        threadPoolTaskExecutor.setQueueCapacity(600);
+        threadPoolTaskExecutor.setCorePoolSize(8);
+        threadPoolTaskExecutor.setMaxPoolSize(32);
+        threadPoolTaskExecutor.setQueueCapacity(2000);
         threadPoolTaskExecutor.afterPropertiesSet();
         return threadPoolTaskExecutor;
     }

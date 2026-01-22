@@ -77,7 +77,7 @@ public class GeneticMaterialControllerTest extends BaseTest {
         mockMvc.perform(MockMvcRequestBuilders.post("http://localhost:8081/api/genetic-material")
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                .header("Idempotency-Key", "MOCK_KEY_SOFTWARE"))
+                .header("Idempotency-Key", "MOCK_KEY_GENETIC"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.documentDate").value("2024-12-16"))
             .andExpect(jsonPath("$.geneticMaterialType").value("RACE"));

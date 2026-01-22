@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
@@ -37,8 +39,10 @@ public class AssessmentEventListener {
     private final DocumentAssessmentClassificationRepository
         documentAssessmentClassificationRepository;
 
+    private final ConcurrentHashMap<Integer, ReentrantLock> locks = new ConcurrentHashMap<>();
 
-    @Async
+
+    @Async("taskExecutor")
     @EventListener
     @Transactional(readOnly = true)
     protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
@@ -82,21 +86,43 @@ public class AssessmentEventListener {
     }
 
     @EventListener
-    @Async
+    @Async("taskExecutor")
     protected void handleEntityAssessmentChanged(EntityAssessmentChanged event) {
         var assessmentStartDate = LocalDate.of(2000, 1, 1);
 
-        switch (event.entityType()) {
-            case PUBLICATION_SERIES ->
-                documentAssessmentClassificationService.classifyJournalPublications(
-                    assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                    Collections.emptyList(), List.of(event.entityId()));
-            case EVENT -> documentAssessmentClassificationService.classifyProceedingsPublications(
-                assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                Collections.emptyList(), List.of(event.entityId()));
-            case MONOGRAPH -> documentAssessmentClassificationService.classifyMonographPublications(
-                assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                Collections.emptyList(), List.of(event.entityId()));
+        withLock(event.commissionId(), () -> {
+            switch (event.entityType()) {
+                case PUBLICATION_SERIES ->
+                    documentAssessmentClassificationService.classifyJournalPublications(
+                        assessmentStartDate, event.commissionId(), Collections.emptyList(),
+                        Collections.emptyList(), List.of(event.entityId()));
+                case EVENT ->
+                    documentAssessmentClassificationService.classifyProceedingsPublications(
+                        assessmentStartDate, event.commissionId(), Collections.emptyList(),
+                        Collections.emptyList(), List.of(event.entityId()));
+                case MONOGRAPH ->
+                    documentAssessmentClassificationService.classifyMonographPublications(
+                        assessmentStartDate, event.commissionId(), Collections.emptyList(),
+                        Collections.emptyList(), List.of(event.entityId()));
+            }
+        });
+    }
+
+    public void withLock(Integer commissionId, Runnable action) {
+        var lock = locks.computeIfAbsent(
+            commissionId,
+            id -> new ReentrantLock()
+        );
+
+        lock.lock();
+        try {
+            action.run();
+        } finally {
+            lock.unlock();
+
+            if (!lock.hasQueuedThreads()) {
+                locks.remove(commissionId, lock);
+            }
         }
     }
 }

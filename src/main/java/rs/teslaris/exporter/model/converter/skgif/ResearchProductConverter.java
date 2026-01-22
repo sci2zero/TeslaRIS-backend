@@ -92,7 +92,7 @@ public class ResearchProductConverter extends BaseConverter {
         return switch (type) {
             case JOURNAL_PUBLICATION, PROCEEDINGS_PUBLICATION, MONOGRAPH_PUBLICATION, THESIS ->
                 "literature";
-            case SOFTWARE -> "research software";
+            case INTANGIBLE_PRODUCT -> "research software";
             case DATASET -> "research data";
             default ->
                 throw new IllegalArgumentException("No RP entity type type for: " + type.name());

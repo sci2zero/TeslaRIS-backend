@@ -74,7 +74,7 @@ public class SKGIFRecordsFactory {
             .collections(List.of(
                 new SKGIFDiscoverTypes.CollectionInfo(
                     "skgif:Collection", "Products", "/product", "product",
-                    "Research products including publications, datasets, software, and other research outputs",
+                    "Research products including publications, datasets, intangible/material products, and other research outputs",
                     (int) mongoTemplate.count(getCollectionQuery(ExportDocument.class, false),
                         ExportDocument.class),
                     ResearchProductFilteringUtil.SUPPORTED_FILTERS,

@@ -55,6 +55,7 @@ import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.GeneticMaterialType;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -70,7 +71,6 @@ import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.ResourceType;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.Commission;
@@ -99,6 +99,7 @@ import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
+import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
@@ -107,7 +108,6 @@ import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
-import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -150,7 +150,7 @@ public class TestingDataInitializer {
 
     private final PatentRepository patentRepository;
 
-    private final SoftwareRepository softwareRepository;
+    private final IntangibleProductRepository intangibleProductRepository;
 
     private final DatasetRepository datasetRepository;
 
@@ -351,12 +351,12 @@ public class TestingDataInitializer {
         person2.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 2, 1));
         personRepository.save(person2);
 
-        var software = new Software();
-        software.setTitle(Set.of(new MultiLingualContent(englishTag,
+        var intangibleProduct = new IntangibleProduct();
+        intangibleProduct.setTitle(Set.of(new MultiLingualContent(englishTag,
             "TeslaRIS - Reengineering of CRIS at the University of Novi Sad", 1)));
-        software.setInternalNumber("123456");
-        software.setDoi("10.1109/tsmc.2014.2347265");
-        software.setApproveStatus(ApproveStatus.APPROVED);
+        intangibleProduct.setInternalNumber("123456");
+        intangibleProduct.setDoi("10.1109/tsmc.2014.2347265");
+        intangibleProduct.setApproveStatus(ApproveStatus.APPROVED);
 
         var patent = new Patent();
         patent.setTitle(Set.of(new MultiLingualContent(englishTag, "Dummy Patent", 1)));
@@ -406,7 +406,8 @@ public class TestingDataInitializer {
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null, dummyOU,
                 EmploymentPosition.TEACHING_ASSISTANT, Set.of(new MultiLingualContent(englishTag,
-                "Courses: Digital Documents Management, Secure Software Development", 1))));
+                "Courses: Digital Documents Management, Secure IntangibleProduct Development",
+                1))));
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.HIRED_BY, new HashSet<>(), null, sci2zero,
@@ -425,7 +426,7 @@ public class TestingDataInitializer {
                 new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null, dummyOU,
                 Set.of(new MultiLingualContent(englishTag, "Reverse Image Search System", 1),
                     new MultiLingualContent(englishTag, "Sistem za reverznu pretragu slika", 1)),
-                Set.of(new MultiLingualContent(englishTag, "Master in Software", 1),
+                Set.of(new MultiLingualContent(englishTag, "Master in IntangibleProduct", 1),
                     new MultiLingualContent(englishTag, "Master inženjer softvera", 1)),
                 Set.of(new MultiLingualContent(englishTag, "Msc", 1))));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
@@ -468,21 +469,21 @@ public class TestingDataInitializer {
             new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null));
         personContributionRepository.save(datasetContribution);
 
-        var softwareContribution = new PersonDocumentContribution();
-        softwareContribution.setPerson(person1);
-        softwareContribution.setContributionType(DocumentContributionType.AUTHOR);
-        softwareContribution.setIsMainContributor(true);
-        softwareContribution.setIsCorrespondingContributor(false);
-        softwareContribution.setOrderNumber(1);
-        softwareContribution.setDocument(dataset);
-        softwareContribution.setApproveStatus(ApproveStatus.APPROVED);
-        softwareContribution.getInstitutions().add(dummyOU);
-        softwareContribution.setAffiliationStatement(
+        var intangibleProductContribution = new PersonDocumentContribution();
+        intangibleProductContribution.setPerson(person1);
+        intangibleProductContribution.setContributionType(DocumentContributionType.AUTHOR);
+        intangibleProductContribution.setIsMainContributor(true);
+        intangibleProductContribution.setIsCorrespondingContributor(false);
+        intangibleProductContribution.setOrderNumber(1);
+        intangibleProductContribution.setDocument(dataset);
+        intangibleProductContribution.setApproveStatus(ApproveStatus.APPROVED);
+        intangibleProductContribution.getInstitutions().add(dummyOU);
+        intangibleProductContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
-        softwareContribution.getAffiliationStatement().setDisplayPersonName(
+        intangibleProductContribution.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Ivan", "", "M.", LocalDate.of(2000, 1, 31), null));
-        personContributionRepository.save(softwareContribution);
+        personContributionRepository.save(intangibleProductContribution);
 
         dummyOU.getResearchAreas().add(researchArea3);
         organisationUnitRepository.save(dummyOU);
@@ -542,24 +543,24 @@ public class TestingDataInitializer {
         person3.setScopusAuthorId("14419566900");
         personRepository.save(person3);
 
-        var softwareContribution2 = new PersonDocumentContribution();
-//        softwareContribution2.setPerson(person3);
-        softwareContribution2.setContributionType(DocumentContributionType.AUTHOR);
-        softwareContribution2.setIsMainContributor(false);
-        softwareContribution2.setIsCorrespondingContributor(false);
-        softwareContribution2.setOrderNumber(2);
-        softwareContribution2.setDocument(dataset);
-        softwareContribution2.setApproveStatus(ApproveStatus.APPROVED);
-        softwareContribution2.setAffiliationStatement(
+        var intangibleProductContribution2 = new PersonDocumentContribution();
+//        intangibleProductContribution2.setPerson(person3);
+        intangibleProductContribution2.setContributionType(DocumentContributionType.AUTHOR);
+        intangibleProductContribution2.setIsMainContributor(false);
+        intangibleProductContribution2.setIsCorrespondingContributor(false);
+        intangibleProductContribution2.setOrderNumber(2);
+        intangibleProductContribution2.setDocument(dataset);
+        intangibleProductContribution2.setApproveStatus(ApproveStatus.APPROVED);
+        intangibleProductContribution2.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
-        softwareContribution2.getAffiliationStatement().setDisplayPersonName(
+        intangibleProductContribution2.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Dušan", "", "N.", null, null));
-        personContributionRepository.save(softwareContribution2);
+        personContributionRepository.save(intangibleProductContribution2);
 
-        software.addDocumentContribution(softwareContribution);
-        software.addDocumentContribution(softwareContribution2);
-        softwareRepository.save(software);
+        intangibleProduct.addDocumentContribution(intangibleProductContribution);
+        intangibleProduct.addDocumentContribution(intangibleProductContribution2);
+        intangibleProductRepository.save(intangibleProduct);
 
         var person4 = new Person();
         var postalAddress4 = new PostalAddress(country, new HashSet<>(),
@@ -889,32 +890,32 @@ public class TestingDataInitializer {
             List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
                 headOfLibraryUser, promotionRegistryAdminUser, institutionalEditorUser2));
 
-        var software2 = new Software();
-        software2.setTitle(Set.of(new MultiLingualContent(englishTag,
+        var intangibleProduct2 = new IntangibleProduct();
+        intangibleProduct2.setTitle(Set.of(new MultiLingualContent(englishTag,
             "CRIS UNS", 1)));
-        software2.setInternalNumber("654321");
-        software2.setApproveStatus(ApproveStatus.APPROVED);
-        software2.setDoi("10.1038/nature.2012.9872");
-        software2.setDocumentDate("2012-3-14");
+        intangibleProduct2.setInternalNumber("654321");
+        intangibleProduct2.setApproveStatus(ApproveStatus.APPROVED);
+        intangibleProduct2.setDoi("10.1038/nature.2012.9872");
+        intangibleProduct2.setDocumentDate("2012-3-14");
 
-        var softwareContribution3 = new PersonDocumentContribution();
-        softwareContribution3.setPerson(person1);
-        softwareContribution3.setContributionType(DocumentContributionType.AUTHOR);
-        softwareContribution3.setIsMainContributor(true);
-        softwareContribution3.setIsCorrespondingContributor(false);
-        softwareContribution3.setOrderNumber(1);
-        softwareContribution3.setDocument(dataset);
-        softwareContribution3.setApproveStatus(ApproveStatus.APPROVED);
-        softwareContribution3.getInstitutions().add(dummyOU);
-        softwareContribution3.setAffiliationStatement(
+        var intangibleProductContribution3 = new PersonDocumentContribution();
+        intangibleProductContribution3.setPerson(person1);
+        intangibleProductContribution3.setContributionType(DocumentContributionType.AUTHOR);
+        intangibleProductContribution3.setIsMainContributor(true);
+        intangibleProductContribution3.setIsCorrespondingContributor(false);
+        intangibleProductContribution3.setOrderNumber(1);
+        intangibleProductContribution3.setDocument(dataset);
+        intangibleProductContribution3.setApproveStatus(ApproveStatus.APPROVED);
+        intangibleProductContribution3.getInstitutions().add(dummyOU);
+        intangibleProductContribution3.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
-        softwareContribution3.getAffiliationStatement().setDisplayPersonName(
+        intangibleProductContribution3.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Ivan", "", "R. M.", LocalDate.of(2000, 1, 31), null));
-        personContributionRepository.save(softwareContribution3);
+        personContributionRepository.save(intangibleProductContribution3);
 
-        software2.addDocumentContribution(softwareContribution3);
-        softwareRepository.save(software2);
+        intangibleProduct2.addDocumentContribution(intangibleProductContribution3);
+        intangibleProductRepository.save(intangibleProduct2);
 
         var promotion1 = new Promotion();
         promotion1.setPromotionDate(LocalDate.of(2023, 5, 1));

@@ -16,26 +16,26 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.dto.document.SoftwareDTO;
-import rs.teslaris.core.service.interfaces.document.SoftwareService;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
+import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 
 @RestController
-@RequestMapping("api/software")
+@RequestMapping("api/intangible-product")
 @RequiredArgsConstructor
 @Traceable
-public class SoftwareController {
+public class IntangibleProductController {
 
-    private final SoftwareService softwareService;
+    private final IntangibleProductService intangibleProductService;
 
 
     @GetMapping("/{documentId}")
-    public ResponseEntity<SoftwareDTO> readSoftware(
+    public ResponseEntity<IntangibleProductDTO> readIntangibleProduct(
         @PathVariable Integer documentId) {
-        var dto = softwareService.readSoftwareById(documentId);
+        var dto = intangibleProductService.readIntangibleProductById(documentId);
 
         return ResponseEntity.ok()
-            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/software"))
+            .headers(FairSignpostingL1Utility.constructHeaders(dto, "/api/intangibleProduct"))
             .body(dto);
     }
 
@@ -43,24 +43,26 @@ public class SoftwareController {
     @ResponseStatus(HttpStatus.CREATED)
     @PublicationEditCheck("CREATE")
     @Idempotent
-    public SoftwareDTO createSoftware(@RequestBody @Valid SoftwareDTO software) {
-        var savedSoftware = softwareService.createSoftware(software, true);
-        software.setId(savedSoftware.getId());
-        return software;
+    public IntangibleProductDTO createIntangibleProduct(
+        @RequestBody @Valid IntangibleProductDTO intangibleProduct) {
+        var savedIntangibleProduct =
+            intangibleProductService.createIntangibleProduct(intangibleProduct, true);
+        intangibleProduct.setId(savedIntangibleProduct.getId());
+        return intangibleProduct;
     }
 
     @PutMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void editSoftware(@PathVariable Integer documentId,
-                             @RequestBody @Valid SoftwareDTO software) {
-        softwareService.editSoftware(documentId, software);
+    public void editIntangibleProduct(@PathVariable Integer documentId,
+                                      @RequestBody @Valid IntangibleProductDTO intangibleProduct) {
+        intangibleProductService.editIntangibleProduct(documentId, intangibleProduct);
     }
 
     @DeleteMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PublicationEditCheck
-    public void deleteSoftware(@PathVariable Integer documentId) {
-        softwareService.deleteSoftware(documentId);
+    public void deleteIntangibleProduct(@PathVariable Integer documentId) {
+        intangibleProductService.deleteIntangibleProduct(documentId);
     }
 }

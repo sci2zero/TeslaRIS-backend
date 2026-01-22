@@ -8,27 +8,27 @@
                             Preamble
 
   The GNU General Public License is a free, copyleft license for
-software and other kinds of works.
+intangibleProduct and other kinds of works.
 
-  The licenses for most software and other practical works are designed
+  The licenses for most intangibleProduct and other practical works are designed
 to take away your freedom to share and change the works.  By contrast,
 the GNU General Public License is intended to guarantee your freedom to
 share and change all versions of a program--to make sure it remains free
-software for all its users.  We, the Free Software Foundation, use the
-GNU General Public License for most of our software; it applies also to
+intangibleProduct for all its users.  We, the Free Software Foundation, use the
+GNU General Public License for most of our intangibleProduct; it applies also to
 any other work released this way by its authors.  You can apply it to
 your programs, too.
 
-  When we speak of free software, we are referring to freedom, not
+  When we speak of free intangibleProduct, we are referring to freedom, not
 price.  Our General Public Licenses are designed to make sure that you
-have the freedom to distribute copies of free software (and charge for
+have the freedom to distribute copies of free intangibleProduct (and charge for
 them if you wish), that you receive source code or can get it if you
-want it, that you can change the software or use pieces of it in new
+want it, that you can change the intangibleProduct or use pieces of it in new
 free programs, and that you know you can do these things.
 
   To protect your rights, we need to prevent others from denying you
 these rights or asking you to surrender the rights.  Therefore, you have
-certain responsibilities if you distribute copies of the software, or if
+certain responsibilities if you distribute copies of the intangibleProduct, or if
 you modify it: responsibilities to respect the freedom of others.
 
   For example, if you distribute copies of such a program, whether
@@ -38,19 +38,19 @@ or can get the source code.  And you must show them these terms so they
 know their rights.
 
   Developers that use the GNU GPL protect your rights with two steps:
-(1) assert copyright on the software, and (2) offer you this License
+(1) assert copyright on the intangibleProduct, and (2) offer you this License
 giving you legal permission to copy, distribute and/or modify it.
 
   For the developers' and authors' protection, the GPL clearly explains
-that there is no warranty for this free software.  For both users' and
+that there is no warranty for this free intangibleProduct.  For both users' and
 authors' sake, the GPL requires that modified versions be marked as
 changed, so that their problems will not be attributed erroneously to
 authors of previous versions.
 
   Some devices are designed to deny users access to install or run
-modified versions of the software inside them, although the manufacturer
+modified versions of the intangibleProduct inside them, although the manufacturer
 can do so.  This is fundamentally incompatible with the aim of
-protecting users' freedom to change the software.  The systematic
+protecting users' freedom to change the intangibleProduct.  The systematic
 pattern of such abuse occurs in the area of products for individuals to
 use, which is precisely where it is most unacceptable.  Therefore, we
 have designed this version of the GPL to prohibit the practice for those
@@ -58,9 +58,9 @@ products.  If such problems arise substantially in other domains, we
 stand ready to extend this provision to those domains in future versions
 of the GPL, as needed to protect the freedom of users.
 
-  Finally, every program is threatened constantly by software patents.
+  Finally, every program is threatened constantly by intangibleProduct patents.
 States should not allow patents to restrict development and use of
-software on general-purpose computers, but in those that do, we wish to
+intangibleProduct on general-purpose computers, but in those that do, we wish to
 avoid the special danger that patents applied to a free program could
 make it effectively proprietary.  To prevent this, the GPL assures that
 patents cannot be used to render the program non-free.
@@ -252,16 +252,16 @@ in one of these ways:
     a) Convey the object code in, or embodied in, a physical product
     (including a physical distribution medium), accompanied by the
     Corresponding Source fixed on a durable physical medium
-    customarily used for software interchange.
+    customarily used for intangibleProduct interchange.
 
     b) Convey the object code in, or embodied in, a physical product
     (including a physical distribution medium), accompanied by a
     written offer, valid for at least three years and valid for as
     long as you offer spare parts or customer support for that product
     model, to give anyone who possesses the object code either (1) a
-    copy of the Corresponding Source for all the software in the
+    copy of the Corresponding Source for all the intangibleProduct in the
     product that is covered by this License, on a durable physical
-    medium customarily used for software interchange, for a price no
+    medium customarily used for intangibleProduct interchange, for a price no
     more than your reasonable cost of physically performing this
     conveying of source, or (2) access to copy the
     Corresponding Source from a network server at no charge.
@@ -523,7 +523,7 @@ the scope of its coverage, prohibits the exercise of, or is
 conditioned on the non-exercise of one or more of the rights that are
 specifically granted under this License.  You may not convey a covered
 work if you are a party to an arrangement with a third party that is
-in the business of distributing software, under which you make payment
+in the business of distributing intangibleProduct, under which you make payment
 to the third party based on the extent of your activity of conveying
 the work, and under which the third party grants, to any of the
 parties who would receive the covered work from you, a discriminatory
@@ -624,7 +624,7 @@ copy of the Program in return for a fee.
 
   If you develop a new program, and you want it to be of the greatest
 possible use to the public, the best way to achieve this is to make it
-free software which everyone can redistribute and change under these terms.
+free intangibleProduct which everyone can redistribute and change under these terms.
 
   To do so, attach the following notices to the program.  It is safest
 to attach them to the start of each source file to most effectively
@@ -634,7 +634,7 @@ the "copyright" line and a pointer to where the full notice is found.
     <one line to give the program's name and a brief idea of what it does.>
     Copyright (C) <year>  <name of author>
 
-    This program is free software: you can redistribute it and/or modify
+    This program is free intangibleProduct: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -654,7 +654,7 @@ notice like this when it starts in an interactive mode:
 
     <program>  Copyright (C) <year>  <name of author>
     This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
-    This is free software, and you are welcome to redistribute it
+    This is free intangibleProduct, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
 
 The hypothetical commands `show w' and `show c' should show the appropriate

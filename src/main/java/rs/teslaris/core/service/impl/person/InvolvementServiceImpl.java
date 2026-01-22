@@ -501,7 +501,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvement.getProofs().clear();
     }
 
-    @Async
+    @Async("taskExecutor")
     @Transactional
     public void addExternalInvolvementToBoardMember(Integer personId,
                                                     List<MultilingualContentDTO> externalInstitutionName,

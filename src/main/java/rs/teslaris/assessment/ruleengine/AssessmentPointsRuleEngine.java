@@ -226,7 +226,7 @@ public class AssessmentPointsRuleEngine {
             case "M70":
                 return 6;
 
-            // SOFTWARE, DATASET
+            // PRODUCT, GENETIC_MATERIAL, DATASET
             case "M81":
                 return 12;
             case "M82":

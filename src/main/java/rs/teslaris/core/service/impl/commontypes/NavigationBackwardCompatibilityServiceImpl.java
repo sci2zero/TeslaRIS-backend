@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.GeneticMaterial;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
@@ -15,7 +16,6 @@ import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
@@ -109,10 +109,10 @@ public class NavigationBackwardCompatibilityServiceImpl implements
                         document.getId(), source, language);
                     return new Pair<>("DATASET", document.getId());
                 }
-                case Software ignored -> {
-                    log.info("NAVIGATION SUCCESS - SOFTWARE {} from {} in LANGUAGE {}",
+                case IntangibleProduct ignored -> {
+                    log.info("NAVIGATION SUCCESS - INTANGIBLE_PRODUCT {} from {} in LANGUAGE {}",
                         document.getId(), source, language);
-                    return new Pair<>("SOFTWARE", document.getId());
+                    return new Pair<>("INTANGIBLE_PRODUCT", document.getId());
                 }
                 case MaterialProduct ignored -> {
                     log.info("NAVIGATION SUCCESS - MATERIAL_PRODUCT {} from {} in LANGUAGE {}",

@@ -58,7 +58,7 @@ public class CommonHarvesterImpl implements CommonHarvester {
 
 
     @Override
-    @Async
+    @Async("taskExecutor")
     public void performHarvestAsync(Integer userId, String userRole, LocalDate dateFrom,
                                     LocalDate dateTo, Integer institutionId) {
         performHarvest(userId, userRole, dateFrom, dateTo, institutionId);
@@ -124,7 +124,7 @@ public class CommonHarvesterImpl implements CommonHarvester {
     }
 
     @Override
-    @Async
+    @Async("taskExecutor")
     public void performAuthorCentricHarvestAsync(Integer userId, String userRole,
                                                  LocalDate dateFrom, LocalDate dateTo,
                                                  List<Integer> authorIds, Boolean allAuthors,

@@ -11,11 +11,11 @@ import lombok.Setter;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class RoCrateSoftware extends RoCratePublicationBase {
+public class RoCrateIntangibleProduct extends RoCratePublicationBase {
 
     private String identifier;
 
-    public RoCrateSoftware() {
-        this.setType("SoftwareSourceCode");
+    public RoCrateIntangibleProduct() {
+        this.setType("CreativeWork");
     }
 }

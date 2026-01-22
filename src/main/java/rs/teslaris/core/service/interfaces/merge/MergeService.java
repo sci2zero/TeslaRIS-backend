@@ -6,6 +6,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
@@ -15,7 +16,6 @@ import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
-import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -90,8 +90,9 @@ public interface MergeService {
     void saveMergedConferencesMetadata(Integer leftId, Integer rightId, ConferenceDTO leftData,
                                        ConferenceDTO rightData);
 
-    void saveMergedSoftwareMetadata(Integer leftId, Integer rightId, SoftwareDTO leftData,
-                                    SoftwareDTO rightData);
+    void saveMergedIntangibleProductMetadata(Integer leftId, Integer rightId,
+                                             IntangibleProductDTO leftData,
+                                             IntangibleProductDTO rightData);
 
     void saveMergedMaterialProductMetadata(Integer leftId, Integer rightId,
                                            MaterialProductDTO leftData,

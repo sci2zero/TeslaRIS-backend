@@ -24,6 +24,7 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
@@ -34,7 +35,6 @@ import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
-import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -53,12 +53,12 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
-import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -66,6 +66,7 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
+import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
@@ -75,7 +76,6 @@ import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
@@ -128,7 +128,7 @@ public class MergeServiceImpl implements MergeService {
 
     private final InvolvementService involvementService;
 
-    private final SoftwareService softwareService;
+    private final IntangibleProductService intangibleProductService;
 
     private final MaterialProductService materialProductService;
 
@@ -150,7 +150,7 @@ public class MergeServiceImpl implements MergeService {
 
     private final BookSeriesService bookSeriesService;
 
-    private final SoftwareRepository softwareRepository;
+    private final IntangibleProductRepository intangibleProductRepository;
 
     private final DatasetRepository datasetRepository;
 
@@ -499,11 +499,13 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
-    public void saveMergedSoftwareMetadata(Integer leftId, Integer rightId, SoftwareDTO leftData,
-                                           SoftwareDTO rightData) {
+    public void saveMergedIntangibleProductMetadata(Integer leftId, Integer rightId,
+                                                    IntangibleProductDTO leftData,
+                                                    IntangibleProductDTO rightData) {
         handleNoAuthorsRemaining(leftData, rightData);
-        updateAndRestoreMetadata(softwareService::editSoftware, softwareService::indexSoftware,
-            softwareService::findSoftwareById, leftId, rightId, leftData,
+        updateAndRestoreMetadata(intangibleProductService::editIntangibleProduct,
+            intangibleProductService::indexIntangibleProduct,
+            intangibleProductService::findIntangibleProductById, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
                 dto.getOpenAlexId(), dto.getWebOfScienceId()},
@@ -827,7 +829,7 @@ public class MergeServiceImpl implements MergeService {
             proceedingsRepository,
             patentRepository,
             datasetRepository,
-            softwareRepository,
+            intangibleProductRepository,
             thesisRepository,
             monographRepository
         );
