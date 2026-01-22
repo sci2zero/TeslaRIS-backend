@@ -176,4 +176,10 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     Optional<Document> findByOpenAlexIdOrDoiOrScopusIdOrWOSId(String openAlexId, String doi,
                                                               String scopusId,
                                                               String webOfScienceId);
+
+    @Query("SELECT DISTINCT p.id FROM Document doc " +
+        "JOIN doc.contributors cont " +
+        "JOIN cont.person p " +
+        "WHERE doc.id = :documentId AND p IS NOT NULL")
+    List<Integer> findPersonIdsByDocumentId(Integer documentId);
 }

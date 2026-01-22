@@ -491,12 +491,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     @Transactional
     public List<Integer> getContributorIds(Integer publicationId) {
-        return findOne(publicationId).getContributors().stream().map(contribution -> {
-            if (Objects.nonNull(contribution.getPerson())) {
-                return contribution.getPerson().getId();
-            }
-            return -1;
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        return documentRepository.findPersonIdsByDocumentId(publicationId);
     }
 
     @Override

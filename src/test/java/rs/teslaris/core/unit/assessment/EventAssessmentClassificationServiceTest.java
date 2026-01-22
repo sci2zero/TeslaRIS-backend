@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.assessment.dto.classification.EventAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.EventAssessmentClassification;
@@ -20,6 +21,7 @@ import rs.teslaris.assessment.service.impl.classification.EventAssessmentClassif
 import rs.teslaris.assessment.service.impl.cruddelegate.EventAssessmentClassificationJPAServiceImpl;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
+import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -49,6 +51,9 @@ public class EventAssessmentClassificationServiceTest {
 
     @Mock
     private ConferenceService conferenceService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private EventAssessmentClassificationServiceImpl eventAssessmentClassificationService;
@@ -110,6 +115,7 @@ public class EventAssessmentClassificationServiceTest {
         assertNotNull(result);
         verify(eventAssessmentClassificationJPAService).save(
             any(EventAssessmentClassification.class));
+        verify(applicationEventPublisher).publishEvent(any(EntityAssessmentChanged.class));
     }
 
     @Test

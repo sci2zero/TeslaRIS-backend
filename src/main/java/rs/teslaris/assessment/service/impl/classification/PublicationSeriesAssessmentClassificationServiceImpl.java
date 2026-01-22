@@ -29,6 +29,7 @@ import rs.teslaris.assessment.dto.classification.PublicationSeriesAssessmentClas
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.EntityClassificationSource;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
+import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.repository.classification.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRepository;
@@ -41,6 +42,7 @@ import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationBatchWriter;
 import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
@@ -157,6 +159,11 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         journalService.reindexJournalVolatileInformation(
             newAssessmentClassification.getPublicationSeries().getId());
 
+        applicationEventPublisher.publishEvent(
+            new EntityAssessmentChanged(ApplicableEntityType.PUBLICATION_SERIES,
+                publicationSeriesAssessmentClassificationDTO.getPublicationSeriesId(),
+                publicationSeriesAssessmentClassificationDTO.getCommissionId()));
+
         return savedClassification;
     }
 
@@ -182,6 +189,11 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
             publicationSeriesAssessmentClassificationToUpdate);
         journalService.reindexJournalVolatileInformation(
             publicationSeriesAssessmentClassificationToUpdate.getPublicationSeries().getId());
+
+        applicationEventPublisher.publishEvent(
+            new EntityAssessmentChanged(ApplicableEntityType.PUBLICATION_SERIES,
+                publicationSeriesAssessmentClassificationDTO.getPublicationSeriesId(),
+                publicationSeriesAssessmentClassificationDTO.getCommissionId()));
     }
 
     private void performJournalClassification(Integer commissionId,

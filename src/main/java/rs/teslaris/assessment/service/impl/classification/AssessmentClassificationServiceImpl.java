@@ -17,6 +17,7 @@ import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.repository.classification.AssessmentClassificationRepository;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
+import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -116,11 +117,13 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
     }
 
     private double calculateSortingScore(String code) {
-        if (Objects.isNull(code) || !code.startsWith("M")) {
+        var sortingRule = ClassificationPriorityMapping.getAssessmentCodeStoringRule();
+
+        if (Objects.isNull(code) || !code.startsWith(sortingRule.startsWithConstraint())) {
             return Double.MAX_VALUE;
         }
 
-        var pattern = Pattern.compile("^M(\\d+)([eA]|Plus|APlus)?$");
+        var pattern = Pattern.compile(sortingRule.codePattern());
         var matcher = pattern.matcher(code);
 
         if (!matcher.find()) {
@@ -133,14 +136,9 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
         double score = number;
 
         if (Objects.nonNull(suffix)) {
-            if ("e".equals(suffix)) {
-                score += 0.5;  // 'e' adds 0.5
-            } else {
-                if (suffix.contains("A")) {
-                    score -= 0.5;  // 'A' subtracts 0.5
-                }
-                if (suffix.contains("Plus")) {
-                    score -= 0.5;  // 'Plus' subtracts 0.5
+            for (var key : sortingRule.scoreAdjustments().keySet()) {
+                if (suffix.contains(key)) {
+                    score += sortingRule.scoreAdjustments().get(key);
                 }
             }
         }

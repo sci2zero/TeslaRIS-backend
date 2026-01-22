@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.assessment.dto.classification.PublicationSeriesAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
@@ -26,6 +27,7 @@ import rs.teslaris.assessment.service.impl.classification.PublicationSeriesAsses
 import rs.teslaris.assessment.service.impl.cruddelegate.PublicationSeriesAssessmentClassificationJPAServiceImpl;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
+import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.Journal;
@@ -69,6 +71,9 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
 
     @Mock
     private JournalService journalService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private PublicationSeriesAssessmentClassificationServiceImpl
@@ -143,6 +148,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
         verify(publicationSeriesAssessmentClassificationJPAService).save(
             any(PublicationSeriesAssessmentClassification.class));
         verify(journalService).reindexJournalVolatileInformation(anyInt());
+        verify(applicationEventPublisher).publishEvent(any(EntityAssessmentChanged.class));
     }
 
     @Test
@@ -179,6 +185,7 @@ public class PublicationSeriesAssessmentClassificationServiceTest {
         verify(publicationSeriesAssessmentClassificationJPAService).save(
             existingPublicationSeriesAssessmentClassification);
         verify(journalService).reindexJournalVolatileInformation(anyInt());
+        verify(applicationEventPublisher).publishEvent(any(EntityAssessmentChanged.class));
     }
 
     @Test

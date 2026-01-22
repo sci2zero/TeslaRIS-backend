@@ -3,6 +3,7 @@ package rs.teslaris.core.repository.user;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -46,15 +47,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<Commission> findUserCommissionForOrganisationUnit(Integer organisationUnitId);
 
     @Query("""
-            SELECT DISTINCT u.commission
+            SELECT DISTINCT u.commission.id
             FROM User u
             JOIN u.organisationUnit ou
-            LEFT JOIN FETCH u.commission.relations rel
-            LEFT JOIN FETCH rel.targetCommissions
             WHERE u.commission IS NOT NULL
             AND ou.id IN :organisationUnitIds
         """)
-    List<Commission> findUserCommissionForOrganisationUnits(List<Integer> organisationUnitIds);
+    List<Integer> findUserCommissionForOrganisationUnits(List<Integer> organisationUnitIds);
 
     @Query("SELECT ou.id FROM User u JOIN u.organisationUnit ou WHERE u.commission.id = :commissionId")
     Integer findOUIdForCommission(Integer commissionId);

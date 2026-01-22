@@ -34,6 +34,22 @@ public interface DocumentAssessmentClassificationService {
                                            List<Integer> orgUnitIds,
                                            List<Integer> journalIds);
 
+    void classifyJournalPublications(LocalDate fromDate, Integer commissionId,
+                                     List<Integer> authorIds, List<Integer> orgUnitIds,
+                                     List<Integer> journalIds);
+
+    void classifyProceedingsPublications(LocalDate fromDate, Integer commissionId,
+                                         List<Integer> authorIds, List<Integer> orgUnitIds,
+                                         List<Integer> eventIds);
+
+    void classifyTheses(LocalDate fromDate, Integer commissionId,
+                        List<Integer> authorIds, List<Integer> orgUnitIds,
+                        List<Integer> eventIds);
+
+    void classifyMonographPublications(LocalDate fromDate, Integer commissionId,
+                                       List<Integer> authorIds, List<Integer> orgUnitIds,
+                                       List<Integer> monographIds);
+
     ImaginaryPublicationAssessmentResponseDTO assessImaginaryJournalPublication(
         Integer journalId, Integer commissionId, Integer classificationYear, String researchArea,
         Integer authorCount, boolean isExperimental, boolean isTheoretical, boolean isSimulation,

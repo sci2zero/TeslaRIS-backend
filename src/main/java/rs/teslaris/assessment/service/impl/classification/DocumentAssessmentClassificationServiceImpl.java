@@ -22,6 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +36,7 @@ import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationR
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.DocumentAssessmentClassification;
 import rs.teslaris.assessment.model.classification.EntityAssessmentClassification;
+import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
 import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.repository.classification.DocumentAssessmentClassificationRepository;
@@ -53,6 +55,7 @@ import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -67,6 +70,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
@@ -222,6 +226,13 @@ public class DocumentAssessmentClassificationServiceImpl
             document.getContributors().stream().filter(c -> Objects.nonNull(c.getPerson()))
                 .map(c -> c.getPerson().getId()).toList()));
 
+        if (document instanceof Monograph) {
+            applicationEventPublisher.publishEvent(
+                new EntityAssessmentChanged(ApplicableEntityType.MONOGRAPH,
+                    documentAssessmentClassificationDTO.getDocumentId(),
+                    documentAssessmentClassificationDTO.getCommissionId()));
+        }
+
         return EntityAssessmentClassificationConverter.toDTO(savedDocumentClassification);
     }
 
@@ -246,6 +257,13 @@ public class DocumentAssessmentClassificationServiceImpl
             documentClassification.getDocument().getContributors().stream()
                 .filter(c -> Objects.nonNull(c.getPerson())).map(c -> c.getPerson().getId())
                 .toList()));
+
+        if (Hibernate.getClass(documentClassification.getDocument()) == Monograph.class) {
+            applicationEventPublisher.publishEvent(
+                new EntityAssessmentChanged(ApplicableEntityType.MONOGRAPH,
+                    documentAssessmentClassificationDTO.getDocumentId(),
+                    documentAssessmentClassificationDTO.getCommissionId()));
+        }
     }
 
     @Override
@@ -320,16 +338,18 @@ public class DocumentAssessmentClassificationServiceImpl
                 null, null));
     }
 
-    private void classifyJournalPublications(LocalDate fromDate, Integer commissionId,
-                                             List<Integer> authorIds, List<Integer> orgUnitIds,
-                                             List<Integer> journalIds) {
+    @Override
+    public void classifyJournalPublications(LocalDate fromDate, Integer commissionId,
+                                            List<Integer> authorIds, List<Integer> orgUnitIds,
+                                            List<Integer> journalIds) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, journalIds,
             List.of(DocumentPublicationType.JOURNAL_PUBLICATION), this::assessJournalPublication);
     }
 
-    private void classifyProceedingsPublications(LocalDate fromDate, Integer commissionId,
-                                                 List<Integer> authorIds, List<Integer> orgUnitIds,
-                                                 List<Integer> eventIds) {
+    @Override
+    public void classifyProceedingsPublications(LocalDate fromDate, Integer commissionId,
+                                                List<Integer> authorIds, List<Integer> orgUnitIds,
+                                                List<Integer> eventIds) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
             List.of(DocumentPublicationType.PROCEEDINGS_PUBLICATION),
             (publicationIndex, organisationUnitId,
@@ -343,17 +363,19 @@ public class DocumentAssessmentClassificationServiceImpl
             });
     }
 
-    private void classifyTheses(LocalDate fromDate, Integer commissionId,
-                                List<Integer> authorIds, List<Integer> orgUnitIds,
-                                List<Integer> eventIds) {
+    @Override
+    public void classifyTheses(LocalDate fromDate, Integer commissionId,
+                               List<Integer> authorIds, List<Integer> orgUnitIds,
+                               List<Integer> eventIds) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
             List.of(DocumentPublicationType.THESIS),
             this::assessThesis);
     }
 
-    private void classifyMonographPublications(LocalDate fromDate, Integer commissionId,
-                                               List<Integer> authorIds, List<Integer> orgUnitIds,
-                                               List<Integer> monographIds) {
+    @Override
+    public void classifyMonographPublications(LocalDate fromDate, Integer commissionId,
+                                              List<Integer> authorIds, List<Integer> orgUnitIds,
+                                              List<Integer> monographIds) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, monographIds,
             List.of(DocumentPublicationType.MONOGRAPH_PUBLICATION),
             this::assessMonographPublication);
@@ -647,7 +669,7 @@ public class DocumentAssessmentClassificationServiceImpl
                     }
                 },
                 proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
-                null, commission,
+                proceedingsPublicationIndex.getPublicationType(), commission,
                 List.of(proceedingsPublicationIndex.getYear()),
                 batchedClassifications
             );

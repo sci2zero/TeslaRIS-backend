@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,6 +33,7 @@ import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.assessment.repository.classification.PersonAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;
 import rs.teslaris.assessment.service.impl.classification.PersonAssessmentClassificationServiceImpl;
+import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -67,6 +69,9 @@ public class PersonAssessmentClassificationServiceTest {
 
     @Mock
     private AssessmentResearchAreaRepository assessmentResearchAreaRepository;
+
+    @Mock
+    private CommissionService commissionService;
 
     @InjectMocks
     private PersonAssessmentClassificationServiceImpl personAssessmentClassificationService;
@@ -145,6 +150,8 @@ public class PersonAssessmentClassificationServiceTest {
         commission.setId(10);
         commission.setRecognisedResearchAreas(Set.of("CS"));
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
+            .thenReturn(Stream.of(commission).map(Commission::getId).toList());
+        when(commissionService.findCommissionsWithRelations(any()))
             .thenReturn(List.of(commission));
 
         var publication = new DocumentPublicationIndex();
@@ -194,6 +201,8 @@ public class PersonAssessmentClassificationServiceTest {
         commission.setRecognisedResearchAreas(Set.of("MATH")); // CS not recognized
 
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
+            .thenReturn(Stream.of(commission).map(Commission::getId).toList());
+        when(commissionService.findCommissionsWithRelations(any()))
             .thenReturn(List.of(commission));
 
         when(documentPublicationIndexRepository.findAssessedByAuthorIds(anyInt(), any()))
@@ -229,6 +238,8 @@ public class PersonAssessmentClassificationServiceTest {
         commission.setId(10);
         commission.setRecognisedResearchAreas(Set.of("CS"));
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
+            .thenReturn(Stream.of(commission).map(Commission::getId).toList());
+        when(commissionService.findCommissionsWithRelations(any()))
             .thenReturn(List.of(commission));
 
         var publication = new DocumentPublicationIndex();
@@ -304,6 +315,8 @@ public class PersonAssessmentClassificationServiceTest {
         commission2.setRecognisedResearchAreas(Set.of("PHYS"));
 
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
+            .thenReturn(Stream.of(commission1, commission2).map(Commission::getId).toList());
+        when(commissionService.findCommissionsWithRelations(any()))
             .thenReturn(List.of(commission1, commission2));
 
         var publication = new DocumentPublicationIndex();

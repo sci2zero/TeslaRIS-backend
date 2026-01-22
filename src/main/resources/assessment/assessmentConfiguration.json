@@ -271,5 +271,14 @@
     "M12": "M14",
     "M41": "M44",
     "M42": "M45"
+  },
+  "assessmentCodeSortingRule": {
+    "startsWithConstraint": "M",
+    "codePattern": "^M(\\d+)([eA]|Plus|APlus)?$",
+    "scoreAdjustments": {
+      "e": 0.5,
+      "A": -0.5,
+      "Plus": -0.5
+    }
   }
 }

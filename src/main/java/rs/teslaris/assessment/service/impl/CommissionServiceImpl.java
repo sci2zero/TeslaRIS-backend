@@ -191,6 +191,11 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
         return getSystemDefaultCommission();
     }
 
+    @Override
+    public List<Commission> findCommissionsWithRelations(List<Integer> commissionIds) {
+        return commissionRepository.findCommissionsWithRelations(commissionIds);
+    }
+
     private Commission getSystemDefaultCommission() {
         return commissionRepository.findCommissionByIsDefaultTrue().orElse(new Commission() {{
             setId(-1);

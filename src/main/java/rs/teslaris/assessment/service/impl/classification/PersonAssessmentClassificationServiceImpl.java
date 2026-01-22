@@ -242,7 +242,8 @@ public class PersonAssessmentClassificationServiceImpl
             .getContent();
 
         var institutionIds = index.get().getEmploymentInstitutionsIdHierarchy();
-        var commissions = userRepository.findUserCommissionForOrganisationUnits(institutionIds);
+        var commissions = commissionService.findCommissionsWithRelations(
+            userRepository.findUserCommissionForOrganisationUnits(institutionIds));
 
         commissions.forEach(commission -> {
             var pointsRuleEngine = new AssessmentPointsRuleEngine(researchAreaRepository);
@@ -302,7 +303,8 @@ public class PersonAssessmentClassificationServiceImpl
     private List<Pair<Integer, AssessmentResearchArea>> resolveCommissionResearchAreas(
         PersonIndex index) {
         var institutionIds = index.getEmploymentInstitutionsIdHierarchy();
-        var commissions = userRepository.findUserCommissionForOrganisationUnits(institutionIds);
+        var commissions = commissionService.findCommissionsWithRelations(
+            userRepository.findUserCommissionForOrganisationUnits(institutionIds));
 
         var commissionResearchArea = new ArrayList<Pair<Integer, AssessmentResearchArea>>();
         commissions.forEach(commission -> {
