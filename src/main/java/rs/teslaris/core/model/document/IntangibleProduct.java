@@ -31,7 +31,7 @@ public non-sealed class IntangibleProduct extends Document implements PublisherP
     @Column(name = "internal_number")
     private String internalNumber;
 
-    @Column(name = "type")
+    @Column(name = "type", nullable = false)
     private IntangibleProductType intangibleProductType;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

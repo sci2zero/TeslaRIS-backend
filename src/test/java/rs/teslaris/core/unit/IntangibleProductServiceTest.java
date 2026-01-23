@@ -38,6 +38,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
@@ -180,6 +181,7 @@ public class IntangibleProductServiceTest {
         var intangibleProductId = 1;
         var intangibleProduct = new IntangibleProduct();
         intangibleProduct.setApproveStatus(ApproveStatus.APPROVED);
+        intangibleProduct.setIntangibleProductType(IntangibleProductType.SOFTWARE);
 
         var contribution = new PersonDocumentContribution();
         contribution.setContributionType(type);
