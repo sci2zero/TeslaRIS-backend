@@ -56,6 +56,7 @@ import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.GeneticMaterialType;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -356,6 +357,7 @@ public class TestingDataInitializer {
             "TeslaRIS - Reengineering of CRIS at the University of Novi Sad", 1)));
         intangibleProduct.setInternalNumber("123456");
         intangibleProduct.setDoi("10.1109/tsmc.2014.2347265");
+        intangibleProduct.setIntangibleProductType(IntangibleProductType.SOFTWARE);
         intangibleProduct.setApproveStatus(ApproveStatus.APPROVED);
 
         var patent = new Patent();
@@ -894,6 +896,7 @@ public class TestingDataInitializer {
         intangibleProduct2.setTitle(Set.of(new MultiLingualContent(englishTag,
             "CRIS UNS", 1)));
         intangibleProduct2.setInternalNumber("654321");
+        intangibleProduct2.setIntangibleProductType(IntangibleProductType.SOFTWARE);
         intangibleProduct2.setApproveStatus(ApproveStatus.APPROVED);
         intangibleProduct2.setDoi("10.1038/nature.2012.9872");
         intangibleProduct2.setDocumentDate("2012-3-14");
