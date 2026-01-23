@@ -18,6 +18,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.document.MaterialProduct;
@@ -63,7 +64,9 @@ import rs.teslaris.core.util.search.StringUtil;
 public class RoCrateConverter {
 
     private static final String DEFAULT_RO_CRATE_LANGUAGE = LanguageAbbreviations.ENGLISH;
+
     public static String baseUrl;
+
     private static EventsRelationRepository eventsRelationRepository;
 
     private static FileService fileService;
@@ -100,12 +103,24 @@ public class RoCrateConverter {
     public static RoCrateIntangibleProduct toRoCrateModel(IntangibleProduct document,
                                                           String documentIdentifier,
                                                           RoCrate metadataInfo) {
-        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "product");
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "intangible-product");
 
         var metadata = new RoCrateIntangibleProduct();
         setCommonFields(metadata, document, documentIdentifier, metadataInfo);
+
+        if (Objects.nonNull(document.getIntangibleProductType())) {
+            if (document.getIntangibleProductType().equals(IntangibleProductType.SOFTWARE)) {
+                metadata.setType("SoftwareApplication");
+            } else {
+                metadata.setCreativeWorkStatus(document.getIntangibleProductType().name());
+            }
+        }
+
         setPublisherInfo(metadataInfo, metadata, document);
         metadata.setIdentifier(document.getInternalNumber());
+        metadata.setAudience(new ContextualEntity(null, "audience",
+            StringUtil.getStringContent(document.getProductUsers(), DEFAULT_RO_CRATE_LANGUAGE),
+            null, null, null, null));
 
         return metadata;
     }

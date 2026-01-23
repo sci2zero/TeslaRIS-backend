@@ -523,6 +523,18 @@ public class DocumentAssessmentClassificationServiceImpl
                 return;
             }
 
+            var manualClassification =
+                documentAssessmentClassificationRepository.findAssessmentClassificationsForDocumentAndCommission(
+                        monographPublicationIndex.getDatabaseId(), commission.getId()).stream()
+                    .filter(EntityAssessmentClassification::getManual)
+                    .findFirst();
+
+            if (manualClassification.isPresent() &&
+                manualClassification.get().getAssessmentClassification().getCode()
+                    .equals(assessmentClassificationCode)) {
+                return;
+            }
+
             var assessmentClassification =
                 assessmentClassificationService.readAssessmentClassificationByCode(
                     assessmentClassificationCode);
@@ -655,7 +667,7 @@ public class DocumentAssessmentClassificationServiceImpl
                             new Pair<>(classification.get().getAssessmentClassification(),
                                 classification.get().getClassificationReason()));
                     } else {
-                        handleRelationAssessments(commission,
+                        var relatedAssessment = handleRelationAssessments(commission,
                             (targetCommissionId) -> {
                                 var assessmentClassification = eventAssessmentClassificationRepository
                                     .findAssessmentClassificationsForEventAndCommissionAndYear(
@@ -665,7 +677,22 @@ public class DocumentAssessmentClassificationServiceImpl
                                 return Objects.nonNull(assessmentClassification) ? Optional.of(
                                     assessmentClassification) : Optional.empty();
                             }
-                        ).ifPresent(classifications::add);
+                        );
+
+                        if (relatedAssessment.isPresent()) {
+                            classifications.add(relatedAssessment.get());
+                        } else {
+                            var allAssessments =
+                                eventAssessmentClassificationRepository.findAssessmentClassificationsForEventAndYear(
+                                    proceedingsPublicationIndex.getEventId(), year).stream().map(
+                                    assessment -> new Pair<>(assessment.getAssessmentClassification(),
+                                        assessment.getClassificationReason())).toList();
+                            if (!allAssessments.isEmpty()) {
+                                ClassificationPriorityMapping.getClassificationBasedOnCriteria(
+                                        allAssessments, ResultCalculationMethod.BEST_VALUE)
+                                    .ifPresent(classifications::add);
+                            }
+                        }
                     }
                 },
                 proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
@@ -1084,6 +1111,18 @@ public class DocumentAssessmentClassificationServiceImpl
                                             Commission commission, Integer documentId,
                                             Integer classificationYear,
                                             ArrayList<DocumentAssessmentClassification> batchedClassifications) {
+        var manualClassification =
+            documentAssessmentClassificationRepository.findAssessmentClassificationsForDocumentAndCommission(
+                    documentId, commission.getId()).stream()
+                .filter(EntityAssessmentClassification::getManual)
+                .findFirst();
+
+        if (manualClassification.isPresent() &&
+            manualClassification.get().getAssessmentClassification().getCode()
+                .equals(assessmentClassification.getCode())) {
+            return;
+        }
+
         var documentClassification = new DocumentAssessmentClassification();
         documentClassification.setTimestamp(LocalDateTime.now());
         documentClassification.setCommission(commission);

@@ -627,7 +627,8 @@ public class UserServiceTest {
         // Given
         var requestDTO = new ResearcherRegistrationRequestDTO();
         requestDTO.setEmail("admin@admin.com");
-        when(userRepository.findByEmail(requestDTO.getEmail())).thenReturn(Optional.of(new User()));
+        when(userRepository.findByEmailIncludingDeleted(requestDTO.getEmail())).thenReturn(
+            Optional.of(new User()));
         when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
 
         // When
@@ -1568,7 +1569,8 @@ public class UserServiceTest {
         var existingUser = new User();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmailIncludingDeleted(newEmail)).thenReturn(
+            Optional.of(existingUser));
 
         // when & then
         assertThrows(UserAlreadyExistsException.class,

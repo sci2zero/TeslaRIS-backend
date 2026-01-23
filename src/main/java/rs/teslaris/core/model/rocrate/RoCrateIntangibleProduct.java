@@ -15,6 +15,10 @@ public class RoCrateIntangibleProduct extends RoCratePublicationBase {
 
     private String identifier;
 
+    private String creativeWorkStatus;
+
+    private ContextualEntity audience;
+
     public RoCrateIntangibleProduct() {
         this.setType("CreativeWork");
     }

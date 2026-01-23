@@ -16,6 +16,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmail(String email);
 
+    @Query(value =
+        "SELECT * from users u WHERE u.username = :email",
+        nativeQuery = true)
+    Optional<User> findByEmailIncludingDeleted(String email);
+
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.organisationUnit ou WHERE u.id = :userId")
     Optional<User> findByIdWithOrganisationUnit(Integer userId);
 

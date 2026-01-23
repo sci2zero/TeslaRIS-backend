@@ -20,8 +20,10 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
@@ -264,6 +266,10 @@ public class DocumentPublicationConverter {
             case ProceedingsPublication proceedingsPublication ->
                 ProceedingsPublicationConverter.toBibTexEntry(proceedingsPublication,
                     defaultLanguageTag);
+            case MaterialProduct materialProduct ->
+                MaterialProductConverter.toBibTexEntry(materialProduct, defaultLanguageTag);
+            case GeneticMaterial geneticMaterial ->
+                GeneticMaterialConverter.toBibTexEntry(geneticMaterial, defaultLanguageTag);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };
@@ -294,6 +300,12 @@ public class DocumentPublicationConverter {
             case ProceedingsPublication proceedingsPublication ->
                 ProceedingsPublicationConverter.toTaggedFormat(proceedingsPublication,
                     defaultLanguageTag, refMan);
+            case MaterialProduct materialProduct ->
+                MaterialProductConverter.toTaggedFormat(materialProduct, defaultLanguageTag,
+                    refMan);
+            case GeneticMaterial geneticMaterial ->
+                GeneticMaterialConverter.toTaggedFormat(geneticMaterial, defaultLanguageTag,
+                    refMan);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };

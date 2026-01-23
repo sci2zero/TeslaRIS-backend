@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.document;
 
+import java.util.List;
 import java.util.Objects;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.Key;
@@ -8,6 +9,7 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.model.document.IntangibleProduct;
+import rs.teslaris.core.model.document.IntangibleProductType;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
@@ -40,7 +42,11 @@ public class IntangibleProductConverter extends DocumentPublicationConverter {
 
     public static BibTeXEntry toBibTexEntry(IntangibleProduct intangibleProduct,
                                             String defaultLanguageTag) {
-        var entry = new BibTeXEntry(new Key("software"),
+        var entry = new BibTeXEntry(
+            List.of(IntangibleProductType.SOFTWARE, IntangibleProductType.FRAMEWORK)
+                .contains(Objects.requireNonNullElse(intangibleProduct.getIntangibleProductType(),
+                    IntangibleProductType.OTHER)) ? new Key("software") :
+                BibTeXEntry.TYPE_MISC,
             new Key(IdentifierUtil.identifierPrefix + intangibleProduct.getId().toString()));
 
         setCommonFields(intangibleProduct, entry, defaultLanguageTag);
@@ -48,6 +54,12 @@ public class IntangibleProductConverter extends DocumentPublicationConverter {
         if (StringUtil.valueExists(intangibleProduct.getInternalNumber())) {
             entry.addField(BibTeXEntry.KEY_NUMBER,
                 new StringValue(intangibleProduct.getInternalNumber(), StringValue.Style.BRACED));
+        }
+
+        if (Objects.nonNull(intangibleProduct.getIntangibleProductType())) {
+            entry.addField(BibTeXEntry.KEY_TYPE,
+                new StringValue(intangibleProduct.getIntangibleProductType().name(),
+                    StringValue.Style.BRACED));
         }
 
         if (Objects.nonNull(intangibleProduct.getPublisher())) {
@@ -68,13 +80,23 @@ public class IntangibleProductConverter extends DocumentPublicationConverter {
                                         String defaultLanguageTag,
                                         boolean refMan) {
         var sb = new StringBuilder();
-        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "GEN" : "Computer Program")
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "GEN" :
+                (Objects.requireNonNullElse(intangibleProduct.getIntangibleProductType(),
+                    IntangibleProductType.OTHER).equals(IntangibleProductType.SOFTWARE) ?
+                    "Computer Program" : "Generic"))
             .append("\n");
 
         setCommonTaggedFields(intangibleProduct, sb, defaultLanguageTag, refMan);
 
         if (StringUtil.valueExists(intangibleProduct.getInternalNumber())) {
             sb.append(refMan ? "C6  - " : "%N ").append(intangibleProduct.getInternalNumber())
+                .append("\n");
+        }
+
+        if (Objects.nonNull(intangibleProduct.getIntangibleProductType())) {
+            sb.append(refMan ? "KW  - " : "%K ")
+                .append("Type: ")
+                .append(intangibleProduct.getIntangibleProductType().name())
                 .append("\n");
         }
 
