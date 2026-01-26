@@ -212,17 +212,17 @@ public class AssessmentEventListener {
                     event.entityType(), event.entityId(), event.commissionId());
             }
         });
-
-        log.info("🔐 Released lock for commissionId={}", event.commissionId());
     }
 
     public void withLock(Integer commissionId, Runnable action) {
         Lock lock = locks.get(commissionId);
         lock.lock();
+        log.info("🔐 Acquired lock for commissionId={}", commissionId);
         try {
             action.run();
         } finally {
             lock.unlock();
+            log.info("🔐 Released lock for commissionId={}", commissionId);
         }
     }
 }

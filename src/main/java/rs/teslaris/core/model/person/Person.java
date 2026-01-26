@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
@@ -36,6 +37,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@DynamicUpdate
 @Table(name = "persons", indexes = {
     @Index(name = "idx_person_apvnt", columnList = "apvnt"),
     @Index(name = "idx_person_e_cris_id", columnList = "e_cris_id"),

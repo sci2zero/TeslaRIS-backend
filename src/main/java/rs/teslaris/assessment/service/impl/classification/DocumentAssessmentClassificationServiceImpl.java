@@ -51,6 +51,7 @@ import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.DocumentAssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
+import rs.teslaris.assessment.service.interfaces.classification.PublicationClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
@@ -141,6 +142,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final ResearchAreaRepository researchAreaRepository;
 
+    private final PublicationClassificationService publicationClassificationService;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -161,7 +164,8 @@ public class DocumentAssessmentClassificationServiceImpl
         NotificationService notificationService,
         PersonAssessmentClassificationService personAssessmentClassificationService,
         AssessmentResearchAreaRepository assessmentResearchAreaRepository,
-        ResearchAreaRepository researchAreaRepository) {
+        ResearchAreaRepository researchAreaRepository,
+        PublicationClassificationService publicationClassificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -182,6 +186,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.personAssessmentClassificationService = personAssessmentClassificationService;
         this.assessmentResearchAreaRepository = assessmentResearchAreaRepository;
         this.researchAreaRepository = researchAreaRepository;
+        this.publicationClassificationService = publicationClassificationService;
     }
 
     @Override
@@ -419,26 +424,8 @@ public class DocumentAssessmentClassificationServiceImpl
                     PageRequest.of(pageNumber, chunkSize), DocumentPublicationIndex.class,
                     "document_publication").getContent();
 
-            chunk.forEach(publicationIndex -> {
-                if (publicationIndex.getType().equals(DocumentPublicationType.THESIS.name())) {
-                    if (Objects.isNull(publicationIndex.getThesisDefenceDate())) {
-                        return;
-                    }
-
-                    assessFunction.accept(publicationIndex,
-                        publicationIndex.getThesisInstitutionId(), null, batchClassifications);
-                } else if (Objects.nonNull(presetCommission)) {
-                    assessFunction.accept(publicationIndex, null, presetCommission,
-                        batchClassifications);
-                } else {
-                    publicationIndex.getOrganisationUnitIds().forEach(organisationUnitId ->
-                        assessFunction.accept(publicationIndex, organisationUnitId, null,
-                            batchClassifications));
-                }
-            });
-
-            documentAssessmentClassificationRepository.saveAll(batchClassifications);
-            batchClassifications.clear();
+            publicationClassificationService.classifyPublicationsChunk(chunk, presetCommission,
+                assessFunction, batchClassifications);
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

@@ -230,26 +230,26 @@ public class AssessmentDataInitializer {
         numberOfPages.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
         numberOfPages.setContentType(IndicatorContentType.NUMBER);
 
-        var assessedByMno = new Indicator();
-        assessedByMno.setCode("assessedByMNO");
-        assessedByMno.setTitle(
-            Set.of(new MultiLingualContent(englishTag, "Assessed by MNO", 1),
-                new MultiLingualContent(serbianTag, "Vrednovano od MNO", 2),
-                new MultiLingualContent(serbianCyrillicTag, "Вредновано од МНО", 3)));
-        assessedByMno.setDescription(
+        var verifiedByMNO = new Indicator();
+        verifiedByMNO.setCode("verifiedByMNO");
+        verifiedByMNO.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Verified by MNO", 1),
+                new MultiLingualContent(serbianTag, "Verifikovano od strane MNO", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Верификовано од стране МНО", 3)));
+        verifiedByMNO.setDescription(
             Set.of(
                 new MultiLingualContent(englishTag,
-                    "Monograph is assessed by the relevant scientific committee (MNO).",
+                    "Monograph is verified by the relevant scientific committee (MNO).",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "Monografija je vrednovana od strane matičnog naučnog odbora (MNO).",
+                    "Monografija je verifikovana od strane matičnog naučnog odbora (MNO).",
                     2),
                 new MultiLingualContent(serbianCyrillicTag,
-                    "Монографија је вреднована од стране матичног научног одбора (МНО).",
+                    "Монографија је верификована од стране матичног научног одбора (МНО).",
                     3)));
-        assessedByMno.setAccessLevel(AccessLevel.CLOSED);
-        assessedByMno.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
-        assessedByMno.setContentType(IndicatorContentType.BOOL);
+        verifiedByMNO.setAccessLevel(AccessLevel.CLOSED);
+        verifiedByMNO.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
+        verifiedByMNO.setContentType(IndicatorContentType.BOOL);
 
         var totalCitations = new Indicator();
         totalCitations.setCode("totalCitations");
@@ -966,7 +966,7 @@ public class AssessmentDataInitializer {
                 numParticipants, organizedByScientificInstitution, slavistiCategory, jciRank,
                 numCountriesInScientificCommittee, numParticipantCountries, numPresentations,
                 lectureInvitation, isTheoretical, isExperimental, isSimulation, authorCount,
-                yearlyCitations, totalOutputCount, assessedByMno));
+                yearlyCitations, totalOutputCount, verifiedByMNO));
     }
 
     public void initializeAssessmentClassifications(LanguageTag englishTag,
