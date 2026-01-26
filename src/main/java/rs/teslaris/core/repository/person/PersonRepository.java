@@ -131,9 +131,10 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
         SELECT DISTINCT p
         FROM Person p
         LEFT JOIN FETCH p.employmentInstitutionsIdHierarchy eih
+        LEFT JOIN FETCH p.prizes pr
         LEFT JOIN FETCH p.involvements i
         LEFT JOIN FETCH i.organisationUnit
         WHERE p.id = :personId
         """)
-    Optional<Person> findOneWithInvolvements(Integer personId);
+    Optional<Person> findOneWithInvolvementsAndPrizes(Integer personId);
 }

@@ -46,6 +46,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -264,35 +265,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     public CompletableFuture<Void> reindexJournals() {
         journalIndexRepository.deleteAll();
 
-        performBulkReindex();
+        FunctionalUtil.performBulkReindex(
+            journalJPAService::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (journal) -> indexJournal(journal, new JournalIndex())
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Journal> chunk =
-                journalJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((journal) -> {
-                try {
-                    indexJournal(journal, new JournalIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping JOURNAL {} due to indexing error: {}",
-                        journal.getId(), e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     private void setJournalRelatedFields(Journal journal, PublicationSeriesDTO journalDTO) {

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -108,6 +107,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintExce
 import rs.teslaris.core.util.exceptionhandling.exception.RegistrationException;
 import rs.teslaris.core.util.exceptionhandling.exception.TakeOfRoleNotPermittedException;
 import rs.teslaris.core.util.exceptionhandling.exception.UserAlreadyExistsException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.PasswordUtil;
@@ -999,33 +999,13 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     public CompletableFuture<Void> reindexUsers() {
         userAccountIndexRepository.deleteAll();
 
-        performBulkReindex();
+        FunctionalUtil.performBulkReindex(
+            this::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (user) -> indexUser(user, new UserAccountIndex())
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<User> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
-                Sort.by(Sort.Direction.ASC, "id"))).getContent();
-
-            chunk.forEach((user) -> {
-                try {
-                    indexUser(user, new UserAccountIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping USER {} due to indexing error: {}", user.getId(),
-                        e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     @Override

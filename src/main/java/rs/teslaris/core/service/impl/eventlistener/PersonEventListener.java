@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.eventlistener;
 
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -14,6 +15,7 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.person.PrizeService;
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +28,8 @@ public class PersonEventListener {
     private final PersonRepository personRepository;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final PrizeService prizeService;
 
 
     @Async("taskExecutor")
@@ -51,10 +55,19 @@ public class PersonEventListener {
 
             chunk.forEach(
                 index -> {
-                    personService.setPersonIndexEmploymentDetails(index,
-                        personRepository.findOneWithInvolvements(index.getDatabaseId())
-                            .orElse(null));
+                    var person =
+                        personRepository.findOneWithInvolvementsAndPrizes(index.getDatabaseId())
+                            .orElse(null);
+
+                    personService.setPersonIndexEmploymentDetails(index, person);
+
                     personIndexRepository.save(index);
+
+                    if (Objects.nonNull(person)) {
+                        person.getPrizes().forEach(prize ->
+                            prizeService.reindexPrizeVolatileInformation(prize, null,
+                                true, false));
+                    }
 
                     applicationEventPublisher.publishEvent(
                         new PersonEmploymentOUHierarchyStructureChangedEvent(

@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
@@ -38,6 +37,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 @Service
@@ -238,35 +238,13 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public CompletableFuture<Void> reindexConferences() {
         eventIndexRepository.deleteAll();
 
-        performBulkReindex();
+        FunctionalUtil.performBulkReindex(
+            conferenceJPAService::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (conference) -> indexConference(conference, new EventIndex())
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Conference> chunk =
-                conferenceJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((conference) -> {
-                try {
-                    indexConference(conference, new EventIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping CONFERENCE {} due to indexing error: {}",
-                        conference.getId(), e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {

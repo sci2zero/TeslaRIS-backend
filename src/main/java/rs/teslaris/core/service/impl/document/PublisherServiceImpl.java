@@ -11,7 +11,6 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,6 +35,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PublisherReferenceConstraintViolationException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -179,33 +179,13 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     public CompletableFuture<Void> reindexPublishers() {
         publisherIndexRepository.deleteAll();
 
-        performBulkReindex();
+        FunctionalUtil.performBulkReindex(
+            this::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (publisher) -> indexPublisher(publisher, new PublisherIndex())
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Publisher> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
-                Sort.by(Sort.Direction.ASC, "id"))).getContent();
-
-            chunk.forEach((publisher) -> {
-                try {
-                    indexPublisher(publisher, new PublisherIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping PUBLISHER {} due to indexing error: {}",
-                        publisher.getId(), e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     @Override

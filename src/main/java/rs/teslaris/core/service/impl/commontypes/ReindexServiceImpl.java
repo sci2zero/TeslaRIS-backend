@@ -36,6 +36,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service
@@ -86,6 +87,8 @@ public class ReindexServiceImpl implements ReindexService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final PrizeService prizeService;
+
 
     @Override
     public void reindexDatabase(List<EntityType> indexesToRepopulate,
@@ -135,6 +138,15 @@ public class ReindexServiceImpl implements ReindexService {
 
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            futures.clear();
+
+            if (indexesToRepopulate.contains(EntityType.PRIZE)) {
+                futures.add(prizeService.reindexPrizes());
+            }
+
+            if (!futures.isEmpty()) {
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            }
 
             if (indexesToRepopulate.contains(EntityType.PUBLICATION) ||
                 indexesToRepopulate.contains(EntityType.PERSON)) {

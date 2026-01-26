@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +78,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -544,7 +544,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             indexOrganisationUnit(organisationUnitToUpdate, index);
 
             if (isNameChanged) {
-                performBulkReindex(
+                FunctionalUtil.performBulkReindex(
                     (pageRequest ->
                         organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
                             organisationUnitId, pageRequest)),
@@ -1254,7 +1254,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public CompletableFuture<Void> reindexOrganisationUnits() {
         organisationUnitIndexRepository.deleteAll();
 
-        performBulkReindex(
+        FunctionalUtil.performBulkReindex(
             this::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (organisationUnit) -> indexOrganisationUnit(organisationUnit,
@@ -1262,36 +1262,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         );
 
         return null;
-    }
-
-    public <T> void performBulkReindex(
-        Function<PageRequest, Page<T>> pageSupplier,
-        Sort sort,
-        Consumer<T> itemProcessor
-    ) {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<T> chunk =
-                pageSupplier.apply(
-                    PageRequest.of(pageNumber, chunkSize, sort)
-                ).getContent();
-
-            chunk.forEach((entity) -> {
-                try {
-                    itemProcessor.accept(entity);
-                } catch (Exception e) {
-                    log.warn("Skipping ORGANISATION_UNIT due to indexing error: {}",
-                        e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     private boolean isAdminUser() {

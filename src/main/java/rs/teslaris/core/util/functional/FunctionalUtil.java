@@ -129,4 +129,33 @@ public class FunctionalUtil {
 
         return result;
     }
+
+    public static <T> void performBulkReindex(
+        Function<PageRequest, Page<T>> pageSupplier,
+        Sort sort,
+        Consumer<T> itemProcessor
+    ) {
+        int pageNumber = 0;
+        int chunkSize = 100;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+
+            List<T> chunk =
+                pageSupplier.apply(
+                    PageRequest.of(pageNumber, chunkSize, sort)
+                ).getContent();
+
+            chunk.forEach((entity) -> {
+                try {
+                    itemProcessor.accept(entity);
+                } catch (Exception e) {
+                    log.warn("Skipping due to indexing error: {}", e.getMessage());
+                }
+            });
+
+            pageNumber++;
+            hasNextPage = chunk.size() == chunkSize;
+        }
+    }
 }

@@ -89,6 +89,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -833,33 +834,13 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public CompletableFuture<Void> reindexPersons() {
         personIndexRepository.deleteAll();
 
-        performBulkReindex();
+        FunctionalUtil.performBulkReindex(
+            this::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            this::indexPerson
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 50;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
-                Sort.by(Sort.Direction.ASC, "id"))).getContent();
-
-            chunk.forEach(person -> {
-                try {
-                    this.indexPerson(person);
-                } catch (Exception e) {
-                    log.warn("Skipping PERSON {} due to indexing error: {}", person.getId(),
-                        e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     @Transactional

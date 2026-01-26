@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
@@ -36,6 +35,7 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.BookSeriesReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -197,35 +197,13 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     public CompletableFuture<Void> reindexBookSeries() {
         bookSeriesIndexRepository.deleteAll();
 
-        performBulkReindex();
+        FunctionalUtil.performBulkReindex(
+            bookSeriesJPAService::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (bookSeries) -> indexBookSeries(bookSeries, new BookSeriesIndex())
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<BookSeries> chunk =
-                bookSeriesJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((bookSeries) -> {
-                try {
-                    indexBookSeries(bookSeries, new BookSeriesIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping BOOK_SERIES {} due to indexing error: {}",
-                        bookSeries.getId(), e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     @Override
