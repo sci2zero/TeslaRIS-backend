@@ -71,6 +71,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
@@ -78,6 +79,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
@@ -95,6 +97,7 @@ import rs.teslaris.core.util.functional.QuadConsumer;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.CollectionOperations;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Transactional
@@ -206,6 +209,12 @@ public class DocumentAssessmentClassificationServiceImpl
                         " does not exist."));
         checkIfDocumentIsAThesis(document);
 
+        if (Hibernate.getClass(document) == Proceedings.class &&
+            SessionUtil.getLoggedInUser().getAuthority().getName()
+                .equals(UserRole.RESEARCHER.name())) {
+            return null;
+        }
+
         if (Objects.isNull(document.getDocumentDate()) || document.getDocumentDate().isEmpty()) {
             throw new CantEditException("Document does not have publication date.");
         }
@@ -246,6 +255,12 @@ public class DocumentAssessmentClassificationServiceImpl
     public void editDocumentAssessmentClassification(Integer classificationId,
                                                      DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
         var documentClassification = documentClassificationJPAService.findOne(classificationId);
+
+        if (Hibernate.getClass(documentClassification.getDocument()) == Proceedings.class &&
+            SessionUtil.getLoggedInUser().getAuthority().getName()
+                .equals(UserRole.RESEARCHER.name())) {
+            return;
+        }
 
         checkIfDocumentIsAThesis(documentClassification.getDocument());
         setCommonFields(documentClassification, documentAssessmentClassificationDTO);
