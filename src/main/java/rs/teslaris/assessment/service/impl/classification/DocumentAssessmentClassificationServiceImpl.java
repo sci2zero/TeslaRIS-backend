@@ -230,7 +230,7 @@ public class DocumentAssessmentClassificationServiceImpl
             applicationEventPublisher.publishEvent(
                 new EntityAssessmentChanged(ApplicableEntityType.MONOGRAPH,
                     documentAssessmentClassificationDTO.getDocumentId(),
-                    documentAssessmentClassificationDTO.getCommissionId()));
+                    documentAssessmentClassificationDTO.getCommissionId(), false));
         }
 
         return EntityAssessmentClassificationConverter.toDTO(savedDocumentClassification);
@@ -262,7 +262,7 @@ public class DocumentAssessmentClassificationServiceImpl
             applicationEventPublisher.publishEvent(
                 new EntityAssessmentChanged(ApplicableEntityType.MONOGRAPH,
                     documentAssessmentClassificationDTO.getDocumentId(),
-                    documentAssessmentClassificationDTO.getCommissionId()));
+                    documentAssessmentClassificationDTO.getCommissionId(), false));
         }
     }
 

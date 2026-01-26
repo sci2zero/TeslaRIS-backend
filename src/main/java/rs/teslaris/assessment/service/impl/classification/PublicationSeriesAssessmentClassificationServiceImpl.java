@@ -162,7 +162,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         applicationEventPublisher.publishEvent(
             new EntityAssessmentChanged(ApplicableEntityType.PUBLICATION_SERIES,
                 publicationSeriesAssessmentClassificationDTO.getPublicationSeriesId(),
-                publicationSeriesAssessmentClassificationDTO.getCommissionId()));
+                publicationSeriesAssessmentClassificationDTO.getCommissionId(), false));
 
         return savedClassification;
     }
@@ -193,7 +193,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         applicationEventPublisher.publishEvent(
             new EntityAssessmentChanged(ApplicableEntityType.PUBLICATION_SERIES,
                 publicationSeriesAssessmentClassificationDTO.getPublicationSeriesId(),
-                publicationSeriesAssessmentClassificationDTO.getCommissionId()));
+                publicationSeriesAssessmentClassificationDTO.getCommissionId(), false));
     }
 
     private void performJournalClassification(Integer commissionId,

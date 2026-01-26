@@ -5,6 +5,7 @@ import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 public record EntityAssessmentChanged(
     ApplicableEntityType entityType,
     Integer entityId,
-    Integer commissionId
+    Integer commissionId,
+    Boolean deleted
 ) {
 }

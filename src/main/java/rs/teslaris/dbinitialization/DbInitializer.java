@@ -14,8 +14,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import rs.teslaris.core.model.commontypes.BrandingInformation;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.Language;
@@ -457,12 +455,13 @@ public class DbInitializer implements ApplicationRunner {
         countryRepository.save(yugoslavia);
 
         // RESEARCH AREAS
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                skosLoader.loadResearchAreas();
-            }
-        });
+//        TransactionSynchronizationManager
+//            .registerSynchronization(new TransactionSynchronization() {
+//                @Override
+//                public void afterCommit() {
+//                    skosLoader.loadResearchAreas();
+//                }
+//            });
 
         ///////////////////// ASSESSMENT DATA /////////////////////
         assessmentDataInitializer.initializeIndicators(englishTag, serbianTag, serbianCyrillicTag);

@@ -32,6 +32,13 @@ public interface DocumentAssessmentClassificationRepository
 
     @Modifying
     @Transactional
+    @Query("DELETE FROM DocumentAssessmentClassification dac " +
+        "WHERE dac.document.id IN :documentIds AND dac.commission.id = :commissionId AND dac.manual = :isManual")
+    void deleteByDocumentIdsAndCommissionId(List<Integer> documentIds, Integer commissionId,
+                                            Boolean isManual);
+
+    @Modifying
+    @Transactional
     @Query("UPDATE DocumentAssessmentClassification dac SET dac.classificationYear = :year " +
         "WHERE dac.document.id = :documentId OR dac.document.monograph.id = :documentId")
     void setUpdatedYearForDocumentAssessments(Integer documentId, Integer year);

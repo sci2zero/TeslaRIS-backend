@@ -100,4 +100,33 @@ public class FunctionalUtil {
             pageNumber++;
         }
     }
+
+    public static <T, R> List<R> mapAllPages(
+        int chunkSize,
+        Sort sort,
+        Function<PageRequest, Page<T>> pageSupplier,
+        Function<T, R> mapper
+    ) {
+        List<R> result = new ArrayList<>();
+        int pageNumber = 0;
+
+        while (true) {
+            Page<T> page = pageSupplier.apply(
+                PageRequest.of(pageNumber, chunkSize, sort)
+            );
+
+            List<R> pageResults = page.getContent().stream()
+                .map(mapper)
+                .toList();
+
+            result.addAll(pageResults);
+
+            if (!page.hasNext()) {
+                break;
+            }
+            pageNumber++;
+        }
+
+        return result;
+    }
 }

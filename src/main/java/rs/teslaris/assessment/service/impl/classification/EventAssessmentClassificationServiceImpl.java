@@ -136,7 +136,7 @@ public class EventAssessmentClassificationServiceImpl
                         applicationEventPublisher.publishEvent(
                             new EntityAssessmentChanged(ApplicableEntityType.EVENT,
                                 eventInstance.getId(),
-                                eventAssessmentClassificationDTO.getCommissionId()));
+                                eventAssessmentClassificationDTO.getCommissionId(), false));
                     }
                 });
         } else {
@@ -157,7 +157,7 @@ public class EventAssessmentClassificationServiceImpl
         applicationEventPublisher.publishEvent(
             new EntityAssessmentChanged(ApplicableEntityType.EVENT,
                 eventAssessmentClassificationDTO.getEventId(),
-                eventAssessmentClassificationDTO.getCommissionId()));
+                eventAssessmentClassificationDTO.getCommissionId(), false));
 
         return savedClassification;
     }
@@ -210,7 +210,7 @@ public class EventAssessmentClassificationServiceImpl
                         applicationEventPublisher.publishEvent(
                             new EntityAssessmentChanged(ApplicableEntityType.EVENT,
                                 eventInstance.getId(),
-                                eventAssessmentClassificationDTO.getCommissionId()));
+                                eventAssessmentClassificationDTO.getCommissionId(), false));
                     }
                 });
         } else {
@@ -231,7 +231,7 @@ public class EventAssessmentClassificationServiceImpl
         applicationEventPublisher.publishEvent(
             new EntityAssessmentChanged(ApplicableEntityType.EVENT,
                 eventAssessmentClassificationDTO.getEventId(),
-                eventAssessmentClassificationDTO.getCommissionId()));
+                eventAssessmentClassificationDTO.getCommissionId(), false));
     }
 
     @Scheduled(cron = "${assessment.event.notify-period}")

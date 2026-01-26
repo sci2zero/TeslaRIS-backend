@@ -801,6 +801,7 @@ public class TestingDataInitializer {
         eventAssessmentClassification1.setEvent(conferenceEvent1);
         eventAssessmentClassification1.setAssessmentClassification(assessmentClassification1);
         eventAssessmentClassification1.setClassificationYear(2023);
+        eventAssessmentClassification1.setCommission(commission5);
 
         var eventAssessmentClassification2 = new EventAssessmentClassification();
         eventAssessmentClassification2.setEvent(conferenceEvent1);
@@ -817,6 +818,7 @@ public class TestingDataInitializer {
         publicationSeriesAssessmentClassification.setAssessmentClassification(
             assessmentClassification1);
         publicationSeriesAssessmentClassification.setClassificationYear(2020);
+        publicationSeriesAssessmentClassification.setCommission(commission5);
 
         publicationSeriesAssessmentClassificationRepository.saveAll(
             List.of(publicationSeriesAssessmentClassification));
