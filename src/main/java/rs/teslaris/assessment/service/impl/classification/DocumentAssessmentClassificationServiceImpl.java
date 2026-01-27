@@ -432,7 +432,6 @@ public class DocumentAssessmentClassificationServiceImpl
             hasNextPage = chunk.size() == chunkSize;
         }
 
-        // TODO: FIX THIS
         if (performIndex) {
             personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
                 authorIds, orgUnitIds);
