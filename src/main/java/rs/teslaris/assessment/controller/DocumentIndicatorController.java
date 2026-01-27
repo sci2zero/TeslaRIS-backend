@@ -53,7 +53,7 @@ public class DocumentIndicatorController {
 
     @PostMapping("/{documentId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @PublicationEditCheck
+    @PublicationEditCheck("ASSESS")
     @Idempotent
     public EntityIndicatorResponseDTO createDocumentIndicator(
         @RequestBody DocumentIndicatorDTO documentIndicatorDTO,
@@ -65,7 +65,7 @@ public class DocumentIndicatorController {
 
     @PutMapping("/{documentId}/{entityIndicatorId}")
     @PreAuthorize("hasAuthority('EDIT_ENTITY_INDICATOR')")
-    @PublicationEditCheck
+    @PublicationEditCheck("ASSESS")
     @EntityIndicatorEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateDocumentIndicator(

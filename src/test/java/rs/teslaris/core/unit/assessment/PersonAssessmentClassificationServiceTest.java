@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -16,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,6 +32,7 @@ import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.assessment.repository.classification.PersonAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;
 import rs.teslaris.assessment.service.impl.classification.PersonAssessmentClassificationServiceImpl;
+import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -39,6 +40,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.functional.Triple;
 
 @SpringBootTest
@@ -67,6 +69,12 @@ public class PersonAssessmentClassificationServiceTest {
 
     @Mock
     private AssessmentResearchAreaRepository assessmentResearchAreaRepository;
+
+    @Mock
+    private CommissionService commissionService;
+
+    @Mock
+    private SearchService<PersonIndex> searchService;
 
     @InjectMocks
     private PersonAssessmentClassificationServiceImpl personAssessmentClassificationService;
@@ -110,7 +118,7 @@ public class PersonAssessmentClassificationServiceTest {
         var researcher2 = new PersonIndex();
         researcher2.setDatabaseId(2);
 
-        when(personIndexRepository.findAll(PageRequest.of(0, 1000)))
+        when(searchService.runQuery(any(), eq(PageRequest.of(0, 1000)), any(), any()))
             .thenReturn(
                 new PageImpl<>(List.of(researcher1, researcher2), PageRequest.of(0, 1000), 2));
 
@@ -124,11 +132,11 @@ public class PersonAssessmentClassificationServiceTest {
             Optional.of(new AssessmentRulebook()));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+            Collections.emptyList(), Collections.emptyList());
 
         // Then
-        verify(personIndexRepository, atLeastOnce()).findAll(any(PageRequest.class));
-        verify(personIndexRepository).findAll(PageRequest.of(0, 1000));
+        verify(searchService, times(1)).runQuery(any(), any(PageRequest.class), any(), any());
     }
 
     @Test
@@ -141,13 +149,12 @@ public class PersonAssessmentClassificationServiceTest {
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setCode("M1");
 
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
-
         var commission = new Commission();
         commission.setId(10);
         commission.setRecognisedResearchAreas(Set.of("CS"));
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
+            .thenReturn(Stream.of(commission).map(Commission::getId).toList());
+        when(commissionService.findCommissionsWithRelations(any()))
             .thenReturn(List.of(commission));
 
         var publication = new DocumentPublicationIndex();
@@ -173,10 +180,10 @@ public class PersonAssessmentClassificationServiceTest {
             }}));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            List.of(assessmentMeasure));
 
         // Then
-        verify(assessmentRulebookRepository).readAssessmentMeasuresForRulebook(any(), any());
         verify(userRepository).findUserCommissionForOrganisationUnits(List.of(1, 2, 3));
         verify(documentPublicationIndexRepository, times(1)).findAssessedByAuthorIds(eq(42), any());
         verify(documentPublicationIndexRepository).save(publication);
@@ -192,14 +199,13 @@ public class PersonAssessmentClassificationServiceTest {
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setCode("M1");
 
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
-
         var commission = new Commission();
         commission.setId(10);
         commission.setRecognisedResearchAreas(Set.of("MATH")); // CS not recognized
 
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
+            .thenReturn(Stream.of(commission).map(Commission::getId).toList());
+        when(commissionService.findCommissionsWithRelations(any()))
             .thenReturn(List.of(commission));
 
         when(documentPublicationIndexRepository.findAssessedByAuthorIds(anyInt(), any()))
@@ -214,7 +220,8 @@ public class PersonAssessmentClassificationServiceTest {
             }}));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            List.of(assessmentMeasure));
 
         // Then
         verify(documentPublicationIndexRepository, never()).save(any());
@@ -230,20 +237,18 @@ public class PersonAssessmentClassificationServiceTest {
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setCode("M1");
 
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
-
         var commission = new Commission();
         commission.setId(10);
         commission.setRecognisedResearchAreas(Set.of("CS"));
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
+            .thenReturn(Stream.of(commission).map(Commission::getId).toList());
+        when(commissionService.findCommissionsWithRelations(any()))
             .thenReturn(List.of(commission));
 
         var publication = new DocumentPublicationIndex();
         publication.setDatabaseId(100);
         publication.setCommissionAssessments(List.of(new Triple<>(10, "CS", false)));
 
-        // Existing points for same researcher and commission
         var existingPoints = new Triple<>(42, 10, 5.0);
         publication.setAssessmentPoints(new ArrayList<>(List.of(existingPoints)));
 
@@ -264,7 +269,8 @@ public class PersonAssessmentClassificationServiceTest {
             }}));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            List.of(assessmentMeasure));
 
         // Then
         verify(documentPublicationIndexRepository).save(publication);
@@ -280,15 +286,14 @@ public class PersonAssessmentClassificationServiceTest {
         when(documentPublicationIndexRepository.findAssessedByAuthorIds(any(), any()))
             .thenReturn(
                 new PageImpl<>(List.of(), PageRequest.of(0, 1), 0));
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(Collections.emptyList()));
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
             .thenReturn(Collections.emptyList());
         when(assessmentRulebookRepository.findDefaultRulebook()).thenReturn(
             Optional.of(new AssessmentRulebook()));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            Collections.emptyList());
 
         // Then
         verify(documentPublicationIndexRepository, never()).save(any());
@@ -304,9 +309,6 @@ public class PersonAssessmentClassificationServiceTest {
         var assessmentMeasure = new AssessmentMeasure();
         assessmentMeasure.setCode("M1");
 
-        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
-            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
-
         var commission1 = new Commission();
         commission1.setId(10);
         commission1.setRecognisedResearchAreas(Set.of("CS"));
@@ -316,6 +318,8 @@ public class PersonAssessmentClassificationServiceTest {
         commission2.setRecognisedResearchAreas(Set.of("PHYS"));
 
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
+            .thenReturn(Stream.of(commission1, commission2).map(Commission::getId).toList());
+        when(commissionService.findCommissionsWithRelations(any()))
             .thenReturn(List.of(commission1, commission2));
 
         var publication = new DocumentPublicationIndex();
@@ -346,7 +350,8 @@ public class PersonAssessmentClassificationServiceTest {
             }}));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher);
+        personAssessmentClassificationService.reindexPublicationPointsForResearcher(researcher,
+            List.of(assessmentMeasure));
 
         // Then
         verify(documentPublicationIndexRepository).save(publication);
@@ -355,16 +360,22 @@ public class PersonAssessmentClassificationServiceTest {
     @Test
     void shouldStopWhenNoMoreResearchers() {
         // Given
-        when(personIndexRepository.findAll(PageRequest.of(0, 1000)))
+        when(searchService.runQuery(any(), eq(PageRequest.of(0, 1000)), any(), any()))
             .thenReturn(new PageImpl<>(Collections.emptyList()));
         when(assessmentRulebookRepository.findDefaultRulebook()).thenReturn(
             Optional.of(new AssessmentRulebook()));
 
+        var assessmentMeasure = new AssessmentMeasure();
+        assessmentMeasure.setCode("M1");
+        when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
+            .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
+
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+            Collections.emptyList(), Collections.emptyList());
 
         // Then
-        verify(personIndexRepository, times(1)).findAll(any(PageRequest.class));
+        verify(searchService, times(1)).runQuery(any(), any(PageRequest.class), any(), any());
         verify(personIndexRepository, never()).findAll(PageRequest.of(1, 1000));
     }
 }

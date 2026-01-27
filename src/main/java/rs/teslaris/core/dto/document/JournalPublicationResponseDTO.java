@@ -11,7 +11,7 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class JournalPublicationResponseDTO extends JournalPublicationDTO {
+public class JournalPublicationResponseDTO extends JournalPublicationDTO implements Importable {
 
     private List<MultilingualContentDTO> journalName;
 }

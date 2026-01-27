@@ -21,29 +21,35 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.GeneticMaterial;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.GeneticMaterialRepository;
+import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
-import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -76,11 +82,13 @@ public class CommonExportServiceImpl implements CommonExportService {
 
     private final DatasetRepository datasetRepository;
 
-    private final SoftwareRepository softwareRepository;
+    private final IntangibleProductRepository intangibleProductRepository;
 
     private final PatentRepository patentRepository;
 
     private final JournalRepository journalRepository;
+
+    private final BookSeriesRepository bookSeriesRepository;
 
     private final JournalPublicationRepository journalPublicationRepository;
 
@@ -93,6 +101,10 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final MonographPublicationRepository monographPublicationRepository;
 
     private final ThesisRepository thesisRepository;
+
+    private final GeneticMaterialRepository geneticMaterialRepository;
+
+    private final MaterialProductRepository materialProductRepository;
 
     private final ReentrantLock organisationUnitExportLock = new ReentrantLock();
 
@@ -219,13 +231,13 @@ public class CommonExportServiceImpl implements CommonExportService {
                     allTime,
                     ExportPublicationType.DATASET
                 );
-                case SOFTWARE -> exportEntitiesAsync(
-                    softwareRepository::findAllModified,
+                case INTANGIBLE_PRODUCT -> exportEntitiesAsync(
+                    intangibleProductRepository::findAllModified,
                     ExportDocumentConverter::toCommonExportModel,
                     ExportDocument.class,
-                    Software::getId,
+                    IntangibleProduct::getId,
                     allTime,
-                    ExportPublicationType.SOFTWARE
+                    ExportPublicationType.INTANGIBLE_PRODUCT
                 );
                 case PATENT -> exportEntitiesAsync(
                     patentRepository::findAllModified,
@@ -242,6 +254,14 @@ public class CommonExportServiceImpl implements CommonExportService {
                     Journal::getId,
                     allTime,
                     ExportPublicationType.JOURNAL
+                );
+                case BOOK_SERIES -> exportEntitiesAsync(
+                    bookSeriesRepository::findAllModified,
+                    ExportPublicationSeriesConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    BookSeries::getId,
+                    allTime,
+                    ExportPublicationType.BOOK_SERIES
                 );
                 case JOURNAL_PUBLICATION -> exportEntitiesAsync(
                     journalPublicationRepository::findAllModified,
@@ -290,6 +310,22 @@ public class CommonExportServiceImpl implements CommonExportService {
                     Thesis::getId,
                     allTime,
                     ExportPublicationType.THESIS
+                );
+                case MATERIAL_PRODUCT -> exportEntitiesAsync(
+                    materialProductRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    MaterialProduct::getId,
+                    allTime,
+                    ExportPublicationType.MATERIAL_PRODUCT
+                );
+                case GENETIC_MATERIAL -> exportEntitiesAsync(
+                    geneticMaterialRepository::findAllModified,
+                    ExportDocumentConverter::toCommonExportModel,
+                    ExportDocument.class,
+                    GeneticMaterial::getId,
+                    allTime,
+                    ExportPublicationType.GENETIC_MATERIAL
                 );
             };
         } catch (Exception e) {

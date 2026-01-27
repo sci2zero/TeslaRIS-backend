@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.thesislibrary.dto.ThesisTableExportRequestDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryTableExportService;
 
@@ -40,7 +41,8 @@ public class ThesisLibraryTableExportController {
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=export" + request.getExportFileType().getValue())
+                StringUtil.contentDisposition(
+                    "attachment; filename=export" + request.getExportFileType().getValue()))
             .body(exportDocument);
     }
 }

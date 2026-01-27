@@ -13,6 +13,7 @@ import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
 import rs.teslaris.assessment.dto.classification.EventAssessmentClassificationDTO;
 import rs.teslaris.assessment.model.classification.EventAssessmentClassification;
+import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.repository.classification.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.EventAssessmentClassificationRepository;
 import rs.teslaris.assessment.service.impl.cruddelegate.EventAssessmentClassificationJPAServiceImpl;
@@ -21,6 +22,7 @@ import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassi
 import rs.teslaris.assessment.service.interfaces.classification.EventAssessmentClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
@@ -130,6 +132,11 @@ public class EventAssessmentClassificationServiceImpl
                         eventAssessmentClassificationJPAService.save(instanceClassification);
                         conferenceService.reindexVolatileConferenceInformation(
                             eventInstance.getId());
+
+                        applicationEventPublisher.publishEvent(
+                            new EntityAssessmentChanged(ApplicableEntityType.EVENT,
+                                eventInstance.getId(),
+                                eventAssessmentClassificationDTO.getCommissionId(), false));
                     }
                 });
         } else {
@@ -146,6 +153,11 @@ public class EventAssessmentClassificationServiceImpl
         var savedClassification =
             eventAssessmentClassificationJPAService.save(newAssessmentClassification);
         conferenceService.reindexVolatileConferenceInformation(event.getId());
+
+        applicationEventPublisher.publishEvent(
+            new EntityAssessmentChanged(ApplicableEntityType.EVENT,
+                eventAssessmentClassificationDTO.getEventId(),
+                eventAssessmentClassificationDTO.getCommissionId(), false));
 
         return savedClassification;
     }
@@ -183,9 +195,22 @@ public class EventAssessmentClassificationServiceImpl
                         instanceClassification.setClassificationYear(
                             eventInstance.getDateFrom().getYear());
                         instanceClassification.setEvent(eventInstance);
+
+                        instanceClassification.setClassificationReason(
+                            AssessmentRulesConfigurationLoader.getRuleDescription(
+                                "eventClassificationRules",
+                                "manual", MultilingualContentConverter.getMultilingualContentDTO(
+                                    instanceClassification.getAssessmentClassification()
+                                        .getTitle())));
+
                         eventAssessmentClassificationJPAService.save(instanceClassification);
                         conferenceService.reindexVolatileConferenceInformation(
                             eventInstance.getId());
+
+                        applicationEventPublisher.publishEvent(
+                            new EntityAssessmentChanged(ApplicableEntityType.EVENT,
+                                eventInstance.getId(),
+                                eventAssessmentClassificationDTO.getCommissionId(), false));
                     }
                 });
         } else {
@@ -193,9 +218,20 @@ public class EventAssessmentClassificationServiceImpl
             eventAssessmentClassificationToUpdate.setClassificationYear(classificationYear);
         }
 
+        eventAssessmentClassificationToUpdate.setClassificationReason(
+            AssessmentRulesConfigurationLoader.getRuleDescription(
+                "eventClassificationRules",
+                "manual", MultilingualContentConverter.getMultilingualContentDTO(
+                    eventAssessmentClassificationToUpdate.getAssessmentClassification()
+                        .getTitle())));
         eventAssessmentClassificationJPAService.save(eventAssessmentClassificationToUpdate);
         conferenceService.reindexVolatileConferenceInformation(
             eventAssessmentClassificationToUpdate.getEvent().getId());
+
+        applicationEventPublisher.publishEvent(
+            new EntityAssessmentChanged(ApplicableEntityType.EVENT,
+                eventAssessmentClassificationDTO.getEventId(),
+                eventAssessmentClassificationDTO.getCommissionId(), false));
     }
 
     @Scheduled(cron = "${assessment.event.notify-period}")

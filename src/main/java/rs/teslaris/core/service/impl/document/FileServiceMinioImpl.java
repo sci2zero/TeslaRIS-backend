@@ -5,16 +5,23 @@ import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tika.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Traceable;
@@ -26,6 +33,7 @@ import rs.teslaris.core.util.functional.Pair;
 @Service
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class FileServiceMinioImpl implements FileService {
 
     private final MinioClient minioClient;
@@ -69,6 +77,51 @@ public class FileServiceMinioImpl implements FileService {
     }
 
     @Override
+    public String store(Resource resource, String serverFilename,
+                        String originalFilename) {
+        if (Objects.isNull(resource) || !resource.exists()) {
+            throw new StorageException("Failed to store empty file.");
+        }
+
+        var originalFilenameTokens = originalFilename.split("\\.");
+        var extension = originalFilenameTokens[originalFilenameTokens.length - 1];
+
+        try {
+            long size;
+            try {
+                if (resource instanceof FileSystemResource fileRes) {
+                    size = fileRes.getFile().length();
+                } else {
+                    size = resource.contentLength();
+                }
+            } catch (IOException e) {
+                size = -1;
+            }
+
+            PutObjectArgs.Builder builder = PutObjectArgs.builder()
+                .bucket(bucketName)
+                .object(serverFilename + "." + extension)
+                .headers(Map.of(
+                    "Content-Disposition",
+                    "attachment; filename=\"" + originalFilename + "\""
+                ));
+
+            if (size >= 0) {
+                builder.stream(resource.getInputStream(), size, -1);
+            } else {
+                builder.stream(resource.getInputStream(), -1, 5 * 1024 * 1024);
+            }
+
+            minioClient.putObject(builder.build());
+        } catch (Exception e) {
+            throw new StorageException(
+                "Error while storing file in Minio. Reason: " + e.getMessage());
+        }
+
+        return serverFilename + "." + extension;
+    }
+
+    @Override
     public void delete(String serverFilename) {
         try {
             RemoveObjectArgs args = RemoveObjectArgs.builder()
@@ -86,6 +139,13 @@ public class FileServiceMinioImpl implements FileService {
     @Override
     public GetObjectResponse loadAsResource(String serverFilename) {
         try {
+            StatObjectResponse stat = minioClient.statObject(
+                StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(serverFilename)
+                    .build()
+            );
+
             var args = GetObjectArgs.builder()
                 .bucket(bucketName)
                 .object(serverFilename)

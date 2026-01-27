@@ -3,6 +3,8 @@ package rs.teslaris.importer.service.interfaces;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import rs.teslaris.importer.model.common.DocumentImport;
 
 public interface WebOfScienceHarvester {
 
@@ -23,4 +25,6 @@ public interface WebOfScienceHarvester {
                                                              List<Integer> authorIds,
                                                              boolean performImportForAllAuthors,
                                                              HashMap<Integer, Integer> newEntriesCount);
+
+    Optional<DocumentImport> harvestDocumentForDoi(String doi);
 }

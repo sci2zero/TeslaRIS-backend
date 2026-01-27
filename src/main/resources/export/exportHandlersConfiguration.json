@@ -54,7 +54,7 @@
           "identifierSetSpec": "Products",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportProductConverter",
-          "publicationTypes": "SOFTWARE,DATASET"
+          "publicationTypes": "INTANGIBLE_PRODUCT,DATASET"
         },
         {
           "setSpec": "openaire_cris_projects",
@@ -67,7 +67,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT;proceedings_publication_type:REGULAR_FULL_ARTICLE,REGULAR_ABSTRACT_ARTICLE",
           "default": true
         }
@@ -76,6 +76,10 @@
         "oai_dc",
         "oai_cerif_openaire"
       ],
+      "typeIdentifierSuffixes": {
+        "JOURNAL": "ps",
+        "BOOK_SERIES": "ps"
+      },
       "typeMappings": {
         "EVENT": "(DEFAULT)https://w3id.org/cerif/vocab/EventTypes#Conference§https://w3id.org/cerif/vocab/EventTypes",
         "ORGANISATION_UNIT": "(DEFAULT)https://w3id.org/cerif/vocab/OrganisationTypes#HigherEducation§https://w3id.org/cerif/vocab/OrganisationTypes",
@@ -86,7 +90,7 @@
         "JOURNAL": "(DEFAULT)http://purl.org/coar/resource_type/c_0640§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
         "JOURNAL_PUBLICATION": "(RESEARCH_ARTICLE)http://purl.org/coar/resource_type/c_2df8fbb1§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;(DEFAULT)http://purl.org/coar/resource_type/c_3e5a§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
         "THESIS": "(PHD)http://purl.org/coar/resource_type/c_db06§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;(PHD_ART_PROJECT)http://purl.org/coar/resource_type/c_db06§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types;http://purl.org/coar/resource_type/c_46ec§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
-        "SOFTWARE": "(DEFAULT)http://purl.org/coar/resource_type/c_5ce6§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
+        "INTANGIBLE_PRODUCT": "(DEFAULT)http://purl.org/coar/resource_type/c_5ce6§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
         "DATASET": "(DEFAULT)http://purl.org/coar/resource_type/c_ddb1§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types",
         "PATENT": "(DEFAULT)http://purl.org/coar/resource_type/c_15cd§https://www.openaire.eu/cerif-profile/vocab/COAR_Publication_Types"
       }
@@ -266,7 +270,9 @@
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
       "dateFormat": "dd.MM.yyyy.",
-      "supportedLanguages": ["EN"],
+      "supportedLanguages": [
+        "EN"
+      ],
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -312,7 +318,7 @@
           "identifierSetSpec": "Products",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportProductConverter",
-          "publicationTypes": "SOFTWARE,DATASET"
+          "publicationTypes": "INTANGIBLE_PRODUCT,DATASET"
         },
         {
           "setSpec": "openaire_cris_projects",
@@ -325,7 +331,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
@@ -334,6 +340,10 @@
         "oai_dc",
         "dim"
       ],
+      "typeIdentifierSuffixes": {
+        "JOURNAL": "ps",
+        "BOOK_SERIES": "ps"
+      },
       "typeMappings": {
         "PERSON": "(DEFAULT)Osoba@sr;(DEFAULT)Person@en",
         "EVENT": "(DEFAULT)Konferencija@sr;(DEFAULT)Conference@en",
@@ -345,7 +355,7 @@
         "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
         "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
         "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
-        "SOFTWARE": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
+        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
         "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
         "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
       }
@@ -360,7 +370,9 @@
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
       "dateFormat": "dd.MM.yyyy.",
-      "supportedLanguages": ["EN"],
+      "supportedLanguages": [
+        "EN"
+      ],
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -406,7 +418,7 @@
           "identifierSetSpec": "Products",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportProductConverter",
-          "publicationTypes": "SOFTWARE,DATASET"
+          "publicationTypes": "INTANGIBLE_PRODUCT,DATASET"
         },
         {
           "setSpec": "openaire_cris_projects",
@@ -419,7 +431,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
@@ -428,6 +440,10 @@
         "oai_dc",
         "dim"
       ],
+      "typeIdentifierSuffixes": {
+        "JOURNAL": "ps",
+        "BOOK_SERIES": "ps"
+      },
       "typeMappings": {
         "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",
         "PROCEEDINGS_PUBLICATION": "(DEFAULT)Rad u zborniku@sr;(DEFAULT)Conference Paper@en",
@@ -436,7 +452,7 @@
         "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
         "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
         "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
-        "SOFTWARE": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
+        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
         "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
         "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
       }
@@ -451,7 +467,9 @@
       "tokenExpirationTimeMinutes": 60,
       "supportLegacyIdentifiers": true,
       "dateFormat": "dd.MM.yyyy.",
-      "supportedLanguages": ["EN"],
+      "supportedLanguages": [
+        "EN"
+      ],
       "sets": [
         {
           "setSpec": "openaire_cris_equipments",
@@ -497,7 +515,7 @@
           "identifierSetSpec": "Products",
           "commonEntityClass": "ExportDocument",
           "converterClass": "ExportProductConverter",
-          "publicationTypes": "SOFTWARE,DATASET"
+          "publicationTypes": "INTANGIBLE_PRODUCT,DATASET"
         },
         {
           "setSpec": "openaire_cris_projects",
@@ -510,7 +528,7 @@
           "setName": "OpenAIRE_CRIS_publications",
           "identifierSetSpec": "Publications",
           "commonEntityClass": "ExportDocument",
-          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
+          "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true
         }
@@ -519,6 +537,10 @@
         "oai_dc",
         "dim"
       ],
+      "typeIdentifierSuffixes": {
+        "JOURNAL": "ps",
+        "BOOK_SERIES": "ps"
+      },
       "typeMappings": {
         "PROCEEDINGS": "(DEFAULT)Zbornik sa konferencije@sr;(DEFAULT)Conference Proceeding@en",
         "PROCEEDINGS_PUBLICATION": "(DEFAULT)Rad u zborniku@sr;(DEFAULT)Conference Paper@en",
@@ -527,7 +549,7 @@
         "JOURNAL": "(DEFAULT)Casopis@sr;(DEFAULT)Journal@en",
         "JOURNAL_PUBLICATION": "(DEFAULT)Rad u casopisu@sr;(DEFAULT)Journal/Magazine Article@en",
         "THESIS": "(PHD)Doktorska disertacija@sr;(PHD)PhD thesis@en",
-        "SOFTWARE": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
+        "INTANGIBLE_PRODUCT": "(DEFAULT)Softver@sr;(DEFAULT)Software@en",
         "DATASET": "(DEFAULT)Ostalo@sr;(DEFAULT)Other@en",
         "PATENT": "(DEFAULT)Patent@sr;(DEFAULT)Patent@en"
       }

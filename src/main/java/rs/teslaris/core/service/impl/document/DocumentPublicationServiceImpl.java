@@ -28,18 +28,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
@@ -82,6 +80,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputCon
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -120,7 +119,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     protected final CitationService citationService;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    protected final ApplicationEventPublisher applicationEventPublisher;
 
     private final PersonContributionService personContributionService;
 
@@ -492,12 +491,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     @Transactional
     public List<Integer> getContributorIds(Integer publicationId) {
-        return findOne(publicationId).getContributors().stream().map(contribution -> {
-            if (Objects.nonNull(contribution.getPerson())) {
-                return contribution.getPerson().getId();
-            }
-            return -1;
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        return documentRepository.findPersonIdsByDocumentId(publicationId);
     }
 
     @Override
@@ -821,7 +815,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         while (hasNextPage) {
             var indexChunk = documentPublicationIndexRepository.findByAuthorIds(personId,
-                PageRequest.of(pageNumber, chunkSize)).getContent();
+                    PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+                .getContent();
 
             var entityChunk = documentRepository.findBulkDocuments(
                 indexChunk.stream().map(DocumentPublicationIndex::getDatabaseId).toList());
@@ -838,6 +833,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                         new HashSet<>(index.getOrganisationUnitIdsSpecified()),
                         document instanceof Thesis
                     );
+
+                    if (Objects.nonNull(document.getEvent())) {
+                        eventService.indexActiveEmploymentRelations(null,
+                            document.getEvent().getId());
+                    }
+
                     documentPublicationIndexRepository.save(index);
                 }
             });
@@ -1828,6 +1829,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 notificationValues.put("contributionId", contribution.getId().toString());
                 notificationValues.put("documentId", document.getId().toString());
                 notificationValues.put("personId", contribution.getPerson().getId().toString());
+                notificationValues.put("systemName", BrandingInformationUtil.getSystemName(
+                    userOptional.get().getPreferredUILanguage().getLanguageTag()));
                 personContributionService.notifyContributor(
                     NotificationFactory.contructAddedToPublicationNotification(notificationValues,
                         userOptional.get()), NotificationType.ADDED_TO_PUBLICATION);
@@ -1897,12 +1900,5 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 organisationUnitTrustConfigurationService::readTrustConfigurationForOrganisationUnit)
             .anyMatch(configuration -> metadata ? !configuration.trustNewPublications() :
                 !configuration.trustNewDocumentFiles());
-    }
-
-    @Async
-    @EventListener
-    protected void handlePersonEmploymentOUHierarchyStructureChangedEvent(
-        PersonEmploymentOUHierarchyStructureChangedEvent event) {
-        reindexEmploymentInformationForAllPersonPublications(event.getPersonId());
     }
 }

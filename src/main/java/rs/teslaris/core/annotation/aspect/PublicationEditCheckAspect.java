@@ -62,8 +62,13 @@ public class PublicationEditCheckAspect {
 
         List<Integer> contributors = getContributors(annotation, attributeMap, joinPoint);
 
+        var assessmentMode = false;
+        if (annotation.value().equalsIgnoreCase("ASSESS")) {
+            assessmentMode = true;
+        }
+
         checkPermission(role, personId, userId, contributors, joinPoint, annotation,
-            attributeMap);
+            attributeMap, assessmentMode);
 
         return joinPoint.proceed();
     }
@@ -113,7 +118,8 @@ public class PublicationEditCheckAspect {
                                  List<Integer> contributors,
                                  ProceedingJoinPoint joinPoint,
                                  PublicationEditCheck annotation,
-                                 Map<String, String> attributeMap) {
+                                 Map<String, String> attributeMap,
+                                 boolean assessmentMode) {
         UserRole userRole = UserRole.valueOf(role);
         switch (userRole) {
             case ADMIN:
@@ -132,14 +138,21 @@ public class PublicationEditCheckAspect {
                 }
 
                 break;
-            case INSTITUTIONAL_EDITOR, COMMISSION:
-                if (noResearchersFromUserInstitution(contributors, userId) &&
+            case INSTITUTIONAL_EDITOR:
+                if (assessmentMode || noResearchersFromUserInstitution(contributors, userId) &&
+                    isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
+                    handleUnauthorisedUser();
+                }
+                break;
+            case COMMISSION:
+                if (!assessmentMode || noResearchersFromUserInstitution(contributors, userId) &&
                     isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
                     handleUnauthorisedUser();
                 }
                 break;
             case INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY:
-                if (isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
+                if (assessmentMode ||
+                    isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
                     handleUnauthorisedUser();
                 }
                 break;

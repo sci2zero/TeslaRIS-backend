@@ -1,28 +1,28 @@
 databaseChangeLog:
-- changeSet:
-    id: 1766587776922-1
-    author: milospopovic (generated)
-    changes:
-    - createIndex:
-        columns:
-        - column:
-            name: commission_id
-        - column:
-            name: entity_type
-        - column:
-            name: publication_series_id
-        - column:
-            name: classification_year
-        indexName: idx_psac_comm_type_series_year
-        tableName: entity_assessment_classifications
-- changeSet:
-    id: 1766587776922-2
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: research_sub_area_ids
-            type: JSONB
-        tableName: person_assessment_research_area
+  - changeSet:
+      id: 1766587776922-1
+      author: milospopovic (generated)
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: commission_id
+              - column:
+                  name: entity_type
+              - column:
+                  name: publication_series_id
+              - column:
+                  name: classification_year
+            indexName: idx_psac_comm_type_series_year
+            tableName: entity_assessment_classifications
+  - changeSet:
+      id: 1766587776922-2
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: research_sub_area_ids
+                  type: JSONB
+            tableName: person_assessment_research_area
 

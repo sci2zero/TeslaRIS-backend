@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -114,7 +115,7 @@ public class BookSeriesServiceTest {
         bookSeriesDTO.setEissn("1234-5678");
         bookSeriesDTO.setPrintISSN("1234-5678");
         bookSeriesDTO.setContributions(new ArrayList<>());
-        bookSeriesDTO.setLanguageIds(new ArrayList<>());
+        bookSeriesDTO.setLanguageIds(new HashSet<>());
 
         var bookSeriesIndex = new BookSeriesIndex();
         bookSeriesIndex.setDatabaseId(1);
@@ -142,7 +143,7 @@ public class BookSeriesServiceTest {
         bookSeriesDTO.setEissn("1234-5676");
         bookSeriesDTO.setPrintISSN("1234-5676");
         bookSeriesDTO.setContributions(new ArrayList<>());
-        bookSeriesDTO.setLanguageIds(new ArrayList<>());
+        bookSeriesDTO.setLanguageIds(new HashSet<>());
 
         var bookSeries = new BookSeries();
 

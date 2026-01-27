@@ -169,11 +169,6 @@ public class IndexBulkUpdateServiceImpl implements IndexBulkUpdateService {
         var queryBuilder = Query.of(q -> q.bool(b -> {
             b.must(m -> m.term(t -> t.field(fieldMappingName).value(queryValue)));
 
-            if (fieldMappingName.startsWith("monograph")) {
-                b.must(m ->
-                    m.term(t -> t.field("publication_type").value("CHAPTER")));
-            }
-
             return b;
         }));
 

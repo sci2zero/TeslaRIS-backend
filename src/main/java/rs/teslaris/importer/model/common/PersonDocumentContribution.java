@@ -1,7 +1,9 @@
 package rs.teslaris.importer.model.common;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +24,7 @@ public class PersonDocumentContribution {
     private List<MultilingualContent> contributionDescription = new ArrayList<>();
 
     @Field("affiliations")
-    private List<OrganisationUnit> institutions = new ArrayList<>();
+    private Set<OrganisationUnit> institutions = new HashSet<>();
 
     @Field("orderNumber")
     private Integer orderNumber;

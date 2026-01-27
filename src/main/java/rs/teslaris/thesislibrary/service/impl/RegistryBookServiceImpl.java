@@ -20,22 +20,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.applicationevent.RegistryBookInfoReindexEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.person.PersonNameConverter;
 import rs.teslaris.core.converter.person.PostalAddressConverter;
 import rs.teslaris.core.dto.person.ContactDTO;
-import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
-import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -50,6 +44,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
@@ -514,6 +509,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     promotion.getPromotionDate().format(DATE_FORMATTER),
                     promotion.getPromotionTime(), cancellationLink},
                 Locale.forLanguageTag(lang));
+
+            emailBody =
+                emailUtil.constructBodyWithSignature(emailBody,
+                    BrandingInformationUtil.getSystemName(lang), lang);
         } else {
             emailSubject = messageSource.getMessage(
                 "promotion.cancelConfirmationSubject",
@@ -527,6 +526,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     promotion.getPromotionDate().format(DATE_FORMATTER),
                     promotion.getPromotionTime()},
                 Locale.forLanguageTag(lang));
+
+            emailBody =
+                emailUtil.constructBodyWithSignature(emailBody, lang, lang);
         }
 
         emailUtil.sendSimpleEmail(entry.getContactInformation().getContact().getContactEmail(),
@@ -932,39 +934,5 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             fallback = content;
         }
         return fallback != null ? fallback.getContent() : "";
-    }
-
-    @EventListener
-    protected void handleThesisRegistryBookInfoReindexEventEvent(
-        RegistryBookInfoReindexEvent ignored) {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-            List<DocumentPublicationIndex> chunk =
-                documentPublicationIndexRepository.findByTypeIn(
-                        List.of(DocumentPublicationType.THESIS.name()),
-                        PageRequest.of(pageNumber, chunkSize,
-                            Sort.by(Sort.Direction.ASC, "databaseId")))
-                    .getContent();
-
-            chunk.forEach(thesisIndex -> {
-                try {
-                    thesisIndex.setIsAddedToRegistryBook(
-                        registryBookEntryRepository.isThesisInRegistryBook(
-                            thesisIndex.getDatabaseId()));
-                    documentPublicationIndexRepository.save(thesisIndex);
-                } catch (Exception e) {
-                    log.warn(
-                        "Skipping indexing registry book info for THESIS {} due to indexing error: {}",
-                        thesisIndex.getDatabaseId(),
-                        e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 }

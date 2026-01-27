@@ -1,11 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
-import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +16,7 @@ import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
@@ -33,6 +32,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -46,6 +46,8 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     private final PatentJPAServiceImpl patentJPAService;
 
     private final PublisherService publisherService;
+
+    private final PatentRepository patentRepository;
 
 
     @Autowired
@@ -65,7 +67,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              InvolvementRepository involvementRepository,
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                              PatentJPAServiceImpl patentJPAService,
-                             PublisherService publisherService) {
+                             PublisherService publisherService, PatentRepository patentRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -74,6 +76,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             involvementRepository, organisationUnitOutputConfigurationService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
+        this.patentRepository = patentRepository;
     }
 
     @Override
@@ -100,6 +103,18 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         return PatentConverter.toDTO(patent);
+    }
+
+    @Override
+    @Transactional
+    public PatentDTO readPatentByOldId(Integer oldId) {
+        var patent = patentRepository.findPatentByOldIdsContains(oldId);
+        if (patent.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
+            !patent.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return PatentConverter.toDTO(patent.get());
     }
 
     @Override
@@ -173,22 +188,12 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     public void reindexPatents() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Patent> chunk =
-                patentJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((patent) -> indexPatent(patent, new DocumentPublicationIndex()));
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            patentJPAService::findAll,
+            patent -> indexPatent(patent, new DocumentPublicationIndex())
+        );
     }
 
     @Override

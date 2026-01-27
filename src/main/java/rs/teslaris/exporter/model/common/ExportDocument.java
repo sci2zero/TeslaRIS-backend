@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+import rs.teslaris.core.model.document.GeneticMaterialType;
 import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.document.MaterialProductType;
 import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -141,6 +143,12 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("thesis_type")
     private ThesisType thesisType;
+
+    @Field("material_product_type")
+    private MaterialProductType materialProductType;
+
+    @Field("genetic_material_type")
+    private GeneticMaterialType geneticMaterialType;
 
     @Field("thesis_grantor")
     private ExportOrganisationUnit thesisGrantor;

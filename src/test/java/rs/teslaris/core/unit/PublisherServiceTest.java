@@ -162,7 +162,7 @@ public class PublisherServiceTest {
         when(publisherRepository.hasPublishedDataset(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedPatent(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(false);
-        when(publisherRepository.hasPublishedSoftware(publisherId)).thenReturn(false);
+        when(publisherRepository.hasPublishedIntangibleProduct(publisherId)).thenReturn(false);
         when(publisherRepository.hasPublishedThesis(publisherId)).thenReturn(false);
         when(publisherIndexRepository.findByDatabaseId(publisherId)).thenReturn(
             Optional.of(new PublisherIndex()));
@@ -181,7 +181,7 @@ public class PublisherServiceTest {
     public void shouldThrowExceptionWhenPublisherIsUsed(boolean publishedDataset,
                                                         boolean publishedPatent,
                                                         boolean publishedProceedings,
-                                                        boolean publishedSoftware,
+                                                        boolean publishedIntangibleProduct,
                                                         boolean publishedThesis) {
         // given
         Integer publisherId = 1;
@@ -193,7 +193,8 @@ public class PublisherServiceTest {
         when(publisherRepository.hasPublishedPatent(publisherId)).thenReturn(publishedPatent);
         when(publisherRepository.hasPublishedProceedings(publisherId)).thenReturn(
             publishedProceedings);
-        when(publisherRepository.hasPublishedSoftware(publisherId)).thenReturn(publishedSoftware);
+        when(publisherRepository.hasPublishedIntangibleProduct(publisherId)).thenReturn(
+            publishedIntangibleProduct);
         when(publisherRepository.hasPublishedThesis(publisherId)).thenReturn(publishedThesis);
 
         // when
@@ -290,7 +291,7 @@ public class PublisherServiceTest {
         verify(publisherRepository).unbindDataset(publisherId);
         verify(publisherRepository).unbindPatent(publisherId);
         verify(publisherRepository).unbindProceedings(publisherId);
-        verify(publisherRepository).unbindSoftware(publisherId);
+        verify(publisherRepository).unbindIntangibleProduct(publisherId);
         verify(publisherRepository).unbindThesis(publisherId);
     }
 

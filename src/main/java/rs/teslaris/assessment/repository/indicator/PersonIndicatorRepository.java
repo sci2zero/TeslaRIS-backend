@@ -14,7 +14,8 @@ import rs.teslaris.core.model.commontypes.AccessLevel;
 public interface PersonIndicatorRepository extends JpaRepository<PersonIndicator, Integer> {
 
     @Query("SELECT pi FROM PersonIndicator pi " +
-        "WHERE pi.person.id = :personId AND pi.indicator.accessLevel <= :accessLevel")
+        "WHERE pi.person.id = :personId AND pi.indicator.accessLevel <= :accessLevel " +
+        "ORDER BY pi.id ASC")
     List<PersonIndicator> findIndicatorsForPersonAndIndicatorAccessLevel(Integer personId,
                                                                          AccessLevel accessLevel);
 
@@ -22,6 +23,11 @@ public interface PersonIndicatorRepository extends JpaRepository<PersonIndicator
     @Query("SELECT pi FROM PersonIndicator pi " +
         "WHERE pi.indicator.code = :code AND pi.person.id = :personId")
     Optional<PersonIndicator> findIndicatorForCodeAndPersonId(String code, Integer personId);
+
+    @Transactional
+    @Query("SELECT COUNT(pi) > 0 FROM PersonIndicator pi " +
+        "WHERE pi.indicator.code = :code AND pi.person.id = :personId")
+    boolean indicatorsExistForCodeAndPersonId(String code, Integer personId);
 
     @Query("""
             SELECT pi FROM PersonIndicator pi

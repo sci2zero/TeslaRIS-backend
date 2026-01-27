@@ -8,7 +8,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -34,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,9 +42,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
-import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
-import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -604,7 +599,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personContributionRepository.deletePersonEventContributions(personId);
         personContributionRepository.deletePersonPublicationsSeriesContributions(personId);
 
-        deletePersonPublications(personId, false);
+        deletePersonPublications(personId, true);
 
         delete(personId);
 
@@ -711,6 +706,33 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
                 if (switchToUnmanaged) {
                     contribution.setPerson(null);
+                    if (Objects.nonNull(contribution.getAffiliationStatement())) {
+                        if (Objects.nonNull(contribution.getAffiliationStatement().getContact())) {
+                            contribution.getAffiliationStatement().getContact()
+                                .setPhoneNumber(null);
+                            contribution.getAffiliationStatement().getContact()
+                                .setContactEmail(null);
+                        }
+
+                        if (Objects.nonNull(
+                            contribution.getAffiliationStatement().getPostalAddress())) {
+                            contribution.getAffiliationStatement().getPostalAddress()
+                                .setCountry(null);
+                            if (Objects.nonNull(
+                                contribution.getAffiliationStatement().getPostalAddress()
+                                    .getCity())) {
+                                contribution.getAffiliationStatement().getPostalAddress().getCity()
+                                    .clear();
+                            }
+
+                            if (Objects.nonNull(
+                                contribution.getAffiliationStatement().getPostalAddress()
+                                    .getStreetAndNumber())) {
+                                contribution.getAffiliationStatement().getPostalAddress()
+                                    .getStreetAndNumber().clear();
+                            }
+                        }
+                    }
 
                     BiConsumer<List<Integer>, Integer> replaceIdWithUnmanaged =
                         (list, idToReplace) ->
@@ -759,7 +781,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
             DocumentPublicationType.MONOGRAPH_PUBLICATION.name());
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
-            DocumentPublicationType.SOFTWARE.name());
+            DocumentPublicationType.INTANGIBLE_PRODUCT.name());
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
             DocumentPublicationType.DATASET.name());
         documentPublicationIndexRepository.deleteByAuthorIdsAndType(personId,
@@ -931,6 +953,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         if (Objects.nonNull(savedPerson.getPersonalInfo().getLocalBirthDate())) {
             personIndex.setBirthdate(
                 savedPerson.getPersonalInfo().getLocalBirthDate().toString());
+        } else {
+            personIndex.setBirthdate(null);
         }
         personIndex.setBirthdateSortable(personIndex.getBirthdate());
 
@@ -971,7 +995,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
     }
 
-    private void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
+    @Override
+    public void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson) {
         if (Objects.isNull(savedPerson)) {
             return;
         }
@@ -1042,7 +1067,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             name.stream()
                 .filter(mc -> mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
-                .forEach(mc -> institutionNameSr.append(mc.getContent()));
+                .forEach(mc -> institutionNameSr.append(mc.getContent()).append(" | "));
             name.stream()
                 .filter(mc -> !mc.getLanguage().getLanguageTag()
                     .startsWith(LanguageAbbreviations.SERBIAN))
@@ -1062,7 +1087,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             if (Objects.nonNull(employment.getOrganisationUnit()) &&
                 Objects.nonNull(employment.getOrganisationUnit().getNameAbbreviation()) &&
                 !employment.getOrganisationUnit().getNameAbbreviation().isBlank()) {
-                employmentsSr.append(" | ")
+                employmentsSr
                     .append(employment.getOrganisationUnit().getNameAbbreviation().trim())
                     .append("; ");
             } else {
@@ -1143,16 +1168,47 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var nameAndEmploymentQuery = buildNameAndEmploymentQuery(tokens, false, null, false);
 
-        var institutionFilter = TermsQuery.of(t -> t
-            .field(fetchAlumni
-                ? "past_employment_institution_ids"
-                : "employment_institutions_id_hierarchy")
-            .terms(v -> v.value(
-                ouHierarchyIds.stream()
-                    .map(String::valueOf)
-                    .map(FieldValue::of)
-                    .toList()))
-        )._toQuery();
+        var institutionFilter = Query.of(q -> q
+            .bool(b -> {
+                if (fetchAlumni) {
+                    b.must(m -> m
+                        .terms(t -> t
+                            .field("past_employment_institution_ids")
+                            .terms(v -> v.value(
+                                ouHierarchyIds.stream()
+                                    .map(String::valueOf)
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                        )
+                    );
+                    b.mustNot(m -> m
+                        .terms(t -> t
+                            .field("employment_institutions_id_hierarchy")
+                            .terms(v -> v.value(
+                                ouHierarchyIds.stream()
+                                    .map(String::valueOf)
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                        )
+                    );
+                } else {
+                    b.must(m -> m
+                        .terms(t -> t
+                            .field("employment_institutions_id_hierarchy")
+                            .terms(v -> v.value(
+                                ouHierarchyIds.stream()
+                                    .map(String::valueOf)
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                        )
+                    );
+                }
+                return b;
+            })
+        );
 
         var combinedQuery = BoolQuery.of(bq -> bq
             .must(nameAndEmploymentQuery)
@@ -1519,44 +1575,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                         personIndex.getBirthdateSortable().substring(0, 4));
                 }
             });
-        }
-    }
-
-    @Async
-    @EventListener
-    protected void handleOUSignificantChange(OrganisationUnitSignificantChangeEvent event) {
-        reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
-    }
-
-    @Async
-    @EventListener
-    protected void handleOUDeletion(OrganisationUnitDeletedEvent event) {
-        reindexInstitutionEmployeesEmployments(event.getOrganisationUnitId());
-    }
-
-    private void reindexInstitutionEmployeesEmployments(Integer organisationUnitId) {
-        int pageNumber = 0;
-        int chunkSize = 500;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-            List<PersonIndex> chunk = personIndexRepository.findByInstitutionId(organisationUnitId,
-                PageRequest.of(pageNumber, chunkSize)).getContent();
-
-            chunk.forEach(
-                index -> {
-                    setPersonIndexEmploymentDetails(index,
-                        personRepository.findOneWithInvolvements(index.getDatabaseId())
-                            .orElse(null));
-                    personIndexRepository.save(index);
-
-                    applicationEventPublisher.publishEvent(
-                        new PersonEmploymentOUHierarchyStructureChangedEvent(
-                            index.getDatabaseId()));
-                });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
         }
     }
 }

@@ -109,7 +109,8 @@ public class ExportEventConverter extends ExportConverterBase {
     }
 
     public static rs.teslaris.core.model.oaipmh.event.Event toOpenaireModel(
-        ExportEvent exportEvent, boolean supportLegacyIdentifiers) {
+        ExportEvent exportEvent, boolean supportLegacyIdentifiers,
+        List<String> supportedLanguages) {
         var openaireEvent = new rs.teslaris.core.model.oaipmh.event.Event();
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportEvent.getOldIds()) &&

@@ -1,7 +1,9 @@
 package rs.teslaris.exporter.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
@@ -9,21 +11,25 @@ import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StreamUtils;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.GeneticMaterial;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.rocrate.ContextualEntity;
@@ -60,6 +66,22 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
 
     private final ObjectMapper objectMapper;
 
+    String previewTableStyles;
+
+    {
+        var styles = "";
+        try {
+            var resource = new ClassPathResource("export/roCratePreviewStyles.html");
+            if (resource.exists()) {
+                styles =
+                    StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            }
+        } catch (IOException e) {
+            log.error("Error reading Ro-Crate style file: {}", e.getMessage());
+        }
+        previewTableStyles = styles;
+    }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -86,10 +108,11 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
 
             progressService.send(exportId, 25, getStatusMessage("statusMessage.generatingPreview"));
 
-            var htmlPreview = Json2HtmlTable
-                .toHtmlTable(objectMapper.readTree(
+            var htmlPreview = ("<body><div class=\"json-view\">" +
+                Json2HtmlTable.toHtmlTable(objectMapper.readTree(
                     objectMapper.writerWithDefaultPrettyPrinter()
                         .writeValueAsString(roCrate.getGraph())))
+                + "</div>" + previewTableStyles + "</body>")
                 .getBytes();
 
             try (var zipOut = new ZipOutputStream(outputStream)) {
@@ -172,10 +195,11 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     .writerWithDefaultPrettyPrinter()
                     .writeValueAsBytes(roCrate);
 
-                var htmlPreview = Json2HtmlTable
-                    .toHtmlTable(objectMapper.readTree(
+                var htmlPreview = ("<body><div class=\"json-view\">" +
+                    Json2HtmlTable.toHtmlTable(objectMapper.readTree(
                         objectMapper.writerWithDefaultPrettyPrinter()
                             .writeValueAsString(roCrate.getGraph())))
+                    + "</div>" + previewTableStyles + "</body>")
                     .getBytes();
 
                 var zipOut = new ZipOutputStream(outputStream);
@@ -231,8 +255,8 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 RoCrateConverter.toRoCrateModel(monographPublication,
                     documentIdentifier,
                     metadataInfo));
-            case Software software -> metadataInfo.getGraph().add(
-                RoCrateConverter.toRoCrateModel(software,
+            case IntangibleProduct intangibleProduct -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(intangibleProduct,
                     documentIdentifier,
                     metadataInfo));
             case Patent patent -> metadataInfo.getGraph().add(
@@ -241,6 +265,14 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     metadataInfo));
             case Thesis thesis -> metadataInfo.getGraph().add(
                 RoCrateConverter.toRoCrateModel(thesis,
+                    documentIdentifier,
+                    metadataInfo));
+            case MaterialProduct materialProduct -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(materialProduct,
+                    documentIdentifier,
+                    metadataInfo));
+            case GeneticMaterial geneticMaterial -> metadataInfo.getGraph().add(
+                RoCrateConverter.toRoCrateModel(geneticMaterial,
                     documentIdentifier,
                     metadataInfo));
             default -> log.error("Unexpected document type: {}. ID: {}.", document.getClass(),

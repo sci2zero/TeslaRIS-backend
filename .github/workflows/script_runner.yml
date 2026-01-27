@@ -6,10 +6,10 @@ on:
       script_name:
         type: choice
         description: Script
-        options: 
-        - reindex
-        - reset_database
-        - test
+        options:
+          - reindex
+          - reset_database
+          - test
         required: true
       environment:
         description: 'Environment'

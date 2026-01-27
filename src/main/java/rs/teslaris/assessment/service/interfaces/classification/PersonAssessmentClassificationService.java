@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
 import rs.teslaris.assessment.dto.ResearcherAssessmentResponseDTO;
 import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationResponseDTO;
+import rs.teslaris.assessment.model.AssessmentMeasure;
 import rs.teslaris.core.indexmodel.PersonIndex;
 
 @Service
@@ -24,7 +25,9 @@ public interface PersonAssessmentClassificationService {
                                                                  LocalDate startDate,
                                                                  LocalDate endDate);
 
-    void reindexPublicationPointsForResearcher(PersonIndex index);
+    void reindexPublicationPointsForResearcher(PersonIndex index,
+                                               List<AssessmentMeasure> assessmentMeasures);
 
-    void reindexPublicationPointsForAllResearchers();
+    void reindexPublicationPointsForAllResearchers(List<Integer> personIds,
+                                                   List<Integer> institutionIds);
 }

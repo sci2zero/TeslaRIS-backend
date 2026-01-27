@@ -40,11 +40,11 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.statistics.StatisticsType;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.ProceedingsPublication;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -161,7 +161,7 @@ class DocumentVisualizationDataServiceTest {
         var statisticsType = StatisticsType.VIEW;
 
         when(documentPublicationService.findOne(documentId)).thenReturn(
-            new Software() {{
+            new IntangibleProduct() {{
                 setMergedIds(new HashSet<>(List.of(456, 789)));
             }}
         );
@@ -362,7 +362,7 @@ class DocumentVisualizationDataServiceTest {
     @Test
     public void shouldThrowExceptionWhenPersonAndInstitutionIdsAreNull() {
         // Given
-        var type = DocumentPublicationType.SOFTWARE;
+        var type = DocumentPublicationType.INTANGIBLE_PRODUCT;
         var yearFrom = 2019;
         var yearTo = 2022;
         Integer personId = null;

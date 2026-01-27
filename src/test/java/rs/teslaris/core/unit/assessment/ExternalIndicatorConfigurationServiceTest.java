@@ -15,8 +15,8 @@ import rs.teslaris.assessment.dto.indicator.ExternalIndicatorConfigurationDTO;
 import rs.teslaris.assessment.model.indicator.ExternalIndicatorConfiguration;
 import rs.teslaris.assessment.repository.indicator.ExternalIndicatorConfigurationRepository;
 import rs.teslaris.assessment.service.impl.indicator.ExternalIndicatorConfigurationServiceImpl;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.InvolvementType;
@@ -107,7 +107,7 @@ public class ExternalIndicatorConfigurationServiceTest {
         var contribution = new PersonDocumentContribution();
         contribution.setPerson(person);
 
-        var document = new Software();
+        var document = new IntangibleProduct();
         document.setContributors(Set.of(contribution));
 
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);

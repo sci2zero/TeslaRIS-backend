@@ -143,7 +143,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         if (publisherRepository.hasPublishedDataset(publisherId) ||
             publisherRepository.hasPublishedPatent(publisherId) ||
             publisherRepository.hasPublishedProceedings(publisherId) ||
-            publisherRepository.hasPublishedSoftware(publisherId) ||
+            publisherRepository.hasPublishedIntangibleProduct(publisherId) ||
             publisherRepository.hasPublishedThesis(publisherId)) {
             throw new PublisherReferenceConstraintViolationException(
                 "Publisher with id " + publisherId + " is already in use.");
@@ -161,7 +161,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         publisherRepository.unbindDataset(publisherId);
         publisherRepository.unbindPatent(publisherId);
         publisherRepository.unbindProceedings(publisherId);
-        publisherRepository.unbindSoftware(publisherId);
+        publisherRepository.unbindIntangibleProduct(publisherId);
         publisherRepository.unbindThesis(publisherId);
 
         delete(publisherId);

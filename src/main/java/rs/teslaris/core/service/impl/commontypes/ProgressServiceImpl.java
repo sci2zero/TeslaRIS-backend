@@ -18,7 +18,7 @@ public class ProgressServiceImpl implements ProgressService {
 
 
     public SseEmitter register(String exportId) {
-        SseEmitter emitter = new SseEmitter(0L); // no timeout
+        var emitter = new SseEmitter(0L); // no timeout
         emitters.put(exportId, emitter);
 
         emitter.onCompletion(() -> emitters.remove(exportId));

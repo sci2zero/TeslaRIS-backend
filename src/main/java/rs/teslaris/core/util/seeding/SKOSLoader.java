@@ -36,7 +36,7 @@ public class SKOSLoader {
     private final ResearchAreaService researchAreaService;
 
 
-    @Async
+    @Async("taskExecutor")
     public void loadResearchAreas() {
         log.info("Started loading research areas.");
 

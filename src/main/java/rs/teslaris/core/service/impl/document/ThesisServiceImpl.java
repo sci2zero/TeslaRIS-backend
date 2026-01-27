@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -85,11 +84,13 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
@@ -324,28 +325,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     public void reindexTheses() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Thesis> chunk =
-                thesisJPAService.findAll(PageRequest.of(pageNumber, chunkSize,
-                    Sort.by(Sort.Direction.ASC, "id"))).getContent();
-
-            chunk.forEach(thesis -> {
-                try {
-                    indexThesis(thesis, new DocumentPublicationIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping THESIS {} due to indexing error: {}", thesis.getId(),
-                        e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            thesisJPAService::findAll,
+            thesis -> indexThesis(thesis, new DocumentPublicationIndex())
+        );
     }
 
     @Override
@@ -1022,13 +1007,18 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 preferredLocale.toLowerCase());
 
             var applicationTitle = brandingInformationService.readBrandingInformation().title();
+            var locale = preferredLocale.toLowerCase();
+
             var body = getMessage("public-review-end.email.body",
                 new Object[] {
                     thesesList.toString(),
                     getLocalisedContentString(applicationTitle, preferredLocale),
                     feedbackEmail
-                },
-                preferredLocale.toLowerCase());
+                }, locale);
+
+            body =
+                emailUtil.constructBodyWithSignature(body,
+                    BrandingInformationUtil.getSystemName(locale), locale);
 
             emailUtil.sendHTMLSupportedEmail(librarianUser.getEmail(), subject, body);
         });

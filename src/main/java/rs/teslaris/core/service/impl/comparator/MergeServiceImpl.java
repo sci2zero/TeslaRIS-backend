@@ -23,8 +23,11 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.GeneticMaterialDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
@@ -32,7 +35,6 @@ import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
-import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -51,27 +53,29 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
-import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
+import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.merge.MergeService;
@@ -124,7 +128,11 @@ public class MergeServiceImpl implements MergeService {
 
     private final InvolvementService involvementService;
 
-    private final SoftwareService softwareService;
+    private final IntangibleProductService intangibleProductService;
+
+    private final MaterialProductService materialProductService;
+
+    private final GeneticMaterialService geneticMaterialService;
 
     private final DatasetService datasetService;
 
@@ -142,7 +150,7 @@ public class MergeServiceImpl implements MergeService {
 
     private final BookSeriesService bookSeriesService;
 
-    private final SoftwareRepository softwareRepository;
+    private final IntangibleProductRepository intangibleProductRepository;
 
     private final DatasetRepository datasetRepository;
 
@@ -491,19 +499,62 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
-    public void saveMergedSoftwareMetadata(Integer leftId, Integer rightId, SoftwareDTO leftData,
-                                           SoftwareDTO rightData) {
+    public void saveMergedIntangibleProductMetadata(Integer leftId, Integer rightId,
+                                                    IntangibleProductDTO leftData,
+                                                    IntangibleProductDTO rightData) {
         handleNoAuthorsRemaining(leftData, rightData);
-        updateAndRestoreMetadata(softwareService::editSoftware, softwareService::indexSoftware,
-            softwareService::findSoftwareById, leftId, rightId, leftData,
+        updateAndRestoreMetadata(intangibleProductService::editIntangibleProduct,
+            intangibleProductService::indexIntangibleProduct,
+            intangibleProductService::findIntangibleProductById, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
-                dto.getOpenAlexId()},
+                dto.getOpenAlexId(), dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setInternalNumber(values[0]);
                 dto.setDoi(values[1]);
                 dto.setScopusId(values[2]);
                 dto.setOpenAlexId(values[3]);
+                dto.setWebOfScienceId(values[4]);
+            });
+    }
+
+    @Override
+    public void saveMergedMaterialProductMetadata(Integer leftId, Integer rightId,
+                                                  MaterialProductDTO leftData,
+                                                  MaterialProductDTO rightData) {
+        handleNoAuthorsRemaining(leftData, rightData);
+        updateAndRestoreMetadata(materialProductService::editMaterialProduct,
+            materialProductService::indexMaterialProduct,
+            materialProductService::findMaterialProductById, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
+                dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            (dto, values) -> {
+                dto.setInternalNumber(values[0]);
+                dto.setDoi(values[1]);
+                dto.setScopusId(values[2]);
+                dto.setOpenAlexId(values[3]);
+                dto.setWebOfScienceId(values[4]);
+            });
+    }
+
+    @Override
+    public void saveMergedGeneticMaterialMetadata(Integer leftId, Integer rightId,
+                                                  GeneticMaterialDTO leftData,
+                                                  GeneticMaterialDTO rightData) {
+        handleNoAuthorsRemaining(leftData, rightData);
+        updateAndRestoreMetadata(geneticMaterialService::editGeneticMaterial,
+            geneticMaterialService::indexGeneticMaterial,
+            geneticMaterialService::findGeneticMaterialById, leftId, rightId, leftData,
+            rightData,
+            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
+                dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            (dto, values) -> {
+                dto.setInternalNumber(values[0]);
+                dto.setDoi(values[1]);
+                dto.setScopusId(values[2]);
+                dto.setOpenAlexId(values[3]);
+                dto.setWebOfScienceId(values[4]);
             });
     }
 
@@ -514,12 +565,13 @@ public class MergeServiceImpl implements MergeService {
         updateAndRestoreMetadata(datasetService::editDataset, datasetService::indexDataset,
             datasetService::findDatasetById, leftId, rightId, leftData, rightData,
             dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
-                dto.getOpenAlexId()},
+                dto.getOpenAlexId(), dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setInternalNumber(values[0]);
                 dto.setDoi(values[1]);
                 dto.setScopusId(values[2]);
                 dto.setOpenAlexId(values[3]);
+                dto.setWebOfScienceId(values[4]);
             });
     }
 
@@ -530,12 +582,13 @@ public class MergeServiceImpl implements MergeService {
         updateAndRestoreMetadata(patentService::editPatent, patentService::indexPatent,
             patentService::findPatentById, leftId, rightId, leftData, rightData,
             dto -> new String[] {dto.getNumber(), dto.getDoi(), dto.getScopusId(),
-                dto.getOpenAlexId()},
+                dto.getOpenAlexId(), dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setNumber(values[0]);
                 dto.setDoi(values[1]);
                 dto.setScopusId(values[2]);
                 dto.setOpenAlexId(values[3]);
+                dto.setWebOfScienceId(values[4]);
             });
     }
 
@@ -548,11 +601,13 @@ public class MergeServiceImpl implements MergeService {
             proceedingsPublicationService::indexProceedingsPublication,
             proceedingsPublicationService::findProceedingsPublicationById, leftId,
             rightId, leftData, rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId()},
+            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId(),
+                dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setDoi(values[0]);
                 dto.setScopusId(values[1]);
                 dto.setOpenAlexId(values[2]);
+                dto.setWebOfScienceId(values[3]);
             });
     }
 
@@ -565,11 +620,13 @@ public class MergeServiceImpl implements MergeService {
             journalPublicationService::indexJournalPublication,
             journalPublicationService::findJournalPublicationById, leftId, rightId,
             leftData, rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId()},
+            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId(),
+                dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setDoi(values[0]);
                 dto.setScopusId(values[1]);
                 dto.setOpenAlexId(values[2]);
+                dto.setWebOfScienceId(values[3]);
             });
     }
 
@@ -578,11 +635,13 @@ public class MergeServiceImpl implements MergeService {
                                          ThesisDTO rightData) {
         updateAndRestoreMetadata(thesisService::editThesis, thesisService::indexThesis,
             thesisService::getThesisById, leftId, rightId, leftData, rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId()},
+            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId(),
+                dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setDoi(values[0]);
                 dto.setScopusId(values[1]);
                 dto.setOpenAlexId(values[2]);
+                dto.setWebOfScienceId(values[3]);
             });
     }
 
@@ -622,13 +681,14 @@ public class MergeServiceImpl implements MergeService {
             monographService::findMonographById, leftId, rightId, leftData,
             rightData,
             dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getPrintISBN(),
-                dto.getEisbn(), dto.getOpenAlexId()},
+                dto.getEisbn(), dto.getOpenAlexId(), dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setDoi(values[0]);
                 dto.setScopusId(values[1]);
                 dto.setPrintISBN(values[2]);
                 dto.setEisbn(values[3]);
                 dto.setOpenAlexId(values[4]);
+                dto.setWebOfScienceId(values[5]);
             });
     }
 
@@ -642,11 +702,13 @@ public class MergeServiceImpl implements MergeService {
             monographPublicationService::findMonographPublicationById, leftId,
             rightId,
             leftData, rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId()},
+            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId(),
+                dto.getWebOfScienceId()},
             (dto, values) -> {
                 dto.setDoi(values[0]);
                 dto.setScopusId(values[1]);
                 dto.setOpenAlexId(values[2]);
+                dto.setWebOfScienceId(values[3]);
             });
     }
 
@@ -767,7 +829,7 @@ public class MergeServiceImpl implements MergeService {
             proceedingsRepository,
             patentRepository,
             datasetRepository,
-            softwareRepository,
+            intangibleProductRepository,
             thesisRepository,
             monographRepository
         );
@@ -957,7 +1019,6 @@ public class MergeServiceImpl implements MergeService {
                                                                 Consumer<T> saveMethod,
                                                                 Integer deletionEntityId,
                                                                 Integer mergedEntityId) {
-
         var deletionEntity = fetchFunction.apply(deletionEntityId);
         var mergedEntity = fetchFunction.apply(mergedEntityId);
 

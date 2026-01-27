@@ -627,7 +627,8 @@ public class UserServiceTest {
         // Given
         var requestDTO = new ResearcherRegistrationRequestDTO();
         requestDTO.setEmail("admin@admin.com");
-        when(userRepository.findByEmail(requestDTO.getEmail())).thenReturn(Optional.of(new User()));
+        when(userRepository.findByEmailIncludingDeleted(requestDTO.getEmail())).thenReturn(
+            Optional.of(new User()));
         when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
 
         // When
@@ -1568,7 +1569,8 @@ public class UserServiceTest {
         var existingUser = new User();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userRepository.findByEmail(newEmail)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmailIncludingDeleted(newEmail)).thenReturn(
+            Optional.of(existingUser));
 
         // when & then
         assertThrows(UserAlreadyExistsException.class,
@@ -1668,6 +1670,8 @@ public class UserServiceTest {
             .thenReturn("Welcome! Activate your account here: {1}");
         when(brandingInformationService.readBrandingInformation()).thenReturn(
             new BrandingInformationDTO(new ArrayList<>(), new ArrayList<>()));
+        when(emailUtil.constructBodyWithSignature(any(), any(), any())).thenReturn(
+            "Content with signature.");
 
         // When
         userService.resendUserActivationEmail(userId);
@@ -1917,6 +1921,8 @@ public class UserServiceTest {
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
             .thenReturn("subject", "body");
+        when(emailUtil.constructBodyWithSignature(any(), any(), any())).thenReturn(
+            "Content with signature.");
 
         ArgumentCaptor<String> passwordCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -1994,6 +2000,9 @@ public class UserServiceTest {
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
             .thenReturn("subject", "body");
+
+        when(emailUtil.constructBodyWithSignature(any(), any(), any())).thenReturn(
+            "Content with signature.");
 
         // when
         var result = userService.registerResearcherAdmin(registrationRequest);

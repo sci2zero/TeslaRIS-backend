@@ -14,8 +14,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.assessment.model.classification.DocumentAssessmentClassification;
 import rs.teslaris.assessment.repository.classification.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.service.impl.classification.EntityAssessmentClassificationServiceImpl;
+import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 
 @SpringBootTest
@@ -39,7 +41,15 @@ public class EntityAssessmentClassificationServiceTest {
         // Given
         var entityAssessmentClassificationId = 1;
         var entityAssessmentClassification = new DocumentAssessmentClassification();
-        entityAssessmentClassification.setDocument(new Monograph());
+
+        var monograph = new Monograph();
+        monograph.setId(1);
+
+        entityAssessmentClassification.setDocument(monograph);
+
+        entityAssessmentClassification.setCommission(new Commission() {{
+            setId(1);
+        }});
 
         when(entityAssessmentClassificationRepository.findById(
             entityAssessmentClassificationId)).thenReturn(
@@ -54,5 +64,7 @@ public class EntityAssessmentClassificationServiceTest {
             entityAssessmentClassification);
         verify(applicationEventPublisher, times(1)).publishEvent(any(
             ResearcherPointsReindexingEvent.class));
+        verify(applicationEventPublisher, times(1)).publishEvent(any(
+            EntityAssessmentChanged.class));
     }
 }

@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -60,6 +61,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 public class InvolvementServiceTest {
@@ -929,6 +931,163 @@ public class InvolvementServiceTest {
         // Then
         verify(employmentMigrationWorker, atLeastOnce()).processSingleMigration(
             any(), any(), any());
+    }
+
+    @Test
+    void shouldNotAddExternalInvolvementWhenDuplicateInstitutionExists() {
+        // Given
+        var personId = 42;
+        var institutionName = List.of(
+            new MultilingualContentDTO(1, LanguageAbbreviations.ENGLISH, "University Of Test", 1)
+        );
+        var employmentTitle = "ASSOCIATE_PROFESSOR";
+
+        var existingEmployment = new Employment();
+        existingEmployment.setInvolvementType(InvolvementType.EMPLOYED_AT);
+
+        var mlc = new MultiLingualContent();
+        mlc.setContent("University of Test");
+        mlc.setLanguage(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"));
+
+        existingEmployment.setAffiliationStatement(Set.of(mlc));
+
+        when(employmentRepository.findExternalByPersonInvolvedId(personId))
+            .thenReturn(List.of(existingEmployment));
+
+        // When
+        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
+            employmentTitle);
+
+        // Then
+        verify(employmentRepository).findExternalByPersonInvolvedId(personId);
+    }
+
+    @Test
+    void shouldAddExternalInvolvementWhenNoDuplicateInstitutionExists() {
+        // Given
+        var personId = 42;
+        var institutionName = List.of(
+            new MultilingualContentDTO(1, LanguageAbbreviations.ENGLISH, "University", 1)
+        );
+        var employmentTitle = "FULL_PROFESSOR";
+
+        var existingEmployment = new Employment();
+        existingEmployment.setInvolvementType(InvolvementType.EMPLOYED_AT);
+
+        var mlc = new MultiLingualContent();
+        mlc.setContent("Old University");
+        mlc.setLanguage(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"));
+
+        existingEmployment.setAffiliationStatement(Set.of(mlc));
+
+        when(employmentRepository.findExternalByPersonInvolvedId(personId))
+            .thenReturn(List.of(existingEmployment));
+        when(personService.findOne(any())).thenReturn(new Person());
+
+        // When
+        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
+            employmentTitle);
+
+        // Then
+        verify(employmentRepository).findExternalByPersonInvolvedId(personId);
+        verify(involvementRepository).save(argThat((Employment e) ->
+            e.getInvolvementType() == InvolvementType.EMPLOYED_AT &&
+                e.getEmploymentPosition() == EmploymentPosition.FULL_PROFESSOR
+        ));
+    }
+
+    @Test
+    void shouldAddExternalInvolvementWhenNoExistingEmployments() {
+        // Given
+        var personId = 99;
+        var institutionName = List.of(
+            new MultilingualContentDTO(1, LanguageAbbreviations.ENGLISH, "University", 1)
+        );
+        var employmentTitle = "ACADEMICIAN";
+
+        when(employmentRepository.findExternalByPersonInvolvedId(personId))
+            .thenReturn(List.of());
+        when(personService.findOne(any())).thenReturn(new Person());
+
+        // When
+        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
+            employmentTitle);
+
+        // Then
+        verify(employmentRepository).findExternalByPersonInvolvedId(personId);
+        verify(involvementRepository).save(any());
+    }
+
+    @Test
+    void shouldMatchInstitutionsCaseInsensitively() {
+        // Given
+        var personId = 42;
+        var institutionName = List.of(
+            new MultilingualContentDTO(1, LanguageAbbreviations.ENGLISH, "University", 1)
+        );
+        var employmentTitle = "ASSISTANT_PROFESSOR";
+
+        var existingEmployment = new Employment();
+        existingEmployment.setInvolvementType(InvolvementType.EMPLOYED_AT);
+
+        var mlc = new MultiLingualContent();
+        mlc.setContent("UNIVERSITY"); // uppercase
+        mlc.setLanguage(new LanguageTag(LanguageAbbreviations.ENGLISH, "English"));
+
+        existingEmployment.setAffiliationStatement(Set.of(mlc));
+
+        when(employmentRepository.findExternalByPersonInvolvedId(personId))
+            .thenReturn(List.of(existingEmployment));
+
+        // When
+        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
+            employmentTitle);
+
+        // Then
+        verify(employmentRepository).findExternalByPersonInvolvedId(personId);
+        verify(involvementRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldReturnExternalInstitutionSuggestions() {
+        // Given
+        var personId = 42;
+
+        var employment1 = new Employment();
+        var mlc1 = new MultiLingualContent();
+        mlc1.setContent("University A");
+        mlc1.setLanguage(new LanguageTag() {{
+            setLanguageTag(LanguageAbbreviations.ENGLISH);
+        }});
+
+        employment1.setAffiliationStatement(Set.of(mlc1));
+
+        var employment2 = new Employment();
+        var mlc2 = new MultiLingualContent();
+        mlc2.setContent("University B");
+        mlc2.setLanguage(new LanguageTag() {{
+            setLanguageTag(LanguageAbbreviations.SERBIAN);
+        }});
+
+        employment2.setAffiliationStatement(Set.of(mlc2));
+
+        when(employmentRepository.findExternalByPersonInvolvedId(personId))
+            .thenReturn(List.of(employment1, employment2));
+
+        // When
+        List<List<MultilingualContentDTO>> result =
+            involvementService.getExternalInstitutionSuggestions(personId);
+
+        // Then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0))
+            .extracting(MultilingualContentDTO::getContent)
+            .containsExactly("University A");
+        assertThat(result.get(1))
+            .extracting(MultilingualContentDTO::getContent)
+            .containsExactly("University B");
+
+        verify(employmentRepository).findExternalByPersonInvolvedId(personId);
     }
 
     private ExtraEmploymentMigrationDTO createMigrationDTO(Integer personAccountingId,

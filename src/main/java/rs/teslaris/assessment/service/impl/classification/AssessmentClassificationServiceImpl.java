@@ -1,7 +1,10 @@
 package rs.teslaris.assessment.service.impl.classification;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +17,7 @@ import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.repository.classification.AssessmentClassificationRepository;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
+import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -58,7 +62,10 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
 
         return assessmentClassificationRepository.getAssessmentClassificationsApplicableToEntity(
                 applicableEntityTypes).stream()
-            .map(AssessmentClassificationConverter::toDTO).collect(Collectors.toList());
+            .map(AssessmentClassificationConverter::toDTO)
+            .sorted(Comparator.comparingDouble(dto ->
+                calculateSortingScore(dto.code())))
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -107,5 +114,35 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
         return assessmentClassificationRepository.findByCode(code).orElseThrow(
             () -> new NotFoundException(
                 "Assessment Classification with given code does not exist - " + code + "."));
+    }
+
+    private double calculateSortingScore(String code) {
+        var sortingRule = ClassificationPriorityMapping.getAssessmentCodeStoringRule();
+
+        if (Objects.isNull(code) || !code.startsWith(sortingRule.startsWithConstraint())) {
+            return Double.MAX_VALUE;
+        }
+
+        var pattern = Pattern.compile(sortingRule.codePattern());
+        var matcher = pattern.matcher(code);
+
+        if (!matcher.find()) {
+            return Double.MAX_VALUE;
+        }
+
+        var number = Integer.parseInt(matcher.group(1));
+        var suffix = matcher.group(2);
+
+        double score = number;
+
+        if (Objects.nonNull(suffix)) {
+            for (var key : sortingRule.scoreAdjustments().keySet()) {
+                if (suffix.contains(key)) {
+                    score += sortingRule.scoreAdjustments().get(key);
+                }
+            }
+        }
+
+        return score;
     }
 }

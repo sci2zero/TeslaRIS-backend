@@ -1,13 +1,18 @@
 package rs.teslaris.thesislibrary.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,10 +32,10 @@ import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.FileSection;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.user.UserRole;
-import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidFileSectionException;
 import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.model.ThesisFileSection;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
@@ -39,11 +44,17 @@ import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryBackupService;
 @RequestMapping("/api/thesis-library/backup")
 @RequiredArgsConstructor
 @Traceable
+@Slf4j
 public class ThesisLibraryBackupController {
 
     private final ThesisLibraryBackupService thesisLibraryBackupService;
 
     private final JwtUtil tokenUtil;
+
+    private final Cache<String, Integer> tokenStore =
+        CacheBuilder.newBuilder()
+            .expireAfterWrite(5, TimeUnit.SECONDS)
+            .build();
 
 
     @PostMapping("/schedule-generation")
@@ -79,26 +90,41 @@ public class ThesisLibraryBackupController {
             tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
+    @GetMapping("/access-token")
+    @ResponseBody
+    public String initializeBackupFileDownload() {
+        if (!SessionUtil.isUserLoggedIn() ||
+            !List.of(UserRole.ADMIN, UserRole.INSTITUTIONAL_LIBRARIAN,
+                UserRole.HEAD_OF_LIBRARY).contains(
+                UserRole.valueOf(SessionUtil.getLoggedInUser().getAuthority().getName()))) {
+            throw new AccessDeniedException("unauthorisedToViewDocumentMessage");
+        }
+
+        var token = UUID.randomUUID().toString();
+
+        tokenStore.put(token, SessionUtil.getLoggedInUser().getId());
+
+        return token;
+    }
+
     @GetMapping("/download/{backupFileName}")
-    @PreAuthorize("hasAuthority('GENERATE_THESIS_LIBRARY_BACKUP')")
     @ResponseBody
     public ResponseEntity<StreamingResponseBody> serveAndDeleteBackupFile(
-        HttpServletRequest request, @PathVariable String backupFileName,
-        @RequestHeader(value = "Authorization") String bearerToken) throws IOException {
-        if (!SessionUtil.isSessionValid(request, bearerToken) ||
-            !SessionUtil.hasAnyRole(bearerToken,
-                List.of(UserRole.ADMIN, UserRole.INSTITUTIONAL_LIBRARIAN,
-                    UserRole.HEAD_OF_LIBRARY))) {
-            return ErrorResponseUtil.buildUnauthorisedStreamingResponse(request,
-                "unauthorisedToViewDocumentMessage");
+        @PathVariable String backupFileName, @RequestParam String accessToken) throws IOException {
+        if (!tokenStore.asMap().containsKey(accessToken)) {
+            throw new AccessDeniedException(
+                "You need to provide valid accessToken.");
         }
 
         var file = thesisLibraryBackupService.serveBackupFile(backupFileName,
-            tokenUtil.extractUserIdFromToken(bearerToken));
+            tokenStore.asMap().get(accessToken));
         Runnable deleteCallback = () -> thesisLibraryBackupService.deleteBackupFile(backupFileName);
 
+        tokenStore.asMap().remove(accessToken);
+
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, file.headers().get("Content-Disposition"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                StringUtil.contentDisposition(file.headers().get("Content-Disposition")))
             .header(HttpHeaders.CONTENT_TYPE, file.headers().get("Content-Type"))
             .header(HttpHeaders.CONTENT_LENGTH, file.headers().get("Content-Length"))
             .body(StreamingUtil.createStreamingBody(file, deleteCallback));

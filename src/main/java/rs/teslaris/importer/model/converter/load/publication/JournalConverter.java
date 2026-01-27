@@ -1,8 +1,9 @@
 package rs.teslaris.importer.model.converter.load.publication;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -56,9 +57,9 @@ public class JournalConverter implements RecordConverter<Publication, JournalDTO
 
         var languageTag = languageService.findLanguageByCode(languageCode);
         if (Objects.nonNull(languageTag.getId())) {
-            dto.setLanguageIds(List.of(languageTag.getId()));
+            dto.setLanguageIds(Set.of(languageTag.getId()));
         } else {
-            dto.setLanguageIds(new ArrayList<>());
+            dto.setLanguageIds(new HashSet<>());
         }
 
         return dto;

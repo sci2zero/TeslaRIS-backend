@@ -45,6 +45,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidApiKeyException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidFileSectionException;
+import rs.teslaris.core.util.exceptionhandling.exception.InvalidOAuth2CodeException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.MaintenanceModeException;
@@ -211,6 +212,14 @@ public class ErrorHandlerConfiguration {
     @ExceptionHandler(MalformedJwtException.class)
     @ResponseBody
     ErrorObject handleMalformedJwtException(HttpServletRequest request, MalformedJwtException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(InvalidOAuth2CodeException.class)
+    @ResponseBody
+    ErrorObject handleInvalidOAuth2CodeException(HttpServletRequest request,
+                                                 InvalidOAuth2CodeException ex) {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
