@@ -1703,6 +1703,38 @@ public class AssessmentDataInitializer {
                     3)));
         m00.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
+        var m102 = new AssessmentClassification();
+        m102.setFormalDescriptionOfRule("handleM102");
+        m102.setCode("M102");
+        m102.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Contest prize",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Nagrada na konkursu",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Награда на конкурсу",
+                    3)));
+        m102.setApplicableTypes(Set.of(ApplicableEntityType.PRIZE));
+
+        var m104 = new AssessmentClassification();
+        m104.setFormalDescriptionOfRule("handleM104");
+        m104.setCode("M104");
+        m104.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Exhibition prize",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Nagrada na изложби",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Награда на изложби",
+                    3)));
+        m104.setApplicableTypes(Set.of(ApplicableEntityType.PRIZE));
+
         assessmentClassificationRepository.saveAll(
             List.of(journalM21APlus, journalM21A, journalM21, journalM22, journalM23, journalM23e,
                 journalM24plus, multinationalConf, nationalConf,
@@ -1717,7 +1749,9 @@ public class AssessmentDataInitializer {
                 m11, m12, m41, m42, m43, m103,
                 m81, m82, m83, m84,
                 m91a, m91, m92, m93, m94, m95, m96, m97, m98,
-                m00)
+                m00,
+                m102, m104
+            )
         );
     }
 

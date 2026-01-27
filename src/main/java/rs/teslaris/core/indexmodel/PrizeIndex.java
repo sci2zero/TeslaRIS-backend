@@ -52,6 +52,9 @@ public class PrizeIndex {
     @Field(type = FieldType.Integer, name = "person_id", store = true)
     private Integer personId;
 
+    @Field(type = FieldType.Text, name = "person_name", store = true, analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String personName;
+
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 

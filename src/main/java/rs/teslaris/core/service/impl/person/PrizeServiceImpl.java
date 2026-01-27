@@ -241,7 +241,9 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
             PrizeIndex::setDescriptionOther);
 
         index.setDateOfAcquisition(prize.getDate());
+
         index.setPersonId(prize.getPerson().getId());
+        index.setPersonName(prize.getPerson().getName().toText());
 
         reindexPrizeVolatileInformation(prize, index, true, true);
 
