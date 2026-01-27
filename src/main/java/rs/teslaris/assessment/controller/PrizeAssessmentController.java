@@ -43,14 +43,13 @@ public class PrizeAssessmentController {
         return true;
     }
 
-    @GetMapping("/{personId}/{prizeId}")
-    @PersonEditCheck("ASSESS")
+    @GetMapping("/{prizeId}")
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForPrize(
         @PathVariable Integer prizeId) {
         return prizeAssessmentClassificationService.getAssessmentClassificationsForPrize(prizeId);
     }
 
-    @PostMapping("/{prizeId}")
+    @PostMapping
     @Idempotent
     @PreAuthorize("hasAuthority('ASSESS_PRIZE')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -66,7 +65,7 @@ public class PrizeAssessmentController {
             prizeAssessmentClassificationDTO);
     }
 
-    @PutMapping("/{prizeId}/{prizeClassificationId}")
+    @PutMapping("/{prizeClassificationId}")
     @PreAuthorize("hasAuthority('ASSESS_PRIZE')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updatePrizeClassification(@PathVariable Integer prizeClassificationId,

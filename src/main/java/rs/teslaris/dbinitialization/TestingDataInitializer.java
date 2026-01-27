@@ -17,6 +17,7 @@ import rs.teslaris.assessment.model.AssessmentResearchArea;
 import rs.teslaris.assessment.model.AssessmentRulebook;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.EventAssessmentClassification;
+import rs.teslaris.assessment.model.classification.PrizeAssessmentClassification;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
 import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
@@ -27,6 +28,7 @@ import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.assessment.repository.classification.AssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.EventAssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.classification.PrizeAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;
 import rs.teslaris.assessment.repository.indicator.EventIndicatorRepository;
@@ -193,6 +195,8 @@ public class TestingDataInitializer {
     private final MaterialProductRepository materialProductRepository;
 
     private final GeneticMaterialRepository geneticMaterialRepository;
+
+    private final PrizeAssessmentClassificationRepository prizeAssessmentClassificationRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1164,5 +1168,13 @@ public class TestingDataInitializer {
         geneticMaterial.setDocumentDate("2025-1-1");
         geneticMaterial.setGeneticMaterialType(GeneticMaterialType.STRAIN);
         geneticMaterialRepository.save(geneticMaterial);
+
+        var prizeAssessment = new PrizeAssessmentClassification();
+        prizeAssessment.setPrize(person1.getPrizes().stream().findFirst().get());
+        prizeAssessment.setAssessmentClassification(
+            assessmentClassification1);
+        prizeAssessment.setClassificationYear(2021);
+        prizeAssessment.setCommission(commission5);
+        prizeAssessmentClassificationRepository.save(prizeAssessment);
     }
 }

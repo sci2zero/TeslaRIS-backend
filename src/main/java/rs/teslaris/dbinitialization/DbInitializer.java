@@ -209,6 +209,7 @@ public class DbInitializer implements ApplicationRunner {
         var registerResearcher = new Privilege("REGISTER_RESEARCHER");
         var unpromoteRbEntries = new Privilege("UNPROMOTE_RB_ENTRIES");
         var changePublicationType = new Privilege("CHANGE_PUBLICATION_TYPE");
+        var assessPrizes = new Privilege("ASSESS_PRIZE");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -247,7 +248,7 @@ public class DbInitializer implements ApplicationRunner {
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
-                unpromoteRbEntries, changePublicationType));
+                unpromoteRbEntries, changePublicationType, assessPrizes));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -284,7 +285,7 @@ public class DbInitializer implements ApplicationRunner {
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
                 forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
-                registerResearcher, unpromoteRbEntries, changePublicationType
+                registerResearcher, unpromoteRbEntries, changePublicationType, assessPrizes
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -316,7 +317,7 @@ public class DbInitializer implements ApplicationRunner {
                 editEventAssessmentClassification, updateProfile, editEventIndicators,
                 editPublicationSeriesAssessmentClassifications, editPubSeriesIndicators,
                 allowAccountTakeover, editEntityIndicatorProofs, updateCommission,
-                editDocumentAssessment, listAssessmentClassifications
+                editDocumentAssessment, listAssessmentClassifications, assessPrizes
             )));
 
         var viceDeanForScienceAuthority =
