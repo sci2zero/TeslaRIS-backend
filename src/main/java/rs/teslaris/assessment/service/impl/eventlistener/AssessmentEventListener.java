@@ -73,7 +73,8 @@ public class AssessmentEventListener {
     @EventListener
     @Transactional(readOnly = true)
     protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
-        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+            Collections.emptyList(), Collections.emptyList());
     }
 
     private List<AssessmentMeasure> loadAssessmentMeasures() {
@@ -186,15 +187,15 @@ public class AssessmentEventListener {
                     case PUBLICATION_SERIES ->
                         documentAssessmentClassificationService.classifyJournalPublications(
                             assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                            Collections.emptyList(), List.of(event.entityId()));
+                            Collections.emptyList(), List.of(event.entityId()), false);
                     case EVENT ->
                         documentAssessmentClassificationService.classifyProceedingsPublications(
                             assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                            Collections.emptyList(), List.of(event.entityId()));
+                            Collections.emptyList(), List.of(event.entityId()), false);
                     case MONOGRAPH ->
                         documentAssessmentClassificationService.classifyMonographPublications(
                             assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                            Collections.emptyList(), List.of(event.entityId()));
+                            Collections.emptyList(), List.of(event.entityId()), false);
                     default -> log.warn("Unhandled entityType={} in classification switch",
                         event.entityType());
                 }

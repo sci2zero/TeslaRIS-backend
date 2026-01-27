@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,6 +40,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.functional.Triple;
 
 @SpringBootTest
@@ -72,6 +72,9 @@ public class PersonAssessmentClassificationServiceTest {
 
     @Mock
     private CommissionService commissionService;
+
+    @Mock
+    private SearchService<PersonIndex> searchService;
 
     @InjectMocks
     private PersonAssessmentClassificationServiceImpl personAssessmentClassificationService;
@@ -115,7 +118,7 @@ public class PersonAssessmentClassificationServiceTest {
         var researcher2 = new PersonIndex();
         researcher2.setDatabaseId(2);
 
-        when(personIndexRepository.findAll(PageRequest.of(0, 1000)))
+        when(searchService.runQuery(any(), eq(PageRequest.of(0, 1000)), any(), any()))
             .thenReturn(
                 new PageImpl<>(List.of(researcher1, researcher2), PageRequest.of(0, 1000), 2));
 
@@ -129,11 +132,11 @@ public class PersonAssessmentClassificationServiceTest {
             Optional.of(new AssessmentRulebook()));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+            Collections.emptyList(), Collections.emptyList());
 
         // Then
-        verify(personIndexRepository, atLeastOnce()).findAll(any(PageRequest.class));
-        verify(personIndexRepository).findAll(PageRequest.of(0, 1000));
+        verify(searchService, times(1)).runQuery(any(), any(PageRequest.class), any(), any());
     }
 
     @Test
@@ -357,7 +360,7 @@ public class PersonAssessmentClassificationServiceTest {
     @Test
     void shouldStopWhenNoMoreResearchers() {
         // Given
-        when(personIndexRepository.findAll(PageRequest.of(0, 1000)))
+        when(searchService.runQuery(any(), eq(PageRequest.of(0, 1000)), any(), any()))
             .thenReturn(new PageImpl<>(Collections.emptyList()));
         when(assessmentRulebookRepository.findDefaultRulebook()).thenReturn(
             Optional.of(new AssessmentRulebook()));
@@ -368,10 +371,11 @@ public class PersonAssessmentClassificationServiceTest {
             .thenReturn(new PageImpl<>(List.of(assessmentMeasure)));
 
         // When
-        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+            Collections.emptyList(), Collections.emptyList());
 
         // Then
-        verify(personIndexRepository, times(1)).findAll(any(PageRequest.class));
+        verify(searchService, times(1)).runQuery(any(), any(PageRequest.class), any(), any());
         verify(personIndexRepository, never()).findAll(PageRequest.of(1, 1000));
     }
 }

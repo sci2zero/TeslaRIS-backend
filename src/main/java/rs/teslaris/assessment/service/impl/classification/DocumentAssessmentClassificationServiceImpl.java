@@ -301,15 +301,15 @@ public class DocumentAssessmentClassificationServiceImpl
                 switch (documentPublicationType) {
                     case JOURNAL_PUBLICATION ->
                         classifyJournalPublications(fromDate, commissionId, authorIds, orgUnitIds,
-                            publishedInIds);
+                            publishedInIds, true);
                     case PROCEEDINGS_PUBLICATION ->
                         classifyProceedingsPublications(fromDate, commissionId, authorIds,
-                            orgUnitIds, publishedInIds);
+                            orgUnitIds, publishedInIds, true);
                     case THESIS -> classifyTheses(fromDate, commissionId, authorIds, orgUnitIds,
-                        publishedInIds);
+                        publishedInIds, true);
                     case MONOGRAPH_PUBLICATION ->
                         classifyMonographPublications(fromDate, commissionId, authorIds, orgUnitIds,
-                            publishedInIds);
+                            publishedInIds, true);
                 }
             }, userId, RecurrenceType.ONCE);
 
@@ -361,15 +361,16 @@ public class DocumentAssessmentClassificationServiceImpl
     @Override
     public void classifyJournalPublications(LocalDate fromDate, Integer commissionId,
                                             List<Integer> authorIds, List<Integer> orgUnitIds,
-                                            List<Integer> journalIds) {
+                                            List<Integer> journalIds, boolean performIndex) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, journalIds,
-            List.of(DocumentPublicationType.JOURNAL_PUBLICATION), this::assessJournalPublication);
+            List.of(DocumentPublicationType.JOURNAL_PUBLICATION), this::assessJournalPublication,
+            performIndex);
     }
 
     @Override
     public void classifyProceedingsPublications(LocalDate fromDate, Integer commissionId,
                                                 List<Integer> authorIds, List<Integer> orgUnitIds,
-                                                List<Integer> eventIds) {
+                                                List<Integer> eventIds, boolean performIndex) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
             List.of(DocumentPublicationType.PROCEEDINGS_PUBLICATION),
             (publicationIndex, organisationUnitId,
@@ -380,32 +381,32 @@ public class DocumentAssessmentClassificationServiceImpl
                     () -> this.assessProceedingsPublication(publicationIndex, organisationUnitId,
                         presetCommission, batchClassifications);
                 assessment.run();
-            });
+            }, performIndex);
     }
 
     @Override
     public void classifyTheses(LocalDate fromDate, Integer commissionId,
                                List<Integer> authorIds, List<Integer> orgUnitIds,
-                               List<Integer> eventIds) {
+                               List<Integer> eventIds, boolean performIndex) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, eventIds,
-            List.of(DocumentPublicationType.THESIS),
-            this::assessThesis);
+            List.of(DocumentPublicationType.THESIS), this::assessThesis, performIndex);
     }
 
     @Override
     public void classifyMonographPublications(LocalDate fromDate, Integer commissionId,
                                               List<Integer> authorIds, List<Integer> orgUnitIds,
-                                              List<Integer> monographIds) {
+                                              List<Integer> monographIds, boolean performIndex) {
         classifyPublications(fromDate, commissionId, authorIds, orgUnitIds, monographIds,
             List.of(DocumentPublicationType.MONOGRAPH_PUBLICATION),
-            this::assessMonographPublication);
+            this::assessMonographPublication, performIndex);
     }
 
     private void classifyPublications(LocalDate fromDate, Integer commissionId,
                                       List<Integer> authorIds, List<Integer> orgUnitIds,
                                       List<Integer> entityIds,
                                       List<DocumentPublicationType> publicationTypes,
-                                      QuadConsumer<DocumentPublicationIndex, Integer, Commission, ArrayList<DocumentAssessmentClassification>> assessFunction) {
+                                      QuadConsumer<DocumentPublicationIndex, Integer, Commission, ArrayList<DocumentAssessmentClassification>> assessFunction,
+                                      boolean performIndex) {
         int pageNumber = 0;
         int chunkSize = 500;
         boolean hasNextPage = true;
@@ -432,7 +433,10 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         // TODO: FIX THIS
-//        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
+        if (performIndex) {
+            personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+                authorIds, orgUnitIds);
+        }
     }
 
     private void assessThesis(DocumentPublicationIndex thesisIndex,
