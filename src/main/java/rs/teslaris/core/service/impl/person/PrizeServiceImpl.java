@@ -50,15 +50,24 @@ import rs.teslaris.core.util.search.StringUtil;
 @Traceable
 public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeService {
 
-    protected final SearchService<PrizeIndex> searchService;
     private final PrizeRepository prizeRepository;
+
     private final PersonService personService;
+
     private final MultilingualContentService multilingualContentService;
+
     private final DocumentFileService documentFileService;
+
     private final PrizeIndexRepository prizeIndexRepository;
+
     private final PersonIndexRepository personIndexRepository;
+
     private final CommissionRepository commissionRepository;
+
     private final OrganisationUnitService organisationUnitService;
+
+    private final SearchService<PrizeIndex> searchService;
+
 
     @Override
     protected JpaRepository<Prize, Integer> getEntityRepository() {
@@ -244,6 +253,7 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
 
         index.setPersonId(prize.getPerson().getId());
         index.setPersonName(prize.getPerson().getName().toText());
+        index.setPersonNameSortable(index.getPersonName());
 
         reindexPrizeVolatileInformation(prize, index, true, true);
 

@@ -38,6 +38,9 @@ public class SearchServiceImplES<T> implements SearchService<T> {
 
     private final ElasticsearchClient elasticsearchClient;
 
+    // Small-record indexes that do not need to implement field omission logic
+    private final List<String> indexesExcludedFromFieldOmission = List.of("prize");
+
     // Very large fields, not needed for display, only for search
     private final List<String> fieldsToOmit = List.of(
         "full_text_sr", "full_text_other", "description_sr", "description_other"
@@ -64,7 +67,8 @@ public class SearchServiceImplES<T> implements SearchService<T> {
             .withPageable(pageable)
             .withTrackTotalHits(true)
             .withSourceFilter(new FetchSourceFilterBuilder()
-                .withExcludes(fieldsToOmit.toArray(new String[0]))
+                .withExcludes(!indexesExcludedFromFieldOmission.contains(indexName) ?
+                    fieldsToOmit.toArray(new String[0]) : new String[] {})
                 .build());
 
         var searchQuery = searchQueryBuilder.build();
@@ -107,7 +111,8 @@ public class SearchServiceImplES<T> implements SearchService<T> {
                 .withPageable(PageRequest.of(0, pageSize))
                 .withTrackTotalHits(true)
                 .withSourceFilter(new FetchSourceFilterBuilder()
-                    .withExcludes(fieldsToOmit.toArray(new String[0]))
+                    .withExcludes(!indexesExcludedFromFieldOmission.contains(indexName) ?
+                        fieldsToOmit.toArray(new String[0]) : new String[] {})
                     .build());
 
             if (Objects.nonNull(searchAfter)) {
