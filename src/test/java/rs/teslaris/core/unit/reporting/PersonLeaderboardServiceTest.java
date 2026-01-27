@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
@@ -646,9 +647,8 @@ public class PersonLeaderboardServiceTest {
             when(bucket1.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg1));
 
             var bucket2 = mock(LongTermsBucket.class);
-
             when(bucket2.key()).thenReturn(2L);
-
+            when(bucket2.key()).thenReturn(FieldValue.of(2).longValue());
             var totalPointsAgg2 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
             var sumAgg2 = mock(SumAggregate.class);
             when(sumAgg2.value()).thenReturn(75.0);
@@ -656,12 +656,14 @@ public class PersonLeaderboardServiceTest {
             when(bucket2.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg2));
 
             var byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+
             when(byPersonAgg.nested()
                 .aggregations().get("filtered_by_person")
                 .filter()
                 .aggregations().get("person_buckets")
                 .isLterms()
             ).thenReturn(true);
+
             when(byPersonAgg.nested()
                 .aggregations().get("filtered_by_person")
                 .filter()

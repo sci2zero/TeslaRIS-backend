@@ -82,7 +82,6 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")
-
     private Set<Integer> oldIds = new HashSet<>();
 
     @JdbcTypeCode(SqlTypes.JSON)

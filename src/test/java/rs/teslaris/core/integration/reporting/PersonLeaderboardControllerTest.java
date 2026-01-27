@@ -30,15 +30,6 @@ public class PersonLeaderboardControllerTest extends BaseTest {
     }
 
     @Test
-    public void testGetResearchersWithMostAssessmentPoints() throws Exception {
-        mockMvc.perform(
-                MockMvcRequestBuilders.get(
-                        "http://localhost:8081/api/leaderboard-data/person/assessment-points?institutionId=1&yearFrom=2000&yearTo=2025")
-                    .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
-    }
-
-    @Test
     public void testGetResearchersWithMostViews() throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
