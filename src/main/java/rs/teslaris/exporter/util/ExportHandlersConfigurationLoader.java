@@ -28,7 +28,7 @@ public class ExportHandlersConfigurationLoader {
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
-    private static void reloadConfiguration() {
+    protected static void reloadConfiguration() {
         try {
             exportHandlersConfiguration = ConfigurationLoaderUtil.loadConfiguration(
                 ExportHandlersConfiguration.class,
@@ -61,6 +61,8 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty(value = "handlerDescription", required = true) String handlerDescription,
         @JsonProperty(value = "handlerLanguage", required = true) String handlerLanguage,
         @JsonProperty(value = "supportLegacyIdentifiers", required = true) boolean supportLegacyIdentifiers,
+        @JsonProperty(value = "dateFormat") String dateFormat,
+        @JsonProperty(value = "supportedLanguages") List<String> supportedLanguages,
         @JsonProperty(value = "sets", required = true) List<Set> sets,
         @JsonProperty(value = "metadataFormats", required = true) List<String> metadataFormats,
         @JsonProperty(value = "exportOnlyActiveEmployees", required = true) Boolean exportOnlyActiveEmployees,

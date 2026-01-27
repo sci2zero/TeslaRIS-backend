@@ -236,7 +236,7 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Keyword, name = "apa", index = false)
     private String apa;
 
-    @Field(type = FieldType.Object, name = "assessment_points")
+    @Field(type = FieldType.Nested, name = "assessment_points")
     private List<Triple<Integer, Integer, Double>> assessmentPoints = new ArrayList<>();
 
     @Field(type = FieldType.Long, name = "total_citations", store = true)
@@ -250,4 +250,13 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "is_added_to_registry_book", store = true)
     private Boolean isAddedToRegistryBook;
+
+    @Field(type = FieldType.Boolean, name = "has_sr_content", store = true)
+    private Boolean hasSrContent;
+
+    @Field(type = FieldType.Integer, name = "number_of_pages", store = true)
+    private Integer numberOfPages;
+
+    @Field(type = FieldType.Boolean, name = "has_publications", store = true)
+    private Boolean hasPublications;
 }

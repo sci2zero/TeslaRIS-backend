@@ -333,7 +333,7 @@ public class DocumentPublicationServiceTest {
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
                 pageable, SearchRequestType.SIMPLE, institutionId, commissionId, false, false,
-                null, false);
+                null, false, false, false);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -353,7 +353,8 @@ public class DocumentPublicationServiceTest {
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
                 pageable, SearchRequestType.ADVANCED, null, null,
-                null, null, new ArrayList<>(), false);
+                null, null, new ArrayList<>(), false,
+                false, false);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -388,7 +389,7 @@ public class DocumentPublicationServiceTest {
         documentPublicationService.deleteDocumentPublication(documentId);
 
         // Then
-        verify(documentRepository, times(1)).delete(any());
+        verify(documentRepository, times(1)).save(any());
         verify(documentPublicationIndexRepository, times(1)).delete(any());
     }
 
@@ -407,7 +408,7 @@ public class DocumentPublicationServiceTest {
         documentPublicationService.deleteDocumentPublication(documentId);
 
         // Then
-        verify(documentRepository, times(1)).delete(any());
+        verify(documentRepository, times(1)).save(any());
         verify(documentPublicationIndexRepository, never()).delete(any());
     }
 
@@ -864,6 +865,7 @@ public class DocumentPublicationServiceTest {
                 documentId, DocumentPublicationType.PROCEEDINGS_PUBLICATION.name()))
             .thenReturn(Optional.of(mockDoc));
         when(mockDoc.getWordcloudTokensSr()).thenReturn(terms);
+        when(mockDoc.getHasSrContent()).thenReturn(true);
 
         // when
         var result = documentPublicationService.getWordCloudForSingleDocument(documentId,
@@ -1273,7 +1275,7 @@ public class DocumentPublicationServiceTest {
         doReturn(emptyPage)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any());
+                any(), any(), any(), any());
 
         // When
         spyService.deleteNonManagedDocuments();
@@ -1296,7 +1298,7 @@ public class DocumentPublicationServiceTest {
         doReturn(page)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any());
+                any(), any(), any(), any());
         doNothing()
             .when(spyService)
             .deleteDocumentPublication(any());
@@ -1324,7 +1326,7 @@ public class DocumentPublicationServiceTest {
         doReturn(firstPage)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any());
+                any(), any(), any(), any());
         doNothing()
             .when(spyService)
             .deleteDocumentPublication(any());
@@ -1335,7 +1337,7 @@ public class DocumentPublicationServiceTest {
         // Then
         verify(spyService).deleteDocumentPublication(10);
         verify(spyService, times(1)).searchDocumentPublications(any(), any(), any(), any(), any(),
-            any(), anyBoolean(), any(), any());
+            any(), anyBoolean(), any(), any(), any(), any());
     }
 
     @Test

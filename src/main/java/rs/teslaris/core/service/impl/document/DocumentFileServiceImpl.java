@@ -312,7 +312,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         var oldResourceType = documentFileToEdit.getResourceType();
 
-        if (!documentFileToEdit.getCanEdit()) {
+        if (!SessionUtil.isUserLoggedInAndAdmin() && !documentFileToEdit.getCanEdit()) {
             throw new StorageException(
                 "Document file with ID " + documentFile.getId() + " can't be edited.");
         }

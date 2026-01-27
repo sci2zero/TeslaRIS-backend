@@ -78,7 +78,9 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               Boolean authorReprint,
                                                               Boolean unmanaged,
                                                               List<DocumentPublicationType> allowedTypes,
-                                                              Boolean notArchivedOnly);
+                                                              Boolean notArchivedOnly,
+                                                              Boolean showProceedings,
+                                                              Boolean emptyProceedingsOnly);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
                                                           String scopusId, String openAlexId,

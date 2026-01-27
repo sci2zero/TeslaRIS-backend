@@ -89,4 +89,7 @@ public class EventIndex {
 
     @Field(type = FieldType.Keyword, store = true, name = "open_alex_id")
     private String openAlexId;
+
+    @Field(type = FieldType.Boolean, name = "has_proceedings", store = true)
+    private Boolean hasProceedings;
 }

@@ -64,6 +64,9 @@ public interface UserService extends UserDetailsService, JPAService<User> {
     User registerResearcherOAuth(ResearcherRegistrationRequestDTO registrationRequest,
                                  OAuth2Provider oAuth2Provider, String identifier);
 
+    User registerResearcherAdmin(ResearcherRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException;
+
     User registerInstitutionEmployee(EmployeeRegistrationRequestDTO registrationRequest,
                                      UserRole userRole) throws NoSuchAlgorithmException;
 

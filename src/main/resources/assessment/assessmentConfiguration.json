@@ -99,5 +99,29 @@
     "M23e": 6,
     "M24Plus": 7,
     "M24": 8
+  },
+  "typeToSupportedClassifications": {
+    "REVIEW_ARTICLE": ["ALL"],
+    "RESEARCH_ARTICLE": ["ALL"],
+    "REGULAR_FULL_ARTICLE": ["ALL"],
+    "INVITED_FULL_ARTICLE": ["ALL"],
+    "REGULAR_ABSTRACT_ARTICLE": ["ALL"],
+    "INVITED_ABSTRACT_ARTICLE": ["ALL"],
+    "SCIENTIFIC_CRITIC": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
+    "POLEMICS": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
+    "COMMENT": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
+    "PHD": ["M70"],
+    "PHD_ART_PROJECT": ["M70"]
+  },
+  "minimumPageRequirements": {
+    "SCIENTIFIC_CRITIC": 2,
+    "POLEMICS": 2,
+    "COMMENT": 2,
+    "REGULAR_ABSTRACT_ARTICLE": 2,
+    "INVITED_ABSTRACT_ARTICLE": 2
+  },
+  "defendedThesesMapping": {
+    "PHD": "M70",
+    "PHD_ART_PROJECT": "M70"
   }
 }

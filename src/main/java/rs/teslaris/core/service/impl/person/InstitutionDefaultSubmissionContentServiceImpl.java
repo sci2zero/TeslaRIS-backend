@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.person;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,7 @@ public class InstitutionDefaultSubmissionContentServiceImpl
             institutionIds = user.getPerson().getInvolvements().stream()
                 .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                     i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                    i.getOrganisationUnit() != null)
+                    Objects.nonNull(i.getOrganisationUnit()))
                 .map(i -> i.getOrganisationUnit().getId())
                 .toList();
         } else {

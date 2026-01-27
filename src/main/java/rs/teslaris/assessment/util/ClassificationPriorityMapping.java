@@ -3,6 +3,7 @@ package rs.teslaris.assessment.util;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,10 +18,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
+import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
@@ -54,7 +57,7 @@ public class ClassificationPriorityMapping {
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
-    private static void reloadConfiguration() {
+    protected static void reloadConfiguration() {
         try {
             assessmentConfig = ConfigurationLoaderUtil.loadConfiguration(AssessmentConfig.class,
                 "src/main/resources/assessment/assessmentConfiguration.json",
@@ -107,7 +110,17 @@ public class ClassificationPriorityMapping {
         if (documentCode.equals("M24") ||
             assessmentConfig.classificationPriorities.get(classificationCode) <
                 assessmentConfig.classificationPriorities.get("journalM24")) {
-            return journalPublicationRepository.findById(documentId).flatMap(
+            var journalPublicationOptional = journalPublicationRepository.findById(documentId);
+
+            if (journalPublicationOptional.isEmpty()) {
+                var proceedingsPublicationOptional =
+                    proceedingsPublicationRepository.findById(documentId);
+
+                return proceedingsPublicationOptional.isPresent() ? Optional.of(documentCode) :
+                    Optional.empty();
+            }
+
+            return journalPublicationOptional.flatMap(
                 journalPublication -> getMappedCode(documentCode,
                     journalPublication.getJournalPublicationType()));
         }
@@ -168,17 +181,23 @@ public class ClassificationPriorityMapping {
 
     private static Optional<String> getMappedCode(String baseCode,
                                                   JournalPublicationType type) {
+        if (baseCode.startsWith("M21")) {
+            return Optional.of(baseCode);
+        }
+
         Map<JournalPublicationType, String> mappingM26 = Map.of(
-            JournalPublicationType.SCIENTIFIC_CRITIC, "M26"
+            JournalPublicationType.SCIENTIFIC_CRITIC, "M26",
+            JournalPublicationType.POLEMICS, "M26"
         );
 
         Map<JournalPublicationType, String> mappingM27 = Map.of(
-            JournalPublicationType.SCIENTIFIC_CRITIC, "M27"
+            JournalPublicationType.SCIENTIFIC_CRITIC, "M27",
+            JournalPublicationType.POLEMICS, "M27"
         );
 
         return Optional.ofNullable(
-            baseCode.equals("M24") ? mappingM26.getOrDefault(type, baseCode) :
-                mappingM27.getOrDefault(type, baseCode)
+            baseCode.equals("M24") ? mappingM27.getOrDefault(type, baseCode) :
+                mappingM26.getOrDefault(type, baseCode)
         );
     }
 
@@ -230,13 +249,44 @@ public class ClassificationPriorityMapping {
             .getOrDefault(locale, "");
     }
 
+    public static boolean canPublicationTypeBeClassifiedAsCode(String publicationType,
+                                                               String documentClassificationCode) {
+        var mapping = assessmentConfig.typeToSupportedClassifications.getOrDefault(publicationType,
+            new ArrayList<>());
+
+        return mapping.contains(documentClassificationCode) || mapping.contains("ALL");
+    }
+
+    public static boolean meetsPageRequirements(DocumentPublicationIndex document) {
+        var minimumPageCount = assessmentConfig.minimumPageRequirements
+            .getOrDefault(document.getPublicationType(), 0);
+
+        if (minimumPageCount == 0) {
+            return true;
+        }
+
+        if (Objects.isNull(document.getNumberOfPages())) {
+            return false;
+        }
+
+        return document.getNumberOfPages() >= minimumPageCount;
+    }
+
+    @Nullable
+    public static String getAssessmentCodeForThesisType(ThesisType thesisType) {
+        return assessmentConfig.defendedThesesMapping().getOrDefault(thesisType, null);
+    }
+
     private record AssessmentConfig(
         @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
         @JsonProperty("groupToClassificationsMapping") Map<String, List<String>> groupToClassificationsMapping,
         @JsonProperty("groupToNameMapping") Map<String, Map<String, String>> groupToNameMapping,
         @JsonProperty("sciList") List<String> sciList,
-        @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities
+        @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities,
+        @JsonProperty("typeToSupportedClassifications") Map<String, List<String>> typeToSupportedClassifications,
+        @JsonProperty("minimumPageRequirements") Map<String, Integer> minimumPageRequirements,
+        @JsonProperty("defendedThesesMapping") Map<ThesisType, String> defendedThesesMapping
     ) {
     }
 }

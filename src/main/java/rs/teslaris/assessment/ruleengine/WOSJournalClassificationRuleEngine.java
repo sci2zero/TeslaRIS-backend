@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
+import rs.teslaris.assessment.model.indicator.EntityIndicator;
 import rs.teslaris.assessment.model.indicator.EntityIndicatorSource;
 import rs.teslaris.assessment.model.indicator.PublicationSeriesIndicator;
 import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessmentClassificationRepository;
@@ -126,7 +127,10 @@ public class WOSJournalClassificationRuleEngine extends JournalClassificationRul
 
             if (conditionPassed) {
                 var ruleCode = rulePrefix + suffix;
-                var rank = suffix.equals("JCI") ? String.valueOf(indicator.getNumericValue()) :
+                var rank = suffix.equals("JCI") ?
+                    Optional.ofNullable(findIndicatorByCode("jciRank", category))
+                        .map(EntityIndicator::getTextualValue)
+                        .orElseGet(() -> String.valueOf(indicator.getNumericValue())) :
                     indicator.getTextualValue();
 
                 reasoningProcess = AssessmentRulesConfigurationLoader.getRuleDescription(

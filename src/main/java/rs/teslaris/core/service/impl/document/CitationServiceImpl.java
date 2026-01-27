@@ -90,6 +90,10 @@ public class CitationServiceImpl implements CitationService {
     private void populatePublicationDetails(CSLItemDataBuilder itemBuilder,
                                             DocumentPublicationIndex index,
                                             String languageCode) {
+        if (Objects.isNull(index.getType())) {
+            return;
+        }
+
         switch (index.getType()) {
             case "JOURNAL_PUBLICATION" -> {
                 var journalPublication =
@@ -98,10 +102,21 @@ public class CitationServiceImpl implements CitationService {
                             "Journal publication ID " + index.getDatabaseId() + " does not exist"));
                 itemBuilder
                     .containerTitle(
-                        getContent(journalPublication.getJournal().getTitle(), languageCode))
-                    .volume(journalPublication.getVolume())
-                    .issue(journalPublication.getIssue())
-                    .page(journalPublication.getStartPage(), journalPublication.getEndPage());
+                        getContent(journalPublication.getJournal().getTitle(), languageCode));
+
+                if (StringUtil.valueExists(journalPublication.getVolume())) {
+                    itemBuilder.volume(journalPublication.getVolume());
+                }
+
+                if (StringUtil.valueExists(journalPublication.getVolume())) {
+                    itemBuilder.issue(journalPublication.getIssue());
+                }
+
+                if (StringUtil.valueExists(journalPublication.getStartPage()) &&
+                    StringUtil.valueExists(journalPublication.getEndPage())) {
+                    itemBuilder.page(journalPublication.getStartPage() + "-" +
+                        journalPublication.getEndPage());
+                }
             }
             case "PROCEEDINGS_PUBLICATION" -> {
                 var proceedingsPublication =
@@ -111,10 +126,18 @@ public class CitationServiceImpl implements CitationService {
                                 " does not exist"));
                 itemBuilder
                     .containerTitle(
-                        getContent(proceedingsPublication.getEvent().getName(), languageCode))
-                    .number(proceedingsPublication.getArticleNumber())
-                    .page(proceedingsPublication.getStartPage(),
+                        getContent(proceedingsPublication.getProceedings().getEvent().getName(),
+                            languageCode));
+
+                if (StringUtil.valueExists(proceedingsPublication.getArticleNumber())) {
+                    itemBuilder.number(proceedingsPublication.getArticleNumber());
+                }
+
+                if (StringUtil.valueExists(proceedingsPublication.getStartPage()) &&
+                    StringUtil.valueExists(proceedingsPublication.getEndPage())) {
+                    itemBuilder.page(proceedingsPublication.getStartPage(),
                         proceedingsPublication.getEndPage());
+                }
             }
         }
 
@@ -123,7 +146,7 @@ public class CitationServiceImpl implements CitationService {
                 .ifPresent(publisher -> {
                     itemBuilder.publisher(getContent(publisher.getName(), languageCode));
 
-                    if (Objects.nonNull(publisher.getPlace())) {
+                    if (Objects.nonNull(publisher.getPlace()) && !publisher.getPlace().isEmpty()) {
                         itemBuilder.publisherPlace(getContent(publisher.getPlace(), languageCode));
                     }
                 });

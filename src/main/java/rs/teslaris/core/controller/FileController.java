@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -97,7 +98,8 @@ public class FileController {
             Hibernate.getClass(documentFile.getDocument()).equals(Thesis.class);
 
         if (isThesisDocument && ((Thesis) documentFile.getDocument()).getIsOnPublicReview()) {
-            if (!documentFile.getResourceType().equals(ResourceType.STATEMENT)) {
+            if (List.of(ResourceType.PREPRINT, ResourceType.STATEMENT, ResourceType.SUPPLEMENT)
+                .contains(documentFile.getResourceType())) {
                 return serveFile(filename, documentFile, file, inline);
             }
 

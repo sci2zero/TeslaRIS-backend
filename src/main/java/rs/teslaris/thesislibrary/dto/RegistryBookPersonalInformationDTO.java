@@ -27,7 +27,6 @@ public class RegistryBookPersonalInformationDTO {
     @NotBlank(message = "You have to provide author's place of birth.")
     private String placeOfBrith;
 
-    @NotBlank(message = "You have to provide author's municipality of birth.")
     private String municipalityOfBrith;
 
     @NotNull(message = "You have to provide author's country of birth.")

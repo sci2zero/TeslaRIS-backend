@@ -9,7 +9,7 @@ public enum ThesisAttachmentType {
 
     SUPPLEMENT(ResourceType.SUPPLEMENT),
 
-    COMMISSION_REPORT(ResourceType.SUPPLEMENT);
+    COMMISSION_REPORT(ResourceType.STATEMENT);
 
 
     private final ResourceType resourceType;

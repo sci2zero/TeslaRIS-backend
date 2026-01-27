@@ -18,6 +18,15 @@ public interface DocumentIndicatorRepository extends JpaRepository<DocumentIndic
     List<DocumentIndicator> findIndicatorsForDocumentAndIndicatorAccessLevel(Integer documentId,
                                                                              AccessLevel accessLevel);
 
+    @Query("""
+            SELECT di FROM DocumentIndicator di
+            WHERE di.document.id IN :documentIds AND di.indicator.accessLevel <= :accessLevel
+        """)
+    List<DocumentIndicator> findIndicatorsForDocumentsAndIndicatorAccessLevel(
+        List<Integer> documentIds,
+        AccessLevel accessLevel
+    );
+
     @Transactional
     @Query("SELECT di FROM DocumentIndicator di " +
         "WHERE di.indicator.code = :code AND di.document.id = :documentId")

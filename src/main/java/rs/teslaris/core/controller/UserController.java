@@ -143,11 +143,19 @@ public class UserController {
         @RequestBody @Valid ResearcherRegistrationRequestDTO registrationRequest) {
         var newUser = userService.registerResearcher(registrationRequest);
 
-        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
-            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredUILanguage().getLanguageTag(),
-            newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
-            newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
+        return constructSimpleUserResponse(newUser);
+    }
+
+    @PostMapping("/register-researcher-admin")
+    @PreAuthorize("hasAuthority('REGISTER_RESEARCHER')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
+    public UserResponseDTO registerResearcherAdmin(
+        @RequestBody @Valid ResearcherRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
+        var newUser = userService.registerResearcherAdmin(registrationRequest);
+
+        return constructSimpleUserResponse(newUser);
     }
 
     @PostMapping("/register-researcher-oauth")
@@ -159,11 +167,7 @@ public class UserController {
         var newUser =
             userService.registerResearcherOAuth(registrationRequest, provider, identifier);
 
-        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
-            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
-            newUser.getPreferredUILanguage().getLanguageTag(),
-            newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
-            newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
+        return constructSimpleUserResponse(newUser);
     }
 
     @GetMapping("/register-researcher-creation-allowed")
@@ -311,5 +315,13 @@ public class UserController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void resendActivationEmail(@PathVariable Integer userId) {
         userService.resendUserActivationEmail(userId);
+    }
+
+    private UserResponseDTO constructSimpleUserResponse(User newUser) {
+        return new UserResponseDTO(newUser.getId(), newUser.getEmail(), newUser.getFirstname(),
+            newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
+            newUser.getPreferredUILanguage().getLanguageTag(),
+            newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
+            newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
     }
 }

@@ -29,7 +29,9 @@ import org.springframework.web.client.RestTemplate;
 public class ScopusAuthenticationHelper {
 
     public final RestTemplate restTemplate;
+
     public Map<String, String> headers = new HashMap<>();
+
     private boolean authenticated = false;
 
     @Value("${scopus.api.key}")
@@ -83,6 +85,12 @@ public class ScopusAuthenticationHelper {
         }
 
         return authenticated;
+    }
+
+    public boolean refreshAuthentication() {
+        this.authenticated = false;
+
+        return authenticate();
     }
 
     private boolean getAuthtoken(int choice, Map<String, String> headers) {

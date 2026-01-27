@@ -21,7 +21,6 @@ import rs.teslaris.thesislibrary.service.interfaces.PromotionService;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements PromotionService {
 
@@ -38,6 +37,7 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<PromotionDTO> getAllPromotions(Integer institutionId, Pageable pageable) {
         if (Objects.nonNull(institutionId) && institutionId > 0) {
             return promotionRepository.findAll(institutionId, pageable)
@@ -48,17 +48,19 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     }
 
     @Override
-    public List<PromotionDTO> getNonFinishedPromotions(Integer institutionId) {
+    @Transactional(readOnly = true)
+    public List<PromotionDTO> getPromotionsBasedOnStatus(Integer institutionId, boolean finished) {
         if (Objects.nonNull(institutionId)) {
-            return promotionRepository.getNonFinishedPromotions(institutionId).stream()
+            return promotionRepository.getPromotionsBasedOnStatus(institutionId, finished).stream()
                 .map(PromotionConverter::toDTO).toList();
         }
 
-        return promotionRepository.getNonFinishedPromotions().stream()
+        return promotionRepository.getPromotionsBasedOnStatus(finished).stream()
             .map(PromotionConverter::toDTO).toList();
     }
 
     @Override
+    @Transactional
     public Promotion createPromotion(PromotionDTO promotionDTO) {
         var newPromotion = new Promotion();
 
@@ -68,6 +70,7 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     }
 
     @Override
+    @Transactional
     public Promotion migratePromotion(PromotionDTO promotionDTO) {
         var newPromotion = new Promotion();
 
@@ -78,6 +81,7 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     }
 
     @Override
+    @Transactional
     public void updatePromotion(Integer promotionId, PromotionDTO promotionDTO) {
         var promotionToUpdate = findOne(promotionId);
 
@@ -100,11 +104,17 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     }
 
     @Override
+    @Transactional
     public void deletePromotion(Integer promotionId) {
         if (promotionRepository.hasPromotableEntries(promotionId)) {
             throw new PromotionException("Promotion has entries.");
         }
 
         promotionRepository.delete(findOne(promotionId));
+    }
+
+    @Override
+    public boolean isPromotionEmpty(Integer promotionId) {
+        return promotionRepository.hasPromotableEntries(promotionId);
     }
 }

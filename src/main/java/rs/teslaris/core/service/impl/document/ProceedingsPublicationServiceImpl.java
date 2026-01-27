@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -19,9 +20,11 @@ import rs.teslaris.core.dto.document.ProceedingsPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -57,6 +60,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     private final ConferenceService conferenceService;
 
+    private final JournalPublicationRepository journalPublicationRepository;
+
+    private final JournalIndexRepository journalIndexRepository;
+
 
     @Autowired
     public ProceedingsPublicationServiceImpl(MultilingualContentService multilingualContentService,
@@ -78,7 +85,9 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository,
-                                             ConferenceService conferenceService) {
+                                             ConferenceService conferenceService,
+                                             JournalPublicationRepository journalPublicationRepository,
+                                             JournalIndexRepository journalIndexRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -89,6 +98,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;
         this.conferenceService = conferenceService;
+        this.journalPublicationRepository = journalPublicationRepository;
+        this.journalIndexRepository = journalIndexRepository;
     }
 
     @Override
@@ -221,6 +232,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
     @Transactional(readOnly = true)
     public void indexProceedingsPublication(ProceedingsPublication publication,
                                             DocumentPublicationIndex index) {
+        var proceedingsIds = new ArrayList<>(List.of(publication.getProceedings().getId()));
+        if (Objects.nonNull(index.getProceedingsId()) &&
+            !proceedingsIds.contains(index.getProceedingsId())) {
+            proceedingsIds.add(index.getProceedingsId());
+        }
+
         indexCommonFields(publication, index);
 
         index.setEventId(publication.getProceedings().getEvent().getId());
@@ -232,11 +249,30 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         if (Objects.nonNull(publication.getProceedings())) {
             index.setProceedingsId(publication.getProceedings().getId());
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                publication.getProceedings().getId()).ifPresent(proceedingsIndex -> {
+                if (Objects.nonNull(proceedingsIndex.getJournalId())) {
+                    index.setJournalId(proceedingsIndex.getJournalId());
+                }
+            });
         }
 
+        calculateNumberOfPages(publication, index);
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
+
         documentPublicationIndexRepository.save(index);
+
+        proceedingsIds.forEach(proceedingsId -> {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                proceedingsId).ifPresent(proceedingsIndex -> {
+                    proceedingsIndex.setHasPublications(
+                        (documentPublicationIndexRepository.countByProceedingsId(proceedingsId) > 0)
+                    );
+                    documentPublicationIndexRepository.save(proceedingsIndex);
+                }
+            );
+        });
     }
 
     @Override
@@ -245,6 +281,44 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         indexProceedingsPublication(publication,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                 publication.getId()).orElse(new DocumentPublicationIndex()));
+    }
+
+    @Override
+    @Transactional
+    public Integer transferJournalPublicationToProceedings(Integer journalPublicationId,
+                                                           Integer proceedingsId) {
+        var journalPublication = journalPublicationRepository.findById(journalPublicationId);
+
+        if (journalPublication.isEmpty()) {
+            throw new NotFoundException("Journal publication with given ID does not exist.");
+        }
+
+        var journalId = journalPublication.get().getJournal().getId();
+        var proceedingsPublication = new ProceedingsPublication(journalPublication.get());
+
+        proceedingsPublication.setProceedings(
+            proceedingsService.findProceedingsById(proceedingsId));
+        proceedingsPublication.setEvent(proceedingsPublication.getProceedings().getEvent());
+        proceedingsPublication.setDocumentDate(
+            proceedingsPublication.getProceedings().getDocumentDate());
+
+        journalPublicationRepository.delete(journalPublication.get());
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            journalPublicationId).ifPresent(documentPublicationIndexRepository::delete);
+
+        var saved = proceedingsPublicationRepository.save(proceedingsPublication);
+        indexProceedingsPublication(saved, new DocumentPublicationIndex());
+
+        journalIndexRepository.findJournalIndexByDatabaseId(
+            journalId).ifPresent(journalIndex -> {
+                journalIndex.setHasPublications(
+                    (documentPublicationIndexRepository.countByJournalId(journalId) > 0)
+                );
+                journalIndexRepository.save(journalIndex);
+            }
+        );
+
+        return saved.getId();
     }
 
     @Override

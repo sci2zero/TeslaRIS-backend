@@ -54,6 +54,17 @@ public interface PublicationSeriesIndicatorRepository extends
     List<PublicationSeriesIndicator> findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
         Integer publicationSeriesId, Integer year, EntityIndicatorSource source);
 
+    @Query(
+        "SELECT psi FROM PublicationSeriesIndicator psi " +
+            "JOIN FETCH psi.indicator " +
+            "JOIN FETCH psi.publicationSeries " +
+            "WHERE psi.publicationSeries.id IN :publicationSeriesIds AND " +
+            "(extract(year from psi.fromDate) = :year OR " +
+            "(extract(year from psi.fromDate) < :year AND psi.toDate IS NULL)) AND " +
+            "psi.source = :source")
+    List<PublicationSeriesIndicator> findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+        List<Integer> publicationSeriesIds, Integer year, EntityIndicatorSource source);
+
     @Query("SELECT DISTINCT psi.publicationSeries.id FROM PublicationSeriesIndicator psi " +
         "WHERE psi.categoryIdentifier = :category AND " +
         "extract(year from psi.fromDate) = :year AND " +

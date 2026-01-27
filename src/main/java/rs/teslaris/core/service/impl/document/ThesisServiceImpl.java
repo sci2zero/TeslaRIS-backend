@@ -85,6 +85,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.OrganisationUnitReferenceConstraintViolationException;
@@ -136,9 +137,6 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     private final FileService fileService;
 
     private final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.");
-
-    @Value("${thesis.public-review.duration-days}")
-    private Integer daysOnPublicReview;
 
     @Value("${feedback.email}")
     private String feedbackEmail;
@@ -528,12 +526,20 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     @Override
     @Transactional
-    public void putOnPublicReview(Integer thesisId, Boolean continueLastReview) {
+    public void putOnPublicReview(Integer thesisId, Boolean continueLastReview, Boolean shortened) {
         var thesis = thesisJPAService.findOne(thesisId);
         validateThesisForPublicReview(thesis);
 
+        if (shortened && (Objects.isNull(thesis.getPublicReviewStartDates()) ||
+            thesis.getPublicReviewStartDates().isEmpty() || !thesis.getPublicReviewCompleted())) {
+            throw new ThesisException(
+                "Thesis had to have been on one regular public review before being put on shortened one."
+            );
+        }
+
         thesis.setIsOnPublicReview(true);
-        updatePublicReviewDates(thesis, continueLastReview);
+        thesis.setIsShortenedReview(shortened);
+        updatePublicReviewDates(thesis, continueLastReview, false);
 
         thesis.setIsOnPublicReviewPause(false);
         thesisJPAService.save(thesis);
@@ -572,13 +578,19 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesis.getThesisType() == ThesisType.PHD_ART_PROJECT;
     }
 
-    private void updatePublicReviewDates(Thesis thesis, Boolean continueLastReview) {
-        if (thesis.getIsOnPublicReviewPause() && !continueLastReview) {
+    private void updatePublicReviewDates(Thesis thesis, Boolean continueLastReview,
+                                         Boolean removeLastPublicReviewStartDate) {
+        if (continueLastReview) {
+            return;
+        }
+
+        if (removeLastPublicReviewStartDate) {
             thesis.getPublicReviewStartDates()
                 .stream()
                 .max(Comparator.naturalOrder())
                 .ifPresent(thesis.getPublicReviewStartDates()::remove);
         }
+
         thesis.getPublicReviewStartDates().add(LocalDate.now());
     }
 
@@ -784,7 +796,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
                 var startDate = thesisDTO.getPublicReviewStartDate();
                 var isOnReviewFlag = Boolean.TRUE.equals(thesisDTO.getIsOnPublicReview());
-                var cutoffDate = LocalDate.now().minusDays(daysOnPublicReview);
+                var cutoffDate = PublicReviewConfigurationLoader.getCutoffDate(false);
 
                 boolean withinWindow = Objects.nonNull(startDate) &&
                     (startDate.isAfter(cutoffDate) || startDate.isEqual(cutoffDate));
@@ -905,7 +917,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     protected void removeFromPublicReviewScheduledFallback() {
         if (Objects.nonNull(fallbackPublicReviewCheckEnabled) && fallbackPublicReviewCheckEnabled) {
             removeFromPublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
-                daysOnPublicReview);
+                PublicReviewConfigurationLoader.getLengthInDays(false));
         }
     }
 

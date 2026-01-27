@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +24,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryDissertationReportService;
@@ -37,9 +37,6 @@ public class ThesisLibraryDissertationReportServiceImpl implements
     private final OrganisationUnitService organisationUnitService;
 
     private final SearchService<DocumentPublicationIndex> searchService;
-
-    @Value("${thesis.public-review.duration-days}")
-    private Integer daysOnPublicReview;
 
 
     @Override
@@ -109,7 +106,8 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 index.getScientificFieldSr(),
                 index.getScientificFieldOther(),
                 index.getLatestPublicReviewStartDate().toString(),
-                index.getLatestPublicReviewStartDate().plusDays(daysOnPublicReview).toString(),
+                index.getLatestPublicReviewStartDate()
+                    .plusDays(PublicReviewConfigurationLoader.getLengthInDays(false)).toString(),
                 index.getDatabaseId()
             ));
     }
@@ -143,7 +141,8 @@ public class ThesisLibraryDissertationReportServiceImpl implements
         if (Objects.nonNull(notDefendedOnly) && notDefendedOnly) {
             queries.add(RangeQuery.of(r -> r
                 .field("public_review_start_dates")
-                .lt(JsonData.of(LocalDate.now().minusDays(daysOnPublicReview).toString()))
+                .lt(JsonData.of(LocalDate.now()
+                    .minusDays(PublicReviewConfigurationLoader.getLengthInDays(false)).toString()))
             )._toQuery());
 
             queries.add(TermQuery.of(t -> t
@@ -176,7 +175,8 @@ public class ThesisLibraryDissertationReportServiceImpl implements
         } else {
             queries.add(RangeQuery.of(r -> r
                 .field("public_review_start_dates")
-                .gte(JsonData.of(LocalDate.now().minusDays(daysOnPublicReview).toString()))
+                .gte(JsonData.of(LocalDate.now()
+                    .minusDays(PublicReviewConfigurationLoader.getLengthInDays(false)).toString()))
                 .lte(JsonData.of(LocalDate.now().toString()))
             )._toQuery());
 

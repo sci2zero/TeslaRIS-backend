@@ -10,6 +10,7 @@ import rs.teslaris.core.model.oaipmh.dublincore.DCMultilingualContent;
 import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.product.Product;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportContribution;
 import rs.teslaris.exporter.model.common.ExportDocument;
@@ -19,7 +20,8 @@ import rs.teslaris.exporter.model.common.ExportPublicationType;
 public class ExportProductConverter extends ExportConverterBase {
 
     public static Product toOpenaireModel(
-        ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
+        ExportDocument exportDocument, boolean supportLegacyIdentifiers,
+        List<String> supportedLanguages) {
         var openaireProduct = new Product();
 
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
@@ -65,7 +67,7 @@ public class ExportProductConverter extends ExportConverterBase {
                 if (Objects.nonNull(contribution.getPerson())) {
                     personAttributes.setPerson(
                         ExportPersonConverter.toOpenaireModel(contribution.getPerson(),
-                            supportLegacyIdentifiers));
+                            supportLegacyIdentifiers, supportedLanguages));
                 }
 
                 openaireProduct.getCreators().add(personAttributes);
@@ -74,7 +76,8 @@ public class ExportProductConverter extends ExportConverterBase {
         return openaireProduct;
     }
 
-    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers) {
+    public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers,
+                               List<String> supportedLanguages) {
         var dcProduct = new DC();
         dcProduct.getType().add(new DCType(
             exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" : "software",
@@ -89,21 +92,26 @@ public class ExportProductConverter extends ExportConverterBase {
 
         dcProduct.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());
 
-        clientLanguages.forEach(lang -> dcProduct.getIdentifier().add(
-            baseFrontendUrl + lang + "/scientific-result/" +
-                (exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
-                    "software") + "/" + exportDocument.getDatabaseId()));
+        CollectionOperations.getIntersection(clientLanguages, supportedLanguages)
+            .forEach(lang -> dcProduct.getIdentifier().add(
+                baseFrontendUrl + lang + "/scientific-result/" +
+                    (exportDocument.getType().equals(ExportPublicationType.DATASET) ? "dataset" :
+                        "software") + "/" + exportDocument.getDatabaseId()));
 
         if (StringUtil.valueExists(exportDocument.getDoi())) {
-            dcProduct.getIdentifier().add("DOI:" + exportDocument.getDoi());
+            dcProduct.getIdentifier().add("doi:" + exportDocument.getDoi());
         }
 
         if (StringUtil.valueExists(exportDocument.getScopus())) {
-            dcProduct.getIdentifier().add("SCOPUS:" + exportDocument.getScopus());
+            dcProduct.getIdentifier().add("scopus:" + exportDocument.getScopus());
         }
 
         if (StringUtil.valueExists(exportDocument.getOpenAlex())) {
-            dcProduct.getIdentifier().add("OPENALEX:" + exportDocument.getOpenAlex());
+            dcProduct.getIdentifier().add("openalex:" + exportDocument.getOpenAlex());
+        }
+
+        if (StringUtil.valueExists(exportDocument.getWebOfScience())) {
+            dcProduct.getIdentifier().add("wos:" + exportDocument.getWebOfScience());
         }
 
         addContentToList(

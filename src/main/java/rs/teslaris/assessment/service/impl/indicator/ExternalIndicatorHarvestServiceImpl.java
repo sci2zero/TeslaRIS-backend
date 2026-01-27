@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -30,7 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -91,6 +92,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     private final Lock harvestLock = new ReentrantLock();
 
+    private final int MAX_RETRY_COUNT = 1;
+
+    private final int PROCESS_BATCH_SIZE = 100;
+
     private Map<String, String> externalIndicatorMapping;
 
     private Map<String, Integer> harvestPeriodOffsets;
@@ -100,14 +105,14 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     @Value("${harvest-external-indicators.allowed}")
     private Boolean harvestAllowed;
 
-
     @Override
     public void performOUIndicatorDeduction() {
         var context = prepareInstitutionIndicatorDeductionContext();
 
         var indicatorsToSave = new ArrayList<OrganisationUnitIndicator>();
         FunctionalUtil.forEachChunked(
-            PageRequest.of(0, 50),
+            PageRequest.of(0, PROCESS_BATCH_SIZE,
+                Sort.by(Sort.Direction.ASC, "databaseId")),
             organisationUnitIndexRepository::findAll,
             institutions -> institutions.forEach(
                 institution -> performInstitutionDeduction(
@@ -149,11 +154,17 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Override
+    @Async
+    public void harvestAllManually() {
+        performIndicatorHarvest();
+    }
+
+    @Override
     public void performPersonIndicatorHarvest() {
         var harvestContext = preparePersonIndicatorHarvestContext();
 
         FunctionalUtil.forEachChunked(
-            PageRequest.of(0, 50),
+            PageRequest.of(0, PROCESS_BATCH_SIZE),
             personService::findPersonsByLRUHarvest,
             people -> people.forEach(person -> {
                 performPersonHarvest(person, harvestContext);
@@ -227,6 +238,9 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                       AtomicInteger openAlexRateLimit,
                                       AtomicInteger scopusRateLimit,
                                       AtomicInteger openCitationsRateLimit) {
+        person.setDateOfLastIndicatorHarvest(LocalDate.now());
+        personService.save(person);
+
         if (openAlexRateLimit.getAndDecrement() > 0) {
             harvestFromOpenAlex(
                 person,
@@ -258,7 +272,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     private void performInstitutionDeduction(List<EntityIndicatorSource> entityIndicatorSources,
                                              OrganisationUnitIndex institution,
                                              Indicator totalCitationsIndicator,
@@ -270,7 +284,8 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var totalPublicationsCount = new AtomicDouble(0);
 
             FunctionalUtil.forEachChunked(
-                PageRequest.of(0, 50),
+                PageRequest.of(0, PROCESS_BATCH_SIZE,
+                    Sort.by(Sort.Direction.ASC, "databaseId")),
                 page -> personService.findPeopleForOrganisationUnit(
                     institution.getDatabaseId(), List.of("*"),
                     page, false),
@@ -356,7 +371,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             performDataEnrichment(person);
         }
 
-        var filter = constructAdequateOpenALexSearchFilter(person);
+        var filter = constructAdequateOpenAlexSearchFilter(person);
         if (Objects.isNull(filter)) {
             return;
         }
@@ -457,7 +472,9 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var harvestPeriodOffset = harvestPeriodOffsets.get("openCitations");
             var endYear = LocalDate.now().getYear();
             var startYear = endYear - harvestPeriodOffset;
-            FunctionalUtil.forEachChunked(PageRequest.of(0, 50),
+            FunctionalUtil.forEachChunked(
+                PageRequest.of(0, PROCESS_BATCH_SIZE,
+                    Sort.by(Sort.Direction.ASC, "databaseId")),
                 (pageable) -> documentPublicationIndexRepository.findByAuthorIdAndYearRangeOrUnknown(
                     person.getId(), startYear, endYear, pageable), (personDocuments) -> {
                     for (var doc : personDocuments) {
@@ -532,77 +549,94 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var documentIndicators = new ArrayList<DocumentIndicator>();
 
             ResponseEntity<String> responseEntity;
-            try {
-                var cursor = "*";
-                while (Objects.nonNull(cursor)) {
-                    var url =
-                        "https://api.elsevier.com/content/search/scopus?query=AU-ID(" +
-                            person.getScopusAuthorId() +
-                            ")&date=" + startYear + "-" + endYear +
-                            "&count=100&view=STANDARD&cursor=" + cursor;
+            var shouldRetry = true;
+            var retryCount = 0;
+            while (shouldRetry) {
+                try {
+                    var cursor = "*";
+                    while (Objects.nonNull(cursor)) {
+                        var url =
+                            "https://api.elsevier.com/content/search/scopus?query=AU-ID(" +
+                                person.getScopusAuthorId() +
+                                ")&date=" + startYear + "-" + endYear +
+                                "&count=100&view=STANDARD&cursor=" + cursor;
 
-                    responseEntity =
-                        restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(requestHeaders),
-                            String.class);
-                    var results =
-                        objectMapper.readValue(responseEntity.getBody(), ScopusResults.class);
+                        responseEntity =
+                            restTemplate.exchange(url, HttpMethod.GET,
+                                new HttpEntity<>(requestHeaders),
+                                String.class);
+                        var results =
+                            objectMapper.readValue(responseEntity.getBody(), ScopusResults.class);
 
-                    if (results.searchResults.totalResults == 0) {
-                        break;
+                        if (results.searchResults.totalResults == 0) {
+                            break;
+                        }
+
+                        totalPublications += results.searchResults.entries.size();
+                        results.searchResults.entries.forEach(citationCount -> {
+                            allCitationCounts.add(citationCount.citationCount);
+
+                            documentPublicationService.findDocumentByCommonIdentifier(
+                                    citationCount.doi,
+                                    null, citationCount.id, null)
+                                .ifPresent(document -> {
+                                    if (Objects.isNull(totalCitationsIndicator) ||
+                                        citationCount.citationCount == 0) {
+                                        return;
+                                    }
+
+                                    var newCitationCountIndicator =
+                                        documentIndicatorRepository.findIndicatorForCodeAndSourceDocumentId(
+                                            totalCitationsIndicator.getCode(),
+                                            EntityIndicatorSource.SCOPUS,
+                                            document.getId()).orElse(new DocumentIndicator());
+
+                                    newCitationCountIndicator.setDocument(document);
+                                    newCitationCountIndicator.setNumericValue(
+                                        (double) citationCount.citationCount);
+                                    newCitationCountIndicator.setIndicator(totalCitationsIndicator);
+                                    newCitationCountIndicator.setSource(
+                                        EntityIndicatorSource.SCOPUS);
+                                    newCitationCountIndicator.setToDate(LocalDate.now());
+                                    documentIndicators.add(newCitationCountIndicator);
+                                });
+                        });
+
+                        cursor = (Objects.nonNull(results.searchResults.cursor) &&
+                            results.searchResults.entries.size() == 100) ?
+                            results.searchResults.cursor.next : null;
                     }
 
-                    totalPublications += results.searchResults.entries.size();
-                    results.searchResults.entries.forEach(citationCount -> {
-                        allCitationCounts.add(citationCount.citationCount);
+                    persistPersonCitationIndicators(person, new HashMap<>(
+                            Map.of("TOTAL", allCitationCounts.stream().reduce(0, Integer::sum))),
+                        totalPublications, allCitationCounts, totalCitationsIndicator,
+                        yearlyCitationsIndicator, totalOutputIndicator, hIndexIndicator,
+                        EntityIndicatorSource.SCOPUS);
 
-                        documentPublicationService.findDocumentByCommonIdentifier(citationCount.doi,
-                                null, citationCount.id, null)
-                            .ifPresent(document -> {
-                                if (Objects.isNull(totalCitationsIndicator) ||
-                                    citationCount.citationCount == 0) {
-                                    return;
-                                }
+                    documentIndicatorRepository.saveAll(documentIndicators);
+                } catch (HttpClientErrorException e) {
+                    if (e.getMessage().contains("AUTHENTICATION_ERROR")) {
+                        scopusAuthenticationHelper.refreshAuthentication();
+                        if (retryCount < MAX_RETRY_COUNT) {
+                            retryCount++;
+                            continue;
+                        }
+                    }
 
-                                var newCitationCountIndicator =
-                                    documentIndicatorRepository.findIndicatorForCodeAndSourceDocumentId(
-                                        totalCitationsIndicator.getCode(),
-                                        EntityIndicatorSource.SCOPUS,
-                                        document.getId()).orElse(new DocumentIndicator());
-
-                                newCitationCountIndicator.setDocument(document);
-                                newCitationCountIndicator.setNumericValue(
-                                    (double) citationCount.citationCount);
-                                newCitationCountIndicator.setIndicator(totalCitationsIndicator);
-                                newCitationCountIndicator.setSource(
-                                    EntityIndicatorSource.SCOPUS);
-                                newCitationCountIndicator.setToDate(LocalDate.now());
-                                documentIndicators.add(newCitationCountIndicator);
-                            });
-                    });
-
-                    cursor = (Objects.nonNull(results.searchResults.cursor) &&
-                        results.searchResults.entries.size() == 100) ?
-                        results.searchResults.cursor.next : null;
+                    log.error("Exception occurred during document fetching: {}", e.getMessage());
+                    shouldRetry = false;
+                } catch (JsonProcessingException e) {
+                    log.error("JSON parsing error in Scopus response: {}", e.getMessage());
+                    shouldRetry = false;
+                } catch (ResourceAccessException e) {
+                    log.error("Exception occurred during connection to Scopus: {}", e.getMessage());
+                    shouldRetry = false;
                 }
-
-                persistPersonCitationIndicators(person, new HashMap<>(
-                        Map.of("TOTAL", allCitationCounts.stream().reduce(0, Integer::sum))),
-                    totalPublications, allCitationCounts, totalCitationsIndicator,
-                    yearlyCitationsIndicator, totalOutputIndicator, hIndexIndicator,
-                    EntityIndicatorSource.SCOPUS);
-
-                documentIndicatorRepository.saveAll(documentIndicators);
-            } catch (HttpClientErrorException e) {
-                log.error("Exception occurred during document fetching: {}", e.getMessage());
-            } catch (JsonProcessingException e) {
-                log.error("JSON parsing error in Scopus response: {}", e.getMessage());
-            } catch (ResourceAccessException e) {
-                log.error("Exception occurred during connection to Scopus: {}", e.getMessage());
             }
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     private void persistPersonCitationIndicators(Person person, Map<String, Integer> counts,
                                                  Integer totalOutputCount,
                                                  List<Integer> citations,
@@ -756,14 +790,16 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     private void performDataEnrichment(Person person) {
-        var baseURL = "https://api.openalex.org/authors/";
+        var baseURL = "https://api.openalex.org/authors";
 
         if (StringUtil.valueExists(person.getOpenAlexId())) {
-            baseURL += person.getOpenAlexId();
+            baseURL += "/" + person.getOpenAlexId();
         } else if (StringUtil.valueExists(person.getOrcid())) {
-            baseURL += "orcid:" + person.getOrcid();
+            baseURL += "?filter=orcid:" + person.getOrcid();
         } else if (StringUtil.valueExists(person.getScopusAuthorId())) {
-            baseURL += "scopus:" + person.getScopusAuthorId();
+            baseURL += "?filter=scopus:" + person.getScopusAuthorId();
+        } else {
+            return;
         }
 
         var objectMapper = new ObjectMapper();
@@ -778,30 +814,35 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                 return;
             }
 
-            var results =
-                objectMapper.readValue(responseEntity.getBody(), PersonIdentifierResponse.class);
+            var response =
+                objectMapper.readValue(responseEntity.getBody(), OpenAlexResponse.class);
+            if (Objects.isNull(response) || Objects.isNull(response.results()) ||
+                response.results().isEmpty()) {
+                return;
+            }
 
+            var result = response.results.getFirst();
             if (!StringUtil.valueExists(person.getOpenAlexId()) &&
-                results.identifiers().containsKey("openalex")) {
+                result.identifiers().containsKey("openalex")) {
                 var identifier =
-                    results.identifiers().get("openalex").replace("https://openalex.org/", "");
+                    result.identifiers().get("openalex").replace("https://openalex.org/", "");
                 if (!personService.isIdentifierInUse(identifier, person.getId())) {
                     person.setOpenAlexId(identifier);
                 }
             }
 
             if (!StringUtil.valueExists(person.getOrcid()) &&
-                results.identifiers().containsKey("orcid")) {
+                result.identifiers().containsKey("orcid")) {
                 var identifier =
-                    results.identifiers().get("orcid").replace("https://orcid.org/", "");
+                    result.identifiers().get("orcid").replace("https://orcid.org/", "");
                 if (!personService.isIdentifierInUse(identifier, person.getId())) {
                     person.setOrcid(identifier);
                 }
             }
 
             if (!StringUtil.valueExists(person.getScopusAuthorId()) &&
-                results.identifiers().containsKey("scopus")) {
-                var identifier = results.identifiers().get("scopus").split("&")[0].replace(
+                result.identifiers().containsKey("scopus")) {
+                var identifier = result.identifiers().get("scopus").split("&")[0].replace(
                     "http://www.scopus.com/inward/authorDetails.url?authorID=", "");
                 if (!personService.isIdentifierInUse(identifier, person.getId())) {
                     person.setScopusAuthorId(identifier);
@@ -809,6 +850,14 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             }
 
             personService.save(person);
+            personIndexRepository.findByDatabaseId(person.getId())
+                .ifPresent(personIndex -> {
+                    personIndex.setOpenAlexId(person.getOpenAlexId());
+                    personIndex.setOrcid(person.getOrcid());
+                    personIndex.setScopusAuthorId(person.getScopusAuthorId());
+
+                    personIndexRepository.save(personIndex);
+                });
         } catch (Exception e) {
             log.warn("Unable to fetch author data from OpenAlex for {}. Reason: {}",
                 baseURL.replace("https://api.openalex.org/authors/", ""), e.getMessage());
@@ -816,7 +865,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Nullable
-    private String constructAdequateOpenALexSearchFilter(Person person) {
+    private String constructAdequateOpenAlexSearchFilter(Person person) {
         if (StringUtil.valueExists(person.getOpenAlexId())) {
             return "author.id:" + person.getOpenAlexId();
         } else if (StringUtil.valueExists(person.getOrcid())) {
@@ -926,7 +975,12 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     ) {
     }
 
-    public record PersonIdentifierResponse(
+    public record OpenAlexResponse(
+        @JsonProperty("results") List<IdentifierResult> results
+    ) {
+    }
+
+    public record IdentifierResult(
         @JsonProperty("ids") Map<String, String> identifiers
     ) {
     }

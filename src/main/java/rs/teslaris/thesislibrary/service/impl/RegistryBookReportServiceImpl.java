@@ -227,6 +227,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                         institutionIds, from, to, authorName, authorTitle,
                         SerbianTransliteration.toCyrillic(authorName),
                         SerbianTransliteration.toCyrillic(authorTitle),
+                        null,
                         PageRequest.of(pageNumber, chunkSize))
                     .getContent();
 

@@ -113,8 +113,8 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     Optional<Person> findApprovedPersonByAccountingId(String accountingId);
 
     @Query("SELECT p FROM Person p ORDER BY " +
-        "CASE WHEN p.dateOfLastIndicatorHarvest IS NULL THEN 0 ELSE 1 END, " +
-        "p.dateOfLastIndicatorHarvest ASC")
+        "CASE WHEN p.dateOfLastIndicatorHarvest IS NULL THEN 1 ELSE 2 END, " +
+        "p.dateOfLastIndicatorHarvest ASC NULLS FIRST")
     Page<Person> findPersonsByLRUHarvest(Pageable pageable);
 
     @Query(value = "SELECT * FROM persons p WHERE p.id = :personId", nativeQuery = true)

@@ -66,4 +66,8 @@ public class OrganisationUnitDTO {
     private boolean validatingEmailDomainDl;
 
     private boolean allowingSubdomainsDl;
+
+    private Integer superInstitutionId;
+
+    private List<MultilingualContentDTO> superInstitutionName;
 }

@@ -158,7 +158,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             throw new NotFoundException("OrganisationUnit with given ID does not exist.");
         }
 
-        return OrganisationUnitConverter.toDTO(ou);
+        var superOrgUnitOptional = organisationUnitsRelationRepository.getSuperOU(id);
+        return superOrgUnitOptional
+            .map(organisationUnitsRelation ->
+                OrganisationUnitConverter.toDTO(
+                    ou, organisationUnitsRelation.getTargetOrganisationUnit())
+            ).orElseGet(() -> OrganisationUnitConverter.toDTO(ou));
+
     }
 
     @Override
@@ -383,7 +389,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<OrganisationUnitsRelationResponseDTO> getOrganisationUnitsRelations(
         Integer sourceId) {
         return organisationUnitsRelationRepository.getRelationsForOrganisationUnits(sourceId)
@@ -399,7 +405,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public RelationGraphDataDTO getOrganisationUnitsRelationsChain(
         Integer leafId) {
         var nodes = new ArrayList<OrganisationUnitDTO>();

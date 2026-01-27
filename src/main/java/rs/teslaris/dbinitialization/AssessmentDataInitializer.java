@@ -608,6 +608,25 @@ public class AssessmentDataInitializer {
         jciPercentile.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
         jciPercentile.setContentType(IndicatorContentType.NUMBER);
 
+        var jciRank = new Indicator();
+        jciRank.setCode("jciRank");
+        jciRank.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "JCI Rank", 1),
+                new MultiLingualContent(serbianTag, "JCI Rank", 2),
+                new MultiLingualContent(serbianCyrillicTag, "JCI Rank", 3)));
+        jciRank.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag, "JCI Rank",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "JCI Rank",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag, "JCI Rank",
+                    3)));
+        jciRank.setAccessLevel(AccessLevel.CLOSED);
+        jciRank.getApplicableTypes().add(ApplicableEntityType.PUBLICATION_SERIES);
+        jciRank.setContentType(IndicatorContentType.TEXT);
+
         var jcr = new Indicator();
         jcr.setCode("jcr");
         jcr.setTitle(
@@ -923,7 +942,7 @@ public class AssessmentDataInitializer {
                 yearlyDownloads, weeklyDownloads, monthlyDownloads, numberOfPages, totalCitations,
                 currentJIF, eigenFactorNorm, ais, citedHL, currentJIFRank, fiveYearJIFRank, sjr,
                 hIndex, sdg, overton, citingHL, erihPlus, jci, jcr, scimago, jciPercentile,
-                numParticipants, organizedByScientificInstitution, slavistiCategory,
+                numParticipants, organizedByScientificInstitution, slavistiCategory, jciRank,
                 numCountriesInScientificCommittee, numParticipantCountries, numPresentations,
                 lectureInvitation, isTheoretical, isExperimental, isSimulation, authorCount,
                 yearlyCitations, totalOutputCount));
@@ -1323,14 +1342,27 @@ public class AssessmentDataInitializer {
                     1)));
         m69.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
+        var m70 = new AssessmentClassification();
+        m70.setFormalDescriptionOfRule("handleM70");
+        m70.setCode("M70");
+        m70.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M70",
+                    1)));
+        m70.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
         assessmentClassificationRepository.saveAll(
             List.of(journalM21APlus, journalM21A, journalM21, journalM22, journalM23, journalM23e,
                 journalM24plus, multinationalConf, nationalConf,
                 nonAcademicConf, journalM51, journalM52, journalM53, journalM54, journalM24,
-                M21APlus, M21A, M21, M22,
-                M23, M23e, M24plus, M24, M51, M52, M53, M54, M26, M27,
-                m31, m32, m33,
-                m34, m61, m62, m63, m64, m69));
+                M21APlus, M21A, M21, M22, M23, M23e, M24plus, M24,
+                M51, M52, M53, M54,
+                M26, M27,
+                m31, m32, m33, m34,
+                m61, m62, m63, m64, m69,
+                m70)
+        );
     }
 
     public Pair<Commission, Commission> initializeCommissions(LanguageTag englishTag,

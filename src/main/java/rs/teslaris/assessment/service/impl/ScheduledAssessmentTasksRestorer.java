@@ -57,7 +57,7 @@ public class ScheduledAssessmentTasksRestorer {
                 ScheduledTaskType.PUBLICATION_CLASSIFICATION,
                 ScheduledTaskType.JOURNAL_CLASSIFICATION,
                 ScheduledTaskType.JOURNAL_CLASSIFICATION_LOADING,
-                ScheduledTaskType.IF5_RANK_COMPUTATION,
+                ScheduledTaskType.IF5_JCI_RANK_COMPUTATION,
                 ScheduledTaskType.INDICATOR_LOADING
             ));
 
@@ -82,8 +82,8 @@ public class ScheduledAssessmentTasksRestorer {
             restoreJournalClassification(metadata);
         } else if (metadata.getType().equals(ScheduledTaskType.JOURNAL_CLASSIFICATION_LOADING)) {
             restoreJournalClassificationLoading(metadata);
-        } else if (metadata.getType().equals(ScheduledTaskType.IF5_RANK_COMPUTATION)) {
-            restoreIF5RankComputation(metadata);
+        } else if (metadata.getType().equals(ScheduledTaskType.IF5_JCI_RANK_COMPUTATION)) {
+            restoreIF5AndJCIRankComputation(metadata);
         } else if (metadata.getType().equals(ScheduledTaskType.INDICATOR_LOADING)) {
             restoreIndicatorLoading(metadata);
         }
@@ -114,8 +114,10 @@ public class ScheduledAssessmentTasksRestorer {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
-        reportingService.scheduleReportGeneration(timeToRun, reportType, assessmentYear,
-            commissionIds, locale, topLevelInstitutionId, userId, metadata.getRecurrenceType());
+        reportingService.scheduleReportGeneration(
+            timeToRun, reportType, assessmentYear, commissionIds, locale,
+            topLevelInstitutionId, userId, metadata.getRecurrenceType()
+        );
     }
 
     private void restoreJournalClassification(ScheduledTaskMetadata metadata) {
@@ -141,8 +143,9 @@ public class ScheduledAssessmentTasksRestorer {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
-        publicationSeriesAssessmentClassificationService.scheduleClassification(timeToRun,
-            commissionId, userId, classificationYears, journalIds);
+        publicationSeriesAssessmentClassificationService.scheduleClassification(
+            timeToRun, commissionId, userId, classificationYears, journalIds
+        );
     }
 
     private void restoreJournalClassificationLoading(ScheduledTaskMetadata metadata) {
@@ -158,8 +161,9 @@ public class ScheduledAssessmentTasksRestorer {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
-        publicationSeriesAssessmentClassificationService.scheduleClassificationLoading(timeToRun,
-            source, userId, commissionId);
+        publicationSeriesAssessmentClassificationService.scheduleClassificationLoading(
+            timeToRun, source, userId, commissionId
+        );
     }
 
     private void restorePublicationClassification(ScheduledTaskMetadata metadata) {
@@ -192,8 +196,10 @@ public class ScheduledAssessmentTasksRestorer {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
-        documentAssessmentClassificationService.schedulePublicationClassification(timeToRun, userId,
-            fromDate, documentPublicationType, commissionId, authorIds, orgUnitIds, publishedInIds);
+        documentAssessmentClassificationService.schedulePublicationClassification(
+            timeToRun, userId, fromDate, documentPublicationType,
+            commissionId, authorIds, orgUnitIds, publishedInIds
+        );
     }
 
     private void restoreIndicatorLoading(ScheduledTaskMetadata metadata) {
@@ -212,7 +218,7 @@ public class ScheduledAssessmentTasksRestorer {
         publicationSeriesIndicatorService.scheduleIndicatorLoading(timeToRun, source, userId);
     }
 
-    private void restoreIF5RankComputation(ScheduledTaskMetadata metadata) {
+    private void restoreIF5AndJCIRankComputation(ScheduledTaskMetadata metadata) {
         Map<String, Object> data = metadata.getMetadata();
 
         var userId = (Integer) data.get("userId");
@@ -220,6 +226,8 @@ public class ScheduledAssessmentTasksRestorer {
             data.get("classificationYears"), new TypeReference<ArrayList<Integer>>() {
             }
         );
+        var calculateIF5 = Boolean.parseBoolean((String) data.get("calculateIF5"));
+        var calculateJci = Boolean.parseBoolean((String) data.get("calculateJci"));
 
         var timeToRun = metadata.getTimeToRun();
 
@@ -227,7 +235,8 @@ public class ScheduledAssessmentTasksRestorer {
             timeToRun = taskManagerService.findNextFreeExecutionTime();
         }
 
-        publicationSeriesIndicatorService.scheduleIF5RankComputation(timeToRun, classificationYears,
-            userId);
+        publicationSeriesIndicatorService.scheduleIF5AndJCIRankComputation(
+            timeToRun, classificationYears, calculateIF5, calculateJci, userId
+        );
     }
 }

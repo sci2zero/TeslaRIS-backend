@@ -1,0 +1,35 @@
+package rs.teslaris.core.model.rocrate;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class RoCratePerson extends ContextualEntity {
+
+    private String givenName;
+
+    private String familyName;
+
+    private String additionalName;
+
+    private String email;
+
+    private String description;
+
+    private List<ContextualEntity> affiliations = new ArrayList<>();
+
+
+    public RoCratePerson() {
+        this.setType("Person");
+    }
+}
+

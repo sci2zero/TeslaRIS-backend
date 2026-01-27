@@ -11,6 +11,7 @@ public class PromotionConverter {
             promotion.getPromotionTime(),
             promotion.getPlaceOrVenue(), MultilingualContentConverter.getMultilingualContentDTO(
             promotion.getDescription()), promotion.getInstitution().getId(),
-            promotion.getFinished());
+            promotion.getFinished(), MultilingualContentConverter.getMultilingualContentDTO(
+            promotion.getInstitution().getName()));
     }
 }

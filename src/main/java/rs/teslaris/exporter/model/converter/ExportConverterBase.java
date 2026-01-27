@@ -3,6 +3,8 @@ package rs.teslaris.exporter.model.converter;
 import jakarta.annotation.PostConstruct;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -14,6 +16,7 @@ import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
@@ -23,6 +26,7 @@ import rs.teslaris.core.model.oaipmh.dspaceinternal.DimField;
 import rs.teslaris.core.model.oaipmh.dublincore.DC;
 import rs.teslaris.core.model.oaipmh.dublincore.DCType;
 import rs.teslaris.core.model.oaipmh.publication.PublicationType;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
@@ -189,7 +193,10 @@ public class ExportConverterBase {
     }
 
     public static void applyCustomMappings(Object convertedEntity, ExportDataFormat format,
+                                           OrganisationUnitService organisationUnitService,
                                            ExportHandlersConfigurationLoader.Handler handler) {
+        var sourceInstitutionId = Integer.parseInt(handler.internalInstitutionId());
+
         if ((format.equals(ExportDataFormat.DUBLIN_CORE) ||
             format.equals(ExportDataFormat.ETD_MS))) {
             var typeKey = ((DC) convertedEntity).getType().getFirst().getValue().toUpperCase();
@@ -198,6 +205,24 @@ public class ExportConverterBase {
             ((DC) convertedEntity).getType().clear();
             ((DC) convertedEntity).getType()
                 .addAll(constructDCTypeFields(handler, typeKey, concreteTypeKey));
+
+            if (typeKey.equals(DocumentPublicationType.THESIS.name())) {
+                organisationUnitService.findOne(sourceInstitutionId).getName()
+                    .forEach(name ->
+                        ((DC) convertedEntity).getSource().add(name.getContent()));
+            }
+
+            if (Objects.nonNull(handler.dateFormat())) {
+                var formatter = DateTimeFormatter.ofPattern(handler.dateFormat());
+                ((DC) convertedEntity).getDate().replaceAll(dateString -> {
+                    if (Objects.isNull(dateString) || !dateString.contains("-")) {
+                        return dateString;
+                    }
+
+                    return LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE)
+                        .format(formatter);
+                });
+            }
         } else if (format.equals(ExportDataFormat.DSPACE_INTERNAL_MODEL)) {
             var typeField = ((Dim) convertedEntity).getFields().stream()
                 .filter(field -> field.getElement().equals("type")).findFirst();
@@ -214,6 +239,34 @@ public class ExportConverterBase {
                 dcType -> ((Dim) convertedEntity).getFields().add(
                     new DimField("dc", "type", dcType.getScheme(), dcType.getLang(), null, null,
                         dcType.getValue())));
+
+            if (typeKey.equals(DocumentPublicationType.THESIS.name())) {
+                organisationUnitService.findOne(sourceInstitutionId).getName()
+                    .forEach(name -> {
+                        var field = new DimField();
+                        field.setMdschema("dc");
+                        field.setElement("source");
+                        field.setLanguage(name.getLanguage().getLanguageTag().toLowerCase());
+                        field.setValue(name.getContent());
+                        ((Dim) convertedEntity).getFields().add(field);
+                    });
+            }
+
+            if (Objects.nonNull(handler.dateFormat())) {
+                var formatter = DateTimeFormatter.ofPattern(handler.dateFormat());
+                ((Dim) convertedEntity).getFields().stream()
+                    .filter(field -> field.getElement().equals("date")).findFirst()
+                    .ifPresent(dateField -> {
+                        if (Objects.isNull(dateField.getValue()) ||
+                            !dateField.getValue().contains("-")) {
+                            return;
+                        }
+
+                        dateField.setValue(
+                            LocalDate.parse(dateField.getValue(), DateTimeFormatter.ISO_LOCAL_DATE)
+                                .format(formatter));
+                    });
+            }
         }
     }
 

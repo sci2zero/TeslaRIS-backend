@@ -21,6 +21,7 @@ import rs.teslaris.core.model.oaipmh.publication.PublicationType;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 import rs.teslaris.exporter.model.common.ExportOrganisationUnit;
@@ -106,7 +107,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
     }
 
     public static OrgUnit toOpenaireModel(ExportOrganisationUnit organisationUnit,
-                                          boolean supportLegacyIdentifiers) {
+                                          boolean supportLegacyIdentifiers,
+                                          List<String> supportedLanguages) {
         var orgUnit = new OrgUnit();
 
         if (supportLegacyIdentifiers && Objects.nonNull(organisationUnit.getOldIds()) &&
@@ -123,7 +125,7 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         if (Objects.nonNull(organisationUnit.getSuperOU())) {
             orgUnit.setPartOf(new PartOf(
                 ExportOrganisationUnitConverter.toOpenaireModel(organisationUnit.getSuperOU(),
-                    supportLegacyIdentifiers)));
+                    supportLegacyIdentifiers, supportedLanguages)));
         }
 
         orgUnit.setType(new ArrayList<>(List.of(
@@ -134,7 +136,8 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
     }
 
     public static DC toDCModel(ExportOrganisationUnit exportOrganisationUnit,
-                               boolean supportLegacyIdentifiers) {
+                               boolean supportLegacyIdentifiers,
+                               List<String> supportedLanguages) {
         var dcOrgUnit = new DC();
         dcOrgUnit.getType().add(new DCType("ORGANISATION_UNIT", null,
             exportOrganisationUnit.getIsLegalEntity() ? "LEGAL" : null));
@@ -150,14 +153,14 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
         }
 
         if (StringUtil.valueExists(exportOrganisationUnit.getScopusAfid())) {
-            dcOrgUnit.getIdentifier().add("SCOPUS:" + exportOrganisationUnit.getScopusAfid());
+            dcOrgUnit.getIdentifier().add("scopus:" + exportOrganisationUnit.getScopusAfid());
         }
 
         if (StringUtil.valueExists(exportOrganisationUnit.getRor())) {
-            dcOrgUnit.getIdentifier().add("ROR:" + exportOrganisationUnit.getRor());
+            dcOrgUnit.getIdentifier().add("ror:" + exportOrganisationUnit.getRor());
         }
 
-        clientLanguages.forEach(lang -> {
+        CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang -> {
             dcOrgUnit.getIdentifier()
                 .add(baseFrontendUrl + lang + "/organisation-units/" +
                     exportOrganisationUnit.getDatabaseId());

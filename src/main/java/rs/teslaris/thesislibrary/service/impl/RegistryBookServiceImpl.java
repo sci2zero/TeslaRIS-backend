@@ -160,6 +160,13 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
         var thesis = thesisService.getThesisById(thesisId);
 
+        if (Objects.isNull(thesis.getThesisDefenceDate()) ||
+            !(ThesisType.PHD.equals(thesis.getThesisType()) ||
+                ThesisType.PHD_ART_PROJECT.equals(thesis.getThesisType()))) {
+            throw new ThesisException(
+                "This functionality is only available for defended PHD theses and PHD art projects.");
+        }
+
         newEntry.setThesis(thesisService.getThesisById(thesisId));
         setCommonFields(newEntry, dto, true);
 
@@ -386,11 +393,10 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     public PhdThesisPrePopulatedDataDTO getPrePopulatedPHDThesisInformation(Integer thesisId) {
         var phdThesis = thesisService.getThesisById(thesisId);
 
-        if (Objects.isNull(phdThesis.getThesisDefenceDate()) ||
-            !(ThesisType.PHD.equals(phdThesis.getThesisType()) ||
-                ThesisType.PHD_ART_PROJECT.equals(phdThesis.getThesisType()))) {
+        if (Objects.isNull(phdThesis.getOrganisationUnit()) ||
+            !phdThesis.getOrganisationUnit().getIsClientInstitutionDl()) {
             throw new ThesisException(
-                "This functionality is only available for defended PHD theses and PHD art projects.");
+                "This functionality is only available for institutions that are DL clients");
         }
 
         var prePopulatedData = new PhdThesisPrePopulatedDataDTO();
@@ -592,10 +598,14 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer hasThesisRegistryBookEntry(Integer thesisId) {
         var thesis = thesisService.getThesisById(thesisId);
 
-        if (!thesis.getPublicReviewCompleted() || Objects.isNull(thesis.getThesisDefenceDate())) {
+        if (Objects.isNull(thesis.getOrganisationUnit()) ||
+            !thesis.getOrganisationUnit().getIsClientInstitutionDl() ||
+            !(ThesisType.PHD.equals(thesis.getThesisType()) ||
+                ThesisType.PHD_ART_PROJECT.equals(thesis.getThesisType()))) {
             throw new ThesisException("thesisNotReadyForRegistryBook");
         }
 
@@ -647,6 +657,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                                                                              LocalDate to,
                                                                              String authorName,
                                                                              String authorTitle,
+                                                                             Integer promotionId,
                                                                              Pageable pageable) {
         var userEmploymentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
         if (Objects.nonNull(userEmploymentInstitutionId) && userEmploymentInstitutionId > 0 &&
@@ -661,10 +672,12 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         return registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
                 institutionIds, from, to, authorName, authorTitle,
                 SerbianTransliteration.toCyrillic(authorName),
-                SerbianTransliteration.toCyrillic(authorTitle), pageable)
+                SerbianTransliteration.toCyrillic(authorTitle),
+                promotionId, pageable)
             .map(RegistryBookEntryConverter::toDTO);
     }
 
+    @Override
     public List<InstitutionCountsReportDTO> institutionCountsReport(
         Integer userId,
         LocalDate from,
@@ -714,6 +727,62 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
         return Objects.nonNull(entry.getPromotion()) && entry.getPromotion().getFinished() &&
             !entry.getAllowSingleEdit();
+    }
+
+    @Override
+    @Transactional
+    public void removeFromFinishedPromotion(Integer registryBookEntryId) {
+        var entry = findOne(registryBookEntryId);
+
+        var promotion = entry.getPromotion();
+        if (!promotion.getFinished()) {
+            throw new PromotionException("Can un-promote only from finished promotions.");
+        }
+
+        entry.setPromotion(null);
+        entry.setAllowSingleEdit(false);
+
+        if (promotionService.isPromotionEmpty(promotion.getId())) {
+            promotion.setDeleted(true);
+            promotionService.save(promotion);
+        }
+
+        save(entry);
+    }
+
+    @Override
+    @Transactional
+    public void removeAllFromFinishedPromotion(Integer promotionId, boolean deletePromotion) {
+        var promotion = promotionService.findOne(promotionId);
+
+        if (!promotion.getFinished()) {
+            throw new PromotionException("Can un-promote only from finished promotions.");
+        }
+
+        var promotableEntries =
+            registryBookEntryRepository.getBookEntriesForFinishedPromotion(promotionId,
+                Pageable.unpaged()).getContent();
+
+        if (deletePromotion) {
+            promotableEntries.forEach(entry -> {
+                entry.setPromotion(null);
+                entry.setRegistryBookNumber(null);
+                entry.setSchoolYearOrdinalNumber(null);
+                save(entry);
+            });
+
+            promotion.setDeleted(true);
+            promotionService.save(promotion);
+        } else {
+            promotableEntries.forEach(entry -> {
+                entry.setRegistryBookNumber(null);
+                entry.setSchoolYearOrdinalNumber(null);
+                save(entry);
+            });
+
+            promotion.setFinished(false);
+            promotionService.save(promotion);
+        }
     }
 
     private List<Integer> getInstitutionIdsForUser(Integer userId) {

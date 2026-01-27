@@ -20,6 +20,15 @@ public class RegistryBookEntryConverter {
         dto.setInPromotion(Objects.nonNull(registryBookEntry.getPromotion()));
         if (Objects.nonNull(registryBookEntry.getPromotion())) {
             dto.setPromoted(registryBookEntry.getPromotion().getFinished());
+            dto.setPromotionDate(registryBookEntry.getPromotion().getPromotionDate());
+            dto.setPromotionTime(registryBookEntry.getPromotion().getPromotionTime());
+
+            if (Objects.nonNull(registryBookEntry.getPromotion().getInstitution())) {
+                dto.setPromotionInstitutionId(
+                    registryBookEntry.getPromotion().getInstitution().getId());
+            }
+
+            dto.setPromotionId(registryBookEntry.getPromotion().getId());
         }
         dto.setRegistryBookNumber(registryBookEntry.getRegistryBookNumber());
         dto.setSchoolYearOrdinalNumber(registryBookEntry.getSchoolYearOrdinalNumber());

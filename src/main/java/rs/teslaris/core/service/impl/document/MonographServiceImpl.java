@@ -369,6 +369,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             index.setPublicationType(monograph.getMonographType().name());
         }
 
+        index.setHasPublications(Objects.nonNull(monograph.getId()) &&
+            (documentPublicationIndexRepository.countByMonographId(monograph.getId()) > 0));
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);

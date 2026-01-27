@@ -329,6 +329,9 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             journalIndex.setClassifiedBy(
                 commissionRepository.findCommissionsThatClassifiedJournal(journalId));
 
+            journalIndex.setHasPublications(Objects.nonNull(journalId) &&
+                (documentPublicationIndexRepository.countByJournalId(journalId) > 0));
+
             journalIndexRepository.save(journalIndex);
         });
     }

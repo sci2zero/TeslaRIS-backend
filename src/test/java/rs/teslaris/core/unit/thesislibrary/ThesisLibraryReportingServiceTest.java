@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,23 +57,25 @@ public class ThesisLibraryReportingServiceTest {
     void shouldReturnThesisReportCountsWhenDataExists() {
         // Given
         var request = new ThesisReportRequestDTO(
-            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1), ThesisType.PHD);
+            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1),
+            List.of(ThesisType.PHD));
 
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1)).thenReturn(
             List.of(1, 2));
 
         when(thesisRepository.countDefendedThesesInPeriod(any(), any(), any(), any())).thenReturn(
             5);
-        when(thesisRepository.countAcceptedThesesInPeriod(any(), any(), any(), any())).thenReturn(
+        when(
+            thesisRepository.countNotDefendedThesesInPeriod(any(), any(), any(), any())).thenReturn(
             3);
-        when(thesisRepository.countThesesWithPublicReviewInPeriod(any(), any(), any(),
+        when(thesisRepository.countClosedAccessDefendedThesesThesesInPeriod(any(), any(), any(),
             any())).thenReturn(2);
         when(
             thesisRepository.countPubliclyAvailableDefendedThesesThesesInPeriod(any(), any(), any(),
                 any())).thenReturn(1);
 
         when(organisationUnitService.findOne(1)).thenReturn(new OrganisationUnit());
-        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(anyInt(),
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(any(),
             eq(Pageable.unpaged()))).thenReturn(
             new PageImpl<>(List.of(new OrganisationUnitIndex())));
 
@@ -84,8 +86,8 @@ public class ThesisLibraryReportingServiceTest {
         assertEquals(1, result.size());
         var report = result.getFirst();
         assertEquals(5, report.defendedCount());
-        assertEquals(3, report.topicsAcceptedCount());
-        assertEquals(2, report.putOnPublicReviewCount());
+        assertEquals(3, report.notDefendedCount());
+        assertEquals(2, report.closedAccessCount());
         assertEquals(1, report.publiclyAvailableCount());
     }
 
@@ -94,21 +96,22 @@ public class ThesisLibraryReportingServiceTest {
         // Given
         var request =
             new ThesisReportRequestDTO(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
-                List.of(1), ThesisType.PHD);
+                List.of(1), List.of(ThesisType.PHD));
 
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1)).thenReturn(
             List.of(1, 2));
 
         when(thesisRepository.countDefendedThesesInPeriod(any(), any(), any(), any())).thenReturn(
             0);
-        when(thesisRepository.countAcceptedThesesInPeriod(any(), any(), any(), any())).thenReturn(
+        when(
+            thesisRepository.countNotDefendedThesesInPeriod(any(), any(), any(), any())).thenReturn(
             0);
-        when(thesisRepository.countThesesWithPublicReviewInPeriod(any(), any(), any(),
+        when(thesisRepository.countClosedAccessDefendedThesesThesesInPeriod(any(), any(), any(),
             any())).thenReturn(0);
         when(
             thesisRepository.countPubliclyAvailableDefendedThesesThesesInPeriod(any(), any(), any(),
                 any())).thenReturn(0);
-        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(anyInt(),
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(any(),
             eq(Pageable.unpaged()))).thenReturn(
             new PageImpl<>(List.of(new OrganisationUnitIndex())));
 
@@ -123,7 +126,8 @@ public class ThesisLibraryReportingServiceTest {
     void shouldReturnEmptyPageWhenNoDefendedThesesExist() {
         // Given
         var request = new ThesisReportRequestDTO(
-            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1), ThesisType.PHD);
+            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1),
+            List.of(ThesisType.PHD));
         var pageable = Pageable.unpaged();
 
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
@@ -144,7 +148,8 @@ public class ThesisLibraryReportingServiceTest {
     void shouldReturnEmptyPageWhenNoAcceptedThesesExist() {
         // Given
         var request = new ThesisReportRequestDTO(
-            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1), ThesisType.PHD);
+            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1),
+            List.of(ThesisType.PHD));
         var pageable = Pageable.unpaged();
 
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
@@ -165,7 +170,8 @@ public class ThesisLibraryReportingServiceTest {
     void shouldReturnEmptyPageWhenNoPublicReviewThesesExist() {
         // Given
         var request = new ThesisReportRequestDTO(
-            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1), ThesisType.PHD);
+            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1),
+            List.of(ThesisType.PHD));
         var pageable = Pageable.unpaged();
 
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
@@ -187,14 +193,15 @@ public class ThesisLibraryReportingServiceTest {
     void shouldReturnEmptyPageWhenNoPubliclyAvailableThesesExist() {
         // Given
         var request = new ThesisReportRequestDTO(
-            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1), ThesisType.PHD);
+            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1),
+            List.of(ThesisType.PHD));
         var pageable = Pageable.unpaged();
 
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
             .thenReturn(List.of(1, 2));
 
-        when(documentPublicationIndexRepository.fetchPubliclyAvailableDefendedThesesInPeriod(
-            any(), any(), any(), any(), any())).thenReturn(Page.empty());
+        when(documentPublicationIndexRepository.fetchDefendedThesesInPeriodWithExplicitAccess(
+            any(), any(), any(), any(), any(), any())).thenReturn(Page.empty());
 
         // When
         var result =
@@ -209,7 +216,8 @@ public class ThesisLibraryReportingServiceTest {
     void shouldReturnNonEmptyPageWhenDefendedThesesExist() {
         // Given
         var request = new ThesisReportRequestDTO(
-            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1), ThesisType.PHD);
+            LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), List.of(1),
+            List.of(ThesisType.PHD));
         var pageable = Pageable.unpaged();
         var thesisIndex = new DocumentPublicationIndex();
         var expectedPage = new PageImpl<>(List.of(thesisIndex));
@@ -361,5 +369,119 @@ public class ThesisLibraryReportingServiceTest {
         );
         assertEquals(expectedPage, result);
         assertTrue(request.thesisTypes().isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoNotDefendedThesesExistInPeriod() {
+        // Given
+        var request = new ThesisReportRequestDTO(
+            LocalDate.of(2024, 1, 1),
+            LocalDate.of(2024, 12, 31),
+            List.of(1),
+            List.of(ThesisType.PHD)
+        );
+        var pageable = Pageable.unpaged();
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1, 2));
+
+        when(documentPublicationIndexRepository.fetchNotDefendedThesesInPeriod(
+            any(), any(), any(), any(), any()
+        )).thenReturn(Page.empty());
+
+        // When
+        var result =
+            thesisLibraryReportingService.fetchNotDefendedThesesInPeriod(request, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldReturnPageOfNotDefendedThesesWhenTheyExistInPeriod() {
+        // Given
+        var request = new ThesisReportRequestDTO(
+            LocalDate.of(2023, 1, 1),
+            LocalDate.of(2023, 12, 31),
+            List.of(5),
+            List.of(ThesisType.MASTER)
+        );
+        var pageable = Pageable.unpaged();
+
+        var thesisIndex = mock(DocumentPublicationIndex.class);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(5))
+            .thenReturn(List.of(5, 6));
+
+        when(documentPublicationIndexRepository.fetchNotDefendedThesesInPeriod(
+            any(), any(), any(), any(), any()
+        )).thenReturn(new PageImpl<>(List.of(thesisIndex)));
+
+        // When
+        var result =
+            thesisLibraryReportingService.fetchNotDefendedThesesInPeriod(request, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.getContent().size());
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoClosedAccessThesesExistInPeriod() {
+        // Given
+        var request = new ThesisReportRequestDTO(
+            LocalDate.of(2022, 1, 1),
+            LocalDate.of(2022, 12, 31),
+            List.of(3),
+            List.of(ThesisType.PHD)
+        );
+        var pageable = Pageable.unpaged();
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(3))
+            .thenReturn(List.of(3, 4));
+
+        when(documentPublicationIndexRepository.fetchDefendedThesesInPeriodWithExplicitAccess(
+            any(), any(), any(), any(), eq(false), any()
+        )).thenReturn(Page.empty());
+
+        // When
+        var result =
+            thesisLibraryReportingService.fetchClosedAccessThesesInPeriod(request, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldReturnPageOfClosedAccessThesesWhenTheyExistInPeriod() {
+        // Given
+        var request = new ThesisReportRequestDTO(
+            LocalDate.of(2021, 1, 1),
+            LocalDate.of(2021, 12, 31),
+            List.of(10),
+            List.of(ThesisType.BACHELOR)
+        );
+        var pageable = Pageable.unpaged();
+
+        var thesisIndex = mock(DocumentPublicationIndex.class);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
+            .thenReturn(List.of(10, 11, 12));
+
+        when(documentPublicationIndexRepository.fetchDefendedThesesInPeriodWithExplicitAccess(
+            any(), any(), any(), any(), eq(false), any()
+        )).thenReturn(new PageImpl<>(List.of(thesisIndex)));
+
+        // When
+        var result =
+            thesisLibraryReportingService.fetchClosedAccessThesesInPeriod(request, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.getContent().size());
     }
 }

@@ -26,10 +26,14 @@ public interface PublicationSeriesIndicatorService {
     void scheduleIndicatorLoading(LocalDateTime dateTime,
                                   EntityIndicatorSource entityIndicatorSource, Integer userId);
 
-    void computeFiveYearIFRank(List<Integer> classificationYears);
+    void computeFiveYearIFAndJciRank(List<Integer> classificationYears, boolean calculateIF5,
+                                     boolean calculateJci);
 
-    void scheduleIF5RankComputation(LocalDateTime timeToRun, List<Integer> classificationYears,
-                                    Integer userId);
+    void scheduleIF5AndJCIRankComputation(LocalDateTime timeToRun,
+                                          List<Integer> classificationYears,
+                                          boolean calculateIF5,
+                                          boolean calculateJci,
+                                          Integer userId);
 
     IFTableResponseDTO getIFTableContent(Integer publicationSeriesId, Integer fromYear,
                                          Integer toYear);

@@ -14,6 +14,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -48,6 +49,7 @@ public class StringUtil {
     private static final Pattern BAD_CHARS = Pattern.compile("[^\\p{L}\\p{Nd} ]+");
 
     private static final Pattern MULTI_SPACE = Pattern.compile("\\s{2,}");
+
     private static final List<String> identifierUrlPrefixes = List.of(
         "https://doi.org/", "https://orcid.org/", "https://www.scopus.com/pages/organization/",
         "https://www.scopus.com/authid/detail.uri?authorId=",
@@ -55,7 +57,9 @@ public class StringUtil {
         "https://openalex.org/", "https://ror.org/",
         "https://www.webofscience.com/api/gateway?GWVersion=2&SrcApp=teslaris&SrcAuth=WosAPI&DestLinkType=FullRecord&DestApp=WOS_CPL&KeyUT=WOS:"
     );
+
     private static List<String> stopwords;
+
     private static Analyzer analyzer;
 
     @Autowired
@@ -100,6 +104,10 @@ public class StringUtil {
     }
 
     public static void sanitizeTokens(List<String> tokens) {
+        if (Objects.isNull(tokens)) {
+            tokens = new ArrayList<>(List.of("*"));
+        }
+
         tokens.replaceAll(
             token -> (token.equals("*") || token.equals(".")) ? "*" :
                 QueryParserBase.escape(token));
@@ -112,7 +120,7 @@ public class StringUtil {
 
     @Nonnull
     public static String performSimpleLatinPreprocessing(String input, boolean performFolding) {
-        if (input == null) {
+        if (Objects.isNull(input)) {
             return "";
         }
 
@@ -189,6 +197,10 @@ public class StringUtil {
 
     public static String getStringContent(Set<MultiLingualContent> multilingualContent,
                                           String lang) {
+        if (Objects.isNull(multilingualContent) || multilingualContent.isEmpty()) {
+            return "";
+        }
+
         MultiLingualContent fallback = null;
         for (var content : multilingualContent) {
             if (lang.equalsIgnoreCase(content.getLanguage().getLanguageTag())) {
@@ -198,7 +210,7 @@ public class StringUtil {
             fallback = content;
         }
 
-        return Objects.nonNull(fallback) ? fallback.getContent() : "";
+        return fallback.getContent();
     }
 
     public static boolean isInteger(String s, int radix) {
@@ -362,5 +374,30 @@ public class StringUtil {
         }
 
         return -1;
+    }
+
+    public static String formatNameToLastNameFirst(String fullName) {
+        if (Objects.isNull(fullName) || fullName.trim().isEmpty()) {
+            return fullName;
+        }
+
+        String trimmed = fullName.trim();
+        String[] parts = trimmed.split("\\s+");
+
+        if (parts.length == 0) {
+            return trimmed;
+        } else if (parts.length == 1) {
+            // Single name: "Madonna", "Prince"
+            return parts[0];
+        } else if (parts.length == 2) {
+            // First Last: "John Doe" -> "Doe John"
+            return parts[1] + " " + parts[0];
+        } else {
+            // Multiple parts: "John Michael Doe" -> "Doe John Michael"
+            String lastName = parts[parts.length - 1];
+            String firstAndMiddle =
+                String.join(" ", Arrays.copyOfRange(parts, 0, parts.length - 1));
+            return lastName + " " + firstAndMiddle;
+        }
     }
 }

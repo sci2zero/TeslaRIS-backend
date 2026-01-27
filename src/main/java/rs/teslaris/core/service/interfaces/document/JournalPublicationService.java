@@ -33,4 +33,7 @@ public interface JournalPublicationService {
                                  DocumentPublicationIndex index);
 
     void indexJournalPublication(JournalPublication publication);
+
+    Integer transferProceedingsPublicationToJournal(Integer proceedingsPublicationId,
+                                                    Integer journalId);
 }

@@ -58,6 +58,14 @@ public class ThesisLibraryReportingController {
         return thesisLibraryReportingService.fetchDefendedThesesInPeriod(reportRequest, pageable);
     }
 
+    @PostMapping("/not-defended")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
+    public Page<DocumentPublicationIndex> getNotDefendedThesesForPeriod(
+        @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
+        return thesisLibraryReportingService.fetchNotDefendedThesesInPeriod(reportRequest,
+            pageable);
+    }
+
     @PostMapping("/accepted")
     @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
     public Page<DocumentPublicationIndex> getAcceptedThesesForPeriod(
@@ -78,6 +86,14 @@ public class ThesisLibraryReportingController {
     public Page<DocumentPublicationIndex> getPubliclyAvailableThesesForPeriod(
         @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
         return thesisLibraryReportingService.fetchPubliclyAvailableThesesInPeriod(reportRequest,
+            pageable);
+    }
+
+    @PostMapping("/closed-access")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
+    public Page<DocumentPublicationIndex> getClosedAccessThesesForPeriod(
+        @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
+        return thesisLibraryReportingService.fetchClosedAccessThesesInPeriod(reportRequest,
             pageable);
     }
 

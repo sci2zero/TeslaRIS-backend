@@ -32,13 +32,23 @@
         "sr": "Publikacije kategorija M10 i M40 ne podležu skaliranju poena.",
         "sr-cyr": "Публикације категорија M10 и M40 не подлежу скалирању поена.",
         "en": "Publications of categories M10 and M40 are not subject to point scaling."
+      },
+      "notFullResults": {
+        "sr": "Prilikom vrednovanja kategorije naučnih radova u časopisu kategorije M20 se uzimaju u obzir sa punim brojem bodova: originalni naučni rad, pregledni (revijski) članak i saopštenje. Svi rezultati koji su obima bar dve strane, koji su referisani u međunarodnim citatnim izveštajima Journal Citation Report Clarivate Analytics i Scopus Scimago Journal & Country Rank, a nisu tipa article, review ili proceeding paper vrednovaće se samo ako su iz kategorija časopisa M21, i to sa 1/4 pripadajućih bodova za kategoriju M21, osim za oblast medicinskih nauka, gde se u obzir uzima samo M21a+ (a u suprotnom se posmatra kao M26).",
+        "sr-cyr": "Приликом вредновања категорије научних радова у часопису категорије М20 се узимају у обзир са пуним бројем бодова: оригинални научни рад, прегледни (ревијски) чланак и саопштење. Сви резултати који су обима бар две стране, који су реферисани у међународним цитатним извештајима Journal Citation Report Clarivate Analytics и Scopus Scimago Journal & Country Rank, а нису типа article, review или proceeding paper вредноваће се само ако су из категорија часописа М21, и то са 1/4 припадајућих бодова за категорију М21, осим за област медицинских наука, где се у обзир узима само М21а+ (а у супротном се посматра као M26).",
+        "en": "When evaluating scientific paper categories in journals of the M20 category, the following are considered with full points: original scientific paper, review article and proceeding paper. All results that are at least two pages long, indexed in international citation reports Journal Citation Report Clarivate Analytics and Scopus Scimago Journal & Country Rank, but are not of type article, review, or proceeding paper, will be evaluated only if they are from journal categories M21, with 1/4 of the corresponding points for category M21, except for the field of medical sciences, where only M21a+ is taken into account (it is assessed as M26 for other)."
       }
     },
     "journalClassificationRules": {
       "generalAssessmentRulePrefix": {
-        "sr": "Rad publikovan u časopisu dobija najpovoljniju kategoriju za godinu publikovanja iz perioda od tri godine (dve godine pre publikovanja i godine publikovanja) ako u tom periodu ima bar u jednoj godini dvogodišnji (IF2) ili petogodišnji (IF5) Impakt Faktor.",
-        "sr-cyr": "Рад публикован у часопису добија најповољнију категорију за годину публиковања из периода од три године (две године пре публиковања и године публиковања) ако у том периоду има бар у једној години двогодишњи (IF2) или петогодишњи (IF5) Импакт Фактор.",
-        "en": "A paper published in a journal receives the most favorable category for the year of publication from a three-year period (two years before publication and the year of publication) if, during that period, it has at least one year with either a two-year (IF2) or five-year (IF5) Impact Factor."
+        "sr": "Rad publikovan u časopisu dobija najpovoljniju kategoriju za godinu publikovanja iz perioda od tri godine (dve godine pre publikovanja i godine publikovanja) ako u tom periodu ima bar u jednoj godini dvogodišnji (IF2) ili petogodišnji (IF5) impakt faktor, ili ako ima indikator citiranosti časopisa (JCI).",
+        "sr-cyr": "Рад публикован у часопису добија најповољнију категорију за годину публиковања из периода од три године (две године пре публиковања и године публиковања) ако у том периоду има бар у једној години двогодишњи (IF2) или петогодишњи (IF5) Импакт Фактор, или аки има индикатор цитираности часописа (JCI).",
+        "en": "A paper published in a journal receives the most favorable category for the year of publication from a three-year period (two years before publication and the year of publication) if, during that period, it has at least one year with either a two-year (IF2), five-year (IF5) Impact Factor or a Journal Citation Index (JCI)."
+      },
+      "mnoAssessmentRulePrefix": {
+        "sr": "Rad publikovan u časopisu dobija najpovoljniju kategoriju za godinu publikovanja iz perioda od tri godine (dve godine pre publikovanja i godine publikovanja) ako u tom periodu ima klasifikaciju od nekog MNO-a.",
+        "sr-cyr": "Рад публикован у часопису добија најповољнију категорију за годину публиковања из периода од три године (две године пре публиковања и године публиковања) ако у том периоду има класификацију од неког МНО-а.",
+        "en": "A paper published in a journal receives the most favorable category for the year of publication from a three-year period (two years before publication and the year of publication) if, during that period, it has classification from any MNO."
       },
       "M21APlusIF2": {
         "sr": "Časopis je prema JCR IF2 rangiran u svojoj oblasti nauka među prvih 5% časopisa ({0}) u {1}. godini za oblast {2}.",
@@ -126,14 +136,14 @@
         "en": "The journal is referenced in SJR Q2 in the field of social and humanities sciences in {0} for category {1}."
       },
       "m23MKS": {
-        "sr": "Časopis je u oblasti humanističkih nauka, sa liste MKS - I kategorija u {0}. godini za oblast {1}.",
-        "sr-cyr": "Часопис је у области хуманистичких наука, са листе MKS - I категорија у Q2 у {0}. години за област {1}.",
-        "en": "The journal is in the field of humanities and is listed in MKS - Category I in {0} for category {1}."
+        "sr": "Časopis je u oblasti humanističkih nauka, sa liste MKS - I kategorija u {0}. godini.",
+        "sr-cyr": "Часопис је у области хуманистичких наука, са листе MKS - I категорија у Q2 у {0}. години.",
+        "en": "The journal is in the field of humanities and is listed in MKS - Category I in {0}."
       },
       "m23e": {
-        "sr": "Časopis je iz oblasti društvenih i humanističkih nauka i nalazi se na listi ERIH Plus, na predlog matičnog naučnog odbora u {0}. godini za oblast {1}.",
-        "sr-cyr": "Часопис је из области друштвених и хуманистичких наука и налази се на листи ERIH Plus, на предлог матичног научног одбора у {0}. години за област {1}.",
-        "en": "The journal is in the field of social and humanities sciences and is listed in ERIH Plus, as proposed by the relevant scientific committee in {0} for category {1}."
+        "sr": "Časopis je iz oblasti društvenih i humanističkih nauka i nalazi se na listi ERIH Plus u {0}. godini.",
+        "sr-cyr": "Часопис је из области друштвених и хуманистичких наука и налази се на листи ERIH Plus у {0}. години.",
+        "en": "The journal is in the field of social and humanities sciences and is listed in ERIH Plus list, in {0}."
       },
       "M24PlusSJR": {
         "sr": "Međunarodni časopis je referisan na SJR-u u {0} u {1}. godini za oblast {2}.",

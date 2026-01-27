@@ -276,6 +276,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public AuthenticationResponseDTO finishOAuthWorkflow(String code, String identifier,
                                                          String fingerprint) {
+        if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
+            throw new MaintenanceModeException("maintenanceInProgressMessage");
+        }
+
         var oAuthCode = oAuthCodeRepository.getCodeForCodeAndIdentifier(code, identifier);
 
         if (oAuthCode.isEmpty()) {
@@ -397,7 +401,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         user.setEmail(newEmail);
 
         var index = userAccountIndexRepository.findByDatabaseId(userId);
-        saveAndNotifyUser(user, index.orElse(new UserAccountIndex()));
+        saveAndNotifyUser(user, index.orElse(new UserAccountIndex()), null);
     }
 
     @Override
@@ -409,12 +413,17 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "Activation email can only be sent to deactivated users.");
         }
 
-        sendActivationEmail(user);
+        sendActivationEmail(user, null);
     }
 
     @Override
     @Transactional
     public User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest) {
+        return registerResearcher(registrationRequest, false);
+    }
+
+    private User registerResearcher(ResearcherRegistrationRequestDTO registrationRequest,
+                                    boolean generatedPassword) {
         if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
             throw new MaintenanceModeException("maintenanceInProgressMessage");
         }
@@ -437,7 +446,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         personService.indexPerson(person);
-        return saveAndNotifyUser(newUser, new UserAccountIndex());
+        return saveAndNotifyUser(newUser, new UserAccountIndex(),
+            generatedPassword ? registrationRequest.getPassword() : null);
     }
 
     @Override
@@ -464,7 +474,19 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         Arrays.fill(generatedPassword, '\0');
-        return saveAndNotifyUser(newUser, new UserAccountIndex());
+        return saveAndNotifyUser(newUser, new UserAccountIndex(), null);
+    }
+
+    @Override
+    @Transactional
+    public User registerResearcherAdmin(ResearcherRegistrationRequestDTO registrationRequest)
+        throws NoSuchAlgorithmException {
+        var random = SecureRandom.getInstance("SHA1PRNG");
+        var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
+
+        registrationRequest.setPassword(new String(generatedPassword));
+
+        return registerResearcher(registrationRequest, true);
     }
 
     private Authority getResearcherAuthority() {
@@ -537,16 +559,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
     }
 
-    private User saveAndNotifyUser(User newUser, UserAccountIndex index) {
+    private User saveAndNotifyUser(User newUser, UserAccountIndex index, String generatedPassword) {
         var savedUser = userRepository.save(newUser);
         indexUser(savedUser, index);
 
-        sendActivationEmail(savedUser);
+        sendActivationEmail(savedUser, generatedPassword);
 
         return savedUser;
     }
 
-    private void sendActivationEmail(User savedUser) {
+    private void sendActivationEmail(User savedUser, String generatedPassword) {
         userAccountActivationRepository.deleteAllByUserId(savedUser.getId());
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), savedUser);
@@ -566,8 +588,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var systemName = getSystemName(language);
 
         var message = messageSource.getMessage(
-            "accountActivation.mailBodyResearcher",
-            new Object[] {systemName, activationLink},
+            StringUtil.valueExists(generatedPassword) ? "accountActivation.mailBodyEmployee" :
+                "accountActivation.mailBodyResearcher",
+            new Object[] {systemName, activationLink, generatedPassword},
             Locale.forLanguageTag(language)
         );
         emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);
@@ -1040,7 +1063,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         userToDelete.setPerson(null);
         userToDelete.setLocked(true);
-        userRepository.delete(userToDelete);
+        userToDelete.setDeleted(true);
+        userRepository.save(userToDelete);
+
         userAccountIndexRepository.findByDatabaseId(userId)
             .ifPresent(userAccountIndexRepository::delete);
     }

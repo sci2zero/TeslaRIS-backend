@@ -64,18 +64,22 @@ public class PublicationSeriesIndicatorController {
             tokenUtil.extractUserIdFromToken(bearerToken));
     }
 
-    @PostMapping("/schedule-if5-compute")
+    @PostMapping("/schedule-if5-jci-compute")
     @Idempotent
     @PreAuthorize("hasAuthority('SCHEDULE_TASK')")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void scheduleIF5RankCompute(@RequestParam("timestamp")
-                                       LocalDateTime timestamp,
-                                       @RequestParam("classificationYears")
-                                       List<Integer> classificationYears,
-                                       @RequestHeader("Authorization")
-                                       String bearerToken) {
-        publicationSeriesIndicatorService.scheduleIF5RankComputation(timestamp, classificationYears,
-            tokenUtil.extractUserIdFromToken(bearerToken));
+    public void scheduleIF5AndJCIRankCompute(@RequestParam("timestamp")
+                                             LocalDateTime timestamp,
+                                             @RequestParam("classificationYears")
+                                             List<Integer> classificationYears,
+                                             @RequestParam boolean calculateIF5Rank,
+                                             @RequestParam boolean calculateJciRank,
+                                             @RequestHeader("Authorization")
+                                             String bearerToken) {
+        publicationSeriesIndicatorService.scheduleIF5AndJCIRankComputation(timestamp,
+            classificationYears, calculateIF5Rank, calculateJciRank,
+            tokenUtil.extractUserIdFromToken(bearerToken)
+        );
     }
 
     @GetMapping("/if-table/{publicationSeriesId}")

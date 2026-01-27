@@ -9,5 +9,6 @@ public enum DocumentPublicationType {
     SOFTWARE,
     DATASET,
     MONOGRAPH_PUBLICATION,
-    THESIS
+    THESIS,
+    MATERIAL_PRODUCT
 }

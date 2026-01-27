@@ -124,7 +124,9 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
-    public void computeFiveYearIFRank(List<Integer> classificationYears) {
+    public void computeFiveYearIFAndJciRank(List<Integer> classificationYears,
+                                            boolean calculateIF5,
+                                            boolean calculateJci) {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
@@ -153,9 +155,26 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                         .toList();
 
                     distinctCategoryIdentifiers.forEach(categoryIdentifier -> {
-                        performIF5RankComputation(classificationYear, currentJournal,
-                            categoryIdentifier,
-                            currentJournalRankIndicators.getFirst().getEdition());
+                        var journalInSameCategoryIds =
+                            publicationSeriesIndicatorRepository.findIndicatorsForCategoryAndYearAndSource(
+                                categoryIdentifier, classificationYear,
+                                EntityIndicatorSource.WEB_OF_SCIENCE);
+
+                        if (calculateIF5) {
+                            performIF5RankComputation(
+                                classificationYear, currentJournal, categoryIdentifier,
+                                currentJournalRankIndicators.getFirst().getEdition(),
+                                journalInSameCategoryIds
+                            );
+                        }
+
+                        if (calculateJci) {
+                            performJCIRankComputation(
+                                classificationYear, currentJournal, categoryIdentifier,
+                                currentJournalRankIndicators.getFirst().getEdition(),
+                                journalInSameCategoryIds
+                            );
+                        }
                     });
                 });
             });
@@ -166,38 +185,49 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     private void performIF5RankComputation(Integer classificationYear, Journal currentJournal,
-                                           String categoryIdentifier, String edition) {
-        var journalInSameCategoryIds =
-            publicationSeriesIndicatorRepository.findIndicatorsForCategoryAndYearAndSource(
-                categoryIdentifier, classificationYear, EntityIndicatorSource.WEB_OF_SCIENCE);
+                                           String categoryIdentifier, String edition,
+                                           List<Integer> journalInSameCategoryIds) {
         var allIF5Values =
             publicationSeriesIndicatorRepository.findJournalIndicatorsForIdsAndCodeAndYearAndSource(
                 journalInSameCategoryIds, "fiveYearJIF", classificationYear,
                 EntityIndicatorSource.WEB_OF_SCIENCE);
 
         var sortedIF5Values = allIF5Values.stream()
-            .filter((indicator) -> Objects.nonNull(indicator.getNumericValue()))
-            .sorted(
-                Comparator.comparing(EntityIndicator::getNumericValue, Comparator.reverseOrder()))
+            .sorted(Comparator.comparing(
+                (EntityIndicator indicator) ->
+                    Objects.nonNull(indicator.getNumericValue()) ?
+                        indicator.getNumericValue() : 0.0,
+                Comparator.reverseOrder()))
             .toList();
 
         var rankMap = new HashMap<Double, Integer>();
-        AtomicInteger currentRank = new AtomicInteger(1);
+        int currentRank = 1;
 
-        // Build rank map based on value occurrences
-        sortedIF5Values.forEach(indicator ->
-            rankMap.computeIfAbsent(indicator.getNumericValue(), v -> currentRank.getAndIncrement())
-        );
+        for (int i = 0; i < sortedIF5Values.size(); i++) {
+            double currentValue = Objects.nonNull(sortedIF5Values.get(i).getNumericValue()) ?
+                sortedIF5Values.get(i).getNumericValue() : 0.0;
 
-        int rank = rankMap.getOrDefault(
-            sortedIF5Values.stream()
-                .filter(ind -> Objects.equals(ind.getPublicationSeries().getId(),
-                    currentJournal.getId()))
-                .map(EntityIndicator::getNumericValue)
-                .findFirst()
-                .orElse(Double.NaN),
-            sortedIF5Values.size()
-        );
+            if (!rankMap.containsKey(currentValue)) {
+                rankMap.put(currentValue, currentRank);
+            }
+
+            if (i + 1 < sortedIF5Values.size()) {
+                double nextValue = Objects.nonNull(sortedIF5Values.get(i + 1).getNumericValue()) ?
+                    sortedIF5Values.get(i + 1).getNumericValue() : 0.0;
+                if (nextValue != currentValue) {
+                    currentRank = i + 2; // Next rank = current position + 2 (1-based)
+                }
+            }
+        }
+
+        Double currentJournalValue = sortedIF5Values.stream()
+            .filter(ind -> Objects.equals(ind.getPublicationSeries().getId(),
+                currentJournal.getId()))
+            .map(ind -> Objects.nonNull(ind.getNumericValue()) ? ind.getNumericValue() : 0.0)
+            .findFirst()
+            .orElse(0.0);
+
+        int rank = rankMap.getOrDefault(currentJournalValue, sortedIF5Values.size());
 
         var if5Rank = new PublicationSeriesIndicator();
         if5Rank.setCategoryIdentifier(categoryIdentifier);
@@ -220,21 +250,75 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         indicatorBatchWriter.bufferIndicator(if5Rank);
     }
 
+    private void performJCIRankComputation(Integer classificationYear, Journal currentJournal,
+                                           String categoryIdentifier, String edition,
+                                           List<Integer> journalInSameCategoryIds) {
+        var allJciValues =
+            publicationSeriesIndicatorRepository.findJournalIndicatorsForIdsAndCodeAndYearAndSource(
+                journalInSameCategoryIds, "jci", classificationYear,
+                EntityIndicatorSource.WEB_OF_SCIENCE);
+
+        var existingPercentileValue =
+            publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                currentJournal.getId(), EntityIndicatorSource.WEB_OF_SCIENCE,
+                LocalDate.of(classificationYear, 1, 1),
+                categoryIdentifier,
+                "jciPercentile");
+
+        if (allJciValues.isEmpty() || existingPercentileValue.isEmpty()) {
+            return;
+        }
+
+        double percentileValue = Objects.nonNull(existingPercentileValue.get().getNumericValue()) ?
+            existingPercentileValue.get().getNumericValue() : 0.0;
+        double rawPosition = (100 - percentileValue) / 100.0 * allJciValues.size();
+        int rank = (int) Math.ceil(rawPosition);
+
+        var jciRank = new PublicationSeriesIndicator();
+        jciRank.setCategoryIdentifier(categoryIdentifier);
+        jciRank.setFromDate(LocalDate.of(classificationYear, 1, 1));
+        jciRank.setToDate(LocalDate.of(classificationYear, 12, 31));
+        jciRank.setPublicationSeries(currentJournal);
+        jciRank.setIndicator(indicatorService.getIndicatorByCode("jciRank"));
+        jciRank.setTextualValue(rank + "/" + allJciValues.size());
+        jciRank.setEdition(edition);
+        jciRank.setTimestamp(LocalDateTime.now());
+        jciRank.setSource(EntityIndicatorSource.WEB_OF_SCIENCE);
+
+        var existingIndicatorValue =
+            publicationSeriesIndicatorRepository.existsByPublicationSeriesIdAndSourceAndYearAndCategory(
+                currentJournal.getId(), jciRank.getSource(), jciRank.getFromDate(),
+                categoryIdentifier,
+                "jciRank");
+        existingIndicatorValue.ifPresent(publicationSeriesIndicatorRepository::delete);
+
+        indicatorBatchWriter.bufferIndicator(jciRank);
+    }
+
     @Override
-    public void scheduleIF5RankComputation(LocalDateTime timeToRun,
-                                           List<Integer> classificationYears, Integer userId) {
+    public void scheduleIF5AndJCIRankComputation(LocalDateTime timeToRun,
+                                                 List<Integer> classificationYears,
+                                                 boolean calculateIF5,
+                                                 boolean calculateJci,
+                                                 Integer userId) {
 
         var taskId = taskManagerService.scheduleTask(
-            "Publication_Series_IF5Rank_Compute-" + EntityIndicatorSource.WEB_OF_SCIENCE.name() +
-                "-" + StringUtils.join(classificationYears, "_") +
+            "Publication_Series_IF5_JCI_Rank_Compute-" +
+                EntityIndicatorSource.WEB_OF_SCIENCE.name() + "-" +
+                (calculateIF5 ? "IF5-" : "") + (calculateJci ? "JCI-" : "") +
+                StringUtils.join(classificationYears, "_") +
                 "-" + UUID.randomUUID(),
-            timeToRun, () -> computeFiveYearIFRank(classificationYears), userId,
+            timeToRun,
+            () -> computeFiveYearIFAndJciRank(classificationYears, calculateIF5, calculateJci),
+            userId,
             RecurrenceType.ONCE);
 
         taskManagerService.saveTaskMetadata(
             new ScheduledTaskMetadata(taskId, timeToRun,
-                ScheduledTaskType.IF5_RANK_COMPUTATION, new HashMap<>() {{
+                ScheduledTaskType.IF5_JCI_RANK_COMPUTATION, new HashMap<>() {{
                 put("classificationYears", classificationYears);
+                put("calculateIF5", String.valueOf(calculateIF5));
+                put("calculateJci", String.valueOf(calculateJci));
                 put("userId", userId);
             }}, RecurrenceType.ONCE));
     }
@@ -253,9 +337,11 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         var ifResponse = new IFTableResponseDTO();
         ifResponse.setIf2Values(extractIFValues(indicatorValues, contentIndicators.getFirst()));
         ifResponse.setIf5Values(extractIFValues(indicatorValues, contentIndicators.get(2)));
+        ifResponse.setJciValues(extractIFValues(indicatorValues, contentIndicators.get(4)));
+        ifResponse.setJciPercentiles(extractIFValues(indicatorValues, contentIndicators.getLast()));
 
         var groupedByCategory = indicatorValues.stream()
-            .filter(ind -> ind.getCategoryIdentifier() != null)
+            .filter(ind -> Objects.nonNull(ind.getCategoryIdentifier()))
             .collect(Collectors.groupingBy(PublicationSeriesIndicator::getCategoryIdentifier));
 
         var tableContent = groupedByCategory.entrySet().stream()
@@ -286,7 +372,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
         categoryContent.setIf2Ranks(
             extractCategoryRanks(indicators, contentIndicators.get(1), category));
         categoryContent.setIf5Ranks(
-            extractCategoryRanks(indicators, contentIndicators.getLast(), category));
+            extractCategoryRanks(indicators, contentIndicators.get(3), category));
 
         return categoryContent;
     }

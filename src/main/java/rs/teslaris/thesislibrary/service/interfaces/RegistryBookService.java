@@ -57,6 +57,7 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
                                                                       LocalDate from, LocalDate to,
                                                                       String authorName,
                                                                       String authorTitle,
+                                                                      Integer promotionId,
                                                                       Pageable pageable);
 
     List<InstitutionCountsReportDTO> institutionCountsReport(Integer userId,
@@ -68,4 +69,8 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     boolean canEdit(Integer registryBookEntryId, boolean librarianCheck);
 
     boolean canAllowSingleEdit(Integer registryBookEntryId);
+
+    void removeFromFinishedPromotion(Integer registryBookEntryId);
+
+    void removeAllFromFinishedPromotion(Integer promotionId, boolean deletePromotion);
 }

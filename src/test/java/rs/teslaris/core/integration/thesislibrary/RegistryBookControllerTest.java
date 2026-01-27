@@ -340,6 +340,28 @@ public class RegistryBookControllerTest extends BaseTest {
     }
 
     @Test
+    @Order(10)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testRemoveAllFromPromotion() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/registry-book/remove-all-from-finished-promotion/{promotionId}?deletePromotion=false",
+                        1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/registry-book/promote-all/{promotionId}", 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
     public void testIsAttendanceNotCanceled() throws Exception {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(

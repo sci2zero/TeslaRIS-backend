@@ -23,7 +23,8 @@ public interface AssessmentResearchAreaService extends JPAService<AssessmentRese
                                                                     String code,
                                                                     Pageable pageable);
 
-    void setPersonAssessmentResearchArea(Integer personId, String researchAreaCode);
+    void setPersonAssessmentResearchArea(Integer personId, String researchAreaCode,
+                                         List<Integer> researchSubAreaIds);
 
     void deletePersonAssessmentResearchArea(Integer personId);
 

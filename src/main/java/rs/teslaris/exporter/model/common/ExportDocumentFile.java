@@ -30,4 +30,10 @@ public class ExportDocumentFile {
 
     @Field("access_rights")
     private AccessRights accessRights;
+
+    @Field("server_filename")
+    private String serverFilename;
+
+    @Field("filename")
+    private String filename;
 }

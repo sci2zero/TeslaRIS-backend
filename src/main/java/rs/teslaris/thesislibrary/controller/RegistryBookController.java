@@ -244,13 +244,16 @@ public class RegistryBookController {
                                                              String authorName,
                                                              @RequestParam(required = false, defaultValue = "")
                                                              String authorTitle,
+                                                             @RequestParam(required = false)
+                                                             Integer promotionId,
                                                              Pageable pageable,
                                                              @RequestHeader("Authorization")
                                                              String bearerToken) {
         return registryBookService.getRegistryBookForInstitutionAndPeriod(
             tokenUtil.extractUserIdFromToken(bearerToken), institutionId,
             Objects.requireNonNullElse(from, LocalDate.of(1000, 1, 1)),
-            Objects.requireNonNullElse(to, LocalDate.now()), authorName, authorTitle, pageable);
+            Objects.requireNonNullElse(to, LocalDate.now()), authorName, authorTitle, promotionId,
+            pageable);
     }
 
     @PatchMapping("/allow-single-update/{registryBookEntryId}")
@@ -264,5 +267,22 @@ public class RegistryBookController {
     @GetMapping("/is-attendance-cancellable/{attendanceIdentifier}")
     public boolean isAttendanceNotCanceled(@PathVariable String attendanceIdentifier) {
         return registryBookService.isAttendanceNotCancelled(attendanceIdentifier);
+    }
+
+    @PatchMapping("/remove-from-finished-promotion/{registryBookEntryId}")
+    @PreAuthorize("hasAuthority('UNPROMOTE_RB_ENTRIES')")
+    @RegistryBookEntryEditCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFromFinishedPromotion(@PathVariable Integer registryBookEntryId) {
+        registryBookService.removeFromFinishedPromotion(registryBookEntryId);
+    }
+
+    @PatchMapping("/remove-all-from-finished-promotion/{promotionId}")
+    @PreAuthorize("hasAuthority('UNPROMOTE_RB_ENTRIES')")
+    @PromotionEditAndUsageCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeAllFromFinishedPromotion(@PathVariable Integer promotionId,
+                                               @RequestParam Boolean deletePromotion) {
+        registryBookService.removeAllFromFinishedPromotion(promotionId, deletePromotion);
     }
 }

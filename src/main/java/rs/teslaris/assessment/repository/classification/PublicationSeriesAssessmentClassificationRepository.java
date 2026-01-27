@@ -38,6 +38,17 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
         Integer publicationSeriesId, String category, Integer classificationYear,
         Integer commissionId);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE PublicationSeriesAssessmentClassification psac " +
+        "SET psac.deleted = TRUE WHERE " +
+        "psac.publicationSeries.id IN :publicationSeriesIds AND " +
+        "psac.classificationYear IN :classificationYears AND " +
+        "psac.commission.id = :commissionId")
+    void deleteByPublicationSeriesAndYearsAndCommission(List<Integer> publicationSeriesIds,
+                                                        List<Integer> classificationYears,
+                                                        Integer commissionId);
+
     @Transactional
     @Modifying
     @Query(value = """
@@ -76,4 +87,36 @@ public interface PublicationSeriesAssessmentClassificationRepository extends
         "WHERE psac.publicationSeries.id = :publicationSeriesId")
     Page<PublicationSeriesAssessmentClassification> findClassificationsForPublicationSeries(
         Integer publicationSeriesId, Pageable pageable);
+
+    @Query(value = "SELECT eac.id FROM entity_assessment_classifications eac " +
+        "WHERE eac.deleted = TRUE " +
+        "ORDER BY eac.id",
+        countQuery = "SELECT COUNT(*) FROM entity_assessment_classifications WHERE deleted = TRUE",
+        nativeQuery = true)
+    Page<Integer> findIdsOfDeletedAssessments(Pageable pageable);
+
+    @Query(
+        value = "SELECT reason.classification_reason_id " +
+            "FROM entity_assessment_classifications_classification_reason reason " +
+            "WHERE reason.entity_assessment_classification_id IN :ids",
+        nativeQuery = true)
+    List<Integer> findReasonIdsForDeletion(List<Integer> ids);
+
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM entity_assessment_classifications_classification_reason reason " +
+        "WHERE reason.entity_assessment_classification_id IN :ids", nativeQuery = true)
+    int deleteClassificationReasonsForDeleted(List<Integer> ids);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM multi_lingual_content WHERE id IN :ids", nativeQuery = true)
+    void deleteReasonsMarkedAsDeleted(List<Integer> ids);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM entity_assessment_classifications eac " +
+        "WHERE eac.id IN :ids", nativeQuery = true)
+    int hardDeleteMarkedAsDeleted(List<Integer> ids);
 }

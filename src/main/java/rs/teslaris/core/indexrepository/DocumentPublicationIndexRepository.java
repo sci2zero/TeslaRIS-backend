@@ -207,7 +207,7 @@ public interface DocumentPublicationIndexRepository extends
                 }
               },
               { "terms": { "organisation_unit_ids": ?2 } },
-              { "term": { "publication_type": "?3" } }
+              { "terms": { "publication_type": ?3 } }
             ]
           }
         }
@@ -215,8 +215,35 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> fetchDefendedThesesInPeriod(LocalDate startDate,
                                                                LocalDate endDate,
                                                                List<Integer> institutionIds,
-                                                               String thesisType,
+                                                               List<String> thesisTypes,
                                                                Pageable pageable);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "type": "THESIS" } },
+              { "range": {
+                  "public_review_start_dates": {
+                    "gte": "?0",
+                    "lte": "?1"
+                  }
+                }
+              },
+              { "terms": { "organisation_unit_ids": ?2 } },
+              { "terms": { "publication_type": ?3 } }
+            ],
+            "must_not": [
+              { "exists": { "field": "thesis_defence_date" } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchNotDefendedThesesInPeriod(LocalDate startDate,
+                                                                  LocalDate endDate,
+                                                                  List<Integer> institutionIds,
+                                                                  List<String> thesisTypes,
+                                                                  Pageable pageable);
 
     @Query("""
         {
@@ -258,7 +285,7 @@ public interface DocumentPublicationIndexRepository extends
                 }
               },
               { "terms": { "organisation_unit_ids": ?2 } },
-              { "term": { "publication_type": "?3" } }
+              { "terms": { "publication_type": ?3 } }
             ]
           }
         }
@@ -266,7 +293,7 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> fetchAcceptedThesesInPeriod(LocalDate startDate,
                                                                LocalDate endDate,
                                                                List<Integer> institutionIds,
-                                                               String thesisType,
+                                                               List<String> thesisTypes,
                                                                Pageable pageable);
 
     @Query("""
@@ -282,7 +309,7 @@ public interface DocumentPublicationIndexRepository extends
                 }
               },
               { "terms": { "organisation_unit_ids": ?2 } },
-              { "term": { "publication_type": "?3" } }
+              { "terms": { "publication_type": ?3 } }
             ]
           }
         }
@@ -290,7 +317,7 @@ public interface DocumentPublicationIndexRepository extends
     Page<DocumentPublicationIndex> fetchThesesWithPublicReviewInPeriod(LocalDate startDate,
                                                                        LocalDate endDate,
                                                                        List<Integer> institutionIds,
-                                                                       String thesisType,
+                                                                       List<String> thesisTypes,
                                                                        Pageable pageable);
 
     @Query("""
@@ -306,19 +333,21 @@ public interface DocumentPublicationIndexRepository extends
                 }
               },
               { "terms": { "organisation_unit_ids": ?2 } },
-              { "term": { "publication_type": "?3" } }
+              { "terms": { "publication_type": ?3 } }
             ],
             "filter": [
-              { "term": { "is_open_access": true } }
+              { "term": { "is_open_access": ?4 } }
             ]
           }
         }
         """)
-    Page<DocumentPublicationIndex> fetchPubliclyAvailableDefendedThesesInPeriod(LocalDate startDate,
-                                                                                LocalDate endDate,
-                                                                                List<Integer> institutionIds,
-                                                                                String thesisType,
-                                                                                Pageable pageable);
+    Page<DocumentPublicationIndex> fetchDefendedThesesInPeriodWithExplicitAccess(
+        LocalDate startDate,
+        LocalDate endDate,
+        List<Integer> institutionIds,
+        List<String> thesisTypes,
+        Boolean openAccess,
+        Pageable pageable);
 
     @CountQuery("""
         {
@@ -401,4 +430,40 @@ public interface DocumentPublicationIndexRepository extends
     long countDocumentsWithAuthorInAnyRole(Integer authorId);
 
     void deleteByType(String type);
+
+    @CountQuery("""
+        {
+          "term": {
+              "proceedings_id": ?0
+            }
+        }
+        """)
+    long countByProceedingsId(Integer proceedingsId);
+
+    @CountQuery("""
+        {
+          "term": {
+              "monograph_id": ?0
+            }
+        }
+        """)
+    long countByMonographId(Integer monographId);
+
+    @CountQuery("""
+        {
+          "term": {
+              "event_id": ?0
+            }
+        }
+        """)
+    long countByEventId(Integer eventId);
+
+    @CountQuery("""
+        {
+          "term": {
+              "journal_id": ?0
+            }
+        }
+        """)
+    long countByJournalId(Integer journalId);
 }

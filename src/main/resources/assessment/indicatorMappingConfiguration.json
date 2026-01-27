@@ -1,5 +1,5 @@
 {
-  "ifTableContent": ["currentJIF", "currentJIFRank", "fiveYearJIF", "fiveYearJIFRank"],
+  "ifTableContent": ["currentJIF", "currentJIFRank", "fiveYearJIF", "fiveYearJIFRank", "jci", "jciPercentile"],
   "mappings": {
     "updateTotalViews": ["viewsTotal"],
     "updateTotalDownloads": ["downloadsTotal"],
@@ -76,9 +76,13 @@
           "mapsTo": "currentJIF",
           "type": "INDEPENDENT"
         },
+        "17": {
+          "mapsTo": "jciRank",
+          "type": "BY_CATEGORY"
+        },
         "19": {
           "mapsTo": "jciPercentile",
-          "type": "INDEPENDENT"
+          "type": "BY_CATEGORY"
         },
         "21": {
           "mapsTo": "eigenFactorNorm",

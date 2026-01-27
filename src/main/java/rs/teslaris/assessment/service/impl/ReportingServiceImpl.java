@@ -62,6 +62,11 @@ public class ReportingServiceImpl implements ReportingService {
                                          String locale, Integer topLevelInstitutionId,
                                          Integer userId, RecurrenceType recurrence) {
         checkCommissionAccessRights(commissionIds, userId);
+
+        if (Objects.isNull(timeToRun)) {
+            timeToRun = taskManagerService.findNextFreeExecutionTime();
+        }
+
         var commissionName =
             commissionService.findOne(commissionIds.getFirst()).getDescription().stream()
                 .filter(desc -> desc.getLanguage().getLanguageTag().equals(locale.toUpperCase()))

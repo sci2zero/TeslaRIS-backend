@@ -28,7 +28,7 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
 
     private ThesisReportRequestDTO getTestPayload() {
         return new ThesisReportRequestDTO(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31),
-            List.of(1), ThesisType.PHD_ART_PROJECT);
+            List.of(1), List.of(ThesisType.PHD_ART_PROJECT));
     }
 
     @Test
@@ -59,6 +59,23 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis-library/report/defended")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetNotDefendedPublications() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/thesis-library/report/not-defended")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
@@ -110,6 +127,23 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis-library/report/public-access")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetClosedAccessPublications() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/thesis-library/report/closed-access")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))

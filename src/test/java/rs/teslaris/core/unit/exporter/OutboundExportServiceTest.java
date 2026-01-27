@@ -1,4 +1,4 @@
-package rs.teslaris.core.unit;
+package rs.teslaris.core.unit.exporter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,6 +27,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.util.ReflectionTestUtils;
 import rs.teslaris.core.model.document.JournalPublicationType;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.oaipmh.common.OAIPMHResponse;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -52,11 +53,13 @@ public class OutboundExportServiceTest {
     @InjectMocks
     private OutboundExportServiceImpl outboundExportService;
 
+
     @BeforeAll
     public static void setup() {
         var handler =
             new ExportHandlersConfigurationLoader.Handler("handler", "1",
-                "name", "description", "en", true,
+                "name", "description", "en",
+                true, null, null,
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
@@ -92,7 +95,7 @@ public class OutboundExportServiceTest {
         when(mongoTemplate.find(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(List.of(document));
         when(mongoTemplate.count(any(Query.class), eq(ExportDocument.class))).thenReturn(1L);
-
+        when(organisationUnitService.findOne(any())).thenReturn(new OrganisationUnit());
 
         // When
         var result = outboundExportService.listRequestedRecords("handler", "dim",
@@ -128,6 +131,7 @@ public class OutboundExportServiceTest {
         document.setJournalPublicationType(JournalPublicationType.REVIEW_ARTICLE);
         when(mongoTemplate.findOne(any(Query.class), eq(ExportDocument.class)))
             .thenReturn(document);
+        when(organisationUnitService.findOne(any())).thenReturn(new OrganisationUnit());
 
         var response = new OAIPMHResponse();
 

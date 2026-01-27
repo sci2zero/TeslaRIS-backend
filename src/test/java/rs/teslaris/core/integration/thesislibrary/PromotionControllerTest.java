@@ -29,7 +29,7 @@ public class PromotionControllerTest extends BaseTest {
 
     private PromotionDTO getTestPayload() {
         return new PromotionDTO(null, LocalDate.of(2023, 11, 12), LocalTime.NOON, "some place",
-            List.of(), 1, false);
+            List.of(), 1, false, null);
     }
 
     @Test
@@ -55,6 +55,20 @@ public class PromotionControllerTest extends BaseTest {
         String requestBody = objectMapper.writeValueAsString(request);
         mockMvc.perform(
                 MockMvcRequestBuilders.get("http://localhost:8081/api/promotion/non-finished")
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetFinishedPromotions() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("http://localhost:8081/api/promotion/finished")
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

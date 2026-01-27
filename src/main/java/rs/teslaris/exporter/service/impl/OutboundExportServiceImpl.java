@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,6 +59,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.exporter.model.common.BaseExportEntity;
 import rs.teslaris.exporter.model.common.ExportDocument;
 import rs.teslaris.exporter.model.common.ExportPublicationType;
@@ -387,15 +389,22 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         try {
             var conversionMethod =
-                converterClass.getMethod(conversionFunctionName, recordClass, boolean.class);
+                converterClass.getMethod(conversionFunctionName, recordClass, boolean.class,
+                    List.class);
 
-            boolean supportLegacyIdentifiers =
-                Objects.nonNull(handler.supportLegacyIdentifiers()) &&
-                    handler.supportLegacyIdentifiers();
+            boolean supportLegacyIdentifiers = handler.supportLegacyIdentifiers();
+            List<String> supportedLanguages =
+                CollectionOperations.containsValues(handler.supportedLanguages()) ?
+                    handler.supportedLanguages().stream().map(String::toLowerCase).toList() :
+                    Collections.emptyList();
+
             Object convertedEntity =
-                conversionMethod.invoke(null, requestedRecord, supportLegacyIdentifiers);
+                conversionMethod.invoke(
+                    null, requestedRecord, supportLegacyIdentifiers, supportedLanguages
+                );
 
-            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat, handler);
+            ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat,
+                organisationUnitService, handler);
 
             ExportConverterBase.performExceptionalHandlingWhereAbsolutelyNecessary(convertedEntity,
                 metadataFormat, recordClass, handler);
@@ -432,18 +441,18 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         if (identifier.contains(IdentifierUtil.legacyIdentifierPrefix)) {
             query.addCriteria(
-                Criteria.where("oldId").is(OAIPMHParseUtility.parseBISISID(identifier)));
-        } else if (identifier.contains(identifier)) {
+                Criteria.where("old_id").in(OAIPMHParseUtility.parseBISISID(identifier)));
+        } else if (identifier.contains(IdentifierUtil.identifierPrefix)) {
             query.addCriteria(
-                Criteria.where("databaseId").is(OAIPMHParseUtility.parseBISISID(identifier)));
+                Criteria.where("database_id").is(OAIPMHParseUtility.parseBISISID(identifier)));
         }
 
         if (handlerConfiguration.exportOnlyActiveEmployees()) {
-            query.addCriteria(Criteria.where("activelyRelatedInstitutionIds")
+            query.addCriteria(Criteria.where("actively_related_institution_ids")
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         } else {
-            query.addCriteria(Criteria.where("relatedInstitutionIds")
+            query.addCriteria(Criteria.where("related_institution_ids")
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         }
@@ -466,11 +475,11 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 LocalDate.parse(until, DateTimeFormatter.ISO_DATE))));
 
         if (handlerConfiguration.exportOnlyActiveEmployees()) {
-            query.addCriteria(Criteria.where("activelyRelatedInstitutionIds")
+            query.addCriteria(Criteria.where("actively_related_institution_ids")
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         } else {
-            query.addCriteria(Criteria.where("relatedInstitutionIds")
+            query.addCriteria(Criteria.where("related_institution_ids")
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         }
@@ -681,9 +690,10 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             ? matchedSet.identifierSetSpec() + "/"
             : "";
 
-        String identifierPrefix = handlerConfig.supportLegacyIdentifiers()
-            ? IdentifierUtil.legacyIdentifierPrefix
-            : IdentifierUtil.identifierPrefix;
+        String identifierPrefix =
+            (handlerConfig.supportLegacyIdentifiers() && !entity.getOldIds().isEmpty())
+                ? IdentifierUtil.legacyIdentifierPrefix
+                : IdentifierUtil.identifierPrefix;
 
         var entityId = getEntityIdentifier(handlerConfig, entity);
 

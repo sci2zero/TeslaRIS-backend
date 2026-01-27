@@ -22,6 +22,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
@@ -54,6 +55,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final ProceedingsPublicationRepository proceedingsPublicationRepository;
+
 
     @Autowired
     public JournalPublicationServiceImpl(MultilingualContentService multilingualContentService,
@@ -74,7 +77,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
-                                         DocumentPublicationIndexRepository documentPublicationIndexRepository1) {
+                                         DocumentPublicationIndexRepository documentPublicationIndexRepository1,
+                                         ProceedingsPublicationRepository proceedingsPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -84,6 +88,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
+        this.proceedingsPublicationRepository = proceedingsPublicationRepository;
     }
 
     @Override
@@ -168,12 +173,18 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         setJournalPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
         var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
+
         indexJournalPublication(publicationToUpdate, indexToUpdate);
         journalService.reindexJournalVolatileInformation(publicationToUpdate.getJournal().getId());
 
         journalPublicationJPAService.save(publicationToUpdate);
 
         sendNotifications(publicationToUpdate);
+
+        if (Objects.nonNull(publicationDTO.getJournalId()) &&
+            !publicationDTO.getJournalId().equals(indexToUpdate.getJournalId())) {
+            journalService.reindexJournalVolatileInformation(indexToUpdate.getJournalId());
+        }
     }
 
     @Override
@@ -204,6 +215,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         }
 
         index.setJournalId(publication.getJournal().getId());
+        calculateNumberOfPages(publication, index);
 
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
@@ -216,6 +228,40 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         indexJournalPublication(publication,
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                 publication.getId()).orElse(new DocumentPublicationIndex()));
+    }
+
+    @Override
+    @Transactional
+    public Integer transferProceedingsPublicationToJournal(Integer proceedingsPublicationId,
+                                                           Integer journalId) {
+        var proceedingsPublication =
+            proceedingsPublicationRepository.findById(proceedingsPublicationId);
+
+        if (proceedingsPublication.isEmpty()) {
+            throw new NotFoundException("Proceedings publication with given ID does not exist.");
+        }
+
+        var proceedingsId = proceedingsPublication.get().getProceedings().getId();
+        var journalPublication = new JournalPublication(proceedingsPublication.get());
+        journalPublication.setJournal(journalService.findJournalById(journalId));
+
+        proceedingsPublicationRepository.delete(proceedingsPublication.get());
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            proceedingsPublicationId).ifPresent(documentPublicationIndexRepository::delete);
+
+        var saved = journalPublicationJPAService.save(journalPublication);
+        indexJournalPublication(saved, new DocumentPublicationIndex());
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            proceedingsId).ifPresent(proceedingsIndex -> {
+                proceedingsIndex.setHasPublications(
+                    (documentPublicationIndexRepository.countByProceedingsId(proceedingsId) > 0)
+                );
+                documentPublicationIndexRepository.save(proceedingsIndex);
+            }
+        );
+
+        return saved.getId();
     }
 
     @Override

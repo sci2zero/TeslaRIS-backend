@@ -1,0 +1,34 @@
+databaseChangeLog:
+- changeSet:
+    id: 1766081586464-1
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: entity_type
+        - column:
+            name: document_id
+        indexName: idx_ei_type_document
+        tableName: entity_indicators
+- changeSet:
+    id: 1766081586464-2
+    author: milospopovic (generated)
+    changes:
+    - createIndex:
+        columns:
+        - column:
+            name: access_level
+        indexName: idx_indicator_access_level
+        tableName: indicators
+- changeSet:
+    id: 1766081586464-3
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: shortened_review
+            type: BOOLEAN
+        tableName: theses
+

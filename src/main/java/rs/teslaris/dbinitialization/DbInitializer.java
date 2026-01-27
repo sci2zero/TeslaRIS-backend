@@ -208,6 +208,9 @@ public class DbInitializer implements ApplicationRunner {
         var performSKGIFHarvest = new Privilege("PERFORM_SKGIF_HARVEST");
         var readPromotions = new Privilege("READ_PROMOTIONS");
         var configureAppSettings = new Privilege("CONFIGURE_APP_SETTINGS");
+        var registerResearcher = new Privilege("REGISTER_RESEARCHER");
+        var unpromoteRbEntries = new Privilege("UNPROMOTE_RB_ENTRIES");
+        var changePublicationType = new Privilege("CHANGE_PUBLICATION_TYPE");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -245,7 +248,8 @@ public class DbInitializer implements ApplicationRunner {
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
-                performSKGIFHarvest, readPromotions, configureAppSettings));
+                performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
+                unpromoteRbEntries, changePublicationType));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -281,7 +285,8 @@ public class DbInitializer implements ApplicationRunner {
                 scheduleDocumentHarvest, configureHarvestSources, performOAIPMHHarvest,
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
-                forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators
+                forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
+                registerResearcher, unpromoteRbEntries, changePublicationType
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -290,7 +295,7 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
                 createBookSeries, createPublisher, performLoading, harvestIdfMetadata,
-                getTopCollaborators)));
+                getTopCollaborators, changePublicationType)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -306,7 +311,7 @@ public class DbInitializer implements ApplicationRunner {
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
                     scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
                     saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
-                    saveChartDisplayConfiguration, getTopCollaborators)));
+                    saveChartDisplayConfiguration, getTopCollaborators, changePublicationType)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

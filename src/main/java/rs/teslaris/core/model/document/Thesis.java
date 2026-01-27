@@ -110,4 +110,7 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
 
     @Column(name = "public_review_completed")
     private Boolean publicReviewCompleted = false;
+
+    @Column(name = "shortened_review")
+    private Boolean isShortenedReview = false;
 }

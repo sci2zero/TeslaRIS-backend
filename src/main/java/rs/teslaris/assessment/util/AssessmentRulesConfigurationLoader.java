@@ -41,7 +41,7 @@ public class AssessmentRulesConfigurationLoader {
     }
 
     @Scheduled(fixedRate = (1000 * 60 * 10)) // 10 minutes
-    private static void reloadConfiguration() {
+    protected static void reloadConfiguration() {
         try {
             assessmentRulesConfiguration = ConfigurationLoaderUtil.loadConfiguration(
                 AssessmentRulesConfigurationLoader.AssessmentRulesConfiguration.class,
@@ -49,7 +49,7 @@ public class AssessmentRulesConfigurationLoader {
                 externalOverrideConfiguration);
         } catch (IOException e) {
             throw new StorageException(
-                "Failed to reload classification mapping configuration: " + e.getMessage());
+                "Failed to reload assessment rules configuration: " + e.getMessage());
         }
     }
 
@@ -89,7 +89,8 @@ public class AssessmentRulesConfigurationLoader {
 
                 if (ruleGroupCode.equals("journalClassificationRules")) {
                     content = assessmentRulesConfiguration.ruleDescriptions.get(ruleGroupCode)
-                        .get("generalAssessmentRulePrefix").get(languageCode) + " " + content;
+                        .get(ruleCode.endsWith("MNO") ? "mnoAssessmentRulePrefix" :
+                            "generalAssessmentRulePrefix").get(languageCode) + "§" + content;
                 }
 
                 mc.setContent(MessageFormat.format(content, processedParams));

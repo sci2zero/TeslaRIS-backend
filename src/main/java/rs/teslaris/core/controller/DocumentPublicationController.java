@@ -118,8 +118,7 @@ public class DocumentPublicationController {
 
     @GetMapping("/simple-search")
     public Page<DocumentPublicationIndex> simpleSearch(
-        @RequestParam("tokens")
-        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
+        @RequestParam(value = "tokens", required = false) List<String> tokens,
         @RequestParam(required = false) Integer institutionId,
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
         @RequestParam(value = "authorReprint", defaultValue = "false") Boolean authorReprint,
@@ -127,9 +126,18 @@ public class DocumentPublicationController {
         @RequestParam(value = "allowedTypes", required = false)
         List<DocumentPublicationType> allowedTypes,
         @RequestParam(value = "notArchivedOnly", required = false) Boolean notArchivedOnly,
+        @RequestParam(value = "showProceedings", required = false) Boolean showProceedings,
+        @RequestParam(value = "emptyProceedingsOnly", required = false)
+        Boolean emptyProceedingsOnly,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
+
+        if (bearerToken.isEmpty() ||
+            !tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.ADMIN.name())) {
+            showProceedings = false;
+            emptyProceedingsOnly = false;
+        }
 
         var isCommission = !bearerToken.isEmpty() &&
             tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name());
@@ -137,7 +145,8 @@ public class DocumentPublicationController {
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.SIMPLE, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
-                null, authorReprint, unmanaged, allowedTypes, notArchivedOnly);
+                null, authorReprint, unmanaged, allowedTypes, notArchivedOnly, showProceedings,
+            emptyProceedingsOnly);
     }
 
     @GetMapping("/advanced-search")
@@ -149,15 +158,25 @@ public class DocumentPublicationController {
         @RequestParam(value = "allowedTypes", required = false)
         List<DocumentPublicationType> allowedTypes,
         @RequestParam(value = "notArchivedOnly", required = false) Boolean notArchivedOnly,
+        @RequestParam(value = "showProceedings", required = false) Boolean showProceedings,
+        @RequestParam(value = "emptyProceedingsOnly", required = false)
+        Boolean emptyProceedingsOnly,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
+        if (bearerToken.isEmpty() ||
+            !tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.ADMIN.name())) {
+            showProceedings = false;
+            emptyProceedingsOnly = false;
+        }
+
         var isCommission = !bearerToken.isEmpty() &&
             tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name());
 
         return documentPublicationService.searchDocumentPublications(tokens, pageable,
             SearchRequestType.ADVANCED, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
-                null, null, null, allowedTypes, notArchivedOnly);
+                null, null, null, allowedTypes, notArchivedOnly, showProceedings,
+            emptyProceedingsOnly);
     }
 
     @GetMapping("/deduplication-search")

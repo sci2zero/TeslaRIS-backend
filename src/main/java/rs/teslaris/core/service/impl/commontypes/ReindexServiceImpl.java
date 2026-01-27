@@ -147,6 +147,7 @@ public class ReindexServiceImpl implements ReindexService {
     public CompletableFuture<Void> reindexPublications() {
         safeReindex(documentPublicationService::deleteIndexes,
             "Error deleting document publication indexes");
+        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
         safeReindex(journalPublicationService::reindexJournalPublications,
             "Error reindexing journal publications");
         safeReindex(proceedingsPublicationService::reindexProceedingsPublications,
@@ -157,7 +158,6 @@ public class ReindexServiceImpl implements ReindexService {
         safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
         safeReindex(monographPublicationService::reindexMonographPublications,
             "Error reindexing monograph publications");
-        safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
         safeReindex(thesisService::reindexTheses, "Error reindexing theses");
 
         applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());
@@ -169,7 +169,7 @@ public class ReindexServiceImpl implements ReindexService {
         try {
             reindexOperation.run();
         } catch (Exception e) {
-            log.error(errorMessage + ": ", e);
+            log.error("Error during publication reindexing: {}", errorMessage, e);
         }
     }
 

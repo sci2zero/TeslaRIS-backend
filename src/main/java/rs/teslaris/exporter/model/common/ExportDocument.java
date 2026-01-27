@@ -1,5 +1,6 @@
 package rs.teslaris.exporter.model.common;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -42,6 +43,9 @@ public class ExportDocument extends BaseExportEntity {
     @Field("document_date")
     private String documentDate;
 
+    @Field("thesis_defence_date")
+    private LocalDate thesisDefenceDate;
+
     @Field("languages")
     private List<String> languageTags = new ArrayList<>();
 
@@ -71,6 +75,9 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("open_alex")
     private String openAlex;
+
+    @Field("web_of_science")
+    private String webOfScience;
 
     @Field("e_isbn")
     private String eIsbn;
@@ -152,4 +159,7 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("is_archived")
     private Boolean isArchived;
+
+    @Field("official_file_name")
+    private String officialFileName;
 }

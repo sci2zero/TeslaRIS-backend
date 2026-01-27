@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import jakarta.annotation.Nullable;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -32,6 +34,7 @@ import rs.teslaris.core.util.notificationhandling.handlerimpl.AddedToPublication
 import rs.teslaris.core.util.notificationhandling.handlerimpl.AuthorRemovedByEditorNotificationHandler;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.EmployedResearcherUnbindedHandler;
 import rs.teslaris.core.util.notificationhandling.handlerimpl.NewOtherNameNotificationHandler;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -59,6 +62,9 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     @Value("${frontend.application.address}")
     private String clientAppAddress;
 
+    @Value("${notifications.distribute-weekly-by-day}")
+    private Boolean distributeWeeklyNotifications;
+
 
     @Override
     protected JpaRepository<Notification, Integer> getEntityRepository() {
@@ -71,8 +77,10 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
         return notificationList.stream().map(
                 notification -> new NotificationDTO(notification.getId(),
-                    notification.getNotificationText(),
-                    NotificationConfiguration.allowedActions.get(notification.getNotificationType())))
+                    notification.getNotificationText(), getDisplayValue(notification),
+                    NotificationConfiguration.allowedActions.get(notification.getNotificationType()),
+                    notification.getCreateDate()
+                        .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()))
             .collect(
                 Collectors.toList());
     }
@@ -167,10 +175,18 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     @Scheduled(cron = "${notifications.schedule.daily}")
     protected void sendDailyNotifications() {
         sendNotifications(UserNotificationPeriod.DAILY);
+
+        if (distributeWeeklyNotifications) {
+            sendNotifications(UserNotificationPeriod.WEEKLY);
+        }
     }
 
     @Scheduled(cron = "${notifications.schedule.weekly}")
     protected void sendWeeklyNotifications() {
+        if (distributeWeeklyNotifications) {
+            return;
+        }
+
         sendNotifications(UserNotificationPeriod.WEEKLY);
     }
 
@@ -185,6 +201,12 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                 .getContent();
 
             chunk.forEach(accountIndex -> {
+                if (distributeWeeklyNotifications &&
+                    notificationPeriod == UserNotificationPeriod.WEEKLY &&
+                    accountIndex.getDatabaseId() % 7 != LocalDate.now().getDayOfWeek().ordinal()) {
+                    return;
+                }
+
                 var notifications = fetchNotifications(notificationPeriod, accountIndex);
 
                 if (notifications.isEmpty()) {
@@ -230,12 +252,13 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             stringBuilder.append(notification.getNotificationText()).append("\n\n");
         });
 
+        var notificationListAddress = clientAppAddress +
+            (clientAppAddress.endsWith("/") ? locale.toLanguageTag().toLowerCase() :
+                "/" + locale.toLanguageTag().toLowerCase()) + "/notifications";
+
         stringBuilder.append(
-                messageSource.getMessage("notification.forMoreInfoMailEnd", null, locale))
-            .append(" ")
-            .append(clientAppAddress)
-            .append(clientAppAddress.endsWith("/") ? locale.toLanguageTag().toLowerCase() :
-                "/" + locale.toLanguageTag().toLowerCase()).append("/notifications");
+            messageSource.getMessage("notification.forMoreInfoMailEnd",
+                new Object[] {notificationListAddress}, locale));
 
         return stringBuilder.toString();
     }
@@ -250,5 +273,25 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         return notificationPeriod == UserNotificationPeriod.DAILY
             ? "notification.dailyMailSubject"
             : "notification.weeklyMailSubject";
+    }
+
+    private String getDisplayValue(Notification notification) {
+        return switch (notification.getNotificationType()) {
+            case ADDED_TO_PUBLICATION, AUTHOR_UNBINDED_BY_EDITOR,
+                 NEW_AUTHOR_UNBINDING, NEW_EMPLOYED_RESEARCHER_UNBINDED ->
+                notification.getValues().get("title");
+            case NEW_OTHER_NAME_DETECTED -> {
+                var middleName = notification.getValues().get("middlename");
+
+                if (StringUtil.valueExists(middleName)) {
+                    yield notification.getValues().get("firstname") + " (" + middleName + ") " +
+                        notification.getValues().get("lastname");
+                }
+
+                yield notification.getValues().get("firstname") + " " +
+                    notification.getValues().get("lastname");
+            }
+            default -> "";
+        };
     }
 }

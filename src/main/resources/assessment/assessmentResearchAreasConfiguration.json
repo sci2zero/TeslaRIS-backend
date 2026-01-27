@@ -32,5 +32,13 @@
       },
       "code": "HUMANITIES"
     }
+  ],
+  "researchAreaClassificationsMappings": [
+    {
+      "code": "NATURAL",
+      "topLevelSubAreaId": 38,
+      "allowedClassifications": ["M21APlus"],
+      "fallback": "M26"
+    }
   ]
 }

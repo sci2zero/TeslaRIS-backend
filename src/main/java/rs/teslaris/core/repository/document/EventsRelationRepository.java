@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.EventsRelation;
 
 @Repository
@@ -14,6 +15,16 @@ public interface EventsRelationRepository extends JpaRepository<EventsRelation, 
 
     @Query("SELECT er FROM EventsRelation er WHERE er.target.id = :eventId")
     List<EventsRelation> getRelationsForEvent(Integer eventId);
+
+    @Query("SELECT er.target FROM EventsRelation er WHERE " +
+        "er.source.id = :eventId AND " +
+        "er.eventsRelationType = 0")
+    List<Event> getSuperEventsForEvent(Integer eventId);
+
+    @Query("SELECT er.source FROM EventsRelation er WHERE " +
+        "er.target.id = :eventId AND " +
+        "er.eventsRelationType = 0")
+    List<Event> getSubEventsForEvent(Integer eventId);
 
     @Query("SELECT COUNT(er) > 0 FROM EventsRelation er " +
         "WHERE (er.source.id = :sourceId AND er.target.id = :targetId) OR" +

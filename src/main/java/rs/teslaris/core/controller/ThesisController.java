@@ -120,8 +120,10 @@ public class ThesisController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void putOnPublicReview(@PathVariable Integer documentId,
                                   @RequestParam(name = "continue", required = false, defaultValue = "false")
-                                  Boolean continueLastReview) {
-        thesisService.putOnPublicReview(documentId, continueLastReview);
+                                  Boolean continueLastReview,
+                                  @RequestParam(name = "shortened", required = false, defaultValue = "false")
+                                  Boolean shortened) {
+        thesisService.putOnPublicReview(documentId, continueLastReview, shortened);
     }
 
     @PatchMapping("/remove-from-public-review/{documentId}")

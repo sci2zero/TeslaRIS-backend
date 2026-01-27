@@ -19,7 +19,7 @@ public interface ConferenceService {
                                        Boolean returnOnlyNonSerialEvents,
                                        Boolean returnOnlySerialEvents,
                                        Integer commissionInstitutionId,
-                                       Integer commissionId);
+                                       Integer commissionId, Boolean emptyEventsOnly);
 
     Page<EventIndex> searchConferencesForImport(List<String> names, String dateFrom, String dateTo);
 

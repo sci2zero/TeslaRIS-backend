@@ -47,7 +47,7 @@ public class ReportingController {
     @ReportGenerationCheck
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void scheduleReportGeneration(
-        @RequestParam("timestamp") LocalDateTime timestamp,
+        @RequestParam(value = "timestamp", required = false) LocalDateTime timestamp,
         @RequestParam("type") ReportType reportType,
         @RequestParam("commissionId") List<Integer> commissionIds,
         @RequestParam("year") Integer year,

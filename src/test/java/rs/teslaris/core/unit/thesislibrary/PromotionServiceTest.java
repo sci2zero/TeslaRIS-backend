@@ -55,7 +55,7 @@ public class PromotionServiceTest {
         // Given
         var dto =
             new PromotionDTO(null, LocalDate.now(), LocalTime.now(), "Somewhere", List.of(), 1,
-                false);
+                false, null);
         Promotion saved = new Promotion();
         when(multilingualContentService.getMultilingualContent(any()))
             .thenReturn(Set.of(new MultiLingualContent()));
@@ -75,7 +75,8 @@ public class PromotionServiceTest {
         var id = 1;
         var existing = new Promotion();
         var dto =
-            new PromotionDTO(1, LocalDate.now(), LocalTime.now(), "Somewhere", List.of(), 1, false);
+            new PromotionDTO(1, LocalDate.now(), LocalTime.now(), "Somewhere", List.of(), 1, false,
+                null);
 
         when(promotionRepository.findById(id)).thenReturn(Optional.of(existing));
         when(multilingualContentService.getMultilingualContent(any()))
@@ -114,8 +115,9 @@ public class PromotionServiceTest {
         verify(promotionRepository).delete(promo);
     }
 
-    @Test
-    void shouldReturnDTOListWhenGettingNonFinishedPromotions() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldReturnDTOListWhenGettingPromotionsBasedOnStatus(boolean finished) {
         // Given
         var dummyMC = new MultiLingualContent();
         dummyMC.setLanguage(new LanguageTag());
@@ -126,10 +128,10 @@ public class PromotionServiceTest {
         p.setInstitution(new OrganisationUnit());
         p.setDescription(Set.of(dummyMC));
 
-        when(promotionRepository.getNonFinishedPromotions()).thenReturn(List.of(p));
+        when(promotionRepository.getPromotionsBasedOnStatus(finished)).thenReturn(List.of(p));
 
         // When
-        var result = service.getNonFinishedPromotions(null);
+        var result = service.getPromotionsBasedOnStatus(null, finished);
 
         // Then
         assertEquals(1, result.size());

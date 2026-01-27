@@ -26,6 +26,10 @@ public class IndicatorBatchWriter implements BatchWriter {
 
 
     public synchronized void bufferIndicator(PublicationSeriesIndicator indicator) {
+        if (buffer.contains(indicator)) {
+            return;
+        }
+
         buffer.add(indicator);
         if (buffer.size() >= BATCH_SIZE) {
             flushBatch();

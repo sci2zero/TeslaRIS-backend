@@ -24,6 +24,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 
 @Transactional
@@ -53,12 +54,10 @@ public abstract class JournalClassificationRuleEngine {
 
 
     @Transactional
-    public void startClassification(Integer classificationYear, Commission commission) {
+    public void startClassification(List<Integer> classificationYears, Commission commission) {
         int pageNumber = 0;
         int chunkSize = 500;
         boolean hasNextPage = true;
-
-        this.classificationYear = classificationYear;
 
         var batchClassifications = new ArrayList<PublicationSeriesAssessmentClassification>();
 
@@ -66,16 +65,38 @@ public abstract class JournalClassificationRuleEngine {
             List<JournalIndex> chunk =
                 journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
 
-            chunk.forEach((journalIndex) -> {
-                this.currentJournal =
-                    journalRepository.getReferenceById(journalIndex.getDatabaseId());
-                this.currentJournalIndicators =
-                    publicationSeriesIndicatorRepository.findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
-                        journalIndex.getDatabaseId(), classificationYear, source);
+            FunctionalUtil.batch(chunk.stream().map(JournalIndex::getDatabaseId), 100)
+                .forEach(idBatch ->
+                    assessmentClassificationRepository
+                        .deleteByPublicationSeriesAndYearsAndCommission(
+                            idBatch,
+                            classificationYears,
+                            commission.getId()
+                        )
+                );
 
-                performClassification(commission, batchClassifications);
-                reasoningProcess.clear();
+            var chunkDatabaseIds = chunk.stream().map(JournalIndex::getDatabaseId).toList();
+            var chunkIndicators = new HashSet<PublicationSeriesIndicator>();
+            classificationYears.forEach(classificationYear -> {
+                chunkIndicators.addAll(publicationSeriesIndicatorRepository
+                    .findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+                        chunkDatabaseIds, classificationYear, source));
             });
+
+            chunk.forEach((journalIndex) ->
+                classificationYears.forEach(classificationYear -> {
+                    this.classificationYear = classificationYear;
+                    this.currentJournal =
+                        journalRepository.getReferenceById(journalIndex.getDatabaseId());
+                    this.currentJournalIndicators = chunkIndicators.stream().filter(ind ->
+                        ind.getPublicationSeries().getId().equals(journalIndex.getDatabaseId()) &&
+                            (ind.getFromDate().getYear() == classificationYear ||
+                                (ind.getFromDate().getYear() < classificationYear &&
+                                    Objects.isNull(ind.getToDate())))).toList();
+
+                    performClassification(commission, batchClassifications);
+                    reasoningProcess.clear();
+                }));
 
             assessmentClassificationRepository.saveAll(batchClassifications);
             batchClassifications.clear();
@@ -86,24 +107,28 @@ public abstract class JournalClassificationRuleEngine {
     }
 
     @Transactional
-    public void startClassification(Integer classificationYear, Commission commission,
+    public void startClassification(List<Integer> classificationYears, Commission commission,
                                     List<Integer> journalIds) {
-        this.classificationYear = classificationYear;
         var batchClassifications = new ArrayList<PublicationSeriesAssessmentClassification>();
 
-        journalIds.forEach((journalId) -> {
-            var journalIndexOptional =
-                journalIndexRepository.findJournalIndexByDatabaseId(journalId);
-            journalIndexOptional.ifPresent(journalIndex -> {
-                this.currentJournal =
-                    journalRepository.getReferenceById(journalIndex.getDatabaseId());
-                this.currentJournalIndicators =
-                    publicationSeriesIndicatorRepository.findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
-                        journalIndex.getDatabaseId(), classificationYear, source);
+        journalIds.forEach((journalId) ->
+            classificationYears.forEach(classificationYear -> {
+                this.classificationYear = classificationYear;
 
-                performClassification(commission, batchClassifications);
-            });
-        });
+                var journalIndexOptional =
+                    journalIndexRepository.findJournalIndexByDatabaseId(journalId);
+                journalIndexOptional.ifPresent(journalIndex -> {
+                    this.currentJournal =
+                        journalRepository.getReferenceById(journalIndex.getDatabaseId());
+                    this.currentJournalIndicators =
+                        publicationSeriesIndicatorRepository
+                            .findCombinedIndicatorsForPublicationSeriesAndIndicatorSourceAndYear(
+                                journalIndex.getDatabaseId(), classificationYear, source);
+
+                    performClassification(commission, batchClassifications);
+                    reasoningProcess.clear();
+                });
+            }));
 
         assessmentClassificationRepository.saveAll(batchClassifications);
         batchClassifications.clear();
@@ -159,13 +184,7 @@ public abstract class JournalClassificationRuleEngine {
         if (Objects.nonNull(assessmentClassification.a)) {
             classification.setCategoryIdentifier(assessmentClassification.b);
             classification.setAssessmentClassification(assessmentClassification.a);
-            classification.setClassificationReason(reasoningProcess);
-
-            var existingClassification =
-                assessmentClassificationRepository.findClassificationForPublicationSeriesAndCategoryAndYearAndCommission(
-                    classification.getPublicationSeries().getId(), assessmentClassification.b,
-                    classificationYear, classification.getCommission().getId());
-            existingClassification.ifPresent(assessmentClassificationRepository::delete);
+            classification.setClassificationReason(new HashSet<>(reasoningProcess));
 
             batchClassifications.add(classification);
             return true;

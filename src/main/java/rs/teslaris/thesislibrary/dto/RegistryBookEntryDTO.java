@@ -2,6 +2,8 @@ package rs.teslaris.thesislibrary.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,6 +47,10 @@ public class RegistryBookEntryDTO {
     private Integer schoolYearOrdinalNumber;
 
     private Integer promotionId;
+
+    private LocalDate promotionDate;
+
+    private LocalTime promotionTime;
 
     private Integer promotionInstitutionId;
 }

@@ -1398,9 +1398,11 @@ public class MergeServiceTest {
     @Test
     void testIdentifierMigrationForOrganisationUnit() {
         OrganisationUnit deletion = new OrganisationUnit();
+        deletion.setId(1);
         deletion.getMergedIds().add(106);
         deletion.getOldIds().add(206);
         OrganisationUnit merged = new OrganisationUnit();
+        merged.setId(2);
 
         when(organisationUnitService.findRaw(1)).thenReturn(deletion);
         when(organisationUnitService.findRaw(2)).thenReturn(merged);
@@ -1409,7 +1411,6 @@ public class MergeServiceTest {
 
         assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(106, 1);
         assertThat(merged.getOldIds()).containsExactly(206);
-        verify(organisationUnitService, atLeastOnce()).save(deletion);
         verify(organisationUnitService, atLeastOnce()).save(merged);
     }
 

@@ -47,6 +47,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.InvalidApiKeyException;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidFileSectionException;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
+import rs.teslaris.core.util.exceptionhandling.exception.MaintenanceModeException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NetworkException;
@@ -491,6 +492,14 @@ public class ErrorHandlerConfiguration {
         return buildErrorObject(request, ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(MaintenanceModeException.class)
+    @ResponseBody
+    public ErrorObject handleMaintenanceModeException(HttpServletRequest request,
+                                                      MaintenanceModeException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)
     @ResponseBody
@@ -502,7 +511,7 @@ public class ErrorHandlerConfiguration {
 
         var tracingContextId = MDC.get(TraceMDCKeys.UNHANDLED_TRACING_CONTEXT_ID);
         emailUtil.sendUnhandledExceptionEmail(exceptionId, tracingContextId,
-            request.getRequestURI(), ex, false);
+            request.getMethod(), request.getRequestURI(), ex, false);
         return buildErrorObject(request, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

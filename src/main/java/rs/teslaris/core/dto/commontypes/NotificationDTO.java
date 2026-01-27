@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.commontypes;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,5 +18,9 @@ public class NotificationDTO {
 
     private String notificationText;
 
+    private String displayValue;
+
     private List<NotificationAction> possibleActions;
+
+    private LocalDateTime creationTimestamp;
 }

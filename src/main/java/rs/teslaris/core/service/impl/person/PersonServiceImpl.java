@@ -990,13 +990,14 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         var currentEmployments = savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.isNull(i.getDateTo())).toList();
+                (Objects.isNull(i.getDateTo()) || i.getDateTo().isAfter(LocalDate.now()))).toList();
 
         var employmentOrCandidateInstitutions = savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY) ||
                 i.getInvolvementType().equals(InvolvementType.CANDIDATE)) &&
-                Objects.isNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
+                (Objects.isNull(i.getDateTo()) || i.getDateTo().isAfter(LocalDate.now())) &&
+                Objects.nonNull(i.getOrganisationUnit()))
             .map(inv -> inv.getOrganisationUnit().getId()).toList();
 
         personIndex.setEmploymentInstitutionsId(
@@ -1015,7 +1016,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setPastEmploymentInstitutionIds(savedPerson.getInvolvements().stream()
             .filter(i -> (i.getInvolvementType().equals(InvolvementType.EMPLOYED_AT) ||
                 i.getInvolvementType().equals(InvolvementType.HIRED_BY)) &&
-                Objects.nonNull(i.getDateTo()) && Objects.nonNull(i.getOrganisationUnit()))
+                (Objects.nonNull(i.getDateTo()) && i.getDateTo().isBefore(LocalDate.now())) &&
+                Objects.nonNull(i.getOrganisationUnit()))
             .map(involvement -> involvement.getOrganisationUnit().getId())
             .filter(institutionId -> !personIndex.getEmploymentInstitutionsIdHierarchy()
                 .contains(institutionId)).toList());
