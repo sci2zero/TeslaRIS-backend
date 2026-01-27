@@ -1,7 +1,6 @@
 package rs.teslaris.assessment.ruleengine;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +30,7 @@ public class AssessmentPointsRuleEngine {
     }
 
     public double serbianPointsRulebook2025(String researchArea,
-                                            HashSet<Integer> researchSubAreaIds,
+                                            Set<Integer> researchSubAreaIds,
                                             String classificationCode) {
         if (Objects.nonNull(publicationType) &&
             List.of("SCIENTIFIC_CRITIC", "POLEMICS", "COMMENT").contains(publicationType)) {

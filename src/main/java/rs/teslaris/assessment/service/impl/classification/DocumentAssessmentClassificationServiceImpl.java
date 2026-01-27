@@ -431,7 +431,8 @@ public class DocumentAssessmentClassificationServiceImpl
             hasNextPage = chunk.size() == chunkSize;
         }
 
-        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
+        // TODO: FIX THIS
+//        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
     }
 
     private void assessThesis(DocumentPublicationIndex thesisIndex,
