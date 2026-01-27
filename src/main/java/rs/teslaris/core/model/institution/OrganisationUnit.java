@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
@@ -38,6 +39,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Entity
+@DynamicUpdate
 @Table(name = "organisation_units", indexes = {
     @Index(name = "idx_org_unit_scopus_afid", columnList = "scopus_afid")
 })
@@ -80,7 +82,6 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")
-
     private Set<Integer> oldIds = new HashSet<>();
 
     @JdbcTypeCode(SqlTypes.JSON)

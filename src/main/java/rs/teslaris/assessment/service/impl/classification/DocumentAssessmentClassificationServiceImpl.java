@@ -51,6 +51,7 @@ import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.DocumentAssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
+import rs.teslaris.assessment.service.interfaces.classification.PublicationClassificationService;
 import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
@@ -71,6 +72,7 @@ import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.Monograph;
+import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
@@ -78,6 +80,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
+import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
@@ -95,6 +98,7 @@ import rs.teslaris.core.util.functional.QuadConsumer;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.CollectionOperations;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Transactional
@@ -138,6 +142,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final ResearchAreaRepository researchAreaRepository;
 
+    private final PublicationClassificationService publicationClassificationService;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -158,7 +164,8 @@ public class DocumentAssessmentClassificationServiceImpl
         NotificationService notificationService,
         PersonAssessmentClassificationService personAssessmentClassificationService,
         AssessmentResearchAreaRepository assessmentResearchAreaRepository,
-        ResearchAreaRepository researchAreaRepository) {
+        ResearchAreaRepository researchAreaRepository,
+        PublicationClassificationService publicationClassificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -179,6 +186,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.personAssessmentClassificationService = personAssessmentClassificationService;
         this.assessmentResearchAreaRepository = assessmentResearchAreaRepository;
         this.researchAreaRepository = researchAreaRepository;
+        this.publicationClassificationService = publicationClassificationService;
     }
 
     @Override
@@ -205,6 +213,12 @@ public class DocumentAssessmentClassificationServiceImpl
                     "Document with ID " + documentAssessmentClassificationDTO.getDocumentId() +
                         " does not exist."));
         checkIfDocumentIsAThesis(document);
+
+        if (Hibernate.getClass(document) == Proceedings.class &&
+            SessionUtil.getLoggedInUser().getAuthority().getName()
+                .equals(UserRole.RESEARCHER.name())) {
+            return null;
+        }
 
         if (Objects.isNull(document.getDocumentDate()) || document.getDocumentDate().isEmpty()) {
             throw new CantEditException("Document does not have publication date.");
@@ -246,6 +260,12 @@ public class DocumentAssessmentClassificationServiceImpl
     public void editDocumentAssessmentClassification(Integer classificationId,
                                                      DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
         var documentClassification = documentClassificationJPAService.findOne(classificationId);
+
+        if (Hibernate.getClass(documentClassification.getDocument()) == Proceedings.class &&
+            SessionUtil.getLoggedInUser().getAuthority().getName()
+                .equals(UserRole.RESEARCHER.name())) {
+            return;
+        }
 
         checkIfDocumentIsAThesis(documentClassification.getDocument());
         setCommonFields(documentClassification, documentAssessmentClassificationDTO);
@@ -404,26 +424,8 @@ public class DocumentAssessmentClassificationServiceImpl
                     PageRequest.of(pageNumber, chunkSize), DocumentPublicationIndex.class,
                     "document_publication").getContent();
 
-            chunk.forEach(publicationIndex -> {
-                if (publicationIndex.getType().equals(DocumentPublicationType.THESIS.name())) {
-                    if (Objects.isNull(publicationIndex.getThesisDefenceDate())) {
-                        return;
-                    }
-
-                    assessFunction.accept(publicationIndex,
-                        publicationIndex.getThesisInstitutionId(), null, batchClassifications);
-                } else if (Objects.nonNull(presetCommission)) {
-                    assessFunction.accept(publicationIndex, null, presetCommission,
-                        batchClassifications);
-                } else {
-                    publicationIndex.getOrganisationUnitIds().forEach(organisationUnitId ->
-                        assessFunction.accept(publicationIndex, organisationUnitId, null,
-                            batchClassifications));
-                }
-            });
-
-            documentAssessmentClassificationRepository.saveAll(batchClassifications);
-            batchClassifications.clear();
+            publicationClassificationService.classifyPublicationsChunk(chunk, presetCommission,
+                assessFunction, batchClassifications);
 
             pageNumber++;
             hasNextPage = chunk.size() == chunkSize;

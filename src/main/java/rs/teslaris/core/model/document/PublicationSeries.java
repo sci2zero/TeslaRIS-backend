@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
@@ -28,6 +29,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 @Getter
 @Setter
 @Entity
+@DynamicUpdate
 @Table(name = "publication_series", indexes = {
     @Index(name = "idx_pub_series_e_issn", columnList = "e_issn"),
     @Index(name = "idx_pub_series_print_issn", columnList = "print_issn")

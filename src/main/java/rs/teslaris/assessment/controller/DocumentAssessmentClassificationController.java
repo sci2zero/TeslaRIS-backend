@@ -59,7 +59,7 @@ public class DocumentAssessmentClassificationController {
 
 
     @GetMapping("/{documentId}/can-classify")
-    @PublicationEditCheck
+    @PublicationEditCheck("ASSESS")
     @PreAuthorize("hasAnyAuthority('ASSESS_DOCUMENT', 'EDIT_DOCUMENT_ASSESSMENT')")
     public boolean canClassifyDocument() {
         return true;
@@ -163,7 +163,7 @@ public class DocumentAssessmentClassificationController {
 
     @PostMapping("/journal-publication/{documentId}")
     @Idempotent
-    @PublicationEditCheck
+    @PublicationEditCheck("ASSESS")
     @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
     public void assessJournalPublication(@PathVariable Integer documentId) {
         documentAssessmentClassificationService.classifyJournalPublication(documentId);
@@ -171,7 +171,7 @@ public class DocumentAssessmentClassificationController {
 
     @PostMapping("/proceedings-publication/{documentId}")
     @Idempotent
-    @PublicationEditCheck
+    @PublicationEditCheck("ASSESS")
     @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
     public void assessProceedingsPublication(@PathVariable Integer documentId) {
         documentAssessmentClassificationService.classifyProceedingsPublication(documentId);
