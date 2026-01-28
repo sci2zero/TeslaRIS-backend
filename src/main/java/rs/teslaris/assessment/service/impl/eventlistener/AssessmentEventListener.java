@@ -3,16 +3,21 @@ package rs.teslaris.assessment.service.impl.eventlistener;
 import com.google.common.util.concurrent.Striped;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.AssessmentMeasure;
@@ -36,44 +41,53 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 @Slf4j
 public class AssessmentEventListener {
 
+    private static final Set<Integer> personIdsToReindex =
+        ConcurrentHashMap.newKeySet();
     private final PersonIndexRepository personIndexRepository;
-
     private final AssessmentRulebookRepository assessmentRulebookRepository;
-
     private final PersonAssessmentClassificationService personAssessmentClassificationService;
-
     private final DocumentAssessmentClassificationService documentAssessmentClassificationService;
-
     private final DocumentAssessmentClassificationRepository
         documentAssessmentClassificationRepository;
-
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
-
     private final Striped<Lock> locks = Striped.lock(1024);
 
-
-    @Async("taskExecutor")
     @EventListener
-    @Transactional(readOnly = true)
     protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
         if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
             return;
         }
 
+        personIdsToReindex.addAll(event.personIds());
+    }
+
+    @Scheduled(cron = "0 0 */2 * * *")
+    @SchedulerLock(name = "researcher-point-reindex")
+    @Transactional(readOnly = true)
+    protected void performBufferedResearcherPointReindexing() {
+        var idsToProcess = new HashSet<>(personIdsToReindex); // atomic snapshot
+        personIdsToReindex.removeAll(idsToProcess);
+
+        if (idsToProcess.isEmpty()) {
+            return;
+        }
+
         var assessmentMeasures = loadAssessmentMeasures();
 
-        event.personIds()
-            .forEach(personId -> personIndexRepository.findByDatabaseId(personId)
+        idsToProcess.forEach(personId ->
+            personIndexRepository.findByDatabaseId(personId)
                 .ifPresent(personIndex ->
-                    personAssessmentClassificationService.reindexPublicationPointsForResearcher(
-                        personIndex, assessmentMeasures))
-            );
+                    personAssessmentClassificationService
+                        .reindexPublicationPointsForResearcher(
+                            personIndex, assessmentMeasures))
+        );
     }
 
     @EventListener
     @Transactional(readOnly = true)
     protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
-        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers();
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+            Collections.emptyList(), Collections.emptyList());
     }
 
     private List<AssessmentMeasure> loadAssessmentMeasures() {
@@ -186,15 +200,15 @@ public class AssessmentEventListener {
                     case PUBLICATION_SERIES ->
                         documentAssessmentClassificationService.classifyJournalPublications(
                             assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                            Collections.emptyList(), List.of(event.entityId()));
+                            Collections.emptyList(), List.of(event.entityId()), false);
                     case EVENT ->
                         documentAssessmentClassificationService.classifyProceedingsPublications(
                             assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                            Collections.emptyList(), List.of(event.entityId()));
+                            Collections.emptyList(), List.of(event.entityId()), false);
                     case MONOGRAPH ->
                         documentAssessmentClassificationService.classifyMonographPublications(
                             assessmentStartDate, event.commissionId(), Collections.emptyList(),
-                            Collections.emptyList(), List.of(event.entityId()));
+                            Collections.emptyList(), List.of(event.entityId()), false);
                     default -> log.warn("Unhandled entityType={} in classification switch",
                         event.entityType());
                 }

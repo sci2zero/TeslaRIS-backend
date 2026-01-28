@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
@@ -272,7 +273,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     @Override
     @Transactional
-    public synchronized void reindexPublicationPointsForAllResearchers() {
+    public synchronized void reindexPublicationPointsForAllResearchers(List<Integer> personIds,
+                                                                       List<Integer> institutionIds) {
         var assessmentMeasures = loadAssessmentMeasures();
 
         int pageNumber = 0;
@@ -280,7 +282,9 @@ public class PersonAssessmentClassificationServiceImpl
 
         while (hasNextPage) {
             var persons =
-                personIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE)).getContent();
+                searchService.runQuery(buildPersonReindexQuery(personIds, institutionIds),
+                        PageRequest.of(pageNumber, CHUNK_SIZE), PersonIndex.class, "person")
+                    .getContent();
 
             persons.forEach(personIndex ->
                 reindexPublicationPointsForResearcher(personIndex, assessmentMeasures)
@@ -665,21 +669,39 @@ public class PersonAssessmentClassificationServiceImpl
             scalingRuleEngine, publication.getAuthorIds().size(), classificationCode, basePoints);
     }
 
-    private Double invokeRule(Class<?> clazz, String methodName, Object instance,
-                              Object... args) {
+    private Double invokeRule(Class<?> clazz, String methodName, Object instance, Object... args) {
         try {
-            Class<?>[] paramTypes = new Class[args.length];
-            for (int i = 0; i < args.length; i++) {
-                paramTypes[i] = args[i].getClass();
+            for (var method : clazz.getMethods()) {
+                if (!method.getName().equals(methodName)) {
+                    continue;
+                }
+
+                Class<?>[] paramTypes = method.getParameterTypes();
+                if (paramTypes.length != args.length) {
+                    continue;
+                }
+
+                boolean matches = true;
+                for (int i = 0; i < args.length; i++) {
+                    if (args[i] == null) {
+                        matches = false;
+                        break;
+                    }
+                    if (!paramTypes[i].isAssignableFrom(args[i].getClass())) {
+                        matches = false;
+                        break;
+                    }
+                }
+
+                if (matches) {
+                    return (Double) method.invoke(instance, args);
+                }
             }
 
-            var method = clazz.getMethod(methodName, paramTypes);
-
-            return (Double) method.invoke(instance, args);
-
-        } catch (NoSuchMethodException e) {
             throw new NotFoundException(
-                "Method not found: " + methodName + ". Reason: " + e.getMessage());
+                "Method not found: " + methodName + " with compatible parameters");
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception e) {
             throw new LoadingException(
                 "Error invoking method: " + methodName + ". Reason: " + e.getMessage());
@@ -767,5 +789,52 @@ public class PersonAssessmentClassificationServiceImpl
             .filter(measure -> ClassificationPriorityMapping.existsInGroup(
                 measure.getCode(), assessmentArea))
             .findFirst();
+    }
+
+    private Query buildPersonReindexQuery(
+        List<Integer> personIds,
+        List<Integer> institutionIds
+    ) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            if (CollectionOperations.containsValues(personIds)) {
+                b.must(m -> m.terms(t ->
+                    t.field("databaseId")
+                        .terms(v -> v.value(
+                            personIds.stream()
+                                .map(FieldValue::of)
+                                .toList()
+                        ))
+                ));
+            }
+
+            if (CollectionOperations.containsValues(institutionIds)) {
+                b.must(m -> m.bool(inst -> inst
+                    .should(s -> s.terms(t ->
+                        t.field("employment_institutions_id")
+                            .terms(v -> v.value(
+                                institutionIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                    ))
+                    .should(s -> s.terms(t ->
+                        t.field("employment_institutions_id_hierarchy")
+                            .terms(v -> v.value(
+                                institutionIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                    ))
+                    .minimumShouldMatch("1")
+                ));
+            }
+
+            return b;
+        })))._toQuery();
+    }
+
+    @Scheduled(cron = "${assessment.person.assessment-points}")
+    protected void reindexResearcherPointsScheduled() {
+        reindexPublicationPointsForAllResearchers(Collections.emptyList(), Collections.emptyList());
     }
 }

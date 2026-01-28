@@ -28,5 +28,6 @@ public interface PersonAssessmentClassificationService {
     void reindexPublicationPointsForResearcher(PersonIndex index,
                                                List<AssessmentMeasure> assessmentMeasures);
 
-    void reindexPublicationPointsForAllResearchers();
+    void reindexPublicationPointsForAllResearchers(List<Integer> personIds,
+                                                   List<Integer> institutionIds);
 }
