@@ -206,7 +206,6 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
         commission.setDescription(
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
                 commissionDTO.description()));
-//        commission.setSources(new HashSet<>(commissionDTO.sources()));
         commission.setAssessmentDateFrom(commissionDTO.assessmentDateFrom());
         commission.setAssessmentDateTo(commissionDTO.assessmentDateTo());
 

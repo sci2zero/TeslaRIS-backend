@@ -24,11 +24,25 @@ public interface IndicatorRepository extends JpaRepository<Indicator, Integer> {
 
     Indicator findByCode(String code);
 
-    @Query(value =
-        "SELECT i FROM Indicator i LEFT JOIN i.title title " +
-            "WHERE title.language.languageTag = :languageTag",
-        countQuery =
-            "SELECT count(DISTINCT i) FROM Indicator i LEFT JOIN i.title title " +
-                "WHERE title.language.languageTag = :languageTag")
+    @Query(
+        value = """
+            SELECT i
+            FROM Indicator i
+            JOIN i.title title
+            WHERE title.language.languageTag = :languageTag
+            """,
+        countQuery = """
+            SELECT COUNT(i)
+            FROM Indicator i
+            WHERE EXISTS (
+                SELECT 1
+                FROM Indicator i2
+                JOIN i2.title title
+                WHERE i2 = i
+                  AND title.language.languageTag = :languageTag
+            )
+            """
+    )
     Page<Indicator> readAll(String languageTag, Pageable pageable);
+
 }

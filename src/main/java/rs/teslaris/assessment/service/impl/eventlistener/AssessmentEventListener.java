@@ -14,13 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.model.AssessmentMeasure;
 import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.assessment.repository.classification.DocumentAssessmentClassificationRepository;
 import rs.teslaris.assessment.service.interfaces.classification.DocumentAssessmentClassificationService;
@@ -43,14 +41,22 @@ public class AssessmentEventListener {
 
     private static final Set<Integer> personIdsToReindex =
         ConcurrentHashMap.newKeySet();
+
     private final PersonIndexRepository personIndexRepository;
+
     private final AssessmentRulebookRepository assessmentRulebookRepository;
+
     private final PersonAssessmentClassificationService personAssessmentClassificationService;
+
     private final DocumentAssessmentClassificationService documentAssessmentClassificationService;
+
     private final DocumentAssessmentClassificationRepository
         documentAssessmentClassificationRepository;
+
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     private final Striped<Lock> locks = Striped.lock(1024);
+
 
     @EventListener
     protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
@@ -72,15 +78,8 @@ public class AssessmentEventListener {
             return;
         }
 
-        var assessmentMeasures = loadAssessmentMeasures();
-
-        idsToProcess.forEach(personId ->
-            personIndexRepository.findByDatabaseId(personId)
-                .ifPresent(personIndex ->
-                    personAssessmentClassificationService
-                        .reindexPublicationPointsForResearcher(
-                            personIndex, assessmentMeasures))
-        );
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+            idsToProcess.stream().toList(), Collections.emptyList());
     }
 
     @EventListener
@@ -88,12 +87,6 @@ public class AssessmentEventListener {
     protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
         personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
             Collections.emptyList(), Collections.emptyList());
-    }
-
-    private List<AssessmentMeasure> loadAssessmentMeasures() {
-        return assessmentRulebookRepository
-            .readAssessmentMeasuresForRulebook(Pageable.unpaged(), findDefaultRulebookId())
-            .getContent();
     }
 
     private Integer findDefaultRulebookId() {

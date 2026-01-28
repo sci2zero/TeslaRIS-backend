@@ -503,7 +503,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
     @Async("taskExecutor")
     @Transactional
-    public void addExternalInvolvementToBoardMember(Integer personId,
+    public void addExternalInvolvementToContributor(Integer personId,
                                                     List<MultilingualContentDTO> externalInstitutionName,
                                                     String employmentTitle) {
         if (employmentRepository.findExternalByPersonInvolvedId(personId).stream()
@@ -511,11 +511,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                 CollectionOperations.hasCaseInsensitiveMatch(
                     externalInstitutionName.stream().map(MultilingualContentDTO::getContent)
                         .collect(Collectors.toSet()), employment.getAffiliationStatement().stream()
-                        .map(MultiLingualContent::getContent).collect(Collectors.toSet())))) {
+                        .map(MultiLingualContent::getContent).collect(Collectors.toSet()),
+                    true))) {
             return;
         }
 
-        if (employmentTitle.equals("ACADEMICIAN")) {
+        if (Objects.nonNull(employmentTitle) && employmentTitle.equals("ACADEMICIAN")) {
             employmentTitle = "FULL_PROFESSOR";
         }
 
@@ -523,7 +524,10 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         addEmployment(personId, new EmploymentDTO() {{
             setInvolvementType(InvolvementType.EMPLOYED_AT);
             setAffiliationStatement(externalInstitutionName);
-            setEmploymentPosition(EmploymentPosition.valueOf(finalEmploymentTitle));
+
+            if (Objects.nonNull(finalEmploymentTitle)) {
+                setEmploymentPosition(EmploymentPosition.valueOf(finalEmploymentTitle));
+            }
         }});
     }
 

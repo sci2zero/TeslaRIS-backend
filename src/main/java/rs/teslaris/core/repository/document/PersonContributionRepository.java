@@ -61,4 +61,15 @@ public interface PersonContributionRepository extends JpaRepository<PersonContri
             ");",
         nativeQuery = true)
     void deleteInstitutionsForForPersonContributions(Integer personId);
+
+    @Query("""
+            SELECT pdc
+            FROM PersonDocumentContribution pdc
+            WHERE pdc.person IS NOT NULL
+              AND pdc.affiliationStatement IS NOT NULL
+              AND pdc.affiliationStatement.displayAffiliationStatement IS NOT EMPTY
+        """)
+    Page<PersonDocumentContribution> fetchAllWithExistingResearcherAndExternalAffiliation(
+        Pageable pageable
+    );
 }
