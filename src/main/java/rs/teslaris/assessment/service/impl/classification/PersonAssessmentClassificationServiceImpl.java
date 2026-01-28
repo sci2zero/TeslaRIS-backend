@@ -272,7 +272,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public synchronized void reindexPublicationPointsForAllResearchers(List<Integer> personIds,
                                                                        List<Integer> institutionIds) {
         var assessmentMeasures = loadAssessmentMeasures();
