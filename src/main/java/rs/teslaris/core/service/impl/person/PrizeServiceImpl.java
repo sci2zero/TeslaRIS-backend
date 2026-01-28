@@ -209,6 +209,8 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         if (indexAssessments) {
             finalPrizeIndex.setAssessedBy(
                 commissionRepository.findCommissionsThatAssessedPrize(prize.getId()));
+
+            finalPrizeIndex.getCommissionAssessments().clear();
             commissionRepository.findAssessmentClassificationBasicInfoForPrizeAndCommissions(
                 prize.getId(), finalPrizeIndex.getAssessedBy()).forEach(assessment ->
                 finalPrizeIndex.getCommissionAssessments().add(

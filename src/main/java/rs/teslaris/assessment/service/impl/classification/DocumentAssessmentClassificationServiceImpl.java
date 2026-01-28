@@ -101,7 +101,6 @@ import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Slf4j
 @Traceable
 public class DocumentAssessmentClassificationServiceImpl
@@ -190,6 +189,7 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForDocument(
         Integer documentId) {
         return documentAssessmentClassificationRepository.findAssessmentClassificationsForDocument(
@@ -199,6 +199,7 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public EntityAssessmentClassificationResponseDTO createDocumentAssessmentClassification(
         DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
         var newDocumentClassification = new DocumentAssessmentClassification();
@@ -257,6 +258,7 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public void editDocumentAssessmentClassification(Integer classificationId,
                                                      DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
         var documentClassification = documentClassificationJPAService.findOne(classificationId);
@@ -287,6 +289,7 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public void schedulePublicationClassification(LocalDateTime timeToRun,
                                                   Integer userId, LocalDate fromDate,
                                                   DocumentPublicationType documentPublicationType,

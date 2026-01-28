@@ -34,6 +34,7 @@ import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.indexrepository.PrizeIndexRepository;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.PrizeRepository;
@@ -84,6 +85,7 @@ public class PrizeServiceTest {
         var dto = new PrizeDTO();
 
         var person = new Person();
+        person.setName(new PersonName("John", null, "Doe", null, null));
 
         var newPrize = new Prize();
 
@@ -116,6 +118,7 @@ public class PrizeServiceTest {
         prize.setId(1);
         prize.setPerson(new Person() {{
             setId(1);
+            setName(new PersonName("John", null, "Doe", null, null));
         }});
 
         when(prizeRepository.findById(1)).thenReturn(

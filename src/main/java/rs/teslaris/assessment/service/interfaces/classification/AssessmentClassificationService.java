@@ -12,7 +12,8 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface AssessmentClassificationService extends JPAService<AssessmentClassification> {
 
-    Page<AssessmentClassificationDTO> readAllAssessmentClassifications(Pageable pageable);
+    Page<AssessmentClassificationDTO> readAllAssessmentClassifications(Pageable pageable,
+                                                                       String language);
 
     List<AssessmentClassificationDTO> getAssessmentClassificationsApplicableToEntity(
         List<ApplicableEntityType> applicableEntityTypes);

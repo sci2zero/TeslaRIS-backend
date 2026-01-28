@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +32,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 public class AssessmentClassificationServiceTest {
@@ -55,11 +57,14 @@ public class AssessmentClassificationServiceTest {
         assessmentClassification2.setCode("code2");
         assessmentClassification2.setFormalDescriptionOfRule("rule2");
 
-        when(assessmentClassificationRepository.findAll(any(Pageable.class))).thenReturn(
+        when(assessmentClassificationRepository.readAll(eq(LanguageAbbreviations.ENGLISH),
+            any(Pageable.class))).thenReturn(
             new PageImpl<>(List.of(assessmentClassification1, assessmentClassification2)));
 
         var response =
-            assessmentClassificationService.readAllAssessmentClassifications(PageRequest.of(0, 10));
+            assessmentClassificationService.readAllAssessmentClassifications(
+                PageRequest.of(0, 10),
+                LanguageAbbreviations.ENGLISH);
 
         assertNotNull(response);
         assertEquals(2, response.getSize());

@@ -42,8 +42,10 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexmodel.PrizeIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.indexrepository.PrizeIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
@@ -60,6 +62,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
@@ -93,6 +96,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final ResearchAreaRepository researchAreaRepository;
 
+    private final PrizeIndexRepository prizeIndexRepository;
+
     private final int CHUNK_SIZE = 1000;
 
 
@@ -112,7 +117,7 @@ public class PersonAssessmentClassificationServiceImpl
         PersonIndexRepository personIndexRepository, UserRepository userRepository,
         CitationService citationService, InvolvementRepository involvementRepository,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
-        ResearchAreaRepository researchAreaRepository) {
+        ResearchAreaRepository researchAreaRepository, PrizeIndexRepository prizeIndexRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.personAssessmentClassificationRepository = personAssessmentClassificationRepository;
@@ -127,6 +132,7 @@ public class PersonAssessmentClassificationServiceImpl
         this.involvementRepository = involvementRepository;
         this.organisationUnitsRelationRepository = organisationUnitsRelationRepository;
         this.researchAreaRepository = researchAreaRepository;
+        this.prizeIndexRepository = prizeIndexRepository;
     }
 
     @Override
@@ -427,10 +433,16 @@ public class PersonAssessmentClassificationServiceImpl
                     return;
                 }
 
-                assessResearcherPublication(personIndex, commission, assessmentMeasures,
+                assessResearcherPublications(personIndex, commission, assessmentMeasures,
                     pointsRuleEngine, scalingRuleEngine,
                     assessmentResearchArea, startYear, endYear,
                     assessmentResult, subOUsForTopLevelInstitution);
+
+                if (!CollectionOperations.containsValues(subOUsForTopLevelInstitution)) {
+                    assessResearcherPrizes(personIndex, commission, assessmentMeasures,
+                        pointsRuleEngine, scalingRuleEngine, assessmentResearchArea,
+                        startYear, endYear, assessmentResult);
+                }
             });
     }
 
@@ -441,7 +453,7 @@ public class PersonAssessmentClassificationServiceImpl
             .or(() -> assessmentResearchAreaRepository.findForPersonId(personId));
     }
 
-    private void assessResearcherPublication(
+    private void assessResearcherPublications(
         PersonIndex personIndex,
         Commission commission,
         List<AssessmentMeasure> measures,
@@ -485,12 +497,50 @@ public class PersonAssessmentClassificationServiceImpl
         }
     }
 
+    private void assessResearcherPrizes(
+        PersonIndex personIndex,
+        Commission commission,
+        List<AssessmentMeasure> measures,
+        AssessmentPointsRuleEngine pointsRuleEngine,
+        AssessmentPointsScalingRuleEngine scalingRuleEngine,
+        AssessmentResearchArea assessmentResearchArea,
+        int startYear, int endYear,
+        EnrichedResearcherAssessmentResponseDTO assessmentResult) {
+
+        var isUserLoggedIn = SessionUtil.isUserLoggedIn();
+
+        int pageNumber = 0;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            List<PrizeIndex> prizes =
+                fetchPrizes(personIndex, pageNumber, CHUNK_SIZE, startYear, endYear);
+
+            prizes.forEach(prize ->
+                processPrize(prize, commission, measures, pointsRuleEngine,
+                    scalingRuleEngine, assessmentResearchArea, personIndex, assessmentResult,
+                    isUserLoggedIn));
+
+            pageNumber++;
+            hasNextPage = prizes.size() == CHUNK_SIZE;
+        }
+    }
+
     private List<DocumentPublicationIndex> fetchPublications(PersonIndex personIndex,
                                                              int pageNumber, int chunkSize,
                                                              int startYear, int endYear) {
         return documentPublicationIndexRepository.findByAuthorIdsAndYearBetween(
             personIndex.getDatabaseId(),
             startYear, endYear, PageRequest.of(pageNumber, chunkSize)).getContent();
+    }
+
+    private List<PrizeIndex> fetchPrizes(PersonIndex personIndex,
+                                         int pageNumber, int chunkSize,
+                                         int startYear, int endYear) {
+        return prizeIndexRepository.findByPersonIdAndDateBetween(
+            personIndex.getDatabaseId(),
+            LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
+            PageRequest.of(pageNumber, chunkSize)).getContent();
     }
 
     private void processPublication(
@@ -537,6 +587,50 @@ public class PersonAssessmentClassificationServiceImpl
             populateTopLevelBelongingInformation(publication, assessmentResult,
                 subOUsForTopLevelInstitution);
         }
+    }
+
+    private void processPrize(
+        PrizeIndex prize,
+        Commission commission,
+        List<AssessmentMeasure> measures,
+        AssessmentPointsRuleEngine pointsRuleEngine,
+        AssessmentPointsScalingRuleEngine scalingRuleEngine,
+        AssessmentResearchArea researchArea, PersonIndex personIndex,
+        EnrichedResearcherAssessmentResponseDTO assessmentResult,
+        boolean isUserLoggedIn) {
+
+        var assessment = prize.getCommissionAssessments().stream()
+            .filter(ca -> ca.a.equals(commission.getId())).findFirst();
+
+        if (assessment.isEmpty()) {
+            return;
+        }
+
+        var applicableMeasureOpt = findApplicableMeasure(measures, assessment.get().b);
+        if (applicableMeasureOpt.isEmpty()) {
+            return;
+        }
+
+        var applicableMeasure = applicableMeasureOpt.get();
+
+        double basePoints = invokeRule(AssessmentPointsRuleEngine.class,
+            applicableMeasure.getPointRule(), pointsRuleEngine, researchArea.getResearchAreaCode(),
+            Objects.nonNull(researchArea.getResearchSubAreaIds()) ?
+                researchArea.getResearchSubAreaIds() : Collections.emptySet(), assessment.get().b);
+
+        double scaledPoints = invokeRule(AssessmentPointsScalingRuleEngine.class,
+            applicableMeasure.getScalingRule(), scalingRuleEngine,
+            1, assessment.get().b, basePoints);
+
+        log.info("{} more points for {}", scaledPoints, personIndex.getName());
+
+        assessmentResult.getPublicationsPerCategory()
+            .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(assessment.get().b),
+                k -> new ArrayList<>())
+            .add(new Triple<>(
+                prize.getTitleOther(),
+                isUserLoggedIn ? scaledPoints : 0,
+                prize.getDatabaseId()));
     }
 
     private double getPointsForPublication(DocumentPublicationIndex publication,

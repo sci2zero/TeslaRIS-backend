@@ -37,13 +37,13 @@ public class Indicator extends BaseEntity {
     @Column(name = "access_level")
     private AccessLevel accessLevel;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> title = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     private Set<ApplicableEntityType> applicableTypes = new HashSet<>();
 
     @Column(name = "content_type")

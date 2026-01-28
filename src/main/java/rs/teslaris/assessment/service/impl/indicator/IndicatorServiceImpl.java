@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.IndicatorConverter;
 import rs.teslaris.assessment.dto.indicator.IndicatorDTO;
 import rs.teslaris.assessment.dto.indicator.IndicatorResponseDTO;
@@ -40,11 +41,13 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<IndicatorResponseDTO> readAllIndicators(Pageable pageable, String language) {
         return indicatorRepository.readAll(language, pageable).map(IndicatorConverter::toDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<IndicatorResponseDTO> getIndicatorsApplicableToEntity(
         List<ApplicableEntityType> applicableEntityTypes) {
         if (!applicableEntityTypes.isEmpty() &&
@@ -61,13 +64,14 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     }
 
     @Override
+    @Transactional(readOnly = true)
     public IndicatorResponseDTO readIndicatorById(
         Integer indicatorId) {
         return IndicatorConverter.toDTO(findOne(indicatorId));
     }
 
     @Override
-    public AccessLevel readIndicatorAccessLEvel(Integer indicatorId) {
+    public AccessLevel readIndicatorAccessLevel(Integer indicatorId) {
         return findOne(indicatorId).getAccessLevel();
     }
 
@@ -77,6 +81,7 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     }
 
     @Override
+    @Transactional
     public Indicator createIndicator(IndicatorDTO indicator) {
         var newIndicator = new Indicator();
 
@@ -86,6 +91,7 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     }
 
     @Override
+    @Transactional
     public void updateIndicator(Integer indicatorId, IndicatorDTO indicator) {
         var indicatorToUpdate = findOne(indicatorId);
 
@@ -113,6 +119,7 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     }
 
     @Override
+    @Transactional
     public void deleteIndicator(Integer indicatorId) {
         if (indicatorRepository.isInUse(indicatorId)) {
             throw new IndicatorReferenceConstraintViolationException("indicatorInUse.");
@@ -120,5 +127,4 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
 
         delete(indicatorId);
     }
-
 }

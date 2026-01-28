@@ -1175,6 +1175,7 @@ public class TestingDataInitializer {
             assessmentClassification1);
         prizeAssessment.setClassificationYear(2021);
         prizeAssessment.setCommission(commission5);
+        prizeAssessment.setManual(true);
         prizeAssessmentClassificationRepository.save(prizeAssessment);
     }
 }

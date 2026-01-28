@@ -33,8 +33,10 @@ public class AssessmentClassificationController {
 
 
     @GetMapping
-    public Page<AssessmentClassificationDTO> readAssessmentClassifications(Pageable pageable) {
-        return assessmentClassificationService.readAllAssessmentClassifications(pageable);
+    public Page<AssessmentClassificationDTO> readAssessmentClassifications(
+        @RequestParam("lang") String language, Pageable pageable) {
+        return assessmentClassificationService.readAllAssessmentClassifications(pageable,
+            language.toUpperCase());
     }
 
     @GetMapping("/{assessmentClassificationId}")

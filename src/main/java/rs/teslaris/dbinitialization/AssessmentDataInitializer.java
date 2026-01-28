@@ -1728,7 +1728,7 @@ public class AssessmentDataInitializer {
                     "Exhibition prize",
                     1),
                 new MultiLingualContent(serbianTag,
-                    "Nagrada na изложби",
+                    "Nagrada na izložbi",
                     2),
                 new MultiLingualContent(serbianCyrillicTag,
                     "Награда на изложби",
@@ -1987,9 +1987,25 @@ public class AssessmentDataInitializer {
         measureM90.setScalingRule("serbianScalingRulebook2025");
         serbianRulebook.addAssessmentMeasure(measureM90);
 
+        var measureM100 = new AssessmentMeasure();
+        measureM100.setTitle(
+            Set.of(new MultiLingualContent(englishTag,
+                    "Performed works, awards, studies, exhibitions and curatorial work of international significance",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Izvedena dela, nagrade, studije, izložbe i kustoski rad od međunarodnog značaja",
+                    2)));
+        measureM100.setCode("M100");
+        measureM100.setPointRule("serbianPointsRulebook2025");
+        measureM100.setScalingRule("serbianScalingRulebook2025");
+        serbianRulebook.addAssessmentMeasure(measureM100);
+
         assessmentMeasureRepository.saveAll(
-            List.of(measureM10, measureM20, measureM30, measureM40, measureM50, measureM60,
-                measureM70, measureM80, measureM90));
+            List.of(
+                measureM10, measureM20, measureM30, measureM40,
+                measureM50, measureM60, measureM70, measureM80,
+                measureM90, measureM100)
+        );
         assessmentRulebookRepository.save(serbianRulebook);
     }
 }

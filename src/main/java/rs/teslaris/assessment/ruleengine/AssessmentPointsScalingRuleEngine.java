@@ -39,8 +39,16 @@ public class AssessmentPointsScalingRuleEngine {
         var isM21aPlus = classificationCode.equals("M21APlus");
         var isM80 = classificationCode.startsWith("M8");
         var isM90 = classificationCode.startsWith("M9");
-        var isM10OrM40 = classificationCode.startsWith("M1") || classificationCode.startsWith("M4");
+        var isM10OrM40 =
+            (classificationCode.startsWith("M1") && !classificationCode.startsWith("M10")) ||
+                classificationCode.startsWith("M4");
+        var isM100 = classificationCode.startsWith("M10");
         var isTheoretical = Objects.nonNull(findIndicatorByCode("isTheoretical"));
+
+        // No scaling for M100
+        if (isM100) {
+            return points;
+        }
 
         // No scaling for M10 and M40
         if (isM10OrM40) {
@@ -117,6 +125,10 @@ public class AssessmentPointsScalingRuleEngine {
     }
 
     private EntityIndicator findIndicatorByCode(String code) {
+        if (Objects.isNull(currentEntityIndicators)) {
+            return null;
+        }
+
         return currentEntityIndicators.stream()
             .filter(journalIndicator ->
                 journalIndicator.getIndicator().getCode().equals(code))
