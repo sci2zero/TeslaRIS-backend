@@ -955,7 +955,7 @@ public class InvolvementServiceTest {
             .thenReturn(List.of(existingEmployment));
 
         // When
-        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
+        involvementService.addExternalInvolvementToContributor(personId, institutionName,
             employmentTitle);
 
         // Then
@@ -985,7 +985,7 @@ public class InvolvementServiceTest {
         when(personService.findOne(any())).thenReturn(new Person());
 
         // When
-        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
+        involvementService.addExternalInvolvementToContributor(personId, institutionName,
             employmentTitle);
 
         // Then
@@ -1010,7 +1010,7 @@ public class InvolvementServiceTest {
         when(personService.findOne(any())).thenReturn(new Person());
 
         // When
-        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
+        involvementService.addExternalInvolvementToContributor(personId, institutionName,
             employmentTitle);
 
         // Then
@@ -1040,7 +1040,7 @@ public class InvolvementServiceTest {
             .thenReturn(List.of(existingEmployment));
 
         // When
-        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
+        involvementService.addExternalInvolvementToContributor(personId, institutionName,
             employmentTitle);
 
         // Then

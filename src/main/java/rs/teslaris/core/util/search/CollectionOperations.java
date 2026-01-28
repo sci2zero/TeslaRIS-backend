@@ -34,7 +34,8 @@ public class CollectionOperations {
         return new ArrayList<>(set);
     }
 
-    public static boolean hasCaseInsensitiveMatch(Set<String> set1, Set<String> set2) {
+    public static boolean hasCaseInsensitiveMatch(Set<String> set1, Set<String> set2,
+                                                  boolean startsWithCheck) {
         if (Objects.isNull(set1) || Objects.isNull(set2)) {
             return false;
         }
@@ -49,6 +50,9 @@ public class CollectionOperations {
             .map(String::toLowerCase)
             .collect(Collectors.toSet());
 
-        return !Collections.disjoint(lowerSet1, lowerSet2);
+        return !Collections.disjoint(lowerSet1, lowerSet2) ||
+            (startsWithCheck && lowerSet1.stream()
+                .anyMatch(str1 -> lowerSet2.stream()
+                    .anyMatch(str2 -> str1.startsWith(str2) || str2.startsWith(str1))));
     }
 }

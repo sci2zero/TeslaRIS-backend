@@ -1,7 +1,6 @@
 package rs.teslaris.core.service.impl.person;
 
 import jakarta.annotation.Nullable;
-import jakarta.transaction.Transactional;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,9 +11,12 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
@@ -50,12 +52,12 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.CollectionOperations;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribution>
     implements PersonContributionService {
@@ -82,6 +84,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
 
     @Override
+    @Transactional
     public void setPersonDocumentContributionsForDocument(Document document,
                                                           DocumentDTO documentDTO) {
         documentDTO.getContributions().forEach(contributionDTO -> {
@@ -117,15 +120,14 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             if (!addedPrevoiusly) {
                 document.addDocumentContribution(contribution);
 
-                if (contribution.getContributionType()
-                    .equals(DocumentContributionType.BOARD_MEMBER) &&
-                    CollectionOperations.containsValues(
-                        contributionDTO.getDisplayAffiliationStatement())) {
+                if (CollectionOperations.containsValues(
+                    contributionDTO.getDisplayAffiliationStatement())) {
 
-                    involvementService.addExternalInvolvementToBoardMember(
+                    involvementService.addExternalInvolvementToContributor(
                         contributionDTO.getPersonId(),
                         contributionDTO.getDisplayAffiliationStatement(),
-                        contributionDTO.getEmploymentTitle().name()
+                        Objects.nonNull(contributionDTO.getEmploymentTitle()) ?
+                            contributionDTO.getEmploymentTitle().name() : null
                     );
                 }
             }
@@ -133,6 +135,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional
     public void setPersonPublicationSeriesContributionsForJournal(
         PublicationSeries publicationSeries,
         PublicationSeriesDTO journalDTO) {
@@ -155,6 +158,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional
     public void setPersonPublicationSeriesContributionsForBookSeries(
         PublicationSeries publicationSeries,
         BookSeriesDTO bookSeriesDTO) {
@@ -177,6 +181,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional
     public void setPersonEventContributionForEvent(Event event, EventDTO eventDTO) {
         eventDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonEventContribution();
@@ -194,6 +199,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional
     public void deleteContribution(Integer contributionId) {
         personContributionRepository.deleteById(contributionId);
     }
@@ -332,6 +338,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional
     public void notifyContributor(Notification notification, NotificationType notificationType) {
         if (notificationType.equals(NotificationType.ADDED_TO_PUBLICATION)) {
             createNotification(notification);
@@ -343,11 +350,13 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<User> getEditorUsersForContributionInstitutionIds(Set<Integer> institutionIds) {
         return userRepository.findInstitutionalEditorUsersForInstitutionIds(institutionIds);
     }
 
     @Override
+    @Transactional
     public void notifyAdminsAboutUnbindedContribution(Document document) {
         userRepository.findAllSystemAdminUsers().forEach(adminUser -> {
             notificationRepository.save(
@@ -363,6 +372,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional
     public void reorderContributions(Set<PersonContribution> contributions,
                                      Integer contributionId,
                                      Integer oldContributionOrderNumber,
@@ -389,6 +399,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional(readOnly = true)
     @Nullable
     public PersonDocumentContribution findContributionForResearcherAndDocument(Integer personId,
                                                                                Integer documentId) {
@@ -397,9 +408,29 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Integer> getIdsOfNonRelatedDocuments(Integer organisationUnitId, Integer personId) {
         return personContributionRepository.fetchAllDocumentsWhereInstitutionIsNotListed(personId,
             organisationUnitId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void createInvolvementsForRetroactiveExternalContributions() {
+        FunctionalUtil.processAllPages(
+            1000,
+            Sort.by(Sort.Direction.ASC, "id"),
+            personContributionRepository::fetchAllWithExistingResearcherAndExternalAffiliation,
+            proceedingsPublication ->
+                involvementService.addExternalInvolvementToContributor(
+                    proceedingsPublication.getPerson().getId(),
+                    MultilingualContentConverter.getMultilingualContentDTO(
+                        proceedingsPublication.getAffiliationStatement()
+                            .getDisplayAffiliationStatement()),
+                    Objects.nonNull(proceedingsPublication.getEmploymentTitle()) ?
+                        proceedingsPublication.getEmploymentTitle().name() : null
+                )
+        );
     }
 
     @Override
