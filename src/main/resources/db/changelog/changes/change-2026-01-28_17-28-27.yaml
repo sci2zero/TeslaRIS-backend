@@ -1,0 +1,27 @@
+databaseChangeLog:
+- changeSet:
+    id: 1769621331809-1
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: prize_id
+            type: INTEGER
+        tableName: entity_assessment_classifications
+- changeSet:
+    id: 1769621331809-2
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: prize_id
+        baseTableName: entity_assessment_classifications
+        constraintName: fkkt6c3p35ckgy9b7upujlm0c4b
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: prizes
+        validate: true
+
