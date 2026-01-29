@@ -34,6 +34,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -98,10 +99,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                   InvolvementRepository involvementRepository,
                                   OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                  DocumentLookupService documentLookupService,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
-                                  LanguageService languageService,
-                                  JournalService journalService,
+                                  LanguageService languageService, JournalService journalService,
                                   BookSeriesService bookSeriesService, EventService eventService1,
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1,
@@ -113,7 +114,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageService = languageService;

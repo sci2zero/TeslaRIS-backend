@@ -8,13 +8,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "datasets")
@@ -30,4 +29,9 @@ public non-sealed class Dataset extends Document implements PublisherPublishable
 
     @Column(name = "author_reprint")
     private Boolean authorReprint = false;
+
+
+    public Dataset() {
+        super(DocumentPublicationType.DATASET);
+    }
 }

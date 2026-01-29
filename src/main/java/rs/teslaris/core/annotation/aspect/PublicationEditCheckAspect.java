@@ -21,6 +21,7 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -35,6 +36,8 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 public class PublicationEditCheckAspect {
 
     private final DocumentPublicationService documentPublicationService;
+
+    private final DocumentLookupService documentLookupService;
 
     private final OrganisationUnitService organisationUnitService;
 
@@ -62,10 +65,7 @@ public class PublicationEditCheckAspect {
 
         List<Integer> contributors = getContributors(annotation, attributeMap, joinPoint);
 
-        var assessmentMode = false;
-        if (annotation.value().equalsIgnoreCase("ASSESS")) {
-            assessmentMode = true;
-        }
+        var assessmentMode = annotation.value().equalsIgnoreCase("ASSESS");
 
         checkPermission(role, personId, userId, contributors, joinPoint, annotation,
             attributeMap, assessmentMode);
@@ -104,7 +104,8 @@ public class PublicationEditCheckAspect {
         }
 
         var document =
-            documentPublicationService.findOne(Integer.parseInt(attributeMap.get("documentId")));
+            documentLookupService.fastDocumentLookup(
+                Integer.parseInt(attributeMap.get("documentId")));
         return !(document instanceof Thesis) || !institutionSubUnitIds.contains(
             ((Thesis) document).getOrganisationUnit().getId());
     }

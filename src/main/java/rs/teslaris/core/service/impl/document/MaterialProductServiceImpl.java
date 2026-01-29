@@ -25,6 +25,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -53,31 +54,33 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
 
 
     @Autowired
-    public MaterialProductServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        SearchService<DocumentPublicationIndex> searchService,
-        OrganisationUnitService organisationUnitService,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        CitationService citationService,
-        ApplicationEventPublisher applicationEventPublisher,
-        PersonContributionService personContributionService,
-        ExpressionTransformer expressionTransformer,
-        EventService eventService,
-        CommissionRepository commissionRepository,
-        SearchFieldsLoader searchFieldsLoader,
-        OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
-        InvolvementRepository involvementRepository,
-        OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
-        MaterialProductJPAServiceImpl materialProductJPAService,
-        PublisherService publisherService, ResearchAreaService researchAreaService) {
+    public MaterialProductServiceImpl(MultilingualContentService multilingualContentService,
+                                      DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                      SearchService<DocumentPublicationIndex> searchService,
+                                      OrganisationUnitService organisationUnitService,
+                                      DocumentRepository documentRepository,
+                                      DocumentFileService documentFileService,
+                                      CitationService citationService,
+                                      ApplicationEventPublisher applicationEventPublisher,
+                                      PersonContributionService personContributionService,
+                                      ExpressionTransformer expressionTransformer,
+                                      EventService eventService,
+                                      CommissionRepository commissionRepository,
+                                      SearchFieldsLoader searchFieldsLoader,
+                                      OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                                      InvolvementRepository involvementRepository,
+                                      OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                      DocumentLookupService documentLookupService,
+                                      MaterialProductJPAServiceImpl materialProductJPAService,
+                                      PublisherService publisherService,
+                                      ResearchAreaService researchAreaService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.materialProductJPAService = materialProductJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;

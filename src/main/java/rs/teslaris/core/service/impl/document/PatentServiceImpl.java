@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -66,14 +67,17 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                              InvolvementRepository involvementRepository,
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                             DocumentLookupService documentLookupService,
                              PatentJPAServiceImpl patentJPAService,
-                             PublisherService publisherService, PatentRepository patentRepository) {
+                             PublisherService publisherService,
+                             PatentRepository patentRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
         this.patentRepository = patentRepository;

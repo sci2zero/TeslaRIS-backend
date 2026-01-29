@@ -25,6 +25,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -69,6 +70,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                                         OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                         InvolvementRepository involvementRepository,
                                         OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                        DocumentLookupService documentLookupService,
                                         IntangibleProductJPAServiceImpl intangibleProductJPAService,
                                         PublisherService publisherService,
                                         ResearchAreaService researchAreaService) {
@@ -77,7 +79,8 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.intangibleProductJPAService = intangibleProductJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;

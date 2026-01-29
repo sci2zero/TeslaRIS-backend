@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 
@@ -67,4 +68,8 @@ public non-sealed class Monograph extends Document
 
     @Column(name = "author_reprint")
     private Boolean authorReprint = false;
+
+    public Monograph() {
+        super(DocumentPublicationType.MONOGRAPH);
+    }
 }

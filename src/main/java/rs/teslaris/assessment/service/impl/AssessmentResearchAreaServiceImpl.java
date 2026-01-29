@@ -30,7 +30,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<AssessmentResearchArea>
     implements AssessmentResearchAreaService {
@@ -56,6 +55,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AssessmentResearchAreaDTO readPersonAssessmentResearchArea(Integer personId) {
         var researchArea = assessmentResearchAreaRepository.findForPersonId(personId).orElse(null);
 
@@ -73,6 +73,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<PersonIndex> readPersonAssessmentResearchAreaForCommission(
         Integer commissionId, String code, Pageable pageable) {
         var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
@@ -85,6 +86,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional
     public void setPersonAssessmentResearchArea(Integer personId, String researchAreaCode,
                                                 List<Integer> researchSubAreaIds) {
         if (!ResearchAreasConfigurationLoader.codeExists(researchAreaCode)) {
@@ -116,6 +118,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional
     public void setPersonAssessmentResearchAreaForCommission(Integer personId,
                                                              String researchAreaCode,
                                                              Integer commissionId) {
@@ -153,6 +156,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional
     public void deletePersonAssessmentResearchArea(Integer personId) {
         var researchAreaToDelete = assessmentResearchAreaRepository.findForPersonId(personId);
         researchAreaToDelete.ifPresent(assessmentResearchAreaRepository::delete);
@@ -162,6 +166,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional
     public void removePersonAssessmentResearchAreaForCommission(Integer personId,
                                                                 Integer commissionId) {
         var commission = commissionService.findOne(commissionId);

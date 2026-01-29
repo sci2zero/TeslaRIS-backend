@@ -32,13 +32,14 @@ import rs.teslaris.assessment.service.impl.cruddelegate.DocumentClassificationJP
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.institution.Commission;
-import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -57,7 +58,7 @@ public class DocumentAssessmentClassificationServiceTest {
     private CommissionService commissionService;
 
     @Mock
-    private DocumentRepository documentRepository;
+    private DocumentLookupService documentLookupService;
 
     @Mock
     private AssessmentClassificationService assessmentClassificationService;
@@ -151,11 +152,13 @@ public class DocumentAssessmentClassificationServiceTest {
         classification.setAssessmentClassification(new AssessmentClassification());
         classification.setDocument(new JournalPublication());
 
-        when(documentRepository.findById(1)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(document);
         when(commissionService.findOne(1)).thenReturn(new Commission());
         when(documentAssessmentClassificationRepository.save(
             any(DocumentAssessmentClassification.class)))
             .thenReturn(classification);
+        when(documentPublicationService.findDocumentPublicationIndexByDatabaseId(1)).thenReturn(
+            new DocumentPublicationIndex());
 
         var result = documentAssessmentClassificationService.createDocumentAssessmentClassification(
             classificationDTO);
@@ -177,7 +180,7 @@ public class DocumentAssessmentClassificationServiceTest {
         classificationDTO.setDocumentId(1);
         classificationDTO.setCommissionId(1);
 
-        when(documentRepository.findById(1)).thenReturn(java.util.Optional.empty());
+        when(documentLookupService.fastDocumentLookup(1)).thenThrow(NotFoundException.class);
         when(assessmentClassificationService.findOne(any())).thenReturn(
             new AssessmentClassification());
 
@@ -197,7 +200,7 @@ public class DocumentAssessmentClassificationServiceTest {
         classificationDTO.setCommissionId(1);
 
         document.setDocumentDate(null);
-        when(documentRepository.findById(1)).thenReturn(java.util.Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(document);
 
         assertThrows(CantEditException.class, () ->
             documentAssessmentClassificationService.createDocumentAssessmentClassification(
@@ -216,10 +219,14 @@ public class DocumentAssessmentClassificationServiceTest {
 
         var classification = new DocumentAssessmentClassification();
         classification.setDocument(new Dataset());
+        classification.setDocumentType(classification.getDocument().getDocumentType());
         classification.setId(1);
+
         when(documentClassificationJPAService.findOne(1)).thenReturn(classification);
         when(entityAssessmentClassificationRepository.findById(1)).thenReturn(
             Optional.of(new DocumentAssessmentClassification()));
+        when(documentPublicationService.findDocumentPublicationIndexByDatabaseId(any())).thenReturn(
+            new DocumentPublicationIndex());
 
         documentAssessmentClassificationService.editDocumentAssessmentClassification(1,
             classificationDTO);

@@ -29,6 +29,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -75,6 +76,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                          InvolvementRepository involvementRepository,
                                          OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                         DocumentLookupService documentLookupService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1,
@@ -84,7 +86,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;

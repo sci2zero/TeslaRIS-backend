@@ -22,7 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -69,10 +68,8 @@ import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
-import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.Monograph;
-import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
@@ -83,11 +80,13 @@ import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
@@ -119,6 +118,8 @@ public class DocumentAssessmentClassificationServiceImpl
     private final PublicationSeriesAssessmentClassificationRepository
         publicationSeriesAssessmentClassificationRepository;
 
+    private final DocumentLookupService documentLookupService;
+
     private final DocumentRepository documentRepository;
 
     private final TaskManagerService taskManagerService;
@@ -143,6 +144,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final PublicationClassificationService publicationClassificationService;
 
+    private final ThesisRepository thesisRepository;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
@@ -155,7 +158,8 @@ public class DocumentAssessmentClassificationServiceImpl
         UserService userService,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
-        DocumentRepository documentRepository, TaskManagerService taskManagerService,
+        DocumentLookupService documentLookupService, DocumentRepository documentRepository,
+        TaskManagerService taskManagerService,
         SearchService<DocumentPublicationIndex> searchService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository,
@@ -164,7 +168,8 @@ public class DocumentAssessmentClassificationServiceImpl
         PersonAssessmentClassificationService personAssessmentClassificationService,
         AssessmentResearchAreaRepository assessmentResearchAreaRepository,
         ResearchAreaRepository researchAreaRepository,
-        PublicationClassificationService publicationClassificationService) {
+        PublicationClassificationService publicationClassificationService,
+        ThesisRepository thesisRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
@@ -174,6 +179,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.organisationUnitsRelationRepository = organisationUnitsRelationRepository;
         this.publicationSeriesAssessmentClassificationRepository =
             publicationSeriesAssessmentClassificationRepository;
+        this.documentLookupService = documentLookupService;
         this.documentRepository = documentRepository;
         this.taskManagerService = taskManagerService;
         this.searchService = searchService;
@@ -186,6 +192,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.assessmentResearchAreaRepository = assessmentResearchAreaRepository;
         this.researchAreaRepository = researchAreaRepository;
         this.publicationClassificationService = publicationClassificationService;
+        this.thesisRepository = thesisRepository;
     }
 
     @Override
@@ -209,13 +216,15 @@ public class DocumentAssessmentClassificationServiceImpl
         newDocumentClassification.setCommission(
             commissionService.findOne(documentAssessmentClassificationDTO.getCommissionId()));
         var document =
-            documentRepository.findById(documentAssessmentClassificationDTO.getDocumentId())
-                .orElseThrow(() -> new NotFoundException(
-                    "Document with ID " + documentAssessmentClassificationDTO.getDocumentId() +
-                        " does not exist."));
-        checkIfDocumentIsAThesis(document);
+            documentLookupService.fastDocumentLookup(
+                documentAssessmentClassificationDTO.getDocumentId());
 
-        if (Hibernate.getClass(document) == Proceedings.class &&
+        if (document.getDocumentType().equals(DocumentPublicationType.THESIS) &&
+            ((Thesis) document).getIsOnPublicReview()) {
+            throw new ThesisException("Thesis is on public review, can't edit classifications.");
+        }
+
+        if (document.getDocumentType().equals(DocumentPublicationType.PROCEEDINGS) &&
             SessionUtil.getLoggedInUser().getAuthority().getName()
                 .equals(UserRole.RESEARCHER.name())) {
             return null;
@@ -232,14 +241,17 @@ public class DocumentAssessmentClassificationServiceImpl
         newDocumentClassification.setClassificationYear(
             Integer.parseInt(document.getDocumentDate().split("-")[0]));
         newDocumentClassification.setDocument(document);
+        newDocumentClassification.setDocumentType(document.getDocumentType());
 
         var savedDocumentClassification =
             documentAssessmentClassificationRepository.save(newDocumentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(document.getId());
 
         applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
-            document.getContributors().stream().filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId()).toList()));
+            documentPublicationService.findDocumentPublicationIndexByDatabaseId(document.getId())
+                .getAuthorIds().stream()
+                .filter(id -> id > 0)
+                .toList()));
 
         if (document instanceof Monograph) {
             applicationEventPublisher.publishEvent(
@@ -251,36 +263,39 @@ public class DocumentAssessmentClassificationServiceImpl
         return EntityAssessmentClassificationConverter.toDTO(savedDocumentClassification);
     }
 
-    private void checkIfDocumentIsAThesis(Document document) {
-        if (document instanceof Thesis && ((Thesis) document).getIsOnPublicReview()) {
-            throw new ThesisException("Thesis is on public review, can't edit classifications.");
-        }
-    }
-
     @Override
     @Transactional
     public void editDocumentAssessmentClassification(Integer classificationId,
                                                      DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
         var documentClassification = documentClassificationJPAService.findOne(classificationId);
 
-        if (Hibernate.getClass(documentClassification.getDocument()) == Proceedings.class &&
+        if (documentClassification.getDocumentType()
+            .equals(DocumentPublicationType.PROCEEDINGS) &&
             SessionUtil.getLoggedInUser().getAuthority().getName()
                 .equals(UserRole.RESEARCHER.name())) {
             return;
         }
 
-        checkIfDocumentIsAThesis(documentClassification.getDocument());
+        if (documentClassification.getDocumentType().equals(DocumentPublicationType.THESIS) &&
+            thesisRepository.isThesisOnPublicReview(documentClassification.getDocument().getId())) {
+            throw new ThesisException("Thesis is on public review, can't edit classifications.");
+        }
+
         setCommonFields(documentClassification, documentAssessmentClassificationDTO);
 
         save(documentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(
             documentClassification.getDocument().getId());
+
         applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
-            documentClassification.getDocument().getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson())).map(c -> c.getPerson().getId())
+            documentPublicationService.findDocumentPublicationIndexByDatabaseId(
+                    documentClassification.getDocument().getId())
+                .getAuthorIds().stream()
+                .filter(id -> id > 0)
                 .toList()));
 
-        if (Hibernate.getClass(documentClassification.getDocument()) == Monograph.class) {
+        if (documentClassification.getDocumentType()
+            .equals(DocumentPublicationType.MONOGRAPH)) {
             applicationEventPublisher.publishEvent(
                 new EntityAssessmentChanged(ApplicableEntityType.MONOGRAPH,
                     documentAssessmentClassificationDTO.getDocumentId(),

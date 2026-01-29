@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -88,10 +87,6 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
 
     Optional<Commission> findCommissionByIsDefaultTrue();
 
-    @EntityGraph(attributePaths = {
-        "relations",
-        "relations.targetCommissions"
-    })
     @Query("""
             SELECT c FROM Commission c
             WHERE c.id IN :commissionIds

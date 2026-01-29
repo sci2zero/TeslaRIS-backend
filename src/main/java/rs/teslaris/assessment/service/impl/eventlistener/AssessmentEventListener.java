@@ -31,7 +31,6 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
-import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 
 @Component
@@ -71,28 +70,37 @@ public class AssessmentEventListener {
     @SchedulerLock(name = "researcher-point-reindex")
     @Transactional(readOnly = true)
     protected void performBufferedResearcherPointReindexing() {
+        long start = System.nanoTime();
+        log.info("performBufferedResearcherPointReindexing started at {}", System.nanoTime());
+
         var idsToProcess = new HashSet<>(personIdsToReindex); // atomic snapshot
         personIdsToReindex.removeAll(idsToProcess);
 
         if (idsToProcess.isEmpty()) {
+            log.info(
+                "performBufferedResearcherPointReindexing exited due to empty wait list. Took {} ms",
+                (System.nanoTime() - start) / 1_000_000.0);
             return;
         }
 
         personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
             idsToProcess.stream().toList(), Collections.emptyList());
+
+        log.info("performBufferedResearcherPointReindexing took {} ms",
+            (System.nanoTime() - start) / 1_000_000.0);
     }
 
     @EventListener
     @Transactional(readOnly = true)
     protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
+        long start = System.nanoTime();
+        log.info("handleAllResearcherPointsReindexing started at {}", System.nanoTime());
+
         personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
             Collections.emptyList(), Collections.emptyList());
-    }
 
-    private Integer findDefaultRulebookId() {
-        return assessmentRulebookRepository.findDefaultRulebook().orElseGet(
-            () -> assessmentRulebookRepository.findById(1)
-                .orElseThrow(() -> new NotFoundException("noRulebooksDefinedMessage"))).getId();
+        log.info("handleAllResearcherPointsReindexing took {} ms",
+            (System.nanoTime() - start) / 1_000_000.0);
     }
 
     @EventListener

@@ -57,6 +57,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -115,6 +116,9 @@ public class MonographServiceTest {
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private DocumentLookupService documentLookupService;
 
     @InjectMocks
     private MonographServiceImpl monographService;
@@ -574,7 +578,7 @@ public class MonographServiceTest {
         var id = 1;
         var oldId = 99;
         var monograph = spy(new Monograph());
-        when(documentRepository.findById(id)).thenReturn(Optional.of(monograph));
+        when(documentLookupService.fastDocumentLookup(id)).thenReturn(monograph);
 
         // When
         monographService.addOldId(id, oldId);

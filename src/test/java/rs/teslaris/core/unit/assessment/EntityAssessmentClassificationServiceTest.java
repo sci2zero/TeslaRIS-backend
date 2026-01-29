@@ -16,6 +16,7 @@ import rs.teslaris.assessment.repository.classification.EntityAssessmentClassifi
 import rs.teslaris.assessment.service.impl.classification.EntityAssessmentClassificationServiceImpl;
 import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -46,6 +47,7 @@ public class EntityAssessmentClassificationServiceTest {
         monograph.setId(1);
 
         entityAssessmentClassification.setDocument(monograph);
+        entityAssessmentClassification.setDocumentType(monograph.getDocumentType());
 
         entityAssessmentClassification.setCommission(new Commission() {{
             setId(1);
@@ -54,6 +56,8 @@ public class EntityAssessmentClassificationServiceTest {
         when(entityAssessmentClassificationRepository.findById(
             entityAssessmentClassificationId)).thenReturn(
             Optional.of(entityAssessmentClassification));
+        when(documentPublicationService.findDocumentPublicationIndexByDatabaseId(1)).thenReturn(
+            new DocumentPublicationIndex());
 
         // When
         entityAssessmentClassificationService.deleteEntityAssessmentClassification(

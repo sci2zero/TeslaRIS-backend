@@ -14,6 +14,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.BrandingInformation;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.Language;
@@ -33,6 +34,7 @@ import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.search.StringUtil;
@@ -72,6 +74,8 @@ public class DbInitializer implements ApplicationRunner {
     private final AssessmentDataInitializer assessmentDataInitializer;
 
     private final BrandingInformationRepository brandingInformationRepository;
+
+    private final ReindexService reindexService;
 
 
     @Override
@@ -481,6 +485,10 @@ public class DbInitializer implements ApplicationRunner {
                 institutionalLibrarianAuthority, headOfLibraryAuthority,
                 promotionRegistryAdministratorAuthority, commissions.a, commissions.b,
                 true);
+
+            reindexService
+                .reindexDatabase(Arrays.asList(EntityType.values()),
+                    false, null);
         }
     }
 

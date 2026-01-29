@@ -22,8 +22,8 @@ import rs.teslaris.assessment.service.interfaces.classification.EntityAssessment
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Journal;
-import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -61,9 +61,8 @@ public class EntityAssessmentClassificationServiceImpl
         Integer entityId = null;
 
         if (entityAssessmentClassificationToDelete instanceof DocumentAssessmentClassification) {
-            if (Hibernate.getClass(
-                ((DocumentAssessmentClassification) entityAssessmentClassificationToDelete)
-                    .getDocument()) == Monograph.class) {
+            if (((DocumentAssessmentClassification) entityAssessmentClassificationToDelete)
+                .getDocumentType().equals(DocumentPublicationType.MONOGRAPH)) {
                 entityType = ApplicableEntityType.MONOGRAPH;
                 entityId =
                     ((DocumentAssessmentClassification) entityAssessmentClassificationToDelete)
@@ -74,9 +73,12 @@ public class EntityAssessmentClassificationServiceImpl
                 ((DocumentAssessmentClassification) entityAssessmentClassificationToDelete).getDocument()
                     .getId());
             applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
-                ((DocumentAssessmentClassification) entityAssessmentClassificationToDelete).getDocument()
-                    .getContributors().stream().filter(c -> Objects.nonNull(c.getPerson()))
-                    .map(c -> c.getPerson().getId()).toList()));
+                documentPublicationService.findDocumentPublicationIndexByDatabaseId(
+                        ((DocumentAssessmentClassification) entityAssessmentClassificationToDelete)
+                            .getDocument().getId())
+                    .getAuthorIds().stream()
+                    .filter(id -> id > 0)
+                    .toList()));
         } else if (entityAssessmentClassificationToDelete instanceof EventAssessmentClassification) {
             entityType = ApplicableEntityType.EVENT;
             entityId =

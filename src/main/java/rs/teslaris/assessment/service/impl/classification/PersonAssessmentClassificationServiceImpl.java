@@ -233,7 +233,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<ResearcherAssessmentResponseDTO> assessSingleResearcher(Integer researcherId,
                                                                         LocalDate startDate,
                                                                         LocalDate endDate) {

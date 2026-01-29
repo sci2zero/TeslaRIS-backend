@@ -8,14 +8,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.Arrays;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @Entity
 @Table(name = "proceedings_publications")
 @SQLRestriction("deleted=false")
@@ -42,6 +41,10 @@ public class ProceedingsPublication extends Document implements PrintedPageable 
     private Proceedings proceedings;
 
 
+    public ProceedingsPublication() {
+        super(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
+    }
+
     public ProceedingsPublication(JournalPublication journalPublication) {
         super(journalPublication);
 
@@ -56,5 +59,7 @@ public class ProceedingsPublication extends Document implements PrintedPageable 
                     .equals(journalPublication.getJournalPublicationType().name()))
                 .findFirst()
                 .orElse(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
+
+        this.setDocumentType(DocumentPublicationType.PROCEEDINGS_PUBLICATION);
     }
 }

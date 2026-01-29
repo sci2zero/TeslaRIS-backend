@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 
 @Getter
 @Setter
@@ -35,4 +36,9 @@ public class MonographPublication extends Document implements PrintedPageable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "monograph_id", nullable = false)
     private Monograph monograph;
+
+
+    public MonographPublication() {
+        super(DocumentPublicationType.MONOGRAPH_PUBLICATION);
+    }
 }

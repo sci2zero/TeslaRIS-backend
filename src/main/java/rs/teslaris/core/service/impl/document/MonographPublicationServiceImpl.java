@@ -30,6 +30,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
@@ -73,6 +74,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                            InvolvementRepository involvementRepository,
                                            OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                           DocumentLookupService documentLookupService,
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService,
                                            MonographPublicationRepository monographPublicationRepository) {
@@ -81,7 +83,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
         this.monographPublicationRepository = monographPublicationRepository;

@@ -15,6 +15,7 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
@@ -60,4 +61,9 @@ public non-sealed class Proceedings extends Document
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> nameAbbreviation = new HashSet<>();
+
+
+    public Proceedings() {
+        super(DocumentPublicationType.PROCEEDINGS);
+    }
 }

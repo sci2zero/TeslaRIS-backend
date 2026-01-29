@@ -20,6 +20,7 @@ public abstract class BaseTest {
     @Autowired
     protected MockMvc mockMvc;
 
+
     protected String authenticateAdminAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")

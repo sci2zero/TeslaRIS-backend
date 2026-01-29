@@ -79,6 +79,7 @@ import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
@@ -131,8 +132,12 @@ public class DocumentPublicationServiceTest {
     @Mock
     private InvolvementRepository involvementRepository;
 
+    @Mock
+    private DocumentLookupService documentLookupService;
+
     @InjectMocks
     private DocumentPublicationServiceImpl documentPublicationService;
+
 
     static Stream<Arguments> shouldFindDocumentPublicationsWhenSearchingWithSimpleQuery() {
         return Stream.of(
@@ -153,7 +158,7 @@ public class DocumentPublicationServiceTest {
         // given
         var expected = new MonographPublication();
         expected.setId(1);
-        when(documentRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(expected);
 
         // when
         var result = documentPublicationService.readDocumentPublication(1);
@@ -166,7 +171,7 @@ public class DocumentPublicationServiceTest {
     public void shouldReturnDocumentWhenItExists() {
         // given
         var expected = new MonographPublication();
-        when(documentRepository.findById(1)).thenReturn(Optional.of(expected));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(expected);
 
         // when
         var result = documentPublicationService.findOne(1);
@@ -178,7 +183,7 @@ public class DocumentPublicationServiceTest {
     @Test
     public void shouldThrowNotFoundExceptionWhenDocumentDoesNotExist() {
         // given
-        when(documentRepository.findById(1)).thenReturn(Optional.empty());
+        when(documentLookupService.fastDocumentLookup(1)).thenThrow(NotFoundException.class);
 
         // when
         assertThrows(NotFoundException.class, () -> documentPublicationService.findOne(1));
@@ -191,12 +196,11 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 1;
         var documentFileId = 1;
-        var isProof = true;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
         var documentFile = new DocumentFile();
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
         when(documentFileService.findOne(documentFileId)).thenReturn(documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -213,12 +217,11 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 1;
         var documentFileId = 1;
-        var isProof = false;
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
         var documentFile = new DocumentFile();
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
         when(documentFileService.findOne(documentFileId)).thenReturn(documentFile);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             any())).thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -239,7 +242,7 @@ public class DocumentPublicationServiceTest {
         document.setApproveStatus(ApproveStatus.REQUESTED);
         var documentFile = new DocumentFile();
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class), eq(false),
             eq(document), anyBoolean())).thenReturn(
             documentFile);
@@ -265,7 +268,7 @@ public class DocumentPublicationServiceTest {
         documentFile.setMimeType("text/xml");
         documentFile.setResourceType(ResourceType.OFFICIAL_PUBLICATION);
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
         when(documentFileService.saveNewPublicationDocument(any(DocumentFileDTO.class),
             eq(!isProof), eq(document), anyBoolean())).thenReturn(
             documentFile);
@@ -289,7 +292,7 @@ public class DocumentPublicationServiceTest {
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
         // When
         documentPublicationService.updateDocumentApprovalStatus(documentId, isApproved);
@@ -307,7 +310,7 @@ public class DocumentPublicationServiceTest {
         var document = new JournalPublication();
         document.setApproveStatus(ApproveStatus.REQUESTED);
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
         // When
         documentPublicationService.updateDocumentApprovalStatus(documentId, isApproved);
@@ -379,8 +382,8 @@ public class DocumentPublicationServiceTest {
     public void testDeleteDocumentPublication() {
         // Given
         var documentId = 1;
-        when(documentRepository.findById(documentId)).thenReturn(
-            Optional.of(new JournalPublication()));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(
+            new JournalPublication());
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
             .thenReturn(Optional.of(new DocumentPublicationIndex()));
@@ -398,8 +401,8 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 1;
 
-        when(documentRepository.findById(documentId)).thenReturn(
-            Optional.of(new JournalPublication()));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(
+            new JournalPublication());
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
             .thenReturn(Optional.empty());
@@ -511,7 +514,7 @@ public class DocumentPublicationServiceTest {
         when(personContributionService.findContributionForResearcherAndDocument(personId,
             documentId))
             .thenReturn(contribution);
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
             .thenReturn(Optional.of(index));
@@ -539,7 +542,8 @@ public class DocumentPublicationServiceTest {
         when(personContributionService.findContributionForResearcherAndDocument(personId,
             documentId))
             .thenReturn(contribution);
-        when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+        when(documentLookupService.fastDocumentLookup(documentId)).thenThrow(
+            NotFoundException.class);
 
         // When
         documentPublicationService.unbindResearcherFromContribution(personId, documentId);
@@ -562,7 +566,7 @@ public class DocumentPublicationServiceTest {
 
         when(personContributionService.findContributionForResearcherAndDocument(personId,
             documentId)).thenReturn(contribution);
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
             .thenReturn(Optional.empty());
@@ -1019,7 +1023,7 @@ public class DocumentPublicationServiceTest {
         document.setTitle(new HashSet<>(List.of(mock(MultiLingualContent.class))));
         document.setDocumentDate("2023-05-01");
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
         // When
         documentPublicationService.archiveDocument(documentId);
@@ -1036,7 +1040,7 @@ public class DocumentPublicationServiceTest {
         var thesis = new Thesis();
         thesis.setId(documentId);
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(thesis));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(thesis);
 
         // When & Then
         assertThrows(ThesisException.class,
@@ -1053,7 +1057,7 @@ public class DocumentPublicationServiceTest {
         document.setTitle(new HashSet<>());
         document.setDocumentDate("2023-01-01");
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
         // When & Then
         assertThrows(MissingDataException.class,
@@ -1069,7 +1073,7 @@ public class DocumentPublicationServiceTest {
         document.setId(documentId);
         document.setIsArchived(true);
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
         // When
         documentPublicationService.unarchiveDocument(documentId);
@@ -1085,7 +1089,7 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 1;
         var documentPublication = mock(Document.class);
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(documentPublication);
 
         try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
             DocumentPublicationConverter.class);
@@ -1105,7 +1109,7 @@ public class DocumentPublicationServiceTest {
 
             // Then
             assertEquals("bibtex-string", result);
-            verify(documentRepository).findById(documentId);
+            verify(documentLookupService).fastDocumentLookup(documentId);
         }
     }
 
@@ -1115,7 +1119,7 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 2;
         var documentPublication = mock(Document.class);
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(documentPublication);
 
         try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
             DocumentPublicationConverter.class)) {
@@ -1130,7 +1134,7 @@ public class DocumentPublicationServiceTest {
 
             // Then
             assertEquals("refman-string", result);
-            verify(documentRepository).findById(documentId);
+            verify(documentLookupService).fastDocumentLookup(documentId);
         }
     }
 
@@ -1140,7 +1144,7 @@ public class DocumentPublicationServiceTest {
         // Given
         var documentId = 3;
         var documentPublication = mock(Document.class);
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(documentPublication));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(documentPublication);
 
         try (MockedStatic<DocumentPublicationConverter> mockedConverter = mockStatic(
             DocumentPublicationConverter.class)) {
@@ -1155,19 +1159,19 @@ public class DocumentPublicationServiceTest {
 
             // Then
             assertEquals("endnote-string", result);
-            verify(documentRepository).findById(documentId);
+            verify(documentLookupService).fastDocumentLookup(documentId);
         }
     }
 
     @Test
     void whenDocumentDoesNotExistThenNoInteractions() {
         // Given
-        when(documentRepository.findById(1)).thenReturn(Optional.empty());
+        when(documentLookupService.fastDocumentLookup(1)).thenThrow(NotFoundException.class);
 
-        // When
-        documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1);
+        // When & Then
+        assertThrows(NotFoundException.class,
+            () -> documentPublicationService.unbindInstitutionResearchersFromDocument(10, 1));
 
-        // Then
         verifyNoInteractions(
             involvementRepository,
             documentPublicationIndexRepository,
@@ -1182,7 +1186,7 @@ public class DocumentPublicationServiceTest {
         var contribution = new PersonDocumentContribution();
         doc.setContributors(Set.of(contribution));
 
-        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(doc);
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
             .thenReturn(List.of(10, 20));
 
@@ -1203,7 +1207,7 @@ public class DocumentPublicationServiceTest {
         contribution.setPerson(person);
         doc.setContributors(Set.of(contribution));
 
-        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(doc);
         when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(10))
             .thenReturn(List.of(10, 20));
         when(involvementRepository.findActiveEmploymentInstitutionIds(7))
@@ -1235,7 +1239,7 @@ public class DocumentPublicationServiceTest {
         var index = new DocumentPublicationIndex();
         index.setAuthorIds(new ArrayList<>(List.of(-1, 0)));
 
-        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(doc);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(1))
             .thenReturn(Optional.of(index));
 
@@ -1255,7 +1259,7 @@ public class DocumentPublicationServiceTest {
         var index = new DocumentPublicationIndex();
         index.setAuthorIds(new ArrayList<>(List.of(-1, 2)));
 
-        when(documentRepository.findById(1)).thenReturn(Optional.of(doc));
+        when(documentLookupService.fastDocumentLookup(1)).thenReturn(doc);
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(1))
             .thenReturn(Optional.of(index));
 
@@ -1353,7 +1357,7 @@ public class DocumentPublicationServiceTest {
         dto.setOpenAlexId("OA6789");
         dto.setWebOfScienceId("WOS999");
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
         // When
         documentPublicationService.updateDocumentIdentifiers(documentId, dto);
@@ -1382,7 +1386,7 @@ public class DocumentPublicationServiceTest {
         dto.setOpenAlexId("OA111");
         dto.setWebOfScienceId("WOS222");
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(documentLookupService.fastDocumentLookup(documentId)).thenReturn(document);
 
         // When
         documentPublicationService.updateDocumentIdentifiers(documentId, dto);
@@ -1403,7 +1407,8 @@ public class DocumentPublicationServiceTest {
         var dto = new DocumentIdentifierUpdateDTO();
         dto.setDoi("10.5678/xyz");
 
-        when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+        when(documentLookupService.fastDocumentLookup(documentId)).thenThrow(
+            NotFoundException.class);
 
         // When / Then
         assertThrows(NotFoundException.class,

@@ -52,6 +52,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -77,6 +78,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     private final DocumentFileRepository documentFileRepository;
 
     private final DocumentRepository documentRepository;
+
+    private final DocumentLookupService documentLookupService;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
@@ -248,6 +251,7 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index,
                                                     Integer documentId) {
         var documentFileResponse = editDocumentFile(documentFile, index);
+        Document boundDocument = null;
 
         if (Objects.nonNull(documentId) && index) {
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
@@ -256,6 +260,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                         documentRepository.isDocumentPubliclyAvailable(documentId));
                     documentPublicationIndexRepository.save(documentIndex);
                 });
+
+            boundDocument = documentLookupService.fastDocumentLookup(documentId);
         }
 
         if (SessionUtil.isUserLoggedIn()) {
@@ -269,33 +275,32 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
                 var file = findDocumentFileById(documentFile.getId());
                 file.setIsVerifiedData(true);
                 save(file);
-                refreshParentDocumentValidationStatus(file);
+                refreshParentDocumentValidationStatus(boundDocument);
             } else if (Objects.nonNull(loggedInUser) &&
                 documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS) &&
                 loggedInUser.getAuthority().getName().equals(UserRole.RESEARCHER.name())) {
                 var file = findDocumentFileById(documentFile.getId());
                 file.setIsVerifiedData(false);
                 save(file);
-                refreshParentDocumentValidationStatus(file);
+                refreshParentDocumentValidationStatus(boundDocument);
             }
         }
 
         return documentFileResponse;
     }
 
-    private void refreshParentDocumentValidationStatus(DocumentFile file) {
-        if (Objects.nonNull(file.getDocument())) {
-            documentRepository.findById(file.getDocument().getId()).ifPresent(document -> {
-                document.setAreFilesValid(document.getFileItems().stream()
-                    .allMatch(DocumentFile::getIsVerifiedData));
-                documentRepository.save(document);
+    private void refreshParentDocumentValidationStatus(Document document) {
+        if (Objects.nonNull(document)) {
+            document.setAreFilesValid(document.getFileItems().stream()
+                .allMatch(DocumentFile::getIsVerifiedData));
+            documentRepository.save(document);
 
-                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-                    document.getId()).ifPresent(docIndex -> {
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                document.getId()).ifPresent(docIndex -> {
                     docIndex.setAreFilesValid(document.getAreFilesValid());
                     documentPublicationIndexRepository.save(docIndex);
-                });
-            });
+                }
+            );
         }
     }
 
@@ -303,9 +308,11 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
     @Transactional
     public DocumentFileResponseDTO editDocumentFile(DocumentFileDTO documentFile, Boolean index) {
         var documentFileToEdit = findDocumentFileById(documentFile.getId());
+        Document boundDocument = null;
 
         if (Objects.nonNull(documentFileToEdit.getDocument()) &&
-            documentFileToEdit.getDocument().getIsArchived() &&
+            (boundDocument = documentLookupService.fastDocumentLookup(
+                documentFileToEdit.getDocument().getId())).getIsArchived() &&
             !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
             throw new CantEditException("Document is archived. Can't edit.");
         }
@@ -352,7 +359,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         var savedDocumentFile = documentFileRepository.save(documentFileToEdit);
 
         if (!documentFile.getResourceType().equals(oldResourceType)) {
-            handlePossibleReindexing(documentFile, documentFileToEdit, oldResourceType);
+            handlePossibleReindexing(documentFile, documentFileToEdit, oldResourceType,
+                boundDocument);
         }
 
         return DocumentFileConverter.toDTO(savedDocumentFile);
@@ -360,7 +368,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
     public void handlePossibleReindexing(DocumentFileDTO documentFile,
                                          DocumentFile documentFileToEdit,
-                                         ResourceType oldResourceType) {
+                                         ResourceType oldResourceType,
+                                         Document boundDocument) {
         var indexableResourceTypes =
             List.of(ResourceType.OFFICIAL_PUBLICATION, ResourceType.PREPRINT);
 
@@ -384,13 +393,13 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
             return; // reindex is not needed
         }
 
-        if (Objects.nonNull(documentFileToEdit.getDocument())) {
+        if (Objects.nonNull(boundDocument)) {
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-                documentFileToEdit.getDocument().getId()).ifPresent(documentIndex -> {
+                boundDocument.getId()).ifPresent(documentIndex -> {
                 documentIndex.setFullTextSr("");
                 documentIndex.setFullTextOther("");
 
-                documentFileToEdit.getDocument().getFileItems().forEach(fileToReindex -> {
+                boundDocument.getFileItems().forEach(fileToReindex -> {
                     if (!fileToReindex.getResourceType().equals(ResourceType.PREPRINT) &&
                         !fileToReindex.getResourceType()
                             .equals(ResourceType.OFFICIAL_PUBLICATION)) {

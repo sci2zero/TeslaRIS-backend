@@ -94,5 +94,4 @@ public class AssessmentResearchAreaController {
         assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId,
             commissionId);
     }
-
 }

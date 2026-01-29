@@ -75,6 +75,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -165,6 +166,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                              InvolvementRepository involvementRepository,
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                             DocumentLookupService documentLookupService,
                              ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              LanguageService languageService, LanguageTagService languageTagService,
@@ -173,14 +175,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitIndexRepository organisationUnitIndexRepository,
                              UserService userService, MessageSource messageSource,
                              BrandingInformationService brandingInformationService,
-                             EmailUtil emailUtil, DocumentFileService documentFileService1,
+                             EmailUtil emailUtil,
+                             DocumentFileService documentFileService1,
                              TaskManagerService taskManagerService, FileService fileService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;

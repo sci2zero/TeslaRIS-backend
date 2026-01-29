@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
@@ -64,6 +65,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                               InvolvementRepository involvementRepository,
                               OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                              DocumentLookupService documentLookupService,
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
@@ -71,7 +73,8 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }

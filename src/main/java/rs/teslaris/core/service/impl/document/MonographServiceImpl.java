@@ -38,6 +38,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
@@ -101,9 +102,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                 InvolvementRepository involvementRepository,
                                 OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                DocumentLookupService documentLookupService,
                                 MonographJPAServiceImpl monographJPAService,
-                                LanguageService languageService,
-                                JournalService journalService,
+                                LanguageService languageService, JournalService journalService,
                                 BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
                                 MonographRepository monographRepository,
@@ -115,7 +116,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.monographJPAService = monographJPAService;
         this.languageService = languageService;
         this.journalService = journalService;

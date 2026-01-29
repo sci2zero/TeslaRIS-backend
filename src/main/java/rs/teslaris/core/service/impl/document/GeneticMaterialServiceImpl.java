@@ -23,6 +23,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -49,31 +50,32 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
 
 
     @Autowired
-    public GeneticMaterialServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        SearchService<DocumentPublicationIndex> searchService,
-        OrganisationUnitService organisationUnitService,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        CitationService citationService,
-        ApplicationEventPublisher applicationEventPublisher,
-        PersonContributionService personContributionService,
-        ExpressionTransformer expressionTransformer,
-        EventService eventService,
-        CommissionRepository commissionRepository,
-        SearchFieldsLoader searchFieldsLoader,
-        OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
-        InvolvementRepository involvementRepository,
-        OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
-        GeneticMaterialJPAServiceImpl geneticMaterialJPAService,
-        PublisherService publisherService) {
+    public GeneticMaterialServiceImpl(MultilingualContentService multilingualContentService,
+                                      DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                      SearchService<DocumentPublicationIndex> searchService,
+                                      OrganisationUnitService organisationUnitService,
+                                      DocumentRepository documentRepository,
+                                      DocumentFileService documentFileService,
+                                      CitationService citationService,
+                                      ApplicationEventPublisher applicationEventPublisher,
+                                      PersonContributionService personContributionService,
+                                      ExpressionTransformer expressionTransformer,
+                                      EventService eventService,
+                                      CommissionRepository commissionRepository,
+                                      SearchFieldsLoader searchFieldsLoader,
+                                      OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                                      InvolvementRepository involvementRepository,
+                                      OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                      DocumentLookupService documentLookupService,
+                                      GeneticMaterialJPAServiceImpl geneticMaterialJPAService,
+                                      PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.geneticMaterialJPAService = geneticMaterialJPAService;
         this.publisherService = publisherService;
     }

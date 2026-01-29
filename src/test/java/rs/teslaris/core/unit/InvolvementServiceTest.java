@@ -953,6 +953,7 @@ public class InvolvementServiceTest {
 
         when(employmentRepository.findExternalByPersonInvolvedId(personId))
             .thenReturn(List.of(existingEmployment));
+        when(personService.findOne(any())).thenReturn(new Person());
 
         // When
         involvementService.addExternalInvolvementToContributor(personId, institutionName,
@@ -1038,6 +1039,7 @@ public class InvolvementServiceTest {
 
         when(employmentRepository.findExternalByPersonInvolvedId(personId))
             .thenReturn(List.of(existingEmployment));
+        when(personService.findOne(any())).thenReturn(new Person());
 
         // When
         involvementService.addExternalInvolvementToContributor(personId, institutionName,

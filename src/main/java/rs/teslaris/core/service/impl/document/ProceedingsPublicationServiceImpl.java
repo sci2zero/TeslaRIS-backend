@@ -33,6 +33,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -82,6 +83,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                              OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                              InvolvementRepository involvementRepository,
                                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                             DocumentLookupService documentLookupService,
                                              ProceedingPublicationJPAServiceImpl proceedingPublicationJPAService,
                                              ProceedingsService proceedingsService,
                                              ProceedingsPublicationRepository proceedingsPublicationRepository,
@@ -93,7 +95,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.proceedingPublicationJPAService = proceedingPublicationJPAService;
         this.proceedingsService = proceedingsService;
         this.proceedingsPublicationRepository = proceedingsPublicationRepository;

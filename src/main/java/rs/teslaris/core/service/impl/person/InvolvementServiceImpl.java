@@ -506,15 +506,24 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public void addExternalInvolvementToContributor(Integer personId,
                                                     List<MultilingualContentDTO> externalInstitutionName,
                                                     String employmentTitle) {
+        if (Objects.nonNull(personService.findOne(personId).getUser())) {
+            log.info("User account bound to PERSON with ID {}. Skipping...", personId);
+            return;
+        }
+
         if (employmentRepository.findExternalByPersonInvolvedId(personId).stream()
             .anyMatch(employment ->
                 CollectionOperations.hasCaseInsensitiveMatch(
                     externalInstitutionName.stream().map(MultilingualContentDTO::getContent)
                         .collect(Collectors.toSet()), employment.getAffiliationStatement().stream()
                         .map(MultiLingualContent::getContent).collect(Collectors.toSet()),
-                    true))) {
+                    false))) {
+            log.info("External contribution already exists for PERSON with ID {}. Skipping...",
+                personId);
             return;
         }
+
+        log.info("Adding external contribution for PERSON with ID {}.", personId);
 
         if (Objects.nonNull(employmentTitle) && employmentTitle.equals("ACADEMICIAN")) {
             employmentTitle = "FULL_PROFESSOR";
@@ -529,6 +538,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
                 setEmploymentPosition(EmploymentPosition.valueOf(finalEmploymentTitle));
             }
         }});
+
+        log.info("Successfully added external contribution for PERSON with ID {}.", personId);
     }
 
     @Override

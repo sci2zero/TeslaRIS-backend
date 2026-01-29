@@ -74,6 +74,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
@@ -139,6 +140,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     private final OrganisationUnitOutputConfigurationService
         organisationUnitOutputConfigurationService;
 
+    private final DocumentLookupService documentLookupService;
+
     private final Pattern doiPattern =
         Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
@@ -155,9 +158,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public DocumentDTO readDocumentPublication(Integer documentId) {
         return DocumentPublicationConverter.toDTO(findOne(documentId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Document findOne(Integer documentId) {
+        return documentLookupService.fastDocumentLookup(documentId);
     }
 
     @Override
@@ -377,7 +386,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DocumentFileResponseDTO addDocumentFile(Integer documentId, DocumentFileDTO file,
                                                    Boolean isProof) {
-        var document = findOne(documentId);
+        var document = documentLookupService.fastDocumentLookup(documentId);
 
         if (document.getIsArchived() &&
             !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
@@ -412,7 +421,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     @Override
     @Transactional
     public void deleteDocumentFile(Integer documentId, Integer documentFileId) {
-        var document = findOne(documentId);
+        var document = documentLookupService.fastDocumentLookup(documentId);
 
         if (document.getIsArchived() &&
             !(migrationModeEnabled && SessionUtil.isUserLoggedInAndAdmin())) {
@@ -1450,56 +1459,56 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var allPossibleInstitutions =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId);
 
-        documentRepository.findById(documentId).ifPresent(document -> {
-            if (document instanceof Thesis || Objects.isNull(document.getContributors())) {
+        var document = documentLookupService.fastDocumentLookup(documentId);
+
+        if (document instanceof Thesis || Objects.isNull(document.getContributors())) {
+            return;
+        }
+
+        document.getContributors().forEach(contribution -> {
+            if (Objects.isNull(contribution.getPerson())) {
                 return;
             }
 
-            document.getContributors().forEach(contribution -> {
-                if (Objects.isNull(contribution.getPerson())) {
-                    return;
+            var user = contribution.getPerson().getUser();
+
+            var employmentIds = involvementRepository.findActiveEmploymentInstitutionIds(
+                contribution.getPerson().getId());
+            var specifiedEmploymentIds =
+                contribution.getInstitutions().stream().map(OrganisationUnit::getId)
+                    .collect(Collectors.toSet());
+
+            var employmentIntersection = allPossibleInstitutions.stream()
+                .filter(employmentIds::contains)
+                .collect(Collectors.toSet());
+
+            var specifiedInstitutionsIntersection = allPossibleInstitutions.stream()
+                .filter(specifiedEmploymentIds::contains)
+                .collect(Collectors.toSet());
+
+            if (!employmentIntersection.isEmpty() ||
+                !specifiedInstitutionsIntersection.isEmpty()) {
+                migrateContributionToUnmanaged(contribution, !employmentIntersection.isEmpty(),
+                    specifiedInstitutionsIntersection);
+
+                if (Objects.nonNull(user)) {
+                    notifyUnbindedAuthorUser(document, contribution, user);
                 }
 
-                var user = contribution.getPerson().getUser();
+            }
+        });
 
-                var employmentIds = involvementRepository.findActiveEmploymentInstitutionIds(
-                    contribution.getPerson().getId());
-                var specifiedEmploymentIds =
-                    contribution.getInstitutions().stream().map(OrganisationUnit::getId)
-                        .collect(Collectors.toSet());
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
+            .ifPresent(index -> {
+                indexCommonFields(document, index);
+                documentPublicationIndexRepository.save(index);
 
-                var employmentIntersection = allPossibleInstitutions.stream()
-                    .filter(employmentIds::contains)
-                    .collect(Collectors.toSet());
-
-                var specifiedInstitutionsIntersection = allPossibleInstitutions.stream()
-                    .filter(specifiedEmploymentIds::contains)
-                    .collect(Collectors.toSet());
-
-                if (!employmentIntersection.isEmpty() ||
-                    !specifiedInstitutionsIntersection.isEmpty()) {
-                    migrateContributionToUnmanaged(contribution, !employmentIntersection.isEmpty(),
-                        specifiedInstitutionsIntersection);
-
-                    if (Objects.nonNull(user)) {
-                        notifyUnbindedAuthorUser(document, contribution, user);
-                    }
-
+                var notifyAdmin = !index.getAuthorIds().isEmpty() &&
+                    index.getAuthorIds().stream().noneMatch(id -> id > 0);
+                if (notifyAdmin) {
+                    personContributionService.notifyAdminsAboutUnbindedContribution(document);
                 }
             });
-
-            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId)
-                .ifPresent(index -> {
-                    indexCommonFields(document, index);
-                    documentPublicationIndexRepository.save(index);
-
-                    var notifyAdmin = !index.getAuthorIds().isEmpty() &&
-                        index.getAuthorIds().stream().noneMatch(id -> id > 0);
-                    if (notifyAdmin) {
-                        personContributionService.notifyAdminsAboutUnbindedContribution(document);
-                    }
-                });
-        });
     }
 
     private void migrateContributionToUnmanaged(PersonDocumentContribution contribution,
