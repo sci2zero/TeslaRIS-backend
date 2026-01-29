@@ -66,6 +66,7 @@ public interface PersonContributionRepository extends JpaRepository<PersonContri
             SELECT pdc
             FROM PersonDocumentContribution pdc
             WHERE pdc.person IS NOT NULL
+              AND pdc.person.user IS NULL
               AND pdc.affiliationStatement IS NOT NULL
               AND pdc.affiliationStatement.displayAffiliationStatement IS NOT EMPTY
         """)

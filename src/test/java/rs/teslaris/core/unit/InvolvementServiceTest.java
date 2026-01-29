@@ -957,7 +957,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.addExternalInvolvementToContributor(personId, institutionName,
-            employmentTitle);
+            employmentTitle, true);
 
         // Then
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);
@@ -987,7 +987,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.addExternalInvolvementToContributor(personId, institutionName,
-            employmentTitle);
+            employmentTitle, true);
 
         // Then
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);
@@ -1012,7 +1012,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.addExternalInvolvementToContributor(personId, institutionName,
-            employmentTitle);
+            employmentTitle, true);
 
         // Then
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);
@@ -1043,7 +1043,7 @@ public class InvolvementServiceTest {
 
         // When
         involvementService.addExternalInvolvementToContributor(personId, institutionName,
-            employmentTitle);
+            employmentTitle, true);
 
         // Then
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);

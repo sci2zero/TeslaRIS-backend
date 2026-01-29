@@ -127,7 +127,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                         contributionDTO.getPersonId(),
                         contributionDTO.getDisplayAffiliationStatement(),
                         Objects.nonNull(contributionDTO.getEmploymentTitle()) ?
-                            contributionDTO.getEmploymentTitle().name() : null
+                            contributionDTO.getEmploymentTitle().name() : null,
+                        true
                     );
                 }
             }
@@ -428,7 +429,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                         proceedingsPublication.getAffiliationStatement()
                             .getDisplayAffiliationStatement()),
                     Objects.nonNull(proceedingsPublication.getEmploymentTitle()) ?
-                        proceedingsPublication.getEmploymentTitle().name() : null
+                        proceedingsPublication.getEmploymentTitle().name() : null,
+                    false
                 )
         );
     }

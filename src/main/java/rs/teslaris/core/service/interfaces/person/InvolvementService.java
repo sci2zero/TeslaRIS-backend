@@ -65,7 +65,8 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     void addExternalInvolvementToContributor(Integer personId,
                                              List<MultilingualContentDTO> externalInstitutionName,
-                                             String employmentTitle);
+                                             String employmentTitle,
+                                             boolean performPersonUserCheck);
 
     List<List<MultilingualContentDTO>> getExternalInstitutionSuggestions(Integer personId);
 }
