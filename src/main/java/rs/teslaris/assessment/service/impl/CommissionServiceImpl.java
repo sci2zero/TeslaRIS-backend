@@ -21,6 +21,7 @@ import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.institution.Commission;
+import rs.teslaris.core.repository.institution.CommissionRelationProjection;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -33,7 +34,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements CommissionService {
 
@@ -56,6 +56,7 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CommissionResponseDTO> readAllCommissions(Pageable pageable,
                                                           String searchExpression,
                                                           String language,
@@ -99,11 +100,13 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CommissionResponseDTO readCommissionById(Integer commissionId) {
         return CommissionConverter.toDTO(findOne(commissionId));
     }
 
     @Override
+    @Transactional
     public Commission createCommission(CommissionDTO commissionDTO) {
         var newCommission = new Commission();
 
@@ -113,6 +116,7 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<String> readAllApplicableRuleEngines() {
         var classNames = new ArrayList<String>();
         var provider = new ClassPathScanningCandidateComponentProvider(false);
@@ -137,6 +141,7 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     @Override
+    @Transactional
     public void updateCommission(Integer commissionId, CommissionDTO commissionDTO) {
         var commissionToUpdate = findOne(commissionId);
 
@@ -147,6 +152,7 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     @Override
+    @Transactional
     public void deleteCommission(Integer commissionId) {
         if (commissionRepository.isInUse(commissionId)) {
             throw new CommissionReferenceConstraintViolationException("Commission already in use.");
@@ -156,17 +162,20 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Commission findOneWithFetchedRelations(Integer commissionId) {
         return commissionRepository.findOneWithRelations(commissionId).orElseThrow(
             () -> new NotFoundException("Commission with ID " + commissionId + " does not exist."));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer findInstitutionIdForCommission(Integer commissionId) {
         return userRepository.findOUIdForCommission(commissionId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Commission getDefaultCommission(Integer userId) {
         if (Objects.isNull(userId)) {
             return getSystemDefaultCommission();
@@ -192,8 +201,23 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
     }
 
     @Override
-    public List<Commission> findCommissionsWithRelations(List<Integer> commissionIds) {
-        return commissionRepository.findCommissionsWithRelations(commissionIds);
+    @Transactional(readOnly = true)
+    public List<Commission> findCommissionsByIds(List<Integer> commissionIds) {
+        return commissionRepository.findCommissionsByIds(commissionIds);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommissionRelationProjection> findRelationsWithTargetIds(Integer commissionId) {
+        return commissionRepository.findRelationsWithTargetIds(commissionId)
+            .stream()
+            .map(row -> CommissionRelationProjection.fromNative(
+                (Integer) row[0],       // relationId
+                (Integer) row[1],       // priority
+                (Integer[]) row[2],     // targetCommissionIds
+                (String) row[3]         // resultCalculationMethod
+            ))
+            .toList();
     }
 
     private Commission getSystemDefaultCommission() {

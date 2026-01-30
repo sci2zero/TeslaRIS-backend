@@ -154,7 +154,7 @@ public class PersonAssessmentClassificationServiceTest {
         commission.setRecognisedResearchAreas(Set.of("CS"));
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
             .thenReturn(Stream.of(commission).map(Commission::getId).toList());
-        when(commissionService.findCommissionsWithRelations(any()))
+        when(commissionService.findCommissionsByIds(any()))
             .thenReturn(List.of(commission));
 
         var publication = new DocumentPublicationIndex();
@@ -205,7 +205,7 @@ public class PersonAssessmentClassificationServiceTest {
 
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
             .thenReturn(Stream.of(commission).map(Commission::getId).toList());
-        when(commissionService.findCommissionsWithRelations(any()))
+        when(commissionService.findCommissionsByIds(any()))
             .thenReturn(List.of(commission));
 
         when(documentPublicationIndexRepository.findAssessedByAuthorIds(anyInt(), any()))
@@ -242,7 +242,7 @@ public class PersonAssessmentClassificationServiceTest {
         commission.setRecognisedResearchAreas(Set.of("CS"));
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
             .thenReturn(Stream.of(commission).map(Commission::getId).toList());
-        when(commissionService.findCommissionsWithRelations(any()))
+        when(commissionService.findCommissionsByIds(any()))
             .thenReturn(List.of(commission));
 
         var publication = new DocumentPublicationIndex();
@@ -319,7 +319,7 @@ public class PersonAssessmentClassificationServiceTest {
 
         when(userRepository.findUserCommissionForOrganisationUnits(any()))
             .thenReturn(Stream.of(commission1, commission2).map(Commission::getId).toList());
-        when(commissionService.findCommissionsWithRelations(any()))
+        when(commissionService.findCommissionsByIds(any()))
             .thenReturn(List.of(commission1, commission2));
 
         var publication = new DocumentPublicationIndex();

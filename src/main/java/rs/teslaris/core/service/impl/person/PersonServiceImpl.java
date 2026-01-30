@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -77,6 +76,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.impl.person.worker.PersonEmploymentWorker;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -135,7 +135,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final ElasticsearchClient elasticsearchClient;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final PersonEmploymentWorker personEmploymentWorker;
 
     private final InvolvementRepository involvementRepository;
 
@@ -837,7 +837,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         FunctionalUtil.performBulkReindex(
             this::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
-            this::indexPerson
+            (person) -> {
+                var index = indexPerson(person);
+                personEmploymentWorker.savePersonEmploymentHierarchyIds(person, index);
+            }
         );
 
         return null;
@@ -873,7 +876,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional(readOnly = true)
-    public void indexPerson(Person savedPerson) {
+    public PersonIndex indexPerson(Person savedPerson) {
         var personIndex = getPersonIndexForId(savedPerson.getId());
 
         setPersonIndexProperties(personIndex, savedPerson);
@@ -881,6 +884,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         setPersonIndexEmploymentDetails(personIndex, savedPerson);
 
         personIndexRepository.save(personIndex);
+
+        return personIndex;
     }
 
     @Override
@@ -1027,10 +1032,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             .map(involvement -> involvement.getOrganisationUnit().getId())
             .filter(institutionId -> !personIndex.getEmploymentInstitutionsIdHierarchy()
                 .contains(institutionId)).toList());
-
-        savedPerson.getEmploymentInstitutionsIdHierarchy().addAll(
-            personIndex.getEmploymentInstitutionsIdHierarchy());
-        save(savedPerson);
 
         var employmentsSr = new StringBuilder();
         var employmentsOther = new StringBuilder();
@@ -1490,6 +1491,23 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     @Override
     public boolean personHasContributions(Integer personId) {
         return documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(personId) > 0;
+    }
+
+    @Override
+    public void savePersonEmploymentHierarchyIds(Person person, PersonIndex index) {
+        if (Objects.isNull(index)) {
+            var indexOpt = personIndexRepository.findByDatabaseId(person.getId());
+
+            if (indexOpt.isEmpty()) {
+                return;
+            }
+
+            index = indexOpt.get();
+        }
+
+        person.getEmploymentInstitutionsIdHierarchy().addAll(
+            index.getEmploymentInstitutionsIdHierarchy());
+        personRepository.save(person);
     }
 
     public List<Integer> findTopCoauthors(Integer authorId) {

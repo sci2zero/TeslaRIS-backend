@@ -377,7 +377,8 @@ public class CommonLoaderImpl implements CommonLoader {
                 });
 
                 personService.save(savedPerson);
-                personService.indexPerson(savedPerson);
+                var personIndex = personService.indexPerson(savedPerson);
+                personService.savePersonEmploymentHierarchyIds(savedPerson, personIndex);
 
                 return PersonConverter.toDTO(savedPerson);
             }
@@ -422,7 +423,9 @@ public class CommonLoaderImpl implements CommonLoader {
             });
 
             personService.save(savedPerson);
-            personService.indexPerson(savedPerson);
+
+            var personIndex = personService.indexPerson(savedPerson);
+            personService.savePersonEmploymentHierarchyIds(savedPerson, personIndex);
         }
     }
 
@@ -615,7 +618,9 @@ public class CommonLoaderImpl implements CommonLoader {
 
                 copyMissingPersonIdentifiers(person, savedPerson);
                 personService.save(savedPerson);
-                personService.indexPerson(savedPerson);
+
+                var personIndex = personService.indexPerson(savedPerson);
+                personService.savePersonEmploymentHierarchyIds(savedPerson, personIndex);
                 return;
             }
         }

@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -75,12 +74,12 @@ import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.Commission;
-import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.repository.institution.CommissionRelationProjection;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -999,13 +998,12 @@ public class DocumentAssessmentClassificationServiceImpl
     private Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> handleRelationAssessments(
         Commission commission,
         Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
-        var sortedRelations = commission.getRelations().stream()
-            .sorted(Comparator.comparingInt(CommissionRelation::getPriority))
-            .toList();
+        var commissionRelationProjections =
+            commissionService.findRelationsWithTargetIds(commission.getId());
 
-        for (var relation : sortedRelations) {
+        for (var relationProjection : commissionRelationProjections) {
             var respectedClassification =
-                respectRelationAssessment(relation, classificationFinder);
+                respectRelationAssessment(relationProjection, classificationFinder);
             if (respectedClassification.isPresent()) {
                 return Optional.of(
                     new Pair<>(respectedClassification.get().a, respectedClassification.get().b));
@@ -1016,13 +1014,13 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     private Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> respectRelationAssessment(
-        CommissionRelation commissionRelation,
+        CommissionRelationProjection relationProjection,
         Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
         var classifications =
             new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
 
-        for (var targetCommission : commissionRelation.getTargetCommissions()) {
-            var foundClassification = classificationFinder.apply(targetCommission.getId());
+        for (var targetCommissionId : relationProjection.targetCommissionIds()) {
+            var foundClassification = classificationFinder.apply(targetCommissionId);
             if (foundClassification.isPresent()) {
                 if (foundClassification.get().getManual()) {
                     return Optional.of(
@@ -1040,7 +1038,7 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         return ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
-            commissionRelation.getResultCalculationMethod());
+            relationProjection.resultCalculationMethod());
     }
 
     public Query findAllDocumentPublicationsByFilters(

@@ -42,6 +42,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.document.BookSeriesPublishable;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -163,6 +164,8 @@ public class MergeServiceImpl implements MergeService {
     private final IndexBulkUpdateService indexBulkUpdateService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final PersonIndexRepository personIndexRepository;
 
 
     @Override
@@ -337,8 +340,10 @@ public class MergeServiceImpl implements MergeService {
         userService.updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
         userService.updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
 
-        personService.indexPerson(sourcePerson);
-        personService.indexPerson(targetPerson);
+        personService.savePersonEmploymentHierarchyIds(sourcePerson,
+            personService.indexPerson(sourcePerson));
+        personService.savePersonEmploymentHierarchyIds(targetPerson,
+            personService.indexPerson(targetPerson));
     }
 
     @Override
@@ -939,7 +944,15 @@ public class MergeServiceImpl implements MergeService {
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
 
         if (reindexPersonEmploymentInformation) {
-            personService.reindexPersonEmploymentDetails(person);
+            personIndexRepository.findByDatabaseId(person.getId()).ifPresent(personIndex -> {
+                personService.setPersonIndexEmploymentDetails(personIndex, person);
+                personIndexRepository.save(personIndex);
+
+                person.getEmploymentInstitutionsIdHierarchy().clear();
+                person.getEmploymentInstitutionsIdHierarchy()
+                    .addAll(personIndex.getEmploymentInstitutionsIdHierarchy());
+            });
+
             applicationEventPublisher.publishEvent(
                 new PersonEmploymentOUHierarchyStructureChangedEvent(
                     person.getId()));

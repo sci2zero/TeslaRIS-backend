@@ -445,7 +445,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             registrationRequest.getPreferredLanguageId()
         );
 
-        personService.indexPerson(person);
+        var personIndex = personService.indexPerson(person);
+        personService.savePersonEmploymentHierarchyIds(person, personIndex);
+
         return saveAndNotifyUser(newUser, new UserAccountIndex(),
             generatedPassword ? registrationRequest.getPassword() : null);
     }

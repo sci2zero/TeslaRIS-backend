@@ -60,8 +60,11 @@ public class PersonEventListener {
                             .orElse(null);
 
                     personService.setPersonIndexEmploymentDetails(index, person);
-
                     personIndexRepository.save(index);
+
+                    person.getEmploymentInstitutionsIdHierarchy().addAll(
+                        index.getEmploymentInstitutionsIdHierarchy());
+                    personRepository.save(person);
 
                     if (Objects.nonNull(person)) {
                         person.getPrizes().forEach(prize ->

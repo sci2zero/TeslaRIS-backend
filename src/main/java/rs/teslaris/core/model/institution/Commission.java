@@ -12,9 +12,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,7 +28,6 @@ import rs.teslaris.core.model.person.Person;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "commissions")
 @SQLRestriction("deleted=false")
@@ -73,4 +72,23 @@ public class Commission extends BaseEntity {
 
     @Column(name = "is_default")
     private Boolean isDefault;
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (Objects.isNull(o) || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        Commission that = (Commission) o;
+        return Objects.equals(getId(), that.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getId());
+    }
 }

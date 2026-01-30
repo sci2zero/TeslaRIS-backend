@@ -6,8 +6,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +17,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
+import rs.teslaris.assessment.model.classification.AssessmentBuffer;
+import rs.teslaris.assessment.repository.classification.AssessmentBufferRepository;
 import rs.teslaris.assessment.repository.classification.DocumentAssessmentClassificationRepository;
 import rs.teslaris.assessment.service.interfaces.classification.DocumentAssessmentClassificationService;
 import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
@@ -30,20 +29,12 @@ import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
-import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class AssessmentEventListener {
-
-    private static final Set<Integer> personIdsToReindex =
-        ConcurrentHashMap.newKeySet();
-
-    private final PersonIndexRepository personIndexRepository;
-
-    private final AssessmentRulebookRepository assessmentRulebookRepository;
 
     private final PersonAssessmentClassificationService personAssessmentClassificationService;
 
@@ -54,27 +45,37 @@ public class AssessmentEventListener {
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
+    private final AssessmentBufferRepository assessmentBufferRepository;
+
     private final Striped<Lock> locks = Striped.lock(1024);
 
 
     @EventListener
+    @SchedulerLock(name = "researcher-point-reindex")
+    @Transactional
     protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
         if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
             return;
         }
 
-        personIdsToReindex.addAll(event.personIds());
+        var assessmentBuffer =
+            assessmentBufferRepository.findById(1).orElse(new AssessmentBuffer());
+
+        assessmentBuffer.getPersonIdsToReindex().addAll(event.personIds());
+        assessmentBufferRepository.save(assessmentBuffer);
     }
 
     @Scheduled(cron = "0 0 */2 * * *")
     @SchedulerLock(name = "researcher-point-reindex")
-    @Transactional(readOnly = true)
     protected void performBufferedResearcherPointReindexing() {
         long start = System.nanoTime();
         log.info("performBufferedResearcherPointReindexing started at {}", System.nanoTime());
 
-        var idsToProcess = new HashSet<>(personIdsToReindex); // atomic snapshot
-        personIdsToReindex.removeAll(idsToProcess);
+        var buffer = assessmentBufferRepository.findById(1).orElse(new AssessmentBuffer());
+
+        var idsToProcess = new HashSet<>(buffer.getPersonIdsToReindex()); // atomic snapshot
+        buffer.getPersonIdsToReindex().removeAll(idsToProcess);
+        assessmentBufferRepository.save(buffer);
 
         if (idsToProcess.isEmpty()) {
             log.info(
@@ -91,15 +92,34 @@ public class AssessmentEventListener {
     }
 
     @EventListener
-    @Transactional(readOnly = true)
+    @SchedulerLock(name = "researcher-point-reindex")
     protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
         long start = System.nanoTime();
         log.info("handleAllResearcherPointsReindexing started at {}", System.nanoTime());
+
+        assessmentBufferRepository.findById(1).ifPresent(assessmentBuffer -> {
+            assessmentBuffer.getPersonIdsToReindex().clear();
+            assessmentBufferRepository.save(assessmentBuffer);
+        });
 
         personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
             Collections.emptyList(), Collections.emptyList());
 
         log.info("handleAllResearcherPointsReindexing took {} ms",
+            (System.nanoTime() - start) / 1_000_000.0);
+    }
+
+    @Scheduled(cron = "${assessment.person.assessment-points}")
+    @SchedulerLock(name = "researcher-point-reindex")
+    @Transactional(readOnly = true)
+    protected void reindexResearcherPointsScheduled() {
+        long start = System.nanoTime();
+        log.info("reindexResearcherPointsScheduled started at {}", System.nanoTime());
+
+        personAssessmentClassificationService.reindexPublicationPointsForAllResearchers(
+            Collections.emptyList(), Collections.emptyList());
+
+        log.info("reindexResearcherPointsScheduled took {} ms",
             (System.nanoTime() - start) / 1_000_000.0);
     }
 

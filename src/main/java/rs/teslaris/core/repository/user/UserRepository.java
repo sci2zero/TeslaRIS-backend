@@ -43,8 +43,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             SELECT DISTINCT u.commission
             FROM User u
             JOIN u.organisationUnit ou
-            LEFT JOIN FETCH u.commission.relations rel
-            LEFT JOIN FETCH rel.targetCommissions
             WHERE u.commission IS NOT NULL
             AND ou.id = :organisationUnitId
         """)

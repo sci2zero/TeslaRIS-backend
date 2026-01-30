@@ -21,6 +21,7 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Employment;
@@ -52,6 +53,8 @@ public class EmploymentMigrationWorker {
     private final UserService userService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final PersonIndexRepository personIndexRepository;
 
 
     @Retryable(
@@ -109,7 +112,8 @@ public class EmploymentMigrationWorker {
         }
 
         var savedPerson = personService.save(person);
-        personService.indexPerson(savedPerson);
+        var personIndex = personService.indexPerson(savedPerson);
+        personService.savePersonEmploymentHierarchyIds(savedPerson, personIndex);
         userService.updateResearcherCurrentOrganisationUnitIfBound(savedPerson.getId());
 
         handledPersonIds.add(savedPerson.getId());
@@ -146,7 +150,8 @@ public class EmploymentMigrationWorker {
 
             employmentRepository.save(employment);
             personService.save(personInvolved);
-            personService.indexPerson(personInvolved);
+            var personIndex = personService.indexPerson(personInvolved);
+            personService.savePersonEmploymentHierarchyIds(personInvolved, personIndex);
         }
     }
 
@@ -216,7 +221,14 @@ public class EmploymentMigrationWorker {
 
         person.addInvolvement(employment);
         Employment saved = employmentRepository.save(employment);
-        personService.indexPerson(person);
+        personIndexRepository.findByDatabaseId(person.getId()).ifPresent(personIndex -> {
+            personService.setPersonIndexEmploymentDetails(personIndex, person);
+            personIndexRepository.save(personIndex);
+
+            person.getEmploymentInstitutionsIdHierarchy().clear();
+            person.getEmploymentInstitutionsIdHierarchy()
+                .addAll(personIndex.getEmploymentInstitutionsIdHierarchy());
+        });
         return saved;
     }
 

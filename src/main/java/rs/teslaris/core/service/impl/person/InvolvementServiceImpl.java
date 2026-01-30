@@ -211,7 +211,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         personInvolved.addInvolvement(newEmployment);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
-        personService.indexPerson(personInvolved);
+
+        var personIndex = personService.indexPerson(personInvolved);
+        personService.savePersonEmploymentHierarchyIds(personInvolved, personIndex);
 
         var savedEmployment = involvementRepository.save(newEmployment);
 
@@ -396,7 +398,10 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvementRepository.save(employmentToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
             employmentToUpdate.getPersonInvolved().getId());
-        personService.indexPerson(employmentToUpdate.getPersonInvolved());
+
+        var personIndex = personService.indexPerson(employmentToUpdate.getPersonInvolved());
+        personService.savePersonEmploymentHierarchyIds(employmentToUpdate.getPersonInvolved(),
+            personIndex);
 
         applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
             employmentToUpdate.getPersonInvolved().getId()));
@@ -421,8 +426,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         }
 
         person.removeInvolvement(involvementToDelete);
-        personService.save(person);
-        personService.indexPerson(person);
+
+        var personIndex = personService.indexPerson(person);
+        personService.savePersonEmploymentHierarchyIds(person, personIndex);
     }
 
     @Override
@@ -438,7 +444,10 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         employment.get().setDateTo(LocalDate.now());
         employmentRepository.save(employment.get());
-        personService.indexPerson(employment.get().getPersonInvolved());
+
+        var personIndex = personService.indexPerson(employment.get().getPersonInvolved());
+        personService.savePersonEmploymentHierarchyIds(employment.get().getPersonInvolved(),
+            personIndex);
 
         applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
             employment.get().getPersonInvolved().getId()));

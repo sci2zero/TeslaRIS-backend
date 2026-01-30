@@ -18,8 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
@@ -249,7 +249,7 @@ public class PersonAssessmentClassificationServiceImpl
             .getContent();
 
         var institutionIds = index.get().getEmploymentInstitutionsIdHierarchy();
-        var commissions = commissionService.findCommissionsWithRelations(
+        var commissions = commissionService.findCommissionsByIds(
             userRepository.findUserCommissionForOrganisationUnits(institutionIds));
 
         commissions.forEach(commission -> {
@@ -272,7 +272,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public synchronized void reindexPublicationPointsForAllResearchers(List<Integer> personIds,
                                                                        List<Integer> institutionIds) {
         var assessmentMeasures = loadAssessmentMeasures();
@@ -286,8 +286,14 @@ public class PersonAssessmentClassificationServiceImpl
                         PageRequest.of(pageNumber, CHUNK_SIZE), PersonIndex.class, "person")
                     .getContent();
 
-            persons.forEach(personIndex ->
-                reindexPublicationPointsForResearcher(personIndex, assessmentMeasures)
+            persons.forEach(personIndex -> {
+                    log.info("reindexPublicationPointsForAllResearchers REINDEXING points for {} ({})",
+                        personIndex.getName(), personIndex.getDatabaseId());
+                    reindexPublicationPointsForResearcher(personIndex, assessmentMeasures);
+                    log.info(
+                        "reindexPublicationPointsForAllResearchers REINDEXING FINISHED for {} ({})",
+                        personIndex.getName(), personIndex.getDatabaseId());
+                }
             );
 
             pageNumber++;
@@ -296,7 +302,7 @@ public class PersonAssessmentClassificationServiceImpl
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public void reindexPublicationPointsForResearcher(PersonIndex index,
                                                       List<AssessmentMeasure> assessmentMeasures) {
         var commissionResearchAreas = resolveCommissionResearchAreas(index);
@@ -313,7 +319,7 @@ public class PersonAssessmentClassificationServiceImpl
     private List<Pair<Integer, AssessmentResearchArea>> resolveCommissionResearchAreas(
         PersonIndex index) {
         var institutionIds = index.getEmploymentInstitutionsIdHierarchy();
-        var commissions = commissionService.findCommissionsWithRelations(
+        var commissions = commissionService.findCommissionsByIds(
             userRepository.findUserCommissionForOrganisationUnits(institutionIds));
 
         var commissionResearchArea = new ArrayList<Pair<Integer, AssessmentResearchArea>>();
@@ -831,10 +837,5 @@ public class PersonAssessmentClassificationServiceImpl
 
             return b;
         })))._toQuery();
-    }
-
-    @Scheduled(cron = "${assessment.person.assessment-points}")
-    protected void reindexResearcherPointsScheduled() {
-        reindexPublicationPointsForAllResearchers(Collections.emptyList(), Collections.emptyList());
     }
 }

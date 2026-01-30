@@ -91,5 +91,40 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
             SELECT c FROM Commission c
             WHERE c.id IN :commissionIds
         """)
-    List<Commission> findCommissionsWithRelations(List<Integer> commissionIds);
+    List<Commission> findCommissionsByIds(List<Integer> commissionIds);
+
+    @Query(value = """
+            SELECT rel.id,
+                   rel.priority,
+                   ARRAY_AGG(tc.id ORDER BY tc.id),
+                   rel.result_calculation_method
+            FROM commission_relations rel
+            JOIN commission_relation_targets crt
+              ON rel.id = crt.commission_relation_id
+            JOIN commissions tc
+              ON crt.target_commission_id = tc.id
+            WHERE rel.source_commission = :commissionId AND
+                rel.deleted = FALSE
+            GROUP BY rel.id, rel.priority, rel.result_calculation_method
+            ORDER BY rel.priority
+        """, nativeQuery = true)
+    List<Object[]> findRelationsWithTargetIds(Integer commissionId);
+
+    @Modifying
+    @Query(
+        value = "INSERT INTO commissions_excluded_researchers " +
+            "(commission_id, excluded_researchers_id) " +
+            "VALUES (:commissionId, :personId)",
+        nativeQuery = true
+    )
+    void addExcludedResearcher(Integer commissionId, Integer personId);
+
+    @Modifying
+    @Query(
+        value = "DELETE FROM commissions_excluded_researchers " +
+            "WHERE commission_id = :commissionId AND excluded_researchers_id = :personId",
+        nativeQuery = true
+    )
+    void removeExcludedResearcher(Integer commissionId, Integer personId);
+
 }

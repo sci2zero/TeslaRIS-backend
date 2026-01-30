@@ -61,6 +61,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
@@ -231,6 +232,9 @@ public class MergeServiceTest {
 
     @Mock
     private GeneticMaterialService geneticMaterialService;
+
+    @Mock
+    private PersonIndexRepository personIndexRepository;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -531,7 +535,6 @@ public class MergeServiceTest {
         // then
         verify(personService).findOne(personId);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(personId);
-        verify(personService).reindexPersonEmploymentDetails(person);
         verify(applicationEventPublisher).publishEvent(any(
             PersonEmploymentOUHierarchyStructureChangedEvent.class));
     }

@@ -53,7 +53,7 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     private static final String DL_KEY = "digital_library";
 
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
 
     @Column(name = "name_abbreviation", nullable = false)

@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -29,7 +28,6 @@ import rs.teslaris.exporter.model.common.ExportPerson;
 import rs.teslaris.exporter.model.common.ExportPersonName;
 
 @Component
-@Transactional
 public class ExportPersonConverter extends ExportConverterBase {
 
     private static DocumentPublicationIndexRepository documentPublicationIndexRepository;

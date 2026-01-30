@@ -17,10 +17,10 @@ import rs.teslaris.assessment.dto.CommissionRelationDTO;
 import rs.teslaris.assessment.dto.ReorderCommissionRelationDTO;
 import rs.teslaris.assessment.repository.CommissionRelationRepository;
 import rs.teslaris.assessment.service.impl.CommissionRelationServiceImpl;
-import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 
 @SpringBootTest
 public class CommissionRelationServiceTest {
@@ -29,7 +29,7 @@ public class CommissionRelationServiceTest {
     private CommissionRelationRepository commissionRelationRepository;
 
     @Mock
-    private CommissionService commissionService;
+    private CommissionRepository commissionRepository;
 
     @InjectMocks
     private CommissionRelationServiceImpl commissionRelationService;
@@ -60,13 +60,15 @@ public class CommissionRelationServiceTest {
         var commissionRelationDTO =
             new CommissionRelationDTO(1, List.of(2, 3), 10, ResultCalculationMethod.WORST_VALUE);
         var sourceCommission = new Commission();
-        when(commissionService.findOne(1)).thenReturn(sourceCommission);
+        when(commissionRepository.findById(1)).thenReturn(Optional.of(sourceCommission));
+        when(commissionRepository.findCommissionsByIds(any())).thenReturn(
+            List.of(new Commission(), new Commission()));
 
         // When
         commissionRelationService.addCommissionRelation(commissionRelationDTO);
 
         // Then
-        verify(commissionService).findOne(1);
+        verify(commissionRepository).getReferenceById(1);
         verify(commissionRelationRepository).save(any(CommissionRelation.class));
     }
 
@@ -79,7 +81,9 @@ public class CommissionRelationServiceTest {
         var commissionRelation = new CommissionRelation();
         when(commissionRelationRepository.findById(commissionRelationId))
             .thenReturn(Optional.of(commissionRelation));
-        when(commissionService.findOne(1)).thenReturn(new Commission());
+        when(commissionRepository.findById(1)).thenReturn(Optional.of(new Commission()));
+        when(commissionRepository.findCommissionsByIds(any())).thenReturn(
+            List.of(new Commission()));
 
         // When
         commissionRelationService.updateCommissionRelation(commissionRelationId,
@@ -104,7 +108,7 @@ public class CommissionRelationServiceTest {
 
         // Then
         verify(commissionRelationRepository).save(any());
-        verify(commissionService).save(sourceCommission);
+        verify(commissionRepository).save(sourceCommission);
     }
 
     @Test
@@ -120,13 +124,13 @@ public class CommissionRelationServiceTest {
             createRelation(3, 3)
         ));
         commission.setRelations(relations);
-        when(commissionService.findOne(commissionId)).thenReturn(commission);
+        when(commissionRepository.findById(commissionId)).thenReturn(Optional.of(commission));
 
         // When
         commissionRelationService.reorderCommissionRelations(commissionId, relationId, reorderDTO);
 
         // Then
-        verify(commissionService).save(commission);
+        verify(commissionRepository).save(commission);
     }
 
     private CommissionRelation createRelation(int id, int priority) {

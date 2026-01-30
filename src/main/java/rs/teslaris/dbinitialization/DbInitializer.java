@@ -14,6 +14,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.BrandingInformation;
 import rs.teslaris.core.model.commontypes.Country;
@@ -460,13 +462,16 @@ public class DbInitializer implements ApplicationRunner {
         countryRepository.save(yugoslavia);
 
         // RESEARCH AREAS
-//        TransactionSynchronizationManager
-//            .registerSynchronization(new TransactionSynchronization() {
-//                @Override
-//                public void afterCommit() {
+        TransactionSynchronizationManager
+            .registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
 //                    skosLoader.loadResearchAreas();
-//                }
-//            });
+                    reindexService
+                        .reindexDatabase(Arrays.asList(EntityType.values()),
+                            false, null);
+                }
+            });
 
         ///////////////////// ASSESSMENT DATA /////////////////////
         assessmentDataInitializer.initializeIndicators(englishTag, serbianTag, serbianCyrillicTag);
@@ -485,10 +490,6 @@ public class DbInitializer implements ApplicationRunner {
                 institutionalLibrarianAuthority, headOfLibraryAuthority,
                 promotionRegistryAdministratorAuthority, commissions.a, commissions.b,
                 true);
-
-            reindexService
-                .reindexDatabase(Arrays.asList(EntityType.values()),
-                    false, null);
         }
     }
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.CommissionDTO;
 import rs.teslaris.assessment.dto.CommissionResponseDTO;
 import rs.teslaris.core.model.institution.Commission;
+import rs.teslaris.core.repository.institution.CommissionRelationProjection;
 import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
@@ -34,5 +35,7 @@ public interface CommissionService extends JPAService<Commission> {
 
     Commission getDefaultCommission(Integer userId);
 
-    List<Commission> findCommissionsWithRelations(List<Integer> commissionIds);
+    List<Commission> findCommissionsByIds(List<Integer> commissionIds);
+
+    List<CommissionRelationProjection> findRelationsWithTargetIds(Integer commissionId);
 }
