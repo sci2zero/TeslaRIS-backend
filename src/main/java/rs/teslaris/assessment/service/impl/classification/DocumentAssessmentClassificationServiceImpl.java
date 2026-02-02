@@ -354,6 +354,8 @@ public class DocumentAssessmentClassificationServiceImpl
                 "Journal publication with ID " + journalPublicationId + " does not exist");
         }
 
+        documentAssessmentClassificationRepository.deleteByDocumentId(journalPublicationId, false);
+
         journalPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
             assessJournalPublication(journalPublicationIndex.get(), organisationUnitId, null,
                 null));
@@ -369,6 +371,9 @@ public class DocumentAssessmentClassificationServiceImpl
             throw new NotFoundException(
                 "Journal publication with ID " + proceedingsPublicationId + " does not exist");
         }
+
+        documentAssessmentClassificationRepository.deleteByDocumentId(proceedingsPublicationId,
+            false);
 
         proceedingsPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
             assessProceedingsPublication(proceedingsPublicationIndex.get(), organisationUnitId,
@@ -460,7 +465,7 @@ public class DocumentAssessmentClassificationServiceImpl
                               ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         var commissions = new HashSet<Commission>();
         if (Objects.nonNull(defenceOrganisationUnitId)) {
-            commissions.addAll(findCommissionInHierarchy(defenceOrganisationUnitId));
+            commissions.addAll(findCommissionInHierarchy(defenceOrganisationUnitId, true));
         }
 
         collectCommissionsIfPresent(
@@ -517,7 +522,8 @@ public class DocumentAssessmentClassificationServiceImpl
                                             ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         List<Commission> commissions = Objects.nonNull(presetCommission)
             ? List.of(presetCommission)
-            : findCommissionInHierarchy(organisationUnitId);
+            :
+            findCommissionInHierarchy(organisationUnitId, Objects.nonNull(batchedClassifications));
 
         if (commissions.isEmpty()) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
@@ -580,7 +586,7 @@ public class DocumentAssessmentClassificationServiceImpl
     ) {
         if (CollectionOperations.containsValues(institutionIds)) {
             institutionIds.forEach(
-                id -> commissions.addAll(findCommissionInHierarchy(id))
+                id -> commissions.addAll(findCommissionInHierarchy(id, true))
             );
         }
     }
@@ -596,7 +602,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
         List<Commission> commissions = Objects.nonNull(presetCommission)
             ? List.of(presetCommission)
-            : findCommissionInHierarchy(organisationUnitId);
+            :
+            findCommissionInHierarchy(organisationUnitId, Objects.nonNull(batchedClassifications));
 
         if (commissions.isEmpty()) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
@@ -665,9 +672,10 @@ public class DocumentAssessmentClassificationServiceImpl
                                               Integer organisationUnitId,
                                               Commission presetCommission,
                                               ArrayList<DocumentAssessmentClassification> batchedClassifications) {
-        List<Commission> commissions = (presetCommission != null)
+        List<Commission> commissions = Objects.nonNull(batchedClassifications)
             ? List.of(presetCommission)
-            : findCommissionInHierarchy(organisationUnitId);
+            :
+            findCommissionInHierarchy(organisationUnitId, Objects.nonNull(batchedClassifications));
 
         if (commissions.isEmpty()) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
@@ -954,20 +962,26 @@ public class DocumentAssessmentClassificationServiceImpl
                     researchArea), points));
     }
 
-    private List<Commission> findCommissionInHierarchy(Integer organisationUnitId) {
-        List<Commission> commission;
+    private List<Commission> findCommissionInHierarchy(Integer organisationUnitId,
+                                                       boolean checkHierarchy) {
+        List<Commission> commissions;
         do {
-            commission = userService.findCommissionForOrganisationUnitId(organisationUnitId);
-            if (commission.isEmpty()) {
+            commissions = userService.findCommissionForOrganisationUnitId(organisationUnitId);
+            if (commissions.isEmpty()) {
+                if (!checkHierarchy) {
+                    break;
+                }
+
                 var superOU = organisationUnitsRelationRepository.getSuperOU(organisationUnitId);
                 if (superOU.isPresent()) {
-                    organisationUnitId = superOU.get().getId();
+                    organisationUnitId = superOU.get().getTargetOrganisationUnit().getId();
                 } else {
                     break;
                 }
             }
-        } while (commission.isEmpty());
-        return commission;
+        } while (commissions.isEmpty());
+
+        return commissions;
     }
 
     private void handleClassification(AssessmentClassification classification,
@@ -1167,17 +1181,20 @@ public class DocumentAssessmentClassificationServiceImpl
                 var assessmentTriple = new Triple<>(commission.getId(),
                     documentClassification.getAssessmentClassification().getCode(), false);
 
-                if (!documentIndex.getCommissionAssessments().contains(assessmentTriple)) {
-                    documentIndex.getCommissionAssessments().add(assessmentTriple);
-                }
+                documentIndex.getCommissionAssessments().removeIf(
+                    existingTriple -> existingTriple.a.equals(assessmentTriple.a) &&
+                        existingTriple.c.equals(assessmentTriple.c));
+                documentIndex.getCommissionAssessments().add(assessmentTriple);
 
-                assessmentTriple = new Triple<>(commission.getId(),
-                    documentClassification.getAssessmentClassification().getCode().substring(0, 2) +
-                        "0", false);
+                var assessmentGroupTriple = new Triple<>(commission.getId(),
+                    ClassificationPriorityMapping.getGroupCode(
+                        documentClassification.getAssessmentClassification().getCode()),
+                    false);
 
-                if (!documentIndex.getCommissionAssessmentGroups().contains(assessmentTriple)) {
-                    documentIndex.getCommissionAssessmentGroups().add(assessmentTriple);
-                }
+                documentIndex.getCommissionAssessmentGroups().removeIf(
+                    existingTriple -> existingTriple.a.equals(assessmentGroupTriple.a) &&
+                        existingTriple.c.equals(assessmentGroupTriple.c));
+                documentIndex.getCommissionAssessmentGroups().add(assessmentGroupTriple);
 
                 documentPublicationIndexRepository.save(documentIndex);
             });

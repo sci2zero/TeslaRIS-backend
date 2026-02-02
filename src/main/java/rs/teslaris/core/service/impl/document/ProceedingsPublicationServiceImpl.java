@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReassessEntityEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -184,6 +185,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         sendNotifications(savedPublication);
 
+        applicationEventPublisher.publishEvent(
+            new ReassessEntityEvent(DocumentPublicationType.PROCEEDINGS_PUBLICATION,
+                savedPublication.getId()));
+
         return savedPublication;
     }
 
@@ -203,6 +208,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
         setProceedingsPublicationRelatedFields(publicationToUpdate, publicationDTO);
 
         var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
+
         indexProceedingsPublication(publicationToUpdate, indexToUpdate);
 
         proceedingPublicationJPAService.save(publicationToUpdate);
@@ -211,6 +217,10 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             publicationToUpdate.getEvent().getId());
         if (!publicationToUpdate.getEvent().getId().equals(oldConferenceId)) {
             conferenceService.reindexVolatileConferenceInformation(oldConferenceId);
+
+            applicationEventPublisher.publishEvent(
+                new ReassessEntityEvent(DocumentPublicationType.PROCEEDINGS_PUBLICATION,
+                    publicationId));
         }
 
         sendNotifications(publicationToUpdate);

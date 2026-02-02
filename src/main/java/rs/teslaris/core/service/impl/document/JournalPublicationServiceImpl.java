@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReassessEntityEvent;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -160,6 +161,10 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         sendNotifications(savedPublication);
 
+        applicationEventPublisher.publishEvent(
+            new ReassessEntityEvent(DocumentPublicationType.JOURNAL_PUBLICATION,
+                savedPublication.getId()));
+
         return savedPublication;
     }
 
@@ -177,6 +182,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
 
+        var journalUpdated = Objects.nonNull(publicationDTO.getJournalId()) &&
+            !publicationDTO.getJournalId().equals(indexToUpdate.getJournalId());
+        var yearUpdated = Objects.nonNull(publicationDTO.getDocumentDate()) &&
+            !publicationDTO.getDocumentDate().equals(indexToUpdate.getYear().toString());
+
         indexJournalPublication(publicationToUpdate, indexToUpdate);
         journalService.reindexJournalVolatileInformation(publicationToUpdate.getJournal().getId());
 
@@ -184,9 +194,14 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         sendNotifications(publicationToUpdate);
 
-        if (Objects.nonNull(publicationDTO.getJournalId()) &&
-            !publicationDTO.getJournalId().equals(indexToUpdate.getJournalId())) {
+        if (journalUpdated) {
             journalService.reindexJournalVolatileInformation(indexToUpdate.getJournalId());
+        }
+
+        if (journalUpdated || yearUpdated) {
+            applicationEventPublisher.publishEvent(
+                new ReassessEntityEvent(DocumentPublicationType.JOURNAL_PUBLICATION,
+                    publicationId));
         }
     }
 

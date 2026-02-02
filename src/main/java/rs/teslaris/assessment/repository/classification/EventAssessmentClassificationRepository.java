@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.assessment.model.classification.EventAssessmentClassification;
@@ -32,15 +33,15 @@ public interface EventAssessmentClassificationRepository extends
     @Query(
         "SELECT eac FROM EventAssessmentClassification eac JOIN FETCH eac.assessmentClassification WHERE " +
             "eac.event.id = :eventId AND " +
-            "eac.commission.id = :commissionId AND " +
             "eac.classificationYear = :year")
     List<EventAssessmentClassification> findAssessmentClassificationsForEventAndYear(
         Integer eventId, Integer year);
 
+    @Modifying
     @Query(
-        "SELECT eac FROM EventAssessmentClassification eac WHERE " +
+        "DELETE FROM EventAssessmentClassification eac WHERE " +
             "eac.event.id = :eventId AND " +
             "eac.commission.id = :commissionId")
-    Optional<EventAssessmentClassification> findAssessmentClassificationsForEventAndCommission(
-        Integer eventId, Integer commissionId);
+    void deleteAssessmentClassificationsForEventAndCommission(Integer eventId,
+                                                              Integer commissionId);
 }

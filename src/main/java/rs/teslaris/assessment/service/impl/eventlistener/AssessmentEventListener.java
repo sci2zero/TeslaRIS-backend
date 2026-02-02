@@ -25,6 +25,7 @@ import rs.teslaris.assessment.service.interfaces.classification.PersonAssessment
 import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
 import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.applicationevent.MonographDateChanged;
+import rs.teslaris.core.applicationevent.ReassessEntityEvent;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -247,6 +248,19 @@ public class AssessmentEventListener {
                     event.entityType(), event.entityId(), event.commissionId());
             }
         });
+    }
+
+    @EventListener
+    @Async
+    void handleReassessEntityEvent(ReassessEntityEvent event) {
+        switch (event.documentPublicationType()) {
+            case JOURNAL_PUBLICATION ->
+                documentAssessmentClassificationService.classifyJournalPublication(
+                    event.entityId());
+            case PROCEEDINGS_PUBLICATION ->
+                documentAssessmentClassificationService.classifyProceedingsPublication(
+                    event.entityId());
+        }
     }
 
     public void withLock(Integer commissionId, Runnable action) {

@@ -1,5 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
+import jakarta.annotation.Nullable;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -53,45 +55,24 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
     public Document fastDocumentLookup(Integer documentId) {
         var index = getDocumentIndex(documentId);
 
-        if (index.getType().equals(DocumentPublicationType.JOURNAL_PUBLICATION.name())) {
-            return journalPublicationRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType()
-            .equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name())) {
-            return proceedingsPublicationRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.MONOGRAPH.name())) {
-            return monographRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType()
-            .equals(DocumentPublicationType.MONOGRAPH_PUBLICATION.name())) {
-            return monographPublicationRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.THESIS.name())) {
-            return thesisRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.PROCEEDINGS.name())) {
-            return proceedingsRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.PATENT.name())) {
-            return patentRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType()
-            .equals(DocumentPublicationType.INTANGIBLE_PRODUCT.name())) {
-            return intangibleProductRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.DATASET.name())) {
-            return datasetRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.MATERIAL_PRODUCT.name())) {
-            return materialProductRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
-        } else if (index.getType().equals(DocumentPublicationType.GENETIC_MATERIAL.name())) {
-            return geneticMaterialRepository.findById(documentId)
-                .orElseThrow(this::throwNotFoundException);
+        var document = getDocumentBasedOnIndex(index);
+
+        if (Objects.isNull(document)) {
+            throw throwNotFoundException();
         }
 
-        throw throwNotFoundException();
+        return document;
+    }
+
+    @Override
+    public Document fastDocumentLookup(DocumentPublicationIndex index) {
+        var document = getDocumentBasedOnIndex(index);
+
+        if (Objects.isNull(document)) {
+            throw throwNotFoundException();
+        }
+
+        return document;
     }
 
     @Override
@@ -99,6 +80,49 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
         return documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
                 documentId)
             .orElseThrow(this::throwNotFoundException);
+    }
+
+    @Nullable
+    private Document getDocumentBasedOnIndex(DocumentPublicationIndex index) {
+        if (index.getType().equals(DocumentPublicationType.JOURNAL_PUBLICATION.name())) {
+            return journalPublicationRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType()
+            .equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name())) {
+            return proceedingsPublicationRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType().equals(DocumentPublicationType.MONOGRAPH.name())) {
+            return monographRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType()
+            .equals(DocumentPublicationType.MONOGRAPH_PUBLICATION.name())) {
+            return monographPublicationRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType().equals(DocumentPublicationType.THESIS.name())) {
+            return thesisRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType().equals(DocumentPublicationType.PROCEEDINGS.name())) {
+            return proceedingsRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType().equals(DocumentPublicationType.PATENT.name())) {
+            return patentRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType()
+            .equals(DocumentPublicationType.INTANGIBLE_PRODUCT.name())) {
+            return intangibleProductRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType().equals(DocumentPublicationType.DATASET.name())) {
+            return datasetRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType().equals(DocumentPublicationType.MATERIAL_PRODUCT.name())) {
+            return materialProductRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType().equals(DocumentPublicationType.GENETIC_MATERIAL.name())) {
+            return geneticMaterialRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        }
+
+        return null;
     }
 
     private NotFoundException throwNotFoundException() {

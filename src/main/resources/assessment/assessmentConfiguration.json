@@ -287,11 +287,14 @@
   },
   "assessmentCodeSortingRule": {
     "startsWithConstraint": "M",
-    "codePattern": "^M(\\d+)([eA]|Plus|APlus)?$",
+    "codePattern": "^M(\\d+)([eEaA]|Plus|APlus|a\\+)?$",
     "scoreAdjustments": {
       "e": 0.5,
+      "E": 0.5,
+      "a": -0.5,
       "A": -0.5,
-      "Plus": -0.5
+      "Plus": -0.5,
+      "+": -0.5
     }
   }
 }

@@ -37,6 +37,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
@@ -748,7 +749,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             documentId, index.getAssessedBy()).forEach(assessment -> {
             index.getCommissionAssessmentGroups().add(
                 new Triple<>(assessment.commissionId(),
-                    assessment.assessmentCode().substring(0, 2) + "0",
+                    ClassificationPriorityMapping.getGroupCode(assessment.assessmentCode()),
                     assessment.manual()));
             index.getCommissionAssessments().add(
                 new Triple<>(assessment.commissionId(),
@@ -815,7 +816,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public synchronized void reindexEmploymentInformationForAllPersonPublications(
         Integer personId) {
         int pageNumber = 0;
@@ -827,28 +828,19 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                     PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
                 .getContent();
 
-            var entityChunk = documentRepository.findBulkDocuments(
-                indexChunk.stream().map(DocumentPublicationIndex::getDatabaseId).toList());
+            indexChunk.forEach(index -> {
+                var document = documentLookupService.fastDocumentLookup(index);
 
-            var indexMap = indexChunk.stream()
-                .collect(Collectors.toMap(DocumentPublicationIndex::getDatabaseId, i -> i));
+                setEmploymentIndexInformation(
+                    index,
+                    new ArrayList<>(document.getContributors()),
+                    new HashSet<>(index.getOrganisationUnitIdsSpecified()),
+                    document instanceof Thesis
+                );
 
-            entityChunk.forEach(document -> {
-                var index = indexMap.get(document.getId());
-                if (Objects.nonNull(index)) {
-                    setEmploymentIndexInformation(
-                        index,
-                        new ArrayList<>(document.getContributors()),
-                        new HashSet<>(index.getOrganisationUnitIdsSpecified()),
-                        document instanceof Thesis
-                    );
-
-                    if (Objects.nonNull(document.getEvent())) {
-                        eventService.indexActiveEmploymentRelations(null,
-                            document.getEvent().getId());
-                    }
-
-                    documentPublicationIndexRepository.save(index);
+                if (Objects.nonNull(document.getEvent())) {
+                    eventService.indexActiveEmploymentRelations(null,
+                        document.getEvent().getId());
                 }
             });
 

@@ -57,7 +57,6 @@ import rs.teslaris.core.util.search.StringUtil;
 @Service
 @Primary
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class EventServiceImpl extends JPAServiceImpl<Event> implements EventService {
 
@@ -86,6 +85,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     @Nullable
+    @Transactional(readOnly = true)
     public Event findEventByOldId(Integer eventId) {
         return eventRepository.findEventByOldIdsContains(eventId).orElse(null);
     }
@@ -160,6 +160,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Boolean hasCommonUsage(Integer eventId) {
         return eventRepository.hasProceedings(eventId);
     }
@@ -183,6 +184,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EventsRelationDTO> readEventRelations(Integer eventId) {
         var event = findOne(eventId);
 
@@ -204,6 +206,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EventsRelationDTO> readSerialEventRelations(Integer serialEventId) {
         var serialEvent = findOne(serialEventId);
 
@@ -216,6 +219,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    @Transactional
     public void addEventsRelation(EventsRelationDTO eventsRelationDTO) {
         if (eventsRelationDTO.getSourceId().equals(eventsRelationDTO.getTargetId())) {
             throw new SelfRelationException("selfRelationEventError");
@@ -251,6 +255,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    @Transactional
     public void deleteEventsRelation(Integer relationId) {
         var relationToDelete = eventsRelationRepository.findById(relationId);
 
@@ -276,6 +281,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    @Transactional
     public void enrichEventInformationFromExternalSource(Integer oldId, LocalDate startDate,
                                                          LocalDate endDate) {
         eventRepository.findEventByOldIdsContains(oldId).ifPresent(event -> {
@@ -475,9 +481,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
         index.setSerialEvent(event.getSerialEvent());
 
-        index.setRelatedInstitutionIds(
-            eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(event.getId()).stream()
-                .toList());
+        index.getRelatedInstitutionIds().clear();
+        index.getRelatedInstitutionIds().addAll(
+            eventRepository.findInstitutionIdsByEventIdAndEventContribution(event.getId())
+        );
 
         indexActiveEmploymentRelations(index, event.getId());
 
@@ -488,6 +495,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void indexActiveEmploymentRelations(EventIndex index, Integer eventId) {
         var shouldSave = false;
         if (Objects.isNull(index)) {
@@ -498,16 +506,31 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
             index = optionalIndex.get();
             shouldSave = true;
+
+            index.getRelatedInstitutionIds().clear();
+            index.getRelatedInstitutionIds().addAll(
+                eventRepository.findInstitutionIdsByEventIdAndEventContribution(eventId)
+            );
         }
 
-        var relatedEmploymentInstitutionIds = new HashSet<Integer>();
-        eventRepository.findEmploymentInstitutionIdsByEventIdAndAuthorContribution(eventId)
-            .stream().forEach(institutionId -> {
+        if (index.getEventType().equals(EventType.CONFERENCE)) {
+            index.getRelatedEmploymentInstitutionIds().clear();
+
+            var relatedEmploymentInstitutionIds = new HashSet<Integer>();
+            var relatedFirstOrderEmploymentInstitutionIds =
+                eventRepository.findEmploymentInstitutionIdsByEventIdAndAuthorContribution(eventId);
+            index.getRelatedInstitutionIds().addAll(relatedEmploymentInstitutionIds);
+
+            relatedFirstOrderEmploymentInstitutionIds.forEach(institutionId -> {
                 relatedEmploymentInstitutionIds.add(institutionId);
                 relatedEmploymentInstitutionIds.addAll(
                     organisationUnitService.getSuperOUsHierarchyRecursive(institutionId));
             });
-        index.setRelatedEmploymentInstitutionIds(relatedEmploymentInstitutionIds.stream().toList());
+
+            index.getRelatedEmploymentInstitutionIds().addAll(
+                relatedEmploymentInstitutionIds.stream().toList()
+            );
+        }
 
         if (shouldSave) {
             eventIndexRepository.save(index);

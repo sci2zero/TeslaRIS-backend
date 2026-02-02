@@ -355,6 +355,10 @@ public class PersonAssessmentClassificationServiceImpl
                     PageRequest.of(pageNumber, CHUNK_SIZE))
                 .getContent();
 
+            if (publications.isEmpty()) {
+                break;
+            }
+
             publications.forEach(pub ->
                 publicationIdsBatch.add(pub.getDatabaseId())
             );
@@ -394,11 +398,18 @@ public class PersonAssessmentClassificationServiceImpl
             );
         }
 
+
         commissionResearchAreas.forEach(commissionResearchArea -> {
-            publication.getCommissionAssessments().stream()
-                .filter(assessment -> assessment.a.equals(commissionResearchArea.a))
-                .findFirst()
-                .ifPresent(assessment -> {
+            var assessments = publication.getCommissionAssessments().stream()
+                .filter(ca -> ca.a.equals(commissionResearchArea.a))
+                .collect(Collectors.toSet());
+
+            var hasManualClassifications = publication.getCommissionAssessments().stream()
+                .anyMatch(ca -> ca.c.equals(true));
+
+            assessments.stream()
+                .filter(ca -> ca.c.equals(hasManualClassifications))
+                .findFirst().ifPresent(assessment -> {
                     var applicableMeasure = findApplicableMeasure(assessmentMeasures, assessment.b);
                     if (applicableMeasure.isEmpty()) {
                         return;
@@ -565,8 +576,17 @@ public class PersonAssessmentClassificationServiceImpl
         List<DocumentIndicator> indicators,
         boolean isUserLoggedIn) {
 
-        var assessment = publication.getCommissionAssessments().stream()
-            .filter(ca -> ca.a.equals(commission.getId())).findFirst();
+        var assessments = publication.getCommissionAssessments().stream()
+            .filter(ca -> ca.a.equals(commission.getId()))
+            .collect(Collectors.toSet());
+
+        var hasManualClassifications = publication.getCommissionAssessments().stream()
+            .anyMatch(ca -> ca.c.equals(true));
+
+        var assessment =
+            assessments.stream()
+                .filter(ca -> ca.c.equals(hasManualClassifications))
+                .findFirst();
 
         if (assessment.isEmpty()) {
             return;

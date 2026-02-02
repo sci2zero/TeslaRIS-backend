@@ -36,6 +36,7 @@ import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.Country;
@@ -417,14 +418,14 @@ public class ConferenceServiceTest {
         // given
         var identifier = "123456";
         var organisationUnitId = 1;
-        when(eventRepository.existsByConfId(identifier, organisationUnitId)).thenReturn(false);
+        when(conferenceRepository.existsByConfId(identifier, organisationUnitId)).thenReturn(false);
 
         // when
         var result = conferenceService.isIdentifierInUse(identifier, organisationUnitId);
 
         // then
         assertFalse(result);
-        verify(eventRepository).existsByConfId(identifier, organisationUnitId);
+        verify(conferenceRepository).existsByConfId(identifier, organisationUnitId);
     }
 
     @Test
@@ -432,14 +433,14 @@ public class ConferenceServiceTest {
         // given
         var identifier = "123456";
         var organisationUnitId = 1;
-        when(eventRepository.existsByConfId(identifier, organisationUnitId)).thenReturn(true);
+        when(conferenceRepository.existsByConfId(identifier, organisationUnitId)).thenReturn(true);
 
         // when
         var result = conferenceService.isIdentifierInUse(identifier, organisationUnitId);
 
         // then
         assertTrue(result);
-        verify(eventRepository).existsByConfId(identifier, organisationUnitId);
+        verify(conferenceRepository).existsByConfId(identifier, organisationUnitId);
     }
 
     @Test
@@ -447,6 +448,8 @@ public class ConferenceServiceTest {
         // Given
         var conferenceId = 123;
         var eventIndex = new EventIndex();
+        eventIndex.setEventType(EventType.CONFERENCE);
+
         var institutionIds = Set.of(1, 2, 3);
 
         when(eventIndexRepository.findByDatabaseId(conferenceId))
@@ -458,7 +461,8 @@ public class ConferenceServiceTest {
         conferenceService.reindexVolatileConferenceInformation(conferenceId);
 
         // Then
-        assertEquals(institutionIds.stream().toList(), eventIndex.getRelatedInstitutionIds());
+        institutionIds.stream().toList().forEach(institutionId -> assertTrue(
+            eventIndex.getRelatedInstitutionIds().contains(institutionId)));
         verify(eventIndexRepository).save(eventIndex);
     }
 
@@ -482,6 +486,8 @@ public class ConferenceServiceTest {
         // Given
         var conferenceId = 789;
         var eventIndex = new EventIndex();
+        eventIndex.setEventType(EventType.CONFERENCE);
+
         when(eventIndexRepository.findByDatabaseId(conferenceId))
             .thenReturn(Optional.of(eventIndex));
         when(eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId))
@@ -500,6 +506,7 @@ public class ConferenceServiceTest {
         // Given
         var conferenceId = 3;
         var eventIndex = mock(EventIndex.class);
+        when(eventIndex.getEventType()).thenReturn(EventType.CONFERENCE);
         when(eventIndexRepository.findByDatabaseId(conferenceId))
             .thenReturn(Optional.of(eventIndex));
         var institutionIds = Set.of(100, 200, 300);
@@ -513,7 +520,7 @@ public class ConferenceServiceTest {
         conferenceService.reindexVolatileConferenceInformation(conferenceId);
 
         // Then
-        verify(eventIndex).setRelatedInstitutionIds(institutionIds.stream().toList());
+        verify(eventIndex, times(3)).getRelatedInstitutionIds();
         verify(eventIndex).setClassifiedBy(classifiedBy);
         verify(eventIndexRepository).save(eventIndex);
     }

@@ -3,7 +3,9 @@ package rs.teslaris.core.indexmodel;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -82,10 +84,10 @@ public class EventIndex {
     private Boolean serialEvent;
 
     @Field(type = FieldType.Integer, name = "related_institution_ids", store = true)
-    private List<Integer> relatedInstitutionIds = new ArrayList<>();
+    private Set<Integer> relatedInstitutionIds = new HashSet<>();
 
     @Field(type = FieldType.Integer, name = "related_employment_institution_ids", store = true)
-    private List<Integer> relatedEmploymentInstitutionIds = new ArrayList<>();
+    private Set<Integer> relatedEmploymentInstitutionIds = new HashSet<>();
 
     @Field(type = FieldType.Integer, name = "classified_by", store = true)
     private List<Integer> classifiedBy = new ArrayList<>();

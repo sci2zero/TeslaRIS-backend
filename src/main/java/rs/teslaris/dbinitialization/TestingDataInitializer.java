@@ -55,6 +55,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
+import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.GeneticMaterialType;
 import rs.teslaris.core.model.document.IntangibleProduct;
@@ -101,6 +102,7 @@ import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
+import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -197,6 +199,8 @@ public class TestingDataInitializer {
     private final GeneticMaterialRepository geneticMaterialRepository;
 
     private final PrizeAssessmentClassificationRepository prizeAssessmentClassificationRepository;
+
+    private final ExhibitionRepository exhibitionRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1177,5 +1181,19 @@ public class TestingDataInitializer {
         prizeAssessment.setCommission(commission5);
         prizeAssessment.setManual(true);
         prizeAssessmentClassificationRepository.save(prizeAssessment);
+
+        var exhibition1 = new Exhibition();
+        exhibition1.setName(Set.of(new MultiLingualContent(serbianTag, "Izlozba 1", 1)));
+        exhibition1.setDateFrom(LocalDate.of(2025, 7, 1));
+        exhibition1.setDateTo(LocalDate.of(2025, 7, 7));
+        exhibition1.setSerialEvent(false);
+        exhibitionRepository.save(exhibition1);
+
+        var exhibition2 = new Exhibition();
+        exhibition2.setName(Set.of(new MultiLingualContent(serbianTag, "Izlozba 2", 1)));
+        exhibition2.setDateFrom(LocalDate.of(2024, 11, 15));
+        exhibition2.setDateTo(LocalDate.of(2024, 11, 17));
+        exhibition2.setSerialEvent(false);
+        exhibitionRepository.save(exhibition2);
     }
 }

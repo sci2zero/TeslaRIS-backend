@@ -28,7 +28,6 @@ import rs.teslaris.core.util.functional.Pair;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 @Traceable
 public class NavigationBackwardCompatibilityServiceImpl implements
@@ -48,6 +47,7 @@ public class NavigationBackwardCompatibilityServiceImpl implements
 
 
     @Nullable
+    @Transactional(readOnly = true)
     public Pair<String, Integer> readResourceByOldId(Integer oldId, String source,
                                                      String language) {
         var documentIdOpt = documentRepository.findDocumentByOldIdsContains(oldId);
@@ -170,6 +170,7 @@ public class NavigationBackwardCompatibilityServiceImpl implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Pair<String, String> readDocumentFileByOldId(String oldServerFilename, String source,
                                                         String language) {
         var documentFileOpt =

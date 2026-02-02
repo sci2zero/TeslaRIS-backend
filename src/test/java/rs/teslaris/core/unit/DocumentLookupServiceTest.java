@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -158,6 +159,79 @@ class DocumentLookupServiceTest {
     }
 
     @Test
+    public void shouldReturnDocumentWhenFoundForAllDocumentTypesByIndex() {
+        // Given
+        var documentId = 1;
+        var documentIndex = mock(DocumentPublicationIndex.class);
+        when(documentIndex.getType())
+            .thenReturn(DocumentPublicationType.JOURNAL_PUBLICATION.name())
+            .thenReturn(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name())
+            .thenReturn(DocumentPublicationType.MONOGRAPH.name())
+            .thenReturn(DocumentPublicationType.MONOGRAPH_PUBLICATION.name())
+            .thenReturn(DocumentPublicationType.THESIS.name())
+            .thenReturn(DocumentPublicationType.PROCEEDINGS.name())
+            .thenReturn(DocumentPublicationType.PATENT.name())
+            .thenReturn(DocumentPublicationType.INTANGIBLE_PRODUCT.name())
+            .thenReturn(DocumentPublicationType.DATASET.name())
+            .thenReturn(DocumentPublicationType.MATERIAL_PRODUCT.name())
+            .thenReturn(DocumentPublicationType.GENETIC_MATERIAL.name());
+        when(documentIndex.getDatabaseId()).thenReturn(documentId);
+
+        var journalDocument = new JournalPublication();
+        var proceedingsDocument = new ProceedingsPublication();
+        var monographDocument = new Monograph();
+        var monographPubDocument = new MonographPublication();
+        var thesisDocument = new Thesis();
+        var procDocument = new Proceedings();
+        var patentDocument = new Patent();
+        var intangibleDocument = new IntangibleProduct();
+        var datasetDocument = new Dataset();
+        var materialDocument = new MaterialProduct();
+        var geneticDocument = new GeneticMaterial();
+
+        when(journalPublicationRepository.findById(documentId)).thenReturn(
+            Optional.of(journalDocument));
+        when(proceedingsPublicationRepository.findById(documentId)).thenReturn(
+            Optional.of(proceedingsDocument));
+        when(monographRepository.findById(documentId)).thenReturn(Optional.of(monographDocument));
+        when(monographPublicationRepository.findById(documentId)).thenReturn(
+            Optional.of(monographPubDocument));
+        when(thesisRepository.findById(documentId)).thenReturn(Optional.of(thesisDocument));
+        when(proceedingsRepository.findById(documentId)).thenReturn(Optional.of(procDocument));
+        when(patentRepository.findById(documentId)).thenReturn(Optional.of(patentDocument));
+        when(intangibleProductRepository.findById(documentId)).thenReturn(
+            Optional.of(intangibleDocument));
+        when(datasetRepository.findById(documentId)).thenReturn(Optional.of(datasetDocument));
+        when(materialProductRepository.findById(documentId)).thenReturn(
+            Optional.of(materialDocument));
+        when(geneticMaterialRepository.findById(documentId)).thenReturn(
+            Optional.of(geneticDocument));
+
+        // When & Then
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            journalDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            proceedingsDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            monographDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            monographPubDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            thesisDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(procDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            patentDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            intangibleDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            datasetDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            materialDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            geneticDocument);
+    }
+
+    @Test
     public void shouldThrowNotFoundExceptionWhenDocumentNotFoundForAllDocumentTypes() {
         // Given
         var documentId = 1;
@@ -241,6 +315,7 @@ class DocumentLookupServiceTest {
     private DocumentPublicationIndex createIndex(DocumentPublicationType type) {
         var index = new DocumentPublicationIndex();
         index.setType(type.name());
+        index.setDatabaseId(1);
         return index;
     }
 }

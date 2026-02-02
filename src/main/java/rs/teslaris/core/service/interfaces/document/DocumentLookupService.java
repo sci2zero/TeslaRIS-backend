@@ -9,5 +9,7 @@ public interface DocumentLookupService {
 
     Document fastDocumentLookup(Integer documentId);
 
+    Document fastDocumentLookup(DocumentPublicationIndex index);
+
     DocumentPublicationIndex getDocumentIndex(Integer documentId);
 }

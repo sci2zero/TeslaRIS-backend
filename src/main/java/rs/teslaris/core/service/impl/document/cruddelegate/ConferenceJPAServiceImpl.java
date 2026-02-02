@@ -12,6 +12,7 @@ public class ConferenceJPAServiceImpl extends JPAServiceImpl<Conference> {
 
     private final ConferenceRepository conferenceRepository;
 
+
     @Autowired
     public ConferenceJPAServiceImpl(ConferenceRepository conferenceRepository) {
         this.conferenceRepository = conferenceRepository;

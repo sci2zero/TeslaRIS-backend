@@ -258,7 +258,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             conferenceDTO.getConfId(),
             conference.getId(),
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-            eventRepository::existsByConfId,
+            conferenceRepository::existsByConfId,
             conference::setConfId,
             "confIdFormatError",
             "confIdExistsError"
@@ -268,7 +268,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             conferenceDTO.getOpenAlexId(),
             conference.getId(),
             "^S\\d{4,10}$",
-            eventRepository::existsByOpenAlexId,
+            conferenceRepository::existsByOpenAlexId,
             conference::setOpenAlexId,
             "openAlexIdFormatError",
             "openAlexIdExistsError"
@@ -278,8 +278,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     @Transactional
     public boolean isIdentifierInUse(String identifier, Integer conferenceId) {
-        return eventRepository.existsByConfId(identifier, conferenceId) ||
-            eventRepository.existsByOpenAlexId(identifier, conferenceId);
+        return conferenceRepository.existsByConfId(identifier, conferenceId) ||
+            conferenceRepository.existsByOpenAlexId(identifier, conferenceId);
     }
 
     @Override
@@ -319,9 +319,15 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Transactional
     public void reindexVolatileConferenceInformation(Integer conferenceId) {
         eventIndexRepository.findByDatabaseId(conferenceId).ifPresent(eventIndex -> {
-            eventIndex.setRelatedInstitutionIds(
+            eventIndex.getRelatedInstitutionIds().addAll(
+                eventRepository.findInstitutionIdsByEventIdAndEventContribution(conferenceId)
+            );
+
+            eventIndex.getRelatedInstitutionIds().addAll(
                 eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId)
-                    .stream().toList());
+                    .stream().toList()
+            );
+
             eventIndex.setClassifiedBy(
                 commissionRepository.findCommissionsThatClassifiedEvent(conferenceId));
 

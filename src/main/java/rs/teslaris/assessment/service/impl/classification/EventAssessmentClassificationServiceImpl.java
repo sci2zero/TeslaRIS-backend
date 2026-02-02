@@ -144,11 +144,10 @@ public class EventAssessmentClassificationServiceImpl
             newAssessmentClassification.setClassificationYear(classificationYear);
         }
 
-        var existingClassification =
-            eventAssessmentClassificationRepository.findAssessmentClassificationsForEventAndCommission(
+        eventAssessmentClassificationRepository
+            .deleteAssessmentClassificationsForEventAndCommission(
                 eventAssessmentClassificationDTO.getEventId(),
                 eventAssessmentClassificationDTO.getCommissionId());
-        existingClassification.ifPresent(eventAssessmentClassificationRepository::delete);
 
         var savedClassification =
             eventAssessmentClassificationJPAService.save(newAssessmentClassification);
