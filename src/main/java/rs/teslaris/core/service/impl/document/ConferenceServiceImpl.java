@@ -97,8 +97,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                               Integer commissionInstitutionId,
                                               Integer commissionId,
                                               Boolean emptyEventsOnly) {
-        return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
+        return searchEvents(tokens, pageable, List.of(EventType.CONFERENCE),
+            returnOnlyNonSerialEvents, returnOnlySerialEvents,
+            commissionInstitutionId, commissionId, emptyEventsOnly);
     }
 
     @Override
@@ -114,7 +115,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         try {
             conference = findConferenceById(conferenceId);
         } catch (NotFoundException e) {
-            eventIndexRepository.findByDatabaseId(conferenceId)
+            eventIndexRepository.findByEventTypeAndDatabaseId(EventType.CONFERENCE, conferenceId)
                 .ifPresent(eventIndexRepository::delete);
             throw e;
         }
@@ -236,7 +237,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Async("reindexExecutor")
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexConferences() {
-        eventIndexRepository.deleteAll();
+        // Super service does the initial deletion
 
         FunctionalUtil.performBulkReindex(
             conferenceJPAService::findAll,

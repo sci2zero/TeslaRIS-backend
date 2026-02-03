@@ -12,5 +12,7 @@ public enum EntityType {
     MONOGRAPH,
     PROCEEDINGS,
     DOCUMENT_FILE,
-    PRIZE
+    PRIZE,
+    CONFERENCE,
+    EXHIBITION
 }

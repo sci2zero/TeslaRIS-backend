@@ -1307,7 +1307,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     @Override
-    @Transactional
     public void deleteIndexes() {
         documentPublicationIndexRepository.deleteAll();
     }

@@ -39,8 +39,8 @@ import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
-import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.EventLookupService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -55,7 +55,7 @@ public class AssessmentMergeServiceTest {
     private BookSeriesService bookSeriesService;
 
     @Mock
-    private ConferenceService conferenceService;
+    private EventLookupService eventLookupService;
 
     @Mock
     private PublicationSeriesIndicatorRepository publicationSeriesIndicatorRepository;
@@ -157,7 +157,7 @@ public class AssessmentMergeServiceTest {
         sourceIndicator.setIndicator(new Indicator());
         var targetEvent = new Conference();
 
-        when(conferenceService.findConferenceById(targetId)).thenReturn(targetEvent);
+        when(eventLookupService.fastEventLookup(targetId)).thenReturn(targetEvent);
         when(eventIndicatorRepository.existsByEventIdAndSourceAndYear(eq(targetId), any(), any(),
             any()))
             .thenReturn(Optional.empty());
@@ -168,7 +168,7 @@ public class AssessmentMergeServiceTest {
 
         mergeService.switchAllIndicatorsToOtherEvent(sourceId, targetId);
 
-        verify(conferenceService).findConferenceById(targetId);
+        verify(eventLookupService).fastEventLookup(targetId);
         verify(eventIndicatorRepository).findIndicatorsForEvent(eq(sourceId), any());
         assertEquals(targetEvent, sourceIndicator.getEvent());
     }
@@ -181,7 +181,7 @@ public class AssessmentMergeServiceTest {
         sourceClassification.setCommission(new Commission());
         var targetEvent = new Conference();
 
-        when(conferenceService.findConferenceById(targetId)).thenReturn(targetEvent);
+        when(eventLookupService.fastEventLookup(targetId)).thenReturn(targetEvent);
         when(
             eventAssessmentClassificationRepository.findAssessmentClassificationsForEventAndCommissionAndYear(
                 eq(targetId), any(), any()
@@ -194,7 +194,7 @@ public class AssessmentMergeServiceTest {
 
         mergeService.switchAllClassificationsToOtherEvent(sourceId, targetId);
 
-        verify(conferenceService).findConferenceById(targetId);
+        verify(eventLookupService).fastEventLookup(targetId);
         verify(eventAssessmentClassificationRepository).findAssessmentClassificationsForEvent(
             eq(sourceId), any());
         assertEquals(targetEvent, sourceClassification.getEvent());

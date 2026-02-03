@@ -77,7 +77,7 @@ public class EventIndex {
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 
-    @Field(type = FieldType.Text, name = "event_type", store = true)
+    @Field(type = FieldType.Keyword, name = "event_type", store = true)
     private EventType eventType;
 
     @Field(type = FieldType.Boolean, name = "is_serial_event", store = true)

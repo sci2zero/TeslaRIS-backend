@@ -93,8 +93,9 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
                                               Integer commissionInstitutionId,
                                               Integer commissionId,
                                               Boolean emptyEventsOnly) {
-        return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
+        return searchEvents(tokens, pageable, List.of(EventType.CONFERENCE),
+            returnOnlyNonSerialEvents, returnOnlySerialEvents,
+            commissionInstitutionId, commissionId, emptyEventsOnly);
     }
 
     @Override
@@ -110,7 +111,7 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
         try {
             exhibition = findExhibitionById(exhibitionId);
         } catch (NotFoundException e) {
-            eventIndexRepository.findByDatabaseId(exhibitionId)
+            eventIndexRepository.findByEventTypeAndDatabaseId(EventType.EXHIBITION, exhibitionId)
                 .ifPresent(eventIndexRepository::delete);
             throw e;
         }
@@ -199,7 +200,7 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     @Async("reindexExecutor")
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexExhibitions() {
-        eventIndexRepository.deleteAll();
+        // Super service does the initial deletion
 
         FunctionalUtil.performBulkReindex(
             exhibitionJPAService::findAll,

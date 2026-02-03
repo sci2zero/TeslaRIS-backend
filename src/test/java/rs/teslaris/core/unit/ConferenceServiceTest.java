@@ -350,7 +350,7 @@ public class ConferenceServiceTest {
         conferenceService.reindexConferences();
 
         // Then
-        verify(eventIndexRepository, times(1)).deleteAll();
+        verify(eventIndexRepository, never()).deleteAll();
         verify(conferenceJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(eventIndexRepository, atLeastOnce()).save(any(EventIndex.class));
     }

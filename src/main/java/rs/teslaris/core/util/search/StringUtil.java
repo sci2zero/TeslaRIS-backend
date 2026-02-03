@@ -436,8 +436,9 @@ public class StringUtil {
     }
 
     public static String contentDisposition(String filename) {
-        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8)
-            .replace("+", "%20");
+        String encoded =
+            URLEncoder.encode(Objects.requireNonNullElse(filename, "file"), StandardCharsets.UTF_8)
+                .replace("+", "%20");
 
         return "attachment; filename=\"file\"; filename*=UTF-8''" + encoded;
     }

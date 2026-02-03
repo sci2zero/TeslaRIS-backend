@@ -24,6 +24,8 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -107,6 +109,12 @@ public class ReindexServiceTest {
     @Mock
     private GeneticMaterialService geneticMaterialService;
 
+    @Mock
+    private ExhibitionService exhibitionService;
+
+    @Mock
+    private EventService eventService;
+
     @InjectMocks
     private ReindexServiceImpl reindexService;
 
@@ -152,6 +160,8 @@ public class ReindexServiceTest {
             CompletableFuture.completedFuture(null));
         when(conferenceService.reindexConferences()).thenReturn(
             CompletableFuture.completedFuture(null));
+        when(exhibitionService.reindexExhibitions()).thenReturn(
+            CompletableFuture.completedFuture(null));
         when(documentFileService.reindexDocumentFiles()).thenReturn(
             CompletableFuture.completedFuture(null));
 
@@ -174,6 +184,10 @@ public class ReindexServiceTest {
             indexType.a.equals(EntityType.BOOK_SERIES) ? times(1) : never()).reindexBookSeries();
         verify(conferenceService,
             indexType.a.equals(EntityType.EVENT) ? times(1) : never()).reindexConferences();
+        verify(exhibitionService,
+            indexType.a.equals(EntityType.EVENT) ? times(1) : never()).reindexExhibitions();
+        verify(eventService,
+            indexType.a.equals(EntityType.EVENT) ? times(1) : never()).deleteIndexes();
         verify(documentFileService,
             indexType.a.equals(EntityType.DOCUMENT_FILE) ? times(1) :
                 never()).reindexDocumentFiles();
@@ -189,6 +203,8 @@ public class ReindexServiceTest {
             verify(monographPublicationService).reindexMonographPublications();
             verify(proceedingsService).reindexProceedings();
             verify(thesisService).reindexTheses();
+            verify(geneticMaterialService).reindexGeneticMaterials();
+            verify(materialProductService).reindexMaterialProducts();
             verify(applicationEventPublisher).publishEvent(
                 any(AllResearcherPointsReindexingEvent.class));
         } else if (indexType.a.equals(EntityType.DOCUMENT_FILE)) {

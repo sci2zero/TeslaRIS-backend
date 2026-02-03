@@ -218,6 +218,7 @@ public class DbInitializer implements ApplicationRunner {
         var assessPrizes = new Privilege("ASSESS_PRIZE");
         var editExhibitions = new Privilege("EDIT_EXHIBITIONS");
         var createExhibitions = new Privilege("CREATE_EXHIBITIONS");
+        var mergeExhibitions = new Privilege("MERGE_EXHIBITIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -257,7 +258,7 @@ public class DbInitializer implements ApplicationRunner {
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
                 unpromoteRbEntries, changePublicationType, assessPrizes, editExhibitions,
-                createExhibitions));
+                createExhibitions, mergeExhibitions));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -295,7 +296,7 @@ public class DbInitializer implements ApplicationRunner {
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
                 forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
                 registerResearcher, unpromoteRbEntries, changePublicationType, assessPrizes,
-                editExhibitions, createExhibitions
+                editExhibitions, createExhibitions, mergeExhibitions
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

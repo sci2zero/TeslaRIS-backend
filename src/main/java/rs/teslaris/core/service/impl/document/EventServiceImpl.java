@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ValidationException;
 import java.time.LocalDate;
@@ -52,6 +54,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -167,12 +170,13 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
-                                         EventType eventType, Boolean returnOnlyNonSerialEvents,
+                                         List<EventType> eventTypes,
+                                         Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId,
                                          Integer commissionId, Boolean emptyEventsOnly) {
         return searchService.runQuery(
-            buildSimpleSearchQuery(tokens, eventType, returnOnlyNonSerialEvents,
+            buildSimpleSearchQuery(tokens, eventTypes, returnOnlyNonSerialEvents,
                 returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly),
             pageable, EventIndex.class, "events");
     }
@@ -323,7 +327,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         })))._toQuery();
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, EventType eventType,
+    private Query buildSimpleSearchQuery(List<String> tokens, List<EventType> eventTypes,
                                          Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId,
@@ -403,7 +407,9 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 return bq;
             });
 
-            b.must(sb -> sb.match(m -> m.field("event_type").query(eventType.name())));
+            if (CollectionOperations.containsValues(eventTypes)) {
+                b.must(createTypeTermsQuery(eventTypes));
+            }
 
             if (returnOnlyNonSerialEvents) {
                 b.must(sb -> sb.match(m -> m.field("is_serial_event").query(false)));
@@ -432,6 +438,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
             return b;
         })))._toQuery();
+    }
+
+    private Query createTypeTermsQuery(List<EventType> values) {
+        return TermsQuery.of(t -> t
+            .field("event_type")
+            .terms(v -> v.value(values.stream()
+                .map(EventType::name)
+                .map(FieldValue::of)
+                .toList()))
+        )._toQuery();
     }
 
     @Override
@@ -535,6 +551,11 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         if (shouldSave) {
             eventIndexRepository.save(index);
         }
+    }
+
+    @Override
+    public void deleteIndexes() {
+        eventIndexRepository.deleteAll();
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,

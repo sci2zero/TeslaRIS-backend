@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.classification.DocumentAssessmentClassification;
@@ -16,6 +17,7 @@ import rs.teslaris.core.util.functional.QuadConsumer;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PublicationClassificationServiceImpl implements PublicationClassificationService {
 
     private final DocumentAssessmentClassificationRepository
@@ -45,6 +47,10 @@ public class PublicationClassificationServiceImpl implements PublicationClassifi
                         batchClassifications));
             }
         });
+
+        if (!batchClassifications.isEmpty()) {
+            log.info("Saving {} new classifications.", batchClassifications.size());
+        }
 
         documentAssessmentClassificationRepository.saveAll(batchClassifications);
         batchClassifications.clear();

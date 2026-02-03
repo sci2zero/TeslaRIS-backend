@@ -41,6 +41,7 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -69,6 +70,7 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -108,6 +110,7 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -160,6 +163,9 @@ public class MergeServiceTest {
 
     @Mock
     private ConferenceService conferenceService;
+
+    @Mock
+    private ExhibitionService exhibitionService;
 
     @Mock
     private ProceedingsService proceedingsService;
@@ -979,6 +985,23 @@ public class MergeServiceTest {
     }
 
     @Test
+    public void shouldSaveMergedExhibitionsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ExhibitionDTO();
+        var rightData = new ExhibitionDTO();
+
+        // when
+        mergeService.saveMergedExhibitionsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(exhibitionService, atLeastOnce()).updateExhibition(leftId, leftData);
+        verify(exhibitionService).updateExhibition(rightId, rightData);
+        verify(exhibitionService, times(2)).updateExhibition(leftId, leftData);
+    }
+
+    @Test
     public void shouldSaveMergedIntangibleProductMetadata() {
         // given
         var leftId = 1;
@@ -1542,22 +1565,41 @@ public class MergeServiceTest {
     }
 
     @Test
-    void testIdentifierMigrationForEvent() {
-        Conference deletion = new Conference();
+    void testIdentifierMigrationForConference() {
+        var deletion = new Conference();
         deletion.getMergedIds().add(104);
         deletion.getOldIds().add(204);
-        Conference merged = new Conference();
+        var merged = new Conference();
 
         when(conferenceService.findRaw(1)).thenReturn(deletion);
         when(conferenceService.findRaw(2)).thenReturn(merged);
 
-        mergeService.migratePersistentIdentifiers(1, 2, EntityType.EVENT);
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.CONFERENCE);
 
         assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(104, 1);
         assertThat(merged.getOldIds()).containsExactly(204);
         verify(conferenceService, atLeastOnce()).save(deletion);
         verify(conferenceService, atLeastOnce()).save(merged);
     }
+
+    @Test
+    void testIdentifierMigrationForExhibition() {
+        var deletion = new Exhibition();
+        deletion.getMergedIds().add(104);
+        deletion.getOldIds().add(204);
+        var merged = new Exhibition();
+
+        when(exhibitionService.findRaw(1)).thenReturn(deletion);
+        when(exhibitionService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.EXHIBITION);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(104, 1);
+        assertThat(merged.getOldIds()).containsExactly(204);
+        verify(exhibitionService, atLeastOnce()).save(deletion);
+        verify(exhibitionService, atLeastOnce()).save(merged);
+    }
+
 
     @Test
     void testIdentifierMigrationForJournal() {

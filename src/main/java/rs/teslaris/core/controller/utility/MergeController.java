@@ -20,6 +20,7 @@ import rs.teslaris.core.dto.deduplication.MergedBookSeriesDTO;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
 import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
+import rs.teslaris.core.dto.deduplication.MergedExhibitionDTO;
 import rs.teslaris.core.dto.deduplication.MergedGeneticMaterialDTO;
 import rs.teslaris.core.dto.deduplication.MergedIntangibleProductDTO;
 import rs.teslaris.core.dto.deduplication.MergedJournalPublicationsDTO;
@@ -285,6 +286,17 @@ public class MergeController {
             mergedConference.getLeftConference(), mergedConference.getRightConference());
     }
 
+    @PatchMapping("/exhibition/metadata/{leftExhibitionId}/{rightExhibitionId}")
+    @PreAuthorize("hasAuthority('MERGE_EVENT_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedExhibitionsMetadata(
+        @PathVariable Integer leftExhibitionId,
+        @PathVariable Integer rightExhibitionId,
+        @NotNull @RequestBody MergedExhibitionDTO mergedExhibition) {
+        mergeService.saveMergedExhibitionsMetadata(leftExhibitionId, rightExhibitionId,
+            mergedExhibition.getLeftExhibition(), mergedExhibition.getRightExhibition());
+    }
+
     @PatchMapping("/journal/metadata/{leftJournalId}/{rightJournalId}")
     @PreAuthorize("hasAuthority('MERGE_PUBLICATION_SERIES_METADATA')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -474,6 +486,10 @@ public class MergeController {
     public void migrateIdentifierHistory(@PathVariable EntityType entityType,
                                          @PathVariable Integer deletionEntityId,
                                          @PathVariable Integer mergedEntityId) {
+        if (entityType.equals(EntityType.EVENT)) {
+            return;
+        }
+
         mergeService.migratePersistentIdentifiers(deletionEntityId, mergedEntityId, entityType);
     }
 

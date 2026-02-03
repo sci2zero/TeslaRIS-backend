@@ -22,6 +22,8 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -58,6 +60,10 @@ public class ReindexServiceImpl implements ReindexService {
     private final BookSeriesService bookSeriesService;
 
     private final ConferenceService conferenceService;
+
+    private final ExhibitionService exhibitionService;
+
+    private final EventService eventService;
 
     private final DocumentPublicationService documentPublicationService;
 
@@ -121,7 +127,9 @@ public class ReindexServiceImpl implements ReindexService {
         }
 
         if (indexesToRepopulate.contains(EntityType.EVENT)) {
+            eventService.deleteIndexes();
             futures.add(conferenceService.reindexConferences());
+            futures.add(exhibitionService.reindexExhibitions());
         }
 
         if (indexesToRepopulate.contains(EntityType.DOCUMENT_FILE)) {

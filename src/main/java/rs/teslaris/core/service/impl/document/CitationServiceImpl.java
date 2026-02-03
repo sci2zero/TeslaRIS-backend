@@ -42,6 +42,7 @@ public class CitationServiceImpl implements CitationService {
 
     public final PublisherRepository publisherRepository;
 
+
     private static void setPageInformation(CSLItemDataBuilder itemBuilder,
                                            PrintedPageable document) {
         if (StringUtil.valueExists(document.getStartPage()) &&
@@ -89,7 +90,27 @@ public class CitationServiceImpl implements CitationService {
 
     private void addAuthors(CSLItemDataBuilder itemBuilder, String authorNames) {
         var authors = Arrays.stream(authorNames.split("; "))
-            .map(authorName -> new CSLNameBuilder().given(authorName).build())
+            .map(authorName -> {
+                var nameParts = authorName.split(" ");
+
+                if (nameParts.length == 1) {
+                    return new CSLNameBuilder().given(nameParts[0]).build();
+                } else if (nameParts.length >= 3) {
+                    String[] middleNames =
+                        Arrays.copyOfRange(nameParts, 1, nameParts.length - 1);
+
+                    return new CSLNameBuilder()
+                        .given(
+                            String.join(" ", nameParts[0],
+                                String.join(" ", middleNames)
+                            )
+                        )
+                        .family(nameParts[nameParts.length - 1])
+                        .build();
+                }
+
+                return new CSLNameBuilder().given(nameParts[0]).family(nameParts[1]).build();
+            })
             .toArray(CSLName[]::new);
 
         itemBuilder.author(authors);

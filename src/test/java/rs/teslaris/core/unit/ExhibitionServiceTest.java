@@ -307,7 +307,7 @@ public class ExhibitionServiceTest {
         exhibitionService.reindexExhibitions();
 
         // Then
-        verify(eventIndexRepository, times(1)).deleteAll();
+        verify(eventIndexRepository, never()).deleteAll();
         verify(exhibitionJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(eventIndexRepository, atLeastOnce()).save(any(EventIndex.class));
     }

@@ -25,7 +25,7 @@ public interface EventService extends JPAService<Event> {
     Boolean hasCommonUsage(Integer eventId);
 
     Page<EventIndex> searchEvents(List<String> tokens, Pageable pageable,
-                                  EventType eventType, Boolean returnOnlyNonSerialEvents,
+                                  List<EventType> eventTypes, Boolean returnOnlyNonSerialEvents,
                                   Boolean returnOnlySerialEvents, Integer commissionInstitutionId,
                                   Integer commissionId, Boolean emptyEventsOnly);
 
@@ -48,4 +48,6 @@ public interface EventService extends JPAService<Event> {
                                                   LocalDate endDate);
 
     void indexActiveEmploymentRelations(EventIndex index, Integer eventId);
+
+    void deleteIndexes();
 }

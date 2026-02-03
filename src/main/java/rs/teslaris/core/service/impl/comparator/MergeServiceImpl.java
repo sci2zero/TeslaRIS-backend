@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -66,6 +67,7 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -120,6 +122,8 @@ public class MergeServiceImpl implements MergeService {
     private final OrganisationUnitService organisationUnitService;
 
     private final ConferenceService conferenceService;
+
+    private final ExhibitionService exhibitionService;
 
     private final ProceedingsService proceedingsService;
 
@@ -504,6 +508,17 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
+    public void saveMergedExhibitionsMetadata(Integer leftId, Integer rightId,
+                                              ExhibitionDTO leftData, ExhibitionDTO rightData) {
+        updateAndRestoreMetadata(exhibitionService::updateExhibition,
+            exhibitionService::indexExhibition, exhibitionService::findExhibitionById,
+            leftId, rightId, leftData, rightData,
+            dto -> new String[] {},
+            (dto, values) -> {
+            });
+    }
+
+    @Override
     public void saveMergedIntangibleProductMetadata(Integer leftId, Integer rightId,
                                                     IntangibleProductDTO leftData,
                                                     IntangibleProductDTO rightData) {
@@ -729,8 +744,10 @@ public class MergeServiceImpl implements MergeService {
                 documentPublicationService::save, deletionEntityId, mergedEntityId);
             case PUBLICATION -> migrateIdentifierHistory(documentPublicationService::findOne,
                 documentPublicationService::save, deletionEntityId, mergedEntityId);
-            case EVENT -> migrateIdentifierHistory(conferenceService::findRaw,
+            case CONFERENCE -> migrateIdentifierHistory(conferenceService::findRaw,
                 conferenceService::save, deletionEntityId, mergedEntityId);
+            case EXHIBITION -> migrateIdentifierHistory(exhibitionService::findRaw,
+                exhibitionService::save, deletionEntityId, mergedEntityId);
             case JOURNAL -> migrateIdentifierHistory(journalService::findRaw, journalService::save,
                 deletionEntityId, mergedEntityId);
             case ORGANISATION_UNIT -> {

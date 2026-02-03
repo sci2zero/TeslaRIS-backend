@@ -27,8 +27,8 @@ import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
-import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.EventLookupService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -43,7 +43,7 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
 
     private final BookSeriesService bookSeriesService;
 
-    private final ConferenceService conferenceService;
+    private final EventLookupService eventLookupService;
 
     private final EventIndicatorRepository eventIndicatorRepository;
 
@@ -141,7 +141,7 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                         return;
                     }
 
-                    eventIndicator.setEvent(conferenceService.findConferenceById(targetId));
+                    eventIndicator.setEvent(eventLookupService.fastEventLookup(targetId));
                 }
             },
             pageRequest -> eventIndicatorRepository.findIndicatorsForEvent(sourceId, pageRequest)
@@ -167,7 +167,7 @@ public class AssessmentMergeServiceImpl implements AssessmentMergeService {
                     return;
                 }
 
-                eventClassification.setEvent(conferenceService.findConferenceById(targetId));
+                eventClassification.setEvent(eventLookupService.fastEventLookup(targetId));
             },
             pageRequest -> eventAssessmentClassificationRepository.findAssessmentClassificationsForEvent(
                 sourceId, pageRequest).getContent()

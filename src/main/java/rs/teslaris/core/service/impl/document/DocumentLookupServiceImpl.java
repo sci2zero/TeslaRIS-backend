@@ -84,6 +84,10 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
 
     @Nullable
     private Document getDocumentBasedOnIndex(DocumentPublicationIndex index) {
+        if (Objects.isNull(index.getType())) {
+            return null;
+        }
+
         if (index.getType().equals(DocumentPublicationType.JOURNAL_PUBLICATION.name())) {
             return journalPublicationRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
