@@ -249,9 +249,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     @Override
     @Transactional
-    public AuthenticationResponseDTO authenticateUser(AuthenticationManager authenticationManager,
-                                                      AuthenticationRequestDTO authenticationRequest,
-                                                      String fingerprint) {
+    public synchronized AuthenticationResponseDTO authenticateUser(
+        AuthenticationManager authenticationManager,
+        AuthenticationRequestDTO authenticationRequest,
+        String fingerprint) {
         if (applicationConfigurationRepository.isApplicationInMaintenanceMode()) {
             var user = userRepository.findByEmail(authenticationRequest.getEmail());
             if (user.isEmpty() ||

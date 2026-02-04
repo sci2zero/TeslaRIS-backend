@@ -81,6 +81,17 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
     List<AssessmentClassificationBasicInfo> findAssessmentClassificationBasicInfoForPrizeAndCommissions(
         Integer prizeId, List<Integer> commissionIds);
 
+    @Query("""
+            SELECT NEW rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo(
+                eac.commission.id, eac.assessmentClassification.code, eac.manual
+            )
+            FROM EventAssessmentClassification eac
+            WHERE eac.event.id = :eventId
+              AND eac.commission.id IN :commissionIds
+        """)
+    List<AssessmentClassificationBasicInfo> findAssessmentClassificationBasicInfoForEventAndCommissions(
+        Integer eventId, List<Integer> commissionIds);
+
     @Modifying
     @Query("UPDATE Commission c SET c.isDefault = false WHERE c.id != :commissionId")
     void setOthersAsNonDefault(Integer commissionId);

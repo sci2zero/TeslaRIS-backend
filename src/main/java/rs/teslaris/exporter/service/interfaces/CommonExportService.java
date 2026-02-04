@@ -11,7 +11,7 @@ public interface CommonExportService {
 
     void exportPersonsToCommonModel(boolean allTime);
 
-    void exportConferencesToCommonModel(boolean allTime);
+    void exportEventsToCommonModel(boolean allTime);
 
     void exportDocumentsToCommonModel(boolean allTime, List<ExportPublicationType> exportTypes);
 }

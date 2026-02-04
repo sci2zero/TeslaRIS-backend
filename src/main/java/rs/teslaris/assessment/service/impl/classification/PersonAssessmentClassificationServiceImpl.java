@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +44,11 @@ import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexmodel.PrizeIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.indexrepository.PrizeIndexRepository;
 import rs.teslaris.core.model.commontypes.AccessLevel;
@@ -58,6 +62,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
@@ -99,6 +104,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final PrizeIndexRepository prizeIndexRepository;
 
+    private final EventIndexRepository eventIndexRepository;
+
     private final int CHUNK_SIZE = 1000;
 
 
@@ -107,8 +114,9 @@ public class PersonAssessmentClassificationServiceImpl
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
         ConferenceService conferenceService,
-        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
+        ExhibitionService exhibitionService,
         ApplicationEventPublisher applicationEventPublisher,
+        EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         PersonAssessmentClassificationRepository personAssessmentClassificationRepository,
         SearchService<PersonIndex> searchService,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
@@ -118,9 +126,11 @@ public class PersonAssessmentClassificationServiceImpl
         PersonIndexRepository personIndexRepository, UserRepository userRepository,
         CitationService citationService, InvolvementRepository involvementRepository,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
-        ResearchAreaRepository researchAreaRepository, PrizeIndexRepository prizeIndexRepository) {
+        ResearchAreaRepository researchAreaRepository, PrizeIndexRepository prizeIndexRepository,
+        EventIndexRepository eventIndexRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, applicationEventPublisher,
+            entityAssessmentClassificationRepository);
         this.personAssessmentClassificationRepository = personAssessmentClassificationRepository;
         this.searchService = searchService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -134,6 +144,7 @@ public class PersonAssessmentClassificationServiceImpl
         this.organisationUnitsRelationRepository = organisationUnitsRelationRepository;
         this.researchAreaRepository = researchAreaRepository;
         this.prizeIndexRepository = prizeIndexRepository;
+        this.eventIndexRepository = eventIndexRepository;
     }
 
     @Override
@@ -463,6 +474,10 @@ public class PersonAssessmentClassificationServiceImpl
                     assessResearcherPrizes(personIndex, commission, assessmentMeasures,
                         pointsRuleEngine, scalingRuleEngine, assessmentResearchArea,
                         startYear, endYear, assessmentResult);
+
+                    assessResearcherEventContributions(personIndex, commission, assessmentMeasures,
+                        pointsRuleEngine, scalingRuleEngine, assessmentResearchArea,
+                        startYear, endYear, assessmentResult);
                 }
             });
     }
@@ -530,20 +545,54 @@ public class PersonAssessmentClassificationServiceImpl
 
         var isUserLoggedIn = SessionUtil.isUserLoggedIn();
 
+        processPaged(
+            (page, size) ->
+                fetchPrizes(personIndex, page, size, startYear, endYear),
+
+            prize ->
+                processPrize(prize, commission, measures, pointsRuleEngine,
+                    scalingRuleEngine, assessmentResearchArea, personIndex,
+                    assessmentResult, isUserLoggedIn)
+        );
+    }
+
+    private void assessResearcherEventContributions(
+        PersonIndex personIndex,
+        Commission commission,
+        List<AssessmentMeasure> measures,
+        AssessmentPointsRuleEngine pointsRuleEngine,
+        AssessmentPointsScalingRuleEngine scalingRuleEngine,
+        AssessmentResearchArea assessmentResearchArea,
+        int startYear, int endYear,
+        EnrichedResearcherAssessmentResponseDTO assessmentResult) {
+
+        var isUserLoggedIn = SessionUtil.isUserLoggedIn();
+
+        processPaged(
+            (page, size) ->
+                fetchEvents(personIndex, page, size, startYear, endYear),
+
+            event ->
+                processEventContribution(event, commission, measures,
+                    pointsRuleEngine, scalingRuleEngine, assessmentResearchArea,
+                    personIndex, assessmentResult, isUserLoggedIn)
+        );
+    }
+
+    private <T> void processPaged(
+        BiFunction<Integer, Integer, List<T>> fetchFunction,
+        Consumer<T> processFunction) {
+
         int pageNumber = 0;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
-            List<PrizeIndex> prizes =
-                fetchPrizes(personIndex, pageNumber, CHUNK_SIZE, startYear, endYear);
+            List<T> items = fetchFunction.apply(pageNumber, CHUNK_SIZE);
 
-            prizes.forEach(prize ->
-                processPrize(prize, commission, measures, pointsRuleEngine,
-                    scalingRuleEngine, assessmentResearchArea, personIndex, assessmentResult,
-                    isUserLoggedIn));
+            items.forEach(processFunction);
 
             pageNumber++;
-            hasNextPage = prizes.size() == CHUNK_SIZE;
+            hasNextPage = items.size() == CHUNK_SIZE;
         }
     }
 
@@ -559,6 +608,15 @@ public class PersonAssessmentClassificationServiceImpl
                                          int pageNumber, int chunkSize,
                                          int startYear, int endYear) {
         return prizeIndexRepository.findByPersonIdAndDateBetween(
+            personIndex.getDatabaseId(),
+            LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
+            PageRequest.of(pageNumber, chunkSize)).getContent();
+    }
+
+    private List<EventIndex> fetchEvents(PersonIndex personIndex,
+                                         int pageNumber, int chunkSize,
+                                         int startYear, int endYear) {
+        return eventIndexRepository.findByPersonIdAndDateBetween(
             personIndex.getDatabaseId(),
             LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
             PageRequest.of(pageNumber, chunkSize)).getContent();
@@ -661,6 +719,56 @@ public class PersonAssessmentClassificationServiceImpl
                 prize.getTitleOther(),
                 isUserLoggedIn ? scaledPoints : 0,
                 prize.getDatabaseId()));
+    }
+
+    private void processEventContribution(
+        EventIndex event,
+        Commission commission,
+        List<AssessmentMeasure> measures,
+        AssessmentPointsRuleEngine pointsRuleEngine,
+        AssessmentPointsScalingRuleEngine scalingRuleEngine,
+        AssessmentResearchArea researchArea, PersonIndex personIndex,
+        EnrichedResearcherAssessmentResponseDTO assessmentResult,
+        boolean isUserLoggedIn) {
+
+        var assessment = event.getCommissionAssessments().stream()
+            .filter(ca -> ca.a.equals(commission.getId())).findFirst();
+
+        if (assessment.isEmpty()) {
+            return;
+        }
+
+        var assessmentCode = ClassificationPriorityMapping.getContributionCodeFromEventAssessment(
+            assessment.get().b);
+        if (Objects.isNull(assessmentCode)) {
+            return;
+        }
+
+        var applicableMeasureOpt = findApplicableMeasure(measures, assessmentCode);
+        if (applicableMeasureOpt.isEmpty()) {
+            return;
+        }
+
+        var applicableMeasure = applicableMeasureOpt.get();
+
+        double basePoints = invokeRule(AssessmentPointsRuleEngine.class,
+            applicableMeasure.getPointRule(), pointsRuleEngine, researchArea.getResearchAreaCode(),
+            Objects.nonNull(researchArea.getResearchSubAreaIds()) ?
+                researchArea.getResearchSubAreaIds() : Collections.emptySet(), assessmentCode);
+
+        double scaledPoints = invokeRule(AssessmentPointsScalingRuleEngine.class,
+            applicableMeasure.getScalingRule(), scalingRuleEngine,
+            1, assessmentCode, basePoints);
+
+        log.info("{} more points for {}", scaledPoints, personIndex.getName());
+
+        assessmentResult.getPublicationsPerCategory()
+            .computeIfAbsent(ClassificationPriorityMapping.getCodeDisplayValue(assessmentCode),
+                k -> new ArrayList<>())
+            .add(new Triple<>(
+                event.getNameOther(),
+                isUserLoggedIn ? scaledPoints : 0,
+                event.getDatabaseId()));
     }
 
     private double getPointsForPublication(DocumentPublicationIndex publication,

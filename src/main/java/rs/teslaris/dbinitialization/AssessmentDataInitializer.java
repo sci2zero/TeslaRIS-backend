@@ -709,7 +709,7 @@ public class AssessmentDataInitializer {
                     "Број учесника на конференцији.",
                     3)));
         numParticipants.setAccessLevel(AccessLevel.CLOSED);
-        numParticipants.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        numParticipants.getApplicableTypes().add(ApplicableEntityType.CONFERENCE);
         numParticipants.setContentType(IndicatorContentType.NUMBER);
 
         var numPresentations = new Indicator();
@@ -725,7 +725,7 @@ public class AssessmentDataInitializer {
             new MultiLingualContent(serbianCyrillicTag, "Број саопштења на скупу.", 3)
         ));
         numPresentations.setAccessLevel(AccessLevel.CLOSED);
-        numPresentations.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        numPresentations.getApplicableTypes().add(ApplicableEntityType.CONFERENCE);
         numPresentations.setContentType(IndicatorContentType.NUMBER);
 
         var numParticipantCountries = new Indicator();
@@ -744,7 +744,7 @@ public class AssessmentDataInitializer {
                 3)
         ));
         numParticipantCountries.setAccessLevel(AccessLevel.CLOSED);
-        numParticipantCountries.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        numParticipantCountries.getApplicableTypes().add(ApplicableEntityType.CONFERENCE);
         numParticipantCountries.setContentType(IndicatorContentType.NUMBER);
 
         var numCountriesInScientificCommittee = new Indicator();
@@ -766,7 +766,7 @@ public class AssessmentDataInitializer {
                 "Број земаља које имају учесника у научном одбору скупа.", 3)
         ));
         numCountriesInScientificCommittee.setAccessLevel(AccessLevel.CLOSED);
-        numCountriesInScientificCommittee.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        numCountriesInScientificCommittee.getApplicableTypes().add(ApplicableEntityType.CONFERENCE);
         numCountriesInScientificCommittee.setContentType(IndicatorContentType.NUMBER);
 
         var organizedByScientificInstitution = new Indicator();
@@ -793,7 +793,7 @@ public class AssessmentDataInitializer {
                 3)
         ));
         organizedByScientificInstitution.setAccessLevel(AccessLevel.CLOSED);
-        organizedByScientificInstitution.getApplicableTypes().add(ApplicableEntityType.EVENT);
+        organizedByScientificInstitution.getApplicableTypes().add(ApplicableEntityType.CONFERENCE);
         organizedByScientificInstitution.setContentType(IndicatorContentType.BOOL);
 
         var slavistiCategory = new Indicator();
@@ -1120,7 +1120,7 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(serbianTag, "Međunarodna konferencija.", 2),
                 new MultiLingualContent(englishTag, "Multinational conference.", 1),
                 new MultiLingualContent(serbianCyrillicTag, "Међународна конференција.", 3)));
-        multinationalConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
+        multinationalConf.setApplicableTypes(Set.of(ApplicableEntityType.CONFERENCE));
 
         var nationalConf = new AssessmentClassification();
         nationalConf.setFormalDescriptionOfRule("nationalConference");
@@ -1130,7 +1130,7 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(serbianTag, "Domaća konferencija.", 2),
                 new MultiLingualContent(englishTag, "National conference.", 1),
                 new MultiLingualContent(serbianCyrillicTag, "Домаћа конференција.", 3)));
-        nationalConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
+        nationalConf.setApplicableTypes(Set.of(ApplicableEntityType.CONFERENCE));
 
         var nonAcademicConf = new AssessmentClassification();
         nonAcademicConf.setFormalDescriptionOfRule("nonAcademicConference");
@@ -1141,7 +1141,7 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag, "Technical (non-academic) conference.", 1),
                 new MultiLingualContent(serbianCyrillicTag, "Техничка (не-научна) конференција.",
                     3)));
-        nonAcademicConf.setApplicableTypes(Set.of(ApplicableEntityType.EVENT));
+        nonAcademicConf.setApplicableTypes(Set.of(ApplicableEntityType.CONFERENCE));
 
         var M21APlus = new AssessmentClassification();
         M21APlus.setFormalDescriptionOfRule("handleM21APlus");
@@ -1735,6 +1735,70 @@ public class AssessmentDataInitializer {
                     3)));
         m104.setApplicableTypes(Set.of(ApplicableEntityType.PRIZE));
 
+        var m111 = new AssessmentClassification();
+        m111.setFormalDescriptionOfRule("handleM111");
+        m111.setCode("M111");
+        m111.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "National exhibition prize",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Nagrada na nacionalnoj izložbi",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Награда на националној изложби",
+                    3)));
+        m111.setApplicableTypes(Set.of(ApplicableEntityType.PRIZE));
+
+        var exhibition = new AssessmentClassification();
+        exhibition.setFormalDescriptionOfRule("handleExhibition");
+        exhibition.setCode("exhibition");
+        exhibition.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Exhibition",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Izložba",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Изложба",
+                    3)));
+        exhibition.setApplicableTypes(Set.of(ApplicableEntityType.EXHIBITION));
+
+        var nationalExhibition = new AssessmentClassification();
+        nationalExhibition.setFormalDescriptionOfRule("handleNationalExhibition");
+        nationalExhibition.setCode("nationalExhibition");
+        nationalExhibition.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "National exhibition",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Nacionalna izložba",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Национална изложба",
+                    3)));
+        nationalExhibition.setApplicableTypes(Set.of(ApplicableEntityType.EXHIBITION));
+
+        var nonAssessableExhibition = new AssessmentClassification();
+        nonAssessableExhibition.setFormalDescriptionOfRule("handleNonAssessableExhibition");
+        nonAssessableExhibition.setCode("nonAssessableExhibition");
+        nonAssessableExhibition.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Exhibition is not for assessment",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Izložba nije za vrednovanje",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Изложба није за вредновање",
+                    3)));
+        nonAssessableExhibition.setApplicableTypes(Set.of(ApplicableEntityType.EXHIBITION));
+
         assessmentClassificationRepository.saveAll(
             List.of(journalM21APlus, journalM21A, journalM21, journalM22, journalM23, journalM23e,
                 journalM24plus, multinationalConf, nationalConf,
@@ -1750,7 +1814,8 @@ public class AssessmentDataInitializer {
                 m81, m82, m83, m84,
                 m91a, m91, m92, m93, m94, m95, m96, m97, m98,
                 m00,
-                m102, m104
+                m102, m104, m111,
+                exhibition, nationalExhibition, nonAssessableExhibition
             )
         );
     }

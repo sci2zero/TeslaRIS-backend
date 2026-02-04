@@ -283,6 +283,11 @@ public class ClassificationPriorityMapping {
         return assessmentConfig.monographCodeToPublicationMapping.getOrDefault(code, null);
     }
 
+    @Nullable
+    public static String getContributionCodeFromEventAssessment(String code) {
+        return assessmentConfig.eventCodeToContributionMapping.getOrDefault(code, null);
+    }
+
     public static AssessmentCodeSortingRule getAssessmentCodeStoringRule() {
         return assessmentConfig.assessmentCodeSortingRule;
     }
@@ -328,6 +333,7 @@ public class ClassificationPriorityMapping {
         @JsonProperty("minimumPageRequirements") Map<String, Integer> minimumPageRequirements,
         @JsonProperty("defendedThesesMapping") Map<ThesisType, String> defendedThesesMapping,
         @JsonProperty("monographCodeToPublicationMapping") Map<String, String> monographCodeToPublicationMapping,
+        @JsonProperty("eventCodeToContributionMapping") Map<String, String> eventCodeToContributionMapping,
         @JsonProperty("assessmentCodeSortingRule") AssessmentCodeSortingRule assessmentCodeSortingRule
     ) {
     }

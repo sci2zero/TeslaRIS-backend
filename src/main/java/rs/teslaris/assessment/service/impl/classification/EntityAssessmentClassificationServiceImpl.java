@@ -23,10 +23,12 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 
 @Service
 @Primary
@@ -44,6 +46,8 @@ public class EntityAssessmentClassificationServiceImpl
     protected final DocumentPublicationService documentPublicationService;
 
     protected final ConferenceService conferenceService;
+
+    protected final ExhibitionService exhibitionService;
 
     protected final ApplicationEventPublisher applicationEventPublisher;
 
@@ -85,9 +89,13 @@ public class EntityAssessmentClassificationServiceImpl
                 ((EventAssessmentClassification) entityAssessmentClassificationToDelete).getEvent()
                     .getId();
 
-            conferenceService.reindexVolatileConferenceInformation(
-                ((EventAssessmentClassification) entityAssessmentClassificationToDelete).getEvent()
-                    .getId());
+            if (Hibernate.getClass(
+                ((EventAssessmentClassification) entityAssessmentClassificationToDelete)
+                    .getEvent()) == Conference.class) {
+                conferenceService.reindexVolatileConferenceInformation(entityId);
+            } else {
+                exhibitionService.reindexVolatileExhibitionInformation(entityId);
+            }
         } else if (entityAssessmentClassificationToDelete instanceof PublicationSeriesAssessmentClassification) {
             if (Hibernate.getClass(
                 ((PublicationSeriesAssessmentClassification) entityAssessmentClassificationToDelete)

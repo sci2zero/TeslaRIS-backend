@@ -35,6 +35,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.functional.Triple;
 
 @Service
 @Traceable
@@ -268,6 +269,14 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
 
             eventIndex.setClassifiedBy(
                 commissionRepository.findCommissionsThatClassifiedEvent(exhibitionId));
+
+            eventIndex.getCommissionAssessments().clear();
+            commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
+                exhibitionId, eventIndex.getClassifiedBy()).forEach(assessment ->
+                eventIndex.getCommissionAssessments().add(
+                    new Triple<>(assessment.commissionId(),
+                        assessment.assessmentCode(),
+                        assessment.manual())));
 
             eventIndexRepository.save(eventIndex);
         });

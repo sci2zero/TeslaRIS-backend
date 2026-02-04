@@ -38,6 +38,7 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 @Service
@@ -331,6 +332,14 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
             eventIndex.setClassifiedBy(
                 commissionRepository.findCommissionsThatClassifiedEvent(conferenceId));
+
+            eventIndex.getCommissionAssessments().clear();
+            commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
+                conferenceId, eventIndex.getClassifiedBy()).forEach(assessment ->
+                eventIndex.getCommissionAssessments().add(
+                    new Triple<>(assessment.commissionId(),
+                        assessment.assessmentCode(),
+                        assessment.manual())));
 
             indexActiveEmploymentRelations(eventIndex, conferenceId);
 

@@ -116,13 +116,13 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public RegistryBookEntryDTO readRegistryBookEntry(Integer registryBookEntryId) {
         return RegistryBookEntryConverter.toDTO(findOne(registryBookEntryId));
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Integer userId,
                                                                         Pageable pageable) {
         var userEmploymentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
@@ -137,7 +137,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
                                                                          Pageable pageable) {
         return registryBookEntryRepository.getBookEntriesForPromotion(promotionId, pageable)
@@ -469,7 +469,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean isAttendanceNotCancelled(String attendanceIdentifier) {
         var entry = registryBookEntryRepository.findByAttendanceIdentifier(attendanceIdentifier);
         return entry.isPresent();
@@ -554,6 +554,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<List<String>> previewPromotedEntries(Integer promotionId, String lang) {
         var promotion = promotionService.findOne(promotionId);
         var entriesToPromote = registryBookEntryRepository
@@ -583,7 +584,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                 registryBookEntryRepository.getLastRegistrySchoolYearNumber(
                     finalPromotionSchoolYear), 0) + 1);
 
-        for (RegistryBookEntry registryBookEntry : entriesToPromote) {
+        for (var registryBookEntry : entriesToPromote) {
             var dissertation = registryBookEntry.getDissertationInformation();
             if (Objects.requireNonNullElse(dissertation.getDiplomaNumber(), "").isBlank()
                 || dissertation.getDiplomaIssueDate() == null) {
@@ -615,7 +616,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<String> getPromoteesList(Integer promotionId) {
         var promotees = new ArrayList<String>();
         registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
@@ -631,7 +632,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<String> getAddressesList(Integer promotionId) {
         var addresses = new ArrayList<String>();
         registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
@@ -652,7 +653,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<RegistryBookEntryDTO> getRegistryBookForInstitutionAndPeriod(Integer userId,
                                                                              Integer institutionId,
                                                                              LocalDate from,
@@ -680,6 +681,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<InstitutionCountsReportDTO> institutionCountsReport(
         Integer userId,
         LocalDate from,

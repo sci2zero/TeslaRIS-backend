@@ -61,4 +61,3 @@ public class ProgressServiceImpl implements ProgressService {
         }
     }
 }
-

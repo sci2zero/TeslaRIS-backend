@@ -59,7 +59,6 @@ import rs.teslaris.thesislibrary.util.RegistryBookGenerationUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 @Traceable
 public class RegistryBookReportServiceImpl implements RegistryBookReportService {
@@ -78,6 +77,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
 
 
     @Override
+    @Transactional
     public String scheduleReportGeneration(RelativeDateDTO from, RelativeDateDTO to,
                                            Integer institutionId,
                                            String lang, Integer userId, String authorName,
@@ -157,6 +157,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<String> listAvailableReports(Integer userId) {
         var availableReports = new ArrayList<String>();
         var userInstitution = userRepository.findOrganisationUnitIdForUser(userId);
@@ -177,6 +178,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public GetObjectResponse serveReportFile(String reportFileName, Integer userId)
         throws IOException {
         var report = registryBookReportRepository.findByReportFileName(reportFileName)
@@ -193,6 +195,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
     }
 
     @Override
+    @Transactional
     public void deleteReportFile(String reportFileName, Integer userId) {
         registryBookReportRepository.findByReportFileName(reportFileName)
             .ifPresent(report -> {

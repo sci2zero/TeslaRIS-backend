@@ -44,6 +44,13 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
         "WHERE pec.event.id = :eventId")
     Set<Integer> findInstitutionIdsByEventIdAndEventContribution(Integer eventId);
 
+    @Query("SELECT DISTINCT p.id " +
+        "FROM PersonEventContribution pec " +
+        "JOIN pec.person p " +
+        "WHERE pec.event.id = :eventId AND " +
+        "p IS NOT NULL")
+    Set<Integer> findPersonIdsByEventIdAndEventContribution(Integer eventId);
+
     @Query("""
             SELECT DISTINCT inv.organisationUnit.id
             FROM ProceedingsPublication pp

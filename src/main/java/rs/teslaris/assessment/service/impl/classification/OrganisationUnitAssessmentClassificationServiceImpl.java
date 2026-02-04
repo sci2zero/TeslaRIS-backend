@@ -15,6 +15,7 @@ import rs.teslaris.assessment.service.interfaces.classification.OrganisationUnit
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 
 @Service
 @Traceable
@@ -31,11 +32,13 @@ public class OrganisationUnitAssessmentClassificationServiceImpl
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
         ConferenceService conferenceService,
+        ExhibitionService exhibitionService,
         ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         OrganisationUnitAssessmentClassificationRepository organisationUnitAssessmentClassificationRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, applicationEventPublisher,
+            entityAssessmentClassificationRepository);
         this.organisationUnitAssessmentClassificationRepository =
             organisationUnitAssessmentClassificationRepository;
     }

@@ -53,6 +53,7 @@ import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.util.functional.Pair;
@@ -100,6 +101,7 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
         ConferenceService conferenceService,
+        ExhibitionService exhibitionService,
         ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
@@ -110,7 +112,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         TaskManagerService taskManagerService, CsvDataLoader csvDataLoader,
         ClassificationBatchWriter classificationBatchWriter) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, applicationEventPublisher,
+            entityAssessmentClassificationRepository);
         this.publicationSeriesAssessmentClassificationJPAService =
             publicationSeriesAssessmentClassificationJPAService;
         this.publicationSeriesAssessmentClassificationRepository =

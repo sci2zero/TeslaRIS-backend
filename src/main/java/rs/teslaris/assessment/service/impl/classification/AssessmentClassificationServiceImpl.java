@@ -21,7 +21,6 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.AssessmentClassificationReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
-import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @Service
 @RequiredArgsConstructor
@@ -37,8 +36,7 @@ public class AssessmentClassificationServiceImpl extends JPAServiceImpl<Assessme
     @Override
     public Page<AssessmentClassificationDTO> readAllAssessmentClassifications(Pageable pageable,
                                                                               String language) {
-        // TODO: Add other language translations to assessment classifications
-        return assessmentClassificationRepository.readAll(LanguageAbbreviations.ENGLISH, pageable)
+        return assessmentClassificationRepository.readAll(language, pageable)
             .map(AssessmentClassificationConverter::toDTO);
     }
 

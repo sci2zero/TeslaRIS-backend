@@ -14,12 +14,18 @@ import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 public interface AssessmentClassificationRepository
     extends JpaRepository<AssessmentClassification, Integer> {
 
-    @Query(value =
-        "SELECT ac FROM AssessmentClassification ac LEFT JOIN ac.title title " +
-            "WHERE title.language.languageTag = :languageTag",
-        countQuery =
-            "SELECT count(DISTINCT ac) FROM AssessmentClassification ac LEFT JOIN ac.title title " +
-                "WHERE title.language.languageTag = :languageTag")
+    @Query(
+        value = """
+            SELECT ac
+            FROM AssessmentClassification ac
+            LEFT JOIN ac.title title
+                 WITH title.language.languageTag = :languageTag
+            """,
+        countQuery = """
+            SELECT COUNT(ac)
+            FROM AssessmentClassification ac
+            """
+    )
     Page<AssessmentClassification> readAll(String languageTag, Pageable pageable);
 
     @Query("SELECT COUNT(eac) > 0 FROM EntityAssessmentClassification eac " +

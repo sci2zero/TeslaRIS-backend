@@ -10,9 +10,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -109,7 +111,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     public void performOUIndicatorDeduction() {
         var context = prepareInstitutionIndicatorDeductionContext();
 
-        var indicatorsToSave = new ArrayList<OrganisationUnitIndicator>();
+        var indicatorsToSave = new HashSet<OrganisationUnitIndicator>();
         FunctionalUtil.forEachChunked(
             PageRequest.of(0, PROCESS_BATCH_SIZE,
                 Sort.by(Sort.Direction.ASC, "databaseId")),
@@ -142,7 +144,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             organisationUnitId).ifPresent(institution -> {
             var context = prepareInstitutionIndicatorDeductionContext();
 
-            var indicatorsToSave = new ArrayList<OrganisationUnitIndicator>();
+            var indicatorsToSave = new HashSet<OrganisationUnitIndicator>();
 
             performInstitutionDeduction(
                 context.sources, institution,
@@ -277,7 +279,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                              OrganisationUnitIndex institution,
                                              Indicator totalCitationsIndicator,
                                              Indicator totalOutputIndicator,
-                                             List<OrganisationUnitIndicator> indicatorsToSave
+                                             Set<OrganisationUnitIndicator> indicatorsToSave
     ) {
         entityIndicatorSources.forEach(entityIndicatorSource -> {
             var totalCitationCount = new AtomicDouble(0);
@@ -383,7 +385,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        var documentIndicators = new ArrayList<DocumentIndicator>();
+        var documentIndicators = new HashSet<DocumentIndicator>();
         try {
             HashMap<String, Integer> personAggregatedCounts = new HashMap<>();
             List<Integer> allCitationCounts = new ArrayList<>();
@@ -546,7 +548,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var endYear = LocalDate.now().getYear();
             var startYear = endYear - harvestPeriodOffset;
 
-            var documentIndicators = new ArrayList<DocumentIndicator>();
+            var documentIndicators = new HashSet<DocumentIndicator>();
 
             ResponseEntity<String> responseEntity;
             var shouldRetry = true;
@@ -651,7 +653,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
         var shouldUpdateIndex = source.equals(EntityIndicatorSource.OPEN_ALEX);
 
-        var personIndicators = new ArrayList<PersonIndicator>();
+        var personIndicators = new HashSet<PersonIndicator>();
 
         counts.forEach((key, value) -> {
             if (value == 0) {

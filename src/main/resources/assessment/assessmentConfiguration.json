@@ -285,6 +285,10 @@
     "M41": "M44",
     "M42": "M45"
   },
+  "eventCodeToContributionMapping": {
+    "exhibition": "M105",
+    "nationalExhibition": "M112"
+  },
   "assessmentCodeSortingRule": {
     "startsWithConstraint": "M",
     "codePattern": "^M(\\d+)([eEaA]|Plus|APlus|a\\+)?$",

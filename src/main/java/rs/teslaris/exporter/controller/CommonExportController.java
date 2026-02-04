@@ -36,7 +36,7 @@ public class CommonExportController {
                 commonExportService.exportPersonsToCommonModel(allTime);
                 break;
             case "events":
-                commonExportService.exportConferencesToCommonModel(allTime);
+                commonExportService.exportEventsToCommonModel(allTime);
                 break;
             case "documents":
                 commonExportService.exportDocumentsToCommonModel(allTime, exportTypes);

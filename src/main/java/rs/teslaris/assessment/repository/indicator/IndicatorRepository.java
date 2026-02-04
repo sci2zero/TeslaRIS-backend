@@ -28,21 +28,13 @@ public interface IndicatorRepository extends JpaRepository<Indicator, Integer> {
         value = """
             SELECT i
             FROM Indicator i
-            JOIN i.title title
-            WHERE title.language.languageTag = :languageTag
+            LEFT JOIN i.title title
+                 WITH title.language.languageTag = :languageTag
             """,
         countQuery = """
             SELECT COUNT(i)
             FROM Indicator i
-            WHERE EXISTS (
-                SELECT 1
-                FROM Indicator i2
-                JOIN i2.title title
-                WHERE i2 = i
-                  AND title.language.languageTag = :languageTag
-            )
             """
     )
     Page<Indicator> readAll(String languageTag, Pageable pageable);
-
 }

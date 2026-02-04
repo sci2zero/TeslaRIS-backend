@@ -497,6 +497,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
         index.setSerialEvent(event.getSerialEvent());
 
+        index.getRelatedPersonIds().clear();
+        index.getRelatedPersonIds()
+            .addAll(eventRepository.findPersonIdsByEventIdAndEventContribution(event.getId()));
+
         index.getRelatedInstitutionIds().clear();
         index.getRelatedInstitutionIds().addAll(
             eventRepository.findInstitutionIdsByEventIdAndEventContribution(event.getId())

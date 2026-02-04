@@ -16,5 +16,7 @@ public enum ApplicableEntityType {
     GENETIC_MATERIAL,
     DATASET,
     THESIS,
-    PRIZE
+    PRIZE,
+    CONFERENCE,
+    EXHIBITION
 }

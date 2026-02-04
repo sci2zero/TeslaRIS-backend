@@ -20,6 +20,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
@@ -36,6 +37,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -74,6 +76,8 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final PersonRepository personRepository;
 
     private final ConferenceRepository conferenceRepository;
+
+    private final ExhibitionRepository exhibitionRepository;
 
     private final DatasetRepository datasetRepository;
 
@@ -163,7 +167,7 @@ public class CommonExportServiceImpl implements CommonExportService {
 
     @Override
     @Transactional(readOnly = true)
-    public void exportConferencesToCommonModel(boolean allTime) {
+    public void exportEventsToCommonModel(boolean allTime) {
         if (!eventExportLock.tryLock()) {
             log.info("Event export already in progress, skipping this run.");
             return;
@@ -175,6 +179,15 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportEventConverter::toCommonExportModel,
                 ExportEvent.class,
                 Conference::getId,
+                allTime,
+                null
+            );
+
+            commonExportWorker.exportEntities(
+                exhibitionRepository::findAllModified,
+                ExportEventConverter::toCommonExportModel,
+                ExportEvent.class,
+                Exhibition::getId,
                 allTime,
                 null
             );
@@ -368,7 +381,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             return;
         }
 
-        exportConferencesToCommonModel(false);
+        exportEventsToCommonModel(false);
     }
 
     @Scheduled(cron = "${export-to-common.schedule.person}")

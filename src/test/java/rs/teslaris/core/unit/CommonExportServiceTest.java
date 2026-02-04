@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
@@ -30,6 +31,7 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -65,6 +67,9 @@ public class CommonExportServiceTest {
 
     @Mock
     private ConferenceRepository conferenceRepository;
+
+    @Mock
+    private ExhibitionRepository exhibitionRepository;
 
     @Mock
     private DatasetRepository datasetRepository;
@@ -164,16 +169,22 @@ public class CommonExportServiceTest {
         var conference = new Conference();
         conference.setId(1);
 
-        var page = new PageImpl<>(List.of(conference));
-        when(
-            conferenceRepository.findAllModified(any(PageRequest.class), anyBoolean()))
-            .thenReturn(page);
+        var exhibition = new Exhibition();
+        exhibition.setId(2);
+
+        var page1 = new PageImpl<>(List.of(conference));
+        var page2 = new PageImpl<>(List.of(exhibition));
+
+        when(conferenceRepository.findAllModified(any(PageRequest.class), anyBoolean()))
+            .thenReturn(page1);
+        when(exhibitionRepository.findAllModified(any(PageRequest.class), anyBoolean()))
+            .thenReturn(page2);
 
         // When
-        commonExportService.exportConferencesToCommonModel(allTime);
+        commonExportService.exportEventsToCommonModel(allTime);
 
         // Then
-        verify(commonExportWorker, times(1)).exportEntities(
+        verify(commonExportWorker, times(2)).exportEntities(
             any(), any(), eq(ExportEvent.class), any(), eq(allTime), any());
     }
 

@@ -14,6 +14,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.core.util.functional.Triple;
 
 @Getter
 @Setter
@@ -86,6 +87,9 @@ public class EventIndex {
     @Field(type = FieldType.Integer, name = "related_institution_ids", store = true)
     private Set<Integer> relatedInstitutionIds = new HashSet<>();
 
+    @Field(type = FieldType.Integer, name = "related_person_ids", store = true)
+    private Set<Integer> relatedPersonIds = new HashSet<>();
+
     @Field(type = FieldType.Integer, name = "related_employment_institution_ids", store = true)
     private Set<Integer> relatedEmploymentInstitutionIds = new HashSet<>();
 
@@ -97,4 +101,7 @@ public class EventIndex {
 
     @Field(type = FieldType.Boolean, name = "has_proceedings", store = true)
     private Boolean hasProceedings;
+
+    @Field(type = FieldType.Object, name = "commission_assessments")
+    private List<Triple<Integer, String, Boolean>> commissionAssessments = new ArrayList<>();
 }

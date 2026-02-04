@@ -87,6 +87,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -150,7 +151,9 @@ public class DocumentAssessmentClassificationServiceImpl
     public DocumentAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
-        ConferenceService conferenceService, ApplicationEventPublisher applicationEventPublisher,
+        ConferenceService conferenceService,
+        ExhibitionService exhibitionService,
+        ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
@@ -170,7 +173,8 @@ public class DocumentAssessmentClassificationServiceImpl
         PublicationClassificationService publicationClassificationService,
         ThesisRepository thesisRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, applicationEventPublisher,
+            entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
