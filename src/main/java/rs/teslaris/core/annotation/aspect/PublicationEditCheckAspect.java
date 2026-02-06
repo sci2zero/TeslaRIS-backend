@@ -1,6 +1,7 @@
 package rs.teslaris.core.annotation.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -63,23 +64,42 @@ public class PublicationEditCheckAspect {
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
         int personId = userService.getPersonIdForUser(tokenUtil.extractUserIdFromToken(tokenValue));
 
-        List<Integer> contributors = getContributors(annotation, attributeMap, joinPoint);
+        List<Integer> documentIds = new ArrayList<>();
+        if (attributeMap.containsKey("documentId")) {
+            documentIds.add(Integer.parseInt(attributeMap.get("documentId")));
+        } else if (attributeMap.containsKey("staleThesisId") &&
+            attributeMap.containsKey("substituteThesisId") &&
+            annotation.value().equalsIgnoreCase("THESIS")) {
+            documentIds.add(Integer.parseInt(attributeMap.get("staleThesisId")));
+            documentIds.add(Integer.parseInt(attributeMap.get("substituteThesisId")));
+        } else if (annotation.value().equalsIgnoreCase("CREATE")) {
+            documentIds.add(-1); // not checked
+        } else {
+            throw new IllegalArgumentException(
+                "Missing document identifiers."); // should never happen in prod, only for testing
+        }
 
         var assessmentMode = annotation.value().equalsIgnoreCase("ASSESS");
 
-        checkPermission(role, personId, userId, contributors, joinPoint, annotation,
-            attributeMap, assessmentMode);
+        for (var documentId : documentIds) {
+            List<Integer> contributors =
+                getContributors(annotation, attributeMap, joinPoint, documentId);
+
+            checkPermission(role, personId, userId, contributors, joinPoint, annotation,
+                assessmentMode, documentId);
+        }
 
         return joinPoint.proceed();
     }
 
     private List<Integer> getContributors(PublicationEditCheck annotation,
                                           Map<String, String> attributeMap,
-                                          ProceedingJoinPoint joinPoint) {
+                                          ProceedingJoinPoint joinPoint,
+                                          Integer documentId) {
         if (annotation.value().equalsIgnoreCase("CREATE")) {
             return getContributorsFromDTO(joinPoint);
         } else {
-            return getContributorsFromDatabase(attributeMap);
+            return getContributorsFromDatabase(attributeMap, documentId);
         }
     }
 
@@ -91,8 +111,7 @@ public class PublicationEditCheckAspect {
 
     private boolean isDocumentNotAThesis(ProceedingJoinPoint joinPoint,
                                          PublicationEditCheck annotation,
-                                         Map<String, String> attributeMap,
-                                         Integer userId) {
+                                         Integer userId, Integer documentId) {
         var userInstitutionId = userService.getUserOrganisationUnitId(userId);
         var institutionSubUnitIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitutionId);
@@ -104,23 +123,22 @@ public class PublicationEditCheckAspect {
         }
 
         var document =
-            documentLookupService.fastDocumentLookup(
-                Integer.parseInt(attributeMap.get("documentId")));
+            documentLookupService.fastDocumentLookup(documentId);
         return !(document instanceof Thesis) || !institutionSubUnitIds.contains(
             ((Thesis) document).getOrganisationUnit().getId());
     }
 
-    private List<Integer> getContributorsFromDatabase(Map<String, String> attributeMap) {
-        int publicationId = Integer.parseInt(attributeMap.get("documentId"));
-        return documentPublicationService.getContributorIds(publicationId);
+    private List<Integer> getContributorsFromDatabase(Map<String, String> attributeMap,
+                                                      Integer documentId) {
+        return documentPublicationService.getContributorIds(documentId);
     }
 
     private void checkPermission(String role, int personId, int userId,
                                  List<Integer> contributors,
                                  ProceedingJoinPoint joinPoint,
                                  PublicationEditCheck annotation,
-                                 Map<String, String> attributeMap,
-                                 boolean assessmentMode) {
+                                 boolean assessmentMode,
+                                 Integer documentId) {
         UserRole userRole = UserRole.valueOf(role);
         switch (userRole) {
             case ADMIN:
@@ -141,19 +159,19 @@ public class PublicationEditCheckAspect {
                 break;
             case INSTITUTIONAL_EDITOR:
                 if (assessmentMode || noResearchersFromUserInstitution(contributors, userId) &&
-                    isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
+                    isDocumentNotAThesis(joinPoint, annotation, userId, documentId)) {
                     handleUnauthorisedUser();
                 }
                 break;
             case COMMISSION:
                 if (!assessmentMode || noResearchersFromUserInstitution(contributors, userId) &&
-                    isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
+                    isDocumentNotAThesis(joinPoint, annotation, userId, documentId)) {
                     handleUnauthorisedUser();
                 }
                 break;
             case INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY:
                 if (assessmentMode ||
-                    isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
+                    isDocumentNotAThesis(joinPoint, annotation, userId, documentId)) {
                     handleUnauthorisedUser();
                 }
                 break;

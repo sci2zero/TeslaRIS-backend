@@ -259,4 +259,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "has_publications", store = true)
     private Boolean hasPublications;
+
+    @Field(type = FieldType.Boolean, name = "is_substituted", store = true)
+    private Boolean isSubstituted;
 }

@@ -1,9 +1,9 @@
 package rs.teslaris.exporter.controller;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import lombok.RequiredArgsConstructor;
-import org.apache.http.auth.AuthenticationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import rs.teslaris.core.annotation.PersonEditCheck;
-import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
-import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.exporter.service.interfaces.RoCrateExportService;
 
 @RestController
@@ -29,51 +26,58 @@ public class RoCrateExportController {
 
 
     @GetMapping("/document/{documentId}")
-    public ResponseEntity<StreamingResponseBody> downloadRoCrate(
-        @PathVariable Integer documentId,
-        @RequestParam String exportId) throws AuthenticationException {
-        if (!SessionUtil.isUserLoggedIn()) {
-            throw new LoadingException(
-                "You have to log in to be able to download Ro-Crates.");
-        }
+    public ResponseEntity<StreamingResponseBody> downloadRoCrate(@PathVariable Integer documentId,
+                                                                 @RequestParam String exportId)
+        throws IOException {
+        var zipPath =
+            roCrateExportService.createRoCrateZip(
+                documentId, exportId);
 
-        var byteArrayOutputStream = new ByteArrayOutputStream();
-        roCrateExportService.createRoCrateZip(documentId, exportId, byteArrayOutputStream);
+        long contentLength = Files.size(zipPath);
 
-        var bytes = byteArrayOutputStream.toByteArray();
-        StreamingResponseBody body = StreamingUtil.createStreamingBody(
-            new ByteArrayInputStream(bytes));
+        StreamingResponseBody body = outputStream -> {
+            try (InputStream in =
+                     Files.newInputStream(zipPath)) {
+                in.transferTo(outputStream);
+            } finally {
+                Files.deleteIfExists(zipPath);
+            }
+        };
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
                 StringUtil.contentDisposition(
-                    "attachment; filename=\"ro-crate-" + documentId + ".zip\""))
-            .header(HttpHeaders.CONTENT_TYPE, "application/zip")
-            .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(bytes.length))
+                    "attachment; filename=\"ro-crate-"
+                        + documentId + ".zip\""))
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .contentLength(contentLength)
             .body(body);
     }
 
     @GetMapping("/person/{personId}")
     @PersonEditCheck
     public ResponseEntity<StreamingResponseBody> downloadRoCrateBibliography(
-        @PathVariable Integer personId,
-        @RequestParam String exportId) {
-        var byteArrayOutputStream = new ByteArrayOutputStream();
-        roCrateExportService.createRoCrateBibliographyZip(personId, exportId,
-            byteArrayOutputStream);
+        @PathVariable Integer personId, @RequestParam String exportId) throws IOException {
+        var zipPath = roCrateExportService.createRoCrateBibliographyZip(personId, exportId);
 
-        var bytes = byteArrayOutputStream.toByteArray();
-        StreamingResponseBody body = StreamingUtil.createStreamingBody(
-            new ByteArrayInputStream(bytes));
+        long contentLength = Files.size(zipPath);
+
+        StreamingResponseBody body = outputStream -> {
+            try (InputStream in =
+                     Files.newInputStream(zipPath)) {
+                in.transferTo(outputStream);
+            } finally {
+                Files.deleteIfExists(zipPath);
+            }
+        };
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
                 StringUtil.contentDisposition(
-                    "attachment; filename=\"ro-crate-" + personId + ".zip\""))
-            .header(HttpHeaders.CONTENT_TYPE, "application/zip")
-            .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(bytes.length))
+                    "attachment; filename=\"ro-crate-"
+                        + personId + ".zip\""))
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .contentLength(contentLength)
             .body(body);
     }
 }

@@ -370,6 +370,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         addPublisherInfo(commonExportDocument, thesis.getPublisher());
 
+        if (Objects.nonNull(thesis.getSubstitutedBy())) {
+            commonExportDocument.setSubstitutedBy(thesis.getSubstitutedBy().getId());
+        }
+
         return commonExportDocument;
     }
 

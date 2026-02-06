@@ -90,6 +90,7 @@ public class CitationServiceImpl implements CitationService {
 
     private void addAuthors(CSLItemDataBuilder itemBuilder, String authorNames) {
         var authors = Arrays.stream(authorNames.split("; "))
+            .filter(name -> !name.isBlank())
             .map(authorName -> {
                 var nameParts = authorName.split(" ");
 
@@ -112,6 +113,10 @@ public class CitationServiceImpl implements CitationService {
                 return new CSLNameBuilder().given(nameParts[0]).family(nameParts[1]).build();
             })
             .toArray(CSLName[]::new);
+
+        if (authors.length == 0) {
+            return;
+        }
 
         itemBuilder.author(authors);
     }

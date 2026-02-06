@@ -145,7 +145,7 @@ public class EmailUtil {
         if (!mustSend) {
             var lastSent = exceptionThrottleMap.get(exceptionClass);
             if (Objects.nonNull(lastSent) && lastSent.isEqual(today)) {
-                log.warn("Skipping email for {} — already sent today",
+                log.warn("Skipping email for {} - already sent today",
                     exceptionClass.getSimpleName());
                 return;
             }

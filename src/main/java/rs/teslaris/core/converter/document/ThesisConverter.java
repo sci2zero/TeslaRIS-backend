@@ -38,6 +38,7 @@ import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 
 
 @Component
@@ -228,13 +229,28 @@ public class ThesisConverter extends DocumentPublicationConverter {
             thesisDTO.getPreliminaryFiles().add(DocumentFileConverter.toDTO(file));
         });
 
-        thesis.getPreliminarySupplements().forEach(supplement -> {
-            thesisDTO.getPreliminarySupplements().add(DocumentFileConverter.toDTO(supplement));
-        });
+        thesis.getPreliminarySupplements().forEach(
+            supplement -> thesisDTO.getPreliminarySupplements()
+                .add(DocumentFileConverter.toDTO(supplement)));
 
-        thesis.getCommissionReports().forEach(commissionReport -> {
-            thesisDTO.getCommissionReports().add(DocumentFileConverter.toDTO(commissionReport));
-        });
+        thesis.getCommissionReports().forEach(commissionReport -> thesisDTO.getCommissionReports()
+            .add(DocumentFileConverter.toDTO(commissionReport)));
+
+        if (SessionUtil.isUserLoggedInAndAdmin() ||
+            SessionUtil.isUserLoggedInAndLibrarian()) {
+            if (Objects.nonNull(thesis.getSubstitutedBy())) {
+                thesisDTO.setSubstitutedBy(thesis.getSubstitutedBy().getId());
+                thesisDTO.setSubstituteTitle(MultilingualContentConverter.getMultilingualContentDTO(
+                    thesis.getSubstitutedBy().getTitle()));
+            }
+
+            if (Objects.nonNull(thesis.getSubstituteFor())) {
+                thesisDTO.setSubstituteFor(thesis.getSubstituteFor().getId());
+                thesisDTO.setSubstitutedTitle(
+                    MultilingualContentConverter.getMultilingualContentDTO(
+                        thesis.getSubstituteFor().getTitle()));
+            }
+        }
     }
 
     public static DC toDCModel(Thesis thesis) {

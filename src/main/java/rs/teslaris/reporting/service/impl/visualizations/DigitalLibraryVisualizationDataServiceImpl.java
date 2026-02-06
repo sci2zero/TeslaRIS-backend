@@ -242,6 +242,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
                     .query(q -> q
                         .bool(b -> {
                                 b.must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                    .mustNot(m -> m.term(t -> t.field("is_substituted").value(true)))
                                     .must(m -> m.term(t -> t.field("type").value("THESIS")))
                                     .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                                         searchFields))
@@ -281,6 +282,7 @@ public class DigitalLibraryVisualizationDataServiceImpl
                 .query(q -> q
                     .bool(b -> {
                             b.must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                .mustNot(m -> m.term(t -> t.field("is_substituted").value(true)))
                                 .must(m -> m.term(t -> t.field("year").value(year)))
                                 .must(QueryUtil.organisationUnitMatchQuery(organisationUnitIds,
                                     searchFields))

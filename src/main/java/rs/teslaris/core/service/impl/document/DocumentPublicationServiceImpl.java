@@ -1629,6 +1629,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 b.must(q -> q.term(t -> t.field("is_approved").value(true)));
             }
 
+            if (!SessionUtil.isUserLoggedInAndAdmin() &&
+                !SessionUtil.isUserLoggedInAndLibrarian()) {
+                b.mustNot(q ->
+                    q.term(t -> t.field("is_substituted").value(true)));
+            }
+
             if (Objects.nonNull(unmanaged) && unmanaged) {
                 var allAuthorsUnmanagedScriptQuery =
                     "if (!doc.containsKey('author_ids') || doc['author_ids'].size() == 0) return false; "

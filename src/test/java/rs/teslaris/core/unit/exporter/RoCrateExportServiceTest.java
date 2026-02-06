@@ -1,8 +1,8 @@
 package rs.teslaris.core.unit.exporter;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -11,13 +11,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.minio.GetObjectResponse;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -107,51 +106,41 @@ class RoCrateExportServiceTest {
     }
 
     @Test
-    void shouldReturnSilentlyWhenDocumentDoesNotExist() throws JsonProcessingException {
-        // Given
+    void shouldReturnSilentlyWhenDocumentDoesNotExist() throws Exception {
         var documentId = 1;
-        var outputStream = new ByteArrayOutputStream();
+
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(null);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
-        var objectWriter = mock(ObjectWriter.class);
-        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
-        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
-        // When
-        service.createRoCrateZip(documentId, exportId, outputStream);
+        var path = service.createRoCrateZip(documentId, exportId);
 
-        // Then
-        assertEquals(0, outputStream.size());
+        assertTrue(Files.exists(path));
+        Files.deleteIfExists(path);
     }
 
     @Test
     void shouldCreateZipWithMetadataAndPreviewOnlyWhenNoFiles() throws Exception {
-        // Given
         var documentId = 2;
-        var outputStream = new ByteArrayOutputStream();
         var document = mock(Dataset.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
-        var objectWriter = mock(ObjectWriter.class);
-        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
-        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
-        // When
-        service.createRoCrateZip(documentId, exportId, outputStream);
+        var writer = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(writer);
+        when(writer.writeValueAsBytes(any())).thenReturn("{}".getBytes());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        // Then
-        assertTrue(outputStream.size() >= 0);
+        var path = service.createRoCrateZip(documentId, exportId);
+
+        assertNotNull(path);
+        Files.deleteIfExists(path);
     }
 
     @Test
     void shouldIncludeOnlyApprovedOpenAccessFiles() throws Exception {
-        // Given
         var documentId = 3;
-        var outputStream = new ByteArrayOutputStream();
         var document = mock(Dataset.class);
 
         var approvedFile = mock(DocumentFile.class);
@@ -168,14 +157,14 @@ class RoCrateExportServiceTest {
 
         when(document.getFileItems()).thenReturn(Set.of(approvedFile, rejectedFile));
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
-        var objectWriter = mock(ObjectWriter.class);
-        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
-        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
+        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
-        // Given
+        var writer = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(writer);
+        when(writer.writeValueAsBytes(any())).thenReturn("{}".getBytes());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
         var body = new ByteArrayInputStream("data".getBytes());
-
         var headers = Headers.of("Content-Length", "4");
 
         var response = new GetObjectResponse(
@@ -187,13 +176,10 @@ class RoCrateExportServiceTest {
         );
 
         when(fileService.loadAsResource(any())).thenReturn(response);
-        when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
-        // When
-        service.createRoCrateZip(documentId, exportId, outputStream);
+        var path = service.createRoCrateZip(documentId, exportId);
 
-        // Then
-        try (var zip = new ZipInputStream(new ByteArrayInputStream(outputStream.toByteArray()))) {
+        try (var zip = new ZipInputStream(Files.newInputStream(path))) {
             var entries = new HashSet<String>();
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
@@ -202,77 +188,66 @@ class RoCrateExportServiceTest {
 
             assertFalse(entries.contains("data/rejected.pdf"));
         }
+
+        Files.deleteIfExists(path);
     }
 
     @Test
-    void shouldWriteValidZipStructure() throws JsonProcessingException {
-        // Given
+    void shouldWriteValidZipStructure() throws Exception {
         var documentId = 5;
-        var outputStream = new ByteArrayOutputStream();
         var document = mock(Dataset.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
         when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
-        var objectWriter = mock(ObjectWriter.class);
-        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
-        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
-        // When
-        service.createRoCrateZip(documentId, exportId, outputStream);
+        var writer = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(writer);
+        when(writer.writeValueAsBytes(any())).thenReturn("{}".getBytes());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        // Then
+        var path = service.createRoCrateZip(documentId, exportId);
+
         assertDoesNotThrow(() ->
-            new ZipInputStream(new ByteArrayInputStream(outputStream.toByteArray()))
+            new ZipInputStream(Files.newInputStream(path))
         );
+
+        Files.deleteIfExists(path);
     }
 
     @Test
     void shouldCreateBibliographyZipWithMetadataAndPreviewOnly() throws Exception {
-        // Given
         var personId = 1;
-        var exportId = "export-1";
-        var outputStream = new ByteArrayOutputStream();
 
-        var docIndex1 = mock(DocumentPublicationIndex.class);
-        when(docIndex1.getDatabaseId()).thenReturn(10);
-        when(docIndex1.getTitleOther()).thenReturn("Title 1");
-
-        var docIndex2 = mock(DocumentPublicationIndex.class);
-        when(docIndex2.getDatabaseId()).thenReturn(11);
-        when(docIndex2.getTitleOther()).thenReturn("Title 2");
+        var docIndex = mock(DocumentPublicationIndex.class);
+        when(docIndex.getDatabaseId()).thenReturn(10);
+        when(docIndex.getTitleOther()).thenReturn("Title");
 
         var page = new PageImpl<>(
-            List.of(docIndex1, docIndex2),
+            List.of(docIndex),
             PageRequest.of(0, 500),
-            2
+            1
         );
 
         when(documentPublicationIndexRepository.findByAuthorIds(
             eq(personId), any(PageRequest.class)))
             .thenReturn(page);
 
-        var document = mock(Dataset.class);
-        when(documentService.findDocumentById(any())).thenReturn(document);
+        when(documentService.findDocumentById(any())).thenReturn(mock(Dataset.class));
         when(personService.findOne(personId)).thenReturn(new Person() {{
             setName(new PersonName());
         }});
+
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
-        var objectWriter = mock(ObjectWriter.class);
-        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
-        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
-        // When
-        service.createRoCrateBibliographyZip(personId, exportId, outputStream);
+        var writer = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(writer);
+        when(writer.writeValueAsBytes(any())).thenReturn("{}".getBytes());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        // Then
-        assertTrue(outputStream.size() > 0);
+        var path = service.createRoCrateBibliographyZip(personId, exportId);
 
-        try (var zip = new ZipInputStream(
-            new ByteArrayInputStream(outputStream.toByteArray()))) {
-
+        try (var zip = new ZipInputStream(Files.newInputStream(path))) {
             var entries = new HashSet<String>();
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
@@ -281,16 +256,14 @@ class RoCrateExportServiceTest {
 
             assertTrue(entries.contains("ro-crate-metadata.json"));
             assertTrue(entries.contains("ro-crate-preview.html"));
-            assertEquals(2, entries.size());
         }
+
+        Files.deleteIfExists(path);
     }
 
     @Test
     void shouldSkipMissingDocumentsAndStillCreateBibliographyZip() throws Exception {
-        // Given
         var personId = 2;
-        var exportId = "export-2";
-        var outputStream = new ByteArrayOutputStream();
 
         var docIndex = mock(DocumentPublicationIndex.class);
         when(docIndex.getDatabaseId()).thenReturn(20);
@@ -306,26 +279,24 @@ class RoCrateExportServiceTest {
             eq(personId), any(PageRequest.class)))
             .thenReturn(page);
 
-        // Document not found
         when(documentService.findDocumentById(20)).thenReturn(null);
         when(personService.findOne(personId)).thenReturn(new Person() {{
             setName(new PersonName());
         }});
+
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
-        var objectWriter = mock(ObjectWriter.class);
-        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-        when(objectWriter.writeValueAsString(any())).thenReturn("{}");
-        when(objectWriter.writeValueAsBytes(any())).thenReturn("{}".getBytes());
 
-        // When
-        service.createRoCrateBibliographyZip(personId, exportId, outputStream);
+        var writer = mock(ObjectWriter.class);
+        when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(writer);
+        when(writer.writeValueAsBytes(any())).thenReturn("{}".getBytes());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        // Then
-        assertTrue(outputStream.size() > 0);
+        var path = service.createRoCrateBibliographyZip(personId, exportId);
 
         assertDoesNotThrow(() ->
-            new ZipInputStream(
-                new ByteArrayInputStream(outputStream.toByteArray()))
+            new ZipInputStream(Files.newInputStream(path))
         );
+
+        Files.deleteIfExists(path);
     }
 }

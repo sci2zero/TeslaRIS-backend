@@ -229,7 +229,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
                 if (Objects.nonNull(record.getHeader().getStatus()) &&
                     record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
-                    return listRecords;
+                    continue;
                 }
 
                 var metadata = new Metadata();
@@ -358,7 +358,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         ExportHandlersConfigurationLoader.Handler handlerConfig, BaseExportEntity exportEntity,
         String identifier, String identifierSetSpec) {
         var header = new Header();
-        if (exportEntity.getDeleted()) {
+        if (exportEntity.getDeleted() || (exportEntity instanceof ExportDocument &&
+            Objects.nonNull(((ExportDocument) exportEntity).getSubstitutedBy()))) {
             header.setStatus("deleted");
         }
         header.setIdentifier(identifier);

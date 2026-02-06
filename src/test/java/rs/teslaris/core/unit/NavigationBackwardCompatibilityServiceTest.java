@@ -21,6 +21,7 @@ import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.commontypes.NavigationBackwardCompatibilityServiceImpl;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 
 @SpringBootTest
 public class NavigationBackwardCompatibilityServiceTest {
@@ -43,6 +44,9 @@ public class NavigationBackwardCompatibilityServiceTest {
     @Mock
     private DocumentFileRepository documentFileRepository;
 
+    @Mock
+    private DocumentLookupService documentLookupService;
+
     @InjectMocks
     private NavigationBackwardCompatibilityServiceImpl service;
 
@@ -53,7 +57,7 @@ public class NavigationBackwardCompatibilityServiceTest {
         var jp = new JournalPublication();
         jp.setId(123);
         when(documentRepository.findDocumentByOldIdsContains(1)).thenReturn(Optional.of(123));
-        when(documentRepository.findById(123)).thenReturn(Optional.of(jp));
+        when(documentLookupService.fastDocumentLookup(123)).thenReturn(jp);
 
         // when
         var result = service.readResourceByOldId(1, "sourceA", "en");

@@ -219,6 +219,7 @@ public class DbInitializer implements ApplicationRunner {
         var editExhibitions = new Privilege("EDIT_EXHIBITIONS");
         var createExhibitions = new Privilege("CREATE_EXHIBITIONS");
         var mergeExhibitions = new Privilege("MERGE_EXHIBITIONS");
+        var substituteThesis = new Privilege("SUBSTITUTE_THESIS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -258,7 +259,7 @@ public class DbInitializer implements ApplicationRunner {
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
                 unpromoteRbEntries, changePublicationType, assessPrizes, editExhibitions,
-                createExhibitions, mergeExhibitions));
+                createExhibitions, mergeExhibitions, substituteThesis));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -296,7 +297,7 @@ public class DbInitializer implements ApplicationRunner {
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
                 forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
                 registerResearcher, unpromoteRbEntries, changePublicationType, assessPrizes,
-                editExhibitions, createExhibitions, mergeExhibitions
+                editExhibitions, createExhibitions, mergeExhibitions, substituteThesis
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -344,7 +345,7 @@ public class DbInitializer implements ApplicationRunner {
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
                 validateMetadata, validateUploadedFiles, promotePreliminaryAttachments,
                 setDefaultContent, createUserBasic, deleteThesisAttachments, readRegistryBook,
-                readDigitalLibraryAnalytics, readPromotions
+                readDigitalLibraryAnalytics, readPromotions, substituteThesis
             )));
 
         var headOfLibraryAuthority =
@@ -352,7 +353,7 @@ public class DbInitializer implements ApplicationRunner {
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
                 unarchiveThesis, performThesisReport, generateThesisLibraryBackup, readRegistryBook,
-                readDigitalLibraryAnalytics, readPromotions, archiveThesis
+                readDigitalLibraryAnalytics, readPromotions, archiveThesis, substituteThesis
             )));
 
         var promotionRegistryAdministratorAuthority =

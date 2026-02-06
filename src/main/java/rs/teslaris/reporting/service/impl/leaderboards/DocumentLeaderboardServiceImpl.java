@@ -61,6 +61,7 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
                         .query(q -> q
                             .bool(b -> b
                                 .must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                .mustNot(m -> m.term(t -> t.field("is_substituted").value(true)))
                                 .must(QueryUtil.organisationUnitMatchQuery(eligibleOUIds,
                                     searchFields))
                                 .must(m -> m.range(
@@ -230,6 +231,7 @@ public class DocumentLeaderboardServiceImpl implements DocumentLeaderboardServic
                     .query(q -> q
                         .bool(b -> {
                                 b.must(m -> m.term(t -> t.field("is_approved").value(true)))
+                                    .mustNot(m -> m.term(t -> t.field("is_substituted").value(true)))
                                     .must(QueryUtil.organisationUnitMatchQuery(
                                         allMergedOrganisationUnitIds.stream().toList(),
                                         searchFields))

@@ -213,6 +213,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         Thesis thesis;
         try {
             thesis = thesisJPAService.findOne(thesisId);
+            if (Objects.nonNull(thesis.getSubstitutedBy()) &&
+                !SessionUtil.isUserLoggedInAndAdmin() &&
+                !SessionUtil.isUserLoggedInAndLibrarian()) {
+                return new ThesisResponseDTO() {{
+                    setId(thesis.getSubstitutedBy().getId());
+                }};
+            }
         } catch (NotFoundException e) {
             log.info("Trying to read non-existent THESIS with ID {}. Clearing index.", thesisId);
             this.clearIndexWhenFailedRead(thesisId, DocumentPublicationType.THESIS);
@@ -476,6 +483,43 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 put("publicReviewLengthDays", publicReviewLengthDays);
                 put("userId", userId);
             }}, recurrence));
+    }
+
+    @Override
+    @Transactional
+    public void addSubstituteThesis(Integer staleThesisId, Integer substituteId) {
+        var staleThesis = thesisJPAService.findOne(staleThesisId);
+        var substituteThesis = thesisJPAService.findOne(substituteId);
+
+        staleThesis.setSubstitute(substituteThesis);
+
+        thesisJPAService.save(staleThesis);
+        thesisJPAService.save(substituteThesis);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(staleThesisId)
+            .ifPresent(index -> {
+                index.setIsSubstituted(true);
+                documentPublicationIndexRepository.save(index);
+            });
+    }
+
+    @Override
+    @Transactional
+    public void removeSubstituteThesis(Integer thesisId) {
+        var thesis = thesisJPAService.findOne(thesisId);
+        var substitutionThesis = thesis.getSubstitutedBy();
+
+        thesis.setSubstitutedBy(null);
+        substitutionThesis.setSubstituteFor(null);
+
+        thesisJPAService.save(thesis);
+        thesisJPAService.save(substitutionThesis);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+            .ifPresent(index -> {
+                index.setIsSubstituted(false);
+                documentPublicationIndexRepository.save(index);
+            });
     }
 
     @Override
