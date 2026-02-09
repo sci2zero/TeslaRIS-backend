@@ -278,14 +278,14 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
                                      List<Notification> notifications, Locale locale) {
         var stringBuilder = new StringBuilder();
 
-        stringBuilder.append(
-                messageSource.getMessage(getStartKey(notificationPeriod), new Object[] {
-                    BrandingInformationUtil.getSystemName(locale.toLanguageTag())}, locale))
-            .append("\n\n");
+        var systemName = BrandingInformationUtil.getSystemName(locale.toLanguageTag());
 
-        notifications.forEach(notification -> {
-            stringBuilder.append(notification.getNotificationText()).append("\n\n");
-        });
+        stringBuilder.append(
+            messageSource.getMessage(getStartKey(notificationPeriod), new Object[] {systemName},
+                locale)).append("\n\n");
+
+        notifications.forEach(notification ->
+            stringBuilder.append(notification.getNotificationText()).append("\n\n"));
 
         var notificationListAddress = clientAppAddress +
             (clientAppAddress.endsWith("/") ? locale.toLanguageTag().toLowerCase() :
@@ -294,6 +294,11 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         stringBuilder.append(
             messageSource.getMessage("notification.forMoreInfoMailEnd",
                 new Object[] {notificationListAddress}, locale));
+
+        stringBuilder
+            .append("\n\n")
+            .append(
+                messageSource.getMessage("signature.generic", new Object[] {systemName}, locale));
 
         return stringBuilder.toString();
     }

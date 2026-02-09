@@ -216,4 +216,32 @@ public class ThesisControllerTest extends BaseTest {
                     .header("Idempotency-Key", "MOCK_KEY_THESIS_SCHEDULE"))
             .andExpect(status().isAccepted());
     }
+
+    @Test
+    @Order(15)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testAddThesisSubstitute() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/add-substitute/{staleThesisId}/{substituteThesisId}",
+                        17, 16).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Order(16)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testRemoveThesisSubstitute() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.patch(
+                        "http://localhost:8081/api/thesis/remove-substitute/{documentId}",
+                        17).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
+    }
 }
