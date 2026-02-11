@@ -79,6 +79,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "user_notification_period", nullable = false)
     private UserNotificationPeriod userNotificationPeriod = UserNotificationPeriod.NEVER;
 
+    @Column(name = "receive_only_new_notifications", nullable = false)
+    private Boolean receiveOnlyNewNotifications = true;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.authority.getPrivileges();

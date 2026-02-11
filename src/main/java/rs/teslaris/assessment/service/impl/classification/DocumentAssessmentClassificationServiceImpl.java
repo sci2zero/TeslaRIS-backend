@@ -465,31 +465,21 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     private void assessThesis(DocumentPublicationIndex thesisIndex,
-                              Integer defenceOrganisationUnitId, Commission presetCommission,
+                              Integer organisationUnitId, Commission presetCommission,
                               ArrayList<DocumentAssessmentClassification> batchedClassifications) {
-        var commissions = new HashSet<Commission>();
-        if (Objects.nonNull(defenceOrganisationUnitId)) {
-            commissions.addAll(findCommissionInHierarchy(defenceOrganisationUnitId, true));
+        if (Objects.nonNull(presetCommission)) {
+            var commissionInstitutionId =
+                commissionService.findInstitutionIdForCommission(presetCommission.getId());
+            if (Objects.isNull(commissionInstitutionId) ||
+                !thesisIndex.getOrganisationUnitIds().contains(commissionInstitutionId)) {
+                return;
+            }
         }
 
-        collectCommissionsIfPresent(
-            thesisIndex.getOrganisationUnitIdsSpecified(),
-            commissions
-        );
-
-        if (commissions.isEmpty()) {
-            collectCommissionsIfPresent(
-                thesisIndex.getOrganisationUnitIdsYearOfPublication(),
-                commissions
-            );
-        }
-
-        if (commissions.isEmpty()) {
-            collectCommissionsIfPresent(
-                thesisIndex.getOrganisationUnitIdsActive(),
-                commissions
-            );
-        }
+        List<Commission> commissions = Objects.nonNull(presetCommission)
+            ? List.of(presetCommission)
+            :
+            findCommissionInHierarchy(organisationUnitId, Objects.nonNull(batchedClassifications));
 
         if (commissions.isEmpty()) {
             log.info("No commission found for thesis with ID {}.",

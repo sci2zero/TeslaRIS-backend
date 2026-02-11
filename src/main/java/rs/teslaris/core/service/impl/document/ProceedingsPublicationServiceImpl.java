@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -183,7 +184,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
         conferenceService.reindexConference(savedPublication.getEvent().getId());
 
-        sendNotifications(savedPublication);
+        sendNotifications(savedPublication, Collections.emptySet());
 
         applicationEventPublisher.publishEvent(
             new ReassessEntityEvent(DocumentPublicationType.PROCEEDINGS_PUBLICATION,
@@ -198,6 +199,12 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                                            ProceedingsPublicationDTO publicationDTO) {
         var publicationToUpdate =
             proceedingPublicationJPAService.findOne(publicationId);
+
+        var oldContributorIds =
+            publicationToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         var oldConferenceId = publicationToUpdate.getEvent().getId();
 
@@ -223,7 +230,7 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                     publicationId));
         }
 
-        sendNotifications(publicationToUpdate);
+        sendNotifications(publicationToUpdate, oldContributorIds);
     }
 
     @Override

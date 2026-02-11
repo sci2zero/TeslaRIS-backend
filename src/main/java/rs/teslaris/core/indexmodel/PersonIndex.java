@@ -97,4 +97,7 @@ public class PersonIndex {
 
     @Field(type = FieldType.Integer, name = "h_index")
     private Integer hIndex = 0;
+
+    @Field(type = FieldType.Boolean, name = "display_birthdate")
+    private Boolean displayBirthdate = false;
 }

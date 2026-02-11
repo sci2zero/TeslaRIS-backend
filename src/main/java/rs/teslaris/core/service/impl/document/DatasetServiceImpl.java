@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -120,7 +122,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             indexDataset(savedDataset, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedDataset);
+        sendNotifications(savedDataset, Collections.emptySet());
 
         return savedDataset;
     }
@@ -129,6 +131,12 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     @Transactional
     public void editDataset(Integer datasetId, DatasetDTO datasetDTO) {
         var datasetToUpdate = datasetJPAService.findOne(datasetId);
+
+        var oldContributorIds =
+            datasetToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(datasetDTO);
         clearCommonFields(datasetToUpdate);
@@ -141,7 +149,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(datasetId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(datasetToUpdate);
+        sendNotifications(datasetToUpdate, oldContributorIds);
     }
 
     private void setDatasetRelatedFields(Dataset dataset, DatasetDTO datasetDTO) {

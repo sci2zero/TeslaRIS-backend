@@ -66,6 +66,7 @@ import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -73,6 +74,7 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.ExpertiseOrSkillRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
@@ -142,6 +144,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final ExpertiseOrSkillRepository expertiseOrSkillRepository;
 
     private final PrizeRepository prizeRepository;
+
+    private final PersonFieldVisibilityRepository personFieldVisibilityRepository;
 
     private final Pattern orcidRegexPattern =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
@@ -967,6 +971,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 !savedPerson.getWebOfScienceResearcherId().isBlank()) ?
                 savedPerson.getWebOfScienceResearcherId() :
                 null);
+
+        personIndex.setDisplayBirthdate(
+            personFieldVisibilityRepository.getFieldVisibilityConfiguration(savedPerson.getId())
+                .orElse(new PersonFieldVisibility()).getDateOfBirthVisible());
     }
 
     private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
@@ -1555,6 +1563,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private void filterSensitiveInformation(Page<PersonIndex> page) {
         if (!SessionUtil.isUserLoggedIn()) {
             page.forEach(personIndex -> {
+                if (personIndex.getDisplayBirthdate()) {
+                    return;
+                }
+
                 personIndex.setBirthdate("");
                 personIndex.setBirthdateSortable("");
             });

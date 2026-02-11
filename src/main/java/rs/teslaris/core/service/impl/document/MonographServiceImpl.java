@@ -2,9 +2,11 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -221,7 +223,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             indexMonograph(savedMonograph, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedMonograph);
+        sendNotifications(savedMonograph, Collections.emptySet());
 
         return savedMonograph;
     }
@@ -230,6 +232,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     @Transactional
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
+
+        var oldContributorIds =
+            monographToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         var updatePublicationDates =
             !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());
@@ -256,7 +264,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             applicationEventPublisher.publishEvent(new MonographDateChanged(monographId, year));
         }
 
-        sendNotifications(monographToUpdate);
+        sendNotifications(monographToUpdate, oldContributorIds);
     }
 
     @Override

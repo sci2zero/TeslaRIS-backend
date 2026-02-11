@@ -1815,33 +1815,34 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         )._toQuery();
     }
 
-    protected void sendNotifications(Document document) {
+    protected void sendNotifications(Document document, Set<Integer> oldContributorIds) {
         var loggedInUser =
             (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        document.getContributors().forEach(contribution -> {
-            if (Objects.isNull(contribution.getPerson())) {
-                return;
-            }
-
-            var userOptional =
-                personContributionService.getUserForContributor(contribution.getPerson().getId());
-            if (userOptional.isPresent() &&
-                !userOptional.get().getId().equals(loggedInUser.getId())) {
-                var notificationValues = new HashMap<String, String>();
-                notificationValues.put("title",
-                    document.getTitle().stream().max(Comparator.comparingInt(
-                        MultiLingualContent::getPriority)).get().getContent());
-                notificationValues.put("contributionId", contribution.getId().toString());
-                notificationValues.put("documentId", document.getId().toString());
-                notificationValues.put("personId", contribution.getPerson().getId().toString());
-                notificationValues.put("systemName", BrandingInformationUtil.getSystemName(
-                    userOptional.get().getPreferredUILanguage().getLanguageTag()));
-                personContributionService.notifyContributor(
-                    NotificationFactory.contructAddedToPublicationNotification(notificationValues,
-                        userOptional.get()), NotificationType.ADDED_TO_PUBLICATION);
-            }
-        });
+        document.getContributors().stream()
+            .filter(c -> Objects.nonNull(c.getPerson()) &&
+                !oldContributorIds.contains(c.getPerson().getId()))
+            .forEach(contribution -> {
+                var userOptional =
+                    personContributionService.getUserForContributor(
+                        contribution.getPerson().getId());
+                if (userOptional.isPresent() &&
+                    !userOptional.get().getId().equals(loggedInUser.getId())) {
+                    var notificationValues = new HashMap<String, String>();
+                    notificationValues.put("title",
+                        document.getTitle().stream().max(Comparator.comparingInt(
+                            MultiLingualContent::getPriority)).get().getContent());
+                    notificationValues.put("contributionId", contribution.getId().toString());
+                    notificationValues.put("documentId", document.getId().toString());
+                    notificationValues.put("personId", contribution.getPerson().getId().toString());
+                    notificationValues.put("systemName", BrandingInformationUtil.getSystemName(
+                        userOptional.get().getPreferredUILanguage().getLanguageTag()));
+                    personContributionService.notifyContributor(
+                        NotificationFactory.contructAddedToPublicationNotification(
+                            notificationValues,
+                            userOptional.get()), NotificationType.ADDED_TO_PUBLICATION);
+                }
+            });
     }
 
     protected void clearIndexWhenFailedRead(Integer documentId, DocumentPublicationType type) {

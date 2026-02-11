@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -279,7 +281,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             indexThesis(savedThesis, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedThesis);
+        sendNotifications(savedThesis, Collections.emptySet());
 
         return newThesis;
     }
@@ -288,6 +290,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
+
+        var oldContributorIds =
+            thesisToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkIfAvailableForEditing(thesisToUpdate);
 
@@ -317,7 +325,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(thesisToUpdate);
+        sendNotifications(thesisToUpdate, oldContributorIds);
     }
 
     @Override

@@ -208,7 +208,8 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null, null,
-                new Authority("RESEARCHER", null), null, null, null, UserNotificationPeriod.NEVER);
+                new Authority("RESEARCHER", null), null, null, null, UserNotificationPeriod.NEVER,
+                true);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -228,7 +229,7 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null, null,
-                new Authority("ADMIN", null), null, null, null, UserNotificationPeriod.NEVER);
+                new Authority("ADMIN", null), null, null, null, UserNotificationPeriod.NEVER, true);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -285,7 +286,7 @@ public class UserServiceTest {
         var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.NEVER);
+            UserNotificationPeriod.NEVER, true);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -342,7 +343,7 @@ public class UserServiceTest {
         var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.NEVER);
+            UserNotificationPeriod.NEVER, true);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -397,7 +398,7 @@ public class UserServiceTest {
         var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.NEVER);
+            UserNotificationPeriod.NEVER, true);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -455,7 +456,7 @@ public class UserServiceTest {
         var newUser = new User("regadmin@example.com", "password123", "",
             "Promotion", "Admin", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.WEEKLY);
+            UserNotificationPeriod.WEEKLY, true);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -514,7 +515,7 @@ public class UserServiceTest {
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.NEVER);
+            UserNotificationPeriod.NEVER, true);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -593,7 +594,7 @@ public class UserServiceTest {
             new User("johndoe@example.com", "password123", "",
                 "John", "Doe", true,
                 true, new LanguageTag(), new LanguageTag(), new Authority(), null, null, null,
-                UserNotificationPeriod.NEVER));
+                UserNotificationPeriod.NEVER, true));
         when(
             userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
             Optional.of(accountActivation));
@@ -1393,7 +1394,7 @@ public class UserServiceTest {
 
         var newUser = new User("oauthuser@example.com", "EncodedPassword", "",
             "Jane", "Doe", true, false, language, language, authority,
-            person, organisationUnit, null, UserNotificationPeriod.NEVER);
+            person, organisationUnit, null, UserNotificationPeriod.NEVER, true);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
@@ -1441,7 +1442,7 @@ public class UserServiceTest {
 
         var newUser = new User("newperson@example.com", "EncodedPassword", "",
             "Alice", "Smith", true, false, language, language, authority,
-            person, null, null, UserNotificationPeriod.NEVER);
+            person, null, null, UserNotificationPeriod.NEVER, true);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
@@ -1978,7 +1979,8 @@ public class UserServiceTest {
             null,
             new OrganisationUnit(),
             null,
-            UserNotificationPeriod.NEVER
+            UserNotificationPeriod.NEVER,
+            true
         );
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 

@@ -220,6 +220,7 @@ public class DbInitializer implements ApplicationRunner {
         var createExhibitions = new Privilege("CREATE_EXHIBITIONS");
         var mergeExhibitions = new Privilege("MERGE_EXHIBITIONS");
         var substituteThesis = new Privilege("SUBSTITUTE_THESIS");
+        var setPersonFieldVisibility = new Privilege("SET_PERSON_FIELD_VISIBILITY");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -259,7 +260,7 @@ public class DbInitializer implements ApplicationRunner {
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
                 unpromoteRbEntries, changePublicationType, assessPrizes, editExhibitions,
-                createExhibitions, mergeExhibitions, substituteThesis));
+                createExhibitions, mergeExhibitions, substituteThesis, setPersonFieldVisibility));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -297,7 +298,8 @@ public class DbInitializer implements ApplicationRunner {
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
                 forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
                 registerResearcher, unpromoteRbEntries, changePublicationType, assessPrizes,
-                editExhibitions, createExhibitions, mergeExhibitions, substituteThesis
+                editExhibitions, createExhibitions, mergeExhibitions, substituteThesis,
+                setPersonFieldVisibility
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -306,7 +308,8 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
                 createBookSeries, createPublisher, performLoading, harvestIdfMetadata,
-                getTopCollaborators, changePublicationType, createExhibitions)));
+                getTopCollaborators, changePublicationType, createExhibitions,
+                setPersonFieldVisibility)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -441,7 +444,7 @@ public class DbInitializer implements ApplicationRunner {
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
                 "Markovic", false, false, serbianTag, englishTag, adminAuthority, null,
                 null, null,
-                UserNotificationPeriod.DAILY);
+                UserNotificationPeriod.DAILY, true);
         userRepository.save(adminUser);
 
         // RESEARCH AREAS - NOT COMPLETE

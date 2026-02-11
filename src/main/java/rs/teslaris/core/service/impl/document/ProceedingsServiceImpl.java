@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -182,7 +183,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         indexProceedings(savedProceedings, new DocumentPublicationIndex());
 
-        sendNotifications(savedProceedings);
+        sendNotifications(savedProceedings, Collections.emptySet());
 
         return savedProceedings;
     }
@@ -191,6 +192,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Transactional
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
+
+        var oldContributorIds =
+            proceedingsToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         var updatePublicationDates =
             !proceedingsDTO.getDocumentDate().equals(proceedingsToUpdate.getDocumentDate());
@@ -214,7 +221,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                 StringUtil.parseYear(proceedingsToUpdate.getDocumentDate()));
         }
 
-        sendNotifications(proceedingsToUpdate);
+        sendNotifications(proceedingsToUpdate, oldContributorIds);
     }
 
     @Override

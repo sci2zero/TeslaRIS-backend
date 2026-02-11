@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -130,7 +132,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             indexIntangibleProduct(savedIntangibleProduct, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedIntangibleProduct);
+        sendNotifications(savedIntangibleProduct, Collections.emptySet());
 
         return savedIntangibleProduct;
     }
@@ -140,6 +142,12 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
     public void editIntangibleProduct(Integer intangibleProductId,
                                       IntangibleProductDTO intangibleProductDTO) {
         var intangibleProductToUpdate = intangibleProductJPAService.findOne(intangibleProductId);
+
+        var oldContributorIds =
+            intangibleProductToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(intangibleProductDTO);
         clearCommonFields(intangibleProductToUpdate);
@@ -153,7 +161,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                     intangibleProductId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(intangibleProductToUpdate);
+        sendNotifications(intangibleProductToUpdate, oldContributorIds);
     }
 
     private void setIntangibleProductRelatedFields(IntangibleProduct intangibleProduct,

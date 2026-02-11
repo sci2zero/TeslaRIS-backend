@@ -10,7 +10,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.Table;
 import java.util.Map;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,7 +20,6 @@ import rs.teslaris.core.model.user.User;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "notification")
 @SQLRestriction("deleted=false")
@@ -44,4 +42,17 @@ public class Notification extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Column(name = "sent_by_email", nullable = false)
+    private Boolean sentByEmail;
+
+
+    public Notification(String notificationText, Map<String, String> values,
+                        NotificationType notificationType, User user) {
+        this.notificationText = notificationText;
+        this.values = values;
+        this.notificationType = notificationType;
+        this.user = user;
+        this.sentByEmail = false;
+    }
 }

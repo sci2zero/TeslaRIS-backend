@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -124,7 +126,7 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
             indexGeneticMaterial(savedProduct, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedProduct);
+        sendNotifications(savedProduct, Collections.emptySet());
 
         return savedProduct;
     }
@@ -134,6 +136,12 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
     public void editGeneticMaterial(Integer geneticMaterialId,
                                     GeneticMaterialDTO geneticMaterialDTO) {
         var geneticMaterialToUpdate = geneticMaterialJPAService.findOne(geneticMaterialId);
+
+        var oldContributorIds =
+            geneticMaterialToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(geneticMaterialDTO);
         clearCommonFields(geneticMaterialToUpdate);
@@ -148,7 +156,7 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                     geneticMaterialId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(geneticMaterialToUpdate);
+        sendNotifications(geneticMaterialToUpdate, oldContributorIds);
     }
 
     @Override

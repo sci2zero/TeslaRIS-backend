@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -130,7 +132,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             indexMaterialProduct(savedProduct, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedProduct);
+        sendNotifications(savedProduct, Collections.emptySet());
 
         return savedProduct;
     }
@@ -140,6 +142,12 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
     public void editMaterialProduct(Integer materialProductId,
                                     MaterialProductDTO materialProductDTO) {
         var materialProductToUpdate = materialProductJPAService.findOne(materialProductId);
+
+        var oldContributorIds =
+            materialProductToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(materialProductDTO);
         clearCommonFields(materialProductToUpdate);
@@ -155,7 +163,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
                     materialProductId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(materialProductToUpdate);
+        sendNotifications(materialProductToUpdate, oldContributorIds);
     }
 
     @Override

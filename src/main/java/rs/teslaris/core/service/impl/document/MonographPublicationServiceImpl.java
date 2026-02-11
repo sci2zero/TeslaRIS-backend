@@ -1,8 +1,10 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -153,7 +155,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             indexMonographPublication(savedMonographPublication, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedMonographPublication);
+        sendNotifications(savedMonographPublication, Collections.emptySet());
 
         return savedMonographPublication;
     }
@@ -186,6 +188,12 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var monographPublicationToUpdate =
             monographPublicationJPAService.findOne(monographPublicationId);
 
+        var oldContributorIds =
+            monographPublicationToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
+
         clearCommonFields(monographPublicationToUpdate);
         setCommonFields(monographPublicationToUpdate, monographPublicationDTO);
         setMonographPublicationRelatedFields(monographPublicationToUpdate, monographPublicationDTO);
@@ -196,7 +204,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
         monographPublicationJPAService.save(monographPublicationToUpdate);
 
-        sendNotifications(monographPublicationToUpdate);
+        sendNotifications(monographPublicationToUpdate, oldContributorIds);
     }
 
     @Override

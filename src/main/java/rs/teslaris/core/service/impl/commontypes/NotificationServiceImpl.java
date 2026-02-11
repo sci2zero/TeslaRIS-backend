@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.commontypes;
 import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -40,7 +41,6 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     implements NotificationService {
@@ -74,6 +74,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<NotificationDTO> getUserNotifications(Integer userId) {
         var notificationList = notificationRepository.getNotificationsForUser(userId);
         var locale = getLocale(notificationList);
@@ -116,11 +117,13 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long getUserNotificationCount(Integer userId) {
         return notificationRepository.getNotificationCountForUser(userId);
     }
 
     @Override
+    @Transactional
     public NotificationActionResult performAction(Integer notificationId, Integer userId,
                                                   NotificationAction notificationAction) {
         var notification = findOne(notificationId);
@@ -168,6 +171,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
+    @Transactional
     public void dismiss(Integer notificationId, Integer userId) {
         var notification = findOne(notificationId);
 
@@ -180,12 +184,14 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
+    @Transactional
     public void dismissAll(Integer userId) {
         notificationRepository.deleteAllForUser(userId);
     }
 
     @Override
     @Nullable
+    @Transactional
     public Notification createNotification(Notification notification) {
         if (Objects.requireNonNull(notification.getNotificationType())
             .equals(NotificationType.FOUND_POTENTIAL_CLAIMS)) {
@@ -197,6 +203,7 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     @Override
+    @Transactional
     public void cleanPastNotificationsOfType(Integer userId, NotificationType notificationType) {
         notificationRepository.getNotificationsForUserAndType(userId,
             NotificationType.NEW_DOCUMENTS_FOR_VALIDATION).forEach(notificationRepository::delete);
@@ -218,6 +225,11 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
         }
 
         sendNotifications(UserNotificationPeriod.WEEKLY);
+    }
+
+    @Scheduled(cron = "${notifications.schedule.monthly}")
+    protected void sendMonthlyNotifications() {
+        sendNotifications(UserNotificationPeriod.MONTHLY);
     }
 
     private void sendNotifications(UserNotificationPeriod notificationPeriod) {
@@ -258,9 +270,17 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
     private List<Notification> fetchNotifications(UserNotificationPeriod notificationPeriod,
                                                   UserAccountIndex accountIndex) {
-        return notificationPeriod == UserNotificationPeriod.DAILY
-            ? notificationRepository.getDailyNotifications(accountIndex.getDatabaseId())
-            : notificationRepository.getWeeklyNotifications(accountIndex.getDatabaseId());
+        return switch (notificationPeriod) {
+            case DAILY -> notificationRepository.getDailyNotifications(accountIndex.getDatabaseId(),
+                accountIndex.getReceiveOnlyNewNotifications());
+            case WEEKLY ->
+                notificationRepository.getWeeklyNotifications(accountIndex.getDatabaseId(),
+                    accountIndex.getReceiveOnlyNewNotifications());
+            case MONTHLY ->
+                notificationRepository.getMonthlyNotifications(accountIndex.getDatabaseId(),
+                    accountIndex.getReceiveOnlyNewNotifications());
+            case NEVER -> Collections.emptyList();
+        };
     }
 
     private Locale getLocale(List<Notification> notifications) {
@@ -284,8 +304,12 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
             messageSource.getMessage(getStartKey(notificationPeriod), new Object[] {systemName},
                 locale)).append("\n\n");
 
-        notifications.forEach(notification ->
-            stringBuilder.append(notification.getNotificationText()).append("\n\n"));
+        notifications.forEach(notification -> {
+            stringBuilder.append(notification.getNotificationText()).append("\n\n");
+            notification.setSentByEmail(true);
+        });
+
+        notificationRepository.saveAll(notifications);
 
         var notificationListAddress = clientAppAddress +
             (clientAppAddress.endsWith("/") ? locale.toLanguageTag().toLowerCase() :
@@ -304,15 +328,21 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
     }
 
     private String getStartKey(UserNotificationPeriod notificationPeriod) {
-        return notificationPeriod == UserNotificationPeriod.DAILY
-            ? "notification.dailyMailStart"
-            : "notification.weeklyMailStart";
+        return switch (notificationPeriod) {
+            case DAILY -> "notification.dailyMailStart";
+            case WEEKLY -> "notification.weeklyMailStart";
+            case MONTHLY -> "notification.monthlyMailStart";
+            case NEVER -> ""; // should never happen
+        };
     }
 
     private String getSubjectKey(UserNotificationPeriod notificationPeriod) {
-        return notificationPeriod == UserNotificationPeriod.DAILY
-            ? "notification.dailyMailSubject"
-            : "notification.weeklyMailSubject";
+        return switch (notificationPeriod) {
+            case DAILY -> "notification.dailyMailSubject";
+            case WEEKLY -> "notification.weeklyMailSubject";
+            case MONTHLY -> "notification.monthlyMailSubject";
+            case NEVER -> ""; // should never happen
+        };
     }
 
     private String getDisplayValue(Notification notification) {

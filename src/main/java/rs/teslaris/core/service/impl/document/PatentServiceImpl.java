@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -136,7 +138,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             indexPatent(savedPatent, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedPatent);
+        sendNotifications(savedPatent, Collections.emptySet());
 
         return savedPatent;
     }
@@ -145,6 +147,12 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     public void editPatent(Integer patentId, PatentDTO patentDTO) {
         var patentToUpdate = patentJPAService.findOne(patentId);
+
+        var oldContributorIds =
+            patentToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(patentDTO);
         clearCommonFields(patentToUpdate);
@@ -157,7 +165,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(patentId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(updatedPatent);
+        sendNotifications(updatedPatent, oldContributorIds);
     }
 
     private void setPatentRelatedFields(Patent patent, PatentDTO patentDTO) {

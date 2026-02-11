@@ -71,11 +71,13 @@ import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
+import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.impl.institution.OrganisationUnitServiceImpl;
 import rs.teslaris.core.service.impl.person.PersonServiceImpl;
@@ -138,6 +140,9 @@ public class PersonServiceTest {
 
     @Mock
     private FileService fileService;
+
+    @Mock
+    private PersonFieldVisibilityRepository personFieldVisibilityRepository;
 
     @InjectMocks
     private PersonServiceImpl personService;
@@ -267,6 +272,8 @@ public class PersonServiceTest {
         when(organisationUnitService.findOrganisationUnitById(2)).thenReturn(
             employmentInstitution);
         when(personRepository.save(any(Person.class))).thenReturn(person);
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
 
         // then
         var result = personService.createPersonWithBasicInfo(personDTO, true);
@@ -330,6 +337,8 @@ public class PersonServiceTest {
         when(organisationUnitService.findOrganisationUnitById(2)).thenReturn(employmentInstitution);
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(new HashSet<>());
         when(personRepository.save(any(Person.class))).thenReturn(person);
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
 
         // then
         var result = personService.importPersonWithBasicInfo(personDTO, true);
@@ -414,6 +423,8 @@ public class PersonServiceTest {
         when(personNameService.findOne(2)).thenReturn(personName2);
         when(personIndexRepository.findByDatabaseId(anyInt())).thenReturn(
             Optional.of(new PersonIndex()));
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
 
         // when
         personService.setPersonMainName(2, 1);
@@ -441,6 +452,8 @@ public class PersonServiceTest {
 
         // when
         personService.setPersonOtherNames(personNameDTOList, personId);
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
 
         // then
         verify(personRepository, times(1)).findById(personId);
@@ -459,12 +472,16 @@ public class PersonServiceTest {
         personToUpdate.setApproveStatus(ApproveStatus.APPROVED);
         personToUpdate.setName(new PersonName());
         personToUpdate.setPersonalInfo(new PersonalInfo());
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
 
         var personNames = new HashSet<PersonName>();
         personNames.add(new PersonName("Jane", "Marie", "Doe", null, null));
         personToUpdate.setOtherNames(personNames);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
 
         // when
         personService.setPersonOtherNames(personNameDTOList, personId);
@@ -528,6 +545,8 @@ public class PersonServiceTest {
         when(personRepository.save(any(Person.class))).thenReturn(personToUpdate);
         when(personIndexRepository.findByDatabaseId(anyInt())).thenReturn(
             Optional.of(new PersonIndex()));
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
 
         // when
         personService.updatePersonalInfo(personId, personalInfoDTO);
@@ -898,6 +917,8 @@ public class PersonServiceTest {
         person.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(person));
+        when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(any())).thenReturn(
+            Optional.of(new PersonFieldVisibility()));
 
         // When
         personService.updatePersonMainName(personId, personNameDTO);

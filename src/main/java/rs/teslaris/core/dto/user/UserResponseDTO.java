@@ -39,4 +39,6 @@ public class UserResponseDTO {
     private List<MultilingualContentDTO> organisationUnitName;
 
     private UserNotificationPeriod notificationPeriod;
+
+    private Boolean sendOnlyNewNotifications;
 }

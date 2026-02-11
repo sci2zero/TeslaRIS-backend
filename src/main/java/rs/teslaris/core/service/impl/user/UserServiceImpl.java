@@ -558,7 +558,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             person.getName().getFirstname(), person.getName().getLastname(), true, false,
             language, language, authority, person,
             Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
-            null, UserNotificationPeriod.WEEKLY
+            null, UserNotificationPeriod.WEEKLY, true
         );
     }
 
@@ -675,7 +675,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             null,
             organisationUnit,
             commission,
-            UserNotificationPeriod.WEEKLY
+            UserNotificationPeriod.WEEKLY,
+            true
         );
 
         var savedUser = userRepository.save(newUser);
@@ -778,6 +779,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         }
 
         userToUpdate.setUserNotificationPeriod(userUpdateRequest.getNotificationPeriod());
+        userToUpdate.setReceiveOnlyNewNotifications(
+            userUpdateRequest.getSendOnlyNewNotifications());
 
         validateNotificationSettings(userToUpdate);
 
@@ -1192,6 +1195,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         indexUserEmployment(index, user.getOrganisationUnit());
         index.setOrganisationUnitNameSortableSr(index.getOrganisationUnitNameSr());
         index.setOrganisationUnitNameSortableOther(index.getOrganisationUnitNameOther());
+        index.setReceiveOnlyNewNotifications(user.getReceiveOnlyNewNotifications());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, List<UserRole> allowedRoles) {
@@ -1289,7 +1293,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         passwordResetTokenRepository.deleteAllByCreateDateBefore(sevenDaysAgo);
     }
 
-    @Scheduled(cron = "0 * * * * *") // every 15 minutes
+    @Scheduled(cron = "0 */5 * * * *") // every 5 minutes
     @Transactional
     public void cleanupExpiredTokens() {
         tokenUtil.cleanupExpiredTokens();

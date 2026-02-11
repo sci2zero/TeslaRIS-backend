@@ -31,14 +31,12 @@ public class PublicationClassificationServiceImpl implements PublicationClassifi
                                           QuadConsumer<DocumentPublicationIndex, Integer, Commission, ArrayList<DocumentAssessmentClassification>> assessFunction,
                                           ArrayList<DocumentAssessmentClassification> batchClassifications) {
         chunk.forEach(publicationIndex -> {
-            if (publicationIndex.getType().equals(DocumentPublicationType.THESIS.name())) {
-                if (Objects.isNull(publicationIndex.getThesisDefenceDate())) {
-                    return;
-                }
+            if (publicationIndex.getType().equals(DocumentPublicationType.THESIS.name()) &&
+                Objects.isNull(publicationIndex.getThesisDefenceDate())) {
+                return;
+            }
 
-                assessFunction.accept(publicationIndex,
-                    publicationIndex.getThesisInstitutionId(), null, batchClassifications);
-            } else if (Objects.nonNull(presetCommission)) {
+            if (Objects.nonNull(presetCommission)) {
                 assessFunction.accept(publicationIndex, null, presetCommission,
                     batchClassifications);
             } else {
