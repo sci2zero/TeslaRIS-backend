@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -146,6 +148,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private final PrizeRepository prizeRepository;
 
     private final PersonFieldVisibilityRepository personFieldVisibilityRepository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final Pattern orcidRegexPattern =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
@@ -844,6 +848,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             (person) -> {
                 var index = indexPerson(person);
                 personEmploymentWorker.savePersonEmploymentHierarchyIds(person, index);
+                applicationEventPublisher.publishEvent(
+                    new ReindexExternalIndicatorsEvent(index, null, null)
+                );
             }
         );
 

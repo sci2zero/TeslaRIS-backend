@@ -50,7 +50,9 @@ import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.util.ExternalMappingConstraintType;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
+import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -97,13 +99,13 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     private final int MAX_RETRY_COUNT = 1;
 
     private final int PROCESS_BATCH_SIZE = 100;
-
+    private final List<EntityIndicatorSource> EXTERNAL_INDICATOR_SOURCES =
+        List.of(EntityIndicatorSource.OPEN_ALEX,
+            EntityIndicatorSource.OPEN_CITATIONS,
+            EntityIndicatorSource.SCOPUS);
     private Map<String, String> externalIndicatorMapping;
-
     private Map<String, Integer> harvestPeriodOffsets;
-
     private Map<String, Integer> rateLimits;
-
     @Value("${harvest-external-indicators.allowed}")
     private Boolean harvestAllowed;
 
@@ -209,17 +211,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var totalOutputIndicator = indicatorService.getIndicatorByCode(
             externalIndicatorMapping.getOrDefault("totalPublicationCount", null));
 
-        var entityIndicatorSources =
-            List.of(
-                EntityIndicatorSource.OPEN_ALEX,
-                EntityIndicatorSource.OPEN_CITATIONS,
-                EntityIndicatorSource.SCOPUS
-            );
-
         return new DeductionContext(
             totalCitationsIndicator,
             totalOutputIndicator,
-            entityIndicatorSources
+            EXTERNAL_INDICATOR_SOURCES
         );
     }
 
@@ -891,6 +886,50 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                     documentPublicationIndexRepository.save(docIndex);
                 });
         });
+    }
+
+    @EventListener
+    @Transactional(readOnly = true)
+    protected void handleExternalIndicatorReindexing(ReindexExternalIndicatorsEvent event) {
+        if (Objects.nonNull(event.personIndex())) {
+            reindexPersonIndicators(event.personIndex(), EXTERNAL_INDICATOR_SOURCES);
+        }
+    }
+
+    public void reindexPersonIndicators(PersonIndex index,
+                                        List<EntityIndicatorSource> externalSources) {
+        var personId = index.getDatabaseId();
+
+        var indicators =
+            personIndicatorRepository.findIndicatorsForPersonAndSources(personId, externalSources);
+
+        index.setTotalCitations(0L);
+        index.setHIndex(0);
+        index.getCitationsByYear().clear();
+
+        for (var indicator : indicators) {
+            var code = indicator.getIndicator().getCode();
+            var value = indicator.getNumericValue() != null ? indicator.getNumericValue() : 0.0;
+            var fromDate = indicator.getFromDate();
+
+            switch (code) {
+                case "totalCitations":
+                    index.setTotalCitations((long) value);
+                    break;
+                case "hIndex":
+                    index.setHIndex((int) value);
+                    break;
+                case "yearlyCitations":
+                    if (fromDate != null) {
+                        index.getCitationsByYear().put(fromDate.getYear(), (int) value);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        personIndexRepository.save(index);
     }
 
     @Async("taskExecutor")
