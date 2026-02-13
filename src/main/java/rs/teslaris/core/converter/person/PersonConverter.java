@@ -84,7 +84,7 @@ public class PersonConverter {
                     person.getPersonalInfo().getDisplayTitle())), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
             expertisesOrSkills, prizes, Objects.nonNull(person.getProfilePhoto()) ?
-            person.getProfilePhoto().getImageServerName() : null);
+            person.getProfilePhoto().getImageServerName() : null, false);
 
         filterSensitiveData(personResponse, person);
 
@@ -253,11 +253,11 @@ public class PersonConverter {
     }
 
     private static void filterSensitiveData(PersonResponseDTO personResponse, Person person) {
-        if (!SessionUtil.isUserLoggedIn()) {
-            var fieldVisibilityConfiguration =
-                personFieldVisibilityRepository.getFieldVisibilityConfiguration(person.getId())
-                    .orElse(new PersonFieldVisibility());
+        var fieldVisibilityConfiguration =
+            personFieldVisibilityRepository.getFieldVisibilityConfiguration(person.getId())
+                .orElse(new PersonFieldVisibility());
 
+        if (!SessionUtil.isUserLoggedIn()) {
             if (!fieldVisibilityConfiguration.getContactEmailVisible()) {
                 personResponse.getPersonalInfo().getContact().setContactEmail("");
             }
@@ -283,6 +283,11 @@ public class PersonConverter {
             personResponse.getPersonalInfo().getPostalAddress()
                 .setStreetAndNumber(new ArrayList<>());
         } else if (!SessionUtil.isUserLoggedInAndAdmin()) {
+            if (fieldVisibilityConfiguration.getDateOfBirthVisible()) {
+                personResponse.setShowFullBirthdate(true);
+                return;
+            }
+
             var userId = SessionUtil.getLoggedInUser().getId();
             if (Objects.isNull(userId)) {
                 userId = 0;

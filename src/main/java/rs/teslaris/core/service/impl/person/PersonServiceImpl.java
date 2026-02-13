@@ -1563,7 +1563,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private void filterSensitiveInformation(Page<PersonIndex> page) {
         if (!SessionUtil.isUserLoggedIn()) {
             page.forEach(personIndex -> {
-                if (personIndex.getDisplayBirthdate()) {
+                if (Objects.nonNull(personIndex.getDisplayBirthdate()) &&
+                    personIndex.getDisplayBirthdate()) {
                     return;
                 }
 
@@ -1578,6 +1579,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             var finalUserId = userId;
             page.forEach(personIndex -> {
+                if (Objects.nonNull(personIndex.getDisplayBirthdate()) &&
+                    personIndex.getDisplayBirthdate()) {
+                    return;
+                }
+
                 if (!finalUserId.equals(personIndex.getUserId()) &&
                     Objects.nonNull(personIndex.getBirthdate()) &&
                     personIndex.getBirthdate().length() > 4) {
