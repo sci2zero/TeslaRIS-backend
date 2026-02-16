@@ -1816,7 +1816,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     protected void sendNotifications(Document document, Set<Integer> oldContributorIds) {
-        if (SessionUtil.isUserLoggedInAndLibrarian()) {
+        if (SessionUtil.isUserLoggedInAndTrustedWithDataIntegrity()) {
             return;
         }
 
