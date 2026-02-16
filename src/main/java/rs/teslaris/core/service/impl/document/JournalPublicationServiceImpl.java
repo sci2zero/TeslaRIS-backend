@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReassessEntityEvent;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -229,8 +230,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     @Override
     @Transactional(readOnly = true)
-    public void indexJournalPublication(JournalPublication publication,
-                                        DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexJournalPublication(JournalPublication publication,
+                                                            DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
 
         index.setPublicationSeriesId(publication.getJournal().getId());
@@ -246,6 +247,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 
     @Override
@@ -299,8 +302,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             journalPublicationJPAService::findAll,
-            journalPublication ->
-                indexJournalPublication(journalPublication, new DocumentPublicationIndex())
+            journalPublication -> {
+                var index =
+                    indexJournalPublication(journalPublication, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 

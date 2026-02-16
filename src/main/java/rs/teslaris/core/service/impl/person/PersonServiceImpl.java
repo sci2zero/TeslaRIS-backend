@@ -849,7 +849,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 var index = indexPerson(person);
                 personEmploymentWorker.savePersonEmploymentHierarchyIds(person, index);
                 applicationEventPublisher.publishEvent(
-                    new ReindexExternalIndicatorsEvent(index, null, null)
+                    new ReindexExternalIndicatorsEvent(index)
                 );
             }
         );

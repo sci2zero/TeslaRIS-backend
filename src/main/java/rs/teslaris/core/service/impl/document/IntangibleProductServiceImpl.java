@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.IntangibleProductConverter;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -210,8 +211,11 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             intangibleProductJPAService::findAll,
-            intangibleProduct ->
-                indexIntangibleProduct(intangibleProduct, new DocumentPublicationIndex())
+            intangibleProduct -> {
+                var index =
+                    indexIntangibleProduct(intangibleProduct, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -223,8 +227,8 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                 intangibleProduct.getId()).orElse(new DocumentPublicationIndex()));
     }
 
-    private void indexIntangibleProduct(IntangibleProduct intangibleProduct,
-                                        DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexIntangibleProduct(IntangibleProduct intangibleProduct,
+                                                            DocumentPublicationIndex index) {
         indexCommonFields(intangibleProduct, index);
 
         index.setType(DocumentPublicationType.INTANGIBLE_PRODUCT.name());
@@ -236,5 +240,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }

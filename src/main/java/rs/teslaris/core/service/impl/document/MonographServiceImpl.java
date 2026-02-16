@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.MonographDateChanged;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -306,8 +307,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             monographJPAService::findAll,
-            monograph ->
-                indexMonograph(monograph, new DocumentPublicationIndex())
+            monograph -> {
+                var index = indexMonograph(monograph, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -359,7 +362,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     @Override
     @Transactional(readOnly = true)
-    public void indexMonograph(Monograph monograph, DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexMonograph(Monograph monograph,
+                                                   DocumentPublicationIndex index) {
         indexCommonFields(monograph, index);
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {
@@ -392,6 +396,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 
     @Override

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.PatentConverter;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -204,7 +205,10 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             patentJPAService::findAll,
-            patent -> indexPatent(patent, new DocumentPublicationIndex())
+            patent -> {
+                var index = indexPatent(patent, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -216,7 +220,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                 patent.getId()).orElse(new DocumentPublicationIndex()));
     }
 
-    private void indexPatent(Patent patent, DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexPatent(Patent patent, DocumentPublicationIndex index) {
         indexCommonFields(patent, index);
 
         index.setType(DocumentPublicationType.PATENT.name());
@@ -230,5 +234,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }

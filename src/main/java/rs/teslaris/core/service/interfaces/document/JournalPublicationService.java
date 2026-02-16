@@ -29,8 +29,8 @@ public interface JournalPublicationService {
 
     void reindexJournalPublications();
 
-    void indexJournalPublication(JournalPublication publication,
-                                 DocumentPublicationIndex index);
+    DocumentPublicationIndex indexJournalPublication(JournalPublication publication,
+                                                     DocumentPublicationIndex index);
 
     void indexJournalPublication(JournalPublication publication);
 

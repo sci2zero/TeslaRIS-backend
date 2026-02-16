@@ -1,14 +1,8 @@
 package rs.teslaris.core.applicationevent;
 
-import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
-import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
-import rs.teslaris.core.indexmodel.PersonIndex;
+import rs.teslaris.core.indexmodel.ExternallyEnrichable;
 
 public record ReindexExternalIndicatorsEvent(
-    PersonIndex personIndex,
-
-    OrganisationUnitIndex organisationUnitIndex,
-
-    DocumentPublicationIndex documentPublicationIndex
+    ExternallyEnrichable index
 ) {
 }

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -257,7 +258,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexProceedings(Proceedings proceedings,
+                                                     DocumentPublicationIndex index) {
         var eventIds = new ArrayList<>(List.of(proceedings.getEvent().getId()));
         if (Objects.nonNull(index.getEventId()) && !eventIds.contains(index.getEventId())) {
             eventIds.add(index.getEventId());
@@ -307,6 +309,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
                 eventIndexRepository.save(eventIndex);
             }));
+
+        return index;
     }
 
     @Override
@@ -326,8 +330,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             proceedingsJPAService::findAll,
-            proceedings ->
-                indexProceedings(proceedings, new DocumentPublicationIndex())
+            proceedings -> {
+                var index = indexProceedings(proceedings, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 

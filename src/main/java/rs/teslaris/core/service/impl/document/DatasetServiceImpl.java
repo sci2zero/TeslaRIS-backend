@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.DatasetConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -188,7 +189,10 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             datasetJPAService::findAll,
-            dataset -> indexDataset(dataset, new DocumentPublicationIndex())
+            dataset -> {
+                var index = indexDataset(dataset, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -200,7 +204,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                 dataset.getId()).orElse(new DocumentPublicationIndex()));
     }
 
-    private void indexDataset(Dataset dataset, DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexDataset(Dataset dataset, DocumentPublicationIndex index) {
         indexCommonFields(dataset, index);
 
         index.setType(DocumentPublicationType.DATASET.name());
@@ -212,5 +216,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }

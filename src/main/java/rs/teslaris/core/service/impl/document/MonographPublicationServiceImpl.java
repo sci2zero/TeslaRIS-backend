@@ -9,12 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.MonographPublicationConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -41,6 +41,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -223,23 +224,16 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     public void reindexMonographPublications() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<MonographPublication> chunk =
-                monographPublicationJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((monographPublication) -> indexMonographPublication(monographPublication,
-                new DocumentPublicationIndex()));
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            monographPublicationJPAService::findAll,
+            monographPublication -> {
+                var index =
+                    indexMonographPublication(monographPublication, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
+        );
     }
 
     private void setMonographPublicationRelatedFields(MonographPublication monographPublication,
@@ -266,8 +260,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
     @Override
     @Transactional(readOnly = true)
-    public void indexMonographPublication(MonographPublication monographPublication,
-                                          DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexMonographPublication(
+        MonographPublication monographPublication,
+        DocumentPublicationIndex index) {
         var monographIds = new ArrayList<>(List.of(monographPublication.getMonograph().getId()));
         if (Objects.nonNull(index.getMonographId()) &&
             !monographIds.contains(index.getMonographId())) {
@@ -301,6 +296,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
                         documentPublicationIndexRepository.save(monographIndex);
                     }));
+
+        return index;
     }
 
     @Override

@@ -25,7 +25,7 @@ import rs.teslaris.core.util.functional.Triple;
 @AllArgsConstructor
 @Document(indexName = "document_publication")
 @Setting(settingPath = "/configuration/index-config.json")
-public class DocumentPublicationIndex {
+public class DocumentPublicationIndex implements ExternallyEnrichable {
 
     @Id
     private String id;

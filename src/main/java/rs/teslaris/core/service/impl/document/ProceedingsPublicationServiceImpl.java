@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ReassessEntityEvent;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.ProceedingsPublicationConverter;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -250,8 +251,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Override
     @Transactional(readOnly = true)
-    public void indexProceedingsPublication(ProceedingsPublication publication,
-                                            DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexProceedingsPublication(ProceedingsPublication publication,
+                                                                DocumentPublicationIndex index) {
         var proceedingsIds = new ArrayList<>(List.of(publication.getProceedings().getId()));
         if (Objects.nonNull(index.getProceedingsId()) &&
             !proceedingsIds.contains(index.getProceedingsId())) {
@@ -293,6 +294,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
                 }
             );
         });
+
+        return index;
     }
 
     @Override
@@ -358,8 +361,11 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             proceedingPublicationJPAService::findAll,
-            proceedingsPublication ->
-                indexProceedingsPublication(proceedingsPublication, new DocumentPublicationIndex())
+            proceedingsPublication -> {
+                var index = indexProceedingsPublication(proceedingsPublication,
+                    new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 

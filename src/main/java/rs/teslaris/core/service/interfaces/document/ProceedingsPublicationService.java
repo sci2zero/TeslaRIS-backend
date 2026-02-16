@@ -34,8 +34,8 @@ public interface ProceedingsPublicationService {
 
     void reindexProceedingsPublications();
 
-    void indexProceedingsPublication(ProceedingsPublication publication,
-                                     DocumentPublicationIndex index);
+    DocumentPublicationIndex indexProceedingsPublication(ProceedingsPublication publication,
+                                                         DocumentPublicationIndex index);
 
     void indexProceedingsPublication(ProceedingsPublication publication);
 

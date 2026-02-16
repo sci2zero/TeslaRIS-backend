@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.MaterialProductConverter;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -189,8 +190,10 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             materialProductJPAService::findAll,
-            materialProduct ->
-                indexMaterialProduct(materialProduct, new DocumentPublicationIndex())
+            materialProduct -> {
+                var index = indexMaterialProduct(materialProduct, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -226,8 +229,8 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         materialProduct.setResearchAreas(new HashSet<>(researchAreas));
     }
 
-    private void indexMaterialProduct(MaterialProduct materialProduct,
-                                      DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexMaterialProduct(MaterialProduct materialProduct,
+                                                          DocumentPublicationIndex index) {
         indexCommonFields(materialProduct, index);
 
         index.setType(DocumentPublicationType.MATERIAL_PRODUCT.name());
@@ -239,5 +242,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }

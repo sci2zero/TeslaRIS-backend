@@ -39,4 +39,10 @@ public interface DocumentIndicatorRepository extends JpaRepository<DocumentIndic
     Optional<DocumentIndicator> findIndicatorForCodeAndSourceDocumentId(String code,
                                                                         EntityIndicatorSource source,
                                                                         Integer documentId);
+
+    @Query("SELECT oui FROM DocumentIndicator oui " +
+        "WHERE oui.document.id = :documentId AND " +
+        "oui.source IN :sources")
+    List<DocumentIndicator> findIndicatorsForDocumentAndSources(Integer documentId,
+                                                                List<EntityIndicatorSource> sources);
 }

@@ -26,7 +26,8 @@ public interface ProceedingsService {
 
     void forceDeleteProceedings(Integer proceedingsId);
 
-    void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index);
+    DocumentPublicationIndex indexProceedings(Proceedings proceedings,
+                                              DocumentPublicationIndex index);
 
     void indexProceedings(Proceedings proceedings);
 

@@ -11,6 +11,8 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -58,10 +60,10 @@ public class EmploymentMigrationWorker {
 
 
     @Retryable(
-        value = {org.springframework.dao.CannotAcquireLockException.class,
-            org.springframework.dao.DeadlockLoserDataAccessException.class},
+        retryFor = {CannotAcquireLockException.class, PessimisticLockingFailureException.class},
         maxAttempts = 3,
-        backoff = @Backoff(delay = 200, multiplier = 2))
+        backoff = @Backoff(delay = 200, multiplier = 2)
+    )
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processSingleMigration(ExtraEmploymentMigrationDTO migration,
                                        HashSet<Integer> handledInstitutionIds,
@@ -121,10 +123,10 @@ public class EmploymentMigrationWorker {
     }
 
     @Retryable(
-        value = {org.springframework.dao.CannotAcquireLockException.class,
-            org.springframework.dao.DeadlockLoserDataAccessException.class},
+        retryFor = {CannotAcquireLockException.class, PessimisticLockingFailureException.class},
         maxAttempts = 3,
-        backoff = @Backoff(delay = 200, multiplier = 2))
+        backoff = @Backoff(delay = 200, multiplier = 2)
+    )
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void cleanupAlumni(Employment employment,
                               HashSet<Integer> handledPersonIds,
@@ -156,10 +158,10 @@ public class EmploymentMigrationWorker {
     }
 
     @Retryable(
-        value = {org.springframework.dao.CannotAcquireLockException.class,
-            org.springframework.dao.DeadlockLoserDataAccessException.class},
+        retryFor = {CannotAcquireLockException.class, PessimisticLockingFailureException.class},
         maxAttempts = 3,
-        backoff = @Backoff(delay = 200, multiplier = 2))
+        backoff = @Backoff(delay = 200, multiplier = 2)
+    )
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Employment performLegacyMigration(EmploymentMigrationDTO employmentMigrationRequest) {
         Person person = resolvePerson(employmentMigrationRequest);

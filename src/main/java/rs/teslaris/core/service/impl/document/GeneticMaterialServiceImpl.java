@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.GeneticMaterialConverter;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -182,8 +183,10 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             geneticMaterialJPAService::findAll,
-            geneticMaterial ->
-                indexGeneticMaterial(geneticMaterial, new DocumentPublicationIndex())
+            geneticMaterial -> {
+                var index = indexGeneticMaterial(geneticMaterial, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -212,8 +215,8 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
         }
     }
 
-    private void indexGeneticMaterial(GeneticMaterial geneticMaterial,
-                                      DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexGeneticMaterial(GeneticMaterial geneticMaterial,
+                                                          DocumentPublicationIndex index) {
         indexCommonFields(geneticMaterial, index);
 
         index.setType(DocumentPublicationType.GENETIC_MATERIAL.name());
@@ -228,6 +231,8 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
         );
 
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }
 

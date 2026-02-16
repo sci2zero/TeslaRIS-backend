@@ -35,6 +35,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -348,7 +349,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             thesisJPAService::findAll,
-            thesis -> indexThesis(thesis, new DocumentPublicationIndex())
+            thesis -> {
+                var index = indexThesis(thesis, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -879,7 +883,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         );
     }
 
-    private void indexThesis(Thesis thesis, DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexThesis(Thesis thesis, DocumentPublicationIndex index) {
         indexCommonFields(thesis, index);
 
         index.setType(DocumentPublicationType.THESIS.name());
@@ -927,6 +931,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 
     private void checkIfAvailableForEditing(Thesis thesis) {
