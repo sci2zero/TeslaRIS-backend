@@ -72,6 +72,36 @@ jobs:
           distribution: "temurin"
           cache: maven
 
+      - name: Debug - List all containers (including stopped)
+        run: |
+          echo "=== All containers ==="
+          docker ps -a
+          echo ""
+          echo "=== Containers with names and status ==="
+          docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+
+      - name: Debug - Elasticsearch container logs
+        run: |
+          echo "=== Elasticsearch container(s) logs ==="
+          for cid in $(docker ps -a -q); do
+            name=$(docker inspect -f '{{.Name}}' "$cid" 2>/dev/null || true)
+            if echo "$name" | grep -qi elasticsearch; then
+              echo "--- Logs for container $cid ($name) ---"
+              docker logs "$cid" 2>&1 || true
+            fi
+          done
+
+      - name: Debug - Minio container logs
+        run: |
+          echo "=== Minio container(s) logs ==="
+          for cid in $(docker ps -a -q); do
+            name=$(docker inspect -f '{{.Name}}' "$cid" 2>/dev/null || true)
+            if echo "$name" | grep -qi minio; then
+              echo "--- Logs for container $cid ($name) ---"
+              docker logs "$cid" 2>&1 || true
+            fi
+          done
+
       - name: Install Elasticsearch plugin
         run: |
           #!/bin/bash
