@@ -283,23 +283,21 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
-        var minShouldMatch = "2<-100% 5<-80% 10<-70%";
+        var minShouldMatch = computeMinimumShouldMatch(tokens.size());
 
-        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+        return BoolQuery.of(b -> {
             tokens.forEach(token -> {
                 if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
                     b.must(mp ->
-                        mp.bool(m -> {
-                            {
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("title_sr")
-                                        .query(token.replace("\\\"", ""))));
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("title_other")
-                                        .query(token.replace("\\\"", ""))));
-                            }
-                            return m;
-                        }));
+                        mp.bool(m -> m
+                            .should(sb -> sb.matchPhrase(
+                                mq -> mq.field("title_sr")
+                                    .query(token.replace("\\\"", ""))))
+                            .should(sb -> sb.matchPhrase(
+                                mq -> mq.field("title_other")
+                                    .query(token.replace("\\\"", ""))))
+                        )
+                    );
                 } else if (token.contains("\\-") &&
                     issnPattern.matcher(token.replace("\\-", "-")).matches()) {
                     String normalizedToken = token.replace("\\-", "-");
@@ -321,25 +319,31 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
                             p -> p.field("print_issn").value(normalizedToken)))
                     ));
                 } else if (token.endsWith("\\*") || token.endsWith(".")) {
-                    var wildcard = token.replace("\\*", "").replace(".", "");
+                    var wildcard =
+                        token.replace("\\*", "").replace(".", "");
+
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_sr")
                                 .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard + "*")
+                            mq -> mq.field("title_other")
+                                .value(wildcard + "*")
                                 .caseInsensitive(true)))
                     ));
                 } else {
                     var wildcard = token + "*";
+
                     b.should(mp -> mp.bool(m -> m
                         .should(sb -> sb.wildcard(
                             mq -> mq.field("title_sr")
                                 .value(StringUtil.performSimpleLatinPreprocessing(token) + "*")
                                 .caseInsensitive(true)))
                         .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
+                            mq -> mq.field("title_other")
+                                .value(wildcard)
+                                .caseInsensitive(true)))
                         .should(sb -> sb.match(
                             mq -> mq.field("title_sr").query(token)))
                         .should(sb -> sb.match(
@@ -353,6 +357,22 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
             });
 
             return b.minimumShouldMatch(minShouldMatch);
-        })))._toQuery();
+        })._toQuery();
+    }
+
+    private String computeMinimumShouldMatch(int tokensCount) {
+        if (tokensCount <= 1) {
+            return "1";
+        }
+
+        if (tokensCount == 2) {
+            return "2";
+        }
+
+        if (tokensCount <= 6) {
+            return String.valueOf((int) Math.floor(tokensCount * 0.75));
+        }
+
+        return String.valueOf((int) Math.floor(tokensCount * 0.6));
     }
 }

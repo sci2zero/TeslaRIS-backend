@@ -121,17 +121,19 @@ public class AssessmentReportGenerator {
                 publications.forEach(publication -> {
                     if (!handledPublicationIds.contains(publication.c) &&
                         ClassificationPriorityMapping.isOnSciList(code)) {
-                        tableData.add(
-                            List.of((tableData.size() + 1) + ".", publication.a, code));
+                        tableData.add(List.of(publication.a, code));
                         handledPublicationIds.add(publication.c);
                     }
                 });
             });
         });
 
-        return new Pair<>(replacements,
-            tableData.stream().sorted((r1, r2) -> classificationCodeSorter(r1.get(2), r2.get(2)))
-                .toList());
+        var sorted = tableData.stream()
+            .sorted((r1, r2) ->
+                classificationCodeSorter(r1.get(1), r2.get(1)))
+            .toList();
+
+        return new Pair<>(replacements, applyRowNumbers(sorted));
     }
 
     private static Map<String, String> getTable64Headers(String locale, String fromYear,
@@ -302,17 +304,23 @@ public class AssessmentReportGenerator {
                         }
 
                         tableData.add(
-                            List.of((tableData.size() + 1) + ".",
-                                institutionName.toString(),
-                                publication.a, code));
+                            List.of(institutionName.toString(),
+                                publication.a,
+                                code)
+                        );
                         handledPublicationIds.add(publication.c);
                     }
                 });
             });
         });
 
-        return new Pair<>(replacements, tableData.stream().sorted(Comparator.comparingInt(
-            rowA -> ClassificationPriorityMapping.getSciListPriority((rowA.get(3))))).toList());
+        var sorted = tableData.stream()
+            .sorted(Comparator.comparingInt(
+                row -> ClassificationPriorityMapping.getSciListPriority(row.get(2))
+            ))
+            .toList();
+
+        return new Pair<>(replacements, applyRowNumbers(sorted));
     }
 
     private static Map<String, String> getTopLevelInstitutionTableHeaders(String locale,
@@ -482,7 +490,6 @@ public class AssessmentReportGenerator {
                         var color = determineRowColor(new HashSet<>(institutionIds), subOUs);
 
                         tableData.add(List.of(
-                            (tableData.size() + 1) + ".",
                             publication.a + "§" + color,
                             code
                         ));
@@ -493,10 +500,13 @@ public class AssessmentReportGenerator {
             });
         });
 
-        return tableData.stream()
+        var sorted = tableData.stream()
             .sorted(Comparator.comparingInt(
-                row -> ClassificationPriorityMapping.getSciListPriority(row.get(2))))
+                row -> ClassificationPriorityMapping.getSciListPriority(row.get(1))
+            ))
             .toList();
+
+        return applyRowNumbers(sorted);
     }
 
     private static String determineRowColor(Set<Integer> institutionIds, Set<Integer> subOUs) {
@@ -538,7 +548,7 @@ public class AssessmentReportGenerator {
                         var existingPair =
                             publicationsPerGroup.getOrDefault(code, new Pair<>("", 0));
                         existingPair.b += 1;
-                        existingPair.a += "\n" + existingPair.b + " " + publication.a + (colored ?
+                        existingPair.a += "\n" + existingPair.b + ". " + publication.a + (colored ?
                             ("§" + color) : "");
                         publicationsPerGroup.put(code, existingPair);
                         handledPublicationIds.add(publication.c);
@@ -597,5 +607,21 @@ public class AssessmentReportGenerator {
         }
 
         return s1.compareTo(s2);
+    }
+
+    private static List<List<String>> applyRowNumbers(List<List<String>> rows) {
+        List<List<String>> numbered = new ArrayList<>();
+
+        for (int i = 0; i < rows.size(); i++) {
+            List<String> row = rows.get(i);
+
+            List<String> newRow = new ArrayList<>();
+            newRow.add((i + 1) + ".");
+            newRow.addAll(row);
+
+            numbered.add(newRow);
+        }
+
+        return numbered;
     }
 }

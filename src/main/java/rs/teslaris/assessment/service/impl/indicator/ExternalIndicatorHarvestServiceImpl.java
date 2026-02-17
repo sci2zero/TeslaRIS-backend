@@ -903,10 +903,11 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
 
         if (event.index() instanceof PersonIndex) {
-            reindexPersonIndicators((PersonIndex) event.index(), EXTERNAL_INDICATOR_SOURCES);
+            reindexPersonIndicators((PersonIndex) event.index(),
+                List.of(EntityIndicatorSource.OPEN_ALEX));
         } else if (event.index() instanceof DocumentPublicationIndex) {
             reindexDocumentIndicators((DocumentPublicationIndex) event.index(),
-                EXTERNAL_INDICATOR_SOURCES);
+                List.of(EntityIndicatorSource.OPEN_ALEX));
         }
     }
 

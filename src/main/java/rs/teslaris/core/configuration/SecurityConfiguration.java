@@ -246,6 +246,9 @@ public class SecurityConfiguration {
                     "/api/assessment/publication-series-indicator/{publicationSeriesId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/publication-series-indicator/if-table/{publicationSeriesId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
                     "/api/assessment/person-assessment-classification/assess/{personId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/assessment/research-area").permitAll()
