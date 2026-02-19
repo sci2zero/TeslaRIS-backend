@@ -544,7 +544,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             indexOrganisationUnit(organisationUnitToUpdate, index);
 
             if (isNameChanged) {
-                FunctionalUtil.performBulkReindex(
+                FunctionalUtil.performBulkOperation(
                     (pageRequest ->
                         organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
                             organisationUnitId, pageRequest)),
@@ -1254,7 +1254,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public CompletableFuture<Void> reindexOrganisationUnits() {
         organisationUnitIndexRepository.deleteAll();
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             this::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (organisationUnit) -> indexOrganisationUnit(organisationUnit,

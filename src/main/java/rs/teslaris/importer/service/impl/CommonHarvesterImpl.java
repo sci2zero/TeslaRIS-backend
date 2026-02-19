@@ -1,28 +1,33 @@
 package rs.teslaris.importer.service.impl;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
-import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.CommonHarvester;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
+import rs.teslaris.importer.service.interfaces.LoadingConfigurationService;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
@@ -50,7 +55,9 @@ public class CommonHarvesterImpl implements CommonHarvester {
 
     private final NotificationService notificationService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
+
+    private final LoadingConfigurationService loadingConfigurationService;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
@@ -192,17 +199,49 @@ public class CommonHarvesterImpl implements CommonHarvester {
     }
 
     @Override
-    public void performDocumentCentricHarvest(Integer documentId) {
-        var mergedMetadata = new DocumentImport();
-
+    public String performDocumentCentricHarvest(Integer documentId) {
         var documentIndex =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
 
         if (documentIndex.isEmpty() || !StringUtil.valueExists(documentIndex.get().getDoi())) {
-            return;
+            return null;
         }
 
-        var doi = documentIndex.get().getDoi();
+        return scanSourcesForDocumentMetadata(documentIndex.get(), false);
+    }
+
+    @Override
+    public void enrichMetadataForInstitution(List<Integer> institutionIds, boolean autoupdate) {
+        var typesToFetch =
+            autoupdate ? Arrays.stream(DocumentPublicationType.values()).map(Enum::name).toList() :
+                List.of(DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
+
+        FunctionalUtil.performBulkOperation(
+            (pageRequest -> documentPublicationIndexRepository.fetchForInstitutionsAndTypes(
+                institutionIds,
+                typesToFetch, pageRequest)),
+            Sort.by(Sort.Direction.ASC, "id"),
+            (documentIndex) -> scanSourcesForDocumentMetadata(documentIndex, autoupdate)
+        );
+
+        institutionIds.forEach(
+            institutionId -> {
+                var loadingConfiguration =
+                    loadingConfigurationService.getLoadingConfigurationForInstitution(
+                        institutionId);
+                loadingConfiguration.setPriorityLoading(true);
+
+                loadingConfigurationService.saveLoadingConfiguration(institutionId,
+                    loadingConfiguration);
+            });
+    }
+
+    private String scanSourcesForDocumentMetadata(DocumentPublicationIndex documentIndex,
+                                                  boolean autoupdate) {
+        var mergedMetadata = new DocumentImport();
+
+        var doi = documentIndex.getDoi();
 
         var scopusHarvestedData = scopusHarvester.harvestDocumentForDoi(doi);
         scopusHarvestedData.ifPresent(
@@ -220,15 +259,21 @@ public class CommonHarvesterImpl implements CommonHarvester {
                 DeepObjectMerger.deepMerge(mergedMetadata, documentImport));
 
         if (!StringUtil.valueExists(mergedMetadata.getDoi())) {
-            return; // nothing was found
+            return null; // nothing was found
+        }
+
+        if (autoupdate) {
+            // TODO: implement later
+            return null; // return value not used
         }
 
         var existingImport =
             CommonImportUtility.findImportByDOIOrMetadata(mergedMetadata);
         if (Objects.nonNull(existingImport)) {
             DeepObjectMerger.deepMerge(existingImport, mergedMetadata);
+            existingImport.setLoaded(false);
             mongoTemplate.save(existingImport, "documentImports");
-            return;
+            return existingImport.getId();
         }
 
         var embedding = CommonImportUtility.generateEmbedding(mergedMetadata);
@@ -236,16 +281,16 @@ public class CommonHarvesterImpl implements CommonHarvester {
             mergedMetadata.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
         }
 
-//        var personId = personService.getPersonIdForUserId(userId);
-//
-//        var employmentInstitutionIds =
-//            involvementService.getDirectEmploymentInstitutionIdsForPerson(personId);
-        var adminUserIds = CommonImportUtility.getAdminUserIds();
+        documentIndex.getAuthorIds().forEach(authorId ->
+            userRepository.findForResearcher(authorId)
+                .ifPresent(user -> mergedMetadata.getImportUsersId().add(user.getId())));
 
-        mergedMetadata.getImportUsersId().add(SessionUtil.getLoggedInUser().getId());
-        mergedMetadata.getImportUsersId().addAll(adminUserIds);
-//        mergedMetadata.getImportInstitutionsId().addAll(employmentInstitutionIds);
-        mongoTemplate.save(mergedMetadata, "documentImports");
+        documentIndex.getOrganisationUnitIdsActive()
+            .forEach(mergedMetadata.getImportInstitutionsId()::add);
+
+        mergedMetadata.getImportUsersId().addAll(CommonImportUtility.getAdminUserIds());
+
+        return mongoTemplate.save(mergedMetadata, "documentImports").getId();
     }
 
     private void dispatchNotifications(Map<Integer, Integer> newDocumentImportCountByUser,
@@ -254,13 +299,14 @@ public class CommonHarvesterImpl implements CommonHarvester {
             newDocumentImportCountByUser.put(userId, 0);
         }
 
-        newDocumentImportCountByUser.keySet().forEach(key -> {
-            var notificationValues = new HashMap<String, String>();
-            notificationValues.put("newImportCount",
-                String.valueOf(newDocumentImportCountByUser.get(key)));
-            notificationService.createNotification(
-                NotificationFactory.contructNewImportsNotification(notificationValues,
-                    userService.findOne(key)));
-        });
+        newDocumentImportCountByUser.keySet().forEach(key ->
+            userRepository.findById(key).ifPresent(user -> {
+                var notificationValues = new HashMap<String, String>();
+                notificationValues.put("newImportCount",
+                    String.valueOf(newDocumentImportCountByUser.get(key)));
+                notificationService.createNotification(
+                    NotificationFactory.contructNewImportsNotification(notificationValues, user));
+            })
+        );
     }
 }

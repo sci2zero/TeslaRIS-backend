@@ -203,7 +203,7 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     public CompletableFuture<Void> reindexExhibitions() {
         // Super service does the initial deletion
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             exhibitionJPAService::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (exhibition) -> indexExhibition(exhibition, new EventIndex())

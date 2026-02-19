@@ -179,7 +179,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
     public CompletableFuture<Void> reindexPublishers() {
         publisherIndexRepository.deleteAll();
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             this::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (publisher) -> indexPublisher(publisher, new PublisherIndex())

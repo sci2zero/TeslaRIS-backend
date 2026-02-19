@@ -165,7 +165,7 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
     public CompletableFuture<Void> reindexPrizes() {
         prizeIndexRepository.deleteAll();
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             this::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (prize) -> indexPrize(prize, new PrizeIndex())

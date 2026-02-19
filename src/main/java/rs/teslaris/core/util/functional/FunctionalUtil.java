@@ -130,7 +130,7 @@ public class FunctionalUtil {
         return result;
     }
 
-    public static <T> void performBulkReindex(
+    public static <T> void performBulkOperation(
         Function<PageRequest, Page<T>> pageSupplier,
         Sort sort,
         Consumer<T> itemProcessor

@@ -1005,7 +1005,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     public CompletableFuture<Void> reindexUsers() {
         userAccountIndexRepository.deleteAll();
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             this::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (user) -> indexUser(user, new UserAccountIndex())

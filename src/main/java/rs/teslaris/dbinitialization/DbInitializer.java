@@ -221,6 +221,7 @@ public class DbInitializer implements ApplicationRunner {
         var mergeExhibitions = new Privilege("MERGE_EXHIBITIONS");
         var substituteThesis = new Privilege("SUBSTITUTE_THESIS");
         var setPersonFieldVisibility = new Privilege("SET_PERSON_FIELD_VISIBILITY");
+        var enrichDocumentMetadata = new Privilege("ENRICH_DOCUMENT_METADATA");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -260,7 +261,8 @@ public class DbInitializer implements ApplicationRunner {
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
                 unpromoteRbEntries, changePublicationType, assessPrizes, editExhibitions,
-                createExhibitions, mergeExhibitions, substituteThesis, setPersonFieldVisibility));
+                createExhibitions, mergeExhibitions, substituteThesis, setPersonFieldVisibility,
+                enrichDocumentMetadata));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -299,7 +301,7 @@ public class DbInitializer implements ApplicationRunner {
                 forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
                 registerResearcher, unpromoteRbEntries, changePublicationType, assessPrizes,
                 editExhibitions, createExhibitions, mergeExhibitions, substituteThesis,
-                setPersonFieldVisibility
+                setPersonFieldVisibility, enrichDocumentMetadata
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -309,7 +311,7 @@ public class DbInitializer implements ApplicationRunner {
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
                 createBookSeries, createPublisher, performLoading, harvestIdfMetadata,
                 getTopCollaborators, changePublicationType, createExhibitions,
-                setPersonFieldVisibility)));
+                setPersonFieldVisibility, enrichDocumentMetadata)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -326,7 +328,7 @@ public class DbInitializer implements ApplicationRunner {
                     scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
                     saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
                     saveChartDisplayConfiguration, getTopCollaborators, changePublicationType,
-                    createExhibitions)));
+                    createExhibitions, enrichDocumentMetadata)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(

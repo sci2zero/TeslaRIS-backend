@@ -240,7 +240,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public CompletableFuture<Void> reindexConferences() {
         // Super service does the initial deletion
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             conferenceJPAService::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (conference) -> indexConference(conference, new EventIndex())

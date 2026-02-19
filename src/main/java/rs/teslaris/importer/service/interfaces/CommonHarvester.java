@@ -26,5 +26,7 @@ public interface CommonHarvester {
     void processVerifiedFile(Integer userId, MultipartFile file, String filename,
                              HashMap<Integer, Integer> counts);
 
-    void performDocumentCentricHarvest(Integer documentId);
+    String performDocumentCentricHarvest(Integer documentId);
+
+    void enrichMetadataForInstitution(List<Integer> institutionIds, boolean autoupdate);
 }

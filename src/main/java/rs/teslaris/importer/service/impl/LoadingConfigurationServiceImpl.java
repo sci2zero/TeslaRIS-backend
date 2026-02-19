@@ -80,6 +80,11 @@ public class LoadingConfigurationServiceImpl extends JPAServiceImpl<LoadingConfi
     }
 
     @Override
+    public LoadingConfigurationDTO getLoadingConfigurationForInstitution(Integer institutionId) {
+        return provideLoadingConfigurationForInstitution(institutionId);
+    }
+
+    @Override
     public LoadingConfigurationDTO getLoadingConfigurationForAdminUser(Integer institutionId) {
         return provideLoadingConfigurationForInstitution(institutionId);
     }

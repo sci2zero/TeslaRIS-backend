@@ -215,10 +215,11 @@ public class CommonHarvestController {
         return newDocumentImportCountByUser.getOrDefault(userId, 0);
     }
 
-    @GetMapping("/enriched-metadata/{documentId}")
+    @GetMapping("/metadata-scan/{documentId}")
+    @PreAuthorize("hasAuthority('ENRICH_DOCUMENT_METADATA')")
     @PublicationEditCheck
-    public void getEnrichedDocumentMetadata(@PathVariable Integer documentId) {
-        commonHarvester.performDocumentCentricHarvest(documentId);
+    public String scanForEnrichedDocumentMetadata(@PathVariable Integer documentId) {
+        return commonHarvester.performDocumentCentricHarvest(documentId);
     }
 
     private void validateFileMetadata(MultipartFile file) {

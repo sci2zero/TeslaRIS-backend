@@ -16,4 +16,6 @@ public interface LoadingConfigurationService extends JPAService<LoadingConfigura
     LoadingConfigurationDTO getLoadingConfigurationForEmployeeUser(Integer userId);
 
     LoadingConfigurationDTO getLoadingConfigurationForAdminUser(Integer institutionId);
+
+    LoadingConfigurationDTO getLoadingConfigurationForInstitution(Integer institutionId);
 }

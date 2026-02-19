@@ -466,4 +466,18 @@ public interface DocumentPublicationIndexRepository extends
         }
         """)
     long countByJournalId(Integer journalId);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "terms": { "type": ?0 } },
+              { "terms": { "organisation_unit_ids": ?2 } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchForInstitutionsAndTypes(List<Integer> institutionIds,
+                                                                List<String> types,
+                                                                Pageable pageable);
 }

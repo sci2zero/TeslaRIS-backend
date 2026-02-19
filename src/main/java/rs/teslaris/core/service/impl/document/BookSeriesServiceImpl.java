@@ -197,7 +197,7 @@ public class BookSeriesServiceImpl extends PublicationSeriesServiceImpl
     public CompletableFuture<Void> reindexBookSeries() {
         bookSeriesIndexRepository.deleteAll();
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             bookSeriesJPAService::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (bookSeries) -> indexBookSeries(bookSeries, new BookSeriesIndex())

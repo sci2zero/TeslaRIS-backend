@@ -842,7 +842,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public CompletableFuture<Void> reindexPersons() {
         personIndexRepository.deleteAll();
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             this::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (person) -> {

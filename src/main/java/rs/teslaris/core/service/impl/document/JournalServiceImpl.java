@@ -265,7 +265,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     public CompletableFuture<Void> reindexJournals() {
         journalIndexRepository.deleteAll();
 
-        FunctionalUtil.performBulkReindex(
+        FunctionalUtil.performBulkOperation(
             journalJPAService::findAll,
             Sort.by(Sort.Direction.ASC, "id"),
             (journal) -> indexJournal(journal, new JournalIndex())
