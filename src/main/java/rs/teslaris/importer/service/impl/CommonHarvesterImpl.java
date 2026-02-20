@@ -23,6 +23,7 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
+import rs.teslaris.importer.service.impl.worker.DocumentEnrichmentWorker;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.CommonHarvester;
@@ -62,6 +63,8 @@ public class CommonHarvesterImpl implements CommonHarvester {
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final MongoTemplate mongoTemplate;
+
+    private final DocumentEnrichmentWorker documentEnrichmentWorker;
 
 
     @Override
@@ -263,22 +266,27 @@ public class CommonHarvesterImpl implements CommonHarvester {
         }
 
         if (autoupdate) {
-            // TODO: implement later
+            documentEnrichmentWorker.enrichDocumentMetadata(documentIndex.getDatabaseId(),
+                mergedMetadata);
             return null; // return value not used
-        }
-
-        var existingImport =
-            CommonImportUtility.findImportByDOIOrMetadata(mergedMetadata);
-        if (Objects.nonNull(existingImport)) {
-            DeepObjectMerger.deepMerge(existingImport, mergedMetadata);
-            existingImport.setLoaded(false);
-            mongoTemplate.save(existingImport, "documentImports");
-            return existingImport.getId();
         }
 
         var embedding = CommonImportUtility.generateEmbedding(mergedMetadata);
         if (Objects.nonNull(embedding)) {
             mergedMetadata.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
+        }
+
+        var existingImport =
+            CommonImportUtility.findImportByDOIOrMetadata(mergedMetadata);
+        if (Objects.nonNull(existingImport)) {
+            if (DeduplicationUtil.isDuplicate(existingImport, embedding, mergedMetadata)) {
+                return null; // skip if duplicate, don't waste time
+            }
+
+            DeepObjectMerger.deepMerge(existingImport, mergedMetadata);
+            existingImport.setLoaded(false);
+            mongoTemplate.save(existingImport, "documentImports");
+            return existingImport.getId();
         }
 
         documentIndex.getAuthorIds().forEach(authorId ->

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -32,10 +33,12 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.importer.dto.LoadingConfigurationDTO;
 import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.service.impl.CommonHarvesterImpl;
+import rs.teslaris.importer.service.impl.worker.DocumentEnrichmentWorker;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
@@ -87,6 +90,9 @@ public class CommonHarvesterTest {
 
     @Mock
     private LoadingConfigurationService loadingConfigurationService;
+
+    @Mock
+    private DocumentEnrichmentWorker documentEnrichmentWorker;
 
     @InjectMocks
     private CommonHarvesterImpl commonHarvester;
@@ -558,6 +564,64 @@ public class CommonHarvesterTest {
             verify(scopusHarvester).harvestDocumentForDoi(doi);
             verify(mongoTemplate).save(any(), eq("documentImports"));
             verify(loadingConfigurationService).saveLoadingConfiguration(any(), any());
+        }
+    }
+
+    @Test
+    void shouldCallEnrichmentWorkerWhenAutoupdateTrueThroughPublicMethod() {
+        // given
+        var institutionIds = List.of(1);
+        var doi = "10.9999/test";
+        var documentId = 55;
+
+        var index = new DocumentPublicationIndex();
+        index.setDatabaseId(documentId);
+        index.setDoi(doi);
+        index.setAuthorIds(List.of());
+        index.setOrganisationUnitIdsActive(List.of());
+
+        var harvested = new DocumentImport();
+        harvested.setDoi(doi);
+
+        when(scopusHarvester.harvestDocumentForDoi(doi))
+            .thenReturn(Optional.of(harvested));
+        when(openAlexHarvester.harvestDocumentForDoi(doi))
+            .thenReturn(Optional.empty());
+        when(webOfScienceHarvester.harvestDocumentForDoi(doi))
+            .thenReturn(Optional.empty());
+
+        when(loadingConfigurationService.getLoadingConfigurationForInstitution(any()))
+            .thenReturn(new LoadingConfigurationDTO());
+
+        try (var functionalMock = mockStatic(FunctionalUtil.class);
+             var commonImportMock = mockStatic(CommonImportUtility.class)) {
+
+            commonImportMock.when(() ->
+                    CommonImportUtility.generateEmbedding(any()))
+                .thenReturn(null);
+
+            commonImportMock.when(() ->
+                    CommonImportUtility.findImportByDOIOrMetadata(any()))
+                .thenReturn(null);
+
+            functionalMock.when(() ->
+                    FunctionalUtil.performBulkOperation(any(), any(), any()))
+                .thenAnswer(invocation -> {
+                    var consumer =
+                        (Consumer<DocumentPublicationIndex>) invocation.getArgument(2);
+                    consumer.accept(index);
+                    return null;
+                });
+
+            // when
+            commonHarvester.enrichMetadataForInstitution(institutionIds, true);
+
+            // then
+            verify(documentEnrichmentWorker)
+                .enrichDocumentMetadata(eq(documentId), any(DocumentImport.class));
+
+            verify(loadingConfigurationService)
+                .saveLoadingConfiguration(eq(1), any(LoadingConfigurationDTO.class));
         }
     }
 }

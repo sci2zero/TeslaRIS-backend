@@ -169,6 +169,7 @@ public class ResearchAreaServiceTest {
         verify(researchAreaRepository, times(1)).isResearchedInMonograph(researchAreaId);
         verify(researchAreaRepository, times(1)).save(researchArea);
         verify(researchAreaRepository, times(1)).findById(any());
+        verify(researchAreaRepository, times(1)).flush();
         verifyNoMoreInteractions(researchAreaRepository);
     }
 

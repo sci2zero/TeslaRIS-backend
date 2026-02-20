@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,7 @@ import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.person.Contact;
@@ -895,6 +897,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         StringBuilder sb = new StringBuilder();
         phdThesis.getContributors().stream()
             .filter(c -> DocumentContributionType.BOARD_MEMBER.equals(c.getContributionType()))
+            .sorted(Comparator.comparing(PersonContribution::getOrderNumber))
             .forEach(member -> {
                 if (!sb.isEmpty()) {
                     sb.append("\n");
