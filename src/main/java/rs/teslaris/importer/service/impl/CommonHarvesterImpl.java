@@ -280,7 +280,8 @@ public class CommonHarvesterImpl implements CommonHarvester {
             CommonImportUtility.findImportByDOIOrMetadata(mergedMetadata);
         if (Objects.nonNull(existingImport)) {
             if (DeduplicationUtil.isDuplicate(existingImport, embedding, mergedMetadata)) {
-                return null; // skip if duplicate, don't waste time
+                return existingImport.getLoaded() ? null :
+                    existingImport.getId(); // return existing one if duplicate and not loaded, otherwise don't waste time
             }
 
             DeepObjectMerger.deepMerge(existingImport, mergedMetadata);

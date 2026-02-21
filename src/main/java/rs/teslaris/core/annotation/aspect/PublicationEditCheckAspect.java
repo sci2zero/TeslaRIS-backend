@@ -1,5 +1,6 @@
 package rs.teslaris.core.annotation.aspect;
 
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,31 +83,46 @@ public class PublicationEditCheckAspect {
         var assessmentMode = annotation.value().equalsIgnoreCase("ASSESS");
 
         for (var documentId : documentIds) {
-            List<Integer> contributors =
-                getContributors(annotation, attributeMap, joinPoint, documentId);
+            if (annotation.value().equalsIgnoreCase("CREATE")) {
 
-            checkPermission(role, personId, userId, contributors, joinPoint, annotation,
-                assessmentMode, documentId);
+                var contributors = getContributorsFromDTO(joinPoint);
+
+                checkPermission(role, personId, userId, contributors, joinPoint,
+                    annotation, assessmentMode, documentId);
+
+            } else {
+                var dbContributors =
+                    getContributorsFromDatabase(attributeMap, documentId);
+
+                var dtoContributors =
+                    getContributorsFromDTO(joinPoint);
+
+                checkPermission(role, personId, userId, dbContributors, joinPoint,
+                    annotation, assessmentMode, documentId);
+
+                if (Objects.nonNull(dtoContributors)) {
+                    checkPermission(role, personId, userId, dtoContributors, joinPoint,
+                        annotation, assessmentMode, documentId);
+                }
+            }
         }
 
         return joinPoint.proceed();
     }
 
-    private List<Integer> getContributors(PublicationEditCheck annotation,
-                                          Map<String, String> attributeMap,
-                                          ProceedingJoinPoint joinPoint,
-                                          Integer documentId) {
-        if (annotation.value().equalsIgnoreCase("CREATE")) {
-            return getContributorsFromDTO(joinPoint);
-        } else {
-            return getContributorsFromDatabase(attributeMap, documentId);
-        }
-    }
-
+    @Nullable
     private List<Integer> getContributorsFromDTO(ProceedingJoinPoint joinPoint) {
-        var publicationDTO = (DocumentDTO) joinPoint.getArgs()[0];
-        return publicationDTO.getContributions().stream().map(PersonContributionDTO::getPersonId)
-            .filter(Objects::nonNull).collect(Collectors.toList());
+        for (Object arg : joinPoint.getArgs()) {
+            if (arg instanceof DocumentDTO publicationDTO) {
+                return publicationDTO.getContributions()
+                    .stream()
+                    .map(PersonContributionDTO::getPersonId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            }
+        }
+
+        return null;
     }
 
     private boolean isDocumentNotAThesis(ProceedingJoinPoint joinPoint,
