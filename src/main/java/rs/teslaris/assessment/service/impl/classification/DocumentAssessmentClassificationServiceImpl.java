@@ -843,19 +843,21 @@ public class DocumentAssessmentClassificationServiceImpl
             yearHandler.accept(year, classifications, commission)
         );
 
-        if (!classifications.isEmpty()) {
-            var bestClassification =
-                ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
-                    ResultCalculationMethod.BEST_VALUE);
-            bestClassification.ifPresent((documentClassification) -> {
-                handleClassification(
-                    documentClassification.a, commission,
-                    documentId, documentPublicationType,
-                    classificationYear, batchedClassifications,
-                    true
-                );
-            });
+        if (classifications.isEmpty()) {
+            addFallbackJournalClassification(classifications);
         }
+
+        var bestClassification =
+            ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
+                ResultCalculationMethod.BEST_VALUE);
+        bestClassification.ifPresent((documentClassification) -> {
+            handleClassification(
+                documentClassification.a, commission,
+                documentId, documentPublicationType,
+                classificationYear, batchedClassifications,
+                true
+            );
+        });
     }
 
     private ImaginaryPublicationAssessmentResponseDTO performPublicationAssessmentForImaginaryDocument(
@@ -863,7 +865,6 @@ public class DocumentAssessmentClassificationServiceImpl
         Commission commission, List<Integer> yearsToConsider, String researchArea,
         PublicationType publicationType, Integer authorCount, boolean isExperimental,
         boolean isTheoretical, boolean isSimulation) {
-
         var assessmentResponse = new ImaginaryPublicationAssessmentResponseDTO();
         var classifications =
             new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
@@ -871,7 +872,7 @@ public class DocumentAssessmentClassificationServiceImpl
         yearsToConsider.forEach(year -> yearHandler.accept(year, classifications, commission));
 
         if (classifications.isEmpty()) {
-            return assessmentResponse;
+            addFallbackJournalClassification(classifications);
         }
 
         ClassificationPriorityMapping
@@ -882,6 +883,16 @@ public class DocumentAssessmentClassificationServiceImpl
             ));
 
         return assessmentResponse;
+    }
+
+    private void addFallbackJournalClassification(
+        ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>> classifications) {
+        classifications.add(new Pair<>(
+            assessmentClassificationService.readAssessmentClassificationByCode(
+                ClassificationPriorityMapping.getDefaultJournalAssessmentCode()),
+            AssessmentRulesConfigurationLoader.getRuleDescription(
+                "journalClassificationRules", "defaultFallback"))
+        );
     }
 
     private void processClassification(

@@ -190,10 +190,11 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
     }
 
     @Override
-    public Optional<DocumentImport> harvestDocumentForDoi(String doi) {
+    public Optional<DocumentImport> harvestDocumentForDoi(String doi, boolean onlyLoadableTypes) {
         var harvestedDocument = scopusImportUtility.getPublicationByDoi(doi);
         return Objects.nonNull(harvestedDocument) ?
-            ScopusConverter.toCommonImportModel(harvestedDocument, scopusImportUtility) :
+            ScopusConverter.toCommonImportModel(harvestedDocument, scopusImportUtility,
+                onlyLoadableTypes) :
             Optional.of(new DocumentImport());
     }
 
@@ -211,7 +212,7 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
                 }
 
                 var optionalDocument =
-                    ScopusConverter.toCommonImportModel(entry, scopusImportUtility);
+                    ScopusConverter.toCommonImportModel(entry, scopusImportUtility, true);
                 if (optionalDocument.isEmpty()) {
                     log.info("Harvested entry is retracted: {}", entry.title());
                     continue;

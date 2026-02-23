@@ -174,10 +174,10 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
     }
 
     @Override
-    public Optional<DocumentImport> harvestDocumentForDoi(String doi) {
+    public Optional<DocumentImport> harvestDocumentForDoi(String doi, boolean onlyLoadableTypes) {
         var harvestedDocument = webOfScienceImportUtility.getPublicationByDoi(doi);
         return Objects.nonNull(harvestedDocument) ?
-            WebOfScienceConverter.toCommonImportModel(harvestedDocument) :
+            WebOfScienceConverter.toCommonImportModel(harvestedDocument, onlyLoadableTypes) :
             Optional.of(new DocumentImport());
     }
 
@@ -186,7 +186,7 @@ public class WebOfScienceHarvesterImpl implements WebOfScienceHarvester {
         Set<Integer> adminUserIds, List<Integer> institutionIds,
         HashMap<Integer, Integer> newEntriesCount, Boolean employeeUser) {
         harvestedRecords.forEach(
-            publication -> WebOfScienceConverter.toCommonImportModel(publication)
+            publication -> WebOfScienceConverter.toCommonImportModel(publication, true)
                 .ifPresent(documentImport -> {
                     var existingImport =
                         CommonImportUtility.findExistingImport(documentImport.getIdentifier());

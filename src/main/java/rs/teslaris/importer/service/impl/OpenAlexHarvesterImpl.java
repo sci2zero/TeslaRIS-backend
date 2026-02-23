@@ -167,10 +167,10 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
     }
 
     @Override
-    public Optional<DocumentImport> harvestDocumentForDoi(String doi) {
+    public Optional<DocumentImport> harvestDocumentForDoi(String doi, boolean onlyLoadableTypes) {
         var harvestedDocument = openAlexImportUtility.getPublicationByDoi(doi);
         return Objects.nonNull(harvestedDocument) ?
-            OpenAlexConverter.toCommonImportModel(harvestedDocument) :
+            OpenAlexConverter.toCommonImportModel(harvestedDocument, onlyLoadableTypes) :
             Optional.of(new DocumentImport());
     }
 
@@ -179,7 +179,7 @@ public class OpenAlexHarvesterImpl implements OpenAlexHarvester {
         Set<Integer> adminUserIds, List<Integer> institutionIds,
         HashMap<Integer, Integer> newEntriesCount, Boolean employeeUser) {
         harvestedRecords.forEach(
-            publication -> OpenAlexConverter.toCommonImportModel(publication)
+            publication -> OpenAlexConverter.toCommonImportModel(publication, true)
                 .ifPresent(documentImport -> {
                     var existingImport =
                         CommonImportUtility.findExistingImport(documentImport.getIdentifier());

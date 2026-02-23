@@ -140,7 +140,6 @@ public class FunctionalUtil {
         boolean hasNextPage = true;
 
         while (hasNextPage) {
-
             List<T> chunk =
                 pageSupplier.apply(
                     PageRequest.of(pageNumber, chunkSize, sort)

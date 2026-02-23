@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -35,7 +36,7 @@ public class DocumentEnrichmentWorker {
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void enrichDocumentMetadata(Integer documentId, DocumentImport documentImport) {
         var optionalIndex =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);

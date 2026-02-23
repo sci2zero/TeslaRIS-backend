@@ -3,6 +3,7 @@ package rs.teslaris.core.unit.importer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
@@ -10,11 +11,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,15 +27,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.importer.dto.LoadingConfigurationDTO;
@@ -94,6 +101,9 @@ public class CommonHarvesterTest {
     @Mock
     private DocumentEnrichmentWorker documentEnrichmentWorker;
 
+    @Mock
+    private TaskManagerService taskManagerService;
+
     @InjectMocks
     private CommonHarvesterImpl commonHarvester;
 
@@ -109,6 +119,13 @@ public class CommonHarvesterTest {
         dateTo = LocalDate.of(2023, 12, 31);
         userId = 1;
         institutionId = 100;
+
+        Executor mockExecutor = Runnable::run;
+        ReflectionTestUtils.setField(
+            commonHarvester,
+            "metadataFetchExecutor",
+            mockExecutor
+        );
     }
 
     @Test
@@ -474,11 +491,11 @@ public class CommonHarvesterTest {
         var harvested = new DocumentImport();
         harvested.setDoi(doi);
 
-        when(scopusHarvester.harvestDocumentForDoi(doi))
+        when(scopusHarvester.harvestDocumentForDoi(doi, true))
             .thenReturn(Optional.of(harvested));
-        when(openAlexHarvester.harvestDocumentForDoi(doi))
+        when(openAlexHarvester.harvestDocumentForDoi(doi, true))
             .thenReturn(Optional.empty());
-        when(webOfScienceHarvester.harvestDocumentForDoi(doi))
+        when(webOfScienceHarvester.harvestDocumentForDoi(doi, true))
             .thenReturn(Optional.empty());
 
         try (var mockedStatic = mockStatic(CommonImportUtility.class)) {
@@ -505,9 +522,9 @@ public class CommonHarvesterTest {
 
             // then
             assertEquals("mongo-id", result);
-            verify(scopusHarvester).harvestDocumentForDoi(doi);
-            verify(openAlexHarvester).harvestDocumentForDoi(doi);
-            verify(webOfScienceHarvester).harvestDocumentForDoi(doi);
+            verify(scopusHarvester).harvestDocumentForDoi(doi, true);
+            verify(openAlexHarvester).harvestDocumentForDoi(doi, true);
+            verify(webOfScienceHarvester).harvestDocumentForDoi(doi, true);
             verify(mongoTemplate).save(any(), eq("documentImports"));
         }
     }
@@ -532,15 +549,14 @@ public class CommonHarvesterTest {
         var harvested = new DocumentImport();
         harvested.setDoi(doi);
 
-        when(scopusHarvester.harvestDocumentForDoi(doi))
+        when(scopusHarvester.harvestDocumentForDoi(doi, true))
             .thenReturn(Optional.of(harvested));
-        when(openAlexHarvester.harvestDocumentForDoi(doi))
+        when(openAlexHarvester.harvestDocumentForDoi(doi, true))
             .thenReturn(Optional.empty());
-        when(webOfScienceHarvester.harvestDocumentForDoi(doi))
+        when(webOfScienceHarvester.harvestDocumentForDoi(doi, true))
             .thenReturn(Optional.empty());
 
         try (var mockedStatic = mockStatic(CommonImportUtility.class)) {
-
             mockedStatic.when(() ->
                     CommonImportUtility.findImportByDOIOrMetadata(any()))
                 .thenReturn(null);
@@ -561,7 +577,7 @@ public class CommonHarvesterTest {
             commonHarvester.enrichMetadataForInstitution(institutionIds, false);
 
             // then
-            verify(scopusHarvester).harvestDocumentForDoi(doi);
+            verify(scopusHarvester).harvestDocumentForDoi(doi, true);
             verify(mongoTemplate).save(any(), eq("documentImports"));
             verify(loadingConfigurationService).saveLoadingConfiguration(any(), any());
         }
@@ -583,11 +599,11 @@ public class CommonHarvesterTest {
         var harvested = new DocumentImport();
         harvested.setDoi(doi);
 
-        when(scopusHarvester.harvestDocumentForDoi(doi))
+        when(scopusHarvester.harvestDocumentForDoi(doi, false))
             .thenReturn(Optional.of(harvested));
-        when(openAlexHarvester.harvestDocumentForDoi(doi))
+        when(openAlexHarvester.harvestDocumentForDoi(doi, false))
             .thenReturn(Optional.empty());
-        when(webOfScienceHarvester.harvestDocumentForDoi(doi))
+        when(webOfScienceHarvester.harvestDocumentForDoi(doi, false))
             .thenReturn(Optional.empty());
 
         when(loadingConfigurationService.getLoadingConfigurationForInstitution(any()))
@@ -595,7 +611,6 @@ public class CommonHarvesterTest {
 
         try (var functionalMock = mockStatic(FunctionalUtil.class);
              var commonImportMock = mockStatic(CommonImportUtility.class)) {
-
             commonImportMock.when(() ->
                     CommonImportUtility.generateEmbedding(any()))
                 .thenReturn(null);
@@ -619,9 +634,53 @@ public class CommonHarvesterTest {
             // then
             verify(documentEnrichmentWorker)
                 .enrichDocumentMetadata(eq(documentId), any(DocumentImport.class));
-
             verify(loadingConfigurationService)
                 .saveLoadingConfiguration(eq(1), any(LoadingConfigurationDTO.class));
         }
+    }
+
+    @Test
+    void shouldScheduleMetadataEnrichmentTaskWithCorrectParameters() {
+        // given
+        var institutionIds = List.of(1, 2, 3);
+        var timeToRun = LocalDateTime.now().plusHours(1);
+        var autoload = true;
+        var recurrenceType = RecurrenceType.ONCE;
+        var userId = 42;
+
+        var expectedTaskName = "Enrichment-1_2_3-AUTO";
+        var expectedTaskId = "task-123";
+
+        when(taskManagerService.scheduleTask(
+            eq(expectedTaskName),
+            eq(timeToRun),
+            any(Runnable.class),
+            eq(userId),
+            eq(recurrenceType)
+        )).thenReturn(expectedTaskId);
+
+        // when
+        commonHarvester.scheduleMetadataEnrichmentForInstitution(
+            timeToRun, institutionIds, autoload, recurrenceType, userId
+        );
+
+        // then
+        verify(taskManagerService).scheduleTask(
+            eq(expectedTaskName),
+            eq(timeToRun),
+            any(Runnable.class),
+            eq(userId),
+            eq(recurrenceType)
+        );
+
+        verify(taskManagerService).saveTaskMetadata(argThat(metadata ->
+            metadata.getTaskId().equals(expectedTaskId) &&
+                metadata.getTimeToRun().equals(timeToRun) &&
+                metadata.getType() == ScheduledTaskType.METADATA_ENRICHMENT &&
+                metadata.getRecurrenceType() == recurrenceType &&
+                metadata.getMetadata().get("institutionIds").equals(institutionIds) &&
+                metadata.getMetadata().get("autoload").equals(autoload) &&
+                metadata.getMetadata().get("userId").equals(userId)
+        ));
     }
 }

@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -231,7 +232,14 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                         SerbianTransliteration.toCyrillic(authorName),
                         SerbianTransliteration.toCyrillic(authorTitle),
                         null,
-                        PageRequest.of(pageNumber, chunkSize))
+                        PageRequest.of(
+                            pageNumber, chunkSize,
+                            Sort.by(
+                                Sort.Order.asc("dissertationInformation.defenceDate"),
+                                Sort.Order.asc("registryBookNumber"),
+                                Sort.Order.asc("schoolYearOrdinalNumber")
+                            )
+                        ))
                     .getContent();
 
             RegistryBookGenerationUtil.constructRowsForChunk(groupedRows, chunk, lang);

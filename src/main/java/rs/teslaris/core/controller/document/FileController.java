@@ -102,9 +102,10 @@ public class FileController {
             documentLookupService.getDocumentIndex(documentFile.getDocument().getId())
                 .getType().equals(DocumentPublicationType.THESIS.name());
 
-        if (isThesisDocument && ((Thesis) documentFile.getDocument()).getIsOnPublicReview()) {
-            if (List.of(ResourceType.PREPRINT, ResourceType.STATEMENT, ResourceType.SUPPLEMENT)
-                .contains(documentFile.getResourceType())) {
+        if (isThesisDocument) {
+            if ((((Thesis) documentFile.getDocument()).getIsOnPublicReview() &&
+                List.of(ResourceType.PREPRINT, ResourceType.STATEMENT, ResourceType.SUPPLEMENT)
+                    .contains(documentFile.getResourceType())) || isOpenAccess) {
                 return serveFile(filename, documentFile, file, inline);
             }
 

@@ -23,15 +23,19 @@ import rs.teslaris.importer.utility.scopus.ScopusImportUtility;
 public class ScopusConverter {
 
     public static Optional<DocumentImport> toCommonImportModel(ScopusImportUtility.Entry entry,
-                                                               ScopusImportUtility scopusImportUtility) {
+                                                               ScopusImportUtility scopusImportUtility,
+                                                               boolean onlyLoadableTypes) {
         var document = new DocumentImport();
         document.setSource("SCOPUS");
 
-        deducePublicationType(entry, document, scopusImportUtility);
-        if (Objects.isNull(document.getPublicationType()) || (
-            document.getPublicationType().equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION) &&
-                Objects.isNull(document.getEvent()))) {
-            return Optional.empty();
+        if (onlyLoadableTypes) {
+            deducePublicationType(entry, document, scopusImportUtility);
+            if (Objects.isNull(document.getPublicationType()) || (
+                document.getPublicationType()
+                    .equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION) &&
+                    Objects.isNull(document.getEvent()))) {
+                return Optional.empty();
+            }
         }
 
         setCommonFields(entry, document);

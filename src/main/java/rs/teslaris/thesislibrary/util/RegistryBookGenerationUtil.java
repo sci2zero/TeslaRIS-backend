@@ -92,7 +92,9 @@ public class RegistryBookGenerationUtil {
     private static void addCommissionAndMentor(List<String> rowData, DissertationInformation info) {
         String commission = info.getCommission();
         String mentor = info.getMentor();
-        rowData.add(commission + "\n" + (commission.contains(mentor) ? "" : mentor));
+        rowData.add(commission + "\n" +
+            (commission.toLowerCase().contains(mentor.toLowerCase().split(",", 2)[0]) ? "" :
+                mentor));
     }
 
     private static void addDefenceInfo(List<String> rowData, DissertationInformation info,

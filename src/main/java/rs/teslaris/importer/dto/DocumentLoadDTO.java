@@ -40,4 +40,6 @@ public class DocumentLoadDTO {
     private Integer eventId;
 
     private List<String> internalIdentifiers;
+
+    private Boolean isEnrichment;
 }

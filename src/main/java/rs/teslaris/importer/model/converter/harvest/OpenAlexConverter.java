@@ -23,12 +23,12 @@ import rs.teslaris.importer.utility.openalex.OpenAlexImportUtility;
 public class OpenAlexConverter {
 
     public static Optional<DocumentImport> toCommonImportModel(
-        OpenAlexImportUtility.OpenAlexPublication record) {
+        OpenAlexImportUtility.OpenAlexPublication record, boolean onlyLoadableTypes) {
 
         var document = new DocumentImport();
         document.setSource("OPEN_ALEX");
 
-        if (!hasValidSource(record)) {
+        if (onlyLoadableTypes && !hasValidSource(record)) {
             return Optional.empty();
         }
 
@@ -42,7 +42,9 @@ public class OpenAlexConverter {
                 case "proceedings-article" ->
                     handleProceedingsArticle(document, record, publicationYear);
                 default -> {
-                    return Optional.empty();
+                    if (onlyLoadableTypes) {
+                        return Optional.empty();
+                    }
                 }
             }
         } else if (Objects.nonNull(record.type()) &&
@@ -54,10 +56,12 @@ public class OpenAlexConverter {
                 case "journal" -> handleJournalArticle(document, record);
                 case "conference" -> handleProceedingsArticle(document, record, publicationYear);
                 default -> {
-                    return Optional.empty();
+                    if (onlyLoadableTypes) {
+                        return Optional.empty();
+                    }
                 }
             }
-        } else {
+        } else if (onlyLoadableTypes) {
             return Optional.empty();
         }
 

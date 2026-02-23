@@ -471,8 +471,8 @@ public interface DocumentPublicationIndexRepository extends
         {
           "bool": {
             "must": [
-              { "terms": { "type": ?0 } },
-              { "terms": { "organisation_unit_ids": ?2 } }
+              { "terms": { "type": ?1 } },
+              { "terms": { "organisation_unit_ids": ?0 } }
             ]
           }
         }
