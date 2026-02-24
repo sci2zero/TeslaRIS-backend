@@ -402,12 +402,21 @@ package document {
       -Set<DocumentFile> proof
       -Set<MultiLingualContent> keywords
       -ApproveStatus approveStatus
+      -Set<Acknowledgement> acknowledgement
       -String doi
       -String scopusId
       -String openAlexId
       -Integer oldId
     }
   !endsub
+  
+  class Acknowledgement {
+    Set<MultiLingualContent> textualValue
+    Project project
+    Funding funding
+  }
+  
+  Document "1..1" --> "0..*" Acknowledgement : acknowledgement
 
   class ProceedingsPublication extends Document {
     -ProceedingsPublicationType proceedingsPublicationType
@@ -682,21 +691,26 @@ package document {
 package project {
 
   class Project {
+    String identifier
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
+    Set<ResearchArea> researchAreas
     Set<MultiLingualContent> adminNote
     Set<String> uris
+    Project superProject
     Set<AgentProjectContribution> contributions
     Set<ProjectDocument> documents
-    LocalDate proposalSubmitted
-    LocalDate projectApproved
     LocalDate projectStarted
     LocalDate projectCompleted
+    ProjectStatus status 
     ProjectCollaborationType collaborationType
     ProjectResearchType researchType
+    Set<FundingProposal> proposals
     Set<Funding> fundings
+    Boolean notFunded
+    MonetaryAmount costs
   }
 
   enum ProjectCollaborationType {
@@ -718,16 +732,121 @@ package project {
     OTHER
   }
 
+  class FundingProposal {
+    Set<DocumentFile> documents ' proposal, review result, supplement
+    Project project
+    FundingCall fundingCall
+    Set<MultiLingualContent> description
+    Set<MultiLingualContent> responseSummary
+    LocalDate submissionDate
+    LocalDate reviewStartDate
+    LocalDate reviewEndDate
+    LocalDate decisionDate
+    LocalDate revisedProposalOrNextRoundDeadlineDate
+    ProjectProposalResult result
+    FundingProposal revisedProposalOrNextRound
+    Funding funding ' in the case it is awarded for funding - ProjectProposalResult
+  }
+  
+  class ProjectStatus {
+    SUBMITTED
+    UNDER_EVALUATION
+    ONGOING
+    CANCELLED
+    CONCLUDED
+  }
+  
+  class ProjectProposalResult {
+      AWARDED
+      REJECTED
+      CHANGES_REQUESTED
+      ACCEPTED_FOR_NEXT_ROUND
+  }
+  
   class Funding {
-    String fundingNumber
+    String internal_identifier ' later we might add specific identifiers, meaning a couple of fields, or set of some generic structure for any identifier
+    String doi
+    String grantAgreementId ' cordis - European Commission
+    Project project
     DocumentFile agreement
-    Set<MultiLingualContent> fundingCall
-    Set<MultiLingualContent> fundingProgram
-    Set<MultiLingualContent> fundingAgency
+    Set<MultiLingualContent> name ' very often the same as linked project, there should be an option to copy name, description and other fields from project and then slightly change
+    Set<MultiLingualContent> description
+    Set<MultiLingualContent> nameAbbreviation
+    Set<MultiLingualContent> keywords
+    Set<ResearchArea> researchAreas
+    Set<MultiLingualContent> adminNote
+    String url
+    FundingCall call
+    Set<MultiLingualContent> displayCall
+    Set<MultiLingualContent> displayProgram
+    Set<MultiLingualContent> displayFunder
     Funding superFunding
+    Set<FundingType> types
     MonetaryAmount grant
+    Boolean competitive 
+    Boolean renewable 
+    LocalDate dateSubmitted
+    LocalDate dateAwarded
     LocalDate dateFrom
     LocalDate dateTo
+    Boolean OAMandated
+    String OAMandateUrl
+  }
+  
+  Project "0..1" --> "0..*" Funding : fundings
+  Project "0..1" --> "0..*" FundingProposal : fundingProposals
+  
+  Project "0..*" --> "0..*" ProjectDocument : projectDocuments
+  
+  FundingCall "0..1" --> "0..*" Funding : fundings
+  FundingProgram "0..1" --> "0..*" FundingCall : fundingCalls
+  
+  class FundingCall {
+    DocumentFile call
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    Set<MultiLingualContent> objectives
+    Set<MultiLingualContent> nameAbbreviation
+    Set<MultiLingualContent> keywords
+    Set<ResearchArea> researchAreas
+    Set<MultiLingualContent> adminNote
+    FundingProgram fundingProgram
+    Set<MultiLingualContent> displayFundingProgram
+    OrganisationUnit funder
+    Set<MultiLingualContent> displayFunder
+    Set<FundingType> types
+    MonetaryAmount total
+    LocalDate callOpens
+    LocalDate callCloses
+    String url
+    Boolean OAMandated
+    String OAMandateUrl
+  }
+  
+  enum FundingType {
+    GRANT 
+    CALL 
+    OTHER
+  }
+  
+  class FundingProgram {
+    DocumentFile program
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    Set<MultiLingualContent> objectives
+    Set<MultiLingualContent> nameAbbreviation
+    Set<MultiLingualContent> keywords
+    Set<ResearchArea> researchAreas
+    Set<MultiLingualContent> adminNote
+    Set<OrganisationUnit> funders
+    Set<MultiLingualContent> displayFunders
+    Set<FundingType> types
+    MonetaryAmount total
+    LocalDate programOpens
+    LocalDate programCloses
+    String url
+    Boolean OAMandated
+    String OAMandateUrl
   }
 
   class MonetaryAmount {
@@ -742,8 +861,7 @@ package project {
   }
 
   class AgentProjectContribution {
-    ProjectContributionType contributionType
-    Set<AgentProjectContribution> contributors
+    Set<AgentProjectContribution> subcontributors
     LocalDate dateFrom
     LocalDate dateTo
     Set<Funding> funding
@@ -765,17 +883,42 @@ package project {
   enum OrganisationUnitProjectContributionType {
     COORDINATOR
     PARTNER
-    ' BENEFICIARY
+    CONSORTIUM_MEMBER
+    INKIND_CONTRIBUTOR
+    CONTRACTOR
+    BENEFICIARY
   }
 
   class PersonProjectContribution extends PersonContribution, AgentProjectContribution {
     PersonProjectContributionType contributionType
+    PersonProjectInvestigationRole investigationRole
+    Set<MultiLingualContent> otherRoleDescription
   }
 
   enum PersonProjectContributionType {
     PRINCIPLE_INVESTIGATOR
-    PARTICIPATION
-    ' CONSULTANT
+    COPRINCIPLE_INVESTIGATOR
+    TEAM_MEMBER
+    CONTACT
+    INKIND_CONTRIBUTOR
+    CONTRACTOR
+  }
+  
+  enum PersonProjectInvestigationRole {
+      RESEARCHER
+      PHD_STUDENT_FELLOW
+      TECHNICAL_DEVELOPMENT
+      MASTER_STUDENT_FELLOW
+      SUPERVISOR
+      POSTDOC
+      POSTDOC_FELLOW
+      RESEARCH_FELLOW
+      INTEGRATION_INTO_RESEARCH_GRANT_FELLOW
+      SCIENTIFIC_INITIATION_FELLOW
+      RESEARCH_TECHNICIAN_FELLOW
+      INVITED_SCIENTIST_FELLOW
+      SCIENCE_AND_TECHNOLOGY_MANAGEMENT_FELLOW
+      OTHER
   }
 
   ProjectsRelation "*" --> "1" Project : source
@@ -802,6 +945,7 @@ package project {
     REPORT
     RESULT
     USED
+    INTERNAL
   }
 }
 package Assessment {
