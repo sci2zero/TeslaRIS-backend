@@ -109,7 +109,7 @@ class RoCrateExportServiceTest {
     void shouldReturnSilentlyWhenDocumentDoesNotExist() throws Exception {
         var documentId = 1;
 
-        when(documentPublicationService.findDocumentById(documentId)).thenReturn(null);
+        when(documentPublicationService.findOne(documentId)).thenReturn(null);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         var path = service.createRoCrateZip(documentId, exportId);
@@ -124,7 +124,7 @@ class RoCrateExportServiceTest {
         var document = mock(Dataset.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
-        when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
+        when(documentPublicationService.findOne(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         var writer = mock(ObjectWriter.class);
@@ -156,7 +156,7 @@ class RoCrateExportServiceTest {
         when(rejectedFile.getLicense()).thenReturn(License.BY);
 
         when(document.getFileItems()).thenReturn(Set.of(approvedFile, rejectedFile));
-        when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
+        when(documentPublicationService.findOne(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         var writer = mock(ObjectWriter.class);
@@ -198,7 +198,7 @@ class RoCrateExportServiceTest {
         var document = mock(Dataset.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
-        when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
+        when(documentPublicationService.findOne(documentId)).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         var writer = mock(ObjectWriter.class);
@@ -233,7 +233,7 @@ class RoCrateExportServiceTest {
             eq(personId), any(PageRequest.class)))
             .thenReturn(page);
 
-        when(documentService.findDocumentById(any())).thenReturn(mock(Dataset.class));
+        when(documentService.findOne(any())).thenReturn(mock(Dataset.class));
         when(personService.findOne(personId)).thenReturn(new Person() {{
             setName(new PersonName());
         }});
@@ -279,7 +279,7 @@ class RoCrateExportServiceTest {
             eq(personId), any(PageRequest.class)))
             .thenReturn(page);
 
-        when(documentService.findDocumentById(20)).thenReturn(null);
+        when(documentService.findOne(20)).thenReturn(null);
         when(personService.findOne(personId)).thenReturn(new Person() {{
             setName(new PersonName());
         }});

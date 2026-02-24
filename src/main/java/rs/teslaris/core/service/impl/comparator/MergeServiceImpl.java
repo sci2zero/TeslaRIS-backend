@@ -396,8 +396,8 @@ public class MergeServiceImpl implements MergeService {
                                         List<Integer> leftFileItems,
                                         List<Integer> rightFileItems) {
 
-        var leftDocument = documentPublicationService.findDocumentById(leftId);
-        var rightDocument = documentPublicationService.findDocumentById(rightId);
+        var leftDocument = documentPublicationService.findOne(leftId);
+        var rightDocument = documentPublicationService.findOne(rightId);
 
         // Merge proofs
         mergeDocumentFiles(leftDocument, rightDocument, leftProofs, rightProofs);
@@ -783,7 +783,7 @@ public class MergeServiceImpl implements MergeService {
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,
                                                 Integer publicationId,
                                                 boolean skipCoauthoredPublications) {
-        var document = documentPublicationService.findDocumentById(publicationId);
+        var document = documentPublicationService.findOne(publicationId);
 
         boolean targetPersonFound = false;
         boolean sourcePersonFound = false;

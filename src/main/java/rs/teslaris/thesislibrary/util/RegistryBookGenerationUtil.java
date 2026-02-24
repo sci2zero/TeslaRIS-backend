@@ -74,7 +74,8 @@ public class RegistryBookGenerationUtil {
     private static void addPreviousTitleInfo(List<String> rowData, PreviousTitleInformation info) {
         rowData.add(
             (Objects.nonNull(info.getAcademicTitle()) ? info.getAcademicTitle().getValue() : "") +
-                "\n" + info.getSchoolYear());
+                "\n" + (Objects.nonNull(info.getGraduationDate()) ?
+                info.getGraduationDate().format(DATE_FORMATTER) : info.getSchoolYear()));
     }
 
     private static void addDissertationInstitution(List<String> rowData,

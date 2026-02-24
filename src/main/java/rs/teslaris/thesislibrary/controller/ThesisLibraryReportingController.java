@@ -98,6 +98,22 @@ public class ThesisLibraryReportingController {
             pageable);
     }
 
+    @PostMapping("/submitted")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
+    public Page<DocumentPublicationIndex> getSubmittedThesesForPeriod(
+        @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
+        return thesisLibraryReportingService.fetchSubmittedThesesInPeriod(reportRequest,
+            pageable);
+    }
+
+    @PostMapping("/archived")
+    @PreAuthorize("hasAuthority('PERFORM_THESIS_REPORT')")
+    public Page<DocumentPublicationIndex> getArchivedThesesForPeriod(
+        @RequestBody @Valid ThesisReportRequestDTO reportRequest, Pageable pageable) {
+        return thesisLibraryReportingService.fetchArchivedThesesInPeriod(reportRequest,
+            pageable);
+    }
+
     @PostMapping("/download/{lang}")
     public ResponseEntity<StreamingResponseBody> generateThesisLibraryReportDocument(
         HttpServletRequest request, @PathVariable String lang,

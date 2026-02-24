@@ -29,8 +29,6 @@ public interface DocumentPublicationService extends JPAService<Document> {
 
     String readBibliographicMetadataById(Integer datasetId, BibliographicFormat format);
 
-    Document findDocumentById(Integer documentId);
-
     Document findDocumentByOldId(Integer documentId);
 
     Page<DocumentPublicationIndex> findResearcherPublications(Integer authorId,

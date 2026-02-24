@@ -164,6 +164,9 @@ public class DocumentPublicationIndex implements ExternallyEnrichable {
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
 
+    @Field(type = FieldType.Date, name = "created_at")
+    private Date createdAt;
+
     @Field(type = FieldType.Integer, name = "assessed_by", store = true)
     private List<Integer> assessedBy = new ArrayList<>();
 

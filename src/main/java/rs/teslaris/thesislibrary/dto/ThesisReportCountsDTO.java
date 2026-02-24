@@ -9,6 +9,10 @@ public record ThesisReportCountsDTO(
     Integer defendedCount,
     Integer notDefendedCount,
     Integer publiclyAvailableCount,
-    Integer closedAccessCount
+    Integer closedAccessCount,
+    Integer acceptedCount,
+    Integer publicReviewCount,
+    Integer submittedCount,
+    Integer archivedCount
 ) {
 }

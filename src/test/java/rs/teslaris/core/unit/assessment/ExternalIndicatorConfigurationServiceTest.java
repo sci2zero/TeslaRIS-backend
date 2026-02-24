@@ -110,7 +110,7 @@ public class ExternalIndicatorConfigurationServiceTest {
         var document = new IntangibleProduct();
         document.setContributors(Set.of(contribution));
 
-        when(documentPublicationService.findDocumentById(documentId)).thenReturn(document);
+        when(documentPublicationService.findOne(documentId)).thenReturn(document);
         when(organisationUnitService.getSuperOUsHierarchyRecursive(any())).thenReturn(List.of());
 
         when(externalIndicatorConfigurationRepository.findByInstitutionId(institutionId1))

@@ -312,7 +312,7 @@ public class CommonLoaderTest {
                 new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                     setDatabaseId(1);
                 }})));
-            when(documentPublicationService.findDocumentById(1)).thenReturn(
+            when(documentPublicationService.findOne(1)).thenReturn(
                 new JournalPublication());
         }
 
@@ -337,7 +337,7 @@ public class CommonLoaderTest {
             verify(documentPublicationService, times(1)).findDocumentDuplicates(any(), any(),
                 any(), any(), any(), any());
 
-            verify(documentPublicationService, times(1)).findDocumentById(1);
+            verify(documentPublicationService, times(1)).findOne(1);
             verify(documentPublicationService, times(1)).save(any());
         }
     }

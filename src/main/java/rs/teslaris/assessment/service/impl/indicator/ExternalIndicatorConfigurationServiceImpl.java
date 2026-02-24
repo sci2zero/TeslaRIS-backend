@@ -57,7 +57,7 @@ public class ExternalIndicatorConfigurationServiceImpl
     @Override
     public ExternalIndicatorConfigurationDTO readConfigurationForDocument(Integer documentId) {
         var institutionIds = new HashSet<Integer>();
-        documentPublicationService.findDocumentById(documentId).getContributors().stream()
+        documentPublicationService.findOne(documentId).getContributors().stream()
             .filter(contribution -> Objects.nonNull(contribution.getPerson()))
             .forEach(contribution -> {
                 contribution.getPerson().getInvolvements().stream()

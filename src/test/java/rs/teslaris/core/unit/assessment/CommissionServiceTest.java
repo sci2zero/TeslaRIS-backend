@@ -117,7 +117,7 @@ public class CommissionServiceTest {
         var newCommission = new Commission();
         newCommission.setId(2);
 
-        when(documentPublicationService.findDocumentById(anyInt())).thenReturn(new Dataset());
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new Dataset());
         when(personService.findPersonById(anyInt())).thenReturn(new Person());
         when(organisationUnitService.findOrganisationUnitById(anyInt())).thenReturn(
             new OrganisationUnit());
@@ -145,7 +145,7 @@ public class CommissionServiceTest {
         when(commissionRepository.findById(commissionId))
             .thenReturn(Optional.of(existingCommission));
 
-        when(documentPublicationService.findDocumentById(anyInt())).thenReturn(new Dataset());
+        when(documentPublicationService.findOne(anyInt())).thenReturn(new Dataset());
         when(personService.findPersonById(anyInt())).thenReturn(new Person());
         when(organisationUnitService.findOrganisationUnitById(anyInt())).thenReturn(
             new OrganisationUnit());

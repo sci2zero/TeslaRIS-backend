@@ -446,7 +446,7 @@ public class CommonLoaderImpl implements CommonLoader {
                 return;
             }
 
-            var oldDocument = documentPublicationService.findDocumentById(oldDocumentId);
+            var oldDocument = documentPublicationService.findOne(oldDocumentId);
             oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
             documentPublicationService.save(oldDocument);
         }
@@ -457,7 +457,7 @@ public class CommonLoaderImpl implements CommonLoader {
             return;
         }
 
-        var savedDocument = documentPublicationService.findDocumentById(newDocumentId);
+        var savedDocument = documentPublicationService.findOne(newDocumentId);
         var currentUser = SessionUtil.getLoggedInUser();
         if (Objects.isNull(currentUser)) {
             // Should never happen

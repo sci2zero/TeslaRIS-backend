@@ -235,7 +235,7 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
                         PageRequest.of(
                             pageNumber, chunkSize,
                             Sort.by(
-                                Sort.Order.asc("dissertationInformation.defenceDate"),
+                                Sort.Order.asc("promotion.promotionDate"),
                                 Sort.Order.asc("registryBookNumber"),
                                 Sort.Order.asc("schoolYearOrdinalNumber")
                             )

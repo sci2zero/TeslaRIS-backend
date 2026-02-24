@@ -94,7 +94,7 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
             progressService.send(exportId, 5,
                 getStatusMessage("statusMessage.fetchingDocument"));
 
-            var document = fetchDocumentForPacking(documentId);
+            var document = documentPublicationService.findOne(documentId);
 
             if (document == null) {
                 progressService.send(exportId, 100,
@@ -209,8 +209,7 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     );
 
                     var document =
-                        fetchDocumentForPacking(
-                            documentIndex.getDatabaseId());
+                        documentPublicationService.findOne(documentIndex.getDatabaseId());
 
                     if (document != null) {
                         populateMetadataInfo(document, roCrate);
@@ -318,10 +317,6 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
             default -> log.error("Unexpected document type: {}. ID: {}.", document.getClass(),
                 document.getId()); // Should never happen
         }
-    }
-
-    public Document fetchDocumentForPacking(Integer documentId) {
-        return documentPublicationService.findDocumentById(documentId);
     }
 
     public String constructDocumentIdentifier(Document document) {

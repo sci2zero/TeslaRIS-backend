@@ -190,14 +190,6 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
     @Override
     @Transactional
-    @Deprecated(forRemoval = true)
-    public Document findDocumentById(Integer documentId) {
-        return documentRepository.findById(documentId)
-            .orElseThrow(() -> new NotFoundException("Document with given id does not exist."));
-    }
-
-    @Override
-    @Transactional
     @Nullable
     public Document findDocumentByOldId(Integer documentOldId) {
         var documentId = documentRepository.findDocumentByOldIdsContains(documentOldId);
@@ -556,6 +548,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setLastEdited(Objects.nonNull(document.getLastModification())
             ? document.getLastModification()
             : new Date());
+        index.setCreatedAt(Objects.nonNull(document.getCreateDate())
+            ? document.getCreateDate()
+            : new Date());
+
         index.setDatabaseId(document.getId());
         index.setYear(StringUtil.parseYear(document.getDocumentDate()));
         indexTitle(document, index);

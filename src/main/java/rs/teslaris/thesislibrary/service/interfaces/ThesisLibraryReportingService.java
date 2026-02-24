@@ -35,6 +35,12 @@ public interface ThesisLibraryReportingService {
     Page<DocumentPublicationIndex> fetchClosedAccessThesesInPeriod(ThesisReportRequestDTO request,
                                                                    Pageable pageable);
 
+    Page<DocumentPublicationIndex> fetchArchivedThesesInPeriod(ThesisReportRequestDTO request,
+                                                               Pageable pageable);
+
+    Page<DocumentPublicationIndex> fetchSubmittedThesesInPeriod(ThesisReportRequestDTO request,
+                                                                Pageable pageable);
+
     Pair<InputStreamResource, Integer> generatePhdLibraryReportDocument(
         ThesisReportRequestDTO request,
         String locale);

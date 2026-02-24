@@ -456,7 +456,7 @@ public class MergeServiceTest {
         contribution.setPerson(contributor);
 
         publication.getContributors().add(contribution);
-        when(documentPublicationService.findDocumentById(publicationId)).thenReturn(publication);
+        when(documentPublicationService.findOne(publicationId)).thenReturn(publication);
 
         var otherPerson = new Person();
         otherPerson.setName(new PersonName());
@@ -509,9 +509,9 @@ public class MergeServiceTest {
         var publication2 = new JournalPublication();
         publication2.addDocumentContribution(contribution);
 
-        when(documentPublicationService.findDocumentById(
+        when(documentPublicationService.findOne(
             publicationIndex1.getDatabaseId())).thenReturn(publication1);
-        when(documentPublicationService.findDocumentById(
+        when(documentPublicationService.findOne(
             publicationIndex2.getDatabaseId())).thenReturn(publication2);
 
         var otherPerson = new Person();
@@ -1151,18 +1151,18 @@ public class MergeServiceTest {
         leftDocument.setProofs(new HashSet<>(List.of(leftProof1, leftProof2)));
         rightDocument.setProofs(new HashSet<>(List.of(rightProof1, rightProof2)));
 
-        when(documentPublicationService.findDocumentById(leftId)).thenReturn(leftDocument);
-        when(documentPublicationService.findDocumentById(rightId)).thenReturn(rightDocument);
+        when(documentPublicationService.findOne(leftId)).thenReturn(leftDocument);
+        when(documentPublicationService.findOne(rightId)).thenReturn(rightDocument);
 
         // when
         mergeService.saveMergedDocumentFiles(leftId, rightId, leftProofs, rightProofs,
             leftFileItems, rightFileItems);
 
         // then
-        verify(documentPublicationService).findDocumentById(leftId);
-        verify(documentPublicationService).findDocumentById(rightId);
-        verify(documentPublicationService, times(1)).findDocumentById(leftId);
-        verify(documentPublicationService, times(1)).findDocumentById(rightId);
+        verify(documentPublicationService).findOne(leftId);
+        verify(documentPublicationService).findOne(rightId);
+        verify(documentPublicationService, times(1)).findOne(leftId);
+        verify(documentPublicationService, times(1)).findOne(rightId);
     }
 
     @Test
