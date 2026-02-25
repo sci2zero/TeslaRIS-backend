@@ -45,6 +45,8 @@ public class Json2HtmlTable {
                 }
             }
             return sb.toString();
+        } else if (node.isTextual() && node.asText().startsWith("http")) {
+            return "<a href=\"" + node.asText() + "\" target=\"_blank\">" + node.asText() + "</a>";
         }
 
         // Primitive values

@@ -22,15 +22,17 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
+import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -68,7 +70,7 @@ public class ReindexServiceImpl implements ReindexService {
 
     private final PatentService patentService;
 
-    private final SoftwareService softwareService;
+    private final IntangibleProductService intangibleProductService;
 
     private final DatasetService datasetService;
 
@@ -77,6 +79,10 @@ public class ReindexServiceImpl implements ReindexService {
     private final MonographPublicationService monographPublicationService;
 
     private final ThesisService thesisService;
+
+    private final MaterialProductService materialProductService;
+
+    private final GeneticMaterialService geneticMaterialService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -153,12 +159,17 @@ public class ReindexServiceImpl implements ReindexService {
         safeReindex(proceedingsPublicationService::reindexProceedingsPublications,
             "Error reindexing proceedings publications");
         safeReindex(patentService::reindexPatents, "Error reindexing patents");
-        safeReindex(softwareService::reindexSoftware, "Error reindexing software");
+        safeReindex(intangibleProductService::reindexIntangibleProduct,
+            "Error reindexing intangible products");
         safeReindex(datasetService::reindexDatasets, "Error reindexing datasets");
         safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
         safeReindex(monographPublicationService::reindexMonographPublications,
             "Error reindexing monograph publications");
         safeReindex(thesisService::reindexTheses, "Error reindexing theses");
+        safeReindex(materialProductService::reindexMaterialProducts,
+            "Error reindexing material products");
+        safeReindex(geneticMaterialService::reindexGeneticMaterials,
+            "Error reindexing genetic materials");
 
         applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());
 
@@ -184,10 +195,12 @@ public class ReindexServiceImpl implements ReindexService {
                 proceedingsPublicationService.reindexProceedingsPublications();
             case MONOGRAPH -> monographService.reindexMonographs();
             case PATENT -> patentService.reindexPatents();
-            case SOFTWARE -> softwareService.reindexSoftware();
+            case INTANGIBLE_PRODUCT -> intangibleProductService.reindexIntangibleProduct();
             case DATASET -> datasetService.reindexDatasets();
             case MONOGRAPH_PUBLICATION ->
                 monographPublicationService.reindexMonographPublications();
+            case MATERIAL_PRODUCT -> materialProductService.reindexMaterialProducts();
+            case GENETIC_MATERIAL -> geneticMaterialService.reindexGeneticMaterials();
             case THESIS -> {
                 thesisService.reindexTheses();
                 applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());

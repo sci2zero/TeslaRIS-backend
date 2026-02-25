@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
@@ -423,7 +424,7 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
         newJournal.setContributions(new ArrayList<>());
         newJournal.setEissn(eIssn);
         newJournal.setPrintISSN(printIssn);
-        newJournal.setLanguageIds(List.of(defaultLanguage.getId()));
+        newJournal.setLanguageIds(Set.of(defaultLanguage.getId()));
 
         return createJournal(newJournal, true);
     }

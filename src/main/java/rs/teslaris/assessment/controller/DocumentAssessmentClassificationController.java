@@ -59,7 +59,7 @@ public class DocumentAssessmentClassificationController {
 
 
     @GetMapping("/{documentId}/can-classify")
-    @PublicationEditCheck
+    @PublicationEditCheck("ASSESS")
     @PreAuthorize("hasAnyAuthority('ASSESS_DOCUMENT', 'EDIT_DOCUMENT_ASSESSMENT')")
     public boolean canClassifyDocument() {
         return true;
@@ -140,9 +140,8 @@ public class DocumentAssessmentClassificationController {
     @PreAuthorize("hasAuthority('EDIT_DOCUMENT_ASSESSMENT')")
     @ResponseStatus(HttpStatus.CREATED)
     public EntityAssessmentClassificationResponseDTO createDocumentClassification(
-        @RequestHeader("Authorization") String bearerToken,
-        @RequestBody
-        DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
+        @RequestBody DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO,
+        @RequestHeader("Authorization") String bearerToken) {
         if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.COMMISSION.name())) {
             var user = userService.findOne(tokenUtil.extractUserIdFromToken(bearerToken));
             documentAssessmentClassificationDTO.setCommissionId(user.getCommission().getId());
@@ -164,7 +163,7 @@ public class DocumentAssessmentClassificationController {
 
     @PostMapping("/journal-publication/{documentId}")
     @Idempotent
-    @PublicationEditCheck
+    @PublicationEditCheck("ASSESS")
     @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
     public void assessJournalPublication(@PathVariable Integer documentId) {
         documentAssessmentClassificationService.classifyJournalPublication(documentId);
@@ -172,7 +171,7 @@ public class DocumentAssessmentClassificationController {
 
     @PostMapping("/proceedings-publication/{documentId}")
     @Idempotent
-    @PublicationEditCheck
+    @PublicationEditCheck("ASSESS")
     @PreAuthorize("hasAuthority('ASSESS_DOCUMENT')")
     public void assessProceedingsPublication(@PathVariable Integer documentId) {
         documentAssessmentClassificationService.classifyProceedingsPublication(documentId);

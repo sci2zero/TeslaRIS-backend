@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
@@ -18,7 +19,6 @@ import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
-import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
@@ -433,8 +433,8 @@ public class FairSignpostingL2Utility {
         return switch (dto) {
             case JournalPublicationResponseDTO ignored ->
                 new Pair<>("https://schema.org/ScholarlyArticle", "/journal-publication");
-            case SoftwareDTO ignored ->
-                new Pair<>("https://schema.org/SoftwareApplication", "/software");
+            case IntangibleProductDTO ignored ->
+                new Pair<>("https://schema.org/Product", "/intangible-product");
             case DatasetDTO ignored -> new Pair<>("https://schema.org/Dataset", "/dataset");
             case PatentDTO ignored -> new Pair<>("https://schema.org/result", "/patent");
             case ProceedingsResponseDTO ignored ->

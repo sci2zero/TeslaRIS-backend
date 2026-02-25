@@ -3,7 +3,9 @@ package rs.teslaris.importer.service.interfaces;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
+import rs.teslaris.importer.model.common.DocumentImport;
 
 @Service
 public interface ScopusHarvester {
@@ -25,4 +27,6 @@ public interface ScopusHarvester {
                                                              List<Integer> authorIds,
                                                              boolean performImportForAllAuthors,
                                                              HashMap<Integer, Integer> newEntriesCount);
+
+    Optional<DocumentImport> harvestDocumentForDoi(String doi);
 }

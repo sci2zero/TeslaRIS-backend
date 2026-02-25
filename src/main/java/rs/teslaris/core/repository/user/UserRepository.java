@@ -16,6 +16,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmail(String email);
 
+    @Query(value =
+        "SELECT * from users u WHERE u.username = :email",
+        nativeQuery = true)
+    Optional<User> findByEmailIncludingDeleted(String email);
+
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.organisationUnit ou WHERE u.id = :userId")
     Optional<User> findByIdWithOrganisationUnit(Integer userId);
 
@@ -46,15 +51,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<Commission> findUserCommissionForOrganisationUnit(Integer organisationUnitId);
 
     @Query("""
-            SELECT DISTINCT u.commission
+            SELECT DISTINCT u.commission.id
             FROM User u
             JOIN u.organisationUnit ou
-            LEFT JOIN FETCH u.commission.relations rel
-            LEFT JOIN FETCH rel.targetCommissions
             WHERE u.commission IS NOT NULL
             AND ou.id IN :organisationUnitIds
         """)
-    List<Commission> findUserCommissionForOrganisationUnits(List<Integer> organisationUnitIds);
+    List<Integer> findUserCommissionForOrganisationUnits(List<Integer> organisationUnitIds);
 
     @Query("SELECT ou.id FROM User u JOIN u.organisationUnit ou WHERE u.commission.id = :commissionId")
     Integer findOUIdForCommission(Integer commissionId);

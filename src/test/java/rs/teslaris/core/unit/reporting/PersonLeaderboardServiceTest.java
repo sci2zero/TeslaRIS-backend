@@ -638,7 +638,8 @@ public class PersonLeaderboardServiceTest {
             )).thenReturn(personIdResponse);
 
             var bucket1 = mock(LongTermsBucket.class);
-            when(bucket1.key()).thenReturn(FieldValue.of(1).longValue());
+            when(bucket1.key()).thenReturn(1L);
+
             var totalPointsAgg1 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
             var sumAgg1 = mock(SumAggregate.class);
             when(sumAgg1.value()).thenReturn(150.5);
@@ -646,6 +647,7 @@ public class PersonLeaderboardServiceTest {
             when(bucket1.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg1));
 
             var bucket2 = mock(LongTermsBucket.class);
+            when(bucket2.key()).thenReturn(2L);
             when(bucket2.key()).thenReturn(FieldValue.of(2).longValue());
             var totalPointsAgg2 = mock(Aggregate.class, RETURNS_DEEP_STUBS);
             var sumAgg2 = mock(SumAggregate.class);
@@ -654,6 +656,14 @@ public class PersonLeaderboardServiceTest {
             when(bucket2.aggregations()).thenReturn(Map.of("total_points", totalPointsAgg2));
 
             var byPersonAgg = mock(Aggregate.class, RETURNS_DEEP_STUBS);
+
+            when(byPersonAgg.nested()
+                .aggregations().get("filtered_by_person")
+                .filter()
+                .aggregations().get("person_buckets")
+                .isLterms()
+            ).thenReturn(true);
+
             when(byPersonAgg.nested()
                 .aggregations().get("filtered_by_person")
                 .filter()

@@ -29,6 +29,7 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
@@ -36,7 +37,6 @@ import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
-import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -65,7 +65,7 @@ public class CommonExportServiceTest {
     private DatasetRepository datasetRepository;
 
     @Mock
-    private SoftwareRepository softwareRepository;
+    private IntangibleProductRepository intangibleProductRepository;
 
     @Mock
     private PatentRepository patentRepository;
@@ -167,7 +167,7 @@ public class CommonExportServiceTest {
         when(datasetRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(softwareRepository.findAllModified(any(Pageable.class),
+        when(intangibleProductRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
         when(patentRepository.findAllModified(any(Pageable.class),
@@ -197,7 +197,7 @@ public class CommonExportServiceTest {
         // Then
         verify(datasetRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
-        verify(softwareRepository, times(1)).findAllModified(any(Pageable.class),
+        verify(intangibleProductRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
         verify(patentRepository, times(1)).findAllModified(any(Pageable.class),
             anyBoolean());
@@ -224,7 +224,7 @@ public class CommonExportServiceTest {
         when(datasetRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
-        when(softwareRepository.findAllModified(any(Pageable.class),
+        when(intangibleProductRepository.findAllModified(any(Pageable.class),
             anyBoolean())).thenReturn(
             (Page) emptyPage);
         when(patentRepository.findAllModified(any(Pageable.class),
@@ -267,8 +267,8 @@ public class CommonExportServiceTest {
                     anyBoolean());
             case PATENT -> verify(patentRepository, times(1)).findAllModified(any(Pageable.class),
                 anyBoolean());
-            case SOFTWARE ->
-                verify(softwareRepository, times(1)).findAllModified(any(Pageable.class),
+            case INTANGIBLE_PRODUCT ->
+                verify(intangibleProductRepository, times(1)).findAllModified(any(Pageable.class),
                     anyBoolean());
             case DATASET -> verify(datasetRepository, times(1)).findAllModified(any(Pageable.class),
                 anyBoolean());

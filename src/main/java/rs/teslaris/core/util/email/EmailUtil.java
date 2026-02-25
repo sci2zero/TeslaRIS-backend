@@ -227,4 +227,14 @@ public class EmailUtil {
                     adminUser));
         });
     }
+
+    public String constructBodyWithSignature(String messageBody, String systemName,
+                                             String languageTag) {
+        return messageBody +
+            messageSource.getMessage(
+                "signature.generic",
+                new Object[] {systemName},
+                Locale.forLanguageTag(languageTag)
+            );
+    }
 }

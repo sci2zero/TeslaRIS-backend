@@ -59,9 +59,12 @@ public class WebOfScienceConverter {
                                                   WebOfScienceImportUtility.WosPublication record) {
         var sourceTypes = record.sourceTypes();
 
-        if (sourceTypes.contains("Article") || sourceTypes.contains("Meeting")) {
+        if (sourceTypes.contains("Article") || sourceTypes.contains("Meeting") ||
+            sourceTypes.contains("Review")) {
             document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
-            document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
+            document.setJournalPublicationType(
+                sourceTypes.contains("Review") ? JournalPublicationType.REVIEW_ARTICLE :
+                    JournalPublicationType.RESEARCH_ARTICLE);
             document.getPublishedIn()
                 .add(new MultilingualContent("EN", record.source().sourceTitle(), 1));
             addIssn(document, record);

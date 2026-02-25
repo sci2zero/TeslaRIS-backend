@@ -20,6 +20,8 @@ public record PublicationSeriesIndicatorResponseDTO(
 
     EntityIndicatorSource source,
 
-    String categoryIdentifier
+    String categoryIdentifier,
+
+    String edition
 ) {
 }

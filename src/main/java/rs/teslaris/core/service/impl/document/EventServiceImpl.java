@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -42,6 +43,7 @@ import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
@@ -76,6 +78,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     private final SearchService<EventIndex> searchService;
 
     private final CountryService countryService;
+
+    private final OrganisationUnitService organisationUnitService;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
@@ -405,7 +409,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
             if (Objects.nonNull(commissionInstitutionId) && commissionInstitutionId > 0) {
                 b.must(sb -> sb.term(
-                    m -> m.field("related_institution_ids").value(commissionInstitutionId)));
+                    m -> m.field("related_employment_institution_ids")
+                        .value(commissionInstitutionId)));
             }
 
             if (Objects.nonNull(emptyEventsOnly) && emptyEventsOnly) {
@@ -473,10 +478,40 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         index.setRelatedInstitutionIds(
             eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(event.getId()).stream()
                 .toList());
+
+        indexActiveEmploymentRelations(index, event.getId());
+
         index.setClassifiedBy(
             commissionRepository.findCommissionsThatClassifiedEvent(event.getId()));
         index.setHasProceedings(Objects.nonNull(event.getId()) &&
             (documentPublicationIndexRepository.countByEventId(event.getId()) > 0));
+    }
+
+    @Override
+    public void indexActiveEmploymentRelations(EventIndex index, Integer eventId) {
+        var shouldSave = false;
+        if (Objects.isNull(index)) {
+            var optionalIndex = eventIndexRepository.findByDatabaseId(eventId);
+            if (optionalIndex.isEmpty()) {
+                return;
+            }
+
+            index = optionalIndex.get();
+            shouldSave = true;
+        }
+
+        var relatedEmploymentInstitutionIds = new HashSet<Integer>();
+        eventRepository.findEmploymentInstitutionIdsByEventIdAndAuthorContribution(eventId)
+            .stream().forEach(institutionId -> {
+                relatedEmploymentInstitutionIds.add(institutionId);
+                relatedEmploymentInstitutionIds.addAll(
+                    organisationUnitService.getSuperOUsHierarchyRecursive(institutionId));
+            });
+        index.setRelatedEmploymentInstitutionIds(relatedEmploymentInstitutionIds.stream().toList());
+
+        if (shouldSave) {
+            eventIndexRepository.save(index);
+        }
     }
 
     private void indexMultilingualContent(EventIndex index, Event event,

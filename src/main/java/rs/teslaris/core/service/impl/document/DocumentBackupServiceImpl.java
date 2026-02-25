@@ -183,9 +183,8 @@ public class DocumentBackupServiceImpl implements DocumentBackupService {
 
             var institution = organisationUnitService.findOne(institutionId);
             var serverFilename = generateBackupFileName(from, to, institution, language);
-            serverFilename = fileService.store(zipBuilder.convertToMultipartFile(
-                    zipBuilder.buildZipAndGetResource().getContentAsByteArray(), serverFilename),
-                serverFilename.split("\\.")[0]);
+            serverFilename = fileService.store(zipBuilder.buildZipAndGetResource(),
+                serverFilename.split("\\.")[0], serverFilename);
 
             var newBackupFile = new DocumentFileBackup();
             newBackupFile.setInstitution(institution);

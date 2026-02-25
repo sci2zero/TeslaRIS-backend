@@ -67,7 +67,7 @@ public class IdentifierUtil {
                     uriSet.add(str);
                 }
             } catch (IllegalArgumentException ex) {
-                // invalid URI → ignore
+                // invalid URI -> ignore
                 log.warn("Invalid URI save attempted. Exception: {}", ex.getMessage());
             }
         }

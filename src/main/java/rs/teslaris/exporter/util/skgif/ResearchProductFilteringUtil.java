@@ -195,8 +195,8 @@ public class ResearchProductFilteringUtil {
                     Criteria.where("type").is(ExportPublicationType.THESIS)
                 )
             );
-            case "research software" ->
-                query.addCriteria(Criteria.where("type").is(ExportPublicationType.SOFTWARE));
+            case "research software" -> query.addCriteria(
+                Criteria.where("type").is(ExportPublicationType.INTANGIBLE_PRODUCT));
             case "research data" ->
                 query.addCriteria(Criteria.where("type").is(ExportPublicationType.DATASET));
             default ->

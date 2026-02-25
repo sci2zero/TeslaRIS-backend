@@ -46,4 +46,6 @@ public interface EventService extends JPAService<Event> {
 
     void enrichEventInformationFromExternalSource(Integer oldId, LocalDate startDate,
                                                   LocalDate endDate);
+
+    void indexActiveEmploymentRelations(EventIndex index, Integer eventId);
 }

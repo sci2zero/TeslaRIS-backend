@@ -3,9 +3,13 @@ package rs.teslaris.core.util.search;
 import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Transliterator;
 import jakarta.annotation.Nonnull;
+import java.beans.PropertyEditorSupport;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.Normalizer;
@@ -23,6 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
@@ -34,6 +39,7 @@ import org.jbibtex.BibTeXEntry;
 import org.jbibtex.BibTeXFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.WebDataBinder;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Component
@@ -399,5 +405,40 @@ public class StringUtil {
                 String.join(" ", Arrays.copyOfRange(parts, 0, parts.length - 1));
             return lastName + " " + firstAndMiddle;
         }
+    }
+
+    public static void registerProperStringListFieldBinderEditor(WebDataBinder binder,
+                                                                 String fieldName) {
+        binder.registerCustomEditor(List.class, fieldName, new PropertyEditorSupport() {
+            @Override
+            public String getAsText() {
+                List<String> list = (List<String>) getValue();
+                return Objects.nonNull(list) ? String.join(",", list) : "";
+            }
+
+            @Override
+            public void setAsText(String text) throws IllegalArgumentException {
+                if (Objects.isNull(text) || text.trim().isEmpty()) {
+                    setValue(new ArrayList<>());
+                    return;
+                }
+
+                String[] values = text.split(",");
+                List<String> list = Arrays.stream(values)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(content -> URLDecoder.decode(content, StandardCharsets.UTF_8))
+                    .collect(Collectors.toList());
+
+                setValue(list);
+            }
+        });
+    }
+
+    public static String contentDisposition(String filename) {
+        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8)
+            .replace("+", "%20");
+
+        return "attachment; filename=\"file\"; filename*=UTF-8''" + encoded;
     }
 }

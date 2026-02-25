@@ -418,8 +418,7 @@ public class OrganisationUnitServiceTest {
         organisationUnitService.deleteRelationProof(1, 1);
 
         //then
-//        verify(organisationUnitsRelationRepository, times(1)).save(relation);
-//        verify(documentFileService, times(1)).deleteDocumentFile(df.getServerFilename());
+        verify(documentFileService, times(1)).deleteDocumentFile(df.getServerFilename());
     }
 
     @Test
@@ -464,19 +463,11 @@ public class OrganisationUnitServiceTest {
         var result =
             organisationUnitService.createOrganisationUnit(organisationUnitDTORequest, true);
 
-//        assertEquals(Set.of(name), result.getName());
-//        assertEquals(organisationUnitDTORequest.getNameAbbreviation(),
-//            result.getNameAbbreviation());
-//        assertEquals(Set.of(keyword), result.getKeyword());
-//        assertEquals(new HashSet<>(researchAreas), result.getResearchAreas());
-//        assertEquals(location.getLatitude(), result.getLocation().getLatitude());
-//        assertEquals(ApproveStatus.APPROVED, result.getApproveStatus());
-//        assertEquals(contact, result.getContact());
+        assertEquals(organisationUnitDTORequest.getNameAbbreviation(),
+            result.getNameAbbreviation());
+        assertEquals(keyword.getContent(), result.getKeyword().getFirst().getContent());
 
-//        verify(multilingualContentService, times(1)).getMultilingualContent(
-//            organisationUnitDTORequest.getName());
-//        verify(multilingualContentService, times(1)).getMultilingualContent(
-//            organisationUnitDTORequest.getKeyword());
+        verify(multilingualContentService, times(2)).getMultilingualContent(any());
         verify(researchAreaService, times(1)).getResearchAreasByIds(
             organisationUnitDTORequest.getResearchAreasId());
         verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));
@@ -514,6 +505,8 @@ public class OrganisationUnitServiceTest {
         when(researchAreaService.getResearchAreasByIds(any())).thenReturn(Collections.emptyList());
         when(organisationUnitRepository.save(any(OrganisationUnit.class))).thenReturn(
             organisationUnit);
+        when(organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(any(),
+            any())).thenReturn(new PageImpl<>(List.of(new OrganisationUnitIndex())));
 
         // when
         OrganisationUnit editedOrganisationUnit =
@@ -523,11 +516,11 @@ public class OrganisationUnitServiceTest {
         // then
         assertNotNull(editedOrganisationUnit);
         assertEquals(organisationUnit, editedOrganisationUnit);
-//        assertEquals(organisationUnitDTORequest.getName().stream().findFirst().get().getContent(),
-//            editedOrganisationUnit.getName().stream().findFirst().get().getContent());
-//        assertEquals(
-//            organisationUnitDTORequest.getKeyword().stream().findFirst().get().getContent(),
-//            editedOrganisationUnit.getKeyword().stream().findFirst().get().getContent());
+        assertEquals(organisationUnitDTORequest.getName().stream().findFirst().get().getContent(),
+            editedOrganisationUnit.getName().stream().findFirst().get().getContent());
+        assertEquals(
+            organisationUnitDTORequest.getKeyword().stream().findFirst().get().getContent(),
+            editedOrganisationUnit.getKeyword().stream().findFirst().get().getContent());
         verify(multilingualContentService, times(2)).getMultilingualContent(any());
         verify(researchAreaService, times(1)).getResearchAreasByIds(any());
         verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));

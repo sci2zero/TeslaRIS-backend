@@ -1,5 +1,6 @@
 package rs.teslaris.importer.utility.scopus;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -20,6 +21,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import rs.teslaris.core.util.session.ScopusAuthenticationHelper;
+import rs.teslaris.importer.model.converter.harvest.ScopusConverter;
 
 @Slf4j
 @Component
@@ -85,6 +87,38 @@ public class ScopusImportUtility {
         }
 
         return retVal;
+    }
+
+    public Entry getPublicationByDoi(String doi) {
+        if (!scopusAuthenticationHelper.authenticate()) {
+            return null;
+        }
+
+        var restTemplate = scopusAuthenticationHelper.restTemplate;
+        var objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        var url = "https://api.elsevier.com/content/abstract/doi/" + doi + "?view=FULL";
+
+        var requestHeaders = new HttpHeaders();
+        scopusAuthenticationHelper.headers.forEach(requestHeaders::add);
+
+        var entity = new HttpEntity<>(requestHeaders);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url, HttpMethod.GET, entity, String.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful() && Objects.nonNull(response.getBody())) {
+                return ScopusConverter.convertToEntry(
+                    objectMapper.readValue(response.getBody(), AbstractDataResponse.class));
+            }
+        } catch (Exception e) {
+            log.error("Error fetching document by DOI: {}", doi, e);
+        }
+
+        return null;
     }
 
     @Nullable
@@ -242,15 +276,68 @@ public class ScopusImportUtility {
 
     public record AbstractRetrievalResponse(
         @JsonProperty("coredata") CoreData coreData,
-        @JsonProperty("item") ItemRecord item
+        @JsonProperty("item") ItemRecord item,
+        @JsonProperty("authors") Authors authors,
+        @JsonProperty("affiliation") List<FullAffiliation> affiliations
     ) {
     }
 
+    public record Authors(
+        @JsonProperty("author") List<FullAuthor> authors
+    ) {
+    }
+
+    public record FullAffiliation(
+        @JsonProperty("@href") String affiliationUrl,
+        @JsonProperty("@id") String afid,
+        @JsonProperty("affilname") String affilName,
+        @JsonProperty("affiliation-city") String affiliationCity,
+        @JsonProperty("affiliation-country") String affiliationCountry
+    ) {
+    }
+
+    public record FullAuthor(
+        @JsonProperty("@_fa") boolean fa,
+        @JsonProperty("@seq") String seq,
+        @JsonProperty("@auid") String authId,
+        @JsonProperty("author-url") String authorUrl,
+        @JsonProperty("ce:given-name") String givenName,
+        @JsonProperty("ce:surname") String surname,
+        @JsonProperty("ce:initials") String initials,
+        @JsonProperty("ce:indexed-name") String authName,
+
+        @JsonProperty("affiliation")
+        @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+        List<AffiliationId> afid
+    ) {
+
+        public record AffiliationId(
+            @JsonProperty("@id") String id,
+            @JsonProperty("@href") String href
+        ) {
+        }
+    }
+
     public record CoreData(
+        @JsonProperty("@_fa") boolean fa,
+        @JsonProperty("link") List<Link> links,
+        @JsonProperty("prism:url") String url,
+        @JsonProperty("dc:identifier") String identifier,
+        @JsonProperty("eid") String eid,
         @JsonProperty("dc:title") String title,
         @JsonProperty("prism:publicationName") String publicationName,
+        @JsonProperty("prism:issn") String issn,
+        @JsonProperty("prism:eIssn") String eIssn,
+        @JsonProperty("prism:isbn") List<Isbn> isbn,
+        @JsonProperty("prism:pageRange") String pageRange,
         @JsonProperty("prism:coverDate") String coverDate,
-        @JsonProperty("citedby-count") String citedByCount
+        @JsonProperty("prism:coverDisplayDate") String coverDisplayDate,
+        @JsonProperty("prism:doi") String doi,
+        @JsonProperty("dc:description") String description,
+        @JsonProperty("affiliation") List<Affiliation> affiliations,
+        @JsonProperty("prism:aggregationType") String aggregationType,
+        @JsonProperty("subtype") String subtype,
+        @JsonProperty("subtypeDescription") String subtypeDescription
     ) {
     }
 

@@ -45,7 +45,8 @@ public class OpenAlexConverter {
                     return Optional.empty();
                 }
             }
-        } else if (Objects.nonNull(record.type()) && record.type().equals("article") &&
+        } else if (Objects.nonNull(record.type()) &&
+            (record.type().equals("article") || record.type().equals("review")) &&
             Objects.nonNull(record.primaryLocation()) &&
             Objects.nonNull(record.primaryLocation().source()) &&
             StringUtil.valueExists(record.primaryLocation().source().type())) {
@@ -93,12 +94,14 @@ public class OpenAlexConverter {
         var sourceId = cleanOpenAlexId(source.id());
 
         document.setPublicationType(DocumentPublicationType.JOURNAL_PUBLICATION);
-        document.setJournalPublicationType(JournalPublicationType.RESEARCH_ARTICLE);
+        document.setJournalPublicationType(
+            record.type().equals("review") ? JournalPublicationType.REVIEW_ARTICLE :
+                JournalPublicationType.RESEARCH_ARTICLE);
         document.getPublishedIn().add(new MultilingualContent("EN", source.displayName(), 1));
         document.setJournalOpenAlexId(sourceId);
 
         var issns = source.issn();
-        if (issns != null && !issns.isEmpty()) {
+        if (Objects.nonNull(issns) && !issns.isEmpty()) {
             document.setPrintIssn(issns.getFirst());
             if (issns.size() > 1) {
                 document.setEIssn(issns.getLast());

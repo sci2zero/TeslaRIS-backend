@@ -22,7 +22,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,8 +41,11 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.GeneticMaterialDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
+import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
@@ -46,7 +53,6 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.PublisherDTO;
-import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
@@ -59,17 +65,20 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Publisher;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
@@ -85,12 +94,12 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
-import rs.teslaris.core.repository.document.SoftwareRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.service.impl.comparator.MergeServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
@@ -98,15 +107,17 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
+import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
-import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.ExpertiseOrSkillService;
@@ -114,6 +125,7 @@ import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.deduplication.Mergeable;
 
 @SpringBootTest
 public class MergeServiceTest {
@@ -167,7 +179,7 @@ public class MergeServiceTest {
     private InvolvementService involvementService;
 
     @Mock
-    private SoftwareService softwareService;
+    private IntangibleProductService intangibleProductService;
 
     @Mock
     private DatasetService datasetService;
@@ -200,7 +212,7 @@ public class MergeServiceTest {
     private IndexBulkUpdateService indexBulkUpdateService;
 
     @Mock
-    private SoftwareRepository softwareRepository;
+    private IntangibleProductRepository intangibleProductRepository;
 
     @Mock
     private DatasetRepository datasetRepository;
@@ -214,9 +226,91 @@ public class MergeServiceTest {
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
 
+    @Mock
+    private MaterialProductService materialProductService;
+
+    @Mock
+    private GeneticMaterialService geneticMaterialService;
+
     @InjectMocks
     private MergeServiceImpl mergeService;
 
+    private static Stream<Arguments> provideDocumentPublicationsForMigration() {
+        return Stream.of(
+            Arguments.of(
+                new IntangibleProduct() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new IntangibleProduct(),
+                IntangibleProduct.class,
+                EntityType.PUBLICATION
+            ),
+            Arguments.of(
+                new MaterialProduct() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new MaterialProduct(),
+                MaterialProduct.class,
+                EntityType.PUBLICATION
+            ),
+            Arguments.of(
+                new Patent() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Patent(),
+                Patent.class,
+                EntityType.PUBLICATION
+            ),
+            Arguments.of(
+                new Dataset() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Dataset(),
+                Dataset.class,
+                EntityType.PUBLICATION
+            ),
+            Arguments.of(
+                new OrganisationUnit() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new OrganisationUnit(),
+                OrganisationUnit.class,
+                EntityType.ORGANISATION_UNIT
+            ),
+            Arguments.of(
+                new Person() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Person(),
+                Person.class,
+                EntityType.PERSON
+            ),
+            Arguments.of(
+                new Journal() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Journal(),
+                Journal.class,
+                EntityType.JOURNAL
+            ),
+            Arguments.of(
+                new Publisher() {{
+                    getMergedIds().add(103);
+                    getOldIds().add(203);
+                }},
+                new Publisher(),
+                Publisher.class,
+                EntityType.PUBLISHER
+            )
+        );
+    }
 
     @Test
     void switchJournalPublicationToOtherJournal_shouldPerformSwitch() {
@@ -882,12 +976,12 @@ public class MergeServiceTest {
     }
 
     @Test
-    public void shouldSaveMergedSoftwareMetadata() {
+    public void shouldSaveMergedIntangibleProductMetadata() {
         // given
         var leftId = 1;
         var rightId = 2;
-        var leftData = new SoftwareDTO();
-        var rightData = new SoftwareDTO();
+        var leftData = new IntangibleProductDTO();
+        var rightData = new IntangibleProductDTO();
 
         // when
         var authentication = mock(Authentication.class);
@@ -898,12 +992,62 @@ public class MergeServiceTest {
         var securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
-        mergeService.saveMergedSoftwareMetadata(leftId, rightId, leftData, rightData);
+        mergeService.saveMergedIntangibleProductMetadata(leftId, rightId, leftData, rightData);
 
         // then
-        verify(softwareService, atLeastOnce()).editSoftware(leftId, leftData);
-        verify(softwareService).editSoftware(rightId, rightData);
-        verify(softwareService, times(2)).editSoftware(leftId, leftData);
+        verify(intangibleProductService, atLeastOnce()).editIntangibleProduct(leftId, leftData);
+        verify(intangibleProductService).editIntangibleProduct(rightId, rightData);
+        verify(intangibleProductService, times(2)).editIntangibleProduct(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedMaterialProductMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new MaterialProductDTO();
+        var rightData = new MaterialProductDTO();
+
+        // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        mergeService.saveMergedMaterialProductMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(materialProductService, atLeastOnce()).editMaterialProduct(leftId, leftData);
+        verify(materialProductService).editMaterialProduct(rightId, rightData);
+        verify(materialProductService, times(2)).editMaterialProduct(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedGeneticMaterialMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new GeneticMaterialDTO();
+        var rightData = new GeneticMaterialDTO();
+
+        // when
+        var authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(new User() {{
+            setAuthority(new Authority(
+                UserRole.ADMIN.name(), new HashSet<>()));
+        }});
+        var securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        mergeService.saveMergedGeneticMaterialMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(geneticMaterialService, atLeastOnce()).editGeneticMaterial(leftId, leftData);
+        verify(geneticMaterialService).editGeneticMaterial(rightId, rightData);
+        verify(geneticMaterialService, times(2)).editGeneticMaterial(leftId, leftData);
     }
 
     @Test
@@ -1341,22 +1485,57 @@ public class MergeServiceTest {
         verify(documentPublicationService, atLeastOnce()).save(merged);
     }
 
-    @Test
-    void testIdentifierMigrationForPublication() {
-        var deletion = new Software();
-        deletion.getMergedIds().add(103);
-        deletion.getOldIds().add(203);
-        var merged = new Software();
+    @ParameterizedTest
+    @MethodSource("provideDocumentPublicationsForMigration")
+    void shouldMigrateIdentifiersForPublications(
+        Mergeable deletionEntity,
+        Mergeable mergedEntity,
+        Class<?> entityClass,
+        EntityType entityType
+    ) {
+        // Given
+        if (deletionEntity instanceof Document) {
+            when(documentPublicationService.findOne(1)).thenReturn((Document) deletionEntity);
+            when(documentPublicationService.findOne(2)).thenReturn((Document) mergedEntity);
+        } else if (deletionEntity instanceof OrganisationUnit) {
+            when(organisationUnitService.findRaw(1)).thenReturn((OrganisationUnit) deletionEntity);
+            when(organisationUnitService.findRaw(2)).thenReturn((OrganisationUnit) mergedEntity);
+        } else if (deletionEntity instanceof Journal) {
+            when(journalService.findRaw(1)).thenReturn((Journal) deletionEntity);
+            when(journalService.findRaw(2)).thenReturn((Journal) mergedEntity);
+        } else if (deletionEntity instanceof Publisher) {
+            when(publisherService.findRaw(1)).thenReturn((Publisher) deletionEntity);
+            when(publisherService.findRaw(2)).thenReturn((Publisher) mergedEntity);
+        } else if (deletionEntity instanceof Person) {
+            when(personService.findRaw(1)).thenReturn((Person) deletionEntity);
+            when(personService.findRaw(2)).thenReturn((Person) mergedEntity);
+        }
 
-        when(documentPublicationService.findOne(1)).thenReturn(deletion);
-        when(documentPublicationService.findOne(2)).thenReturn(merged);
+        // When
+        mergeService.migratePersistentIdentifiers(1, 2, entityType);
 
-        mergeService.migratePersistentIdentifiers(1, 2, EntityType.PUBLICATION);
+        // Then
+        assertThat(mergedEntity.getMergedIds()).containsExactlyInAnyOrder(103, 1);
+        assertThat(mergedEntity.getOldIds()).containsExactly(203);
 
-        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(103, 1);
-        assertThat(merged.getOldIds()).containsExactly(203);
-        verify(documentPublicationService, atLeastOnce()).save(deletion);
-        verify(documentPublicationService, atLeastOnce()).save(merged);
+        if (deletionEntity instanceof Document) {
+            verify(documentPublicationService, atLeastOnce()).save(
+                argThat(entityClass::isInstance));
+            verify(documentPublicationService, atLeastOnce()).save(
+                argThat(entityClass::isInstance));
+        } else if (deletionEntity instanceof OrganisationUnit) {
+            verify(organisationUnitService, atLeastOnce()).save(argThat(entityClass::isInstance));
+            verify(organisationUnitService, atLeastOnce()).save(argThat(entityClass::isInstance));
+        } else if (deletionEntity instanceof Journal) {
+            verify(journalService, atLeastOnce()).save(argThat(entityClass::isInstance));
+            verify(journalService, atLeastOnce()).save(argThat(entityClass::isInstance));
+        } else if (deletionEntity instanceof Publisher) {
+            verify(publisherService, atLeastOnce()).save(argThat(entityClass::isInstance));
+            verify(publisherService, atLeastOnce()).save(argThat(entityClass::isInstance));
+        } else if (deletionEntity instanceof Person) {
+            verify(personService, atLeastOnce()).save(argThat(entityClass::isInstance));
+            verify(personService, atLeastOnce()).save(argThat(entityClass::isInstance));
+        }
     }
 
     @Test

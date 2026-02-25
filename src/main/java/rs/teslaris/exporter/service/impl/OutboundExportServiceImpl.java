@@ -13,9 +13,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
 import org.jetbrains.annotations.NotNull;
@@ -389,8 +391,11 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         try {
             var conversionMethod =
-                converterClass.getMethod(conversionFunctionName, recordClass, boolean.class,
-                    List.class);
+                List.of("Publications", "Theses", "Products", "Patents").contains(set) ?
+                    converterClass.getMethod(conversionFunctionName, recordClass,
+                        boolean.class, List.class, Map.class) :
+                    converterClass.getMethod(conversionFunctionName, recordClass,
+                        boolean.class, List.class);
 
             boolean supportLegacyIdentifiers = handler.supportLegacyIdentifiers();
             List<String> supportedLanguages =
@@ -400,7 +405,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
             Object convertedEntity =
                 conversionMethod.invoke(
-                    null, requestedRecord, supportLegacyIdentifiers, supportedLanguages
+                    null, requestedRecord, supportLegacyIdentifiers,
+                    supportedLanguages, handler.getTypeToIdentifierSuffixMapping()
                 );
 
             ExportConverterBase.applyCustomMappings(convertedEntity, metadataFormat,
@@ -439,10 +445,39 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                                                 ExportHandlersConfigurationLoader.Handler handlerConfiguration) {
         var query = new Query();
 
+        if (identifier.contains("_")) {
+            var identifierParts = identifier.split("_", 2);
+            identifier = identifierParts[0];
+            var suffix = identifierParts[1];
+            var requiredType =
+                handlerConfiguration.getIdentifierSuffixToTypeMapping().getOrDefault(suffix, null);
+            if (Objects.nonNull(requiredType)) {
+                query.addCriteria(
+                    Criteria.where("type")
+                        .in(Arrays.stream(requiredType.split(","))
+                            .map(ExportPublicationType::fromStringValue).toList()));
+            }
+        } else {
+            var excludedTypes = handlerConfiguration
+                .getTypeToIdentifierSuffixMapping()
+                .keySet()
+                .stream()
+                .map(ExportPublicationType::fromStringValue)
+                .collect(Collectors.toList());
+
+            query.addCriteria(
+                Criteria.where("type").nin(excludedTypes)
+            );
+        }
+
         if (identifier.contains(IdentifierUtil.legacyIdentifierPrefix)) {
             query.addCriteria(
                 Criteria.where("old_id").in(OAIPMHParseUtility.parseBISISID(identifier)));
         } else if (identifier.contains(IdentifierUtil.identifierPrefix)) {
+            query.addCriteria(
+                Criteria.where("database_id").is(OAIPMHParseUtility.parseBISISID(identifier)));
+        } else {
+            // TODO: We could also throw an error here or simply join with upper clause
             query.addCriteria(
                 Criteria.where("database_id").is(OAIPMHParseUtility.parseBISISID(identifier)));
         }
@@ -697,7 +732,13 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         var entityId = getEntityIdentifier(handlerConfig, entity);
 
-        return basePrefix + setSpecPrefix + identifierPrefix + entityId;
+        var identifierTypeSuffix = "";
+        if (entity instanceof ExportDocument) {
+            identifierTypeSuffix = handlerConfig.getTypeToIdentifierSuffixMapping()
+                .getOrDefault(((ExportDocument) entity).getType().name(), "");
+        }
+
+        return basePrefix + setSpecPrefix + identifierPrefix + entityId + identifierTypeSuffix;
     }
 
     private Integer getEntityIdentifier(ExportHandlersConfigurationLoader.Handler handlerConfig,

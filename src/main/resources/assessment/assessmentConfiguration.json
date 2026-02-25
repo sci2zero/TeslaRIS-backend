@@ -32,15 +32,76 @@
     "nationalConf": "M60"
   },
   "groupToClassificationsMapping": {
-    "M10": ["M11", "M12", "M13", "M14", "M15", "M16"],
-    "M20": ["M21APlus", "M21A", "M21", "M22", "M23", "M23e", "M24Plus", "M24"],
-    "M30": ["M31", "M32", "M33", "M34"],
-    "M40": ["M41", "M42", "M43", "M44", "M45", "M46", "M47"],
-    "M50": ["M51", "M52", "M53", "M54", "M56", "M57"],
-    "M60": ["M61", "M62", "M63", "M64", "M67", "M68", "M69"],
-    "M70": ["M70"],
-    "M80": ["M81", "M82", "M83", "M84"],
-    "M90": ["M91a", "M91", "M92", "M93", "M94", "M95", "M96", "M97", "M98"]
+    "M10": [
+      "M11",
+      "M12",
+      "M13",
+      "M14",
+      "M15",
+      "M16"
+    ],
+    "M20": [
+      "M21APlus",
+      "M21A",
+      "M21",
+      "M22",
+      "M23",
+      "M23e",
+      "M24Plus",
+      "M24"
+    ],
+    "M30": [
+      "M31",
+      "M32",
+      "M33",
+      "M34"
+    ],
+    "M40": [
+      "M41",
+      "M42",
+      "M43",
+      "M44",
+      "M45",
+      "M46",
+      "M47"
+    ],
+    "M50": [
+      "M51",
+      "M52",
+      "M53",
+      "M54",
+      "M56",
+      "M57"
+    ],
+    "M60": [
+      "M61",
+      "M62",
+      "M63",
+      "M64",
+      "M67",
+      "M68",
+      "M69"
+    ],
+    "M70": [
+      "M70"
+    ],
+    "M80": [
+      "M81",
+      "M82",
+      "M83",
+      "M84"
+    ],
+    "M90": [
+      "M91a",
+      "M91",
+      "M92",
+      "M93",
+      "M94",
+      "M95",
+      "M96",
+      "M97",
+      "M98"
+    ]
   },
   "groupToNameMapping": {
     "M10": {
@@ -88,8 +149,17 @@
       "sr-cyr": "Патенти, сорте, расе или сојеви",
       "en": "Patents, varieties, breeds, or strains"
     }
-},
-  "sciList": ["M21APlus", "M21A", "M21", "M22", "M23", "M23e", "M24Plus", "M24"],
+  },
+  "sciList": [
+    "M21APlus",
+    "M21A",
+    "M21",
+    "M22",
+    "M23",
+    "M23e",
+    "M24Plus",
+    "M24"
+  ],
   "sciListPriorities": {
     "M21APlus": 1,
     "M21A": 2,
@@ -101,17 +171,89 @@
     "M24": 8
   },
   "typeToSupportedClassifications": {
-    "REVIEW_ARTICLE": ["ALL"],
-    "RESEARCH_ARTICLE": ["ALL"],
-    "REGULAR_FULL_ARTICLE": ["ALL"],
-    "INVITED_FULL_ARTICLE": ["ALL"],
-    "REGULAR_ABSTRACT_ARTICLE": ["ALL"],
-    "INVITED_ABSTRACT_ARTICLE": ["ALL"],
-    "SCIENTIFIC_CRITIC": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
-    "POLEMICS": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
-    "COMMENT": ["M21APlus", "M21A", "M21", "M51", "M52", "M53", "M54", "M56", "M57"],
-    "PHD": ["M70"],
-    "PHD_ART_PROJECT": ["M70"]
+    "REVIEW_ARTICLE": [
+      "ALL"
+    ],
+    "RESEARCH_ARTICLE": [
+      "ALL"
+    ],
+    "REGULAR_FULL_ARTICLE": [
+      "ALL"
+    ],
+    "INVITED_FULL_ARTICLE": [
+      "ALL"
+    ],
+    "REGULAR_ABSTRACT_ARTICLE": [
+      "ALL"
+    ],
+    "INVITED_ABSTRACT_ARTICLE": [
+      "ALL"
+    ],
+    "SCIENTIFIC_CRITIC": [
+      "M21APlus",
+      "M21A",
+      "M21",
+      "M51",
+      "M52",
+      "M53",
+      "M54",
+      "M56",
+      "M57",
+      "M13",
+      "M14",
+      "M44",
+      "M45"
+    ],
+    "POLEMICS": [
+      "M21APlus",
+      "M21A",
+      "M21",
+      "M51",
+      "M52",
+      "M53",
+      "M54",
+      "M56",
+      "M57",
+      "M13",
+      "M14",
+      "M44",
+      "M45"
+    ],
+    "LEXICOGRAPHIC_UNIT": [
+      "M13",
+      "M14",
+      "M44",
+      "M45"
+    ],
+    "CHAPTER": [
+      "M13",
+      "M14",
+      "M44",
+      "M45"
+    ],
+    "PREFACE": [
+      "M13",
+      "M14",
+      "M44",
+      "M45"
+    ],
+    "COMMENT": [
+      "M21APlus",
+      "M21A",
+      "M21",
+      "M51",
+      "M52",
+      "M53",
+      "M54",
+      "M56",
+      "M57"
+    ],
+    "PHD": [
+      "M70"
+    ],
+    "PHD_ART_PROJECT": [
+      "M70"
+    ]
   },
   "minimumPageRequirements": {
     "SCIENTIFIC_CRITIC": 2,
@@ -123,5 +265,20 @@
   "defendedThesesMapping": {
     "PHD": "M70",
     "PHD_ART_PROJECT": "M70"
+  },
+  "monographCodeToPublicationMapping": {
+    "M11": "M13",
+    "M12": "M14",
+    "M41": "M44",
+    "M42": "M45"
+  },
+  "assessmentCodeSortingRule": {
+    "startsWithConstraint": "M",
+    "codePattern": "^M(\\d+)([eA]|Plus|APlus)?$",
+    "scoreAdjustments": {
+      "e": 0.5,
+      "A": -0.5,
+      "Plus": -0.5
+    }
   }
 }

@@ -21,7 +21,7 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     Optional<Person> findApprovedByIdWithOtherNames(Integer id);
 
     @Query(value = "SELECT * FROM persons WHERE " +
-        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+        "old_ids @> to_jsonb(array[cast(?1 as int)]) AND deleted = FALSE", nativeQuery = true)
     Optional<Person> findPersonByOldIdsContains(Integer oldId);
 
     @Query("SELECT count(i) > 0 FROM Involvement i JOIN i.personInvolved p WHERE p.id = :personId")

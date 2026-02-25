@@ -47,7 +47,8 @@ public class NotificationFactory {
     public static Notification contructAddedToPublicationNotification(
         Map<String, String> notificationValues, User user) {
         String message;
-        var args = new Object[] {notificationValues.get("title")};
+        var args =
+            new Object[] {notificationValues.get("systemName"), notificationValues.get("title")};
         try {
             message = messageSource.getMessage(
                 "notification.addedToPublication",

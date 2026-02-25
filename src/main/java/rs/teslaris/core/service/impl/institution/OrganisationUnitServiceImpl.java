@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -541,6 +542,25 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             var index = organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
                 organisationUnitId).orElse(new OrganisationUnitIndex());
             indexOrganisationUnit(organisationUnitToUpdate, index);
+
+            if (isNameChanged) {
+                performBulkReindex(
+                    (pageRequest ->
+                        organisationUnitIndexRepository.findOrganisationUnitIndexesBySuperOUId(
+                            organisationUnitId, pageRequest)),
+                    Sort.by(Sort.Direction.ASC, "databaseId"),
+                    (subOrganisationUnitIndex) -> {
+                        subOrganisationUnitIndex.setSuperOUNameSr(index.getNameSr());
+                        subOrganisationUnitIndex.setSuperOUNameOther(index.getNameOther());
+
+                        subOrganisationUnitIndex.setSuperOUNameSrSortable(
+                            index.getNameSrSortable());
+                        subOrganisationUnitIndex.setSuperOUNameOtherSortable(
+                            index.getNameOtherSortable());
+
+                        organisationUnitIndexRepository.save(subOrganisationUnitIndex);
+                    });
+            }
         }
 
         if (isNameChanged) {
@@ -1234,28 +1254,38 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     public CompletableFuture<Void> reindexOrganisationUnits() {
         organisationUnitIndexRepository.deleteAll();
 
-        performBulkReindex();
+        performBulkReindex(
+            this::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (organisationUnit) -> indexOrganisationUnit(organisationUnit,
+                new OrganisationUnitIndex())
+        );
 
         return null;
     }
 
-    public void performBulkReindex() {
+    public <T> void performBulkReindex(
+        Function<PageRequest, Page<T>> pageSupplier,
+        Sort sort,
+        Consumer<T> itemProcessor
+    ) {
         int pageNumber = 0;
         int chunkSize = 100;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
 
-            List<OrganisationUnit> chunk =
-                findAll(PageRequest.of(pageNumber, chunkSize,
-                    Sort.by(Sort.Direction.ASC, "id"))).getContent();
+            List<T> chunk =
+                pageSupplier.apply(
+                    PageRequest.of(pageNumber, chunkSize, sort)
+                ).getContent();
 
-            chunk.forEach((organisationUnit) -> {
+            chunk.forEach((entity) -> {
                 try {
-                    indexOrganisationUnit(organisationUnit, new OrganisationUnitIndex());
+                    itemProcessor.accept(entity);
                 } catch (Exception e) {
-                    log.warn("Skipping ORGANISATION_UNIT {} due to indexing error: {}",
-                        organisationUnit.getId(), e.getMessage());
+                    log.warn("Skipping ORGANISATION_UNIT due to indexing error: {}",
+                        e.getMessage());
                 }
             });
 

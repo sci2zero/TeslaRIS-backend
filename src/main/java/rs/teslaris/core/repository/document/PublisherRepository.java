@@ -19,8 +19,8 @@ public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
     @Query("SELECT COUNT(pr) > 0 FROM Proceedings pr JOIN pr.publisher p WHERE p.id = :publisherId")
     boolean hasPublishedProceedings(Integer publisherId);
 
-    @Query("SELECT COUNT(s) > 0 FROM Software s JOIN s.publisher p WHERE p.id = :publisherId")
-    boolean hasPublishedSoftware(Integer publisherId);
+    @Query("SELECT COUNT(s) > 0 FROM IntangibleProduct s JOIN s.publisher p WHERE p.id = :publisherId")
+    boolean hasPublishedIntangibleProduct(Integer publisherId);
 
     @Query("SELECT COUNT(t) > 0 FROM Thesis t JOIN t.publisher p WHERE p.id = :publisherId")
     boolean hasPublishedThesis(Integer publisherId);
@@ -38,8 +38,8 @@ public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
     void unbindProceedings(Integer publisherId);
 
     @Modifying
-    @Query("UPDATE Software s SET s.publisher = null WHERE s.publisher.id = :publisherId")
-    void unbindSoftware(Integer publisherId);
+    @Query("UPDATE IntangibleProduct s SET s.publisher = null WHERE s.publisher.id = :publisherId")
+    void unbindIntangibleProduct(Integer publisherId);
 
     @Modifying
     @Query("UPDATE Thesis t SET t.publisher = null WHERE t.publisher.id = :publisherId")

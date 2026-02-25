@@ -33,14 +33,14 @@ public class OpenAlexImportUtility {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         for (String openAlexId : openAlexIds) {
-            String baseUrl = "https://api.openalex.org/works?per-page=100" +
+            var baseUrl = "https://api.openalex.org/works?per-page=100" +
                 "&filter=" +
                 (institutionLevelHarvest ? "authorships.institutions.lineage:" : "author.id:") +
                 openAlexId +
                 ",from_publication_date:" + dateFrom +
                 ",to_publication_date:" + dateTo;
 
-            String cursor = "*";
+            var cursor = "*";
 
             try {
                 while (Objects.nonNull(cursor)) {
@@ -72,6 +72,38 @@ public class OpenAlexImportUtility {
         }
 
         return allResults;
+    }
+
+    public OpenAlexPublication getPublicationByDoi(String doi) {
+        var objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        var url = "https://api.openalex.org/works/doi:" + doi;
+
+        try {
+            ResponseEntity<String> responseEntity =
+                restTemplateProvider.provideRestTemplate()
+                    .getForEntity(url, String.class);
+
+            if (responseEntity.getStatusCode() == HttpStatus.OK &&
+                responseEntity.getBody() != null) {
+
+                return objectMapper.readValue(
+                    responseEntity.getBody(),
+                    OpenAlexPublication.class
+                );
+            }
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("OpenAlex work not found for DOI {}", doi);
+        } catch (HttpClientErrorException e) {
+            log.error("HTTP error fetching OpenAlex work for DOI {}: {}", doi, e.getMessage());
+        } catch (JsonProcessingException e) {
+            log.error("JSON parsing error for OpenAlex work DOI {}: {}", doi, e.getMessage());
+        } catch (ResourceAccessException e) {
+            log.error("OpenAlex unreachable when fetching DOI {}: {}", doi, e.getMessage());
+        }
+
+        return null;
     }
 
     public record OpenAlexResults(

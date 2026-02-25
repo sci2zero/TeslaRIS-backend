@@ -37,4 +37,6 @@ public interface MonographService {
     boolean isIdentifierInUse(String identifier, Integer monographId);
 
     void addOldId(Integer id, Integer oldId);
+
+    MonographDTO readMonographByOldId(Integer oldId);
 }

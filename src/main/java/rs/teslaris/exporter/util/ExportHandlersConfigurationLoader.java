@@ -2,10 +2,12 @@ package rs.teslaris.exporter.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -65,10 +67,43 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty(value = "supportedLanguages") List<String> supportedLanguages,
         @JsonProperty(value = "sets", required = true) List<Set> sets,
         @JsonProperty(value = "metadataFormats", required = true) List<String> metadataFormats,
+        @JsonProperty(value = "typeIdentifierSuffixes") Map<String, String> typeIdentifierSuffixes,
         @JsonProperty(value = "exportOnlyActiveEmployees", required = true) Boolean exportOnlyActiveEmployees,
         @JsonProperty(value = "tokenExpirationTimeMinutes", required = true) Integer tokenExpirationTimeMinutes,
         @JsonProperty(value = "typeMappings", required = true) Map<String, String> typeMappings
     ) {
+
+        public Map<String, String> getIdentifierSuffixToTypeMapping() {
+            if (Objects.isNull(this.typeIdentifierSuffixes)) {
+                return Collections.emptyMap();
+            }
+
+            return this.typeIdentifierSuffixes.entrySet().stream()
+                .collect(Collectors.groupingBy(
+                    Map.Entry::getValue,
+                    Collectors.mapping(
+                        Map.Entry::getKey,
+                        Collectors.joining(",")
+                    )
+                ))
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                    entry -> "_" + entry.getKey(),
+                    Map.Entry::getValue
+                ));
+        }
+
+        public Map<String, String> getTypeToIdentifierSuffixMapping() {
+            if (Objects.isNull(this.typeIdentifierSuffixes)) {
+                return Collections.emptyMap();
+            }
+
+            return this.typeIdentifierSuffixes.entrySet().stream()
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    entry -> "_" + entry.getValue()
+                ));
+        }
     }
 
     public record Set(

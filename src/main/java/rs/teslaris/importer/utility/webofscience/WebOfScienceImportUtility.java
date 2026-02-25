@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -121,6 +122,54 @@ public class WebOfScienceImportUtility {
 
         return allPublications;
     }
+
+    public WosPublication getPublicationByDoi(String doi) {
+        var restTemplate = restTemplateProvider.provideRestTemplate();
+
+        int page = 1;
+        int limit = 1; // only need one
+
+        var url = UriComponentsBuilder.fromHttpUrl(BASE_URL)
+            .queryParam("db", "WOK")
+            .queryParam("q", "DO=(" + doi + ")")
+            .queryParam("limit", limit)
+            .queryParam("page", page)
+            .build(false) // DO NOT encode DOI slashes
+            .toUriString();
+
+        var headers = new HttpHeaders();
+        headers.set("X-ApiKey", apiKey);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                request,
+                String.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()
+                && response.getBody() != null) {
+
+                WoSResults results =
+                    objectMapper.readValue(response.getBody(), WoSResults.class);
+
+                if (results.hits() != null && !results.hits().isEmpty()) {
+                    return results.hits().getFirst();
+                }
+            }
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("WoS publication not found for DOI {}", doi);
+        } catch (JsonProcessingException e) {
+            log.error("Unable to parse WoS response for DOI {}: {}", doi, e.getMessage());
+        } catch (ResourceAccessException e) {
+            log.error("WoS unreachable while fetching DOI {}: {}", doi, e.getMessage());
+        }
+
+        return null;
+    }
+
 
     public record WoSResults(
         Metadata metadata,

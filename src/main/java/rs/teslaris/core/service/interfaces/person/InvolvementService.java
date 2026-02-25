@@ -3,6 +3,7 @@ package rs.teslaris.core.service.interfaces.person;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.InternalIdentifierMigrationDTO;
@@ -61,4 +62,10 @@ public interface InvolvementService extends JPAService<Involvement> {
     EmploymentTitle getCurrentEmploymentTitle(Integer personId);
 
     void migrateEmployeeInternalIdentifiers(InternalIdentifierMigrationDTO dto);
+
+    void addExternalInvolvementToBoardMember(Integer personId,
+                                             List<MultilingualContentDTO> externalInstitutionName,
+                                             String employmentTitle);
+
+    List<List<MultilingualContentDTO>> getExternalInstitutionSuggestions(Integer personId);
 }

@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,7 +49,7 @@ public class BookSeriesControllerTest extends BaseTest {
         contribution.setPersonName(
             new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
         bookSeriesDTO.setContributions(List.of(contribution));
-        bookSeriesDTO.setLanguageIds(new ArrayList<>());
+        bookSeriesDTO.setLanguageIds(new HashSet<>());
 
         return bookSeriesDTO;
     }

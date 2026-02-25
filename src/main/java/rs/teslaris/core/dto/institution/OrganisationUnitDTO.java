@@ -27,7 +27,7 @@ public class OrganisationUnitDTO {
 
     private List<MultilingualContentDTO> keyword;
 
-    private List<ResearchAreaHierarchyDTO> researchAreas;
+    private Set<ResearchAreaHierarchyDTO> researchAreas;
 
     private String scopusAfid;
 

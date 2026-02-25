@@ -2,6 +2,7 @@ package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +46,7 @@ import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.document.PatentServiceImpl;
 import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
@@ -53,6 +56,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
+import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @SpringBootTest
 public class PatentServiceTest {
@@ -86,6 +90,9 @@ public class PatentServiceTest {
 
     @Mock
     private CitationService citationService;
+
+    @Mock
+    private PatentRepository patentRepository;
 
     @InjectMocks
     private PatentServiceImpl patentService;
@@ -220,5 +227,46 @@ public class PatentServiceTest {
         verify(patentJPAService, atLeastOnce()).findAll(any(PageRequest.class));
         verify(documentPublicationIndexRepository, atLeastOnce()).save(
             any(DocumentPublicationIndex.class));
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenPatentDoesNotExist() {
+        // Given
+        var oldId = 123;
+        when(patentRepository.findPatentByOldIdsContains(oldId)).thenReturn(Optional.empty());
+
+        // When / Then
+        assertThrows(NotFoundException.class, () -> patentService.readPatentByOldId(oldId));
+        verify(patentRepository).findPatentByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenPatentIsNotApproved() {
+        // Given
+        var oldId = 456;
+        var patent = new Patent();
+        patent.setApproveStatus(ApproveStatus.REQUESTED);
+        when(patentRepository.findPatentByOldIdsContains(oldId)).thenReturn(Optional.of(patent));
+
+        // When / Then
+        assertThrows(NotFoundException.class, () -> patentService.readPatentByOldId(oldId));
+        verify(patentRepository).findPatentByOldIdsContains(oldId);
+    }
+
+    @Test
+    void shouldReturnDtoWhenPatentIsApproved() {
+        // Given
+        var oldId = 789;
+        var patent = new Patent();
+        patent.setApproveStatus(ApproveStatus.APPROVED);
+
+        when(patentRepository.findPatentByOldIdsContains(oldId)).thenReturn(Optional.of(patent));
+
+        // When
+        var result = patentService.readPatentByOldId(oldId);
+
+        // Then
+        assertNotNull(result);
+        verify(patentRepository).findPatentByOldIdsContains(oldId);
     }
 }

@@ -15,9 +15,12 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -104,12 +107,18 @@ public class DeduplicationServiceImpl implements DeduplicationService {
 
 
     @Override
+    @Retryable(retryFor = {OptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 300, multiplier = 2))
     public void deleteSuggestion(String suggestionId) {
         deduplicationSuggestionRepository.delete(
             findDeduplicationSuggestionById(suggestionId));
     }
 
     @Override
+    @Retryable(retryFor = {OptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 300, multiplier = 2))
     public void deleteSuggestion(Integer deletedEntityId, EntityType entityType) {
         deduplicationSuggestionRepository.deleteAll(
             deduplicationSuggestionRepository.findByEntityIdAndEntityType(deletedEntityId,
@@ -218,7 +227,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(),
                     DocumentPublicationType.JOURNAL_PUBLICATION.name(),
                     DocumentPublicationType.PATENT.name(),
-                    DocumentPublicationType.SOFTWARE.name(),
+                    DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
                     DocumentPublicationType.DATASET.name(),
                     DocumentPublicationType.THESIS.name()
                 ),
@@ -583,20 +592,41 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                 getTitleOtherFunction.apply(similarEntity));
 
             currentSessionCounter.incrementAndGet();
-            deduplicationSuggestionRepository.save(
-                new DeduplicationSuggestion(
-                    getIdFunction.apply(entity),
-                    getIdFunction.apply(similarEntity),
-                    getTitleSrFunction.apply(entity),
-                    getTitleOtherFunction.apply(entity),
-                    getTitleSrFunction.apply(similarEntity),
-                    getTitleOtherFunction.apply(similarEntity),
-                    indexType == EntityType.PUBLICATION ?
-                        DocumentPublicationType.valueOf(getTypeFunction.apply(entity)) :
-                        null,
-                    indexType
-                )
-            );
+
+            if (indexType.equals(EntityType.PUBLICATION)) {
+                var leftDocument = (DocumentPublicationIndex) entity;
+                var rightDocument = (DocumentPublicationIndex) similarEntity;
+                deduplicationSuggestionRepository.save(
+                    new DeduplicationSuggestion(
+                        getIdFunction.apply(entity),
+                        getIdFunction.apply(similarEntity),
+                        getTitleSrFunction.apply(entity),
+                        getTitleOtherFunction.apply(entity),
+                        getTitleSrFunction.apply(similarEntity),
+                        getTitleOtherFunction.apply(similarEntity),
+                        DocumentPublicationType.valueOf(getTypeFunction.apply(entity)), indexType,
+                        leftDocument.getYear(), rightDocument.getYear(),
+                        leftDocument.getAuthorNames(), rightDocument.getAuthorNames(),
+                        leftDocument.getAuthorIds(), rightDocument.getAuthorIds(),
+                        leftDocument.getPublicationType(), rightDocument.getPublicationType(),
+                        leftDocument.getType()// can be right also, they are always same type ATP
+                    )
+                );
+            } else {
+                deduplicationSuggestionRepository.save(
+                    new DeduplicationSuggestion(
+                        getIdFunction.apply(entity),
+                        getIdFunction.apply(similarEntity),
+                        getTitleSrFunction.apply(entity),
+                        getTitleOtherFunction.apply(entity),
+                        getTitleSrFunction.apply(similarEntity),
+                        getTitleOtherFunction.apply(similarEntity),
+                        null, indexType, null, null,
+                        null, null, null, null,
+                        null, null, null
+                    )
+                );
+            }
         }
     }
 

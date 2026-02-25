@@ -62,13 +62,13 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
@@ -505,7 +505,7 @@ public class DocumentPublicationServiceTest {
             setId(1);
         }});
 
-        var document = new Software();
+        var document = new IntangibleProduct();
         var index = new DocumentPublicationIndex();
 
         when(personContributionService.findContributionForResearcherAndDocument(personId,
@@ -558,7 +558,7 @@ public class DocumentPublicationServiceTest {
         contribution.setPerson(new Person() {{
             setId(1);
         }});
-        var document = new Software();
+        var document = new IntangibleProduct();
 
         when(personContributionService.findContributionForResearcherAndDocument(personId,
             documentId)).thenReturn(contribution);
@@ -1048,7 +1048,7 @@ public class DocumentPublicationServiceTest {
     void shouldThrowExceptionWhenArchivingWithMissingData() {
         // Given
         var documentId = 3;
-        var document = new Software();
+        var document = new IntangibleProduct();
         document.setId(documentId);
         document.setTitle(new HashSet<>());
         document.setDocumentDate("2023-01-01");
@@ -1249,7 +1249,7 @@ public class DocumentPublicationServiceTest {
     @Test
     void whenAuthorIdsContainPositiveThenDoNotNotifyAdmins() {
         // Given
-        var doc = new Software();
+        var doc = new IntangibleProduct();
         doc.setContributors(Collections.emptySet());
 
         var index = new DocumentPublicationIndex();
@@ -1344,7 +1344,7 @@ public class DocumentPublicationServiceTest {
     void shouldUpdateAllIdentifiersWhenValuesExist() {
         // Given
         var documentId = 1;
-        var document = new Software();
+        var document = new IntangibleProduct();
         document.setId(documentId);
 
         var dto = new DocumentIdentifierUpdateDTO();

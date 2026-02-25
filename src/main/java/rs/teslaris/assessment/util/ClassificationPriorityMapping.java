@@ -277,6 +277,15 @@ public class ClassificationPriorityMapping {
         return assessmentConfig.defendedThesesMapping().getOrDefault(thesisType, null);
     }
 
+    @Nullable
+    public static String getPublicationCodeFromMonographAssessment(String code) {
+        return assessmentConfig.monographCodeToPublicationMapping.getOrDefault(code, null);
+    }
+
+    public static AssessmentCodeSortingRule getAssessmentCodeStoringRule() {
+        return assessmentConfig.assessmentCodeSortingRule;
+    }
+
     private record AssessmentConfig(
         @JsonProperty("classificationPriorities") Map<String, Integer> classificationPriorities,
         @JsonProperty("classificationToAssessmentMapping") Map<String, String> classificationToAssessmentMapping,
@@ -286,7 +295,16 @@ public class ClassificationPriorityMapping {
         @JsonProperty("sciListPriorities") Map<String, Integer> sciListPriorities,
         @JsonProperty("typeToSupportedClassifications") Map<String, List<String>> typeToSupportedClassifications,
         @JsonProperty("minimumPageRequirements") Map<String, Integer> minimumPageRequirements,
-        @JsonProperty("defendedThesesMapping") Map<ThesisType, String> defendedThesesMapping
+        @JsonProperty("defendedThesesMapping") Map<ThesisType, String> defendedThesesMapping,
+        @JsonProperty("monographCodeToPublicationMapping") Map<String, String> monographCodeToPublicationMapping,
+        @JsonProperty("assessmentCodeSortingRule") AssessmentCodeSortingRule assessmentCodeSortingRule
+    ) {
+    }
+
+    public record AssessmentCodeSortingRule(
+        @JsonProperty("startsWithConstraint") String startsWithConstraint,
+        @JsonProperty("codePattern") String codePattern,
+        @JsonProperty("scoreAdjustments") Map<String, Double> scoreAdjustments
     ) {
     }
 }

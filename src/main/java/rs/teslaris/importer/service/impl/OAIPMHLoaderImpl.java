@@ -30,6 +30,7 @@ import rs.teslaris.core.model.oaipmh.product.Product;
 import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
@@ -37,7 +38,6 @@ import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
-import rs.teslaris.core.service.interfaces.document.SoftwareService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
@@ -106,7 +106,7 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
 
     private final PatentService patentService;
 
-    private final SoftwareService softwareService;
+    private final IntangibleProductService intangibleProductService;
 
     private final ProductConverter productConverter;
 
@@ -428,7 +428,8 @@ public class OAIPMHLoaderImpl implements OAIPMHLoader {
                     break;
                 case PRODUCTS:
                     hasNextPage = loadBatch(Product.class, productConverter,
-                        softwareService::createSoftware, query, performIndex, batchSize);
+                        intangibleProductService::createIntangibleProduct, query, performIndex,
+                        batchSize);
                     break;
             }
             page++;

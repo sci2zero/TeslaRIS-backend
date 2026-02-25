@@ -12,7 +12,7 @@ import rs.teslaris.core.model.document.ProceedingsPublicationType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProceedingsPublicationDTO extends DocumentDTO {
+public class ProceedingsPublicationDTO extends DocumentDTO implements Importable {
 
     @NotNull(message = "You have to provide a valid publication type.")
     private ProceedingsPublicationType proceedingsPublicationType;

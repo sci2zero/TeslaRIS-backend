@@ -47,7 +47,6 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.converter.person.UserConverter;
-import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.user.AuthenticationRequestDTO;
@@ -95,6 +94,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.email.EmailDomainChecker;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
@@ -394,7 +394,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "You have to deactivate user in order to change his email.");
         }
 
-        if (userRepository.findByEmail(newEmail).isPresent()) {
+        if (userRepository.findByEmailIncludingDeleted(newEmail).isPresent()) {
             throw new UserAlreadyExistsException("userWithEmailExistsMessage");
         }
 
@@ -561,6 +561,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private User saveAndNotifyUser(User newUser, UserAccountIndex index, String generatedPassword) {
         var savedUser = userRepository.save(newUser);
+        userRepository.flush();
+
         indexUser(savedUser, index);
 
         sendActivationEmail(savedUser, generatedPassword);
@@ -585,7 +587,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
-        var systemName = getSystemName(language);
+        var systemName = BrandingInformationUtil.getSystemName(language);
 
         var message = messageSource.getMessage(
             StringUtil.valueExists(generatedPassword) ? "accountActivation.mailBodyEmployee" :
@@ -593,6 +595,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             new Object[] {systemName, activationLink, generatedPassword},
             Locale.forLanguageTag(language)
         );
+
+        message =
+            emailUtil.constructBodyWithSignature(message, systemName, language);
         emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);
     }
 
@@ -671,6 +676,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         );
 
         var savedUser = userRepository.save(newUser);
+        userRepository.flush();
 
         indexUser(savedUser, new UserAccountIndex());
 
@@ -687,13 +693,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
-        var systemName = getSystemName(language);
+        var systemName = BrandingInformationUtil.getSystemName(language);
 
         var message = messageSource.getMessage(
             "accountActivation.mailBodyEmployee",
             new Object[] {systemName, activationLink, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
+
+        message =
+            emailUtil.constructBodyWithSignature(message, systemName, language);
 
         emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
 
@@ -732,7 +741,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     private void validateEmailUniqueness(String email) {
-        if (userRepository.findByEmail(email).isPresent()) {
+        if (userRepository.findByEmailIncludingDeleted(email).isPresent()) {
             throw new UserAlreadyExistsException("emailInUseMessage");
         }
     }
@@ -829,6 +838,10 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var message = messageSource.getMessage("emailUpdateRequest.mailBody",
             new Object[] {confirmationLink}, Locale.forLanguageTag(languageCode));
 
+        message =
+            emailUtil.constructBodyWithSignature(message,
+                BrandingInformationUtil.getSystemName(languageCode), languageCode);
+
         emailUtil.sendSimpleEmail(user.getEmail(), subject, message);
     }
 
@@ -911,13 +924,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                     user.getPreferredUILanguage().getLanguageTag().toLowerCase())
             );
 
-            var systemName = getSystemName(language);
+            var systemName = BrandingInformationUtil.getSystemName(language);
+            var preferredLanguage = user.getPreferredUILanguage().getLanguageTag().toLowerCase();
             String emailBody = messageSource.getMessage(
                 "resetPassword.mailBody",
                 new Object[] {systemName, resetLink},
-                Locale.forLanguageTag(
-                    user.getPreferredUILanguage().getLanguageTag().toLowerCase())
+                Locale.forLanguageTag(preferredLanguage)
             );
+
+            emailBody =
+                emailUtil.constructBodyWithSignature(emailBody, systemName, preferredLanguage);
 
             emailUtil.sendSimpleEmail(user.getEmail(), emailSubject, emailBody);
             passwordResetTokenRepository.save(new PasswordResetToken(resetToken, user));
@@ -1114,13 +1130,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             Locale.forLanguageTag(language)
         );
 
-        var systemName = getSystemName(language);
+        var systemName = BrandingInformationUtil.getSystemName(language);
 
         var message = messageSource.getMessage(
             "adminPasswordReset.mailBodyEmployee",
             new Object[] {systemName, new String(generatedPassword)},
             Locale.forLanguageTag(language)
         );
+
+        message =
+            emailUtil.constructBodyWithSignature(message, systemName, language);
 
         var emailIsSent = emailUtil.sendSimpleEmail(savedUser.getEmail(), subject, message);
         try {
@@ -1157,9 +1176,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     private void indexUserEmployment(UserAccountIndex index, OrganisationUnit employment) {
         var orgUnitNameSr = new StringBuilder();
         var orgUnitNameOther = new StringBuilder();
+
         if (Objects.nonNull(employment)) {
             multilingualContentService.buildLanguageStrings(orgUnitNameSr, orgUnitNameOther,
                 employment.getName(), true);
+            index.setOrganisationUnitId(employment.getId());
         }
 
         StringUtil.removeTrailingDelimiters(orgUnitNameSr, orgUnitNameOther);
@@ -1255,16 +1276,6 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             index.setActive(!user.getLocked());
             userAccountIndexRepository.save(index);
         });
-    }
-
-    private String getSystemName(String language) {
-        var brandingTitle = brandingInformationService.readBrandingInformation().title();
-        return brandingTitle.stream()
-            .filter(t -> t.getLanguageTag().equalsIgnoreCase(language))
-            .findFirst()
-            .or(() -> brandingTitle.stream().findFirst())
-            .map(MultilingualContentDTO::getContent)
-            .orElse("TeslaRIS");
     }
 
     @Scheduled(cron = "0 */10 * ? * *") // every ten minutes

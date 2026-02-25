@@ -20,9 +20,9 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.MonographPublication;
-import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographPublicationJPAServiceImpl;
@@ -53,6 +53,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
     private final MonographService monographService;
 
+    private final MonographPublicationRepository monographPublicationRepository;
+
 
     @Autowired
     public MonographPublicationServiceImpl(MultilingualContentService multilingualContentService,
@@ -72,7 +74,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            InvolvementRepository involvementRepository,
                                            OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
-                                           MonographService monographService) {
+                                           MonographService monographService,
+                                           MonographPublicationRepository monographPublicationRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
@@ -81,12 +84,26 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             involvementRepository, organisationUnitOutputConfigurationService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
+        this.monographPublicationRepository = monographPublicationRepository;
     }
 
     @Override
     @Transactional
     public MonographPublication findMonographPublicationById(Integer monographPublicationId) {
         return monographPublicationJPAService.findOne(monographPublicationId);
+    }
+
+    @Override
+    @Transactional
+    public MonographPublicationDTO readMonographPublicationByOldId(Integer oldId) {
+        var monographPublication =
+            monographPublicationRepository.findMonographPublicationByOldIdsContains(oldId);
+        if (monographPublication.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
+            !monographPublication.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return MonographPublicationConverter.toDTO(monographPublication.get());
     }
 
     @Override
@@ -231,10 +248,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         }
 
         monographPublication.setMonograph(monograph);
-        if (monographPublication.getMonographPublicationType()
-            .equals(MonographPublicationType.CHAPTER)) {
-            monographPublication.setDocumentDate(monograph.getDocumentDate());
-        }
+        monographPublication.setDocumentDate(
+            Objects.nonNull(monograph.getDocumentDate()) ? monograph.getDocumentDate() :
+                monographPublicationDTO.getDocumentDate());
     }
 
     @Override

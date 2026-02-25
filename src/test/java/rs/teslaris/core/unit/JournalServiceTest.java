@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -118,7 +119,7 @@ public class JournalServiceTest {
         journalDTO.setEissn("8765-4322");
         journalDTO.setPrintISSN("8765-4322");
         journalDTO.setContributions(new ArrayList<>());
-        journalDTO.setLanguageIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new HashSet<>());
 
         when(journalJPAService.save(any())).thenReturn(new Journal());
 
@@ -161,7 +162,7 @@ public class JournalServiceTest {
         journalDTO.setEissn("1234-5678");
         journalDTO.setPrintISSN("1234-5678");
         journalDTO.setContributions(new ArrayList<>());
-        journalDTO.setLanguageIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new HashSet<>());
 
         var journal = new Journal();
         var journalIndex = new JournalIndex();
@@ -189,7 +190,7 @@ public class JournalServiceTest {
         journalDTO.setEissn("8765-4321");
         journalDTO.setPrintISSN("8765-4321");
         journalDTO.setContributions(new ArrayList<>());
-        journalDTO.setLanguageIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new HashSet<>());
 
         var journal = new Journal();
 

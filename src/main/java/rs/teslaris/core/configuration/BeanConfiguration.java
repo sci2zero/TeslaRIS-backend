@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -127,9 +128,9 @@ public class BeanConfiguration {
     public Executor defaultTaskExecutor() {
         var threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
         threadPoolTaskExecutor.setThreadNamePrefix("Async-");
-        threadPoolTaskExecutor.setCorePoolSize(3);
-        threadPoolTaskExecutor.setMaxPoolSize(3);
-        threadPoolTaskExecutor.setQueueCapacity(600);
+        threadPoolTaskExecutor.setCorePoolSize(8);
+        threadPoolTaskExecutor.setMaxPoolSize(32);
+        threadPoolTaskExecutor.setQueueCapacity(2000);
         threadPoolTaskExecutor.afterPropertiesSet();
         return threadPoolTaskExecutor;
     }
@@ -151,5 +152,13 @@ public class BeanConfiguration {
         scheduler.setPoolSize(10);
         scheduler.setThreadNamePrefix("TaskScheduler-");
         return scheduler;
+    }
+
+    @Bean
+    public TomcatServletWebServerFactory tomcatServletWebServerFactory() {
+        var factory = new TomcatServletWebServerFactory();
+        factory.addConnectorCustomizers(
+            connector -> connector.setAsyncTimeout(60 * 60000)); // 1h should be enough
+        return factory;
     }
 }

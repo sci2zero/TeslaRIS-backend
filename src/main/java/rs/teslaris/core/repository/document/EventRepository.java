@@ -45,4 +45,21 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
         "WHERE e.id = :eventId " +
         "AND pc.contributionType = 0")
     Set<Integer> findInstitutionIdsByEventIdAndAuthorContribution(Integer eventId);
+
+    @Query("""
+            SELECT DISTINCT inv.organisationUnit.id
+            FROM ProceedingsPublication pp
+            JOIN pp.proceedings proc
+            JOIN proc.event e
+            JOIN pp.contributors pc
+            JOIN pc.person person
+            JOIN person.involvements inv
+            WHERE e.id = :eventId
+              AND pc.contributionType = 0
+              AND inv.organisationUnit IS NOT NULL
+              AND (inv.dateTo IS NULL OR inv.dateTo > CURRENT_DATE)
+        """)
+    Set<Integer> findEmploymentInstitutionIdsByEventIdAndAuthorContribution(
+        Integer eventId
+    );
 }

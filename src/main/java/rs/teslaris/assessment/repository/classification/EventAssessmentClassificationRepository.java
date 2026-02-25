@@ -30,6 +30,14 @@ public interface EventAssessmentClassificationRepository extends
         Integer eventId, Integer commissionId, Integer year);
 
     @Query(
+        "SELECT eac FROM EventAssessmentClassification eac JOIN FETCH eac.assessmentClassification WHERE " +
+            "eac.event.id = :eventId AND " +
+            "eac.commission.id = :commissionId AND " +
+            "eac.classificationYear = :year")
+    List<EventAssessmentClassification> findAssessmentClassificationsForEventAndYear(
+        Integer eventId, Integer year);
+
+    @Query(
         "SELECT eac FROM EventAssessmentClassification eac WHERE " +
             "eac.event.id = :eventId AND " +
             "eac.commission.id = :commissionId")

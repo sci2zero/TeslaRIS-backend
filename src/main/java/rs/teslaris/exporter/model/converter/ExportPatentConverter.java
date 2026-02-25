@@ -3,6 +3,7 @@ package rs.teslaris.exporter.model.converter;
 import com.google.common.base.Functions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
@@ -21,16 +22,20 @@ public class ExportPatentConverter extends ExportConverterBase {
 
     public static Patent toOpenaireModel(ExportDocument exportDocument,
                                          boolean supportLegacyIdentifiers,
-                                         List<String> supportedLanguages) {
+                                         List<String> supportedLanguages,
+                                         Map<String, String> typeToIdentifierSuffixMapping) {
         var openairePatent = new Patent();
 
+        var identifierTypeSuffix =
+            typeToIdentifierSuffixMapping.getOrDefault(exportDocument.getType().name(), "");
         if (supportLegacyIdentifiers && Objects.nonNull(exportDocument.getOldIds()) &&
             !exportDocument.getOldIds().isEmpty()) {
             openairePatent.setOldId("Patents/" + legacyIdentifierPrefix +
                 exportDocument.getOldIds().stream().findFirst().get());
         } else {
             openairePatent.setOldId(
-                "Patents/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId());
+                "Patents/" + IdentifierUtil.identifierPrefix + exportDocument.getDatabaseId() +
+                    identifierTypeSuffix);
         }
 
         openairePatent.setTitle(
@@ -71,7 +76,8 @@ public class ExportPatentConverter extends ExportConverterBase {
     }
 
     public static DC toDCModel(ExportDocument exportDocument, boolean supportLegacyIdentifiers,
-                               List<String> supportedLanguages) {
+                               List<String> supportedLanguages,
+                               Map<String, String> typeToIdentifierSuffixMapping) {
         var dcPatent = new DC();
         dcPatent.getType().add(new DCType("model", null, null));
         dcPatent.getSource().add(repositoryName);
@@ -82,7 +88,10 @@ public class ExportPatentConverter extends ExportConverterBase {
                 exportDocument.getOldIds().stream().findFirst().get());
         }
 
-        dcPatent.getIdentifier().add(identifierPrefix + exportDocument.getDatabaseId());
+        var identifierTypeSuffix =
+            typeToIdentifierSuffixMapping.getOrDefault(exportDocument.getType().name(), "");
+        dcPatent.getIdentifier()
+            .add(identifierPrefix + exportDocument.getDatabaseId() + identifierTypeSuffix);
 
         CollectionOperations.getIntersection(clientLanguages, supportedLanguages).forEach(lang -> {
             dcPatent.getIdentifier()

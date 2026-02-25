@@ -16,10 +16,9 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityAssessmentClassificationConverter;
@@ -41,8 +40,6 @@ import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassi
 import rs.teslaris.assessment.service.interfaces.classification.PersonAssessmentClassificationService;
 import rs.teslaris.assessment.util.ClassificationPriorityMapping;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
-import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -64,6 +61,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
@@ -246,7 +244,8 @@ public class PersonAssessmentClassificationServiceImpl
             .getContent();
 
         var institutionIds = index.get().getEmploymentInstitutionsIdHierarchy();
-        var commissions = userRepository.findUserCommissionForOrganisationUnits(institutionIds);
+        var commissions = commissionService.findCommissionsWithRelations(
+            userRepository.findUserCommissionForOrganisationUnits(institutionIds));
 
         commissions.forEach(commission -> {
             var pointsRuleEngine = new AssessmentPointsRuleEngine(researchAreaRepository);
@@ -269,15 +268,22 @@ public class PersonAssessmentClassificationServiceImpl
 
     @Override
     @Transactional
-    public synchronized void reindexPublicationPointsForAllResearchers() {
-        int pageNumber = 0;
+    public synchronized void reindexPublicationPointsForAllResearchers(List<Integer> personIds,
+                                                                       List<Integer> institutionIds) {
+        var assessmentMeasures = loadAssessmentMeasures();
 
+        int pageNumber = 0;
         boolean hasNextPage = true;
 
         while (hasNextPage) {
             var persons =
-                personIndexRepository.findAll(PageRequest.of(pageNumber, CHUNK_SIZE)).getContent();
-            persons.forEach(this::reindexPublicationPointsForResearcher);
+                searchService.runQuery(buildPersonReindexQuery(personIds, institutionIds),
+                        PageRequest.of(pageNumber, CHUNK_SIZE), PersonIndex.class, "person")
+                    .getContent();
+
+            persons.forEach(personIndex ->
+                reindexPublicationPointsForResearcher(personIndex, assessmentMeasures)
+            );
 
             pageNumber++;
             hasNextPage = persons.size() == CHUNK_SIZE;
@@ -286,8 +292,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public void reindexPublicationPointsForResearcher(PersonIndex index) {
-        var assessmentMeasures = loadAssessmentMeasures();
+    public void reindexPublicationPointsForResearcher(PersonIndex index,
+                                                      List<AssessmentMeasure> assessmentMeasures) {
         var commissionResearchAreas = resolveCommissionResearchAreas(index);
 
         processPublicationsInChunks(index, commissionResearchAreas, assessmentMeasures);
@@ -302,7 +308,8 @@ public class PersonAssessmentClassificationServiceImpl
     private List<Pair<Integer, AssessmentResearchArea>> resolveCommissionResearchAreas(
         PersonIndex index) {
         var institutionIds = index.getEmploymentInstitutionsIdHierarchy();
-        var commissions = userRepository.findUserCommissionForOrganisationUnits(institutionIds);
+        var commissions = commissionService.findCommissionsWithRelations(
+            userRepository.findUserCommissionForOrganisationUnits(institutionIds));
 
         var commissionResearchArea = new ArrayList<Pair<Integer, AssessmentResearchArea>>();
         commissions.forEach(commission -> {
@@ -544,8 +551,10 @@ public class PersonAssessmentClassificationServiceImpl
                                            String classificationCode,
                                            AssessmentMeasure applicableMeasure,
                                            List<DocumentIndicator> indicators) {
+        pointsRuleEngine.setPublicationType(publication.getPublicationType());
         scalingRuleEngine.setCurrentEntityIndicators(indicators);
         scalingRuleEngine.setPublicationType(publication.getPublicationType());
+
         return calculatePoints(applicableMeasure, pointsRuleEngine, scalingRuleEngine,
             researchArea, classificationCode, publication);
     }
@@ -560,27 +569,46 @@ public class PersonAssessmentClassificationServiceImpl
 
         double basePoints = invokeRule(AssessmentPointsRuleEngine.class, measure.getPointRule(),
             pointsRuleEngine, researchArea.getResearchAreaCode(),
-            researchArea.getResearchSubAreaIds(), classificationCode);
+            Objects.nonNull(researchArea.getResearchSubAreaIds()) ?
+                researchArea.getResearchSubAreaIds() : Collections.emptySet(), classificationCode);
 
         return invokeRule(AssessmentPointsScalingRuleEngine.class, measure.getScalingRule(),
             scalingRuleEngine, publication.getAuthorIds().size(), classificationCode, basePoints);
     }
 
-    private Double invokeRule(Class<?> clazz, String methodName, Object instance,
-                              Object... args) {
+    private Double invokeRule(Class<?> clazz, String methodName, Object instance, Object... args) {
         try {
-            Class<?>[] paramTypes = new Class[args.length];
-            for (int i = 0; i < args.length; i++) {
-                paramTypes[i] = args[i].getClass();
+            for (var method : clazz.getMethods()) {
+                if (!method.getName().equals(methodName)) {
+                    continue;
+                }
+
+                Class<?>[] paramTypes = method.getParameterTypes();
+                if (paramTypes.length != args.length) {
+                    continue;
+                }
+
+                boolean matches = true;
+                for (int i = 0; i < args.length; i++) {
+                    if (args[i] == null) {
+                        matches = false;
+                        break;
+                    }
+                    if (!paramTypes[i].isAssignableFrom(args[i].getClass())) {
+                        matches = false;
+                        break;
+                    }
+                }
+
+                if (matches) {
+                    return (Double) method.invoke(instance, args);
+                }
             }
 
-            var method = clazz.getMethod(methodName, paramTypes);
-
-            return (Double) method.invoke(instance, args);
-
-        } catch (NoSuchMethodException e) {
             throw new NotFoundException(
-                "Method not found: " + methodName + ". Reason: " + e.getMessage());
+                "Method not found: " + methodName + " with compatible parameters");
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception e) {
             throw new LoadingException(
                 "Error invoking method: " + methodName + ". Reason: " + e.getMessage());
@@ -670,22 +698,50 @@ public class PersonAssessmentClassificationServiceImpl
             .findFirst();
     }
 
-    @Async
-    @EventListener
-    @Transactional(readOnly = true)
-    protected void handleResearcherPointsReindexing(ResearcherPointsReindexingEvent event) {
-        if (Objects.isNull(event.personIds()) || event.personIds().isEmpty()) {
-            return;
-        }
+    private Query buildPersonReindexQuery(
+        List<Integer> personIds,
+        List<Integer> institutionIds
+    ) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            if (CollectionOperations.containsValues(personIds)) {
+                b.must(m -> m.terms(t ->
+                    t.field("databaseId")
+                        .terms(v -> v.value(
+                            personIds.stream()
+                                .map(FieldValue::of)
+                                .toList()
+                        ))
+                ));
+            }
 
-        event.personIds()
-            .forEach(personId -> personIndexRepository.findByDatabaseId(personId)
-                .ifPresent(this::reindexPublicationPointsForResearcher));
+            if (CollectionOperations.containsValues(institutionIds)) {
+                b.must(m -> m.bool(inst -> inst
+                    .should(s -> s.terms(t ->
+                        t.field("employment_institutions_id")
+                            .terms(v -> v.value(
+                                institutionIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                    ))
+                    .should(s -> s.terms(t ->
+                        t.field("employment_institutions_id_hierarchy")
+                            .terms(v -> v.value(
+                                institutionIds.stream()
+                                    .map(FieldValue::of)
+                                    .toList()
+                            ))
+                    ))
+                    .minimumShouldMatch("1")
+                ));
+            }
+
+            return b;
+        })))._toQuery();
     }
 
-    @EventListener
-    @Transactional(readOnly = true)
-    protected void handleAllResearcherPointsReindexing(AllResearcherPointsReindexingEvent ignored) {
-        reindexPublicationPointsForAllResearchers();
+    @Scheduled(cron = "${assessment.person.assessment-points}")
+    protected void reindexResearcherPointsScheduled() {
+        reindexPublicationPointsForAllResearchers(Collections.emptyList(), Collections.emptyList());
     }
 }

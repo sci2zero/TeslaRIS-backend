@@ -20,13 +20,15 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.GeneticMaterial;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
@@ -249,7 +251,8 @@ public class DocumentPublicationConverter {
         return switch (document) {
             case Thesis thesis -> ThesisConverter.toBibTexEntry(thesis, defaultLanguageTag);
             case Dataset dataset -> DatasetConverter.toBibTexEntry(dataset, defaultLanguageTag);
-            case Software software -> SoftwareConverter.toBibTexEntry(software, defaultLanguageTag);
+            case IntangibleProduct intangibleProduct -> IntangibleProductConverter.toBibTexEntry(
+                intangibleProduct, defaultLanguageTag);
             case Patent patent -> PatentConverter.toBibTexEntry(patent, defaultLanguageTag);
             case JournalPublication journalPublication ->
                 JournalPublicationConverter.toBibTexEntry(journalPublication, defaultLanguageTag);
@@ -263,6 +266,10 @@ public class DocumentPublicationConverter {
             case ProceedingsPublication proceedingsPublication ->
                 ProceedingsPublicationConverter.toBibTexEntry(proceedingsPublication,
                     defaultLanguageTag);
+            case MaterialProduct materialProduct ->
+                MaterialProductConverter.toBibTexEntry(materialProduct, defaultLanguageTag);
+            case GeneticMaterial geneticMaterial ->
+                GeneticMaterialConverter.toBibTexEntry(geneticMaterial, defaultLanguageTag);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };
@@ -275,8 +282,9 @@ public class DocumentPublicationConverter {
                 ThesisConverter.toTaggedFormat(thesis, defaultLanguageTag, refMan);
             case Dataset dataset ->
                 DatasetConverter.toTaggedFormat(dataset, defaultLanguageTag, refMan);
-            case Software software ->
-                SoftwareConverter.toTaggedFormat(software, defaultLanguageTag, refMan);
+            case IntangibleProduct intangibleProduct ->
+                IntangibleProductConverter.toTaggedFormat(intangibleProduct, defaultLanguageTag,
+                    refMan);
             case Patent patent ->
                 PatentConverter.toTaggedFormat(patent, defaultLanguageTag, refMan);
             case JournalPublication journalPublication ->
@@ -292,6 +300,12 @@ public class DocumentPublicationConverter {
             case ProceedingsPublication proceedingsPublication ->
                 ProceedingsPublicationConverter.toTaggedFormat(proceedingsPublication,
                     defaultLanguageTag, refMan);
+            case MaterialProduct materialProduct ->
+                MaterialProductConverter.toTaggedFormat(materialProduct, defaultLanguageTag,
+                    refMan);
+            case GeneticMaterial geneticMaterial ->
+                GeneticMaterialConverter.toTaggedFormat(geneticMaterial, defaultLanguageTag,
+                    refMan);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };

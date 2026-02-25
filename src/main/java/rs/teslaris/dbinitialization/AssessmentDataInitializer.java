@@ -230,6 +230,27 @@ public class AssessmentDataInitializer {
         numberOfPages.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
         numberOfPages.setContentType(IndicatorContentType.NUMBER);
 
+        var verifiedByMNO = new Indicator();
+        verifiedByMNO.setCode("verifiedByMNO");
+        verifiedByMNO.setTitle(
+            Set.of(new MultiLingualContent(englishTag, "Verified by MNO", 1),
+                new MultiLingualContent(serbianTag, "Verifikovano od strane MNO", 2),
+                new MultiLingualContent(serbianCyrillicTag, "Верификовано од стране МНО", 3)));
+        verifiedByMNO.setDescription(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Monograph is verified by the relevant scientific committee (MNO).",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Monografija je verifikovana od strane matičnog naučnog odbora (MNO).",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Монографија је верификована од стране матичног научног одбора (МНО).",
+                    3)));
+        verifiedByMNO.setAccessLevel(AccessLevel.CLOSED);
+        verifiedByMNO.getApplicableTypes().add(ApplicableEntityType.MONOGRAPH);
+        verifiedByMNO.setContentType(IndicatorContentType.BOOL);
+
         var totalCitations = new Indicator();
         totalCitations.setCode("totalCitations");
         totalCitations.setTitle(
@@ -945,7 +966,7 @@ public class AssessmentDataInitializer {
                 numParticipants, organizedByScientificInstitution, slavistiCategory, jciRank,
                 numCountriesInScientificCommittee, numParticipantCountries, numPresentations,
                 lectureInvitation, isTheoretical, isExperimental, isSimulation, authorCount,
-                yearlyCitations, totalOutputCount));
+                yearlyCitations, totalOutputCount, verifiedByMNO));
     }
 
     public void initializeAssessmentClassifications(LanguageTag englishTag,
@@ -1129,7 +1150,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M21a+",
                     1)));
-        M21APlus.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M21APlus.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M21A = new AssessmentClassification();
         M21A.setFormalDescriptionOfRule("handleM21A");
@@ -1138,7 +1160,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M21a",
                     1)));
-        M21A.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M21A.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M21 = new AssessmentClassification();
         M21.setFormalDescriptionOfRule("handleM21");
@@ -1147,7 +1170,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M21",
                     1)));
-        M21.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M21.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M22 = new AssessmentClassification();
         M22.setFormalDescriptionOfRule("handleM22");
@@ -1156,7 +1180,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M22",
                     1)));
-        M22.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M22.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M23 = new AssessmentClassification();
         M23.setFormalDescriptionOfRule("handleM23");
@@ -1165,7 +1190,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M23",
                     1)));
-        M23.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M23.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M23e = new AssessmentClassification();
         M23e.setFormalDescriptionOfRule("handleM23e");
@@ -1174,7 +1200,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M23e",
                     1)));
-        M23e.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M23e.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M24plus = new AssessmentClassification();
         M24plus.setFormalDescriptionOfRule("handleM24plus");
@@ -1183,7 +1210,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M24+",
                     1)));
-        M24plus.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M24plus.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M24 = new AssessmentClassification();
         M24.setFormalDescriptionOfRule("handleM24");
@@ -1193,7 +1221,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M24",
                     1)));
-        M24.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M24.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M26 = new AssessmentClassification();
         M26.setFormalDescriptionOfRule("handleM26");
@@ -1203,7 +1232,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M26",
                     1)));
-        M26.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M26.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M27 = new AssessmentClassification();
         M27.setFormalDescriptionOfRule("handleM27");
@@ -1213,7 +1243,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M27",
                     1)));
-        M27.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M27.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M51 = new AssessmentClassification();
         M51.setFormalDescriptionOfRule("handleM51");
@@ -1222,7 +1253,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M51",
                     1)));
-        M51.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M51.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M52 = new AssessmentClassification();
         M52.setFormalDescriptionOfRule("handleM52");
@@ -1231,7 +1263,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M52",
                     1)));
-        M52.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M52.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M53 = new AssessmentClassification();
         M53.setFormalDescriptionOfRule("handleM53");
@@ -1240,7 +1273,8 @@ public class AssessmentDataInitializer {
             Set.of(
                 new MultiLingualContent(englishTag, "M53",
                     1)));
-        M53.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M53.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var M54 = new AssessmentClassification();
         M54.setFormalDescriptionOfRule("handleM54");
@@ -1250,7 +1284,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M54",
                     1)));
-        M54.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        M54.setApplicableTypes(
+            Set.of(ApplicableEntityType.JOURNAL_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m31 = new AssessmentClassification();
         m31.setFormalDescriptionOfRule("handleM31");
@@ -1260,37 +1295,41 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M31",
                     1)));
-        m31.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m31.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m32 = new AssessmentClassification();
-        m32.setFormalDescriptionOfRule("handleM31");
+        m32.setFormalDescriptionOfRule("handleM32");
         m32.setCode("M32");
         m32.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "M32",
                     1)));
-        m32.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m32.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m33 = new AssessmentClassification();
-        m33.setFormalDescriptionOfRule("handleM31");
+        m33.setFormalDescriptionOfRule("handleM33");
         m33.setCode("M33");
         m33.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "M33",
                     1)));
-        m33.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m33.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m34 = new AssessmentClassification();
-        m34.setFormalDescriptionOfRule("handleM31");
+        m34.setFormalDescriptionOfRule("handleM34");
         m34.setCode("M34");
         m34.setTitle(
             Set.of(
                 new MultiLingualContent(englishTag,
                     "M34",
                     1)));
-        m34.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m34.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m61 = new AssessmentClassification();
         m61.setFormalDescriptionOfRule("handleM61");
@@ -1300,7 +1339,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M61",
                     1)));
-        m61.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m61.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m62 = new AssessmentClassification();
         m62.setFormalDescriptionOfRule("handleM62");
@@ -1310,7 +1350,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M62",
                     1)));
-        m62.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m62.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m63 = new AssessmentClassification();
         m63.setFormalDescriptionOfRule("handleM63");
@@ -1320,7 +1361,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M63",
                     1)));
-        m63.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m63.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m64 = new AssessmentClassification();
         m64.setFormalDescriptionOfRule("handleM64");
@@ -1330,7 +1372,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M64",
                     1)));
-        m64.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m64.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m69 = new AssessmentClassification();
         m69.setFormalDescriptionOfRule("handleM69");
@@ -1340,7 +1383,8 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M69",
                     1)));
-        m69.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m69.setApplicableTypes(
+            Set.of(ApplicableEntityType.PROCEEDINGS_PUBLICATION, ApplicableEntityType.DOCUMENT));
 
         var m70 = new AssessmentClassification();
         m70.setFormalDescriptionOfRule("handleM70");
@@ -1350,7 +1394,314 @@ public class AssessmentDataInitializer {
                 new MultiLingualContent(englishTag,
                     "M70",
                     1)));
-        m70.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+        m70.setApplicableTypes(Set.of(ApplicableEntityType.THESIS, ApplicableEntityType.DOCUMENT));
+
+        var m13 = new AssessmentClassification();
+        m13.setFormalDescriptionOfRule("handleM13");
+        m13.setCode("M13");
+        m13.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M13",
+                    1)));
+        m13.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION, ApplicableEntityType.DOCUMENT));
+
+        var m14 = new AssessmentClassification();
+        m14.setFormalDescriptionOfRule("handleM14");
+        m14.setCode("M14");
+        m14.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M14",
+                    1)));
+        m14.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION, ApplicableEntityType.DOCUMENT));
+
+        var m15 = new AssessmentClassification();
+        m15.setFormalDescriptionOfRule("handleM15");
+        m15.setCode("M15");
+        m15.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M15",
+                    1)));
+        m15.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION, ApplicableEntityType.DOCUMENT));
+
+        var m16 = new AssessmentClassification();
+        m16.setFormalDescriptionOfRule("handleM16");
+        m16.setCode("M16");
+        m16.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M16",
+                    1)));
+        m16.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION, ApplicableEntityType.DOCUMENT));
+
+        var m44 = new AssessmentClassification();
+        m44.setFormalDescriptionOfRule("handleM44");
+        m44.setCode("M44");
+        m44.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M44",
+                    1)));
+        m44.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION, ApplicableEntityType.DOCUMENT));
+
+        var m45 = new AssessmentClassification();
+        m45.setFormalDescriptionOfRule("handleM45");
+        m45.setCode("M45");
+        m45.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M45",
+                    1)));
+        m45.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION, ApplicableEntityType.DOCUMENT));
+
+        var m46 = new AssessmentClassification();
+        m46.setFormalDescriptionOfRule("handleM46");
+        m46.setCode("M46");
+        m46.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M46",
+                    1)));
+        m46.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION, ApplicableEntityType.DOCUMENT));
+
+        var m47 = new AssessmentClassification();
+        m47.setFormalDescriptionOfRule("handleM47");
+        m47.setCode("M47");
+        m47.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M47",
+                    1)));
+        m47.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH_PUBLICATION, ApplicableEntityType.DOCUMENT));
+
+        var m11 = new AssessmentClassification();
+        m11.setFormalDescriptionOfRule("handleM11");
+        m11.setCode("M11");
+        m11.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M11",
+                    1)));
+        m11.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH, ApplicableEntityType.DOCUMENT));
+
+        var m12 = new AssessmentClassification();
+        m12.setFormalDescriptionOfRule("handleM12");
+        m12.setCode("M12");
+        m12.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M12",
+                    1)));
+        m12.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH, ApplicableEntityType.DOCUMENT));
+
+        var m41 = new AssessmentClassification();
+        m41.setFormalDescriptionOfRule("handleM41");
+        m41.setCode("M41");
+        m41.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M41",
+                    1)));
+        m41.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH, ApplicableEntityType.DOCUMENT));
+
+        var m42 = new AssessmentClassification();
+        m42.setFormalDescriptionOfRule("handleM42");
+        m42.setCode("M42");
+        m42.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M42",
+                    1)));
+        m42.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH, ApplicableEntityType.DOCUMENT));
+
+        var m43 = new AssessmentClassification();
+        m43.setFormalDescriptionOfRule("handleM43");
+        m43.setCode("M43");
+        m43.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M43",
+                    1)));
+        m43.setApplicableTypes(
+            Set.of(ApplicableEntityType.MONOGRAPH, ApplicableEntityType.DOCUMENT));
+
+        var m103 = new AssessmentClassification();
+        m103.setFormalDescriptionOfRule("handleM103");
+        m103.setCode("M103");
+        m103.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M103",
+                    1)));
+        m103.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
+
+        var m91a = new AssessmentClassification();
+        m91a.setFormalDescriptionOfRule("handleM91A");
+        m91a.setCode("M91A");
+        m91a.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M91A",
+                    1)));
+        m91a.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+
+        var m91 = new AssessmentClassification();
+        m91.setFormalDescriptionOfRule("handleM91");
+        m91.setCode("M91");
+        m91.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M91",
+                    1)));
+        m91.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+
+        var m92 = new AssessmentClassification();
+        m92.setFormalDescriptionOfRule("handleM92");
+        m92.setCode("M92");
+        m92.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M92",
+                    1)));
+        m92.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+
+        var m93 = new AssessmentClassification();
+        m93.setFormalDescriptionOfRule("handleM93");
+        m93.setCode("M93");
+        m93.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M93",
+                    1)));
+        m93.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+
+        var m94 = new AssessmentClassification();
+        m94.setFormalDescriptionOfRule("handleM94");
+        m94.setCode("M94");
+        m94.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M94",
+                    1)));
+        m94.setApplicableTypes(Set.of(ApplicableEntityType.PATENT));
+
+        var m95 = new AssessmentClassification();
+        m95.setFormalDescriptionOfRule("handleM95");
+        m95.setCode("M95");
+        m95.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M95",
+                    1)));
+        m95.setApplicableTypes(Set.of(ApplicableEntityType.GENETIC_MATERIAL));
+
+        var m96 = new AssessmentClassification();
+        m96.setFormalDescriptionOfRule("handleM96");
+        m96.setCode("M96");
+        m96.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M96",
+                    1)));
+        m96.setApplicableTypes(Set.of(ApplicableEntityType.GENETIC_MATERIAL));
+
+        var m97 = new AssessmentClassification();
+        m97.setFormalDescriptionOfRule("handleM97");
+        m97.setCode("M97");
+        m97.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M97",
+                    1)));
+        m97.setApplicableTypes(Set.of(ApplicableEntityType.GENETIC_MATERIAL));
+
+        var m98 = new AssessmentClassification();
+        m98.setFormalDescriptionOfRule("handleM98");
+        m98.setCode("M98");
+        m98.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M98",
+                    1)));
+        m98.setApplicableTypes(Set.of(ApplicableEntityType.GENETIC_MATERIAL));
+
+        var m81 = new AssessmentClassification();
+        m81.setFormalDescriptionOfRule("handleM81");
+        m81.setCode("M81");
+        m81.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M81",
+                    1)));
+        m81.setApplicableTypes(
+            Set.of(ApplicableEntityType.GENETIC_MATERIAL, ApplicableEntityType.MATERIAL_PRODUCT,
+                ApplicableEntityType.DATASET));
+
+        var m82 = new AssessmentClassification();
+        m82.setFormalDescriptionOfRule("handleM82");
+        m82.setCode("M82");
+        m82.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M82",
+                    1)));
+        m82.setApplicableTypes(
+            Set.of(ApplicableEntityType.GENETIC_MATERIAL, ApplicableEntityType.MATERIAL_PRODUCT,
+                ApplicableEntityType.DATASET));
+
+        var m83 = new AssessmentClassification();
+        m83.setFormalDescriptionOfRule("handleM83");
+        m83.setCode("M83");
+        m83.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M83",
+                    1)));
+        m83.setApplicableTypes(
+            Set.of(ApplicableEntityType.GENETIC_MATERIAL, ApplicableEntityType.MATERIAL_PRODUCT,
+                ApplicableEntityType.DATASET));
+
+        var m84 = new AssessmentClassification();
+        m84.setFormalDescriptionOfRule("handleM84");
+        m84.setCode("M84");
+        m84.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "M84",
+                    1)));
+        m84.setApplicableTypes(
+            Set.of(ApplicableEntityType.GENETIC_MATERIAL, ApplicableEntityType.MATERIAL_PRODUCT,
+                ApplicableEntityType.DATASET));
+
+        var m00 = new AssessmentClassification();
+        m00.setFormalDescriptionOfRule("handleM00");
+        m00.setCode("M00");
+        m00.setTitle(
+            Set.of(
+                new MultiLingualContent(englishTag,
+                    "Not a result for assessment",
+                    1),
+                new MultiLingualContent(serbianTag,
+                    "Nije rezultat za vrednovanje",
+                    2),
+                new MultiLingualContent(serbianCyrillicTag,
+                    "Није резултат за вредновање",
+                    3)));
+        m00.setApplicableTypes(Set.of(ApplicableEntityType.DOCUMENT));
 
         assessmentClassificationRepository.saveAll(
             List.of(journalM21APlus, journalM21A, journalM21, journalM22, journalM23, journalM23e,
@@ -1361,7 +1712,12 @@ public class AssessmentDataInitializer {
                 M26, M27,
                 m31, m32, m33, m34,
                 m61, m62, m63, m64, m69,
-                m70)
+                m70,
+                m13, m14, m15, m16, m44, m45, m46, m47,
+                m11, m12, m41, m42, m43, m103,
+                m81, m82, m83, m84,
+                m91a, m91, m92, m93, m94, m95, m96, m97, m98,
+                m00)
         );
     }
 

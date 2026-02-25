@@ -41,11 +41,16 @@ public class ExportConverterBase {
     // Inherited classes should include
     // these static methods:
     // static T toCommonExportModel(D modelEntity)
-    // static R toOpenaireModel(T commonExportEntity, boolean supportLegacyIdentifiers);
-    // static D toDCModel(T commonExportEntity, boolean supportLegacyIdentifiers);
-    // static E toETDMSModel(T commonExportEntity, boolean supportLegacyIdentifiers); // where applicable
-    // static S toDIMSModel(T commonExportEntity, boolean supportLegacyIdentifiers); // where applicable
-    // static M toMARC21Model(T commonExportEntity, boolean supportLegacyIdentifiers); // where applicable
+    // static R toOpenaireModel(T commonExportEntity, boolean supportLegacyIdentifiers,
+    //      List<String> supportedLanguages, Map<String, String> typeToIdentifierSuffixMapping);
+    // static D toDCModel(T commonExportEntity, boolean supportLegacyIdentifiers,
+    //      List<String> supportedLanguages, Map<String, String> typeToIdentifierSuffixMapping);
+    // static E toETDMSModel(T commonExportEntity, boolean supportLegacyIdentifiers,
+    //     List<String> supportedLanguages, Map<String, String> typeToIdentifierSuffixMapping); // where applicable
+    // static S toDIMSModel(T commonExportEntity, boolean supportLegacyIdentifiers,
+    //     List<String> supportedLanguages, Map<String, String> typeToIdentifierSuffixMapping); // where applicable
+    // static M toMARC21Model(T commonExportEntity, boolean supportLegacyIdentifiers,
+    //     List<String> supportedLanguages, Map<String, String> typeToIdentifierSuffixMapping); // where applicable
 
     protected static String repositoryName;
 
@@ -145,9 +150,9 @@ public class ExportConverterBase {
                 ProceedingsPublicationType.REGULAR_FULL_ARTICLE) ?
                 "http://purl.org/coar/resource_type/c_5794" :
                 "http://purl.org/coar/resource_type/c_c94f";
-            case MONOGRAPH -> "http://purl.org/coar/resource_type/c_2f33"; // book
+            case MONOGRAPH, BOOK_SERIES -> "http://purl.org/coar/resource_type/c_2f33"; // book
             case PATENT -> "http://purl.org/coar/resource_type/c_15cd";
-            case SOFTWARE -> "http://purl.org/coar/resource_type/c_5ce6";
+            case INTANGIBLE_PRODUCT -> "http://purl.org/coar/resource_type/c_5ce6";
             case DATASET -> "http://purl.org/coar/resource_type/c_ddb1";
             case JOURNAL -> "http://purl.org/coar/resource_type/c_0640";
             case MONOGRAPH_PUBLICATION -> "http://purl.org/coar/resource_type/c_3248"; // book part
@@ -155,6 +160,8 @@ public class ExportConverterBase {
                 exportDocument.getThesisType().equals(ThesisType.PHD_ART_PROJECT)) ?
                 "http://purl.org/coar/resource_type/c_db06" :
                 "http://purl.org/coar/resource_type/c_46ec";
+            case MATERIAL_PRODUCT -> "http://purl.org/coar/resource_type/JBNF-DYAD";
+            case GENETIC_MATERIAL -> "http://purl.org/coar/resource_type/S7R1-K5P0";
         };
 
         return new PublicationType(coarType, null, scheme);
@@ -320,11 +327,14 @@ public class ExportConverterBase {
             case PROCEEDINGS_PUBLICATION -> "proceedings-publication";
             case MONOGRAPH -> "monograph";
             case PATENT -> "patent";
-            case SOFTWARE -> "software";
+            case INTANGIBLE_PRODUCT -> "intangible-product";
             case DATASET -> "dataset";
             case JOURNAL -> "journal";
             case MONOGRAPH_PUBLICATION -> "monograph-publication";
             case THESIS -> "thesis";
+            case MATERIAL_PRODUCT -> "material-product";
+            case GENETIC_MATERIAL -> "genetic-material";
+            case BOOK_SERIES -> "book-series";
         };
     }
 

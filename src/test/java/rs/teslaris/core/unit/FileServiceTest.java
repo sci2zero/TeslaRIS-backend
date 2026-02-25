@@ -24,6 +24,8 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.InjectMocks;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +42,7 @@ public class FileServiceTest {
     @InjectMocks
     private FileServiceFileSystemImpl fileService;
 
+
     @BeforeEach
     public void setUp() {
         ReflectionTestUtils.setField(fileService, "rootLocation", testRootPath);
@@ -51,7 +54,7 @@ public class FileServiceTest {
 
     @Test
     @Order(1)
-    public void ShouldStoreNonEmptyFile() {
+    public void shouldStoreNonEmptyFile() {
         // given
         var file = createMockMultipartFile("test.txt", "Test file content");
         var serverFilename = "file1";
@@ -64,7 +67,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldThrowExceptionWhenStoringEmptyFile() {
+    public void shouldThrowExceptionWhenStoringEmptyFile() {
         // given
         var file = createMockMultipartFile("empty.txt", "");
         var serverFilename = "file2";
@@ -76,7 +79,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldThrowExceptionWhenStoringFileOutsideCurrentDirectory() {
+    public void shouldThrowExceptionWhenStoringFileOutsideCurrentDirectory() {
         // given
         var file = createMockMultipartFile("test.txt", "Test file content");
         var serverFilename = "../file3";
@@ -89,7 +92,7 @@ public class FileServiceTest {
 
     @Test
     @Order(2)
-    public void ShouldLoadExistingReadableResource() throws IOException {
+    public void shouldLoadExistingReadableResource() throws IOException {
         // given
         var filename = "file1.txt";
 
@@ -101,7 +104,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldThrowExceptionWhenLoadingNonExistingResource() {
+    public void shouldThrowExceptionWhenLoadingNonExistingResource() {
         // given
         var filename = "nonExistingFile.txt";
 
@@ -113,7 +116,7 @@ public class FileServiceTest {
 
     @Test
     @Order(3)
-    public void ShouldDeleteFile() throws IOException {
+    public void shouldDeleteFile() throws IOException {
         // given
         var serverFilename = "file1.txt";
         var file = new File(Paths.get(testRootPath, serverFilename).toUri());
@@ -126,7 +129,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldThrowExceptionWhenDeleteFileDoesNotExist() throws IOException {
+    public void shouldThrowExceptionWhenDeleteFileDoesNotExist() throws IOException {
         // given
         var serverFilename = "nonExistingFile.txt";
 
@@ -141,7 +144,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldDuplicateExistingFile() {
+    public void shouldDuplicateExistingFile() {
         // given
         var serverFilename = "existing-file.txt";
         var originalContent = "Original file content";
@@ -184,7 +187,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldThrowExceptionWhenDuplicatingNonExistentFile() {
+    public void shouldThrowExceptionWhenDuplicatingNonExistentFile() {
         // given
         var nonExistentFilename = "non-existent-file.txt";
 
@@ -195,7 +198,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldThrowExceptionWhenDuplicatingFileOutsideRoot() {
+    public void shouldThrowExceptionWhenDuplicatingFileOutsideRoot() {
         // given
         var maliciousFilename = "../outside-file.txt";
 
@@ -206,7 +209,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldDuplicateFileWithComplexExtension() {
+    public void shouldDuplicateFileWithComplexExtension() {
         // given
         var serverFilename = "document.tar.gz";
         var originalContent = "Compressed file content";
@@ -244,7 +247,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldGenerateUniqueFilenamesWhenDuplicating() {
+    public void shouldGenerateUniqueFilenamesWhenDuplicating() {
         // given
         var serverFilename = "original.doc";
         var originalContent = "Document content";
@@ -280,7 +283,7 @@ public class FileServiceTest {
     }
 
     @Test
-    public void ShouldHandleLargeFilesWhenDuplicating() {
+    public void shouldHandleLargeFilesWhenDuplicating() {
         // given
         var serverFilename = "large-file.bin";
         var largeContent = new byte[1024 * 1024];
@@ -314,5 +317,74 @@ public class FileServiceTest {
         } catch (IOException e) {
             // Ignore cleanup errors, if any
         }
+    }
+
+    @Test
+    public void shouldStoreValidResourceToFileSystem() throws Exception {
+        // given
+        var content = "Test file content";
+        var resource = new ByteArrayResource(content.getBytes());
+        var serverFilename = "file1";
+        var originalFilename = "test.txt";
+
+        var expectedPath = Paths.get(testRootPath, "file1.txt");
+
+        // when
+        var result = fileService.store(resource, serverFilename, originalFilename);
+
+        // then
+        assertEquals("file1.txt", result);
+        assertTrue(Files.exists(expectedPath));
+        assertEquals(content, Files.readString(expectedPath));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenResourceIsNull() {
+        // given
+        Resource resource = null;
+        var serverFilename = "file2";
+        var originalFilename = "test.txt";
+
+        // when & then
+        assertThrows(StorageException.class, () ->
+            fileService.store(resource, serverFilename, originalFilename));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenOriginalFilenameIsEmpty() {
+        // given
+        var content = "Test content";
+        var resource = new ByteArrayResource(content.getBytes());
+        var serverFilename = "file3";
+        var originalFilename = "";
+
+        // when & then
+        assertThrows(StorageException.class, () ->
+            fileService.store(resource, serverFilename, originalFilename));
+    }
+
+    @Test
+    public void shouldSanitizeFilenameAndPreventPathTraversal() throws Exception {
+        // given
+        var content = "Test content";
+        var resource = new ByteArrayResource(content.getBytes());
+        var serverFilename = "normalFile";
+
+        var originalFilename = "../../<script>alert('xss')</script>test.txt";
+
+        var expectedPath = Paths.get(testRootPath, "normalFile.txt");
+
+        // when
+        var result = fileService.store(resource, serverFilename, originalFilename);
+
+        // then
+        assertEquals("normalFile.txt", result);
+        assertTrue(Files.exists(expectedPath));
+        assertEquals(content, Files.readString(expectedPath));
+
+        var storedFilename = expectedPath.getFileName().toString();
+        assertFalse(storedFilename.contains("<"));
+        assertFalse(storedFilename.contains(">"));
+        assertFalse(storedFilename.contains("script"));
     }
 }

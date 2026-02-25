@@ -126,4 +126,6 @@ public interface PersonService extends JPAService<Person> {
     String getPersonProfileImageServerFilename(Integer personId);
 
     boolean personHasContributions(Integer personId);
+
+    void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson);
 }

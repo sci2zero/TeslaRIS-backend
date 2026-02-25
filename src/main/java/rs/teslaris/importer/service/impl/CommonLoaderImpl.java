@@ -24,7 +24,10 @@ import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.Importable;
+import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
+import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitRequestDTO;
@@ -34,6 +37,7 @@ import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Document;
@@ -43,6 +47,8 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.document.JournalPublicationRepository;
+import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -112,6 +118,12 @@ public class CommonLoaderImpl implements CommonLoader {
     private final LoadingConfigurationService loadingConfigurationService;
 
     private final DocumentPublicationService documentPublicationService;
+
+    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    private final JournalPublicationRepository journalPublicationRepository;
+
+    private final ProceedingsPublicationRepository proceedingsPublicationRepository;
 
     private final EmailUtil emailUtil;
 
@@ -230,7 +242,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
     @Override
     public void markRecordAsLoaded(Integer userId, Integer institutionId, Integer oldDocumentId,
-                                   Boolean deleteOldDocument, Integer newDocumentId) {
+                                   Integer newDocumentId) {
         var progressReport =
             Objects.requireNonNullElse(
                 ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
@@ -266,7 +278,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
         updatePersonInvolvements((DocumentImport) updatedRecord);
 
-        handleDeduplication(oldDocumentId, deleteOldDocument, (DocumentImport) updatedRecord,
+        handleDeduplication(oldDocumentId, (DocumentImport) updatedRecord,
             progressReport);
 
         migrateInternalIdentifiers(newDocumentId, (DocumentImport) updatedRecord);
@@ -414,24 +426,19 @@ public class CommonLoaderImpl implements CommonLoader {
         }
     }
 
-    private void handleDeduplication(Integer oldDocumentId, Boolean deleteOldDocument,
+    private void handleDeduplication(Integer oldDocumentId,
                                      DocumentImport updatedRecord,
                                      LoadProgressReport progressReport) {
-        if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0 &&
-            Objects.nonNull(deleteOldDocument)) {
+        if (Objects.nonNull(oldDocumentId) && oldDocumentId > 0) {
             var potentialDuplicateIds = fetchPotentialDuplicateIds(updatedRecord);
 
             if (!potentialDuplicateIds.contains(oldDocumentId)) {
                 return;
             }
 
-            if (deleteOldDocument) {
-                documentPublicationService.deleteDocumentPublication(oldDocumentId);
-            } else {
-                var oldDocument = documentPublicationService.findDocumentById(oldDocumentId);
-                oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
-                documentPublicationService.save(oldDocument);
-            }
+            var oldDocument = documentPublicationService.findDocumentById(oldDocumentId);
+            oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
+            documentPublicationService.save(oldDocument);
         }
     }
 
@@ -520,12 +527,42 @@ public class CommonLoaderImpl implements CommonLoader {
         var potentialDuplicateIds = fetchPotentialDuplicateIds(currentlyLoadedEntity);
         if (potentialDuplicateIds.contains(oldDocumentId)) {
             var document = documentPublicationService.findOne(oldDocumentId);
-            document.setDoi("");
-            document.setScopusId("");
-            document.setOpenAlexId("");
-            document.setWebOfScienceId("");
+
+            switch (currentlyLoadedEntity.getSource()) {
+                case "SCOPUS":
+                    document.setScopusId("");
+                    break;
+                case "OPEN_ALEX":
+                    document.setOpenAlexId("");
+                    break;
+                case "WEB_OF_SCIENCE":
+                    document.setWebOfScienceId("");
+                    break;
+            }
+
             documentPublicationService.save(document);
         }
+    }
+
+    @Override
+    public Importable readEnrichmentMetadata(Integer documentId) {
+        var index =
+            documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
+
+        if (index.isEmpty()) {
+            return new JournalPublicationResponseDTO();
+        }
+
+        if (index.get().getType().equals(DocumentPublicationType.JOURNAL_PUBLICATION.name())) {
+            return rs.teslaris.core.converter.document.JournalPublicationConverter.toDTO(
+                journalPublicationRepository.findById(documentId).get());
+        } else if (index.get().getType()
+            .equals(DocumentPublicationType.PROCEEDINGS_PUBLICATION.name())) {
+            return rs.teslaris.core.converter.document.ProceedingsPublicationConverter.toDTO(
+                proceedingsPublicationRepository.findById(documentId).get());
+        }
+
+        return new ProceedingsPublicationDTO();
     }
 
     @Override
@@ -783,7 +820,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
-        journalDTO.setLanguageIds(new ArrayList<>());
+        journalDTO.setLanguageIds(new HashSet<>());
 
         synchronized (journalLock) {
             potentialMatch = searchPotentialMatches(documentImport);

@@ -11,10 +11,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 public class ShareControllerTest extends BaseTest {
 
     @Test
-    public void testReadSoftware() throws Exception {
+    public void testReadIntangibleProduct() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/share/document/SOFTWARE/{id}/en", 7)
+                    "http://localhost:8081/api/share/document/INTANGIBLE_PRODUCT/{id}/en", 7)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 }

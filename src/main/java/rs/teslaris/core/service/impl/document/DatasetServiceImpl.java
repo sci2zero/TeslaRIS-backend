@@ -1,11 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
-import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +31,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -174,22 +173,12 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     public void reindexDatasets() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Dataset> chunk =
-                datasetJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((dataset) -> indexDataset(dataset, new DocumentPublicationIndex()));
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            datasetJPAService::findAll,
+            dataset -> indexDataset(dataset, new DocumentPublicationIndex())
+        );
     }
 
     @Override

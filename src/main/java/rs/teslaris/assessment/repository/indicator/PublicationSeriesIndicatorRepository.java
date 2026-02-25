@@ -119,4 +119,8 @@ public interface PublicationSeriesIndicatorRepository extends
         "psi.indicator.code = :code")
     Optional<PublicationSeriesIndicator> findIndicatorForCodeAndPublicationSeriesId(String code,
                                                                                     Integer publicationSeriesId);
+
+    @Query("SELECT DISTINCT psi.edition FROM PublicationSeriesIndicator psi " +
+        "WHERE psi.publicationSeries.id = :publicationSeriesId")
+    List<String> getEditionsJournalIsListedIn(Integer publicationSeriesId);
 }

@@ -357,7 +357,7 @@ public class DocumentConverter {
             var bookSeriesDTO = new BookSeriesDTO();
             bookSeriesDTO.setTitle(multilingualContentConverter.toDTO(bookSeries.getTitle()));
             bookSeriesDTO.setContributions(new ArrayList<>());
-            bookSeriesDTO.setLanguageIds(new ArrayList<>());
+            bookSeriesDTO.setLanguageIds(new HashSet<>());
             bookSeriesDTO.setNameAbbreviation(new ArrayList<>());
             bookSeriesDTO.setUris(new HashSet<>());
 

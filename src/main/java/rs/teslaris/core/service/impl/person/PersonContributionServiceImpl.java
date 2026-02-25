@@ -45,11 +45,13 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.exceptionhandling.exception.TypeNotAllowedException;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +71,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
     private final UserRepository userRepository;
 
     private final NotificationRepository notificationRepository;
+
+    private final InvolvementService involvementService;
 
     @Value("${contribution.approved_by_default}")
     private Boolean contributionApprovedByDefault;
@@ -112,6 +116,18 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
             if (!addedPrevoiusly) {
                 document.addDocumentContribution(contribution);
+
+                if (contribution.getContributionType()
+                    .equals(DocumentContributionType.BOARD_MEMBER) &&
+                    CollectionOperations.containsValues(
+                        contributionDTO.getDisplayAffiliationStatement())) {
+
+                    involvementService.addExternalInvolvementToBoardMember(
+                        contributionDTO.getPersonId(),
+                        contributionDTO.getDisplayAffiliationStatement(),
+                        contributionDTO.getEmploymentTitle().name()
+                    );
+                }
             }
         });
     }

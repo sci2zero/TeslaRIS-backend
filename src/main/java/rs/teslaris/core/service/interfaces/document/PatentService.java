@@ -20,4 +20,6 @@ public interface PatentService {
     void reindexPatents();
 
     void indexPatent(Patent patent);
+
+    PatentDTO readPatentByOldId(Integer oldId);
 }

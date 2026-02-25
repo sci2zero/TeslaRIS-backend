@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -186,6 +187,14 @@ public class ScopusHarvesterImpl implements ScopusHarvester {
         }
 
         return newEntriesCount;
+    }
+
+    @Override
+    public Optional<DocumentImport> harvestDocumentForDoi(String doi) {
+        var harvestedDocument = scopusImportUtility.getPublicationByDoi(doi);
+        return Objects.nonNull(harvestedDocument) ?
+            ScopusConverter.toCommonImportModel(harvestedDocument, scopusImportUtility) :
+            Optional.of(new DocumentImport());
     }
 
     private void performDocumentHarvest(

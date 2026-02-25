@@ -34,6 +34,7 @@ import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -61,13 +62,15 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  EventsRelationRepository eventsRelationRepository,
                                  SearchService<EventIndex> searchService,
                                  CountryService countryService,
+                                 OrganisationUnitService organisationUnitService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
                                  ConferenceJPAServiceImpl conferenceJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1,
                                  ConferenceRepository conferenceRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
             eventRepository, indexBulkUpdateService, commissionRepository, eventsRelationRepository,
-            searchService, countryService, documentPublicationIndexRepository);
+            searchService, countryService, organisationUnitService,
+            documentPublicationIndexRepository);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
         this.conferenceRepository = conferenceRepository;
@@ -343,6 +346,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                     .stream().toList());
             eventIndex.setClassifiedBy(
                 commissionRepository.findCommissionsThatClassifiedEvent(conferenceId));
+
+            indexActiveEmploymentRelations(eventIndex, conferenceId);
 
             eventIndexRepository.save(eventIndex);
         });

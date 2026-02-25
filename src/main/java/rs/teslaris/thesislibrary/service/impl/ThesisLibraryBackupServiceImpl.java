@@ -163,15 +163,19 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
 
             var institution = organisationUnitService.findOne(institutionId);
             var serverFilename = generateBackupFileName(from, to, institution);
-            serverFilename = fileService.store(zipBuilder.convertToMultipartFile(
-                    zipBuilder.buildZipAndGetResource().getContentAsByteArray(), serverFilename),
-                serverFilename.split("\\.")[0]);
+
+            serverFilename = fileService.store(
+                zipBuilder.buildZipAndGetResource(),
+                serverFilename.split("\\.")[0],
+                serverFilename
+            );
 
             var newBackupFile = new DocumentFileBackup();
             newBackupFile.setInstitution(institution);
             newBackupFile.setBackupFileName(serverFilename);
             documentFileBackupRepository.save(newBackupFile);
-        } catch (IOException e) {
+        } catch (Exception e) {
+            log.error("Failed to generate THESIS backup file. Reason: {}", e.getMessage());
             throw new StorageException("Failed to generate backup file.");
         } finally {
             if (Objects.nonNull(zipBuilder)) {

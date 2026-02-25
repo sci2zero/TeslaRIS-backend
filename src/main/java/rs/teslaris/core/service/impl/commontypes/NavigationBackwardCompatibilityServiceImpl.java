@@ -7,13 +7,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.GeneticMaterial;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
+import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
@@ -48,10 +50,23 @@ public class NavigationBackwardCompatibilityServiceImpl implements
     @Nullable
     public Pair<String, Integer> readResourceByOldId(Integer oldId, String source,
                                                      String language) {
-        var documentOpt = documentRepository.findDocumentByOldIdsContains(oldId);
-        if (documentOpt.isPresent()) {
-            var documentId = documentOpt.get();
-            var document = documentRepository.findById(documentId).get();
+        var documentIdOpt = documentRepository.findDocumentByOldIdsContains(oldId);
+        if (documentIdOpt.isPresent()) {
+            var documentId = documentIdOpt.get();
+            var documentOpt = documentRepository.findById(documentId);
+
+            if (documentOpt.isEmpty()) {
+                // Should not happen anymore but leave it JIC
+                documentIdOpt = documentRepository.findDocumentByMergedIdsContains(documentId);
+                if (documentIdOpt.isEmpty()) {
+                    return new Pair<>("DELETED", documentId);
+                }
+
+                documentOpt = documentRepository.findById(documentId);
+            }
+
+            var document = documentOpt.get();
+
             switch (document) {
                 case JournalPublication ignored -> {
                     log.info("NAVIGATION SUCCESS - JOURNAL_PUBLICATION {} from {} in LANGUAGE {}",
@@ -94,13 +109,30 @@ public class NavigationBackwardCompatibilityServiceImpl implements
                         document.getId(), source, language);
                     return new Pair<>("DATASET", document.getId());
                 }
-                case Software ignored -> {
-                    log.info("NAVIGATION SUCCESS - SOFTWARE {} from {} in LANGUAGE {}",
+                case IntangibleProduct ignored -> {
+                    log.info("NAVIGATION SUCCESS - INTANGIBLE_PRODUCT {} from {} in LANGUAGE {}",
                         document.getId(), source, language);
-                    return new Pair<>("SOFTWARE", document.getId());
+                    return new Pair<>("INTANGIBLE_PRODUCT", document.getId());
+                }
+                case MaterialProduct ignored -> {
+                    log.info("NAVIGATION SUCCESS - MATERIAL_PRODUCT {} from {} in LANGUAGE {}",
+                        document.getId(), source, language);
+                    return new Pair<>("MATERIAL_PRODUCT", document.getId());
+                }
+                case GeneticMaterial ignored -> {
+                    log.info("NAVIGATION SUCCESS - GENETIC_MATERIAL {} from {} in LANGUAGE {}",
+                        document.getId(), source, language);
+                    return new Pair<>("GENETIC_MATERIAL", document.getId());
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + document);
             }
+        }
+
+        if (documentRepository.countDocumentsByOldIdsContains(oldId) > 0) {
+            log.info(
+                "NAVIGATION FAILED - DOCUMENT with legacy ID {} from {} in LANGUAGE {} is deleted",
+                oldId, source, language);
+            return new Pair<>("DELETED", oldId);
         }
 
         var journalOpt = journalRepository.findByOldIdsContains(oldId);

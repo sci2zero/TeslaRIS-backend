@@ -21,7 +21,9 @@
     "analyzer": {
       "serbian": {
         "type": "custom",
-        "char_filter": ["serbian_char_filter"],
+        "char_filter": [
+          "serbian_char_filter"
+        ],
         "tokenizer": "standard",
         "filter": [
           "lowercase",
@@ -33,7 +35,9 @@
       },
       "serbian_simple": {
         "type": "custom",
-        "char_filter": ["serbian_char_filter"],
+        "char_filter": [
+          "serbian_char_filter"
+        ],
         "tokenizer": "standard",
         "filter": [
           "lowercase",
@@ -59,7 +63,9 @@
     "normalizer": {
       "serbian_normalizer": {
         "type": "custom",
-        "char_filter": ["serbian_char_filter"],
+        "char_filter": [
+          "serbian_char_filter"
+        ],
         "filter": [
           "lowercase",
           "serbian_cyrillic_to_latinic",
@@ -76,7 +82,10 @@
       },
       "doi_normalizer": {
         "type": "custom",
-        "filter": ["lowercase", "trim"]
+        "filter": [
+          "lowercase",
+          "trim"
+        ]
       }
     }
   }

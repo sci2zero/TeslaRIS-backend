@@ -30,6 +30,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.ApiKeyService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.util.configuration.BrandingInformationUtil;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.InvalidApiKeyException;
 
@@ -102,6 +103,10 @@ public class ApiKeyServiceImpl extends JPAServiceImpl<ApiKey> implements ApiKeyS
                 locale);
         var body = getMessage("apikey.email.body",
             new Object[] {savedApiKey.getUsageType().name(), keyValue}, locale);
+
+        body =
+            emailUtil.constructBodyWithSignature(body,
+                BrandingInformationUtil.getSystemName(locale), locale);
 
         emailUtil.sendSimpleEmail(savedApiKey.getClientEmail(), subject, body);
     }

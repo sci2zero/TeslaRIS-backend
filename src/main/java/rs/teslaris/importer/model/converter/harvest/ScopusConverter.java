@@ -1,6 +1,8 @@
 package rs.teslaris.importer.model.converter.harvest;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
@@ -260,5 +262,102 @@ public class ScopusConverter {
 
             document.setEvent(conference);
         }
+    }
+
+    public static ScopusImportUtility.Entry convertToEntry(
+        ScopusImportUtility.AbstractDataResponse abstractResponse) {
+        if (Objects.isNull(abstractResponse) ||
+            Objects.isNull(abstractResponse.abstractRetrievalResponse())) {
+            return null;
+        }
+
+        var response = abstractResponse.abstractRetrievalResponse();
+        var coreData = response.coreData();
+        var authors = Objects.nonNull(response.authors()) ? response.authors().authors() : null;
+        var affiliations = response.affiliations();
+
+        var entryAuthors = new ArrayList<ScopusImportUtility.Author>();
+        if (Objects.nonNull(authors)) {
+            for (var author : authors) {
+                entryAuthors.add(convertAuthor(author));
+            }
+        }
+
+        var entryAffiliations = new ArrayList<ScopusImportUtility.Affiliation>();
+        if (Objects.nonNull(affiliations)) {
+            for (var affil : affiliations) {
+                entryAffiliations.add(convertAffiliation(affil));
+            }
+        }
+
+        return new ScopusImportUtility.Entry(
+            Objects.nonNull(coreData) && coreData.fa(),
+            Objects.nonNull(coreData) ? coreData.links() : new ArrayList<>(),
+            Objects.nonNull(coreData) ? coreData.url() : null,
+            Objects.nonNull(coreData) ? coreData.identifier() : null,
+            Objects.nonNull(coreData) ? coreData.eid() : null,
+            Objects.nonNull(coreData) ? coreData.title() : null,
+            null, // dc:creator - not directly available in AbstractRetrievalResponse
+            Objects.nonNull(coreData) ? coreData.publicationName() : null,
+            Objects.nonNull(coreData) ? coreData.issn() : null,
+            Objects.nonNull(coreData) ? coreData.eIssn() : null,
+            Objects.nonNull(coreData) ? coreData.isbn() : new ArrayList<>(),
+            Objects.nonNull(coreData) ? coreData.pageRange() : null,
+            Objects.nonNull(coreData) ? coreData.coverDate() : null,
+            Objects.nonNull(coreData) ? coreData.coverDisplayDate() : null,
+            Objects.nonNull(coreData) ? coreData.doi() : null,
+            Objects.nonNull(coreData) ? coreData.description() : null,
+            null, // citedby-count - not in AbstractRetrievalResponse
+            entryAffiliations,
+            Objects.nonNull(coreData) ? coreData.aggregationType() : null,
+            Objects.nonNull(coreData) ? coreData.subtype() : null,
+            Objects.nonNull(coreData) ? coreData.subtypeDescription() : null,
+            null,
+            entryAuthors,
+            null, // authkeywords - not in AbstractRetrievalResponse
+            null, // source-id - not in AbstractRetrievalResponse
+            null, // fund-acr - not in AbstractRetrievalResponse
+            null, // fund-no - not in AbstractRetrievalResponse
+            null, // fund-sponsor - not in AbstractRetrievalResponse
+            null, // openaccess - not in AbstractRetrievalResponse
+            false // openaccessFlag - not in AbstractRetrievalResponse
+        );
+    }
+
+    private static ScopusImportUtility.Author convertAuthor(
+        ScopusImportUtility.FullAuthor fullAuthor) {
+        List<ScopusImportUtility.AffiliationId> afidList = new ArrayList<>();
+        if (Objects.nonNull(fullAuthor.afid())) {
+            for (var affilId : fullAuthor.afid()) {
+                afidList.add(new ScopusImportUtility.AffiliationId(
+                    true,
+                    affilId.id()
+                ));
+            }
+        }
+
+        return new ScopusImportUtility.Author(
+            fullAuthor.fa(),
+            fullAuthor.seq(),
+            fullAuthor.authorUrl(),
+            fullAuthor.authId(),
+            fullAuthor.authName(),
+            fullAuthor.surname(),
+            fullAuthor.givenName(),
+            fullAuthor.initials(),
+            afidList
+        );
+    }
+
+    private static ScopusImportUtility.Affiliation convertAffiliation(
+        ScopusImportUtility.FullAffiliation fullAffiliation) {
+        return new ScopusImportUtility.Affiliation(
+            true,
+            fullAffiliation.affiliationUrl(),
+            fullAffiliation.afid(),
+            fullAffiliation.affilName(),
+            fullAffiliation.affiliationCity(),
+            fullAffiliation.affiliationCountry()
+        );
     }
 }

@@ -1,0 +1,138 @@
+databaseChangeLog:
+- changeSet:
+    id: 1769162900516-10
+    author: milospopovic (generated)
+    changes:
+      - renameTable:
+          oldTableName: software
+          newTableName: intangible_products
+- changeSet:
+    id: add-type-to-intangible
+    author: milospopovic
+    changes:
+      - addColumn:
+          tableName: intangible_products
+          columns:
+            - column:
+                name: type
+                type: SMALLINT
+                defaultValueNumeric: 0
+                constraints:
+                  nullable: false
+- changeSet:
+    id: drop-type-default
+    author: milospopovic
+    changes:
+      - dropDefaultValue:
+          tableName: intangible_products
+          columnName: type
+- changeSet:
+    id: 1769162900516-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: intangible_products_product_users_pkey
+            name: intangible_product_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: intangible_products_product_users_pkey
+            name: product_users_id
+            type: INTEGER
+        tableName: intangible_products_product_users
+- changeSet:
+    id: 1769162900516-3
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: product_users_id
+        constraintName: intangible_products_product_users_product_users_id_key
+        tableName: intangible_products_product_users
+- changeSet:
+    id: 1769162900516-4
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: intangible_products_research_areas_pkey
+            name: intangible_product_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: intangible_products_research_areas_pkey
+            name: research_areas_id
+            type: INTEGER
+        tableName: intangible_products_research_areas
+- changeSet:
+    id: 1769162900516-5
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: intangible_product_id
+        baseTableName: intangible_products_product_users
+        constraintName: fk27th72hl5803krtkph8re3tfk
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: intangible_products
+        validate: true
+- changeSet:
+    id: 1769162900516-6
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: product_users_id
+        baseTableName: intangible_products_product_users
+        constraintName: fk29mvn6il8ckdw7nyh7gnf1rka
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1769162900516-7
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: research_areas_id
+        baseTableName: intangible_products_research_areas
+        constraintName: fk9gspq9dbrpo92kghk0fb6ig0a
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: research_area
+        validate: true
+- changeSet:
+    id: 1769162900516-8
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: intangible_product_id
+        baseTableName: intangible_products_research_areas
+        constraintName: fkbgve6iwil1yy4m6erdrxbki2w
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: intangible_products
+        validate: true

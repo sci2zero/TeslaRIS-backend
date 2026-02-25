@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.dto.document.Importable;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
@@ -51,12 +52,11 @@ public class CommonLoadController {
     public void markRecordAsLoaded(
         @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
         @RequestParam(required = false) Integer oldDocumentId,
-        @RequestParam(required = false) Boolean deleteOldDocument,
         @RequestParam(required = false) Integer newDocumentId,
         @RequestHeader("Authorization") String bearerToken) {
         loader.markRecordAsLoaded(tokenUtil.extractUserIdFromToken(bearerToken),
             getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId), oldDocumentId,
-            deleteOldDocument, newDocumentId);
+            newDocumentId);
     }
 
     @GetMapping("/load-wizard/count-remaining")
@@ -193,6 +193,12 @@ public class CommonLoadController {
         @PathVariable Integer oldDocumentId) {
         loader.prepareOldDocumentForOverwriting(tokenUtil.extractUserIdFromToken(bearerToken),
             getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId), oldDocumentId);
+    }
+
+    @GetMapping("/enrichment-metadata/{documentId}")
+    @PreAuthorize("hasAuthority('PERFORM_IMPORT_AND_LOADING')")
+    public Importable readEnrichmentMetadata(@PathVariable Integer documentId) {
+        return loader.readEnrichmentMetadata(documentId);
     }
 
     @Nullable

@@ -35,4 +35,6 @@ public interface MonographPublicationService {
                                    DocumentPublicationIndex index);
 
     void indexMonographPublication(MonographPublication monographPublication);
+
+    MonographPublicationDTO readMonographPublicationByOldId(Integer oldId);
 }

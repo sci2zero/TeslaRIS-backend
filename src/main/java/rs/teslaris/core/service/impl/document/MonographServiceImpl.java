@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.MonographDateChanged;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -47,6 +48,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConf
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.MonographReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
@@ -129,6 +131,18 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     @Transactional
     public Monograph findMonographById(Integer monographId) {
         return monographJPAService.findOne(monographId);
+    }
+
+    @Override
+    @Transactional
+    public MonographDTO readMonographByOldId(Integer oldId) {
+        var monograph = monographRepository.findMonographByOldIdsContains(oldId);
+        if (monograph.isEmpty() || (!SessionUtil.isUserLoggedIn() &&
+            !monograph.get().getApproveStatus().equals(ApproveStatus.APPROVED))) {
+            throw new NotFoundException("Document with given id does not exist.");
+        }
+
+        return MonographConverter.toDTO(monograph.get());
     }
 
     @Override
@@ -232,9 +246,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         if (updatePublicationDates) {
             monographPublicationRepository.setDateToAggregatedPublications(
                 monographToUpdate.getId(), monographToUpdate.getDocumentDate());
+
+            var year = StringUtil.parseYear(monographToUpdate.getDocumentDate());
             indexBulkUpdateService.setYearForAggregatedRecord("monograph_id",
-                monographToUpdate.getId(),
-                StringUtil.parseYear(monographToUpdate.getDocumentDate()));
+                monographToUpdate.getId(), year);
+
+            applicationEventPublisher.publishEvent(new MonographDateChanged(monographId, year));
         }
 
         sendNotifications(monographToUpdate);
@@ -275,22 +292,13 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     public void reindexMonographs() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Monograph> chunk =
-                monographJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((monograph) -> indexMonograph(monograph, new DocumentPublicationIndex()));
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            monographJPAService::findAll,
+            monograph ->
+                indexMonograph(monograph, new DocumentPublicationIndex())
+        );
     }
 
     private void setMonographRelatedFields(Monograph monograph,

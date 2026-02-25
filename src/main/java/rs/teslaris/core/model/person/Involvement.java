@@ -73,6 +73,7 @@ public class Involvement extends BaseEntity {
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

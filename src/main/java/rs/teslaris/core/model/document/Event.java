@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
@@ -26,6 +27,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 @Getter
 @Setter
 @Entity
+@DynamicUpdate
 @Table(name = "events")
 @SQLRestriction("deleted=false")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)

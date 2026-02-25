@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
@@ -20,7 +21,6 @@ import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
-import rs.teslaris.core.dto.document.SoftwareDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
@@ -30,6 +30,7 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.Monograph;
@@ -38,7 +39,6 @@ import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.ResourceType;
-import rs.teslaris.core.model.document.Software;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
 
@@ -245,8 +245,8 @@ public class FairSignpostingL1Utility {
         switch (dto) {
             case JournalPublicationResponseDTO ignored -> headers.add(HttpHeaders.LINK,
                 "<https://schema.org/ScholarlyArticle> ; rel=\"type\"");
-            case SoftwareDTO ignored -> headers.add(HttpHeaders.LINK,
-                "<https://schema.org/SoftwareApplication> ; rel=\"type\"");
+            case IntangibleProductDTO ignored -> headers.add(HttpHeaders.LINK,
+                "<https://schema.org/Product> ; rel=\"type\"");
             case DatasetDTO ignored ->
                 headers.add(HttpHeaders.LINK, "<https://schema.org/Dataset> ; rel=\"type\"");
             case PatentDTO ignored ->
@@ -269,7 +269,7 @@ public class FairSignpostingL1Utility {
     private static String deduceDocumentType(Document document) {
         return switch (document) {
             case JournalPublication ignored -> "journal-publication";
-            case Software ignored -> "software";
+            case IntangibleProduct ignored -> "product";
             case Dataset ignored -> "dataset";
             case Patent ignored -> "patent";
             case Proceedings ignored -> "proceedings";

@@ -45,4 +45,8 @@ public interface MonographRepository extends JpaRepository<Monograph, Integer> {
         "m.eISBN = :eISBN OR " +
         "m.eISBN = :printISBN")
     List<Monograph> findByISBN(String eISBN, String printISBN);
+
+    @Query(value = "SELECT *, 0 AS clazz_ FROM monographs WHERE " +
+        "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
+    Optional<Monograph> findMonographByOldIdsContains(Integer oldId);
 }

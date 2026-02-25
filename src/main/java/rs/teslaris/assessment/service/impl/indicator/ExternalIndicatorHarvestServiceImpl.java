@@ -127,7 +127,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Override
-    @Async
+    @Async("taskExecutor")
     public void performIndicatorHavestForSinglePerson(Integer personId) {
         var person = personService.findOne(personId);
         var harvestContext = preparePersonIndicatorHarvestContext();
@@ -136,7 +136,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Override
-    @Async
+    @Async("taskExecutor")
     public void performIndicatorDeductionForSingleInstitution(Integer organisationUnitId) {
         organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
             organisationUnitId).ifPresent(institution -> {
@@ -154,7 +154,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     }
 
     @Override
-    @Async
+    @Async("taskExecutor")
     public void harvestAllManually() {
         performIndicatorHarvest();
     }
@@ -891,7 +891,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         });
     }
 
-    @Async
+    @Async("taskExecutor")
     @EventListener
     protected void handleManualIndicatorHarvest(HarvestExternalIndicatorsEvent ignored) {
         performIndicatorHarvest();

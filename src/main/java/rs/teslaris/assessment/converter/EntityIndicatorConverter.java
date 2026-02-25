@@ -24,6 +24,7 @@ public class EntityIndicatorConverter {
             entityIndicator.getNumericValue(), entityIndicator.getBooleanValue(),
             entityIndicator.getTextualValue(), entityIndicator.getFromDate(),
             entityIndicator.getToDate(), IndicatorConverter.toDTO(entityIndicator.getIndicator()),
-            entityIndicator.getSource(), entityIndicator.getCategoryIdentifier());
+            entityIndicator.getSource(), entityIndicator.getCategoryIdentifier(),
+            entityIndicator.getEdition());
     }
 }

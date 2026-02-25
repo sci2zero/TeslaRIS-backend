@@ -45,6 +45,9 @@ public class UserAccountIndex {
     @Field(type = FieldType.Keyword, name = "org_unit_name_sortable_other")
     private String organisationUnitNameSortableOther;
 
+    @Field(type = FieldType.Integer, store = true, name = "organisation_unit_id")
+    private Integer organisationUnitId;
+
     @Field(type = FieldType.Keyword, store = true, name = "user_role")
     private String userRole;
 

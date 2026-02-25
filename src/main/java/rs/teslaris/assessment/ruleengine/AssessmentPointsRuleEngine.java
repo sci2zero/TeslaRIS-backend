@@ -1,10 +1,11 @@
 package rs.teslaris.assessment.ruleengine;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import lombok.Setter;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.util.functional.Triple;
@@ -13,6 +14,8 @@ public class AssessmentPointsRuleEngine {
 
     private final Map<String, Triple<Set<Integer>, List<String>, String>>
         areaCodeToAllowedAssessmentsMapping = new HashMap<>();
+    @Setter
+    private String publicationType;
 
 
     public AssessmentPointsRuleEngine(ResearchAreaRepository researchAreaRepository) {
@@ -27,14 +30,17 @@ public class AssessmentPointsRuleEngine {
     }
 
     public double serbianPointsRulebook2025(String researchArea,
-                                            HashSet<Integer> researchSubAreaIds,
+                                            Set<Integer> researchSubAreaIds,
                                             String classificationCode) {
-        if (areaCodeToAllowedAssessmentsMapping.containsKey(researchArea) &&
-            areaCodeToAllowedAssessmentsMapping.get(researchArea).a.containsAll(
-                researchSubAreaIds)) {
-            if (!areaCodeToAllowedAssessmentsMapping.get(researchArea).b.contains(
-                classificationCode)) {
-                classificationCode = areaCodeToAllowedAssessmentsMapping.get(researchArea).c;
+        if (Objects.nonNull(publicationType) &&
+            List.of("SCIENTIFIC_CRITIC", "POLEMICS", "COMMENT").contains(publicationType)) {
+            if (areaCodeToAllowedAssessmentsMapping.containsKey(researchArea) &&
+                areaCodeToAllowedAssessmentsMapping.get(researchArea).a.containsAll(
+                    researchSubAreaIds) && !researchSubAreaIds.isEmpty()) {
+                if (!areaCodeToAllowedAssessmentsMapping.get(researchArea).b.contains(
+                    classificationCode)) {
+                    classificationCode = areaCodeToAllowedAssessmentsMapping.get(researchArea).c;
+                }
             }
         }
 
@@ -219,7 +225,7 @@ public class AssessmentPointsRuleEngine {
             case "M70":
                 return 6;
 
-            // SOFTWARE, DATASET
+            // PRODUCT, GENETIC_MATERIAL, DATASET
             case "M81":
                 return 12;
             case "M82":
