@@ -17,32 +17,32 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.document.Document;
+import rs.teslaris.core.model.document.Event;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "project_documents")
+@Table(name = "project_events")
 @SQLRestriction("deleted=false")
-public class ProjectDocument extends BaseEntity {
+public class ProjectEvent extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id", nullable = false)
-    private Document document;
+    @JoinColumn(name = "event_id", nullable = false)
+    private Event event;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "funding_id", nullable = false)
+    @JoinColumn(name = "funding_id")
     private Funding funding;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> textualDescription = new HashSet<>();
 
-    @Column(name = "relation_type", nullable = false)
-    private ProjectDocumentType relationType;
+    @Column(name = "relation_type")
+    private ProjectEventType relationType;
 }

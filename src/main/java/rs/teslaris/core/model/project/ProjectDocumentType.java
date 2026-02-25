@@ -4,4 +4,5 @@ public enum ProjectDocumentType {
     REPORT,
     RESULT,
     USED,
+    INTERNAL
 }

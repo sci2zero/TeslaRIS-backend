@@ -92,6 +92,7 @@ import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.model.person.Sex;
+import rs.teslaris.core.model.project.Currency;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.PasswordResetToken;
 import rs.teslaris.core.model.user.User;
@@ -116,6 +117,7 @@ import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
+import rs.teslaris.core.repository.project.CurrencyRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.thesislibrary.model.PageContentType;
@@ -201,6 +203,8 @@ public class TestingDataInitializer {
     private final PrizeAssessmentClassificationRepository prizeAssessmentClassificationRepository;
 
     private final ExhibitionRepository exhibitionRepository;
+
+    private final CurrencyRepository currencyRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1195,5 +1199,23 @@ public class TestingDataInitializer {
         exhibition2.setDateTo(LocalDate.of(2024, 11, 17));
         exhibition2.setSerialEvent(false);
         exhibitionRepository.save(exhibition2);
+
+        var currencyEuro = new Currency();
+        currencyEuro.setName(Set.of(new MultiLingualContent(englishTag, "Euro", 1)));
+        currencyEuro.setCode("EUR");
+        currencyEuro.setSymbol("€");
+
+        var currencyDollar = new Currency();
+        currencyDollar.setName(Set.of(new MultiLingualContent(englishTag, "Dollar", 1)));
+        currencyDollar.setCode("USD");
+        currencyDollar.setSymbol("$");
+
+        var currencySerbianDinar = new Currency();
+        currencySerbianDinar.setName(
+            Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
+        currencySerbianDinar.setCode("RSD");
+        currencySerbianDinar.setSymbol("RSD");
+
+        currencyRepository.saveAll(List.of(currencyEuro, currencyDollar, currencySerbianDinar));
     }
 }

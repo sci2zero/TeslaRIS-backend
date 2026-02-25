@@ -2,8 +2,10 @@ package rs.teslaris.core.model.project;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
@@ -13,12 +15,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 
 @Getter
 @Setter
@@ -29,6 +33,15 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 @Table(name = "projects")
 @SQLRestriction("deleted=false")
 public class Project extends BaseEntity {
+
+    @Column(name = "internal_identifier")
+    private String internalIdentifier;
+
+    @Column(name = "doi")
+    private String doi;
+
+    @Column(name = "raid")
+    private String raid;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
@@ -42,29 +55,57 @@ public class Project extends BaseEntity {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> keywords = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<ResearchArea> researchAreas = new HashSet<>();
+
+    @Column(name = "admin_note")
+    private String adminNote;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
 
+    @OneToMany(fetch = FetchType.LAZY)
+    private Set<ProjectsRelation> relatedProjects = new HashSet<>();
+
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Set<PersonProjectContribution> contributions = new HashSet<>();
+    @BatchSize(size = 50)
+    private Set<OrganisationUnitProjectContribution> consortium = new HashSet<>();
+
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @BatchSize(size = 50)
+    private Set<PersonProjectContribution> team = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<ProjectDocument> documents = new HashSet<>();
 
-    @Column(name = "date_from", nullable = false)
-    private LocalDate dateFrom;
+    @OneToMany(fetch = FetchType.LAZY)
+    private Set<ProjectEvent> events = new HashSet<>();
 
-    @Column(name = "date_to", nullable = false)
-    private LocalDate dateTo;
+    @Column(name = "project_started")
+    private LocalDate projectStarted;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb", name = "project_statuses")
-    private Set<ProjectStatus> statuses = new HashSet<>();
+    @Column(name = "project_completed")
+    private LocalDate projectCompleted;
 
-    @Column(name = "type", nullable = false)
-    private ProjectType type;
+    @Column(name = "status", nullable = false)
+    private ProjectStatus projectStatus;
+
+    @Column(name = "collaboration_type", nullable = false)
+    private ProjectCollaborationType type;
+
+    @Column(name = "research_type", nullable = false)
+    private ProjectResearchType projectResearchType;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<Funding> fundings = new HashSet<>();
+    private Set<Funding> funding = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY)
+    private Set<FundingProposal> proposals;
+
+    @Column(name = "not_funded")
+    private Boolean notFunded;
+
+    @Embedded
+    private MonetaryAmount costs;
 }

@@ -2,5 +2,9 @@ package rs.teslaris.core.model.project;
 
 public enum ProjectContributionType {
     PRINCIPLE_INVESTIGATOR,
-    PARTICIPATION,
+    COPRINCIPLE_INVESTIGATOR,
+    TEAM_MEMBER,
+    CONTACT,
+    INKIND_CONTRIBUTOR,
+    CONTRACTOR
 }
