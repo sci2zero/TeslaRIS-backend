@@ -755,15 +755,17 @@ package project {
   class Project {
     String internal_identifier
     String doi
+    String RAID
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    Set<MultiLingualContent> adminNote
+    String adminNote
     Set<String> uris
     Set<ProjectsRelation> relatedProjects
-    Set<AgentProjectContribution> contributions
+    Set<OrganisationUnitProjectContribution> consortium
+    Set<PersonProjectContribution> team
     Set<ProjectDocument> documents
     Set<ProjectEvent> events
     LocalDate projectStarted
@@ -796,14 +798,11 @@ package project {
     OTHER
   }
   
-    class AgentProjectContribution {
-      Set<AgentProjectContribution> subcontributors
+    class OrganisationUnitProjectContribution {
+      OrganisationUnitProjectContributionType contributionType
       LocalDate dateFrom
       LocalDate dateTo
-      Set<Funding> funding
-    }
-  
-    class OrganisationUnitContribution {
+      Set<Funding> funding ' might be funding allocated only to this institution
       OrganisationUnit organisationUnit
       Set<MultiLingualContent> displayOrganizationUnit
       Set<MultiLingualContent> contributionDescription
@@ -811,10 +810,6 @@ package project {
       Integer orderNumber
       ApproveStatus approveStatus
       ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
-    }
-  
-    class OrganisationUnitProjectContribution extends OrganisationUnitContribution, AgentProjectContribution {
-      OrganisationUnitProjectContributionType contributionType
     }
   
     enum OrganisationUnitProjectContributionType {
@@ -826,10 +821,13 @@ package project {
       BENEFICIARY
     }
   
-    class PersonProjectContribution extends PersonContribution, AgentProjectContribution {
+    class PersonProjectContribution extends PersonContribution {
       PersonProjectContributionType contributionType
       PersonProjectInvestigationRole investigationRole
       Set<MultiLingualContent> otherRoleDescription
+      LocalDate dateFrom
+      LocalDate dateTo
+      Set<Funding> funding ' might be funding allocated only to this person
     }
   
     enum PersonProjectContributionType {
@@ -869,7 +867,6 @@ package project {
   
     enum ProjectsRelationType {
       PART_OF
-      RESULT_OF
       PREDECESSOR
     }
   
@@ -925,6 +922,7 @@ package project {
       Set<DocumentFile> documents ' proposal, review result, supplement
       Project project
       FundingCall fundingCall
+      MonetaryAmount requestedBudget
       Set<MultiLingualContent> description
       Set<MultiLingualContent> responseSummary
       LocalDate submissionDate
@@ -981,11 +979,9 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    Set<MultiLingualContent> adminNote
+    String adminNote
     FundingProgram fundingProgram
-    Set<MultiLingualContent> displayFundingProgram
     OrganisationUnit funder
-    Set<MultiLingualContent> displayFunder
     Set<FundingType> types
     MonetaryAmount total
     LocalDate callOpens
@@ -1009,9 +1005,8 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    Set<MultiLingualContent> adminNote
-    Set<OrganisationUnit> funders
-    Set<MultiLingualContent> displayFunders
+    String adminNote
+    OrganisationUnit funder
     Set<FundingType> types
     MonetaryAmount total
     LocalDate programOpens
