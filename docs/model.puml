@@ -462,7 +462,6 @@ package document {
       -Set<DocumentFile> proof
       -Set<MultiLingualContent> keywords
       -ApproveStatus approveStatus
-      -Set<Acknowledgement> acknowledgement
       -String doi
       -String scopusId
       -String openAlexId
@@ -472,14 +471,6 @@ package document {
       -Set<String> internalIdentifiers
     }
   !endsub
-  
-  class Acknowledgement {
-    Set<MultiLingualContent> textualValue
-    Project project
-    Funding funding
-  }
-  
-  Document "1..1" --> "0..*" Acknowledgement : acknowledgement
 
   class ProceedingsPublication extends Document {
     -ProceedingsPublicationType proceedingsPublicationType
@@ -762,7 +753,8 @@ package document {
 package project {
 
   class Project {
-    String identifier
+    String internal_identifier
+    String doi
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     Set<MultiLingualContent> nameAbbreviation
@@ -770,9 +762,10 @@ package project {
     Set<ResearchArea> researchAreas
     Set<MultiLingualContent> adminNote
     Set<String> uris
-    Project superProject
+    Set<ProjectsRelation> relatedProjects
     Set<AgentProjectContribution> contributions
     Set<ProjectDocument> documents
+    Set<ProjectEvent> events
     LocalDate projectStarted
     LocalDate projectCompleted
     ProjectStatus status 
@@ -802,22 +795,116 @@ package project {
     INFRASTRUCTURE
     OTHER
   }
+  
+    class AgentProjectContribution {
+      Set<AgentProjectContribution> subcontributors
+      LocalDate dateFrom
+      LocalDate dateTo
+      Set<Funding> funding
+    }
+  
+    class OrganisationUnitContribution {
+      OrganisationUnit organisationUnit
+      Set<MultiLingualContent> displayOrganizationUnit
+      Set<MultiLingualContent> contributionDescription
+      Set<MultilingualContent> contactPoint
+      Integer orderNumber
+      ApproveStatus approveStatus
+      ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
+    }
+  
+    class OrganisationUnitProjectContribution extends OrganisationUnitContribution, AgentProjectContribution {
+      OrganisationUnitProjectContributionType contributionType
+    }
+  
+    enum OrganisationUnitProjectContributionType {
+      COORDINATOR
+      PARTNER
+      CONSORTIUM_MEMBER
+      INKIND_CONTRIBUTOR
+      CONTRACTOR
+      BENEFICIARY
+    }
+  
+    class PersonProjectContribution extends PersonContribution, AgentProjectContribution {
+      PersonProjectContributionType contributionType
+      PersonProjectInvestigationRole investigationRole
+      Set<MultiLingualContent> otherRoleDescription
+    }
+  
+    enum PersonProjectContributionType {
+      PRINCIPLE_INVESTIGATOR
+      COPRINCIPLE_INVESTIGATOR
+      TEAM_MEMBER
+      CONTACT
+      INKIND_CONTRIBUTOR
+      CONTRACTOR
+    }
+    
+    enum PersonProjectInvestigationRole {
+        RESEARCHER
+        PHD_STUDENT_FELLOW
+        TECHNICAL_DEVELOPMENT
+        MASTER_STUDENT_FELLOW
+        SUPERVISOR
+        POSTDOC
+        POSTDOC_FELLOW
+        RESEARCH_FELLOW
+        INTEGRATION_INTO_RESEARCH_GRANT_FELLOW
+        SCIENTIFIC_INITIATION_FELLOW
+        RESEARCH_TECHNICIAN_FELLOW
+        INVITED_SCIENTIST_FELLOW
+        SCIENCE_AND_TECHNOLOGY_MANAGEMENT_FELLOW
+        OTHER
+    }
+  
+    ProjectsRelation "*" --> "1" Project : source
+    ProjectsRelation "*" --> "1" Project : target
+  
+    class ProjectsRelation {
+      ProjectsRelationType relationType
+      LocalDate dateFrom
+      LocalDate dateTo
+    }
+  
+    enum ProjectsRelationType {
+      PART_OF
+      RESULT_OF
+      PREDECESSOR
+    }
+  
+    class ProjectDocument {
+      Project project
+      Document document
+      Funding funding
+      Set<MultiLingualContent> textualDescription
+      ProjectDocumentType relationType
+    }
+  
+    enum ProjectDocumentType {
+      REPORT
+      RESULT
+      USED
+      INTERNAL
+    }
+    
+    class ProjectEvent {
+      Project project
+      Event event
+      Funding funding
+      Set<MultiLingualContent> textualDescription
+      ProjectEventType relationType
+    }
+    
+    enum ProjectEventType {
+      MEETING
+      PROJECT_RESULTS_PRESENTED_AT
+      PUBLIC_EVENT_ORGANIZED_BY_PROJECT
+    }
+    
+  Project "1..1" --> "0..*" ProjectDocument : projectDocuments
+  Project "1..1" --> "0..*" ProjectEvent : projectEvent
 
-  class FundingProposal {
-    Set<DocumentFile> documents ' proposal, review result, supplement
-    Project project
-    FundingCall fundingCall
-    Set<MultiLingualContent> description
-    Set<MultiLingualContent> responseSummary
-    LocalDate submissionDate
-    LocalDate reviewStartDate
-    LocalDate reviewEndDate
-    LocalDate decisionDate
-    LocalDate revisedProposalOrNextRoundDeadlineDate
-    ProjectProposalResult result
-    FundingProposal revisedProposalOrNextRound
-    Funding funding ' in the case it is awarded for funding - ProjectProposalResult
-  }
   
   class ProjectStatus {
     SUBMITTED
@@ -833,6 +920,22 @@ package project {
       CHANGES_REQUESTED
       ACCEPTED_FOR_NEXT_ROUND
   }
+  
+  class FundingProposal {
+      Set<DocumentFile> documents ' proposal, review result, supplement
+      Project project
+      FundingCall fundingCall
+      Set<MultiLingualContent> description
+      Set<MultiLingualContent> responseSummary
+      LocalDate submissionDate
+      LocalDate reviewStartDate
+      LocalDate reviewEndDate
+      LocalDate decisionDate
+      LocalDate revisedProposalOrNextRoundDeadlineDate
+      ProjectProposalResult result
+      FundingProposal revisedProposalOrNextRound
+      Funding funding ' in the case it is awarded for funding - ProjectProposalResult
+    }
   
   class Funding {
     String internal_identifier ' later we might add specific identifiers, meaning a couple of fields, or set of some generic structure for any identifier
@@ -866,9 +969,7 @@ package project {
   
   Project "0..1" --> "0..*" Funding : fundings
   Project "0..1" --> "0..*" FundingProposal : fundingProposals
-  
-  Project "0..*" --> "0..*" ProjectDocument : projectDocuments
-  
+    
   FundingCall "0..1" --> "0..*" Funding : fundings
   FundingProgram "0..1" --> "0..*" FundingCall : fundingCalls
   
@@ -929,94 +1030,6 @@ package project {
     Set<MultiLingualContent> name
     String symbol ' for instance - $
     String code  ' for instance USD
-  }
-
-  class AgentProjectContribution {
-    Set<AgentProjectContribution> subcontributors
-    LocalDate dateFrom
-    LocalDate dateTo
-    Set<Funding> funding
-  }
-
-  class OrganisationUnitContribution {
-    OrganisationUnit organisationUnit
-    Set<MultiLingualContent> contributionDescription
-    Set<MultilingualContent> contactPoint
-    Integer orderNumber
-    ApproveStatus approveStatus
-    ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
-  }
-
-  class OrganisationUnitProjectContribution extends OrganisationUnitContribution, AgentProjectContribution {
-    OrganisationUnitProjectContributionType contributionType
-  }
-
-  enum OrganisationUnitProjectContributionType {
-    COORDINATOR
-    PARTNER
-    CONSORTIUM_MEMBER
-    INKIND_CONTRIBUTOR
-    CONTRACTOR
-    BENEFICIARY
-  }
-
-  class PersonProjectContribution extends PersonContribution, AgentProjectContribution {
-    PersonProjectContributionType contributionType
-    PersonProjectInvestigationRole investigationRole
-    Set<MultiLingualContent> otherRoleDescription
-  }
-
-  enum PersonProjectContributionType {
-    PRINCIPLE_INVESTIGATOR
-    COPRINCIPLE_INVESTIGATOR
-    TEAM_MEMBER
-    CONTACT
-    INKIND_CONTRIBUTOR
-    CONTRACTOR
-  }
-  
-  enum PersonProjectInvestigationRole {
-      RESEARCHER
-      PHD_STUDENT_FELLOW
-      TECHNICAL_DEVELOPMENT
-      MASTER_STUDENT_FELLOW
-      SUPERVISOR
-      POSTDOC
-      POSTDOC_FELLOW
-      RESEARCH_FELLOW
-      INTEGRATION_INTO_RESEARCH_GRANT_FELLOW
-      SCIENTIFIC_INITIATION_FELLOW
-      RESEARCH_TECHNICIAN_FELLOW
-      INVITED_SCIENTIST_FELLOW
-      SCIENCE_AND_TECHNOLOGY_MANAGEMENT_FELLOW
-      OTHER
-  }
-
-  ProjectsRelation "*" --> "1" Project : source
-  ProjectsRelation "*" --> "1" Project : target
-
-  class ProjectsRelation {
-    ProjectsRelationType relationType
-    LocalDate dateFrom
-    LocalDate dateTo
-  }
-
-  enum ProjectsRelationType {
-    PART_OF
-    RESULT_OF
-    PREDECESSOR
-  }
-
-  class ProjectDocument {
-    Document document
-    ProjectDocumentType relationType
-  }
-
-  enum ProjectDocumentType {
-    REPORT
-    RESULT
-    USED
-    INTERNAL
   }
 }
 package Assessment {
