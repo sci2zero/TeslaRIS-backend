@@ -747,6 +747,9 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
 
         entry.setPromotion(null);
         entry.setAllowSingleEdit(false);
+        entry.setPromotionSchoolYear(null);
+        entry.setRegistryBookNumber(null);
+        entry.setSchoolYearOrdinalNumber(null);
 
         if (promotionService.isPromotionEmpty(promotion.getId())) {
             promotion.setDeleted(true);
@@ -772,6 +775,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         if (deletePromotion) {
             promotableEntries.forEach(entry -> {
                 entry.setPromotion(null);
+                entry.setAllowSingleEdit(false);
+                entry.setPromotionSchoolYear(null);
                 entry.setRegistryBookNumber(null);
                 entry.setSchoolYearOrdinalNumber(null);
                 save(entry);
@@ -783,6 +788,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             promotableEntries.forEach(entry -> {
                 entry.setRegistryBookNumber(null);
                 entry.setSchoolYearOrdinalNumber(null);
+                entry.setPromotionSchoolYear(null);
+                entry.setAllowSingleEdit(false);
                 save(entry);
             });
 
