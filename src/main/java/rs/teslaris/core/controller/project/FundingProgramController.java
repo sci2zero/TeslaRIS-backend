@@ -51,6 +51,7 @@ public class FundingProgramController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAMS')")
     public FundingProgramDTO createFundingProgram(
         @RequestBody @Valid FundingProgramDTO fundingProgramDTO) {
         var savedFundingProgram = fundingProgramService.createFundingProgram(fundingProgramDTO);
@@ -60,6 +61,7 @@ public class FundingProgramController {
     }
 
     @PutMapping("/{fundingProgramId}")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAMS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateFundingProgram(@PathVariable Integer fundingProgramId,
                                      @RequestBody @Valid FundingProgramDTO fundingProgramDTO) {
@@ -67,13 +69,14 @@ public class FundingProgramController {
     }
 
     @DeleteMapping("/{fundingProgramId}")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAMS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFundingProgram(@PathVariable Integer fundingProgramId) {
         fundingProgramService.deleteFundingProgram(fundingProgramId);
     }
 
     @PatchMapping("/{fundingProgramId}")
-    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAM')")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAMS')")
     @Idempotent
     public DocumentFileResponseDTO addFundingProgramDocument(@PathVariable Integer fundingProgramId,
                                                              @ModelAttribute @Valid
@@ -82,7 +85,7 @@ public class FundingProgramController {
     }
 
     @PatchMapping("/update-program")
-    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAM')")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAMS')")
     @Idempotent
     public DocumentFileResponseDTO updateFundingProgramDocument(
         @ModelAttribute @Valid DocumentFileDTO documentFile) {
@@ -90,7 +93,7 @@ public class FundingProgramController {
     }
 
     @DeleteMapping("/{fundingProgramId}/{documentFileId}")
-    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAM')")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAMS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFundingProgramDocument(@PathVariable Integer fundingProgramId,
                                              @PathVariable Integer documentFileId) {
