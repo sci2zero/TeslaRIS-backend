@@ -731,7 +731,7 @@ package project {
       OrganisationUnitProjectContributionType contributionType
       LocalDate dateFrom
       LocalDate dateTo
-      Set<Funding> funding ' might be funding allocated only to this institution
+      Set<FundingPart> fundingParts ' might be funding allocated only to this institution
       OrganisationUnit organisationUnit
       Set<MultiLingualContent> displayOrganizationUnit
       Set<MultiLingualContent> contributionDescription
@@ -756,7 +756,7 @@ package project {
       Set<MultiLingualContent> otherRoleDescription
       LocalDate dateFrom
       LocalDate dateTo
-      Set<Funding> funding ' might be funding allocated only to this person
+      Set<FundingPart> fundingParts ' might be funding allocated only to this person
     }
   
     enum PersonProjectContributionType {
@@ -802,7 +802,7 @@ package project {
     class ProjectDocument {
       Project project
       Document document
-      Funding funding
+      Set<FundingPart> fundingParts
       Set<MultiLingualContent> textualDescription
       ProjectDocumentType relationType
     }
@@ -817,7 +817,7 @@ package project {
     class ProjectEvent {
       Project project
       Event event
-      Funding funding
+      Set<FundingPart> fundingParts
       Set<MultiLingualContent> textualDescription
       ProjectEventType relationType
     }
@@ -852,6 +852,8 @@ package project {
       Project project
       FundingCall fundingCall
       MonetaryAmount requestedBudget
+      MonetaryAmount selfFunding
+      MonetaryAmount otherSourceFunding
       Set<MultiLingualContent> description
       Set<MultiLingualContent> responseSummary
       LocalDate submissionDate
@@ -881,7 +883,7 @@ package project {
     Set<MultiLingualContent> displayCall
     Set<MultiLingualContent> displayProgram
     Set<MultiLingualContent> displayFunder
-    Funding superFunding
+    Set<FundingPart> fundingParts
     Set<FundingType> types
     MonetaryAmount grant
     Boolean competitive 
@@ -892,6 +894,13 @@ package project {
     LocalDate dateTo
     Boolean OAMandated
     String OAMandateUrl
+    Boolean internalInvestment
+  }
+  
+  class FundingPart{
+    Funding funding
+    Set<MultiLingualContent> description
+    MonetaryAmount costs
   }
   
   Project "0..1" --> "0..*" Funding : fundings
