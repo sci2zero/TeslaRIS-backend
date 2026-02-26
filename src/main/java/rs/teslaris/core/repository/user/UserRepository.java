@@ -14,10 +14,11 @@ import rs.teslaris.core.model.user.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
 
+    @Query("SELECT u FROM User u WHERE LOWER(u.email) = LOWER(:email)")
     Optional<User> findByEmail(String email);
 
     @Query(value =
-        "SELECT * from users u WHERE u.username = :email",
+        "SELECT * from users u WHERE LOWER(u.username) = LOWER(:email)",
         nativeQuery = true)
     Optional<User> findByEmailIncludingDeleted(String email);
 

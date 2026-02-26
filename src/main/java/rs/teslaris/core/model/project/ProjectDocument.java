@@ -36,9 +36,8 @@ public class ProjectDocument extends BaseEntity {
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "funding_id", nullable = false)
-    private Funding funding;
+    @OneToMany(mappedBy = "projectDocument", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FundingPart> fundingParts;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> textualDescription = new HashSet<>();

@@ -72,7 +72,7 @@ public class FundingProposal extends BaseEntity {
     @JoinColumn(name = "funding_proposal_id")
     private FundingProposal revisedProposalOrNextRound;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "funding_id")
-    private Funding funding; // in the case it is awarded for funding - ProjectProposalResult
+    @OneToMany(mappedBy = "fundingProposal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FundingPart> fundingParts;
+    // in the case it is awarded for funding - ProjectProposalResult
 }

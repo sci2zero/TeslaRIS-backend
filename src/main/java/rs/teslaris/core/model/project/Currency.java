@@ -29,8 +29,10 @@ public class Currency extends BaseEntity {
     private Set<MultiLingualContent> name = new HashSet<>();
 
     @Column(name = "symbol", nullable = false)
-    private String symbol;
+    private String symbol; // for instance - $
 
+    // iso-4217-currency-enum
+    // from https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
     @Column(name = "code", nullable = false)
     private String code;
 }

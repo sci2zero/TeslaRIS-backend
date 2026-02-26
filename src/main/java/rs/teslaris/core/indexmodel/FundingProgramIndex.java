@@ -2,6 +2,7 @@ package rs.teslaris.core.indexmodel;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,4 +39,13 @@ public class FundingProgramIndex {
 
     @Field(type = FieldType.Integer, name = "funder_id", store = true)
     private Integer funderId;
+
+    @Field(type = FieldType.Integer, name = "databaseId", store = true)
+    private Integer databaseId;
+
+    @Field(type = FieldType.Date, name = "program_opens")
+    private LocalDate programOpens;
+
+    @Field(type = FieldType.Date, name = "program_closes")
+    private LocalDate programCloses;
 }

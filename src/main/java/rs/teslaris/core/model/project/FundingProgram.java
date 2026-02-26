@@ -8,7 +8,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -35,10 +34,6 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @SQLRestriction("deleted=false")
 public class FundingProgram extends BaseEntity {
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "document_id")
-    private DocumentFile program;
-
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
 
@@ -56,6 +51,9 @@ public class FundingProgram extends BaseEntity {
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<DocumentFile> programDocuments = new HashSet<>();
 
     @Column(name = "admin_note")
     private String adminNote;

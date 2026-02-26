@@ -546,6 +546,7 @@ public class UserServiceTest {
         ReflectionTestUtils.setField(userService, "allowNewResearcherCreation", true);
 
         var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("test@test.com");
         registrationRequest.setPassword("Password123");
 
         when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
@@ -562,6 +563,7 @@ public class UserServiceTest {
     public void shouldThrowPasswordExceptionWhenPasswordIsWeak() {
         // given
         var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("test@test.com");
         registrationRequest.setPassword("weak_password");
 
         when(authorityRepository.findById(2)).thenReturn(Optional.empty());

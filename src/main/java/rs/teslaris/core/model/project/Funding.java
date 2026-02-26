@@ -87,9 +87,8 @@ public class Funding extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> displayFunder = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "super_funding_id")
-    private Funding superFunding;
+    @OneToMany(mappedBy = "forFunding", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FundingPart> fundingParts;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "funding_types")

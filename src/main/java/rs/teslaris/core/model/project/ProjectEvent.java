@@ -36,9 +36,8 @@ public class ProjectEvent extends BaseEntity {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "funding_id")
-    private Funding funding;
+    @OneToMany(mappedBy = "projectEvent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FundingPart> fundingParts;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> textualDescription = new HashSet<>();

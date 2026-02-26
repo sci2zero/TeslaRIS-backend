@@ -395,7 +395,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "You have to deactivate user in order to change his email.");
         }
 
-        if (userRepository.findByEmailIncludingDeleted(newEmail).isPresent()) {
+        if (userRepository.findByEmailIncludingDeleted(newEmail.trim()).isPresent()) {
             throw new UserAlreadyExistsException("userWithEmailExistsMessage");
         }
 
@@ -554,7 +554,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var language = languageTagService.findOne(preferredLanguageId);
 
         return new User(
-            email, encodedPassword, "",
+            email.toLowerCase().trim(), encodedPassword, "",
             person.getName().getFirstname(), person.getName().getLastname(), true, false,
             language, language, authority, person,
             Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
@@ -662,7 +662,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
 
         var newUser = new User(
-            email,
+            email.toLowerCase().trim(),
             passwordEncoder.encode(new String(generatedPassword)),
             note,
             name.trim(),
@@ -745,7 +745,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     private void validateEmailUniqueness(String email) {
-        if (userRepository.findByEmailIncludingDeleted(email).isPresent()) {
+        if (userRepository.findByEmailIncludingDeleted(email.trim()).isPresent()) {
             throw new UserAlreadyExistsException("emailInUseMessage");
         }
     }
