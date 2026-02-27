@@ -152,7 +152,6 @@ package person {
     Set<Prize> prizes
     Set<MultiLingualContent> biography
     Set<MultiLingualContent> keywords
-    Set<LanguageCompetency> languageCompetencies
     String apvnt
     String eCrisId
     String nationalScienceId ' eNaukaId for instance, or CienciaID
@@ -172,6 +171,8 @@ package person {
     PersonalInfo personalInfo
   }
 !endsub
+
+  Person "1" --> "0..*" PersonName : otherNames 
 
   class PersonName {
     String firstname
@@ -216,7 +217,7 @@ package person {
      String postalNumber
      GeoLocation location
   }
-  
+ 
   class LanguageKnowledge extends ExpertiseOrSkill {
     Language language
     Boolean motherTongue
@@ -357,12 +358,22 @@ package person {
 
   ExpertiseOrSkill "*" --> "1" Person : person
 
-  class Prize {
+  class Prize { 
+    PrizeType type
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
-    LocalDate date
+    LocalDate effectiveDate ' former date 
+    LocalDate endDate 
+    Set<String> keywords
+    Set<ResearchArea> researchAreas
   }
+
+  enum PrizeType {
+    AWARD
+    TITLE 
+    OTHER
+  }  
 
   Prize "*" --> "1" Person : person
 
@@ -449,7 +460,14 @@ package document {
   !startsub Person_Contribution
     enum DocumentContributionType {
       AUTHOR
+      COAUTHOR
+      PRESENTER
+      TRANSLATOR
+      ASSISTANT_STAFF
       EDITOR
+      COEDITOR
+      ASSOCIATED_EDITOR
+      INVITED_EDITOR
       REVIEWER
       ADVISOR
       BOARD_MEMBER
@@ -457,22 +475,22 @@ package document {
   !endsub
 
   class Publisher {
-    -Set<MultiLingualContent> name
-    -Set<MultiLingualContent> place
-    -Set<MultiLingualContent> state
-    -Set<Integer> oldIds
-    -Set<Integer> mergedIds
-    -Country country
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> place
+    Set<MultiLingualContent> state
+    Set<String> oldIds
+    Set<String> mergedIds
+    Country country
   }
 
   !startsub Person_Contribution
     class PersonContribution {
-      -Person person
-      -Set<MultiLingualContent> contributionDescription
-      -AffiliationStatement affiliationStatement
-      -Set<OrganisationUnit> institutions
-      -Integer orderNumber
-      -ApproveStatus approveStatus
+      Person person
+      Set<MultiLingualContent> contributionDescription
+      AffiliationStatement affiliationStatement
+      Set<OrganisationUnit> institutions
+      Integer orderNumber
+      ApproveStatus approveStatus
       ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
     }
 
@@ -492,12 +510,12 @@ package document {
 
   !startsub Person_Document_Contribution
     class PersonDocumentContribution extends PersonContribution {
-      -DocumentContributionType contributionType
-      -boolean isMainContributor
-      -boolean isCorrespondingContributor
-      -boolean isBoardPresident
-      -EmploymentTitle employmentTitle
-      -PersonalTitle personalTitle
+      DocumentContributionType contributionType
+      boolean isMainContributor
+      boolean isCorrespondingContributor
+      boolean isBoardPresident
+      EmploymentTitle employmentTitle
+      PersonalTitle personalTitle
     }
   !endsub
 
@@ -544,33 +562,57 @@ package document {
 
   !startsub Document
     class Document {
-      -Set<MultiLingualContent> title
-      -Set<MultiLingualContent> subTitle
-      -Set<MultiLingualContent> description
-      -Set<MultiLingualContent> adminNote
-      -Set<PersonDocumentContribution> contributors
-      -Set<String> uris
-      -String documentDate
-      -Set<DocumentFile> fileItems
-      -Set<DocumentFile> proof
-      -Set<MultiLingualContent> keywords
-      -ApproveStatus approveStatus
-      -String doi
-      -String scopusId
-      -String openAlexId
-      -String webOfScienceId
-      -Set<Integer> oldIds
-      -Set<Integer> mergedIds
-      -Set<String> internalIdentifiers
+      Set<MultiLingualContent> title
+      Set<MultiLingualContent> subTitle
+      Set<MultiLingualContent> description
+      Set<MultiLingualContent> keywords
+      String adminNote
+      Set<ResearchArea> researchAreas
+      Set<PersonDocumentContribution> contributors
+      Set<String> uris
+      String documentDate
+      Set<DocumentFile> fileItems
+      Set<DocumentFile> proof
+      ApproveStatus approveStatus
+      PublicationStatus publicationStatus
+      String doi
+      String scopusId
+      String openAlexId
+      String wosId
+      String arXivId
+      String lccnId
+      String lensId
+      String pubmedId
+      String ssrnId
+      String authenticusId
+      String arkId
+      String halId
+      String internalId
+      String otherId
+      Set<String> oldIds
+      Set<String> mergedIds
+      Boolean peerReviewed ' refereed
+      Boolean openAccess
+      Set<MultiLingualContent> city
+      Country country
     }
   !endsub
+  
+  enum PublicationStatus {
+    SUBMITTED
+    IN_REVIEW
+    ACCEPTED
+    IN_PRINT
+    PUBLISHED
+  }
 
   class ProceedingsPublication extends Document {
-    -ProceedingsPublicationType proceedingsPublicationType
-    -String startPage;
-    -String endPage;
-    -Integer numberOfPages
-    -String articleNumber
+    ProceedingsPublicationType proceedingsPublicationType
+    String startPage;
+    String endPage;
+    Integer numberOfPages
+    String articleNumber
+    LocalDate presentationDate
   }
 
   enum ProceedingsPublicationType {
@@ -579,9 +621,11 @@ package document {
       INVITED_ABSTRACT_ARTICLE
       REGULAR_ABSTRACT_ARTICLE
       PREFACE
+      POSTFACE
       LEXICOGRAPHIC_UNIT
       POLEMICS
       SCIENTIFIC_CRITIC
+      BOOK_REVIEW
     }
 
   class Proceedings extends Document {
@@ -666,13 +710,13 @@ package document {
 
   !startsub Journal_Publication
     class JournalPublication extends Document {
-      -JournalPublicationType journalPublicationType
-      -String startPage
-      -String endPage
-      -Integer numberOfPages
-      -String articleNumber
-      -String volume
-      -String issue
+      JournalPublicationType journalPublicationType
+      String startPage
+      String endPage
+      Integer numberOfPages
+      String articleNumber
+      String volume
+      String issue
     }
   !endsub
 
@@ -680,24 +724,28 @@ package document {
       REVIEW_ARTICLE
       RESEARCH_ARTICLE
       PREFACE
+      POSTFACE
       COMMENT
       CORRECTION
       LEXICOGRAPHIC_UNIT
       POLEMICS
       SCIENTIFIC_CRITIC
+      BOOK_REVIEW
+      TRANSLATION
+      PREPRINT
     }
 
   class PublicationSeries {
-    -String eISSN
-    -String printISSN
-    -Set<PersonJournalContribution> contributors
-    -Set<LanguageTag> languages
-    -Set<MultiLingualContent> title
-    -Set<MultiLingualContent> nameAbbreviation
-    -Set<Integer> oldIds
-    -Set<Integer> mergedIds,
-    -String openAlexId
-    -Set<String> uris
+    String eISSN
+    String printISSN
+    Set<PersonJournalContribution> contributors
+    Set<LanguageTag> languages
+    Set<MultiLingualContent> title
+    Set<MultiLingualContent> nameAbbreviation
+    Set<String> oldIds
+    Set<String> mergedIds
+    String openAlexId
+    Set<String> uris
   }
 
   class Journal extends PublicationSeries {
@@ -706,16 +754,28 @@ package document {
   class BookSeries extends PublicationSeries {
     ' for instance https://www.springer.com/gp/computer-science/lncs
   }
+  
+  class OtherPublicationSeries extends PublicationSeries {
+    OtherPublicationSeriesType type
+  }
+  
+  enum OtherPublicationSeriesType {
+    MAGAZINE
+    NEWSPAPER
+    NEWSLETTER
+  }
 
   class PersonPublicationSeriesContribution extends PersonContribution {
-    -PublicationSeriesContributionType contributionType
-    -LocalDate dateFrom
-    -LocalDate dateTo
+    PublicationSeriesContributionType contributionType
+    LocalDate dateFrom
+    LocalDate dateTo
   }
 
   enum PublicationSeriesContributionType {
     EDITOR
-    ASSOCIATE_EDITOR
+    COEDITOR
+    ASSOCIATED_EDITOR
+    INVITED_EDITOR
     REVIEWER
     SCIENTIFIC_BOARD_MEMBER
   }
@@ -723,88 +783,130 @@ package document {
   JournalPublication "1..*" --> "1" Journal
 
   class MonographPublication extends Document {
-    -MonographPublicationType monographPublicationType
-    -String startPage;
-	-String endPage
-    -Integer numberOfPages
-    -String articleNumber
+    MonographPublicationType monographPublicationType
+    String startPage;
+	String endPage
+    Integer numberOfPages
+    String articleNumber
   }
 
   enum MonographPublicationType {
-      CHAPTER
-      RESEARCH_ARTICLE
-      PREFACE
-      LEXICOGRAPHIC_UNIT
-      POLEMICS
-      SCIENTIFIC_CRITIC
-    }
+    CHAPTER
+    RESEARCH_ARTICLE
+    PREFACE
+    POSTFACE
+    LEXICOGRAPHIC_UNIT
+    POLEMICS
+    SCIENTIFIC_CRITIC
+    BOOK_REVIEW
+    ENTRY
+  }
 
   class Monograph extends Document {
-    -MonographType monographType
-    -String printISBN
-    -String eISBN
-    -Integer numberOfPages
-    -String volume
+    MonographType monographType
+    String printISBN
+    String eISBN
+    Integer numberOfPages
+    String volume
     ' volume and number are defined only in the case publicationSeries is defined.
     ' We can even model that with link entity PublicationToPublicationSeriesRelation (with volume and number)
-    -String number
-    -Set<LanguageTag> languages
-    -ResearchArea researchArea
+    String number
+    String edition ' version of a book
+    Set<LanguageTag> languages
+    Set<MultiLingualContent> city
+    Country country
   }
 
   enum MonographType {
-        RESEARCH_MONOGRAPH
-        BOOK
-        BIBLIOGRAPHY
-        TRANSLATION
-        STUDY
-      }
+    RESEARCH_MONOGRAPH
+    BOOK
+    BIBLIOGRAPHY
+    TRANSLATION
+    STUDY
+    JOURNAL_ISSUE
+    ENCYCLOPEDIA
+    DICTIONARY
+    REPORT
+    WORKING_PAPER
+    PREPRINT
+    MANUAL
+    CATALOGUE ' exhibition catalogue
+  }
 
   Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
 
-  MonographPublication "1..*" --> "1" Monograph
+  MonographPublication "1..*" --> "1" Monograph 
+  ' can we use DocumentsRelation (PART_OF) instead of this? 
 
   class Patent extends Document {
-    -String number
-  }
-
-  class InformativeAttachment extends Document {
-  }
-
-  class EncyclopedicContribution extends Document {
+    String number
   }
 
   class Thesis extends Document {
-    -OrganisationUnit OrganisationUnit
-    -Set<MultiLingualContent> externalOrganisationUnitName
-    -ThesisType thesisType
-    -LocalDate topicAcceptanceDate
-    -LocalDate thesisDefenceDate
-    -Integer numberOfPages
-    -Set<LanguageTag> languages
-    -ResearchArea researchArea
-    -LanguageTag writingLanguage
-    -boolean isOnPublicReview
-    -boolean isOnPublicReviewPause
-    -Set<LocalDate> publicReviewStartDates
-    -Set<DocumentFile> preliminaryFiles
-    -Set<DocumentFile> preliminarySupplements
-    -Set<DocumentFile> commissionReports
-    -boolean isArchived
-    -Set<MultiLingualContent> placeOfKeep
-    -String eISBN
-    -String printISBN
-    -String udc
-    -Set<MultiLingualContent> typeOfTitle
-    -Boolean publicReviewCompleted
+    OrganisationUnit OrganisationUnit
+    Set<MultiLingualContent> externalOrganisationUnitName
+    ThesisType thesisType
+    LocalDate topicAcceptanceDate
+    LocalDate thesisDefenceDate
+    Integer numberOfPages
+    Set<LanguageTag> languages
+    LanguageTag writingLanguage
+    boolean isOnPublicReview
+    boolean isOnPublicReviewPause
+    Set<LocalDate> publicReviewStartDates
+    Set<DocumentFile> preliminaryFiles
+    Set<DocumentFile> preliminarySupplements
+    Set<DocumentFile> commissionReports
+    boolean isArchived
+    Set<MultiLingualContent> placeOfKeep
+    String udc
+    Set<MultiLingualContent> typeOfTitle
+    Boolean publicReviewCompleted
   }
 
   class Dataset extends Document {
-    -String internalNumber
   }
-
-  class Software extends Document {
-    -String internalNumber
+  
+  class IntangibleProduct extends Document {
+    IntangibleProductType type
+    Set<MultilingualContent> customers
+  }
+  
+  enum IntangibleProductType {
+    SOFTWARE 
+    MODEL
+    PROCESS
+    METHOD 
+    STRATEGY
+    POLICY
+    FRAMEWORK
+    OTHER
+  }
+  
+  class MaterialProduct extends Document {
+    MaterialProductType type
+    Set<MultilingualContent> customers
+    Integer numberOfUnitsProduced
+  }
+    
+  enum MaterialProductType {
+    PROTOTYPE 
+    INDUSTRIAL_PRODUCT
+    INFRASTRUCTURE_OBJECT
+    DERIVATIVE_WORK
+    OTHER
+  }
+  
+  class GeneticMaterial extends Document {
+    GeneticMaterialType type
+  }
+    
+  enum GeneticMaterialType {
+    GENOTYPE 
+    RACE
+    VARIETY
+    STRAIN 
+    OTHER
   }
 
   enum ThesisType {
@@ -824,7 +926,9 @@ package document {
   Proceedings "0..*" --> "1" Publisher
   Patent "0..*" --> "1" Publisher
   Dataset "0..*" --> "1" Publisher
-  Software "0..*" --> "1" Publisher
+  IntangibleProduct "0..*" --> "1" Publisher
+  MaterialProduct "0..*" --> "1" Publisher
+  GeneticMaterial "0..*" --> "1" Publisher
 
   DocumentsRelation "*" --> "0..1" Document : source
   DocumentsRelation "*" --> "0..1" Document : target
@@ -837,7 +941,8 @@ package document {
     PART_OF
     USED_BY
     CITED_BY
-    RESULT_OF
+    RESULT_OF ' also can link PREPRINT
+    TOPIC_OF ' if a document is BOOK_REVIEW, SCIENTIFIC_CRITIC, TRANSLATION, then we can point to original document
   }
 
 }
@@ -971,10 +1076,9 @@ package project {
     }
   
     enum ProjectDocumentType {
-      REPORT
-      RESULT
-      USED
-      INTERNAL
+      RESULT ' OUTPUT
+      USED ' INPUT
+      INTERNAL ' OUTPUT but not Published, which can be also input for some other project documents
     }
     
     class ProjectEvent {
@@ -1034,7 +1138,7 @@ package project {
     String doi
     String grantAgreementId ' cordis - European Commission
     Project project
-    DocumentFile agreement
+    Set<DocumentFile> documents ' agreement(s), report, etc.
     Set<MultiLingualContent> name ' very often the same as linked project, there should be an option to copy name, description and other fields from project and then slightly change
     Set<MultiLingualContent> description
     Set<MultiLingualContent> nameAbbreviation
@@ -1074,7 +1178,7 @@ package project {
   FundingProgram "0..1" --> "0..*" FundingCall : fundingCalls
   
   class FundingCall {
-    DocumentFile call
+    Set<DocumentFile> documents ' call(s)
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     Set<MultiLingualContent> objectives
@@ -1100,7 +1204,7 @@ package project {
   }
   
   class FundingProgram {
-    DocumentFile program
+    Set<DocumentFile> documents 
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     Set<MultiLingualContent> objectives
