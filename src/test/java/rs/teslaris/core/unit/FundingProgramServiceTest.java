@@ -53,6 +53,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 
 @SpringBootTest
@@ -236,6 +237,30 @@ public class FundingProgramServiceTest {
         verify(currencyService).findOne(1);
         verify(fundingProgramRepository).save(any(FundingProgram.class));
         verify(fundingProgramIndexRepository).save(any(FundingProgramIndex.class));
+    }
+
+    @Test
+    public void shouldThrowWhenCreateAndDatesAreInvalid() {
+        // given
+        var fundingProgramDTO = new FundingProgramDTO();
+        fundingProgramDTO.setName(List.of());
+        fundingProgramDTO.setDescription(List.of());
+        fundingProgramDTO.setObjectives(List.of());
+        fundingProgramDTO.setNameAbbreviation(List.of());
+        fundingProgramDTO.setKeywords(List.of());
+        fundingProgramDTO.setResearchAreasId(Set.of(1, 2));
+        fundingProgramDTO.setFunderId(10);
+        fundingProgramDTO.setFundingTypes(Set.of(FundingType.GRANT));
+
+        fundingProgramDTO.setProgramCloses(LocalDate.now());
+        fundingProgramDTO.setProgramOpens(LocalDate.now().plusYears(1));
+        fundingProgramDTO.setUris(Set.of("https://example.com"));
+        fundingProgramDTO.setOaMandated(true);
+        fundingProgramDTO.setOaMandateUrl("https://example.com/mandate");
+
+        // when & then
+        assertThrows(DateRangeException.class,
+            () -> fundingProgramService.createFundingProgram(fundingProgramDTO));
     }
 
     @Test

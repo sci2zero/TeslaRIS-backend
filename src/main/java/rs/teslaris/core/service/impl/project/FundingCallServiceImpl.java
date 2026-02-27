@@ -180,24 +180,27 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         var fundingProgram = fundingProgramService.findOne(fundingCallDTO.getFundingProgramId());
         fundingCall.setFundingProgram(fundingProgram);
 
-        if (Objects.nonNull(fundingCall.getCallOpens()) &&
-            Objects.nonNull(fundingCall.getCallCloses()) &&
-            fundingCall.getCallCloses().isBefore(fundingCall.getCallOpens())) {
+        if (Objects.nonNull(fundingCallDTO.getCallOpens()) &&
+            Objects.nonNull(fundingCallDTO.getCallCloses()) &&
+            fundingCallDTO.getCallCloses().isBefore(fundingCallDTO.getCallOpens())) {
             throw new DateRangeException(
                 "Funding call must opened before closing.");
         }
 
         if (Objects.nonNull(fundingProgram.getProgramOpens()) &&
-            fundingProgram.getProgramOpens().isAfter(fundingCall.getCallOpens())) {
+            fundingProgram.getProgramOpens().isAfter(fundingCallDTO.getCallOpens())) {
             throw new DateRangeException(
                 "Funding call opening must be equal or after program opening.");
         }
 
         if (Objects.nonNull(fundingProgram.getProgramCloses()) &&
-            fundingProgram.getProgramCloses().isBefore(fundingCall.getCallCloses())) {
+            fundingProgram.getProgramCloses().isBefore(fundingCallDTO.getCallCloses())) {
             throw new DateRangeException(
                 "Funding call closing must be equal or before program closing.");
         }
+
+        fundingCall.setCallOpens(fundingCallDTO.getCallOpens());
+        fundingCall.setCallCloses(fundingCallDTO.getCallCloses());
 
         fundingCall.setName(
             multilingualContentService.getMultilingualContent(fundingCallDTO.getName()));
@@ -228,8 +231,6 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             fundingCall.setTotal(null);
         }
 
-        fundingCall.setCallOpens(fundingCallDTO.getCallOpens());
-        fundingCall.setCallCloses(fundingCallDTO.getCallCloses());
         fundingCall.setUris(fundingCallDTO.getUris());
         fundingCall.setOaMandated(fundingCallDTO.getOaMandated());
         fundingCall.setOaMandateUrl(fundingCallDTO.getOaMandateUrl());

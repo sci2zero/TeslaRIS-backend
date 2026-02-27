@@ -173,9 +173,9 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
     private void setCommonFields(FundingProgram fundingProgram,
                                  FundingProgramDTO fundingProgramDTO) {
-        if (Objects.nonNull(fundingProgram.getProgramOpens()) &&
-            Objects.nonNull(fundingProgram.getProgramCloses()) &&
-            fundingProgram.getProgramCloses().isBefore(fundingProgram.getProgramOpens())) {
+        if (Objects.nonNull(fundingProgramDTO.getProgramOpens()) &&
+            Objects.nonNull(fundingProgramDTO.getProgramCloses()) &&
+            fundingProgramDTO.getProgramCloses().isBefore(fundingProgramDTO.getProgramOpens())) {
             throw new DateRangeException(
                 "Funding program must opened before closing.");
         }
