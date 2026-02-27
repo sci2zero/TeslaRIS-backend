@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
@@ -280,15 +281,16 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         if (Objects.nonNull(proceedings.getPublicationSeries())) {
             index.setPublicationSeriesId(proceedings.getPublicationSeries().getId());
-            if (proceedings.getPublicationSeries() instanceof Journal journal) {
-                index.setJournalId(journal.getId());
+            if (Hibernate.getClass(proceedings.getPublicationSeries()) == Journal.class) {
+                index.setJournalId(proceedings.getPublicationSeries().getId());
 
                 indexBulkUpdateService.setIdFieldForRecord("document_publication",
                     "proceedings_id", proceedings.getId(),
-                    "journal_id", journal.getId());
+                    "journal_id", proceedings.getPublicationSeries().getId());
             }
         } else {
             index.setPublicationSeriesId(null);
+            index.setJournalId(null);
             indexBulkUpdateService.setIdFieldForRecord("document_publication",
                 "proceedings_id", proceedings.getId(),
                 "journal_id", null);

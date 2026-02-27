@@ -652,7 +652,7 @@ public class DocumentAssessmentClassificationServiceImpl
                         ).ifPresent(classifications::add);
                     }
                 },
-                publicationIndex.getYear(), publicationIndex.getDatabaseId(),
+                publicationIndex.getYear(), publicationIndex,
                 publicationIndex.getPublicationType(), commission,
                 List.of(
                     publicationIndex.getYear(),
@@ -722,7 +722,7 @@ public class DocumentAssessmentClassificationServiceImpl
                         }
                     }
                 },
-                proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
+                proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex,
                 proceedingsPublicationIndex.getPublicationType(), commission,
                 List.of(proceedingsPublicationIndex.getYear()),
                 batchedClassifications
@@ -835,7 +835,7 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private void performPublicationAssessment(
         TriConsumer<Integer, ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>, Commission> yearHandler,
-        Integer classificationYear, Integer documentId, String documentPublicationType,
+        Integer classificationYear, DocumentPublicationIndex index, String documentPublicationType,
         Commission commission, List<Integer> yearsToConsider,
         ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         var classifications =
@@ -845,8 +845,10 @@ public class DocumentAssessmentClassificationServiceImpl
             yearHandler.accept(year, classifications, commission)
         );
 
-        if (classifications.isEmpty()) {
+        if (classifications.isEmpty() && Objects.nonNull(index.getJournalId())) {
             addFallbackJournalClassification(classifications);
+        } else if (classifications.isEmpty()) {
+            return;
         }
 
         var bestClassification =
@@ -855,7 +857,7 @@ public class DocumentAssessmentClassificationServiceImpl
         bestClassification.ifPresent((documentClassification) -> {
             handleClassification(
                 documentClassification.a, commission,
-                documentId, documentPublicationType,
+                index.getDatabaseId(), documentPublicationType,
                 classificationYear, batchedClassifications,
                 true
             );
