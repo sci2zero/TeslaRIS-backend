@@ -1270,14 +1270,6 @@ databaseChangeLog:
         indexName: idx_funding_parts_funding
         tableName: funding_parts
 - changeSet:
-    id: 1772187649527-51
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: agreement_id
-        constraintName: fundings_agreement_id_key
-        tableName: fundings
-- changeSet:
     id: 1772187649527-52
     author: milospopovic (generated)
     changes:
@@ -3592,3 +3584,11 @@ databaseChangeLog:
         columnName: date_to
         tableName: fundings
 
+- changeSet:
+    id: 1772187649527-51
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: agreement_id
+        constraintName: fundings_agreement_id_key
+        tableName: fundings
