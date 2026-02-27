@@ -411,12 +411,18 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 b.must(createTypeTermsQuery(eventTypes));
             }
 
-            if (returnOnlyNonSerialEvents) {
-                b.must(sb -> sb.match(m -> m.field("is_serial_event").query(false)));
+            if (Boolean.TRUE.equals(returnOnlyNonSerialEvents)) {
+                b.must(sb -> sb.term(m -> m
+                    .field("is_serial_event")
+                    .value(false)
+                ));
             }
 
-            if (returnOnlySerialEvents) {
-                b.must(sb -> sb.match(m -> m.field("is_serial_event").query(true)));
+            if (Boolean.TRUE.equals(returnOnlySerialEvents)) {
+                b.must(sb -> sb.term(m -> m
+                    .field("is_serial_event")
+                    .value(true)
+                ));
             }
 
             if (Objects.nonNull(commissionInstitutionId) && commissionInstitutionId > 0) {

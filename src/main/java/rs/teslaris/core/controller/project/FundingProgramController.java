@@ -24,7 +24,7 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.project.FundingProgramDTO;
-import rs.teslaris.core.indexmodel.FundingProgramIndex;
+import rs.teslaris.core.indexmodel.project.FundingProgramIndex;
 import rs.teslaris.core.service.interfaces.project.FundingProgramService;
 
 @RestController
@@ -36,22 +36,28 @@ public class FundingProgramController {
 
 
     @GetMapping("/search")
+    @PreAuthorize("hasAuthority('READ_FUNDING_PROGRAMS')")
     public Page<FundingProgramIndex> searchFundingPrograms(@RequestParam List<String> tokens,
-                                                           @RequestParam LocalDate dateFrom,
-                                                           @RequestParam LocalDate dateTo,
-                                                           @RequestParam Integer funderId,
+                                                           @RequestParam(required = false)
+                                                           LocalDate dateFrom,
+                                                           @RequestParam(required = false)
+                                                           LocalDate dateTo,
+                                                           @RequestParam(required = false)
+                                                           Integer funderId,
                                                            Pageable pageable) {
         return fundingProgramService.searchFundingPrograms(tokens, dateFrom, dateTo, funderId,
             pageable);
     }
 
     @GetMapping("/{fundingProgramId}")
+    @PreAuthorize("hasAuthority('READ_FUNDING_PROGRAMS')")
     public FundingProgramDTO readFundingProgram(@PathVariable Integer fundingProgramId) {
         return fundingProgramService.readFundingProgram(fundingProgramId);
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_FUNDING_PROGRAMS')")
+    @ResponseStatus(HttpStatus.CREATED)
     public FundingProgramDTO createFundingProgram(
         @RequestBody @Valid FundingProgramDTO fundingProgramDTO) {
         var savedFundingProgram = fundingProgramService.createFundingProgram(fundingProgramDTO);

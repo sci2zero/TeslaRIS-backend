@@ -17,7 +17,7 @@ import lombok.Setter;
 @Embeddable
 public class MonetaryAmount {
 
-    @Column(name = "amount", nullable = false)
+    @Column(name = "amount")
     private double amount;
 
     @ManyToOne(fetch = FetchType.EAGER)

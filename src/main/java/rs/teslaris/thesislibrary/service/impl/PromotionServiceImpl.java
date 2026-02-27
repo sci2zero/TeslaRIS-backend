@@ -13,6 +13,8 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.converter.PromotionConverter;
 import rs.teslaris.thesislibrary.dto.PromotionDTO;
 import rs.teslaris.thesislibrary.model.Promotion;
@@ -38,13 +40,19 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PromotionDTO> getAllPromotions(Integer institutionId, Pageable pageable) {
+    public Page<PromotionDTO> getAllPromotions(Integer institutionId, Boolean nonFinishedOnly,
+                                               Pageable pageable) {
+        if (Objects.isNull(nonFinishedOnly)) {
+            nonFinishedOnly = false;
+        }
+
         if (Objects.nonNull(institutionId) && institutionId > 0) {
-            return promotionRepository.findAll(institutionId, pageable)
+            return promotionRepository.findAll(institutionId, nonFinishedOnly, pageable)
                 .map(PromotionConverter::toDTO);
         }
 
-        return promotionRepository.findAll(pageable).map(PromotionConverter::toDTO);
+        return promotionRepository
+            .findAll(null, nonFinishedOnly, pageable).map(PromotionConverter::toDTO);
     }
 
     @Override
@@ -63,6 +71,17 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     @Transactional
     public Promotion createPromotion(PromotionDTO promotionDTO) {
         var newPromotion = new Promotion();
+
+        if (!SessionUtil.isUserLoggedInAndAdmin()) {
+            if (!organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
+                    SessionUtil.getLoggedInUser().getOrganisationUnit().getId())
+                .contains(promotionDTO.getInstitutionId())) {
+                throw new ReferenceConstraintException(
+                    "Promotion registry admin can only add promotions in organisation units " +
+                        "which belong to his institution's sub hierarchy."
+                );
+            }
+        }
 
         setCommonFields(newPromotion, promotionDTO);
 

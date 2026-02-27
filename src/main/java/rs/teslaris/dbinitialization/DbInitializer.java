@@ -224,6 +224,8 @@ public class DbInitializer implements ApplicationRunner {
         var enrichDocumentMetadata = new Privilege("ENRICH_DOCUMENT_METADATA");
         var enrichInstitutionMetadata = new Privilege("ENRICH_INSTITUTION_METADATA");
         var scheduleMetadataEnrichment = new Privilege("SCHEDULE_METADATA_ENRICHMENT");
+        var readFundingPrograms = new Privilege("READ_FUNDING_PROGRAMS");
+        var editFundingPrograms = new Privilege("EDIT_FUNDING_PROGRAMS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -264,7 +266,8 @@ public class DbInitializer implements ApplicationRunner {
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
                 unpromoteRbEntries, changePublicationType, assessPrizes, editExhibitions,
                 createExhibitions, mergeExhibitions, substituteThesis, setPersonFieldVisibility,
-                enrichDocumentMetadata, enrichInstitutionMetadata, scheduleMetadataEnrichment));
+                enrichDocumentMetadata, enrichInstitutionMetadata, scheduleMetadataEnrichment,
+                editFundingPrograms, readFundingPrograms));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -304,7 +307,7 @@ public class DbInitializer implements ApplicationRunner {
                 registerResearcher, unpromoteRbEntries, changePublicationType, assessPrizes,
                 editExhibitions, createExhibitions, mergeExhibitions, substituteThesis,
                 setPersonFieldVisibility, enrichDocumentMetadata, enrichInstitutionMetadata,
-                scheduleMetadataEnrichment
+                scheduleMetadataEnrichment, editFundingPrograms, readFundingPrograms
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

@@ -15,23 +15,23 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
-import rs.teslaris.core.converter.project.FundingProgramConverter;
+import rs.teslaris.core.converter.project.FundingCallConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
-import rs.teslaris.core.dto.project.FundingProgramDTO;
-import rs.teslaris.core.indexmodel.project.FundingProgramIndex;
-import rs.teslaris.core.indexrepository.project.FundingProgramIndexRepository;
+import rs.teslaris.core.dto.project.FundingCallDTO;
+import rs.teslaris.core.indexmodel.project.FundingCallIndex;
+import rs.teslaris.core.indexrepository.project.FundingCallIndexRepository;
 import rs.teslaris.core.model.document.AccessRights;
-import rs.teslaris.core.model.project.FundingProgram;
+import rs.teslaris.core.model.project.FundingCall;
 import rs.teslaris.core.model.project.MonetaryAmount;
-import rs.teslaris.core.repository.project.FundingProgramRepository;
+import rs.teslaris.core.repository.project.FundingCallRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
-import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.project.FundingCallService;
 import rs.teslaris.core.service.interfaces.project.FundingProgramService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
@@ -40,103 +40,107 @@ import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
-public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
-    implements FundingProgramService {
+public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
+    implements FundingCallService {
 
-    private final FundingProgramRepository fundingProgramRepository;
+    private final FundingCallRepository fundingCallRepository;
 
     private final DocumentFileService documentFileService;
 
-    private final SearchService<FundingProgramIndex> searchService;
+    private final SearchService<FundingCallIndex> searchService;
 
     private final MultilingualContentService multilingualContentService;
 
     private final ResearchAreaService researchAreaService;
 
-    private final OrganisationUnitService organisationUnitService;
+    private final FundingProgramService fundingProgramService;
 
     private final CurrencyService currencyService;
 
-    private final FundingProgramIndexRepository fundingProgramIndexRepository;
+    private final FundingCallIndexRepository fundingCallIndexRepository;
 
 
     @Override
-    protected JpaRepository<FundingProgram, Integer> getEntityRepository() {
-        return fundingProgramRepository;
+    protected JpaRepository<FundingCall, Integer> getEntityRepository() {
+        return fundingCallRepository;
     }
 
     @Override
-    public Page<FundingProgramIndex> searchFundingPrograms(List<String> tokens, LocalDate dateFrom,
-                                                           LocalDate dateTo, Integer funderId,
-                                                           Pageable pageable) {
-        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, funderId),
-            pageable, FundingProgramIndex.class, "funding_program");
+    public Page<FundingCallIndex> searchFundingCalls(List<String> tokens, LocalDate dateFrom,
+                                                     LocalDate dateTo, Integer programId,
+                                                     Pageable pageable) {
+        return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, programId),
+            pageable, FundingCallIndex.class, "funding_program");
     }
 
     @Override
     @Transactional(readOnly = true)
-    public FundingProgramDTO readFundingProgram(Integer fundingProgramId) {
-        return FundingProgramConverter.toDTO(findOne(fundingProgramId));
+    public FundingCallDTO readFundingCall(Integer fundingCallId) {
+        return FundingCallConverter.toDTO(findOne(fundingCallId));
     }
 
     @Override
     @Transactional
-    public FundingProgram createFundingProgram(FundingProgramDTO fundingProgramDTO) {
-        var newFundingProgram = new FundingProgram();
+    public FundingCall createFundingCall(FundingCallDTO fundingCallDTO) {
+        var newFundingCall = new FundingCall();
 
-        setCommonFields(newFundingProgram, fundingProgramDTO);
+        setCommonFields(newFundingCall, fundingCallDTO);
 
-        var savedFundingProgram = save(newFundingProgram);
+        var savedFundingCall = save(newFundingCall);
 
-        fundingProgramIndexRepository.save(
-            indexCommonFields(savedFundingProgram, new FundingProgramIndex()));
+        fundingCallIndexRepository.save(
+            indexCommonFields(savedFundingCall, new FundingCallIndex()));
 
-        return savedFundingProgram;
+        return savedFundingCall;
     }
 
     @Override
     @Transactional
-    public void updateFundingProgram(Integer fundingProgramId,
-                                     FundingProgramDTO fundingProgramDTO) {
-        var fundingProgramToUpdate = findOne(fundingProgramId);
+    public void updateFundingCall(Integer fundingCallId,
+                                  FundingCallDTO fundingCallDTO) {
+        var fundingCallToUpdate = findOne(fundingCallId);
 
-        clearCommonFields(fundingProgramToUpdate);
-        setCommonFields(fundingProgramToUpdate, fundingProgramDTO);
+        clearCommonFields(fundingCallToUpdate);
+        setCommonFields(fundingCallToUpdate, fundingCallDTO);
 
-        fundingProgramIndexRepository.findFundingProgramIndexByDatabaseId(fundingProgramId)
+        fundingCallIndexRepository.findFundingCallIndexByDatabaseId(fundingCallId)
             .ifPresent(index -> {
-                indexCommonFields(fundingProgramToUpdate, index);
-                fundingProgramIndexRepository.save(index);
+                indexCommonFields(fundingCallToUpdate, index);
+                fundingCallIndexRepository.save(index);
             });
     }
 
     @Override
     @Transactional
-    public void deleteFundingProgram(Integer fundingProgramId) {
-        if (fundingProgramRepository.hasFundingCalls(fundingProgramId)) {
-            throw new ReferenceConstraintException("fundingProgramHasCallsMessage");
+    public void deleteFundingCall(Integer fundingCallId) {
+        if (fundingCallRepository.hasFunding(fundingCallId)) {
+            throw new ReferenceConstraintException("fundingCallHasFundingMessage");
         }
 
-        delete(fundingProgramId);
+        if (fundingCallRepository.hasFundingProposals(fundingCallId)) {
+            throw new ReferenceConstraintException("fundingCallHasProposalsMessage");
+        }
+
+        delete(fundingCallId);
     }
 
     @Override
     @Transactional
-    public DocumentFileResponseDTO addFundingProgramDocument(Integer fundingProgramId,
-                                                             DocumentFileDTO program) {
-        var fundingProgram = findOne(fundingProgramId);
+    public DocumentFileResponseDTO addFundingCallDocument(Integer fundingCallId,
+                                                          DocumentFileDTO program) {
+        var fundingCall = findOne(fundingCallId);
         program.setAccessRights(AccessRights.ALL_RIGHTS_RESERVED); // TODO: should we keep this?
         var documentFile = documentFileService.saveNewDocument(program, false);
-        fundingProgram.getProgramDocuments().add(documentFile);
+        fundingCall.getCallDocuments().add(documentFile);
 
-        save(fundingProgram);
+        save(fundingCall);
 
         return DocumentFileConverter.toDTO(documentFile);
     }
 
     @Override
     @Transactional
-    public DocumentFileResponseDTO updateFundingProgramDocument(DocumentFileDTO updatedProgram) {
+    public DocumentFileResponseDTO updateFundingCallDocument(DocumentFileDTO updatedProgram) {
         updatedProgram.setAccessRights(
             AccessRights.ALL_RIGHTS_RESERVED); // TODO: should we keep this?
         return documentFileService.editDocumentFile(updatedProgram, false);
@@ -144,96 +148,109 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
     @Override
     @Transactional
-    public void deleteFundingProgramDocument(Integer programFileId, Integer fundingProgramId) {
+    public void deleteFundingCallDocument(Integer programFileId, Integer fundingCallId) {
         var documentFile = documentFileService.findOne(programFileId);
-        var fundingProgram = findOne(fundingProgramId);
-        fundingProgram.getProgramDocuments().remove(documentFile);
+        var fundingCall = findOne(fundingCallId);
+        fundingCall.getCallDocuments().remove(documentFile);
 
         documentFileService.delete(programFileId);
-        save(fundingProgram);
+        save(fundingCall);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void reindexFundingPrograms() {
+    public void reindexFundingCalls() {
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             this::findAll,
-            fundingProgram -> indexFundingProgram(fundingProgram, new FundingProgramIndex())
+            fundingCall -> indexFundingCall(fundingCall, new FundingCallIndex())
         );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void indexFundingProgram(FundingProgram fundingProgram, FundingProgramIndex index) {
-        indexCommonFields(fundingProgram, index);
-        fundingProgramIndexRepository.save(index);
+    public void indexFundingCall(FundingCall fundingCall, FundingCallIndex index) {
+        indexCommonFields(fundingCall, index);
+        fundingCallIndexRepository.save(index);
     }
 
-    private void setCommonFields(FundingProgram fundingProgram,
-                                 FundingProgramDTO fundingProgramDTO) {
-        if (Objects.nonNull(fundingProgram.getProgramOpens()) &&
-            Objects.nonNull(fundingProgram.getProgramCloses()) &&
-            fundingProgram.getProgramCloses().isBefore(fundingProgram.getProgramOpens())) {
+    private void setCommonFields(FundingCall fundingCall,
+                                 FundingCallDTO fundingCallDTO) {
+        var fundingProgram = fundingProgramService.findOne(fundingCallDTO.getFundingProgramId());
+        fundingCall.setFundingProgram(fundingProgram);
+
+        if (Objects.nonNull(fundingCall.getCallOpens()) &&
+            Objects.nonNull(fundingCall.getCallCloses()) &&
+            fundingCall.getCallCloses().isBefore(fundingCall.getCallOpens())) {
             throw new DateRangeException(
-                "Funding program must opened before closing.");
+                "Funding call must opened before closing.");
         }
 
-        fundingProgram.setName(
-            multilingualContentService.getMultilingualContent(fundingProgramDTO.getName()));
-        fundingProgram.setDescription(
-            multilingualContentService.getMultilingualContent(fundingProgramDTO.getDescription()));
-        fundingProgram.setObjectives(
-            multilingualContentService.getMultilingualContent(fundingProgramDTO.getObjectives()));
-        fundingProgram.setNameAbbreviation(multilingualContentService.getMultilingualContent(
-            fundingProgramDTO.getNameAbbreviation()));
-        fundingProgram.setKeywords(
-            multilingualContentService.getMultilingualContent(fundingProgramDTO.getKeywords()));
+        if (Objects.nonNull(fundingProgram.getProgramOpens()) &&
+            fundingProgram.getProgramOpens().isAfter(fundingCall.getCallOpens())) {
+            throw new DateRangeException(
+                "Funding call opening must be equal or after program opening.");
+        }
+
+        if (Objects.nonNull(fundingProgram.getProgramCloses()) &&
+            fundingProgram.getProgramCloses().isBefore(fundingCall.getCallCloses())) {
+            throw new DateRangeException(
+                "Funding call closing must be equal or before program closing.");
+        }
+
+        fundingCall.setName(
+            multilingualContentService.getMultilingualContent(fundingCallDTO.getName()));
+        fundingCall.setDescription(
+            multilingualContentService.getMultilingualContent(fundingCallDTO.getDescription()));
+        fundingCall.setObjectives(
+            multilingualContentService.getMultilingualContent(fundingCallDTO.getObjectives()));
+        fundingCall.setNameAbbreviation(multilingualContentService.getMultilingualContent(
+            fundingCallDTO.getNameAbbreviation()));
+        fundingCall.setKeywords(
+            multilingualContentService.getMultilingualContent(fundingCallDTO.getKeywords()));
 
         var researchAreas = researchAreaService.getResearchAreasByIds(
-            fundingProgramDTO.getResearchAreasId().stream().toList());
-        fundingProgram.setResearchAreas(new HashSet<>(researchAreas));
+            fundingCallDTO.getResearchAreasId().stream().toList());
+        fundingCall.setResearchAreas(new HashSet<>(researchAreas));
 
-        fundingProgram.setFunder(organisationUnitService.findOne(fundingProgramDTO.getFunderId()));
+        fundingCall.setTypes(fundingCallDTO.getFundingTypes());
 
-        fundingProgram.setTypes(fundingProgramDTO.getFundingTypes());
-
-        if (Objects.nonNull(fundingProgramDTO.getMonetaryAmount())) {
-            if (Objects.isNull(fundingProgram.getTotal())) {
-                fundingProgram.setTotal(new MonetaryAmount());
+        if (Objects.nonNull(fundingCallDTO.getMonetaryAmount())) {
+            if (Objects.isNull(fundingCall.getTotal())) {
+                fundingCall.setTotal(new MonetaryAmount());
             }
 
-            fundingProgram.getTotal().setCurrency(
-                currencyService.findOne(fundingProgramDTO.getMonetaryAmount().getCurrencyId()));
-            fundingProgram.getTotal().setAmount(fundingProgramDTO.getMonetaryAmount().getAmount());
+            fundingCall.getTotal().setCurrency(
+                currencyService.findOne(fundingCallDTO.getMonetaryAmount().getCurrencyId()));
+            fundingCall.getTotal().setAmount(fundingCallDTO.getMonetaryAmount().getAmount());
         } else {
-            fundingProgram.setTotal(null);
+            fundingCall.setTotal(null);
         }
 
-        fundingProgram.setProgramOpens(fundingProgramDTO.getProgramOpens());
-        fundingProgram.setProgramCloses(fundingProgramDTO.getProgramCloses());
-        fundingProgram.setUris(fundingProgramDTO.getUris());
-        fundingProgram.setOaMandated(fundingProgramDTO.getOaMandated());
-        fundingProgram.setOaMandateUrl(fundingProgramDTO.getOaMandateUrl());
+        fundingCall.setCallOpens(fundingCallDTO.getCallOpens());
+        fundingCall.setCallCloses(fundingCallDTO.getCallCloses());
+        fundingCall.setUris(fundingCallDTO.getUris());
+        fundingCall.setOaMandated(fundingCallDTO.getOaMandated());
+        fundingCall.setOaMandateUrl(fundingCallDTO.getOaMandateUrl());
     }
 
-    private void clearCommonFields(FundingProgram fundingProgram) {
-        fundingProgram.getName().clear();
-        fundingProgram.getDescription().clear();
-        fundingProgram.getObjectives().clear();
-        fundingProgram.getNameAbbreviation().clear();
-        fundingProgram.getKeywords().clear();
-        fundingProgram.getResearchAreas().clear();
+    private void clearCommonFields(FundingCall fundingCall) {
+        fundingCall.getName().clear();
+        fundingCall.getDescription().clear();
+        fundingCall.getObjectives().clear();
+        fundingCall.getNameAbbreviation().clear();
+        fundingCall.getKeywords().clear();
+        fundingCall.getResearchAreas().clear();
     }
 
-    private FundingProgramIndex indexCommonFields(FundingProgram fundingProgram,
-                                                  FundingProgramIndex index) {
+    private FundingCallIndex indexCommonFields(FundingCall fundingCall,
+                                               FundingCallIndex index) {
         var srContent = new StringBuilder();
         var otherContent = new StringBuilder();
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            fundingProgram.getName(), true);
+            fundingCall.getName(), true);
 
         if (srContent.isEmpty() && !otherContent.isEmpty()) {
             srContent.append(otherContent);
@@ -242,7 +259,7 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
         }
 
         multilingualContentService.buildLanguageStrings(srContent, otherContent,
-            fundingProgram.getNameAbbreviation(), false);
+            fundingCall.getNameAbbreviation(), false);
 
         StringUtil.removeTrailingDelimiters(srContent, otherContent);
         index.setNameSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
@@ -251,10 +268,10 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
-        index.setFunderId(fundingProgram.getFunder().getId());
-        index.setDatabaseId(fundingProgram.getId());
-        index.setProgramOpens(fundingProgram.getProgramOpens());
-        index.setProgramCloses(fundingProgram.getProgramCloses());
+        index.setProgramId(fundingCall.getFundingProgram().getId());
+        index.setDatabaseId(fundingCall.getId());
+        index.setCallOpens(fundingCall.getCallOpens());
+        index.setCallCloses(fundingCall.getCallCloses());
 
         return index;
     }
@@ -262,7 +279,7 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
     private Query buildSimpleSearchQuery(List<String> tokens,
                                          LocalDate dateFrom,
                                          LocalDate dateTo,
-                                         Integer funderId) {
+                                         Integer programId) {
         var minShouldMatch = (Objects.isNull(tokens) || tokens.isEmpty())
             ? 0
             : (int) Math.ceil(tokens.size() * 0.8);
@@ -333,13 +350,13 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                 b.must(sb -> sb.bool(dateBool -> {
                     if (Objects.nonNull(dateFrom)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("program_closes")
+                            r.field("call_closes")
                                 .gte(JsonData.of(dateFrom.toString()))
                         ));
                     }
                     if (Objects.nonNull(dateTo)) {
                         dateBool.must(m -> m.range(r ->
-                            r.field("program_opens")
+                            r.field("call_opens")
                                 .lte(JsonData.of(dateTo.toString()))
                         ));
                     }
@@ -348,11 +365,9 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
                 }));
             }
 
-            if (Objects.nonNull(funderId)) {
-                b.must(sb -> sb.term(
-                    m -> m.field("funder_id").value(funderId)
-                ));
-            }
+            b.must(sb -> sb.term(
+                m -> m.field("program_id").value(programId)
+            ));
 
             return b;
         })))._toQuery();

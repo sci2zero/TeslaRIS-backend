@@ -5,8 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,20 +19,27 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
+import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.dto.PromotionDTO;
 import rs.teslaris.thesislibrary.model.Promotion;
 import rs.teslaris.thesislibrary.repository.PromotionRepository;
@@ -49,6 +60,14 @@ public class PromotionServiceTest {
     @InjectMocks
     private PromotionServiceImpl service;
 
+    static Stream<Arguments> searchFilterProvider() {
+        return Stream.of(
+            Arguments.of(0, false),
+            Arguments.of(1, false),
+            Arguments.of(0, true),
+            Arguments.of(1, true)
+        );
+    }
 
     @Test
     void shouldCreatePromotion() {
@@ -60,13 +79,63 @@ public class PromotionServiceTest {
         when(multilingualContentService.getMultilingualContent(any()))
             .thenReturn(Set.of(new MultiLingualContent()));
         when(promotionRepository.save(any(Promotion.class))).thenReturn(saved);
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(any())).thenReturn(
+            List.of(1));
 
         // When
-        Promotion result = service.createPromotion(dto);
+        try (MockedStatic<SessionUtil> sessionUtilMock = mockStatic(SessionUtil.class)) {
+            sessionUtilMock.when(SessionUtil::getLoggedInUser)
+                .thenReturn(new User() {{
+                    setOrganisationUnit(new OrganisationUnit() {{
+                        setId(1);
+                    }});
+                }});
 
-        // Then
-        assertNotNull(result);
-        verify(promotionRepository).save(any(Promotion.class));
+            var result = service.createPromotion(dto);
+
+            // Then
+            assertNotNull(result);
+            verify(promotionRepository).save(any(Promotion.class));
+        }
+    }
+
+    @Test
+    void shouldThrowWhenInstitutionNotInSubHierarchy() {
+        // Given
+        var dto = new PromotionDTO(
+            null,
+            LocalDate.now(),
+            LocalTime.now(),
+            "Somewhere",
+            List.of(),
+            999, // NOT in allowed sub-hierarchy
+            false,
+            null
+        );
+
+        var user = new User();
+        var organisationUnit = new OrganisationUnit();
+        organisationUnit.setId(1);
+        user.setOrganisationUnit(organisationUnit);
+
+        when(organisationUnitService
+            .getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1));
+
+        try (MockedStatic<SessionUtil> sessionUtilMock = mockStatic(SessionUtil.class)) {
+            sessionUtilMock.when(SessionUtil::isUserLoggedInAndAdmin)
+                .thenReturn(false);
+
+            sessionUtilMock.when(SessionUtil::getLoggedInUser)
+                .thenReturn(user);
+
+            // When & Then
+            assertThrows(ReferenceConstraintException.class,
+                () -> service.createPromotion(dto));
+
+            verify(promotionRepository, never())
+                .save(any(Promotion.class));
+        }
     }
 
     @Test
@@ -138,8 +207,8 @@ public class PromotionServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, 1})
-    void shouldReturnAllPromotions(Integer userId) {
+    @MethodSource("searchFilterProvider")
+    void shouldReturnAllPromotions(int institutionId, boolean nonFinishedOnly) {
         // Given
         var pageable = PageRequest.of(0, 2);
         var promotion1 = new Promotion();
@@ -149,19 +218,19 @@ public class PromotionServiceTest {
         var promotions = List.of(promotion1, promotion2);
         var promotionPage = new PageImpl<>(promotions, pageable, 2);
 
-        when(promotionRepository.findAll(pageable)).thenReturn(promotionPage);
-        when(promotionRepository.findAll(anyInt(), eq(pageable))).thenReturn(promotionPage);
+        when(promotionRepository.findAll(any(), anyBoolean(), eq(pageable))).thenReturn(
+            promotionPage);
 
         // When
-        var result = service.getAllPromotions(userId, pageable);
+        var result = service.getAllPromotions(institutionId, nonFinishedOnly, pageable);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(2);
-        if (userId < 1) {
-            verify(promotionRepository).findAll(pageable);
+        if (institutionId < 1) {
+            verify(promotionRepository).findAll(isNull(), anyBoolean(), eq(pageable));
         } else {
-            verify(promotionRepository).findAll(anyInt(), eq(pageable));
+            verify(promotionRepository).findAll(anyInt(), anyBoolean(), eq(pageable));
         }
     }
 }

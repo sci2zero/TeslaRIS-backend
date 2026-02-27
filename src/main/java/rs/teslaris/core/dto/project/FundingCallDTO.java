@@ -15,6 +15,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.model.project.FundingType;
 
 @Getter
@@ -26,7 +28,7 @@ public class FundingCallDTO {
     @Valid
     @NotNull(message = "You have to provide a program name.")
     @NotEmpty(message = "You have to provide a program name.")
-    private List<MultilingualContentDTO> title;
+    private List<MultilingualContentDTO> name;
 
     private List<MultilingualContentDTO> description = new ArrayList<>();
 
@@ -40,7 +42,7 @@ public class FundingCallDTO {
 
     @NotNull(message = "You have to provide funder program ID.")
     @Positive(message = "Funder program ID cannot be a negative number.")
-    private Integer fundingProgram;
+    private Integer fundingProgramId;
 
     @NotNull(message = "You have to provide funding types.")
     private Set<FundingType> fundingTypes = new HashSet<>();
@@ -56,4 +58,13 @@ public class FundingCallDTO {
     private Boolean oaMandated;
 
     private String oaMandateUrl;
+
+    // Used only for responses
+    private Integer id;
+
+    private List<DocumentFileResponseDTO> fileItems = new ArrayList<>();
+
+    private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
+
+    private List<MultilingualContentDTO> fundingProgramName = new ArrayList<>();
 }

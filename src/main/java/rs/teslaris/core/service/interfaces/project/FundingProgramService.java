@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.project.FundingProgramDTO;
-import rs.teslaris.core.indexmodel.FundingProgramIndex;
+import rs.teslaris.core.indexmodel.project.FundingProgramIndex;
 import rs.teslaris.core.model.project.FundingProgram;
 import rs.teslaris.core.service.interfaces.JPAService;
 

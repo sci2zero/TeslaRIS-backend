@@ -1,4 +1,4 @@
-package rs.teslaris.core.indexmodel;
+package rs.teslaris.core.indexmodel.project;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.persistence.Id;
@@ -16,9 +16,9 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "funding_program")
+@Document(indexName = "funding_call")
 @Setting(settingPath = "/configuration/index-config.json")
-public class FundingProgramIndex {
+public class FundingCallIndex {
 
     @Id
     private String id;
@@ -37,15 +37,15 @@ public class FundingProgramIndex {
     @Field(type = FieldType.Keyword, name = "name_other_sortable", normalizer = "english_normalizer")
     private String nameOtherSortable;
 
-    @Field(type = FieldType.Integer, name = "funder_id", store = true)
-    private Integer funderId;
+    @Field(type = FieldType.Integer, name = "program_id", store = true)
+    private Integer programId;
 
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 
-    @Field(type = FieldType.Date, name = "program_opens")
-    private LocalDate programOpens;
+    @Field(type = FieldType.Date, name = "call_opens")
+    private LocalDate callOpens;
 
-    @Field(type = FieldType.Date, name = "program_closes")
-    private LocalDate programCloses;
+    @Field(type = FieldType.Date, name = "call_closes")
+    private LocalDate callCloses;
 }
