@@ -24,6 +24,7 @@ import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -448,8 +449,9 @@ public class DocumentAssessmentClassificationServiceImpl
                 .runQuery(findAllDocumentPublicationsByFilters(fromDate.toString(),
                         publicationTypes.stream().map(Enum::name).toList(),
                         authorIds, orgUnitIds, entityIds),
-                    PageRequest.of(pageNumber, chunkSize), DocumentPublicationIndex.class,
-                    "document_publication").getContent();
+                    PageRequest.of(pageNumber, chunkSize,
+                        Sort.by(Sort.Direction.ASC, "databaseId")),
+                    DocumentPublicationIndex.class, "document_publication").getContent();
 
             publicationClassificationService.classifyPublicationsChunk(chunk, presetCommission,
                 assessFunction, batchClassifications);

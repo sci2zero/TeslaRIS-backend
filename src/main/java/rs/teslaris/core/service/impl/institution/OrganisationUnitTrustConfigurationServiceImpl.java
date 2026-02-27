@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -288,7 +289,8 @@ public class OrganisationUnitTrustConfigurationServiceImpl
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> chunk =
-                searchService.runQuery(finalQuery, PageRequest.of(pageNumber, chunkSize),
+                searchService.runQuery(finalQuery, PageRequest.of(pageNumber, chunkSize,
+                        Sort.by(Sort.Direction.ASC, "databaseId")),
                     DocumentPublicationIndex.class, "document_publication").getContent();
 
             chunk.forEach((document) -> {

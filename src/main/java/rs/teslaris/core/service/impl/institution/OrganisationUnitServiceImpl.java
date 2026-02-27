@@ -962,7 +962,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
             List<Thesis> chunk =
                 organisationUnitRepository.fetchAllThesesForOU(organisationUnitId,
-                    PageRequest.of(pageNumber, chunkSize)).getContent();
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
+                    .getContent();
 
             chunk.forEach((thesis) -> {
                 thesis.getOrganisationUnit().getName().forEach(mc -> {

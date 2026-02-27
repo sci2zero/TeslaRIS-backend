@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.applicationevent.OrganisationUnitDeletedEvent;
@@ -51,7 +52,8 @@ public class PersonEventListener {
 
         while (hasNextPage) {
             List<PersonIndex> chunk = personIndexRepository.findByInstitutionId(organisationUnitId,
-                PageRequest.of(pageNumber, chunkSize)).getContent();
+                    PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+                .getContent();
 
             chunk.forEach(
                 index -> {

@@ -701,7 +701,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             List<PersonDocumentContribution> chunk =
                 personContributionRepository.fetchAllPersonDocumentContributions(personId,
-                    PageRequest.of(pageNumber, chunkSize)).getContent();
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
+                    .getContent();
 
             chunk.forEach((contribution) -> {
                 var index =

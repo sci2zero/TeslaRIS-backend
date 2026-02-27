@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -600,26 +601,30 @@ public class PersonAssessmentClassificationServiceImpl
                                                              int pageNumber, int chunkSize,
                                                              int startYear, int endYear) {
         return documentPublicationIndexRepository.findByAuthorIdsAndYearBetween(
-            personIndex.getDatabaseId(),
-            startYear, endYear, PageRequest.of(pageNumber, chunkSize)).getContent();
+                personIndex.getDatabaseId(),
+                startYear, endYear,
+                PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+            .getContent();
     }
 
     private List<PrizeIndex> fetchPrizes(PersonIndex personIndex,
                                          int pageNumber, int chunkSize,
                                          int startYear, int endYear) {
         return prizeIndexRepository.findByPersonIdAndDateBetween(
-            personIndex.getDatabaseId(),
-            LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
-            PageRequest.of(pageNumber, chunkSize)).getContent();
+                personIndex.getDatabaseId(),
+                LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
+                PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+            .getContent();
     }
 
     private List<EventIndex> fetchEvents(PersonIndex personIndex,
                                          int pageNumber, int chunkSize,
                                          int startYear, int endYear) {
         return eventIndexRepository.findByPersonIdAndDateBetween(
-            personIndex.getDatabaseId(),
-            LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
-            PageRequest.of(pageNumber, chunkSize)).getContent();
+                personIndex.getDatabaseId(),
+                LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
+                PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+            .getContent();
     }
 
     private void processPublication(

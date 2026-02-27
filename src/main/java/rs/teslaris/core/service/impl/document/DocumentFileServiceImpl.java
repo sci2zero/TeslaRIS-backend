@@ -28,6 +28,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -566,7 +567,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         while (hasNextPage) {
             List<DocumentFile> chunk =
-                documentFileRepository.findAllIndexable(PageRequest.of(pageNumber, chunkSize))
+                documentFileRepository.findAllIndexable(
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
                     .getContent();
 
             chunk.forEach(this::reindexDocumentFile);
