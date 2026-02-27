@@ -291,7 +291,7 @@
   },
   "assessmentCodeSortingRule": {
     "startsWithConstraint": "M",
-    "codePattern": "^M(\\d+)([eEaA]|Plus|APlus|a\\+)?$",
+    "codePattern": "^M(\\d+)([eEaA]|Plus|APlus|a\\+|\\+)?$",
     "scoreAdjustments": {
       "e": 0.5,
       "E": 0.5,
