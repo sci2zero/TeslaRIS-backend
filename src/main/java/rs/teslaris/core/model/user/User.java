@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.Collection;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -81,6 +82,9 @@ public class User extends BaseEntity implements UserDetails {
 
     @Column(name = "receive_only_new_notifications", nullable = false)
     private Boolean receiveOnlyNewNotifications = true;
+
+    @Column(name = "tombstone")
+    private LocalDate tombstone;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

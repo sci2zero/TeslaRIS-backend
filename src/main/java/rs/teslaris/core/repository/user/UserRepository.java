@@ -1,5 +1,6 @@
 package rs.teslaris.core.repository.user;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.user.User;
@@ -113,4 +115,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Modifying
     @Query("UPDATE EntityIndicator ei SET ei.user = (SELECT u FROM User u WHERE u.id = :newUserId) WHERE ei.user.id = :oldUserId")
     void migrateEntityIndicatorsToAnotherUser(Integer newUserId, Integer oldUserId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM User u WHERE " +
+        "u.tombstone IS NOT NULL " +
+        "AND u.tombstone = :date")
+    void deleteAllThatExpireOnDate(LocalDate date);
 }

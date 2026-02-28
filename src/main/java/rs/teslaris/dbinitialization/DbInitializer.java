@@ -452,7 +452,7 @@ public class DbInitializer implements ApplicationRunner {
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
                 "Markovic", false, false, serbianTag, englishTag, adminAuthority, null,
                 null, null,
-                UserNotificationPeriod.DAILY, true);
+                UserNotificationPeriod.DAILY, true, null);
         userRepository.save(adminUser);
 
         // RESEARCH AREAS - NOT COMPLETE

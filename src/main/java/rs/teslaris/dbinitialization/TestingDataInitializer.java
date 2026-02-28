@@ -246,7 +246,7 @@ public class TestingDataInitializer {
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
                 "Dragan", "Ivanovic", false, false, serbianTag, serbianTag,
                 researcherAuthority, person1,
-                null, null, UserNotificationPeriod.DAILY, true);
+                null, null, UserNotificationPeriod.DAILY, true, null);
         userRepository.save(researcherUser);
 
         var dummyOU = new OrganisationUnit();
@@ -539,7 +539,7 @@ public class TestingDataInitializer {
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
                 "Schöpfel", "Joachim", false, false, englishTag, germanTag,
                 researcherAuthority, person2,
-                null, null, UserNotificationPeriod.WEEKLY, false);
+                null, null, UserNotificationPeriod.WEEKLY, false, null);
         userRepository.save(researcherUser2);
 
         var person3 = new Person();
@@ -838,7 +838,7 @@ public class TestingDataInitializer {
                 "note note note",
                 "FTN", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
-                dummyOU, commission5, UserNotificationPeriod.WEEKLY, true);
+                dummyOU, commission5, UserNotificationPeriod.WEEKLY, true, null);
         userRepository.save(commissionUser);
 
         var commissionUser2 =
@@ -846,7 +846,7 @@ public class TestingDataInitializer {
                 "note note note",
                 "PMF", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
-                dummyOU2, commission6, UserNotificationPeriod.WEEKLY, true);
+                dummyOU2, commission6, UserNotificationPeriod.WEEKLY, true, null);
         userRepository.save(commissionUser2);
 
         var assessmentResearchArea = new AssessmentResearchArea();
@@ -860,14 +860,14 @@ public class TestingDataInitializer {
                 "Nikola", "Nikolic", false, false, serbianTag, serbianTag,
                 viceDeanForScienceAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY, false);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, false, null);
 
         var institutionalEditorUser =
             new User("editor@editor.com", passwordEncoder.encode("editor"), "note note note",
                 "Nikola", "Markovic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY, true);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, true, null);
 
         var institutionalLibrarianUser =
             new User("librarian@librarian.com", passwordEncoder.encode("librarian"),
@@ -875,7 +875,7 @@ public class TestingDataInitializer {
                 "Mirka", "Maric", false, false, serbianTag, serbianTag,
                 institutionalLibrarianAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY, true);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, true, null);
 
         var headOfLibraryUser =
             new User("head_of_library@library.com", passwordEncoder.encode("head_of_library"),
@@ -883,7 +883,7 @@ public class TestingDataInitializer {
                 "Djordje", "Perovic", false, false, serbianTag, serbianTag,
                 headOfLibraryAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.MONTHLY, true);
+                dummyOU, null, UserNotificationPeriod.MONTHLY, true, null);
 
         var promotionRegistryAdminUser =
             new User("promotion@registry.com", passwordEncoder.encode("promotion_registry"),
@@ -891,14 +891,14 @@ public class TestingDataInitializer {
                 "Davor", "Kontić", false, false, serbianTag, serbianTag,
                 promotionRegistryAdminAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.DAILY, true);
+                dummyOU, null, UserNotificationPeriod.DAILY, true, null);
 
         var institutionalEditorUser2 =
             new User("editor2@editor.com", passwordEncoder.encode("editor2"), "note note note",
                 "Marko", "Nikolic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
-                dummyOU2, null, UserNotificationPeriod.WEEKLY, true);
+                dummyOU2, null, UserNotificationPeriod.WEEKLY, true, null);
 
         userRepository.saveAll(
             List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,

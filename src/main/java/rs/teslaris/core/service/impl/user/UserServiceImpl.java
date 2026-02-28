@@ -12,6 +12,7 @@ import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -558,7 +559,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             person.getName().getFirstname(), person.getName().getLastname(), true, false,
             language, language, authority, person,
             Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
-            null, UserNotificationPeriod.WEEKLY, true
+            null, UserNotificationPeriod.WEEKLY, true, null
         );
     }
 
@@ -676,7 +677,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             organisationUnit,
             commission,
             UserNotificationPeriod.WEEKLY,
-            true
+            true,
+            null
         );
 
         var savedUser = userRepository.save(newUser);
@@ -1066,6 +1068,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         userToDelete.setPerson(null);
         userToDelete.setLocked(true);
         userToDelete.setDeleted(true);
+        userToDelete.setTombstone(LocalDate.now().plusMonths(1));
         userRepository.save(userToDelete);
 
         userAccountIndexRepository.findByDatabaseId(userId)
@@ -1297,5 +1300,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public void cleanupExpiredTokens() {
         tokenUtil.cleanupExpiredTokens();
+    }
+
+    @Scheduled(cron = "0 30 0 * * *") // every day at 00:30
+    @Transactional
+    public void cleanupDeletedUsers() {
+        userRepository.deleteAllThatExpireOnDate(LocalDate.now());
     }
 }
