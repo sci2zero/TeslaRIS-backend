@@ -138,9 +138,9 @@ public class FundingProgramServiceTest {
         assertNotNull(result);
         assertFalse(result.isEmpty());
         assertEquals(1, result.getTotalElements());
-        assertEquals(1, result.getContent().get(0).getDatabaseId());
-        assertEquals("Test Program", result.getContent().get(0).getNameSr());
-        assertEquals(1, result.getContent().get(0).getFunderId());
+        assertEquals(1, result.getContent().getFirst().getDatabaseId());
+        assertEquals("Test Program", result.getContent().getFirst().getNameSr());
+        assertEquals(1, result.getContent().getFirst().getFunderId());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
             eq(FundingProgramIndex.class), eq("funding_program"));
     }

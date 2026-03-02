@@ -1069,7 +1069,6 @@ public class DocumentAssessmentClassificationServiceImpl
         List<Integer> authorIds,
         List<Integer> organisationUnitIds,
         List<Integer> publishedInIds) {
-
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(sb -> sb.range(r -> r.field("last_edited").gte(JsonData.of(date))));
             b.must(sb -> sb.terms(t -> t.field("type")
