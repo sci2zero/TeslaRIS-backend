@@ -8,8 +8,6 @@ import rs.teslaris.core.service.interfaces.JPAService;
 @Service
 public interface FundingPartService extends JPAService<FundingPart> {
 
-    FundingPartDTO readFundingPart(Integer fundingPartId);
-
     FundingPart createFundingPart(FundingPartDTO fundingPartDTO);
 
     void updateFundingPart(Integer fundingPartId, FundingPartDTO fundingPartDTO);

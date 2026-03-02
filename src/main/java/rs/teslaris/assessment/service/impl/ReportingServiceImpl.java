@@ -73,8 +73,18 @@ public class ReportingServiceImpl implements ReportingService {
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Locale " + locale + " does not exist."))
                 .getContent().replace(" ", "_");
+
+        var institutionId = userRepository.findOUIdForCommission(commissionIds.getFirst());
+        if (Objects.isNull(institutionId)) {
+            if (Objects.nonNull(topLevelInstitutionId)) {
+                institutionId = topLevelInstitutionId;
+            } else {
+                throw new NotFoundException("noOUForConfigurationMessage");
+            }
+        }
+
         var taskId = taskManagerService.scheduleTask(
-            "ReportGeneration-" + userRepository.findOUIdForCommission(commissionIds.getFirst()) +
+            "ReportGeneration-" + institutionId +
                 "-" + commissionName +
                 "-" + reportType + "-" + assessmentYear +
                 "-" + UUID.randomUUID(), timeToRun,

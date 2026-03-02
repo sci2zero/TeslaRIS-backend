@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -82,9 +80,6 @@ public class FundingProgramServiceTest {
 
     @Mock
     private FundingProgramIndexRepository fundingProgramIndexRepository;
-
-    @Captor
-    private ArgumentCaptor<FundingProgram> fundingProgramCaptor;
 
     @InjectMocks
     private FundingProgramServiceImpl fundingProgramService;

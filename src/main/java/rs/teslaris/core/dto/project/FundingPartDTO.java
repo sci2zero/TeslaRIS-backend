@@ -27,6 +27,8 @@ public class FundingPartDTO {
     @NotEmpty(message = "You have to provide a funding part description.")
     private List<MultilingualContentDTO> description;
 
+    @NotNull(message = "You have to specify costs")
+    @Valid
     private MonetaryAmountDTO costs;
 
     private Integer projectEventId;

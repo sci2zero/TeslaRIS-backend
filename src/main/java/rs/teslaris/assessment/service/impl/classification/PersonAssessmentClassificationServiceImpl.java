@@ -64,6 +64,7 @@ import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
@@ -107,6 +108,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final EventIndexRepository eventIndexRepository;
 
+    private final OrganisationUnitService organisationUnitService;
+
     private final int CHUNK_SIZE = 1000;
 
 
@@ -128,7 +131,8 @@ public class PersonAssessmentClassificationServiceImpl
         CitationService citationService, InvolvementRepository involvementRepository,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
         ResearchAreaRepository researchAreaRepository, PrizeIndexRepository prizeIndexRepository,
-        EventIndexRepository eventIndexRepository) {
+        EventIndexRepository eventIndexRepository,
+        OrganisationUnitService organisationUnitService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, exhibitionService, applicationEventPublisher,
             entityAssessmentClassificationRepository);
@@ -146,6 +150,7 @@ public class PersonAssessmentClassificationServiceImpl
         this.researchAreaRepository = researchAreaRepository;
         this.prizeIndexRepository = prizeIndexRepository;
         this.eventIndexRepository = eventIndexRepository;
+        this.organisationUnitService = organisationUnitService;
     }
 
     @Override
@@ -166,8 +171,20 @@ public class PersonAssessmentClassificationServiceImpl
                                                                            Integer endYear,
                                                                            Integer topLevelInstitutionId) {
         var commission = commissionService.findOneWithFetchedRelations(commissionId);
-        var organisationUnit = userRepository.findOUForCommission(commissionId)
-            .orElseThrow(() -> new NotFoundException("commissionNotBoundToOUMessage"));
+        var commissionOuOpt = userRepository.findOUForCommission(commissionId);
+        if (commissionOuOpt.isEmpty()) {
+            if (Objects.nonNull(topLevelInstitutionId)) {
+                log.warn("Commission {} not bound to OU. Falling back to top level OU {}",
+                    commissionId, topLevelInstitutionId);
+                commissionOuOpt =
+                    Optional.of(organisationUnitService.findOne(topLevelInstitutionId));
+            } else {
+                throw new NotFoundException("commissionNotBoundToOUMessage");
+            }
+        }
+
+        var organisationUnit = commissionOuOpt.get();
+
         var subOUs =
             organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnit.getId());
         subOUs.add(organisationUnit.getId());
