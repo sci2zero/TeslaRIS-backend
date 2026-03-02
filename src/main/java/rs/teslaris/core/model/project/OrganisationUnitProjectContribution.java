@@ -47,10 +47,10 @@ public class OrganisationUnitProjectContribution extends BaseEntity {
     private OrganisationUnit organisationUnit;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> displayOrganizationUnit = new HashSet<>();
+    private Set<MultiLingualContent> displayOU = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<MultiLingualContent> contributionDescription = new HashSet<>();
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> contactPoint = new HashSet<>();

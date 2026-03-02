@@ -9,7 +9,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -48,9 +47,8 @@ public class Funding extends BaseEntity {
     @JoinColumn(name = "project_id")
     private Project project;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "agreement_id")
-    private DocumentFile agreement;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<DocumentFile> agreements = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
@@ -88,7 +86,7 @@ public class Funding extends BaseEntity {
     private Set<MultiLingualContent> displayFunder = new HashSet<>();
 
     @OneToMany(mappedBy = "forFunding", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<FundingPart> fundingParts;
+    private Set<FundingPart> fundingParts = new HashSet<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "funding_types")
