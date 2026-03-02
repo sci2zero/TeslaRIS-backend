@@ -10,8 +10,10 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.project.Currency;
+import rs.teslaris.core.model.project.FundingCall;
 import rs.teslaris.core.model.project.FundingProgram;
 import rs.teslaris.core.repository.project.CurrencyRepository;
+import rs.teslaris.core.repository.project.FundingCallRepository;
 import rs.teslaris.core.repository.project.FundingProgramRepository;
 
 @Component
@@ -22,6 +24,8 @@ public class ProjectDataInitializer {
     private final CurrencyRepository currencyRepository;
 
     private final FundingProgramRepository fundingProgramRepository;
+
+    private final FundingCallRepository fundingCallRepository;
 
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1) {
@@ -58,5 +62,21 @@ public class ProjectDataInitializer {
         fundingProgram2.setFunder(funder1);
 
         fundingProgramRepository.saveAll(List.of(fundingProgram1, fundingProgram2));
+
+        var fundingCall1 = new FundingCall();
+        fundingCall1.setName(
+            Set.of(new MultiLingualContent(englishTag, "Funding Call 1", 1)));
+        fundingCall1.setCallOpens(LocalDate.of(2020, 2, 1));
+        fundingCall1.setCallCloses(LocalDate.of(2021, 2, 1));
+        fundingCall1.setFundingProgram(fundingProgram1);
+
+        var fundingCall2 = new FundingCall();
+        fundingCall2.setName(
+            Set.of(new MultiLingualContent(englishTag, "Funding Call 2", 1)));
+        fundingCall2.setCallOpens(LocalDate.of(2022, 7, 6));
+        fundingCall2.setCallCloses(LocalDate.of(2023, 3, 17));
+        fundingCall2.setFundingProgram(fundingProgram1);
+
+        fundingCallRepository.saveAll(List.of(fundingCall1, fundingCall2));
     }
 }

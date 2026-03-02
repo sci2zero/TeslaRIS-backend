@@ -40,14 +40,12 @@ public class ThesisLibraryDissertationReportServiceImpl implements
 
 
     @Override
-    public Page<ThesisPublicReviewResponseDTO> fetchPublicReviewDissertations(
-        Integer institutionId,
-        Integer year,
-        Boolean notDefendedOnly,
-        Integer userInstitutionId,
-        Pageable pageable) {
-
-        Set<Integer> institutionIds = getInstitutionIds(institutionId);
+    public Page<ThesisPublicReviewResponseDTO> fetchPublicReviewDissertations(Integer institutionId,
+                                                                              Integer year,
+                                                                              Boolean notDefendedOnly,
+                                                                              Integer userInstitutionId,
+                                                                              Pageable pageable) {
+        var institutionIds = getInstitutionIds(institutionId);
 
         List<Query> mustQueries = new ArrayList<>();
 
@@ -107,7 +105,9 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 index.getScientificFieldOther(),
                 index.getLatestPublicReviewStartDate().toString(),
                 index.getLatestPublicReviewStartDate()
-                    .plusDays(PublicReviewConfigurationLoader.getLengthInDays(false)).toString(),
+                    .plusDays(
+                        PublicReviewConfigurationLoader.getLengthInDays(false)
+                    ).toString(),
                 index.getDatabaseId()
             ));
     }

@@ -903,20 +903,25 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesisResearchOutputRepository.findResearchOutputIdsForThesis(thesis.getId()));
         index.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());
         index.setThesisDefenceDate(thesis.getThesisDefenceDate());
+
         index.setPublicReviewStartDates(thesis.getPublicReviewStartDates().stream().toList());
         if (!index.getPublicReviewStartDates().isEmpty()) {
-            index.setLatestPublicReviewStartDate(index.getPublicReviewStartDates().getLast());
+            index.getPublicReviewStartDates().stream()
+                .max(LocalDate::compareTo)
+                .ifPresent(index::setLatestPublicReviewStartDate);
         }
+
         index.setIsOnPublicReview(thesis.getIsOnPublicReview());
         index.setIsPublicReviewCompleted(thesis.getPublicReviewCompleted());
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             index.setThesisInstitutionId(thesis.getOrganisationUnit().getId());
             organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                thesis.getOrganisationUnit().getId()).ifPresent(institutionIndex -> {
-                index.setThesisInstitutionNameSr(institutionIndex.getNameSr());
-                index.setThesisInstitutionNameOther(institutionIndex.getNameOther());
-            });
+                    thesis.getOrganisationUnit().getId())
+                .ifPresent(institutionIndex -> {
+                    index.setThesisInstitutionNameSr(institutionIndex.getNameSr());
+                    index.setThesisInstitutionNameOther(institutionIndex.getNameOther());
+                });
         }
 
         indexScientificArea(thesis, index);

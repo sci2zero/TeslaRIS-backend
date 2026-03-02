@@ -70,7 +70,7 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                                                      LocalDate dateTo, Integer programId,
                                                      Pageable pageable) {
         return searchService.runQuery(buildSimpleSearchQuery(tokens, dateFrom, dateTo, programId),
-            pageable, FundingCallIndex.class, "funding_program");
+            pageable, FundingCallIndex.class, "funding_call");
     }
 
     @Override
@@ -127,10 +127,10 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
     @Override
     @Transactional
     public DocumentFileResponseDTO addFundingCallDocument(Integer fundingCallId,
-                                                          DocumentFileDTO program) {
+                                                          DocumentFileDTO call) {
         var fundingCall = findOne(fundingCallId);
-        program.setAccessRights(AccessRights.ALL_RIGHTS_RESERVED); // TODO: should we keep this?
-        var documentFile = documentFileService.saveNewDocument(program, false);
+        call.setAccessRights(AccessRights.ALL_RIGHTS_RESERVED); // TODO: should we keep this?
+        var documentFile = documentFileService.saveNewDocument(call, false);
         fundingCall.getCallDocuments().add(documentFile);
 
         save(fundingCall);
@@ -148,12 +148,12 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
 
     @Override
     @Transactional
-    public void deleteFundingCallDocument(Integer programFileId, Integer fundingCallId) {
-        var documentFile = documentFileService.findOne(programFileId);
+    public void deleteFundingCallDocument(Integer callFileId, Integer fundingCallId) {
+        var documentFile = documentFileService.findOne(callFileId);
         var fundingCall = findOne(fundingCallId);
         fundingCall.getCallDocuments().remove(documentFile);
 
-        documentFileService.delete(programFileId);
+        documentFileService.delete(callFileId);
         save(fundingCall);
     }
 

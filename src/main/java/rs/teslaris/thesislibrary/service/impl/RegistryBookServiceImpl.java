@@ -129,7 +129,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                                                                         Pageable pageable) {
         var userEmploymentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
         if (Objects.nonNull(userEmploymentInstitutionId) && userEmploymentInstitutionId > 0) {
-            registryBookEntryRepository.getNonPromotedBookEntries(
+            return registryBookEntryRepository.getNonPromotedBookEntries(
                 organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(
                     userEmploymentInstitutionId), pageable).map(RegistryBookEntryConverter::toDTO);
         }
