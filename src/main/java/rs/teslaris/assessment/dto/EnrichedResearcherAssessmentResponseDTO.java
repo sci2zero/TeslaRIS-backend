@@ -27,4 +27,6 @@ public class EnrichedResearcherAssessmentResponseDTO extends ResearcherAssessmen
     private List<MultilingualContentDTO> institutionName;
 
     private Map<Integer, List<Integer>> publicationToInstitution = new HashMap<>();
+
+    private Map<Integer, Integer> publicationToCommission = new HashMap<>();
 }

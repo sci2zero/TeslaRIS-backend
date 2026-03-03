@@ -228,6 +228,7 @@ public class DbInitializer implements ApplicationRunner {
         var editFundingPrograms = new Privilege("EDIT_FUNDING_PROGRAMS");
         var readFundingCalls = new Privilege("READ_FUNDING_CALLS");
         var editFundingCalls = new Privilege("EDIT_FUNDING_CALLS");
+        var editFundingParts = new Privilege("EDIT_FUNDING_PARTS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -269,7 +270,8 @@ public class DbInitializer implements ApplicationRunner {
                 unpromoteRbEntries, changePublicationType, assessPrizes, editExhibitions,
                 createExhibitions, mergeExhibitions, substituteThesis, setPersonFieldVisibility,
                 enrichDocumentMetadata, enrichInstitutionMetadata, scheduleMetadataEnrichment,
-                editFundingPrograms, readFundingPrograms, readFundingCalls, editFundingCalls));
+                editFundingPrograms, readFundingPrograms, readFundingCalls, editFundingCalls,
+                editFundingParts));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -310,7 +312,7 @@ public class DbInitializer implements ApplicationRunner {
                 editExhibitions, createExhibitions, mergeExhibitions, substituteThesis,
                 setPersonFieldVisibility, enrichDocumentMetadata, enrichInstitutionMetadata,
                 scheduleMetadataEnrichment, editFundingPrograms, readFundingPrograms,
-                readFundingCalls, editFundingCalls
+                readFundingCalls, editFundingCalls, editFundingParts
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

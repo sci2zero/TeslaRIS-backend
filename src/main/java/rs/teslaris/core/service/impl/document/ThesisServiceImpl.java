@@ -485,7 +485,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 publicReviewLengthDays + "_DAYS-" +
                 UUID.randomUUID(),
             timestamp,
-            () -> removeFromPublicReview(types, publicReviewLengthDays),
+            () -> completePublicReview(types, publicReviewLengthDays),
             userId, recurrence);
 
         taskManagerService.saveTaskMetadata(
@@ -583,6 +583,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         thesis.setIsOnPublicReview(true);
+        thesis.setPublicReviewCompleted(false);
         thesis.setIsShortenedReview(shortened);
         updatePublicReviewDates(thesis, continueLastReview, false);
 
@@ -968,13 +969,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     protected void removeFromPublicReviewScheduledFallback() {
         if (Objects.nonNull(fallbackPublicReviewCheckEnabled) && fallbackPublicReviewCheckEnabled) {
-            removeFromPublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
+            completePublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
                 PublicReviewConfigurationLoader.getLengthInDays(false));
         }
     }
 
-    private void removeFromPublicReview(List<ThesisType> thesisTypes,
-                                        Integer publicReviewLengthDays) {
+    private void completePublicReview(List<ThesisType> thesisTypes,
+                                      Integer publicReviewLengthDays) {
         var thesesOnPublicReview = thesisRepository.findAllOnPublicReviewOfGivenTypes(thesisTypes);
 
         var latestPossibleStartDate = LocalDate.now().minusDays(publicReviewLengthDays);

@@ -56,6 +56,7 @@ import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.repository.institution.CommissionRelationProjection;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -256,7 +257,8 @@ public class PersonAssessmentClassificationServiceImpl
         assessmentResult.setPersonPosition(employments.getFirst().getEmploymentPosition());
 
         processResearcher(personIndex, commission, assessmentMeasures, pointsRuleEngine,
-            scalingRuleEngine, assessmentResult, startYear, endYear, subOUsForTopLevelInstitution);
+            scalingRuleEngine, assessmentResult, startYear, endYear, subOUsForTopLevelInstitution,
+            commissionService.findRelationsWithTargetIds(commission.getId()));
 
         responses.add(assessmentResult);
     }
@@ -293,7 +295,7 @@ public class PersonAssessmentClassificationServiceImpl
 
             processResearcher(index.get(), commission, assessmentMeasures,
                 pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
-                endDate.getYear(), Collections.emptyList());
+                endDate.getYear(), Collections.emptyList(), Collections.emptyList());
             assessmentResponse.add(assessmentResult);
         });
 
@@ -473,7 +475,8 @@ public class PersonAssessmentClassificationServiceImpl
                                    AssessmentPointsScalingRuleEngine scalingRuleEngine,
                                    EnrichedResearcherAssessmentResponseDTO assessmentResult,
                                    int startYear, int endYear,
-                                   List<Integer> subOUsForTopLevelInstitution) {
+                                   List<Integer> subOUsForTopLevelInstitution,
+                                   List<CommissionRelationProjection> commissionRelationProjections) {
         var researchArea = getResearchArea(personIndex.getDatabaseId(), commission);
 
         researchArea.ifPresent(
@@ -486,7 +489,8 @@ public class PersonAssessmentClassificationServiceImpl
                 assessResearcherPublications(personIndex, commission, assessmentMeasures,
                     pointsRuleEngine, scalingRuleEngine,
                     assessmentResearchArea, startYear, endYear,
-                    assessmentResult, subOUsForTopLevelInstitution);
+                    assessmentResult, subOUsForTopLevelInstitution,
+                    commissionRelationProjections);
 
                 if (!CollectionOperations.containsValues(subOUsForTopLevelInstitution)) {
                     assessResearcherPrizes(personIndex, commission, assessmentMeasures,
@@ -516,7 +520,8 @@ public class PersonAssessmentClassificationServiceImpl
         AssessmentResearchArea assessmentResearchArea,
         int startYear, int endYear,
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
-        List<Integer> subOUsForTopLevelInstitution) {
+        List<Integer> subOUsForTopLevelInstitution,
+        List<CommissionRelationProjection> commissionRelationProjections) {
 
         var isUserLoggedIn = SessionUtil.isUserLoggedIn();
         List<Integer> publicationIdsBatch = new ArrayList<>();
@@ -544,7 +549,8 @@ public class PersonAssessmentClassificationServiceImpl
                     scalingRuleEngine, assessmentResearchArea, personIndex, assessmentResult,
                     subOUsForTopLevelInstitution,
                     indicatorsByDocumentId.getOrDefault(publication.getDatabaseId(),
-                        Collections.emptyList()), isUserLoggedIn));
+                        Collections.emptyList()), isUserLoggedIn,
+                    commissionRelationProjections));
 
             pageNumber++;
             hasNextPage = publications.size() == CHUNK_SIZE;
@@ -654,19 +660,37 @@ public class PersonAssessmentClassificationServiceImpl
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
         List<Integer> subOUsForTopLevelInstitution,
         List<DocumentIndicator> indicators,
-        boolean isUserLoggedIn) {
+        boolean isUserLoggedIn,
+        List<CommissionRelationProjection> commissionRelationProjections) {
 
         var assessments = publication.getCommissionAssessments().stream()
             .filter(ca -> ca.a.equals(commission.getId()))
             .collect(Collectors.toSet());
 
-        var hasManualClassifications = publication.getCommissionAssessments().stream()
-            .anyMatch(ca -> ca.c.equals(true));
+        Optional<Triple<Integer, String, Boolean>> assessment = Optional.empty();
 
-        var assessment =
-            assessments.stream()
-                .filter(ca -> ca.c.equals(hasManualClassifications))
-                .findFirst();
+        if (assessments.isEmpty()) {
+            for (var relationProjection : commissionRelationProjections) {
+                var relationGroupAssessments = publication.getCommissionAssessments().stream()
+                    .filter(ca -> relationProjection.targetCommissionIds().contains(ca.a))
+                    .collect(Collectors.toSet());
+                assessment = ClassificationPriorityMapping.getClassificationBasedOnCriteria(
+                    relationGroupAssessments,
+                    relationProjection.resultCalculationMethod());
+
+                if (assessment.isPresent()) {
+                    break;
+                }
+            }
+        } else {
+            var hasManualClassifications = publication.getCommissionAssessments().stream()
+                .anyMatch(ca -> ca.c.equals(true));
+
+            assessment =
+                assessments.stream()
+                    .filter(ca -> ca.c.equals(hasManualClassifications))
+                    .findFirst();
+        }
 
         if (assessment.isEmpty()) {
             return;
@@ -696,6 +720,8 @@ public class PersonAssessmentClassificationServiceImpl
         if (!subOUsForTopLevelInstitution.isEmpty()) {
             populateTopLevelBelongingInformation(publication, assessmentResult,
                 subOUsForTopLevelInstitution);
+            assessmentResult.getPublicationToCommission()
+                .put(publication.getDatabaseId(), assessment.get().a);
         }
     }
 

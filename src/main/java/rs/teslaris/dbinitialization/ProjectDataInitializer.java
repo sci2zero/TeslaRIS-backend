@@ -10,11 +10,16 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.project.Currency;
+import rs.teslaris.core.model.project.Funding;
 import rs.teslaris.core.model.project.FundingCall;
+import rs.teslaris.core.model.project.FundingPart;
 import rs.teslaris.core.model.project.FundingProgram;
+import rs.teslaris.core.model.project.MonetaryAmount;
 import rs.teslaris.core.repository.project.CurrencyRepository;
 import rs.teslaris.core.repository.project.FundingCallRepository;
+import rs.teslaris.core.repository.project.FundingPartRepository;
 import rs.teslaris.core.repository.project.FundingProgramRepository;
+import rs.teslaris.core.repository.project.FundingRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +31,10 @@ public class ProjectDataInitializer {
     private final FundingProgramRepository fundingProgramRepository;
 
     private final FundingCallRepository fundingCallRepository;
+
+    private final FundingRepository fundingRepository;
+
+    private final FundingPartRepository fundingPartRepository;
 
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1) {
@@ -78,5 +87,33 @@ public class ProjectDataInitializer {
         fundingCall2.setFundingProgram(fundingProgram1);
 
         fundingCallRepository.saveAll(List.of(fundingCall1, fundingCall2));
+
+        var funding1 = new Funding();
+        funding1.setName(Set.of(new MultiLingualContent(englishTag, "Funding 1", 1)));
+        funding1.setGrant(new MonetaryAmount(1000000, currencyEuro));
+
+        var funding2 = new Funding();
+        funding2.setName(Set.of(new MultiLingualContent(englishTag, "Funding 2", 1)));
+        funding2.setGrant(new MonetaryAmount(1000000, currencyEuro));
+
+        var funding3 = new Funding();
+        funding3.setName(Set.of(new MultiLingualContent(englishTag, "Big Funding", 1)));
+        funding3.setGrant(new MonetaryAmount(1000000000, currencyEuro));
+
+        fundingRepository.saveAll(List.of(funding1, funding2, funding3));
+
+        var fundingPart1 = new FundingPart();
+        fundingPart1.setDescription(Set.of(new MultiLingualContent(englishTag, "Small Part", 1)));
+        fundingPart1.setCosts(new MonetaryAmount(3000, currencyEuro));
+        fundingPart1.setFunding(funding3);
+        fundingPart1.setForFunding(funding1);
+
+        var fundingPart2 = new FundingPart();
+        fundingPart2.setDescription(Set.of(new MultiLingualContent(englishTag, "Big Part", 1)));
+        fundingPart2.setCosts(new MonetaryAmount(10000, currencyEuro));
+        fundingPart2.setFunding(funding3);
+        fundingPart2.setForFunding(funding1);
+
+        fundingPartRepository.saveAll(List.of(fundingPart1, fundingPart2));
     }
 }

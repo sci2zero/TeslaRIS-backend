@@ -1,5 +1,8 @@
 package rs.teslaris.assessment.util;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -11,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -24,6 +28,7 @@ import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 
@@ -37,6 +42,19 @@ public class AssessmentReportGenerator {
     private static UserRepository userRepository;
 
     private static OrganisationUnitService organisationUnitService;
+
+    private static final LoadingCache<Integer, List<Integer>> ouHierarchyCache =
+        CacheBuilder.newBuilder()
+            .maximumSize(500)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build(new CacheLoader<>() {
+
+                @Override
+                public List<Integer> load(Integer ouId) {
+                    return organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(ouId);
+                }
+
+            });
 
     private static CommissionService commissionService;
 
@@ -392,23 +410,56 @@ public class AssessmentReportGenerator {
     private static Map<String, int[]> computeCategorySums(
         List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
         List<Integer> commissionIds) {
+        // Map commissionId -> index in result array
+        Map<Integer, Integer> commissionIndexMap = new HashMap<>();
+        for (int i = 0; i < commissionIds.size(); i++) {
+            commissionIndexMap.put(commissionIds.get(i), i);
+        }
+
+        // category -> array of sets (one set per commission)
+        Map<String, Set<Integer>[]> categoryToPublicationSets =
+            new TreeMap<>(AssessmentReportGenerator::classificationCodeSorter);
+
+        for (EnrichedResearcherAssessmentResponseDTO response : assessmentResponses) {
+            var commissionId = response.getCommissionId();
+            var commissionIndex = commissionIndexMap.get(commissionId);
+
+            if (Objects.isNull(commissionIndex)) {
+                continue; // skip commissions not in requested list
+            }
+
+            response.getPublicationsPerCategory()
+                .forEach((category, publications) -> {
+                    categoryToPublicationSets.computeIfAbsent(category, k -> {
+                        @SuppressWarnings("unchecked")
+                        Set<Integer>[] arr = new HashSet[commissionIds.size()];
+                        for (int j = 0; j < arr.length; j++) {
+                            arr[j] = new HashSet<>();
+                        }
+                        return arr;
+                    });
+
+                    Set<Integer>[] sets = categoryToPublicationSets.get(category);
+
+                    for (Triple<String, Double, Integer> triple : publications) {
+                        Integer publicationId = triple.c; // document databaseId
+                        if (Objects.nonNull(publicationId)) {
+                            sets[commissionIndex].add(publicationId);
+                        }
+                    }
+                });
+        }
 
         Map<String, int[]> categoryToSums =
             new TreeMap<>(AssessmentReportGenerator::classificationCodeSorter);
 
-        for (int i = 0; i < commissionIds.size(); i++) {
-            int commissionId = commissionIds.get(i);
-            int finalI = i;
-            assessmentResponses.stream()
-                .filter(response -> response.getCommissionId().equals(commissionId))
-                .forEach(response -> response.getPublicationsPerCategory()
-                    .forEach((category, publications) -> {
-                        categoryToSums.computeIfAbsent(category,
-                            k -> new int[commissionIds.size()]);
-                        categoryToSums.get(category)[finalI] += publications.size();
-                    })
-                );
-        }
+        categoryToPublicationSets.forEach((category, sets) -> {
+            int[] counts = new int[commissionIds.size()];
+            for (int i = 0; i < sets.length; i++) {
+                counts[i] = sets[i].size();
+            }
+            categoryToSums.put(category, counts);
+        });
 
         return categoryToSums;
     }
@@ -428,7 +479,8 @@ public class AssessmentReportGenerator {
     }
 
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTableTopLevelInstitutionColored(
-        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, String locale) {
+        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, String locale,
+        Integer topLevelInstitutionId) {
 
         if (assessmentResponses.isEmpty()) {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
@@ -438,7 +490,11 @@ public class AssessmentReportGenerator {
         Map<String, String> replacements = getTopLevelInstitutionColoredTableHeaders(locale, year);
 
         int commissionId = assessmentResponses.getFirst().getCommissionId();
-        int organisationUnitId = userRepository.findOUIdForCommission(commissionId);
+        var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
+        if (Objects.isNull(organisationUnitId)) {
+            organisationUnitId = topLevelInstitutionId;
+        }
+
         Set<Integer> subOUs = new HashSet<>(
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId));
 
@@ -519,13 +575,18 @@ public class AssessmentReportGenerator {
     }
 
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTableForAllPublications(
-        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, Boolean colored) {
+        List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses, Boolean colored,
+        Integer topLevelInstitutionId) {
         if (assessmentResponses.isEmpty()) {
             return new Pair<>(new HashMap<>(), new ArrayList<>());
         }
 
         var commissionId = assessmentResponses.getFirst().getCommissionId();
         var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
+        if (Objects.isNull(organisationUnitId)) {
+            organisationUnitId = topLevelInstitutionId;
+        }
+
         var subOUs =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(organisationUnitId);
 
@@ -536,12 +597,21 @@ public class AssessmentReportGenerator {
             assessmentResponse.getPublicationsPerCategory().forEach((code, publications) -> {
                 publications.forEach(publication -> {
                     if (!handledPublicationIds.contains(publication.c)) {
+                        var commissionInstitutions = subOUs;
+                        var assessmentCommissionId =
+                            assessmentResponse.getPublicationToCommission().get(publication.c);
+                        if (!assessmentCommissionId.equals(commissionId)) {
+                            commissionInstitutions = ouHierarchyCache.getUnchecked(
+                                userRepository.findOUIdForCommission(assessmentCommissionId));
+                        }
+
                         var institutionIds =
                             assessmentResponse.getPublicationToInstitution().get(publication.c);
                         var color = TableRowColors.RED;
                         if (institutionIds.isEmpty()) {
                             color = TableRowColors.YELLOW;
-                        } else if (new HashSet<>(subOUs).containsAll(institutionIds)) {
+                        } else if (new HashSet<>(commissionInstitutions).containsAll(
+                            institutionIds)) {
                             color = TableRowColors.WHITE;
                         }
 

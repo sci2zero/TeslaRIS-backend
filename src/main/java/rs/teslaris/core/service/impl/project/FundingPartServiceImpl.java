@@ -4,6 +4,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.project.FundingPartDTO;
 import rs.teslaris.core.model.project.FundingPart;
 import rs.teslaris.core.model.project.MonetaryAmount;
@@ -44,6 +45,7 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
     }
 
     @Override
+    @Transactional
     public FundingPart createFundingPart(FundingPartDTO fundingPartDTO) {
         var fundingPart = new FundingPart();
 
@@ -53,6 +55,7 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
     }
 
     @Override
+    @Transactional
     public void updateFundingPart(Integer fundingPartId, FundingPartDTO fundingPartDTO) {
         var fundingPart = findOne(fundingPartId);
 
@@ -63,6 +66,7 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
     }
 
     @Override
+    @Transactional
     public void deleteFundingPart(Integer fundingPartId) {
         delete(fundingPartId);
     }

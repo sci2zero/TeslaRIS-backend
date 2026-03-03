@@ -18,6 +18,8 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 @AllArgsConstructor
 public class FundingPartDTO {
 
+    private Integer id;
+
     @NotNull(message = "You have to provide project ID.")
     @Positive(message = "Funding ID cannot be a negative number.")
     private Integer fundingId;

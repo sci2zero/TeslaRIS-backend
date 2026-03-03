@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -126,10 +127,10 @@ public class ReportingServiceImpl implements ReportingService {
                 ReportTemplateEngine.addColumnsToFirstRow(document, columns, 0);
             }
 
-            processReportData(reportType, document, assessmentResponses, commissionIds, locale);
+            processReportData(reportType, document, assessmentResponses, commissionIds, locale,
+                topLevelInstitutionId);
 
             saveReport(reportType, document, commissionIds, assessmentYear, locale);
-
         } catch (IOException e) {
             throw new LoadingException(
                 "Failed to generate report for " + reportType + ". Reason: " + e.getMessage());
@@ -147,9 +148,12 @@ public class ReportingServiceImpl implements ReportingService {
         var employmentInstitutionId = userRepository.findOrganisationUnitIdForUser(userId);
 
         if (Objects.isNull(employmentInstitutionId)) { // ADMIN user
+            var seenFileNames = new HashSet<String>();
             return commissionReportRepository.findAll().stream()
+                .filter(report -> seenFileNames.add(report.getReportFileName()))
                 .map(report -> new ReportDTO(report.getCommission().getId(),
-                    report.getReportFileName())).toList();
+                    report.getReportFileName()))
+                .toList();
         }
 
         var subOUs =
@@ -181,10 +185,8 @@ public class ReportingServiceImpl implements ReportingService {
     }
 
     private List<EnrichedResearcherAssessmentResponseDTO> fetchAssessmentResponses(
-        ReportType reportType,
-        List<Integer> commissionIds, int startYear, int assessmentYear,
+        ReportType reportType, List<Integer> commissionIds, int startYear, int assessmentYear,
         Integer topLevelInstitutionId) {
-
         List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses = new ArrayList<>();
         boolean isTopLevelInstitutionReport = isTopLevelInstitutionReport(reportType);
 
@@ -218,16 +220,19 @@ public class ReportingServiceImpl implements ReportingService {
 
     private void processReportData(ReportType reportType, XWPFDocument document,
                                    List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
-                                   List<Integer> commissionIds, String locale) {
+                                   List<Integer> commissionIds, String locale,
+                                   Integer topLevelInstitutionId) {
 
-        var reportData = generateReportData(reportType, assessmentResponses, commissionIds, locale);
+        var reportData = generateReportData(reportType, assessmentResponses, commissionIds, locale,
+            topLevelInstitutionId);
         ReportTemplateEngine.insertFields(document, reportData.a);
         ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 0);
 
         if (isTopLevelInstitutionReport(reportType)) {
             reportData = AssessmentReportGenerator.constructDataForTableForAllPublications(
                 assessmentResponses,
-                reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED));
+                reportType.equals(ReportType.TABLE_TOP_LEVEL_INSTITUTION_COLORED),
+                topLevelInstitutionId);
             ReportTemplateEngine.dynamicallyGenerateTableRows(document, reportData.b, 1);
         }
     }
@@ -271,7 +276,7 @@ public class ReportingServiceImpl implements ReportingService {
 
     private Pair<Map<String, String>, List<List<String>>> generateReportData(
         ReportType reportType, List<EnrichedResearcherAssessmentResponseDTO> assessmentResponses,
-        List<Integer> commissionIds, String locale) {
+        List<Integer> commissionIds, String locale, Integer topLevelInstitutionId) {
         return switch (reportType) {
             case TABLE_67 ->
                 AssessmentReportGenerator.constructDataForTable67(assessmentResponses, locale);
@@ -289,7 +294,7 @@ public class ReportingServiceImpl implements ReportingService {
             case TABLE_TOP_LEVEL_INSTITUTION_COLORED ->
                 AssessmentReportGenerator.constructDataForTableTopLevelInstitutionColored(
                     assessmentResponses,
-                    locale);
+                    locale, topLevelInstitutionId);
             case TABLE_TOP_LEVEL_INSTITUTION_SUMMARY ->
                 AssessmentReportGenerator.constructDataForTableTopLevelInstitutionSummary(
                     assessmentResponses, commissionIds, locale);
