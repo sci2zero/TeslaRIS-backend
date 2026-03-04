@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,7 +21,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -69,26 +67,27 @@ import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
-import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.JournalPublicationType;
 import rs.teslaris.core.model.document.Monograph;
-import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublicationType;
 import rs.teslaris.core.model.document.PublicationType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.Commission;
-import rs.teslaris.core.model.institution.CommissionRelation;
 import rs.teslaris.core.model.institution.ResultCalculationMethod;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.repository.institution.CommissionRelationProjection;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -101,7 +100,6 @@ import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
-@Transactional
 @Slf4j
 @Traceable
 public class DocumentAssessmentClassificationServiceImpl
@@ -119,6 +117,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final PublicationSeriesAssessmentClassificationRepository
         publicationSeriesAssessmentClassificationRepository;
+
+    private final DocumentLookupService documentLookupService;
 
     private final DocumentRepository documentRepository;
 
@@ -144,19 +144,24 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private final PublicationClassificationService publicationClassificationService;
 
+    private final ThesisRepository thesisRepository;
+
 
     @Autowired
     public DocumentAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
-        ConferenceService conferenceService, ApplicationEventPublisher applicationEventPublisher,
+        ConferenceService conferenceService,
+        ExhibitionService exhibitionService,
+        ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository,
         DocumentPublicationIndexRepository documentPublicationIndexRepository,
         UserService userService,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
         PublicationSeriesAssessmentClassificationRepository publicationSeriesAssessmentClassificationRepository,
-        DocumentRepository documentRepository, TaskManagerService taskManagerService,
+        DocumentLookupService documentLookupService, DocumentRepository documentRepository,
+        TaskManagerService taskManagerService,
         SearchService<DocumentPublicationIndex> searchService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
         IndicatorRepository indicatorRepository, EventIndexRepository eventIndexRepository,
@@ -165,9 +170,11 @@ public class DocumentAssessmentClassificationServiceImpl
         PersonAssessmentClassificationService personAssessmentClassificationService,
         AssessmentResearchAreaRepository assessmentResearchAreaRepository,
         ResearchAreaRepository researchAreaRepository,
-        PublicationClassificationService publicationClassificationService) {
+        PublicationClassificationService publicationClassificationService,
+        ThesisRepository thesisRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, applicationEventPublisher,
+            entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
@@ -175,6 +182,7 @@ public class DocumentAssessmentClassificationServiceImpl
         this.organisationUnitsRelationRepository = organisationUnitsRelationRepository;
         this.publicationSeriesAssessmentClassificationRepository =
             publicationSeriesAssessmentClassificationRepository;
+        this.documentLookupService = documentLookupService;
         this.documentRepository = documentRepository;
         this.taskManagerService = taskManagerService;
         this.searchService = searchService;
@@ -187,9 +195,11 @@ public class DocumentAssessmentClassificationServiceImpl
         this.assessmentResearchAreaRepository = assessmentResearchAreaRepository;
         this.researchAreaRepository = researchAreaRepository;
         this.publicationClassificationService = publicationClassificationService;
+        this.thesisRepository = thesisRepository;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EntityAssessmentClassificationResponseDTO> getAssessmentClassificationsForDocument(
         Integer documentId) {
         return documentAssessmentClassificationRepository.findAssessmentClassificationsForDocument(
@@ -199,6 +209,7 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public EntityAssessmentClassificationResponseDTO createDocumentAssessmentClassification(
         DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
         var newDocumentClassification = new DocumentAssessmentClassification();
@@ -208,13 +219,15 @@ public class DocumentAssessmentClassificationServiceImpl
         newDocumentClassification.setCommission(
             commissionService.findOne(documentAssessmentClassificationDTO.getCommissionId()));
         var document =
-            documentRepository.findById(documentAssessmentClassificationDTO.getDocumentId())
-                .orElseThrow(() -> new NotFoundException(
-                    "Document with ID " + documentAssessmentClassificationDTO.getDocumentId() +
-                        " does not exist."));
-        checkIfDocumentIsAThesis(document);
+            documentLookupService.fastDocumentLookup(
+                documentAssessmentClassificationDTO.getDocumentId());
 
-        if (Hibernate.getClass(document) == Proceedings.class &&
+        if (document.getDocumentType().equals(DocumentPublicationType.THESIS) &&
+            ((Thesis) document).getIsOnPublicReview()) {
+            throw new ThesisException("Thesis is on public review, can't edit classifications.");
+        }
+
+        if (document.getDocumentType().equals(DocumentPublicationType.PROCEEDINGS) &&
             SessionUtil.getLoggedInUser().getAuthority().getName()
                 .equals(UserRole.RESEARCHER.name())) {
             return null;
@@ -231,14 +244,17 @@ public class DocumentAssessmentClassificationServiceImpl
         newDocumentClassification.setClassificationYear(
             Integer.parseInt(document.getDocumentDate().split("-")[0]));
         newDocumentClassification.setDocument(document);
+        newDocumentClassification.setDocumentType(document.getDocumentType());
 
         var savedDocumentClassification =
             documentAssessmentClassificationRepository.save(newDocumentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(document.getId());
 
         applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
-            document.getContributors().stream().filter(c -> Objects.nonNull(c.getPerson()))
-                .map(c -> c.getPerson().getId()).toList()));
+            documentPublicationService.findDocumentPublicationIndexByDatabaseId(document.getId())
+                .getAuthorIds().stream()
+                .filter(id -> id > 0)
+                .toList()));
 
         if (document instanceof Monograph) {
             applicationEventPublisher.publishEvent(
@@ -250,35 +266,39 @@ public class DocumentAssessmentClassificationServiceImpl
         return EntityAssessmentClassificationConverter.toDTO(savedDocumentClassification);
     }
 
-    private void checkIfDocumentIsAThesis(Document document) {
-        if (document instanceof Thesis && ((Thesis) document).getIsOnPublicReview()) {
-            throw new ThesisException("Thesis is on public review, can't edit classifications.");
-        }
-    }
-
     @Override
+    @Transactional
     public void editDocumentAssessmentClassification(Integer classificationId,
                                                      DocumentAssessmentClassificationDTO documentAssessmentClassificationDTO) {
         var documentClassification = documentClassificationJPAService.findOne(classificationId);
 
-        if (Hibernate.getClass(documentClassification.getDocument()) == Proceedings.class &&
+        if (documentClassification.getDocumentType()
+            .equals(DocumentPublicationType.PROCEEDINGS) &&
             SessionUtil.getLoggedInUser().getAuthority().getName()
                 .equals(UserRole.RESEARCHER.name())) {
             return;
         }
 
-        checkIfDocumentIsAThesis(documentClassification.getDocument());
+        if (documentClassification.getDocumentType().equals(DocumentPublicationType.THESIS) &&
+            thesisRepository.isThesisOnPublicReview(documentClassification.getDocument().getId())) {
+            throw new ThesisException("Thesis is on public review, can't edit classifications.");
+        }
+
         setCommonFields(documentClassification, documentAssessmentClassificationDTO);
 
         save(documentClassification);
         documentPublicationService.reindexDocumentVolatileInformation(
             documentClassification.getDocument().getId());
+
         applicationEventPublisher.publishEvent(new ResearcherPointsReindexingEvent(
-            documentClassification.getDocument().getContributors().stream()
-                .filter(c -> Objects.nonNull(c.getPerson())).map(c -> c.getPerson().getId())
+            documentPublicationService.findDocumentPublicationIndexByDatabaseId(
+                    documentClassification.getDocument().getId())
+                .getAuthorIds().stream()
+                .filter(id -> id > 0)
                 .toList()));
 
-        if (Hibernate.getClass(documentClassification.getDocument()) == Monograph.class) {
+        if (documentClassification.getDocumentType()
+            .equals(DocumentPublicationType.MONOGRAPH)) {
             applicationEventPublisher.publishEvent(
                 new EntityAssessmentChanged(ApplicableEntityType.MONOGRAPH,
                     documentAssessmentClassificationDTO.getDocumentId(),
@@ -287,6 +307,7 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     @Override
+    @Transactional
     public void schedulePublicationClassification(LocalDateTime timeToRun,
                                                   Integer userId, LocalDate fromDate,
                                                   DocumentPublicationType documentPublicationType,
@@ -337,6 +358,8 @@ public class DocumentAssessmentClassificationServiceImpl
                 "Journal publication with ID " + journalPublicationId + " does not exist");
         }
 
+        documentAssessmentClassificationRepository.deleteByDocumentId(journalPublicationId, false);
+
         journalPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
             assessJournalPublication(journalPublicationIndex.get(), organisationUnitId, null,
                 null));
@@ -352,6 +375,9 @@ public class DocumentAssessmentClassificationServiceImpl
             throw new NotFoundException(
                 "Journal publication with ID " + proceedingsPublicationId + " does not exist");
         }
+
+        documentAssessmentClassificationRepository.deleteByDocumentId(proceedingsPublicationId,
+            false);
 
         proceedingsPublicationIndex.get().getOrganisationUnitIds().forEach(organisationUnitId ->
             assessProceedingsPublication(proceedingsPublicationIndex.get(), organisationUnitId,
@@ -439,31 +465,21 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     private void assessThesis(DocumentPublicationIndex thesisIndex,
-                              Integer defenceOrganisationUnitId, Commission presetCommission,
+                              Integer organisationUnitId, Commission presetCommission,
                               ArrayList<DocumentAssessmentClassification> batchedClassifications) {
-        var commissions = new HashSet<Commission>();
-        if (Objects.nonNull(defenceOrganisationUnitId)) {
-            commissions.addAll(findCommissionInHierarchy(defenceOrganisationUnitId));
+        if (Objects.nonNull(presetCommission)) {
+            var commissionInstitutionId =
+                commissionService.findInstitutionIdForCommission(presetCommission.getId());
+            if (Objects.isNull(commissionInstitutionId) ||
+                !thesisIndex.getOrganisationUnitIds().contains(commissionInstitutionId)) {
+                return;
+            }
         }
 
-        collectCommissionsIfPresent(
-            thesisIndex.getOrganisationUnitIdsSpecified(),
-            commissions
-        );
-
-        if (commissions.isEmpty()) {
-            collectCommissionsIfPresent(
-                thesisIndex.getOrganisationUnitIdsYearOfPublication(),
-                commissions
-            );
-        }
-
-        if (commissions.isEmpty()) {
-            collectCommissionsIfPresent(
-                thesisIndex.getOrganisationUnitIdsActive(),
-                commissions
-            );
-        }
+        List<Commission> commissions = Objects.nonNull(presetCommission)
+            ? List.of(presetCommission)
+            :
+            findCommissionInHierarchy(organisationUnitId, Objects.nonNull(batchedClassifications));
 
         if (commissions.isEmpty()) {
             log.info("No commission found for thesis with ID {}.",
@@ -500,7 +516,8 @@ public class DocumentAssessmentClassificationServiceImpl
                                             ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         List<Commission> commissions = Objects.nonNull(presetCommission)
             ? List.of(presetCommission)
-            : findCommissionInHierarchy(organisationUnitId);
+            :
+            findCommissionInHierarchy(organisationUnitId, Objects.nonNull(batchedClassifications));
 
         if (commissions.isEmpty()) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
@@ -563,7 +580,7 @@ public class DocumentAssessmentClassificationServiceImpl
     ) {
         if (CollectionOperations.containsValues(institutionIds)) {
             institutionIds.forEach(
-                id -> commissions.addAll(findCommissionInHierarchy(id))
+                id -> commissions.addAll(findCommissionInHierarchy(id, true))
             );
         }
     }
@@ -579,7 +596,8 @@ public class DocumentAssessmentClassificationServiceImpl
 
         List<Commission> commissions = Objects.nonNull(presetCommission)
             ? List.of(presetCommission)
-            : findCommissionInHierarchy(organisationUnitId);
+            :
+            findCommissionInHierarchy(organisationUnitId, Objects.nonNull(batchedClassifications));
 
         if (commissions.isEmpty()) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
@@ -648,9 +666,10 @@ public class DocumentAssessmentClassificationServiceImpl
                                               Integer organisationUnitId,
                                               Commission presetCommission,
                                               ArrayList<DocumentAssessmentClassification> batchedClassifications) {
-        List<Commission> commissions = (presetCommission != null)
+        List<Commission> commissions = Objects.nonNull(batchedClassifications)
             ? List.of(presetCommission)
-            : findCommissionInHierarchy(organisationUnitId);
+            :
+            findCommissionInHierarchy(organisationUnitId, Objects.nonNull(batchedClassifications));
 
         if (commissions.isEmpty()) {
             log.info("No commission found for organisation unit {} or its hierarchy.",
@@ -824,19 +843,21 @@ public class DocumentAssessmentClassificationServiceImpl
             yearHandler.accept(year, classifications, commission)
         );
 
-        if (!classifications.isEmpty()) {
-            var bestClassification =
-                ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
-                    ResultCalculationMethod.BEST_VALUE);
-            bestClassification.ifPresent((documentClassification) -> {
-                handleClassification(
-                    documentClassification.a, commission,
-                    documentId, documentPublicationType,
-                    classificationYear, batchedClassifications,
-                    true
-                );
-            });
+        if (classifications.isEmpty()) {
+            addFallbackJournalClassification(classifications);
         }
+
+        var bestClassification =
+            ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
+                ResultCalculationMethod.BEST_VALUE);
+        bestClassification.ifPresent((documentClassification) -> {
+            handleClassification(
+                documentClassification.a, commission,
+                documentId, documentPublicationType,
+                classificationYear, batchedClassifications,
+                true
+            );
+        });
     }
 
     private ImaginaryPublicationAssessmentResponseDTO performPublicationAssessmentForImaginaryDocument(
@@ -844,7 +865,6 @@ public class DocumentAssessmentClassificationServiceImpl
         Commission commission, List<Integer> yearsToConsider, String researchArea,
         PublicationType publicationType, Integer authorCount, boolean isExperimental,
         boolean isTheoretical, boolean isSimulation) {
-
         var assessmentResponse = new ImaginaryPublicationAssessmentResponseDTO();
         var classifications =
             new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
@@ -852,7 +872,7 @@ public class DocumentAssessmentClassificationServiceImpl
         yearsToConsider.forEach(year -> yearHandler.accept(year, classifications, commission));
 
         if (classifications.isEmpty()) {
-            return assessmentResponse;
+            addFallbackJournalClassification(classifications);
         }
 
         ClassificationPriorityMapping
@@ -863,6 +883,16 @@ public class DocumentAssessmentClassificationServiceImpl
             ));
 
         return assessmentResponse;
+    }
+
+    private void addFallbackJournalClassification(
+        ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>> classifications) {
+        classifications.add(new Pair<>(
+            assessmentClassificationService.readAssessmentClassificationByCode(
+                ClassificationPriorityMapping.getDefaultJournalAssessmentCode()),
+            AssessmentRulesConfigurationLoader.getRuleDescription(
+                "journalClassificationRules", "defaultFallback"))
+        );
     }
 
     private void processClassification(
@@ -937,20 +967,26 @@ public class DocumentAssessmentClassificationServiceImpl
                     researchArea), points));
     }
 
-    private List<Commission> findCommissionInHierarchy(Integer organisationUnitId) {
-        List<Commission> commission;
+    private List<Commission> findCommissionInHierarchy(Integer organisationUnitId,
+                                                       boolean checkHierarchy) {
+        List<Commission> commissions;
         do {
-            commission = userService.findCommissionForOrganisationUnitId(organisationUnitId);
-            if (commission.isEmpty()) {
+            commissions = userService.findCommissionForOrganisationUnitId(organisationUnitId);
+            if (commissions.isEmpty()) {
+                if (!checkHierarchy) {
+                    break;
+                }
+
                 var superOU = organisationUnitsRelationRepository.getSuperOU(organisationUnitId);
                 if (superOU.isPresent()) {
-                    organisationUnitId = superOU.get().getId();
+                    organisationUnitId = superOU.get().getTargetOrganisationUnit().getId();
                 } else {
                     break;
                 }
             }
-        } while (commission.isEmpty());
-        return commission;
+        } while (commissions.isEmpty());
+
+        return commissions;
     }
 
     private void handleClassification(AssessmentClassification classification,
@@ -981,13 +1017,12 @@ public class DocumentAssessmentClassificationServiceImpl
     private Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> handleRelationAssessments(
         Commission commission,
         Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
-        var sortedRelations = commission.getRelations().stream()
-            .sorted(Comparator.comparingInt(CommissionRelation::getPriority))
-            .toList();
+        var commissionRelationProjections =
+            commissionService.findRelationsWithTargetIds(commission.getId());
 
-        for (var relation : sortedRelations) {
+        for (var relationProjection : commissionRelationProjections) {
             var respectedClassification =
-                respectRelationAssessment(relation, classificationFinder);
+                respectRelationAssessment(relationProjection, classificationFinder);
             if (respectedClassification.isPresent()) {
                 return Optional.of(
                     new Pair<>(respectedClassification.get().a, respectedClassification.get().b));
@@ -998,13 +1033,13 @@ public class DocumentAssessmentClassificationServiceImpl
     }
 
     private Optional<Pair<AssessmentClassification, Set<MultiLingualContent>>> respectRelationAssessment(
-        CommissionRelation commissionRelation,
+        CommissionRelationProjection relationProjection,
         Function<Integer, Optional<EntityAssessmentClassification>> classificationFinder) {
         var classifications =
             new ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>();
 
-        for (var targetCommission : commissionRelation.getTargetCommissions()) {
-            var foundClassification = classificationFinder.apply(targetCommission.getId());
+        for (var targetCommissionId : relationProjection.targetCommissionIds()) {
+            var foundClassification = classificationFinder.apply(targetCommissionId);
             if (foundClassification.isPresent()) {
                 if (foundClassification.get().getManual()) {
                     return Optional.of(
@@ -1022,7 +1057,7 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         return ClassificationPriorityMapping.getClassificationBasedOnCriteria(classifications,
-            commissionRelation.getResultCalculationMethod());
+            relationProjection.resultCalculationMethod());
     }
 
     public Query findAllDocumentPublicationsByFilters(
@@ -1151,17 +1186,20 @@ public class DocumentAssessmentClassificationServiceImpl
                 var assessmentTriple = new Triple<>(commission.getId(),
                     documentClassification.getAssessmentClassification().getCode(), false);
 
-                if (!documentIndex.getCommissionAssessments().contains(assessmentTriple)) {
-                    documentIndex.getCommissionAssessments().add(assessmentTriple);
-                }
+                documentIndex.getCommissionAssessments().removeIf(
+                    existingTriple -> existingTriple.a.equals(assessmentTriple.a) &&
+                        existingTriple.c.equals(assessmentTriple.c));
+                documentIndex.getCommissionAssessments().add(assessmentTriple);
 
-                assessmentTriple = new Triple<>(commission.getId(),
-                    documentClassification.getAssessmentClassification().getCode().substring(0, 2) +
-                        "0", false);
+                var assessmentGroupTriple = new Triple<>(commission.getId(),
+                    ClassificationPriorityMapping.getGroupCode(
+                        documentClassification.getAssessmentClassification().getCode()),
+                    false);
 
-                if (!documentIndex.getCommissionAssessmentGroups().contains(assessmentTriple)) {
-                    documentIndex.getCommissionAssessmentGroups().add(assessmentTriple);
-                }
+                documentIndex.getCommissionAssessmentGroups().removeIf(
+                    existingTriple -> existingTriple.a.equals(assessmentGroupTriple.a) &&
+                        existingTriple.c.equals(assessmentGroupTriple.c));
+                documentIndex.getCommissionAssessmentGroups().add(assessmentGroupTriple);
 
                 documentPublicationIndexRepository.save(documentIndex);
             });

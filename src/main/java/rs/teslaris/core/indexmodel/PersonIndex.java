@@ -21,7 +21,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @AllArgsConstructor
 @Document(indexName = "person")
 @Setting(settingPath = "/configuration/index-config.json")
-public class PersonIndex {
+public class PersonIndex implements ExternallyEnrichable {
 
     @Id
     private String id;
@@ -97,4 +97,7 @@ public class PersonIndex {
 
     @Field(type = FieldType.Integer, name = "h_index")
     private Integer hIndex = 0;
+
+    @Field(type = FieldType.Boolean, name = "display_birthdate")
+    private Boolean displayBirthdate = false;
 }

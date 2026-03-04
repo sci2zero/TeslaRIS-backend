@@ -31,6 +31,7 @@ import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.oaipmh.common.Description;
 import rs.teslaris.core.model.oaipmh.common.GetRecord;
@@ -56,7 +57,6 @@ import rs.teslaris.core.model.oaipmh.patent.PatentConvertable;
 import rs.teslaris.core.model.oaipmh.person.PersonConvertable;
 import rs.teslaris.core.model.oaipmh.product.ProductConvertable;
 import rs.teslaris.core.model.oaipmh.publication.PublicationConvertable;
-import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConverterDoesNotExistException;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -83,8 +83,6 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
     private final OrganisationUnitService organisationUnitService;
 
-    private final OrganisationUnitsRelationRepository organisationUnitsRelationRepository;
-
     private final int PAGE_SIZE = 10;
 
     private final String EXPORT_ENTITY_BASE_PACKAGE = "rs.teslaris.exporter.model.common.";
@@ -106,6 +104,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public ListRecords listRequestedRecords(String handler, String metadataPrefix,
                                             String from, String until, String requestedSet,
                                             OAIPMHResponse response, int page,
@@ -230,7 +229,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
                 if (Objects.nonNull(record.getHeader().getStatus()) &&
                     record.getHeader().getStatus().equalsIgnoreCase("deleted")) {
-                    return listRecords;
+                    continue;
                 }
 
                 var metadata = new Metadata();
@@ -258,6 +257,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public GetRecord listRequestedRecord(String handler, String metadataPrefix,
                                          String identifier, OAIPMHResponse response) {
         if (Objects.isNull(metadataPrefix) || metadataPrefix.isBlank() ||
@@ -358,7 +358,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         ExportHandlersConfigurationLoader.Handler handlerConfig, BaseExportEntity exportEntity,
         String identifier, String identifierSetSpec) {
         var header = new Header();
-        if (exportEntity.getDeleted()) {
+        if (exportEntity.getDeleted() || (exportEntity instanceof ExportDocument &&
+            Objects.nonNull(((ExportDocument) exportEntity).getSubstitutedBy()))) {
             header.setStatus("deleted");
         }
         header.setIdentifier(identifier);

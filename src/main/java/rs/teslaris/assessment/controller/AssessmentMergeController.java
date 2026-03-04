@@ -49,19 +49,39 @@ public class AssessmentMergeController {
     @PatchMapping("/conference-indicator/source/{sourceConferenceId}/target/{targetConferenceId}")
     @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllIndicatorsToOtherEvent(@PathVariable Integer sourceConferenceId,
-                                                @PathVariable Integer targetConferenceId) {
+    public void switchAllIndicatorsToOtherConference(@PathVariable Integer sourceConferenceId,
+                                                     @PathVariable Integer targetConferenceId) {
         assessmentMergeService.switchAllIndicatorsToOtherEvent(sourceConferenceId,
             targetConferenceId);
+    }
+
+    @PatchMapping("/exhibition-indicator/source/{sourceExhibitionId}/target/{targetExhibitionId}")
+    @PreAuthorize("hasAuthority('MERGE_EXHIBITIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllIndicatorsToOtherExhibition(@PathVariable Integer sourceExhibitionId,
+                                                     @PathVariable Integer targetExhibitionId) {
+        assessmentMergeService.switchAllIndicatorsToOtherEvent(sourceExhibitionId,
+            targetExhibitionId);
     }
 
     @PatchMapping("/conference-classification/source/{sourceConferenceId}/target/{targetConferenceId}")
     @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchAllClassificationsToOtherEvent(@PathVariable Integer sourceConferenceId,
-                                                     @PathVariable Integer targetConferenceId) {
+    public void switchAllClassificationsToOtherConference(@PathVariable Integer sourceConferenceId,
+                                                          @PathVariable
+                                                          Integer targetConferenceId) {
         assessmentMergeService.switchAllClassificationsToOtherEvent(sourceConferenceId,
             targetConferenceId);
+    }
+
+    @PatchMapping("/exhibition-classification/source/{sourceExhibitionId}/target/{targetExhibitionId}")
+    @PreAuthorize("hasAuthority('MERGE_EXHIBITIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllClassificationsToOtherExhibition(@PathVariable Integer sourceExhibitionId,
+                                                          @PathVariable
+                                                          Integer targetExhibitionId) {
+        assessmentMergeService.switchAllClassificationsToOtherEvent(sourceExhibitionId,
+            targetExhibitionId);
     }
 
     @PatchMapping("/person-indicator/source/{sourcePersonId}/target/{targetPersonId}")

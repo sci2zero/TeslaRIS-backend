@@ -11,6 +11,8 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -21,6 +23,7 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.dto.person.BasicPersonDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
 import rs.teslaris.core.dto.person.involvement.ExtraEmploymentMigrationDTO;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Employment;
@@ -53,12 +56,14 @@ public class EmploymentMigrationWorker {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final PersonIndexRepository personIndexRepository;
+
 
     @Retryable(
-        value = {org.springframework.dao.CannotAcquireLockException.class,
-            org.springframework.dao.DeadlockLoserDataAccessException.class},
+        retryFor = {CannotAcquireLockException.class, PessimisticLockingFailureException.class},
         maxAttempts = 3,
-        backoff = @Backoff(delay = 200, multiplier = 2))
+        backoff = @Backoff(delay = 200, multiplier = 2)
+    )
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processSingleMigration(ExtraEmploymentMigrationDTO migration,
                                        HashSet<Integer> handledInstitutionIds,
@@ -109,7 +114,8 @@ public class EmploymentMigrationWorker {
         }
 
         var savedPerson = personService.save(person);
-        personService.indexPerson(savedPerson);
+        var personIndex = personService.indexPerson(savedPerson);
+        personService.savePersonEmploymentHierarchyIds(savedPerson, personIndex);
         userService.updateResearcherCurrentOrganisationUnitIfBound(savedPerson.getId());
 
         handledPersonIds.add(savedPerson.getId());
@@ -117,10 +123,10 @@ public class EmploymentMigrationWorker {
     }
 
     @Retryable(
-        value = {org.springframework.dao.CannotAcquireLockException.class,
-            org.springframework.dao.DeadlockLoserDataAccessException.class},
+        retryFor = {CannotAcquireLockException.class, PessimisticLockingFailureException.class},
         maxAttempts = 3,
-        backoff = @Backoff(delay = 200, multiplier = 2))
+        backoff = @Backoff(delay = 200, multiplier = 2)
+    )
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void cleanupAlumni(Employment employment,
                               HashSet<Integer> handledPersonIds,
@@ -146,15 +152,16 @@ public class EmploymentMigrationWorker {
 
             employmentRepository.save(employment);
             personService.save(personInvolved);
-            personService.indexPerson(personInvolved);
+            var personIndex = personService.indexPerson(personInvolved);
+            personService.savePersonEmploymentHierarchyIds(personInvolved, personIndex);
         }
     }
 
     @Retryable(
-        value = {org.springframework.dao.CannotAcquireLockException.class,
-            org.springframework.dao.DeadlockLoserDataAccessException.class},
+        retryFor = {CannotAcquireLockException.class, PessimisticLockingFailureException.class},
         maxAttempts = 3,
-        backoff = @Backoff(delay = 200, multiplier = 2))
+        backoff = @Backoff(delay = 200, multiplier = 2)
+    )
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Employment performLegacyMigration(EmploymentMigrationDTO employmentMigrationRequest) {
         Person person = resolvePerson(employmentMigrationRequest);
@@ -216,7 +223,14 @@ public class EmploymentMigrationWorker {
 
         person.addInvolvement(employment);
         Employment saved = employmentRepository.save(employment);
-        personService.indexPerson(person);
+        personIndexRepository.findByDatabaseId(person.getId()).ifPresent(personIndex -> {
+            personService.setPersonIndexEmploymentDetails(personIndex, person);
+            personIndexRepository.save(personIndex);
+
+            person.getEmploymentInstitutionsIdHierarchy().clear();
+            person.getEmploymentInstitutionsIdHierarchy()
+                .addAll(personIndex.getEmploymentInstitutionsIdHierarchy());
+        });
         return saved;
     }
 

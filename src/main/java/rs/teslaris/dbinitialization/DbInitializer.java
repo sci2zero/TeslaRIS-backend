@@ -14,6 +14,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.model.commontypes.BrandingInformation;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.Language;
@@ -33,6 +36,7 @@ import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
 import rs.teslaris.core.repository.user.AuthorityRepository;
 import rs.teslaris.core.repository.user.PrivilegeRepository;
 import rs.teslaris.core.repository.user.UserRepository;
+import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.search.StringUtil;
@@ -72,6 +76,8 @@ public class DbInitializer implements ApplicationRunner {
     private final AssessmentDataInitializer assessmentDataInitializer;
 
     private final BrandingInformationRepository brandingInformationRepository;
+
+    private final ReindexService reindexService;
 
 
     @Override
@@ -209,6 +215,15 @@ public class DbInitializer implements ApplicationRunner {
         var registerResearcher = new Privilege("REGISTER_RESEARCHER");
         var unpromoteRbEntries = new Privilege("UNPROMOTE_RB_ENTRIES");
         var changePublicationType = new Privilege("CHANGE_PUBLICATION_TYPE");
+        var assessPrizes = new Privilege("ASSESS_PRIZE");
+        var editExhibitions = new Privilege("EDIT_EXHIBITIONS");
+        var createExhibitions = new Privilege("CREATE_EXHIBITIONS");
+        var mergeExhibitions = new Privilege("MERGE_EXHIBITIONS");
+        var substituteThesis = new Privilege("SUBSTITUTE_THESIS");
+        var setPersonFieldVisibility = new Privilege("SET_PERSON_FIELD_VISIBILITY");
+        var enrichDocumentMetadata = new Privilege("ENRICH_DOCUMENT_METADATA");
+        var enrichInstitutionMetadata = new Privilege("ENRICH_INSTITUTION_METADATA");
+        var scheduleMetadataEnrichment = new Privilege("SCHEDULE_METADATA_ENRICHMENT");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -247,7 +262,9 @@ public class DbInitializer implements ApplicationRunner {
                 unbindEmployeesFromPublication, getTopCollaborators, performExtraMigration,
                 saveChartDisplayConfiguration, readDigitalLibraryAnalytics, forceEmailChange,
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
-                unpromoteRbEntries, changePublicationType));
+                unpromoteRbEntries, changePublicationType, assessPrizes, editExhibitions,
+                createExhibitions, mergeExhibitions, substituteThesis, setPersonFieldVisibility,
+                enrichDocumentMetadata, enrichInstitutionMetadata, scheduleMetadataEnrichment));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -284,7 +301,10 @@ public class DbInitializer implements ApplicationRunner {
                 setDefaultContent, saveOUOutputConfiguration, createBookSeries, readRegistryBook,
                 performExtraMigration, saveChartDisplayConfiguration, readDigitalLibraryAnalytics,
                 forceEmailChange, performSKGIFHarvest, configureAppSettings, getTopCollaborators,
-                registerResearcher, unpromoteRbEntries, changePublicationType
+                registerResearcher, unpromoteRbEntries, changePublicationType, assessPrizes,
+                editExhibitions, createExhibitions, mergeExhibitions, substituteThesis,
+                setPersonFieldVisibility, enrichDocumentMetadata, enrichInstitutionMetadata,
+                scheduleMetadataEnrichment
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -293,7 +313,8 @@ public class DbInitializer implements ApplicationRunner {
                 editEntityIndicatorProofs, listMyJournalPublications, editAssessmentResearchArea,
                 unbindYourselfFromPublication, editEntityIndicators, createJournal,
                 createBookSeries, createPublisher, performLoading, harvestIdfMetadata,
-                getTopCollaborators, changePublicationType)));
+                getTopCollaborators, changePublicationType, createExhibitions,
+                setPersonFieldVisibility, enrichDocumentMetadata)));
 
         var institutionalEditorAuthority =
             new Authority(UserRole.INSTITUTIONAL_EDITOR.toString(), new HashSet<>(
@@ -309,14 +330,15 @@ public class DbInitializer implements ApplicationRunner {
                     saveOUTrustConfiguration, validateUploadedFiles, archiveDocument,
                     scheduleDocumentHarvest, configureHarvestSources, setDefaultContent,
                     saveOUOutputConfiguration, createBookSeries, unbindEmployeesFromPublication,
-                    saveChartDisplayConfiguration, getTopCollaborators, changePublicationType)));
+                    saveChartDisplayConfiguration, getTopCollaborators, changePublicationType,
+                    createExhibitions, enrichDocumentMetadata, enrichInstitutionMetadata)));
 
         var commissionAuthority =
             new Authority(UserRole.COMMISSION.toString(), new HashSet<>(List.of(
                 editEventAssessmentClassification, updateProfile, editEventIndicators,
                 editPublicationSeriesAssessmentClassifications, editPubSeriesIndicators,
                 allowAccountTakeover, editEntityIndicatorProofs, updateCommission,
-                editDocumentAssessment, listAssessmentClassifications
+                editDocumentAssessment, listAssessmentClassifications, assessPrizes
             )));
 
         var viceDeanForScienceAuthority =
@@ -331,7 +353,7 @@ public class DbInitializer implements ApplicationRunner {
                 addToRegistryBook, generateThesisLibraryBackup, harvestIdfMetadata,
                 validateMetadata, validateUploadedFiles, promotePreliminaryAttachments,
                 setDefaultContent, createUserBasic, deleteThesisAttachments, readRegistryBook,
-                readDigitalLibraryAnalytics, readPromotions
+                readDigitalLibraryAnalytics, readPromotions, substituteThesis
             )));
 
         var headOfLibraryAuthority =
@@ -339,7 +361,7 @@ public class DbInitializer implements ApplicationRunner {
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
                 unarchiveThesis, performThesisReport, generateThesisLibraryBackup, readRegistryBook,
-                readDigitalLibraryAnalytics, readPromotions
+                readDigitalLibraryAnalytics, readPromotions, archiveThesis, substituteThesis
             )));
 
         var promotionRegistryAdministratorAuthority =
@@ -427,7 +449,7 @@ public class DbInitializer implements ApplicationRunner {
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
                 "Markovic", false, false, serbianTag, englishTag, adminAuthority, null,
                 null, null,
-                UserNotificationPeriod.DAILY);
+                UserNotificationPeriod.DAILY, true);
         userRepository.save(adminUser);
 
         // RESEARCH AREAS - NOT COMPLETE
@@ -455,13 +477,16 @@ public class DbInitializer implements ApplicationRunner {
         countryRepository.save(yugoslavia);
 
         // RESEARCH AREAS
-//        TransactionSynchronizationManager
-//            .registerSynchronization(new TransactionSynchronization() {
-//                @Override
-//                public void afterCommit() {
+        TransactionSynchronizationManager
+            .registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
 //                    skosLoader.loadResearchAreas();
-//                }
-//            });
+                    reindexService
+                        .reindexDatabase(Arrays.asList(EntityType.values()),
+                            false, null);
+                }
+            });
 
         ///////////////////// ASSESSMENT DATA /////////////////////
         assessmentDataInitializer.initializeIndicators(englishTag, serbianTag, serbianCyrillicTag);

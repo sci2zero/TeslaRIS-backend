@@ -56,4 +56,7 @@ public class UserAccountIndex {
 
     @Field(type = FieldType.Boolean, store = true, name = "active", index = false)
     private Boolean active;
+
+    @Field(type = FieldType.Boolean, store = true, name = "receive_only_new_notifications", index = false)
+    private Boolean receiveOnlyNewNotifications;
 }

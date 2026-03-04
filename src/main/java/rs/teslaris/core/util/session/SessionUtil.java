@@ -92,6 +92,26 @@ public class SessionUtil {
             getLoggedInUser().getAuthority().getName().equals(UserRole.ADMIN.name());
     }
 
+    public static boolean isUserLoggedInAndLibrarian() {
+        return isUserLoggedIn() &&
+            (getLoggedInUser().getAuthority().getName()
+                .equals(UserRole.INSTITUTIONAL_LIBRARIAN.name()) ||
+                getLoggedInUser().getAuthority().getName().equals(UserRole.HEAD_OF_LIBRARY.name()));
+    }
+
+    public static boolean isUserLoggedInAndTrustedWithDataIntegrity() {
+        if (!isUserLoggedIn()) {
+            return false;
+        }
+
+        var roleName = getLoggedInUser().getAuthority().getName();
+
+        return roleName.equals(UserRole.INSTITUTIONAL_LIBRARIAN.name()) ||
+            roleName.equals(UserRole.HEAD_OF_LIBRARY.name()) ||
+            roleName.equals(UserRole.INSTITUTIONAL_EDITOR.name()) ||
+            roleName.equals(UserRole.ADMIN.name());
+    }
+
     @Nullable
     public static User getLoggedInUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();

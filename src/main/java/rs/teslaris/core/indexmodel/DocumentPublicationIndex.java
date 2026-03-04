@@ -25,7 +25,7 @@ import rs.teslaris.core.util.functional.Triple;
 @AllArgsConstructor
 @Document(indexName = "document_publication")
 @Setting(settingPath = "/configuration/index-config.json")
-public class DocumentPublicationIndex {
+public class DocumentPublicationIndex implements ExternallyEnrichable {
 
     @Id
     private String id;
@@ -164,6 +164,9 @@ public class DocumentPublicationIndex {
     @Field(type = FieldType.Date, name = "last_edited")
     private Date lastEdited;
 
+    @Field(type = FieldType.Date, name = "created_at")
+    private Date createdAt;
+
     @Field(type = FieldType.Integer, name = "assessed_by", store = true)
     private List<Integer> assessedBy = new ArrayList<>();
 
@@ -259,4 +262,7 @@ public class DocumentPublicationIndex {
 
     @Field(type = FieldType.Boolean, name = "has_publications", store = true)
     private Boolean hasPublications;
+
+    @Field(type = FieldType.Boolean, name = "is_substituted", store = true)
+    private Boolean isSubstituted;
 }

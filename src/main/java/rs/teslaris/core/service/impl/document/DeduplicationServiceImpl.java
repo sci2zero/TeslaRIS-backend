@@ -229,7 +229,9 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     DocumentPublicationType.PATENT.name(),
                     DocumentPublicationType.INTANGIBLE_PRODUCT.name(),
                     DocumentPublicationType.DATASET.name(),
-                    DocumentPublicationType.THESIS.name()
+                    DocumentPublicationType.THESIS.name(),
+                    DocumentPublicationType.MATERIAL_PRODUCT.name(),
+                    DocumentPublicationType.GENETIC_MATERIAL.name()
                 ),
                 PageRequest.of(pageNumber, CHUNK_SIZE)).getContent(),
             documentSearchService,
@@ -256,10 +258,11 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                         m -> m.field("publication_type").value(item.getPublicationType())));
                 }
 
-                b.must(sb -> sb.match(
-                    m -> m.field("type").query(item.getType())));
+                b.must(sb -> sb.term(
+                    m -> m.field("type").value(item.getType())));
                 b.mustNot(sb -> sb.match(
                     m -> m.field("databaseId").query(item.getDatabaseId())));
+
                 return b;
             }))),
             DocumentPublicationIndex::getDatabaseId,
@@ -437,14 +440,18 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     });
                     return bq;
                 });
+
+                b.must(sb -> sb.term(
+                    m -> m.field("event_type").value(item.getEventType().name())));
                 b.mustNot(sb -> sb.match(
                     m -> m.field("databaseId").query((item).getDatabaseId())));
+
                 return b;
             }))),
             EventIndex::getDatabaseId,
             (eventIndex -> eventIndex.getNameSr() + " (" + eventIndex.getDateFromTo() + ")"),
             (eventIndex -> eventIndex.getNameOther() + " (" + eventIndex.getDateFromTo() + ")"),
-            null,
+            (eventIndex) -> eventIndex.getEventType().name(),
             "events"
         );
     }
@@ -604,7 +611,7 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                         getTitleOtherFunction.apply(entity),
                         getTitleSrFunction.apply(similarEntity),
                         getTitleOtherFunction.apply(similarEntity),
-                        DocumentPublicationType.valueOf(getTypeFunction.apply(entity)), indexType,
+                        getTypeFunction.apply(entity), indexType,
                         leftDocument.getYear(), rightDocument.getYear(),
                         leftDocument.getAuthorNames(), rightDocument.getAuthorNames(),
                         leftDocument.getAuthorIds(), rightDocument.getAuthorIds(),
@@ -621,8 +628,10 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                         getTitleOtherFunction.apply(entity),
                         getTitleSrFunction.apply(similarEntity),
                         getTitleOtherFunction.apply(similarEntity),
-                        null, indexType, null, null,
-                        null, null, null, null,
+                        indexType.equals(EntityType.EVENT) ? getTypeFunction.apply(entity) : null,
+                        indexType,
+                        null, null, null,
+                        null, null, null,
                         null, null, null
                     )
                 );

@@ -211,7 +211,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         personInvolved.addInvolvement(newEmployment);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
-        personService.indexPerson(personInvolved);
+
+        var personIndex = personService.indexPerson(personInvolved);
+        personService.savePersonEmploymentHierarchyIds(personInvolved, personIndex);
 
         var savedEmployment = involvementRepository.save(newEmployment);
 
@@ -396,7 +398,10 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvementRepository.save(employmentToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
             employmentToUpdate.getPersonInvolved().getId());
-        personService.indexPerson(employmentToUpdate.getPersonInvolved());
+
+        var personIndex = personService.indexPerson(employmentToUpdate.getPersonInvolved());
+        personService.savePersonEmploymentHierarchyIds(employmentToUpdate.getPersonInvolved(),
+            personIndex);
 
         applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
             employmentToUpdate.getPersonInvolved().getId()));
@@ -421,8 +426,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         }
 
         person.removeInvolvement(involvementToDelete);
-        personService.save(person);
-        personService.indexPerson(person);
+
+        var personIndex = personService.indexPerson(person);
+        personService.savePersonEmploymentHierarchyIds(person, personIndex);
     }
 
     @Override
@@ -438,7 +444,10 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         employment.get().setDateTo(LocalDate.now());
         employmentRepository.save(employment.get());
-        personService.indexPerson(employment.get().getPersonInvolved());
+
+        var personIndex = personService.indexPerson(employment.get().getPersonInvolved());
+        personService.savePersonEmploymentHierarchyIds(employment.get().getPersonInvolved(),
+            personIndex);
 
         applicationEventPublisher.publishEvent(new PersonEmploymentOUHierarchyStructureChangedEvent(
             employment.get().getPersonInvolved().getId()));
@@ -501,21 +510,33 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvement.getProofs().clear();
     }
 
+    @Override
     @Async("taskExecutor")
     @Transactional
-    public void addExternalInvolvementToBoardMember(Integer personId,
+    public void addExternalInvolvementToContributor(Integer personId,
                                                     List<MultilingualContentDTO> externalInstitutionName,
-                                                    String employmentTitle) {
+                                                    String employmentTitle,
+                                                    boolean performPersonUserCheck) {
+        if (performPersonUserCheck && Objects.nonNull(personService.findOne(personId).getUser())) {
+            log.info("User account bound to PERSON with ID {}. Skipping...", personId);
+            return;
+        }
+
         if (employmentRepository.findExternalByPersonInvolvedId(personId).stream()
             .anyMatch(employment ->
                 CollectionOperations.hasCaseInsensitiveMatch(
                     externalInstitutionName.stream().map(MultilingualContentDTO::getContent)
                         .collect(Collectors.toSet()), employment.getAffiliationStatement().stream()
-                        .map(MultiLingualContent::getContent).collect(Collectors.toSet())))) {
+                        .map(MultiLingualContent::getContent).collect(Collectors.toSet()),
+                    false))) {
+            log.info("External contribution already exists for PERSON with ID {}. Skipping...",
+                personId);
             return;
         }
 
-        if (employmentTitle.equals("ACADEMICIAN")) {
+        log.info("Adding external contribution for PERSON with ID {}.", personId);
+
+        if (Objects.nonNull(employmentTitle) && employmentTitle.equals("ACADEMICIAN")) {
             employmentTitle = "FULL_PROFESSOR";
         }
 
@@ -523,8 +544,13 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         addEmployment(personId, new EmploymentDTO() {{
             setInvolvementType(InvolvementType.EMPLOYED_AT);
             setAffiliationStatement(externalInstitutionName);
-            setEmploymentPosition(EmploymentPosition.valueOf(finalEmploymentTitle));
+
+            if (Objects.nonNull(finalEmploymentTitle)) {
+                setEmploymentPosition(EmploymentPosition.valueOf(finalEmploymentTitle));
+            }
         }});
+
+        log.info("Successfully added external contribution for PERSON with ID {}.", personId);
     }
 
     @Override

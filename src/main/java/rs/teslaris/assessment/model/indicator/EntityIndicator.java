@@ -44,7 +44,10 @@ import rs.teslaris.core.model.user.User;
         @Index(name = "idx_entity_type_pubseries_source_from_to", columnList = "entity_type, publication_series_id, source, from_date, to_date"),
         @Index(name = "idx_entity_type_category_source_fromdate", columnList = "entity_type, category_identifier, source, from_date"),
         @Index(name = "idx_entity_type_pubseries_source_date_category", columnList = "entity_type, publication_series_id, source, from_date, category_identifier"),
-        @Index(name = "idx_ei_type_document", columnList = "entity_type, document_id")
+        @Index(name = "idx_ei_type_document", columnList = "entity_type, document_id"),
+        @Index(name = "idx_psi_pubseries_indicator", columnList = "entity_type, publication_series_id, indicator_id"),
+        @Index(name = "idx_ei_person_source", columnList = "entity_type, person_id, source"),
+        @Index(name = "idx_ei_document_source", columnList = "entity_type, document_id, source")
     }
 )
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -75,7 +78,7 @@ public abstract class EntityIndicator extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<DocumentFile> proofs = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "indicator_id")
     private Indicator indicator;
 

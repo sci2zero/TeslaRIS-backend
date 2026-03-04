@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -228,5 +229,73 @@ public class LoadingConfigurationServiceTest {
         // Then
         assertTrue(result.getSmartLoadingByDefault());
         assertTrue(result.getLoadedEntitiesAreUnmanaged());
+    }
+
+    @Test
+    void shouldReturnDirectInstitutionConfigurationWhenExists() {
+        // given
+        var institutionId = 1;
+
+        var config = new LoadingConfiguration();
+        config.setSmartLoadingByDefault(false);
+        config.setLoadedEntitiesAreUnmanaged(false);
+        config.setPriorityLoading(true);
+
+        when(loadingConfigurationRepository
+            .getLoadingConfigurationForInstitution(institutionId))
+            .thenReturn(Optional.of(config));
+
+        // when
+        var result =
+            loadingConfigurationService.getLoadingConfigurationForInstitution(institutionId);
+
+        // then
+        assertFalse(result.getSmartLoadingByDefault());
+        assertFalse(result.getLoadedEntitiesAreUnmanaged());
+        assertTrue(result.getPriorityLoading());
+
+        verify(loadingConfigurationRepository)
+            .getLoadingConfigurationForInstitution(institutionId);
+        verifyNoInteractions(organisationUnitService);
+    }
+
+    @Test
+    void shouldReturnSuperInstitutionConfigurationWhenDirectDoesNotExist() {
+        // given
+        var institutionId = 10;
+        var superOuId = 5;
+
+        when(loadingConfigurationRepository
+            .getLoadingConfigurationForInstitution(institutionId))
+            .thenReturn(Optional.empty());
+
+        when(organisationUnitService
+            .getSuperOUsHierarchyRecursive(institutionId))
+            .thenReturn(List.of(superOuId));
+
+        var superConfig = new LoadingConfiguration();
+        superConfig.setSmartLoadingByDefault(true);
+        superConfig.setLoadedEntitiesAreUnmanaged(false);
+        superConfig.setPriorityLoading(true);
+
+        when(loadingConfigurationRepository
+            .getLoadingConfigurationForInstitution(superOuId))
+            .thenReturn(Optional.of(superConfig));
+
+        // when
+        var result =
+            loadingConfigurationService.getLoadingConfigurationForInstitution(institutionId);
+
+        // then
+        assertTrue(result.getSmartLoadingByDefault());
+        assertFalse(result.getLoadedEntitiesAreUnmanaged());
+        assertTrue(result.getPriorityLoading());
+
+        verify(loadingConfigurationRepository)
+            .getLoadingConfigurationForInstitution(institutionId);
+        verify(organisationUnitService)
+            .getSuperOUsHierarchyRecursive(institutionId);
+        verify(loadingConfigurationRepository)
+            .getLoadingConfigurationForInstitution(superOuId);
     }
 }

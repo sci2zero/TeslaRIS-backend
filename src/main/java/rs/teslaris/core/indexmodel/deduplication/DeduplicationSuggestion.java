@@ -10,7 +10,6 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
-import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 
 @Getter
@@ -42,8 +41,8 @@ public class DeduplicationSuggestion {
     @Field(type = FieldType.Text, store = true, name = "right_title_other", analyzer = "english", searchAnalyzer = "english")
     private String rightTitleOther;
 
-    @Field(type = FieldType.Keyword, store = true, name = "document_type")
-    private DocumentPublicationType documentPublicationType;
+    @Field(type = FieldType.Keyword, store = true, name = "concrete_entity_type")
+    private String concreteEntityType;
 
     @Field(type = FieldType.Keyword, store = true, name = "entity_type")
     private EntityType entityType;
@@ -79,7 +78,7 @@ public class DeduplicationSuggestion {
     public DeduplicationSuggestion(Integer leftEntityId, Integer rightEntityId, String leftTitleSr,
                                    String leftTitleOther, String rightTitleSr,
                                    String rightTitleOther,
-                                   DocumentPublicationType documentPublicationType,
+                                   String concreteEntityType,
                                    EntityType entityType, Integer leftYear, Integer rightYear,
                                    String leftAuthors, String rightAuthors,
                                    List<Integer> leftAuthorIds,
@@ -91,7 +90,7 @@ public class DeduplicationSuggestion {
         this.leftTitleOther = leftTitleOther;
         this.rightTitleSr = rightTitleSr;
         this.rightTitleOther = rightTitleOther;
-        this.documentPublicationType = documentPublicationType;
+        this.concreteEntityType = concreteEntityType;
         this.entityType = entityType;
         this.leftYear = leftYear;
         this.rightYear = rightYear;

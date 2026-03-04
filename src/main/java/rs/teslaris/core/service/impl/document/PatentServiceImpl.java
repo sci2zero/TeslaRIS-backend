@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -8,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.PatentConverter;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -24,6 +27,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -66,14 +70,17 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                              InvolvementRepository involvementRepository,
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                             DocumentLookupService documentLookupService,
                              PatentJPAServiceImpl patentJPAService,
-                             PublisherService publisherService, PatentRepository patentRepository) {
+                             PublisherService publisherService,
+                             PatentRepository patentRepository) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
         this.patentRepository = patentRepository;
@@ -132,7 +139,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             indexPatent(savedPatent, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedPatent);
+        sendNotifications(savedPatent, Collections.emptySet());
 
         return savedPatent;
     }
@@ -141,6 +148,12 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     public void editPatent(Integer patentId, PatentDTO patentDTO) {
         var patentToUpdate = patentJPAService.findOne(patentId);
+
+        var oldContributorIds =
+            patentToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(patentDTO);
         clearCommonFields(patentToUpdate);
@@ -153,7 +166,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(patentId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(updatedPatent);
+        sendNotifications(updatedPatent, oldContributorIds);
     }
 
     private void setPatentRelatedFields(Patent patent, PatentDTO patentDTO) {
@@ -192,7 +205,10 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             patentJPAService::findAll,
-            patent -> indexPatent(patent, new DocumentPublicationIndex())
+            patent -> {
+                var index = indexPatent(patent, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -204,7 +220,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                 patent.getId()).orElse(new DocumentPublicationIndex()));
     }
 
-    private void indexPatent(Patent patent, DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexPatent(Patent patent, DocumentPublicationIndex index) {
         indexCommonFields(patent, index);
 
         index.setType(DocumentPublicationType.PATENT.name());
@@ -218,5 +234,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }

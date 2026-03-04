@@ -150,6 +150,40 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
             .andExpect(status().isOk());
     }
 
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetSubmittedPublications() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/thesis-library/report/submitted")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testGetArchivedPublications() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var request = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(request);
+        mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/thesis-library/report/archived")
+                    .content(requestBody)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"sr", "en"})
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")

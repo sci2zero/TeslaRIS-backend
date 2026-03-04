@@ -349,6 +349,55 @@ public interface DocumentPublicationIndexRepository extends
         Boolean openAccess,
         Pageable pageable);
 
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "type": "THESIS" } },
+              { "range": {
+                  "created_at": {
+                    "gte": "?0",
+                    "lte": "?1"
+                  }
+                }
+              },
+              { "terms": { "organisation_unit_ids": ?2 } },
+              { "terms": { "publication_type": ?3 } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchThesesCreatedInPeriod(LocalDate startDate,
+                                                              LocalDate endDate,
+                                                              List<Integer> institutionIds,
+                                                              List<String> thesisTypes,
+                                                              Pageable pageable);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "term": { "type": "THESIS" } },
+              { "term": { "is_archived": true } },
+              { "range": {
+                  "last_edited": {
+                    "gte": "?0",
+                    "lte": "?1"
+                  }
+                }
+              },
+              { "terms": { "organisation_unit_ids": ?2 } },
+              { "terms": { "publication_type": ?3 } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchThesesArchivedInPeriod(LocalDate startDate,
+                                                               LocalDate endDate,
+                                                               List<Integer> institutionIds,
+                                                               List<String> thesisTypes,
+                                                               Pageable pageable);
+
     @CountQuery("""
         {
           "bool": {
@@ -466,4 +515,18 @@ public interface DocumentPublicationIndexRepository extends
         }
         """)
     long countByJournalId(Integer journalId);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "terms": { "type": ?1 } },
+              { "terms": { "organisation_unit_ids": ?0 } }
+            ]
+          }
+        }
+        """)
+    Page<DocumentPublicationIndex> fetchForInstitutionsAndTypes(List<Integer> institutionIds,
+                                                                List<String> types,
+                                                                Pageable pageable);
 }

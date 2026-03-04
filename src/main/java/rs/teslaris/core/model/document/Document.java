@@ -16,13 +16,13 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -30,7 +30,6 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @DynamicUpdate
@@ -117,6 +116,17 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(columnDefinition = "jsonb", name = "internal_identifiers")
     private Set<String> internalIdentifiers = new HashSet<>();
 
+    @Column(name = "document_type", nullable = false)
+    private DocumentPublicationType documentType;
+
+
+    protected Document(DocumentPublicationType documentType) {
+        this.documentType = documentType;
+    }
+
+    protected Document() {
+        // for JPA
+    }
 
     protected Document(Document other) {
         this.documentDate = other.documentDate;

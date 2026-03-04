@@ -1,7 +1,6 @@
 package rs.teslaris.core.controller.event;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -67,44 +66,6 @@ public class ConferenceController {
     @GetMapping
     public Page<ConferenceDTO> readAll(Pageable pageable) {
         return conferenceService.readAllConferences(pageable);
-    }
-
-    @GetMapping("/simple-search")
-    Page<EventIndex> searchConferences(
-        @RequestParam("tokens")
-        @NotNull(message = "You have to provide a valid search input.") List<String> tokens,
-        @RequestParam("returnOnlyNonSerialEvents")
-        @NotNull(message = "You have to provide search range.") Boolean returnOnlyNonSerialEvents,
-        @RequestParam("returnOnlySerialEvents")
-        @NotNull(message = "You have to provide search range.") Boolean returnOnlySerialEvents,
-        @RequestParam(value = "forMyInstitution", defaultValue = "false") Boolean forMyInstitution,
-        @RequestParam(value = "commissionId", required = false) Integer commissionId,
-        @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
-        @RequestParam(value = "emptyEventsOnly", defaultValue = "false") Boolean emptyEventsOnly,
-        @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
-        Pageable pageable) {
-        StringUtil.sanitizeTokens(tokens);
-
-        if (!bearerToken.isEmpty()) {
-            if (tokenUtil.extractUserRoleFromToken(bearerToken).equals(UserRole.ADMIN.name())) {
-                return conferenceService.searchConferences(tokens, pageable,
-                    returnOnlyNonSerialEvents,
-                    returnOnlySerialEvents, null,
-                    unclassified ? commissionId : null, emptyEventsOnly);
-            } else if (tokenUtil.extractUserRoleFromToken(bearerToken)
-                .equals(UserRole.COMMISSION.name())) {
-                var userId = tokenUtil.extractUserIdFromToken(bearerToken);
-
-                return conferenceService.searchConferences(tokens, pageable,
-                    returnOnlyNonSerialEvents,
-                    returnOnlySerialEvents,
-                    forMyInstitution ? userService.getUserOrganisationUnitId(userId) : null,
-                    unclassified ? userService.getUserCommissionId(userId) : null, false);
-            }
-        }
-
-        return conferenceService.searchConferences(tokens, pageable, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, null, null, false);
     }
 
     @GetMapping("/import-search")

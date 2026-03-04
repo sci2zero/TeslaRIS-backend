@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
+import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -42,6 +43,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.document.BookSeriesPublishable;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -65,6 +67,7 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -120,6 +123,8 @@ public class MergeServiceImpl implements MergeService {
 
     private final ConferenceService conferenceService;
 
+    private final ExhibitionService exhibitionService;
+
     private final ProceedingsService proceedingsService;
 
     private final PrizeService prizeService;
@@ -163,6 +168,8 @@ public class MergeServiceImpl implements MergeService {
     private final IndexBulkUpdateService indexBulkUpdateService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final PersonIndexRepository personIndexRepository;
 
 
     @Override
@@ -337,8 +344,10 @@ public class MergeServiceImpl implements MergeService {
         userService.updateResearcherCurrentOrganisationUnitIfBound(sourcePersonId);
         userService.updateResearcherCurrentOrganisationUnitIfBound(targetPersonId);
 
-        personService.indexPerson(sourcePerson);
-        personService.indexPerson(targetPerson);
+        personService.savePersonEmploymentHierarchyIds(sourcePerson,
+            personService.indexPerson(sourcePerson));
+        personService.savePersonEmploymentHierarchyIds(targetPerson,
+            personService.indexPerson(targetPerson));
     }
 
     @Override
@@ -387,8 +396,8 @@ public class MergeServiceImpl implements MergeService {
                                         List<Integer> leftFileItems,
                                         List<Integer> rightFileItems) {
 
-        var leftDocument = documentPublicationService.findDocumentById(leftId);
-        var rightDocument = documentPublicationService.findDocumentById(rightId);
+        var leftDocument = documentPublicationService.findOne(leftId);
+        var rightDocument = documentPublicationService.findOne(rightId);
 
         // Merge proofs
         mergeDocumentFiles(leftDocument, rightDocument, leftProofs, rightProofs);
@@ -495,6 +504,17 @@ public class MergeServiceImpl implements MergeService {
             (dto, values) -> {
                 dto.setConfId(values[0]);
                 dto.setOpenAlexId(values[1]);
+            });
+    }
+
+    @Override
+    public void saveMergedExhibitionsMetadata(Integer leftId, Integer rightId,
+                                              ExhibitionDTO leftData, ExhibitionDTO rightData) {
+        updateAndRestoreMetadata(exhibitionService::updateExhibition,
+            exhibitionService::indexExhibition, exhibitionService::findExhibitionById,
+            leftId, rightId, leftData, rightData,
+            dto -> new String[] {},
+            (dto, values) -> {
             });
     }
 
@@ -724,8 +744,10 @@ public class MergeServiceImpl implements MergeService {
                 documentPublicationService::save, deletionEntityId, mergedEntityId);
             case PUBLICATION -> migrateIdentifierHistory(documentPublicationService::findOne,
                 documentPublicationService::save, deletionEntityId, mergedEntityId);
-            case EVENT -> migrateIdentifierHistory(conferenceService::findRaw,
+            case CONFERENCE -> migrateIdentifierHistory(conferenceService::findRaw,
                 conferenceService::save, deletionEntityId, mergedEntityId);
+            case EXHIBITION -> migrateIdentifierHistory(exhibitionService::findRaw,
+                exhibitionService::save, deletionEntityId, mergedEntityId);
             case JOURNAL -> migrateIdentifierHistory(journalService::findRaw, journalService::save,
                 deletionEntityId, mergedEntityId);
             case ORGANISATION_UNIT -> {
@@ -761,7 +783,7 @@ public class MergeServiceImpl implements MergeService {
     private void performPersonPublicationSwitch(Integer sourcePersonId, Integer targetPersonId,
                                                 Integer publicationId,
                                                 boolean skipCoauthoredPublications) {
-        var document = documentPublicationService.findDocumentById(publicationId);
+        var document = documentPublicationService.findOne(publicationId);
 
         boolean targetPersonFound = false;
         boolean sourcePersonFound = false;
@@ -939,7 +961,15 @@ public class MergeServiceImpl implements MergeService {
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
 
         if (reindexPersonEmploymentInformation) {
-            personService.reindexPersonEmploymentDetails(person);
+            personIndexRepository.findByDatabaseId(person.getId()).ifPresent(personIndex -> {
+                personService.setPersonIndexEmploymentDetails(personIndex, person);
+                personIndexRepository.save(personIndex);
+
+                person.getEmploymentInstitutionsIdHierarchy().clear();
+                person.getEmploymentInstitutionsIdHierarchy()
+                    .addAll(personIndex.getEmploymentInstitutionsIdHierarchy());
+            });
+
             applicationEventPublisher.publishEvent(
                 new PersonEmploymentOUHierarchyStructureChangedEvent(
                     person.getId()));

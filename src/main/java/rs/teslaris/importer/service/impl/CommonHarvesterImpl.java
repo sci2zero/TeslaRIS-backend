@@ -1,28 +1,44 @@
 package rs.teslaris.importer.service.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
-import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.util.deduplication.DeduplicationUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.StringUtil;
-import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.importer.model.common.DocumentImport;
+import rs.teslaris.importer.service.impl.worker.DocumentEnrichmentWorker;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.CommonHarvester;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
+import rs.teslaris.importer.service.interfaces.LoadingConfigurationService;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
@@ -50,11 +66,20 @@ public class CommonHarvesterImpl implements CommonHarvester {
 
     private final NotificationService notificationService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
+
+    private final LoadingConfigurationService loadingConfigurationService;
 
     private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
 
     private final MongoTemplate mongoTemplate;
+
+    private final DocumentEnrichmentWorker documentEnrichmentWorker;
+
+    private final TaskManagerService taskManagerService;
+
+    @Qualifier("metadataFetchExecutor")
+    private final Executor metadataFetchExecutor;
 
 
     @Override
@@ -192,60 +217,155 @@ public class CommonHarvesterImpl implements CommonHarvester {
     }
 
     @Override
-    public void performDocumentCentricHarvest(Integer documentId) {
-        var mergedMetadata = new DocumentImport();
-
+    public String performDocumentCentricHarvest(Integer documentId) {
         var documentIndex =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
 
         if (documentIndex.isEmpty() || !StringUtil.valueExists(documentIndex.get().getDoi())) {
-            return;
+            return null;
         }
 
-        var doi = documentIndex.get().getDoi();
+        return scanSourcesForDocumentMetadata(documentIndex.get(), false);
+    }
 
-        var scopusHarvestedData = scopusHarvester.harvestDocumentForDoi(doi);
-        scopusHarvestedData.ifPresent(
-            documentImport ->
-                DeepObjectMerger.deepMerge(mergedMetadata, documentImport));
+    @Override
+    public void scheduleMetadataEnrichmentForInstitution(LocalDateTime timeToRun,
+                                                         List<Integer> institutionIds,
+                                                         boolean autoload,
+                                                         RecurrenceType recurrenceType,
+                                                         Integer userId) {
+        var taskId = taskManagerService.scheduleTask(
+            "Enrichment-" +
+                institutionIds.stream().map(String::valueOf).collect(Collectors.joining("_")) +
+                "-" + (autoload ? "AUTO" : "UI"),
+            timeToRun,
+            () -> enrichMetadataForInstitution(institutionIds, autoload),
+            userId, recurrenceType);
 
-        var openAlexHarvestedData = openAlexHarvester.harvestDocumentForDoi(doi);
-        openAlexHarvestedData.ifPresent(
-            documentImport ->
-                DeepObjectMerger.deepMerge(mergedMetadata, documentImport));
+        taskManagerService.saveTaskMetadata(
+            new ScheduledTaskMetadata(taskId, timeToRun,
+                ScheduledTaskType.METADATA_ENRICHMENT, new HashMap<>() {{
+                put("institutionIds", institutionIds);
+                put("autoload", autoload);
+                put("userId", userId);
+            }}, recurrenceType));
+    }
 
-        var webOfScienceHarvestedData = webOfScienceHarvester.harvestDocumentForDoi(doi);
-        webOfScienceHarvestedData.ifPresent(
-            documentImport ->
-                DeepObjectMerger.deepMerge(mergedMetadata, documentImport));
+    @Override
+    @Async
+    public void enrichMetadataForInstitution(List<Integer> institutionIds, boolean autoupdate) {
+        var typesToFetch =
+            autoupdate ? Arrays.stream(DocumentPublicationType.values()).map(Enum::name).toList() :
+                List.of(DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name());
+
+        FunctionalUtil.performBulkOperation(
+            (pageRequest -> documentPublicationIndexRepository.fetchForInstitutionsAndTypes(
+                institutionIds,
+                typesToFetch, pageRequest)),
+            Sort.by(Sort.Direction.ASC, "databaseId"),
+            (documentIndex) -> scanSourcesForDocumentMetadata(documentIndex, autoupdate)
+        );
+
+        institutionIds.forEach(
+            institutionId -> {
+                var loadingConfiguration =
+                    loadingConfigurationService.getLoadingConfigurationForInstitution(
+                        institutionId);
+                loadingConfiguration.setPriorityLoading(true);
+
+                loadingConfigurationService.saveLoadingConfiguration(institutionId,
+                    loadingConfiguration);
+            });
+    }
+
+    private String scanSourcesForDocumentMetadata(DocumentPublicationIndex documentIndex,
+                                                  boolean autoupdate) {
+        var doi = documentIndex.getDoi();
+        if (!StringUtil.valueExists(doi)) {
+            return null;
+        }
+
+        CompletableFuture<Optional<DocumentImport>> scopusFuture =
+            CompletableFuture.supplyAsync(
+                () -> scopusHarvester.harvestDocumentForDoi(doi, !autoupdate),
+                metadataFetchExecutor
+            );
+
+        CompletableFuture<Optional<DocumentImport>> openAlexFuture =
+            CompletableFuture.supplyAsync(
+                () -> openAlexHarvester.harvestDocumentForDoi(doi, !autoupdate),
+                metadataFetchExecutor
+            );
+
+        CompletableFuture<Optional<DocumentImport>> wosFuture =
+            CompletableFuture.supplyAsync(
+                () -> webOfScienceHarvester.harvestDocumentForDoi(doi, !autoupdate),
+                metadataFetchExecutor
+            );
+
+        CompletableFuture.allOf(scopusFuture, openAlexFuture, wosFuture).join();
+
+        var mergedMetadata = new DocumentImport();
+
+        mergeIfPresent(scopusFuture.join(), mergedMetadata);
+        mergeIfPresent(openAlexFuture.join(), mergedMetadata);
+        mergeIfPresent(wosFuture.join(), mergedMetadata);
 
         if (!StringUtil.valueExists(mergedMetadata.getDoi())) {
-            return; // nothing was found
+            return null;
         }
 
-        var existingImport =
-            CommonImportUtility.findImportByDOIOrMetadata(mergedMetadata);
-        if (Objects.nonNull(existingImport)) {
-            DeepObjectMerger.deepMerge(existingImport, mergedMetadata);
-            mongoTemplate.save(existingImport, "documentImports");
-            return;
+        if (autoupdate) {
+            documentEnrichmentWorker.enrichDocumentMetadata(
+                documentIndex.getDatabaseId(),
+                mergedMetadata
+            );
+            return null;
         }
 
+        return handleManualImport(documentIndex, mergedMetadata);
+    }
+
+    private void mergeIfPresent(Optional<DocumentImport> optional,
+                                DocumentImport target) {
+        optional.ifPresent(source ->
+            DeepObjectMerger.deepMerge(target, source));
+    }
+
+    private String handleManualImport(DocumentPublicationIndex documentIndex,
+                                      DocumentImport mergedMetadata) {
         var embedding = CommonImportUtility.generateEmbedding(mergedMetadata);
         if (Objects.nonNull(embedding)) {
             mergedMetadata.setEmbedding(DeduplicationUtil.toDoubleList(embedding));
         }
 
-//        var personId = personService.getPersonIdForUserId(userId);
-//
-//        var employmentInstitutionIds =
-//            involvementService.getDirectEmploymentInstitutionIdsForPerson(personId);
-        var adminUserIds = CommonImportUtility.getAdminUserIds();
+        var existingImport = CommonImportUtility.findImportByDOIOrMetadata(mergedMetadata);
+        if (Objects.nonNull(existingImport)) {
+            if (DeduplicationUtil.isDuplicate(existingImport, embedding, mergedMetadata) &&
+                existingImport.getLoaded()) {
+                return null;
+            } else {
+                DeepObjectMerger.deepMerge(existingImport, mergedMetadata);
+                existingImport.setLoaded(false);
+            }
 
-        mergedMetadata.getImportUsersId().add(SessionUtil.getLoggedInUser().getId());
-        mergedMetadata.getImportUsersId().addAll(adminUserIds);
-//        mergedMetadata.getImportInstitutionsId().addAll(employmentInstitutionIds);
-        mongoTemplate.save(mergedMetadata, "documentImports");
+            existingImport.setSource("ENRICHMENT");
+            mongoTemplate.save(existingImport, "documentImports");
+            return existingImport.getId();
+        }
+
+        documentIndex.getAuthorIds().forEach(authorId ->
+            userRepository.findForResearcher(authorId)
+                .ifPresent(user -> mergedMetadata.getImportUsersId().add(user.getId())));
+
+        documentIndex.getOrganisationUnitIdsActive()
+            .forEach(mergedMetadata.getImportInstitutionsId()::add);
+
+        mergedMetadata.getImportUsersId().addAll(CommonImportUtility.getAdminUserIds());
+
+        mergedMetadata.setSource("ENRICHMENT");
+        return mongoTemplate.save(mergedMetadata, "documentImports").getId();
     }
 
     private void dispatchNotifications(Map<Integer, Integer> newDocumentImportCountByUser,
@@ -254,13 +374,14 @@ public class CommonHarvesterImpl implements CommonHarvester {
             newDocumentImportCountByUser.put(userId, 0);
         }
 
-        newDocumentImportCountByUser.keySet().forEach(key -> {
-            var notificationValues = new HashMap<String, String>();
-            notificationValues.put("newImportCount",
-                String.valueOf(newDocumentImportCountByUser.get(key)));
-            notificationService.createNotification(
-                NotificationFactory.contructNewImportsNotification(notificationValues,
-                    userService.findOne(key)));
-        });
+        newDocumentImportCountByUser.keySet().forEach(key ->
+            userRepository.findById(key).ifPresent(user -> {
+                var notificationValues = new HashMap<String, String>();
+                notificationValues.put("newImportCount",
+                    String.valueOf(newDocumentImportCountByUser.get(key)));
+                notificationService.createNotification(
+                    NotificationFactory.contructNewImportsNotification(notificationValues, user));
+            })
+        );
     }
 }

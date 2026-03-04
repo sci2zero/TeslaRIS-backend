@@ -14,24 +14,24 @@ import rs.teslaris.assessment.dto.CommissionRelationResponseDTO;
 import rs.teslaris.assessment.dto.ReorderCommissionRelationDTO;
 import rs.teslaris.assessment.repository.CommissionRelationRepository;
 import rs.teslaris.assessment.service.interfaces.CommissionRelationService;
-import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.institution.CommissionRelation;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class CommissionRelationServiceImpl extends JPAServiceImpl<CommissionRelation>
     implements CommissionRelationService {
 
     private final CommissionRelationRepository commissionRelationRepository;
 
-    private final CommissionService commissionService;
+    private final CommissionRepository commissionRepository;
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommissionRelationResponseDTO> fetchCommissionRelations(
         Integer sourceCommissionId) {
         return commissionRelationRepository.getRelationsForSourceCommission(sourceCommissionId)
@@ -40,16 +40,17 @@ public class CommissionRelationServiceImpl extends JPAServiceImpl<CommissionRela
     }
 
     @Override
+    @Transactional
     public void addCommissionRelation(CommissionRelationDTO commissionRelationDTO) {
         var newRelation = new CommissionRelation();
 
         setCommonFields(newRelation, commissionRelationDTO);
-        newRelation.getSourceCommission().getRelations().add(newRelation);
 
         save(newRelation);
     }
 
     @Override
+    @Transactional
     public void updateCommissionRelation(Integer commissionRelationId,
                                          CommissionRelationDTO commissionRelationDTO) {
         var commissionRelationToUpdate = findOne(commissionRelationId);
@@ -60,24 +61,22 @@ public class CommissionRelationServiceImpl extends JPAServiceImpl<CommissionRela
     }
 
     private void setCommonFields(CommissionRelation relation, CommissionRelationDTO dto) {
-        relation.setSourceCommission(commissionService.findOne(
+        relation.setSourceCommission(commissionRepository.getReferenceById(
             dto.getSourceCommissionId()));
         relation.setPriority(dto.getPriority());
         relation.setResultCalculationMethod(dto.getResultCalculationMethod());
 
         relation.getTargetCommissions().clear();
-        dto.getTargetCommissionIds().forEach((targetCommissionId) -> {
-            relation.getTargetCommissions().add(commissionService.findOne(targetCommissionId));
-        });
+        relation.getTargetCommissions()
+            .addAll(commissionRepository.findCommissionsByIds(dto.getTargetCommissionIds()));
     }
 
     @Override
+    @Transactional
     public void deleteCommissionRelation(Integer commissionRelationId) {
         var commissionRelationToDelete = findOne(commissionRelationId);
 
-        commissionRelationToDelete.getSourceCommission().getRelations()
-            .remove(commissionRelationToDelete);
-        commissionService.save(commissionRelationToDelete.getSourceCommission());
+        commissionRepository.save(commissionRelationToDelete.getSourceCommission());
 
         delete(commissionRelationId);
     }
@@ -88,14 +87,16 @@ public class CommissionRelationServiceImpl extends JPAServiceImpl<CommissionRela
     }
 
     @Override
+    @Transactional
     public void reorderCommissionRelations(Integer commissionId, Integer relationId,
                                            ReorderCommissionRelationDTO reorderDTO) {
-        var commissionToUpdate = commissionService.findOne(commissionId);
-        reorderRelations(commissionToUpdate.getRelations(), relationId,
-            reorderDTO.getOldRelationPriority(),
-            reorderDTO.getNewRelationPriority());
+        commissionRepository.findById(commissionId).ifPresent(commissionToUpdate -> {
+            reorderRelations(commissionToUpdate.getRelations(), relationId,
+                reorderDTO.getOldRelationPriority(),
+                reorderDTO.getNewRelationPriority());
 
-        commissionService.save(commissionToUpdate);
+            commissionRepository.save(commissionToUpdate);
+        });
     }
 
     private void reorderRelations(Set<CommissionRelation> relations,

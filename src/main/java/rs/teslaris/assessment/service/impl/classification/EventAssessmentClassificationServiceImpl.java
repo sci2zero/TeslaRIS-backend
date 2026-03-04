@@ -24,11 +24,15 @@ import rs.teslaris.assessment.util.AssessmentRulesConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.EventLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
@@ -46,6 +50,8 @@ public class EventAssessmentClassificationServiceImpl
 
     private final EventService eventService;
 
+    private final EventLookupService eventLookupService;
+
     private final UserService userService;
 
     private final NotificationService notificationService;
@@ -55,18 +61,20 @@ public class EventAssessmentClassificationServiceImpl
     public EventAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
-        ConferenceService conferenceService,
+        ConferenceService conferenceService, ExhibitionService exhibitionService,
         ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
         EventAssessmentClassificationRepository eventAssessmentClassificationRepository,
-        EventService eventService, UserService userService,
+        EventService eventService, EventLookupService eventLookupService, UserService userService,
         NotificationService notificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, applicationEventPublisher, entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, applicationEventPublisher,
+            entityAssessmentClassificationRepository);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;
+        this.eventLookupService = eventLookupService;
         this.userService = userService;
         this.notificationService = notificationService;
     }
@@ -97,7 +105,8 @@ public class EventAssessmentClassificationServiceImpl
                 "manual", MultilingualContentConverter.getMultilingualContentDTO(
                     assessmentClassification.getTitle())));
 
-        var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());
+        var event =
+            eventLookupService.fastEventLookup(eventAssessmentClassificationDTO.getEventId());
         newAssessmentClassification.setEvent(event);
         if (event.getSerialEvent()) {
             newAssessmentClassification.setClassificationYear(null);
@@ -106,7 +115,8 @@ public class EventAssessmentClassificationServiceImpl
                 .forEach((relation) -> {
                     if (relation.getEventsRelationType()
                         .equals(EventsRelationType.BELONGS_TO_SERIES)) {
-                        var eventInstance = eventService.findOne(relation.getSourceId());
+                        var eventInstance =
+                            eventLookupService.fastEventLookup(relation.getSourceId());
                         var instanceClassification = new EventAssessmentClassification();
 
                         var existingClassification =
@@ -130,8 +140,7 @@ public class EventAssessmentClassificationServiceImpl
                                     assessmentClassification.getTitle())));
 
                         eventAssessmentClassificationJPAService.save(instanceClassification);
-                        conferenceService.reindexVolatileConferenceInformation(
-                            eventInstance.getId());
+                        reindexVolatileInformation(eventInstance);
 
                         applicationEventPublisher.publishEvent(
                             new EntityAssessmentChanged(ApplicableEntityType.EVENT,
@@ -144,15 +153,14 @@ public class EventAssessmentClassificationServiceImpl
             newAssessmentClassification.setClassificationYear(classificationYear);
         }
 
-        var existingClassification =
-            eventAssessmentClassificationRepository.findAssessmentClassificationsForEventAndCommission(
+        eventAssessmentClassificationRepository
+            .deleteAssessmentClassificationsForEventAndCommission(
                 eventAssessmentClassificationDTO.getEventId(),
                 eventAssessmentClassificationDTO.getCommissionId());
-        existingClassification.ifPresent(eventAssessmentClassificationRepository::delete);
 
         var savedClassification =
             eventAssessmentClassificationJPAService.save(newAssessmentClassification);
-        conferenceService.reindexVolatileConferenceInformation(event.getId());
+        reindexVolatileInformation(event);
 
         applicationEventPublisher.publishEvent(
             new EntityAssessmentChanged(ApplicableEntityType.EVENT,
@@ -171,7 +179,8 @@ public class EventAssessmentClassificationServiceImpl
 
         setCommonFields(eventAssessmentClassificationToUpdate, eventAssessmentClassificationDTO);
 
-        var event = eventService.findOne(eventAssessmentClassificationDTO.getEventId());
+        var event =
+            eventLookupService.fastEventLookup(eventAssessmentClassificationDTO.getEventId());
         eventAssessmentClassificationToUpdate.setEvent(event);
         if (event.getSerialEvent()) {
             eventAssessmentClassificationToUpdate.setClassificationYear(null);
@@ -180,7 +189,8 @@ public class EventAssessmentClassificationServiceImpl
                 .forEach((relation) -> {
                     if (relation.getEventsRelationType()
                         .equals(EventsRelationType.BELONGS_TO_SERIES)) {
-                        var eventInstance = eventService.findOne(relation.getSourceId());
+                        var eventInstance =
+                            eventLookupService.fastEventLookup(relation.getSourceId());
                         var instanceClassification = new EventAssessmentClassification();
 
                         var existingClassification =
@@ -204,8 +214,8 @@ public class EventAssessmentClassificationServiceImpl
                                         .getTitle())));
 
                         eventAssessmentClassificationJPAService.save(instanceClassification);
-                        conferenceService.reindexVolatileConferenceInformation(
-                            eventInstance.getId());
+                        reindexVolatileInformation(
+                            eventLookupService.fastEventLookup(eventInstance.getId()));
 
                         applicationEventPublisher.publishEvent(
                             new EntityAssessmentChanged(ApplicableEntityType.EVENT,
@@ -225,8 +235,9 @@ public class EventAssessmentClassificationServiceImpl
                     eventAssessmentClassificationToUpdate.getAssessmentClassification()
                         .getTitle())));
         eventAssessmentClassificationJPAService.save(eventAssessmentClassificationToUpdate);
-        conferenceService.reindexVolatileConferenceInformation(
-            eventAssessmentClassificationToUpdate.getEvent().getId());
+        reindexVolatileInformation(eventLookupService.fastEventLookup(
+            eventAssessmentClassificationToUpdate.getEvent().getId())
+        );
 
         applicationEventPublisher.publishEvent(
             new EntityAssessmentChanged(ApplicableEntityType.EVENT,
@@ -255,6 +266,15 @@ public class EventAssessmentClassificationServiceImpl
                     user)
             );
         });
+    }
+
+    private void reindexVolatileInformation(Event event) {
+        if (event instanceof Conference) {
+            conferenceService.reindexVolatileConferenceInformation(event.getId());
+            return;
+        }
+
+        exhibitionService.reindexVolatileExhibitionInformation(event.getId());
     }
 
     private long longValue(Long value) {

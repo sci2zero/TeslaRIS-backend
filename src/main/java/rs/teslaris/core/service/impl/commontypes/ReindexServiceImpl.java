@@ -22,6 +22,8 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -36,6 +38,7 @@ import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service
@@ -57,6 +60,10 @@ public class ReindexServiceImpl implements ReindexService {
     private final BookSeriesService bookSeriesService;
 
     private final ConferenceService conferenceService;
+
+    private final ExhibitionService exhibitionService;
+
+    private final EventService eventService;
 
     private final DocumentPublicationService documentPublicationService;
 
@@ -85,6 +92,8 @@ public class ReindexServiceImpl implements ReindexService {
     private final GeneticMaterialService geneticMaterialService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final PrizeService prizeService;
 
 
     @Override
@@ -118,7 +127,9 @@ public class ReindexServiceImpl implements ReindexService {
         }
 
         if (indexesToRepopulate.contains(EntityType.EVENT)) {
+            eventService.deleteIndexes();
             futures.add(conferenceService.reindexConferences());
+            futures.add(exhibitionService.reindexExhibitions());
         }
 
         if (indexesToRepopulate.contains(EntityType.DOCUMENT_FILE)) {
@@ -135,6 +146,15 @@ public class ReindexServiceImpl implements ReindexService {
 
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            futures.clear();
+
+            if (indexesToRepopulate.contains(EntityType.PRIZE)) {
+                futures.add(prizeService.reindexPrizes());
+            }
+
+            if (!futures.isEmpty()) {
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            }
 
             if (indexesToRepopulate.contains(EntityType.PUBLICATION) ||
                 indexesToRepopulate.contains(EntityType.PERSON)) {

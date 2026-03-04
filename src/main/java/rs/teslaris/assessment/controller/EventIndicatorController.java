@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,6 +55,7 @@ public class EventIndicatorController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_EVENT_INDICATORS')")
     @Idempotent
+    @Transactional
     public EntityIndicatorResponseDTO createEventIndicator(
         @RequestBody EventIndicatorDTO eventIndicatorDTO,
         @RequestHeader("Authorization") String bearerToken) {

@@ -1,0 +1,79 @@
+databaseChangeLog:
+- changeSet:
+    id: 1770108075449-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        - column:
+            name: date_from
+            type: date
+        - column:
+            name: date_to
+            type: date
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: exhibitions_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: serial_event
+            type: BOOLEAN
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: fee
+            type: VARCHAR(255)
+        - column:
+            name: number
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        - column:
+            name: merged_ids
+            type: JSONB
+        - column:
+            name: old_ids
+            type: JSONB
+        - column:
+            name: uris
+            type: JSONB
+        tableName: exhibitions
+- changeSet:
+    id: 1770108075449-2
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: exhibitions
+        constraintName: fk_nd01oyfcsj5t3av7wrwsir6fr
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+

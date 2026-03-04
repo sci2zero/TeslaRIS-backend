@@ -953,10 +953,11 @@ public class InvolvementServiceTest {
 
         when(employmentRepository.findExternalByPersonInvolvedId(personId))
             .thenReturn(List.of(existingEmployment));
+        when(personService.findOne(any())).thenReturn(new Person());
 
         // When
-        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
-            employmentTitle);
+        involvementService.addExternalInvolvementToContributor(personId, institutionName,
+            employmentTitle, true);
 
         // Then
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);
@@ -985,8 +986,8 @@ public class InvolvementServiceTest {
         when(personService.findOne(any())).thenReturn(new Person());
 
         // When
-        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
-            employmentTitle);
+        involvementService.addExternalInvolvementToContributor(personId, institutionName,
+            employmentTitle, true);
 
         // Then
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);
@@ -1010,8 +1011,8 @@ public class InvolvementServiceTest {
         when(personService.findOne(any())).thenReturn(new Person());
 
         // When
-        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
-            employmentTitle);
+        involvementService.addExternalInvolvementToContributor(personId, institutionName,
+            employmentTitle, true);
 
         // Then
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);
@@ -1038,10 +1039,11 @@ public class InvolvementServiceTest {
 
         when(employmentRepository.findExternalByPersonInvolvedId(personId))
             .thenReturn(List.of(existingEmployment));
+        when(personService.findOne(any())).thenReturn(new Person());
 
         // When
-        involvementService.addExternalInvolvementToBoardMember(personId, institutionName,
-            employmentTitle);
+        involvementService.addExternalInvolvementToContributor(personId, institutionName,
+            employmentTitle, true);
 
         // Then
         verify(employmentRepository).findExternalByPersonInvolvedId(personId);

@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.ProceedingsConverter;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
@@ -34,6 +36,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -98,10 +101,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                   InvolvementRepository involvementRepository,
                                   OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                  DocumentLookupService documentLookupService,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
-                                  LanguageService languageService,
-                                  JournalService journalService,
+                                  LanguageService languageService, JournalService journalService,
                                   BookSeriesService bookSeriesService, EventService eventService1,
                                   PublisherService publisherService,
                                   DocumentPublicationIndexRepository documentPublicationIndexRepository1,
@@ -113,7 +116,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageService = languageService;
@@ -180,7 +184,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
         indexProceedings(savedProceedings, new DocumentPublicationIndex());
 
-        sendNotifications(savedProceedings);
+        sendNotifications(savedProceedings, Collections.emptySet());
 
         return savedProceedings;
     }
@@ -189,6 +193,12 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
     @Transactional
     public void updateProceedings(Integer proceedingsId, ProceedingsDTO proceedingsDTO) {
         var proceedingsToUpdate = findProceedingsById(proceedingsId);
+
+        var oldContributorIds =
+            proceedingsToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         var updatePublicationDates =
             !proceedingsDTO.getDocumentDate().equals(proceedingsToUpdate.getDocumentDate());
@@ -212,7 +222,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                 StringUtil.parseYear(proceedingsToUpdate.getDocumentDate()));
         }
 
-        sendNotifications(proceedingsToUpdate);
+        sendNotifications(proceedingsToUpdate, oldContributorIds);
     }
 
     @Override
@@ -248,7 +258,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public void indexProceedings(Proceedings proceedings, DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexProceedings(Proceedings proceedings,
+                                                     DocumentPublicationIndex index) {
         var eventIds = new ArrayList<>(List.of(proceedings.getEvent().getId()));
         if (Objects.nonNull(index.getEventId()) && !eventIds.contains(index.getEventId())) {
             eventIds.add(index.getEventId());
@@ -298,6 +309,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
 
                 eventIndexRepository.save(eventIndex);
             }));
+
+        return index;
     }
 
     @Override
@@ -317,8 +330,10 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             proceedingsJPAService::findAll,
-            proceedings ->
-                indexProceedings(proceedings, new DocumentPublicationIndex())
+            proceedings -> {
+                var index = indexProceedings(proceedings, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 

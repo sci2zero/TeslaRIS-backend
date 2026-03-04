@@ -1,10 +1,12 @@
 package rs.teslaris.importer.service.interfaces;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
 
 @Service
 public interface CommonHarvester {
@@ -26,5 +28,11 @@ public interface CommonHarvester {
     void processVerifiedFile(Integer userId, MultipartFile file, String filename,
                              HashMap<Integer, Integer> counts);
 
-    void performDocumentCentricHarvest(Integer documentId);
+    String performDocumentCentricHarvest(Integer documentId);
+
+    void scheduleMetadataEnrichmentForInstitution(LocalDateTime timeToRun,
+                                                  List<Integer> institutionIds, boolean autoload,
+                                                  RecurrenceType recurrenceType, Integer userId);
+
+    void enrichMetadataForInstitution(List<Integer> institutionIds, boolean autoupdate);
 }

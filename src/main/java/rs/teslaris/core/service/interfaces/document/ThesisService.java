@@ -56,4 +56,8 @@ public interface ThesisService {
     void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
                                       Integer publicReviewLengthDays, Integer userId,
                                       RecurrenceType recurrence);
+
+    void addSubstituteThesis(Integer staleThesisId, Integer substituteId);
+
+    void removeSubstituteThesis(Integer thesisId);
 }

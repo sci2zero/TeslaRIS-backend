@@ -64,6 +64,23 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
                                                 List<ThesisType> types,
                                                 List<Integer> institutionIds);
 
+    @Query("SELECT COUNT(DISTINCT t) FROM Thesis t " +
+        "WHERE DATE(t.createDate) >= :startDate AND " +
+        "DATE(t.createDate) <= :endDate AND " +
+        "t.thesisType IN :types AND " +
+        "t.organisationUnit.id IN :institutionIds")
+    Integer countThesesSubmittedInPeriod(LocalDate startDate, LocalDate endDate,
+                                         List<ThesisType> types, List<Integer> institutionIds);
+
+    @Query("SELECT COUNT(DISTINCT t) FROM Thesis t " +
+        "WHERE t.isArchived = TRUE AND " +
+        "DATE(t.lastModification) >= :startDate AND " +
+        "DATE(t.lastModification) <= :endDate AND " +
+        "t.thesisType IN :types AND " +
+        "t.organisationUnit.id IN :institutionIds")
+    Integer countThesesArchivedInPeriod(LocalDate startDate, LocalDate endDate,
+                                        List<ThesisType> types, List<Integer> institutionIds);
+
     @Query("SELECT COUNT(DISTINCT t) FROM Thesis t JOIN t.publicReviewStartDates d " +
         "WHERE d >= :startDate AND " +
         "d <= :endDate AND " +
@@ -132,4 +149,7 @@ public interface ThesisRepository extends JpaRepository<Thesis, Integer> {
     @Query(value = "SELECT *, 0 AS clazz_ FROM theses WHERE " +
         "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
     Optional<Thesis> findThesisByOldIdsContains(Integer oldId);
+
+    @Query("SELECT t.isOnPublicReview FROM Thesis t WHERE t.id = :thesisId")
+    boolean isThesisOnPublicReview(Integer thesisId);
 }

@@ -32,6 +32,6 @@ public class UserConverter {
             commissionId,
             personId,
             MultilingualContentConverter.getMultilingualContentDTO(organisationUnitName),
-            user.getUserNotificationPeriod());
+            user.getUserNotificationPeriod(), user.getReceiveOnlyNewNotifications());
     }
 }

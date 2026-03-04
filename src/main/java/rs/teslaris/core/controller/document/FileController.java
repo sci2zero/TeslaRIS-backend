@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.tika.Tika;
-import org.hibernate.Hibernate;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +35,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -44,6 +44,7 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.document.DocumentDownloadTracker;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -78,6 +79,8 @@ public class FileController {
 
     private final DocumentDownloadTracker documentDownloadTracker;
 
+    private final DocumentLookupService documentLookupService;
+
 
     @GetMapping("/{filename}")
     @ResponseBody
@@ -96,11 +99,13 @@ public class FileController {
         var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
         var isOpenAccess = isOpenAccess(accessRights);
         var isThesisDocument = Objects.nonNull(documentFile.getDocument()) &&
-            Hibernate.getClass(documentFile.getDocument()).equals(Thesis.class);
+            documentLookupService.getDocumentIndex(documentFile.getDocument().getId())
+                .getType().equals(DocumentPublicationType.THESIS.name());
 
-        if (isThesisDocument && ((Thesis) documentFile.getDocument()).getIsOnPublicReview()) {
-            if (List.of(ResourceType.PREPRINT, ResourceType.STATEMENT, ResourceType.SUPPLEMENT)
-                .contains(documentFile.getResourceType())) {
+        if (isThesisDocument) {
+            if ((((Thesis) documentFile.getDocument()).getIsOnPublicReview() &&
+                List.of(ResourceType.PREPRINT, ResourceType.STATEMENT, ResourceType.SUPPLEMENT)
+                    .contains(documentFile.getResourceType())) || isOpenAccess) {
                 return serveFile(filename, documentFile, file, inline);
             }
 

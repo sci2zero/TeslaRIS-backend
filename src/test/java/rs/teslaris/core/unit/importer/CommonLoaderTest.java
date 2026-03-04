@@ -183,7 +183,7 @@ public class CommonLoaderTest {
             new JournalPublicationLoadDTO());
 
         // When
-        var result = commonLoader.loadRecordsWizard(userId, null);
+        var result = commonLoader.loadRecordsWizard(userId, null, null);
 
         // Then
         assertNotNull(result);
@@ -215,7 +215,7 @@ public class CommonLoaderTest {
             new ProceedingsPublicationLoadDTO());
 
         // When
-        var result = commonLoader.loadRecordsWizard(userId, null);
+        var result = commonLoader.loadRecordsWizard(userId, null, null);
 
         // Then
         assertNotNull(result);
@@ -247,13 +247,51 @@ public class CommonLoaderTest {
         // When
         Object result;
         if (importByUser) {
-            result = commonLoader.loadRecordsWizard(identifier, null);
+            result = commonLoader.loadRecordsWizard(identifier, null, null);
         } else {
-            result = commonLoader.loadRecordsWizard(null, identifier);
+            result = commonLoader.loadRecordsWizard(null, identifier, null);
         }
 
         // Then
         assertNull(result);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "507f1f77bcf86cd799439011"})
+    void shouldNotLoadRecordsWizard_whenNoRecordFound(String recordIdParam) {
+        // Given
+        var identifier = 1;
+        String recordId = "null".equals(recordIdParam) ? null : recordIdParam;
+
+        var expectedQuery = new Query();
+        expectedQuery.addCriteria(Criteria.where("import_users_id").in(identifier));
+        expectedQuery.addCriteria(Criteria.where("is_loaded").is(false));
+
+        if (recordId != null) {
+            expectedQuery.addCriteria(Criteria.where("_id").gte(new ObjectId(recordId)));
+        } else {
+            var progressReport = mock(LoadProgressReport.class);
+            var lastLoadedId = new ObjectId();
+
+            when(ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, identifier,
+                null, mongoTemplate)).thenReturn(progressReport);
+            when(progressReport.getLastLoadedId()).thenReturn(lastLoadedId);
+
+            expectedQuery.addCriteria(Criteria.where("_id").gte(lastLoadedId));
+        }
+
+        expectedQuery.limit(1);
+
+        when(mongoTemplate.findOne(expectedQuery, DocumentImport.class,
+            "documentImports")).thenReturn(null);
+
+        // When
+        Object result = commonLoader.loadRecordsWizard(identifier, null, recordId);
+
+        // Then
+        assertNull(result);
+        verify(mongoTemplate)
+            .findOne(expectedQuery, DocumentImport.class, "documentImports");
     }
 
     @ParameterizedTest
@@ -274,7 +312,7 @@ public class CommonLoaderTest {
                 new PageImpl<>(List.of(new DocumentPublicationIndex() {{
                     setDatabaseId(1);
                 }})));
-            when(documentPublicationService.findDocumentById(1)).thenReturn(
+            when(documentPublicationService.findOne(1)).thenReturn(
                 new JournalPublication());
         }
 
@@ -299,7 +337,7 @@ public class CommonLoaderTest {
             verify(documentPublicationService, times(1)).findDocumentDuplicates(any(), any(),
                 any(), any(), any(), any());
 
-            verify(documentPublicationService, times(1)).findDocumentById(1);
+            verify(documentPublicationService, times(1)).findOne(1);
             verify(documentPublicationService, times(1)).save(any());
         }
     }

@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
@@ -38,6 +37,8 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 @Service
@@ -97,8 +98,9 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                               Integer commissionInstitutionId,
                                               Integer commissionId,
                                               Boolean emptyEventsOnly) {
-        return searchEvents(tokens, pageable, EventType.CONFERENCE, returnOnlyNonSerialEvents,
-            returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
+        return searchEvents(tokens, pageable, List.of(EventType.CONFERENCE),
+            returnOnlyNonSerialEvents, returnOnlySerialEvents,
+            commissionInstitutionId, commissionId, emptyEventsOnly);
     }
 
     @Override
@@ -114,7 +116,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
         try {
             conference = findConferenceById(conferenceId);
         } catch (NotFoundException e) {
-            eventIndexRepository.findByDatabaseId(conferenceId)
+            eventIndexRepository.findByEventTypeAndDatabaseId(EventType.CONFERENCE, conferenceId)
                 .ifPresent(eventIndexRepository::delete);
             throw e;
         }
@@ -236,37 +238,15 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Async("reindexExecutor")
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexConferences() {
-        eventIndexRepository.deleteAll();
+        // Super service does the initial deletion
 
-        performBulkReindex();
+        FunctionalUtil.performBulkOperation(
+            conferenceJPAService::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (conference) -> indexConference(conference, new EventIndex())
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Conference> chunk =
-                conferenceJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((conference) -> {
-                try {
-                    indexConference(conference, new EventIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping CONFERENCE {} due to indexing error: {}",
-                        conference.getId(), e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     private void setConferenceRelatedFields(Conference conference, ConferenceDTO conferenceDTO) {
@@ -280,7 +260,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             conferenceDTO.getConfId(),
             conference.getId(),
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-            eventRepository::existsByConfId,
+            conferenceRepository::existsByConfId,
             conference::setConfId,
             "confIdFormatError",
             "confIdExistsError"
@@ -290,7 +270,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
             conferenceDTO.getOpenAlexId(),
             conference.getId(),
             "^S\\d{4,10}$",
-            eventRepository::existsByOpenAlexId,
+            conferenceRepository::existsByOpenAlexId,
             conference::setOpenAlexId,
             "openAlexIdFormatError",
             "openAlexIdExistsError"
@@ -300,8 +280,8 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Override
     @Transactional
     public boolean isIdentifierInUse(String identifier, Integer conferenceId) {
-        return eventRepository.existsByConfId(identifier, conferenceId) ||
-            eventRepository.existsByOpenAlexId(identifier, conferenceId);
+        return conferenceRepository.existsByConfId(identifier, conferenceId) ||
+            conferenceRepository.existsByOpenAlexId(identifier, conferenceId);
     }
 
     @Override
@@ -341,11 +321,25 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     @Transactional
     public void reindexVolatileConferenceInformation(Integer conferenceId) {
         eventIndexRepository.findByDatabaseId(conferenceId).ifPresent(eventIndex -> {
-            eventIndex.setRelatedInstitutionIds(
+            eventIndex.getRelatedInstitutionIds().addAll(
+                eventRepository.findInstitutionIdsByEventIdAndEventContribution(conferenceId)
+            );
+
+            eventIndex.getRelatedInstitutionIds().addAll(
                 eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId)
-                    .stream().toList());
+                    .stream().toList()
+            );
+
             eventIndex.setClassifiedBy(
                 commissionRepository.findCommissionsThatClassifiedEvent(conferenceId));
+
+            eventIndex.getCommissionAssessments().clear();
+            commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
+                conferenceId, eventIndex.getClassifiedBy()).forEach(assessment ->
+                eventIndex.getCommissionAssessments().add(
+                    new Triple<>(assessment.commissionId(),
+                        assessment.assessmentCode(),
+                        assessment.manual())));
 
             indexActiveEmploymentRelations(eventIndex, conferenceId);
 

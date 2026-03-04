@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -8,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.GeneticMaterialConverter;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -23,6 +26,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -49,31 +53,32 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
 
 
     @Autowired
-    public GeneticMaterialServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        SearchService<DocumentPublicationIndex> searchService,
-        OrganisationUnitService organisationUnitService,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        CitationService citationService,
-        ApplicationEventPublisher applicationEventPublisher,
-        PersonContributionService personContributionService,
-        ExpressionTransformer expressionTransformer,
-        EventService eventService,
-        CommissionRepository commissionRepository,
-        SearchFieldsLoader searchFieldsLoader,
-        OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
-        InvolvementRepository involvementRepository,
-        OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
-        GeneticMaterialJPAServiceImpl geneticMaterialJPAService,
-        PublisherService publisherService) {
+    public GeneticMaterialServiceImpl(MultilingualContentService multilingualContentService,
+                                      DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                      SearchService<DocumentPublicationIndex> searchService,
+                                      OrganisationUnitService organisationUnitService,
+                                      DocumentRepository documentRepository,
+                                      DocumentFileService documentFileService,
+                                      CitationService citationService,
+                                      ApplicationEventPublisher applicationEventPublisher,
+                                      PersonContributionService personContributionService,
+                                      ExpressionTransformer expressionTransformer,
+                                      EventService eventService,
+                                      CommissionRepository commissionRepository,
+                                      SearchFieldsLoader searchFieldsLoader,
+                                      OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                                      InvolvementRepository involvementRepository,
+                                      OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                      DocumentLookupService documentLookupService,
+                                      GeneticMaterialJPAServiceImpl geneticMaterialJPAService,
+                                      PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.geneticMaterialJPAService = geneticMaterialJPAService;
         this.publisherService = publisherService;
     }
@@ -122,7 +127,7 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
             indexGeneticMaterial(savedProduct, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedProduct);
+        sendNotifications(savedProduct, Collections.emptySet());
 
         return savedProduct;
     }
@@ -132,6 +137,12 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
     public void editGeneticMaterial(Integer geneticMaterialId,
                                     GeneticMaterialDTO geneticMaterialDTO) {
         var geneticMaterialToUpdate = geneticMaterialJPAService.findOne(geneticMaterialId);
+
+        var oldContributorIds =
+            geneticMaterialToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(geneticMaterialDTO);
         clearCommonFields(geneticMaterialToUpdate);
@@ -146,7 +157,7 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
                     geneticMaterialId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(geneticMaterialToUpdate);
+        sendNotifications(geneticMaterialToUpdate, oldContributorIds);
     }
 
     @Override
@@ -172,8 +183,10 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             geneticMaterialJPAService::findAll,
-            geneticMaterial ->
-                indexGeneticMaterial(geneticMaterial, new DocumentPublicationIndex())
+            geneticMaterial -> {
+                var index = indexGeneticMaterial(geneticMaterial, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -202,8 +215,8 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
         }
     }
 
-    private void indexGeneticMaterial(GeneticMaterial geneticMaterial,
-                                      DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexGeneticMaterial(GeneticMaterial geneticMaterial,
+                                                          DocumentPublicationIndex index) {
         indexCommonFields(geneticMaterial, index);
 
         index.setType(DocumentPublicationType.GENETIC_MATERIAL.name());
@@ -218,6 +231,8 @@ public class GeneticMaterialServiceImpl extends DocumentPublicationServiceImpl i
         );
 
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }
 

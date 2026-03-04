@@ -42,6 +42,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.person.InvolvementConverter;
 import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -67,6 +68,7 @@ import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
@@ -74,9 +76,11 @@ import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.person.ExpertiseOrSkillRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.impl.person.worker.PersonEmploymentWorker;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
@@ -89,6 +93,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
 import rs.teslaris.core.util.files.ImageUtil;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
@@ -134,13 +139,17 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     private final ElasticsearchClient elasticsearchClient;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final PersonEmploymentWorker personEmploymentWorker;
 
     private final InvolvementRepository involvementRepository;
 
     private final ExpertiseOrSkillRepository expertiseOrSkillRepository;
 
     private final PrizeRepository prizeRepository;
+
+    private final PersonFieldVisibilityRepository personFieldVisibilityRepository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     private final Pattern orcidRegexPattern =
         Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-[\\dX]{4}$", Pattern.CASE_INSENSITIVE);
@@ -833,33 +842,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public CompletableFuture<Void> reindexPersons() {
         personIndexRepository.deleteAll();
 
-        performBulkReindex();
+        FunctionalUtil.performBulkOperation(
+            this::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (person) -> {
+                var index = indexPerson(person);
+                personEmploymentWorker.savePersonEmploymentHierarchyIds(person, index);
+                applicationEventPublisher.publishEvent(
+                    new ReindexExternalIndicatorsEvent(index)
+                );
+            }
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 50;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Person> chunk = findAll(PageRequest.of(pageNumber, chunkSize,
-                Sort.by(Sort.Direction.ASC, "id"))).getContent();
-
-            chunk.forEach(person -> {
-                try {
-                    this.indexPerson(person);
-                } catch (Exception e) {
-                    log.warn("Skipping PERSON {} due to indexing error: {}", person.getId(),
-                        e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     @Transactional
@@ -892,7 +887,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Override
     @Transactional(readOnly = true)
-    public void indexPerson(Person savedPerson) {
+    public PersonIndex indexPerson(Person savedPerson) {
         var personIndex = getPersonIndexForId(savedPerson.getId());
 
         setPersonIndexProperties(personIndex, savedPerson);
@@ -900,6 +895,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         setPersonIndexEmploymentDetails(personIndex, savedPerson);
 
         personIndexRepository.save(personIndex);
+
+        return personIndex;
     }
 
     @Override
@@ -981,6 +978,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 !savedPerson.getWebOfScienceResearcherId().isBlank()) ?
                 savedPerson.getWebOfScienceResearcherId() :
                 null);
+
+        personIndex.setDisplayBirthdate(
+            personFieldVisibilityRepository.getFieldVisibilityConfiguration(savedPerson.getId())
+                .orElse(new PersonFieldVisibility()).getDateOfBirthVisible());
     }
 
     private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
@@ -1046,10 +1047,6 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             .map(involvement -> involvement.getOrganisationUnit().getId())
             .filter(institutionId -> !personIndex.getEmploymentInstitutionsIdHierarchy()
                 .contains(institutionId)).toList());
-
-        savedPerson.getEmploymentInstitutionsIdHierarchy().addAll(
-            personIndex.getEmploymentInstitutionsIdHierarchy());
-        save(savedPerson);
 
         var employmentsSr = new StringBuilder();
         var employmentsOther = new StringBuilder();
@@ -1511,6 +1508,23 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         return documentPublicationIndexRepository.countDocumentsWithAuthorInAnyRole(personId) > 0;
     }
 
+    @Override
+    public void savePersonEmploymentHierarchyIds(Person person, PersonIndex index) {
+        if (Objects.isNull(index)) {
+            var indexOpt = personIndexRepository.findByDatabaseId(person.getId());
+
+            if (indexOpt.isEmpty()) {
+                return;
+            }
+
+            index = indexOpt.get();
+        }
+
+        person.getEmploymentInstitutionsIdHierarchy().addAll(
+            index.getEmploymentInstitutionsIdHierarchy());
+        personRepository.save(person);
+    }
+
     public List<Integer> findTopCoauthors(Integer authorId) {
         try {
             var response = elasticsearchClient.search(s -> s
@@ -1556,6 +1570,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private void filterSensitiveInformation(Page<PersonIndex> page) {
         if (!SessionUtil.isUserLoggedIn()) {
             page.forEach(personIndex -> {
+                if (Objects.nonNull(personIndex.getDisplayBirthdate()) &&
+                    personIndex.getDisplayBirthdate()) {
+                    return;
+                }
+
                 personIndex.setBirthdate("");
                 personIndex.setBirthdateSortable("");
             });
@@ -1567,6 +1586,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
             var finalUserId = userId;
             page.forEach(personIndex -> {
+                if (Objects.nonNull(personIndex.getDisplayBirthdate()) &&
+                    personIndex.getDisplayBirthdate()) {
+                    return;
+                }
+
                 if (!finalUserId.equals(personIndex.getUserId()) &&
                     Objects.nonNull(personIndex.getBirthdate()) &&
                     personIndex.getBirthdate().length() > 4) {

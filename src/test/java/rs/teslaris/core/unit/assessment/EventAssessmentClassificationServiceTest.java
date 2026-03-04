@@ -26,6 +26,7 @@ import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.EventLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 
 @SpringBootTest
@@ -42,6 +43,9 @@ public class EventAssessmentClassificationServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private EventLookupService eventLookupService;
 
     @Mock
     private CommissionService commissionService;
@@ -101,7 +105,7 @@ public class EventAssessmentClassificationServiceTest {
 
         var conference = new Conference();
         conference.setDateFrom(LocalDate.of(2020, 4, 2));
-        when(eventService.findOne(1)).thenReturn(conference);
+        when(eventLookupService.fastEventLookup(1)).thenReturn(conference);
 
         when(commissionService.findOne(1)).thenReturn(new Commission());
 
@@ -131,12 +135,15 @@ public class EventAssessmentClassificationServiceTest {
         existingEventAssessmentClassification.setCommission(new Commission());
 
         var event = new Conference();
+        event.setId(1);
         event.setDateFrom(LocalDate.now());
+
+        existingEventAssessmentClassification.setEvent(event);
 
         when(eventAssessmentClassificationJPAService.findOne(
             eventAssessmentClassificationId)).thenReturn(
             existingEventAssessmentClassification);
-        when(eventService.findOne(1)).thenReturn(event);
+        when(eventLookupService.fastEventLookup(1)).thenReturn(event);
         when(assessmentClassificationService.findOne(1)).thenReturn(new AssessmentClassification());
 
         eventAssessmentClassificationService.updateEventAssessmentClassification(

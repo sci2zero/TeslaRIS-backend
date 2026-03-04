@@ -94,7 +94,7 @@ public class IndicatorServiceTest {
         when(indicatorRepository.findById(indicatorId))
             .thenReturn(Optional.of(indicator));
 
-        var result = indicatorService.readIndicatorAccessLEvel(indicatorId);
+        var result = indicatorService.readIndicatorAccessLevel(indicatorId);
 
         assertEquals(AccessLevel.CLOSED, result);
         verify(indicatorRepository).findById(indicatorId);

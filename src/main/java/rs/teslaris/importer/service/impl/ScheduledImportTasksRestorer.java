@@ -162,6 +162,26 @@ public class ScheduledImportTasksRestorer {
             }}, metadata.getRecurrenceType()));
     }
 
+    private void restoreInstitutionMetadataEnrichment(ScheduledTaskMetadata metadata) {
+        Map<String, Object> data = metadata.getMetadata();
+
+        var userId = (Integer) data.get("userId");
+        var institutionIds = objectMapper.convertValue(
+            data.get("institutionIds"), new TypeReference<ArrayList<Integer>>() {
+            }
+        );
+        var autoload = (Boolean) data.get("autoload");
+
+        var timeToRun = metadata.getTimeToRun();
+
+        if (timeToRun.isBefore(LocalDateTime.now())) {
+            timeToRun = taskManagerService.findNextFreeExecutionTime();
+        }
+
+        commonHarvester.scheduleMetadataEnrichmentForInstitution(timeToRun, institutionIds,
+            autoload, metadata.getRecurrenceType(), userId);
+    }
+
     private void restoreOAIPMHHarvest(ScheduledTaskMetadata metadata) {
         Map<String, Object> data = metadata.getMetadata();
 

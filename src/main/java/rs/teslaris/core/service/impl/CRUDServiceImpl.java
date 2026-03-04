@@ -43,7 +43,10 @@ public abstract class CRUDServiceImpl<T extends BaseEntity> implements CRUDServi
 
     @Override
     public T save(T entity) {
-        return getEntityRepository().save(entity);
+        T savedEntity = getEntityRepository().save(entity);
+        getEntityRepository().flush();
+
+        return savedEntity;
     }
 
     @Override

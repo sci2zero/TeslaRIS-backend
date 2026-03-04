@@ -15,5 +15,8 @@ public enum ApplicableEntityType {
     MATERIAL_PRODUCT,
     GENETIC_MATERIAL,
     DATASET,
-    THESIS
+    THESIS,
+    PRIZE,
+    CONFERENCE,
+    EXHIBITION
 }

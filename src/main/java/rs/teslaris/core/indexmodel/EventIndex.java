@@ -3,7 +3,9 @@ package rs.teslaris.core.indexmodel;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.core.util.functional.Triple;
 
 @Getter
 @Setter
@@ -75,17 +78,20 @@ public class EventIndex {
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 
-    @Field(type = FieldType.Text, name = "event_type", store = true)
+    @Field(type = FieldType.Keyword, name = "event_type", store = true)
     private EventType eventType;
 
     @Field(type = FieldType.Boolean, name = "is_serial_event", store = true)
     private Boolean serialEvent;
 
     @Field(type = FieldType.Integer, name = "related_institution_ids", store = true)
-    private List<Integer> relatedInstitutionIds = new ArrayList<>();
+    private Set<Integer> relatedInstitutionIds = new HashSet<>();
+
+    @Field(type = FieldType.Integer, name = "related_person_ids", store = true)
+    private Set<Integer> relatedPersonIds = new HashSet<>();
 
     @Field(type = FieldType.Integer, name = "related_employment_institution_ids", store = true)
-    private List<Integer> relatedEmploymentInstitutionIds = new ArrayList<>();
+    private Set<Integer> relatedEmploymentInstitutionIds = new HashSet<>();
 
     @Field(type = FieldType.Integer, name = "classified_by", store = true)
     private List<Integer> classifiedBy = new ArrayList<>();
@@ -95,4 +101,7 @@ public class EventIndex {
 
     @Field(type = FieldType.Boolean, name = "has_proceedings", store = true)
     private Boolean hasProceedings;
+
+    @Field(type = FieldType.Object, name = "commission_assessments")
+    private List<Triple<Integer, String, Boolean>> commissionAssessments = new ArrayList<>();
 }

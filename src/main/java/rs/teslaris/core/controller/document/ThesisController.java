@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,7 +30,6 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
-import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
@@ -176,18 +174,21 @@ public class ThesisController {
         return thesisService.getLibraryReferenceFormat(documentId);
     }
 
-    @GetMapping("/library-format/{documentId}/{libraryFormat}")
-    public ResponseEntity<String> getSingleLibraryReferenceFormat(@PathVariable Integer documentId,
-                                                                  @PathVariable
-                                                                  LibraryFormat libraryFormat) {
-        var content = thesisService.getSingleLibraryReferenceFormat(documentId, libraryFormat);
+    @PatchMapping("/add-substitute/{staleThesisId}/{substituteThesisId}")
+    @PreAuthorize("hasAuthority('SUBSTITUTE_THESIS')")
+    @PublicationEditCheck("THESIS")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addThesisSubstitute(@PathVariable Integer staleThesisId,
+                                    @PathVariable Integer substituteThesisId) {
+        thesisService.addSubstituteThesis(staleThesisId, substituteThesisId);
+    }
 
-        var headers = new HttpHeaders();
-        FairSignpostingL1Utility.addHeadersForMetadataFormats(headers, documentId);
-
-        return ResponseEntity.ok()
-            .headers(headers)
-            .body(content);
+    @PatchMapping("/remove-substitute/{documentId}")
+    @PreAuthorize("hasAuthority('SUBSTITUTE_THESIS')")
+    @PublicationEditCheck("THESIS")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeThesisSubstitute(@PathVariable Integer documentId) {
+        thesisService.removeSubstituteThesis(documentId);
     }
 
     @PostMapping("/schedule-public-review-end-check")

@@ -484,4 +484,183 @@ public class ThesisLibraryReportingServiceTest {
         assertFalse(result.isEmpty());
         assertEquals(1, result.getContent().size());
     }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoSubmittedThesesExist() {
+        // Given
+        var request = new ThesisReportRequestDTO(
+            LocalDate.of(2024, 1, 1),
+            LocalDate.of(2024, 12, 31),
+            List.of(1),
+            List.of(ThesisType.PHD, ThesisType.MASTER));
+        var pageable = Pageable.unpaged();
+        var institutionIds = List.of(1, 2, 3);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(institutionIds);
+
+        when(documentPublicationIndexRepository.fetchThesesCreatedInPeriod(
+            request.fromDate(),
+            request.toDate(),
+            institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        )).thenReturn(Page.empty());
+
+        // When
+        var result = thesisLibraryReportingService.fetchSubmittedThesesInPeriod(request, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(documentPublicationIndexRepository).fetchThesesCreatedInPeriod(
+            request.fromDate(),
+            request.toDate(),
+            institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        );
+    }
+
+    @Test
+    void shouldReturnThesesPageWhenSubmittedThesesExist() {
+        // Given
+        var request = new ThesisReportRequestDTO(
+            LocalDate.of(2024, 1, 1),
+            LocalDate.of(2024, 12, 31),
+            List.of(1),
+            List.of(ThesisType.PHD));
+        var pageable = PageRequest.of(0, 10);
+        var institutionIds = List.of(1, 2, 3);
+
+        var thesis1 = new DocumentPublicationIndex();
+        thesis1.setDatabaseId(1);
+        thesis1.setTitleSr("Doktorska disertacija 1");
+
+        var thesis2 = new DocumentPublicationIndex();
+        thesis2.setDatabaseId(2);
+        thesis2.setTitleSr("Doktorska disertacija 2");
+
+        var expectedPage = new PageImpl<>(List.of(thesis1, thesis2), pageable, 2);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(institutionIds);
+
+        when(documentPublicationIndexRepository.fetchThesesCreatedInPeriod(
+            request.fromDate(),
+            request.toDate(),
+            institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        )).thenReturn(expectedPage);
+
+        // When
+        var result = thesisLibraryReportingService.fetchSubmittedThesesInPeriod(request, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals(2, result.getTotalElements());
+        assertEquals(2, result.getContent().size());
+        assertEquals(1, result.getContent().get(0).getDatabaseId());
+        assertEquals(2, result.getContent().get(1).getDatabaseId());
+
+        verify(documentPublicationIndexRepository).fetchThesesCreatedInPeriod(
+            request.fromDate(),
+            request.toDate(),
+            institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        );
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenNoArchivedThesesExist() {
+        // Given
+        var request = new ThesisReportRequestDTO(
+            LocalDate.of(2024, 1, 1),
+            LocalDate.of(2024, 12, 31),
+            List.of(1, 2),
+            List.of(ThesisType.PHD));
+        var pageable = Pageable.unpaged();
+        var institutionIds = List.of(1, 2, 3, 4);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(List.of(1, 2));
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(2))
+            .thenReturn(List.of(3, 4));
+
+        when(documentPublicationIndexRepository.fetchThesesArchivedInPeriod(
+            request.fromDate(),
+            request.toDate(),
+            institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        )).thenReturn(Page.empty());
+
+        // When
+        var result = thesisLibraryReportingService.fetchArchivedThesesInPeriod(request, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(documentPublicationIndexRepository).fetchThesesArchivedInPeriod(
+            request.fromDate(),
+            request.toDate(),
+            institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        );
+    }
+
+    @Test
+    void shouldReturnThesesPageWhenArchivedThesesExist() {
+        // Given
+        var request = new ThesisReportRequestDTO(
+            LocalDate.of(2024, 1, 1),
+            LocalDate.of(2024, 12, 31),
+            List.of(1),
+            List.of(ThesisType.PHD, ThesisType.MASTER));
+        var pageable = PageRequest.of(0, 5);
+        var institutionIds = List.of(1, 2, 3);
+
+        var thesis1 = new DocumentPublicationIndex();
+        thesis1.setDatabaseId(10);
+        thesis1.setTitleOther("PhD Thesis 1");
+
+        var thesis2 = new DocumentPublicationIndex();
+        thesis2.setDatabaseId(11);
+        thesis2.setTitleOther("Master Thesis 1");
+
+        var expectedPage = new PageImpl<>(List.of(thesis1, thesis2), pageable, 2);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(1))
+            .thenReturn(institutionIds);
+
+        when(documentPublicationIndexRepository.fetchThesesArchivedInPeriod(
+            request.fromDate(),
+            request.toDate(),
+            institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        )).thenReturn(expectedPage);
+
+        // When
+        var result = thesisLibraryReportingService.fetchArchivedThesesInPeriod(request, pageable);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals(2, result.getTotalElements());
+        assertEquals(10, result.getContent().get(0).getDatabaseId());
+        assertEquals(11, result.getContent().get(1).getDatabaseId());
+
+        verify(documentPublicationIndexRepository).fetchThesesArchivedInPeriod(
+            request.fromDate(),
+            request.toDate(),
+            institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        );
+    }
 }

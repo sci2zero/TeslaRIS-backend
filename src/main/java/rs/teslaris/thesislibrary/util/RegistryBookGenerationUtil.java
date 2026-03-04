@@ -74,7 +74,8 @@ public class RegistryBookGenerationUtil {
     private static void addPreviousTitleInfo(List<String> rowData, PreviousTitleInformation info) {
         rowData.add(
             (Objects.nonNull(info.getAcademicTitle()) ? info.getAcademicTitle().getValue() : "") +
-                "\n" + info.getSchoolYear());
+                "\n" + (Objects.nonNull(info.getGraduationDate()) ?
+                info.getGraduationDate().format(DATE_FORMATTER) : info.getSchoolYear()));
     }
 
     private static void addDissertationInstitution(List<String> rowData,
@@ -92,7 +93,9 @@ public class RegistryBookGenerationUtil {
     private static void addCommissionAndMentor(List<String> rowData, DissertationInformation info) {
         String commission = info.getCommission();
         String mentor = info.getMentor();
-        rowData.add(commission + "\n" + (commission.contains(mentor) ? "" : mentor));
+        rowData.add(commission + "\n" +
+            (commission.toLowerCase().contains(mentor.toLowerCase().split(",", 2)[0]) ? "" :
+                mentor));
     }
 
     private static void addDefenceInfo(List<String> rowData, DissertationInformation info,

@@ -47,6 +47,8 @@ public class PersonEditCheckAspect {
             return joinPoint.proceed();
         }
 
+        var assessmentCheck = annotation.value().equalsIgnoreCase("ASSESS");
+
         if (annotation.value().equalsIgnoreCase("ADD_EMPLOYMENT") &&
             role.equals(UserRole.INSTITUTIONAL_EDITOR)) {
             return joinPoint.proceed();
@@ -67,7 +69,7 @@ public class PersonEditCheckAspect {
         }
 
         for (var personId : personIds) {
-            validateEditPermission(role, userId, personId);
+            validateEditPermission(role, userId, personId, assessmentCheck);
         }
 
         return joinPoint.proceed();
@@ -89,18 +91,25 @@ public class PersonEditCheckAspect {
         }
     }
 
-    private void validateEditPermission(UserRole role, Integer userId, Integer personId) {
+    private void validateEditPermission(UserRole role, Integer userId, Integer personId,
+                                        boolean assessmentCheck) {
         switch (role) {
             case ADMIN:
                 return;
             case RESEARCHER:
-                if (!userService.isUserAResearcher(userId, personId)) {
+                if (!userService.isUserAResearcher(userId, personId) || assessmentCheck) {
                     throw new CantEditException("unauthorizedPersonEditAttemptMessage");
                 }
                 break;
             case INSTITUTIONAL_EDITOR:
                 if (!personService.isPersonEmployedInOrganisationUnit(personId,
-                    userService.getUserOrganisationUnitId(userId))) {
+                    userService.getUserOrganisationUnitId(userId)) || assessmentCheck) {
+                    throw new CantEditException("unauthorizedPersonEditAttemptMessage");
+                }
+                break;
+            case COMMISSION:
+                if (!personService.isPersonEmployedInOrganisationUnit(personId,
+                    userService.getUserOrganisationUnitId(userId)) || !assessmentCheck) {
                     throw new CantEditException("unauthorizedPersonEditAttemptMessage");
                 }
                 break;

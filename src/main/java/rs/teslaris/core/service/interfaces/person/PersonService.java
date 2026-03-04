@@ -89,7 +89,7 @@ public interface PersonService extends JPAService<Person> {
 
     CompletableFuture<Void> reindexPersons();
 
-    void indexPerson(Person savedPerson);
+    PersonIndex indexPerson(Person savedPerson);
 
     void reindexPersonEmploymentDetails(Person savedPerson);
 
@@ -128,4 +128,6 @@ public interface PersonService extends JPAService<Person> {
     boolean personHasContributions(Integer personId);
 
     void setPersonIndexEmploymentDetails(PersonIndex personIndex, Person savedPerson);
+
+    void savePersonEmploymentHierarchyIds(Person person, PersonIndex index);
 }

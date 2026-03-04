@@ -1,5 +1,6 @@
 package rs.teslaris.assessment.model.classification;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.Document;
 
 @Getter
@@ -22,4 +24,7 @@ public class DocumentAssessmentClassification extends EntityAssessmentClassifica
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id")
     private Document document;
+
+    @Column(name = "document_type")
+    private DocumentPublicationType documentType;
 }

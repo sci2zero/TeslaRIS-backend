@@ -21,7 +21,7 @@ public interface IndicatorService extends JPAService<Indicator> {
 
     IndicatorResponseDTO readIndicatorById(Integer indicatorId);
 
-    AccessLevel readIndicatorAccessLEvel(Integer indicatorId);
+    AccessLevel readIndicatorAccessLevel(Integer indicatorId);
 
     Indicator getIndicatorByCode(String code);
 

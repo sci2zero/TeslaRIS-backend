@@ -27,6 +27,7 @@ import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
+import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 
 @RestController
 @RequestMapping("/api/extra-migration")
@@ -44,6 +45,8 @@ public class ExtraMigrationController {
     private final LanguageService languageService;
 
     private final LanguageTagService languageTagService;
+
+    private final PersonContributionService personContributionService;
 
 
     @PatchMapping("/event")
@@ -108,5 +111,11 @@ public class ExtraMigrationController {
     @PreAuthorize("hasAuthority('PERFORM_EXTRA_MIGRATION_OPERATIONS')")
     public Integer getLanguageTagByValue(@PathVariable String languageTag) {
         return languageTagService.findLanguageTagByValue(languageTag).getId();
+    }
+
+    @PostMapping("/create-involvements-for-external-contributions")
+    @PreAuthorize("hasAuthority('PERFORM_EXTRA_MIGRATION_OPERATIONS')")
+    public void createInvolvementsForRetroactiveExternalContributions() {
+        personContributionService.createInvolvementsForRetroactiveExternalContributions();
     }
 }

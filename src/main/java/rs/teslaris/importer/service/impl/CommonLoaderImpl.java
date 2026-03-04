@@ -61,6 +61,7 @@ import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.RecordAlreadyLoadedException;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.session.TraceMDCKeys;
 import rs.teslaris.importer.model.common.DocumentImport;
@@ -129,7 +130,7 @@ public class CommonLoaderImpl implements CommonLoader {
 
 
     @Override
-    public <R> R loadRecordsWizard(Integer userId, Integer institutionId) {
+    public <R> R loadRecordsWizard(Integer userId, Integer institutionId, String recordId) {
         int maxRetries = 10;
         int retryCount = 0;
 
@@ -142,16 +143,22 @@ public class CommonLoaderImpl implements CommonLoader {
             }
             query.addCriteria(Criteria.where("is_loaded").is(false));
 
-            var progressReport =
-                ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
-                    institutionId,
-                    mongoTemplate);
-            if (Objects.nonNull(progressReport)) {
+            if (StringUtil.valueExists(recordId)) {
                 query.addCriteria(
-                    Criteria.where("_id").gte(progressReport.getLastLoadedId()));
+                    Criteria.where("_id").gte(new ObjectId(recordId)));
             } else {
-                query.addCriteria(Criteria.where("identifier").gte(""));
+                var progressReport =
+                    ProgressReportUtility.getProgressReport(DataSet.DOCUMENT_IMPORTS, userId,
+                        institutionId,
+                        mongoTemplate);
+                if (Objects.nonNull(progressReport)) {
+                    query.addCriteria(
+                        Criteria.where("_id").gte(progressReport.getLastLoadedId()));
+                } else {
+                    query.addCriteria(Criteria.where("identifier").gte(""));
+                }
             }
+
             query.limit(1);
 
             try {
@@ -177,7 +184,7 @@ public class CommonLoaderImpl implements CommonLoader {
     public <R> R loadSkippedRecordsWizard(Integer userId, Integer institutionId) {
         ProgressReportUtility.resetProgressReport(DataSet.DOCUMENT_IMPORTS, userId, institutionId,
             mongoTemplate);
-        return loadRecordsWizard(userId, institutionId);
+        return loadRecordsWizard(userId, institutionId, null);
     }
 
     @Override
@@ -377,7 +384,8 @@ public class CommonLoaderImpl implements CommonLoader {
                 });
 
                 personService.save(savedPerson);
-                personService.indexPerson(savedPerson);
+                var personIndex = personService.indexPerson(savedPerson);
+                personService.savePersonEmploymentHierarchyIds(savedPerson, personIndex);
 
                 return PersonConverter.toDTO(savedPerson);
             }
@@ -422,7 +430,9 @@ public class CommonLoaderImpl implements CommonLoader {
             });
 
             personService.save(savedPerson);
-            personService.indexPerson(savedPerson);
+
+            var personIndex = personService.indexPerson(savedPerson);
+            personService.savePersonEmploymentHierarchyIds(savedPerson, personIndex);
         }
     }
 
@@ -436,7 +446,7 @@ public class CommonLoaderImpl implements CommonLoader {
                 return;
             }
 
-            var oldDocument = documentPublicationService.findDocumentById(oldDocumentId);
+            var oldDocument = documentPublicationService.findOne(oldDocumentId);
             oldDocument.setScopusId(progressReport.getLastLoadedIdentifier());
             documentPublicationService.save(oldDocument);
         }
@@ -447,7 +457,7 @@ public class CommonLoaderImpl implements CommonLoader {
             return;
         }
 
-        var savedDocument = documentPublicationService.findDocumentById(newDocumentId);
+        var savedDocument = documentPublicationService.findOne(newDocumentId);
         var currentUser = SessionUtil.getLoggedInUser();
         if (Objects.isNull(currentUser)) {
             // Should never happen
@@ -615,7 +625,9 @@ public class CommonLoaderImpl implements CommonLoader {
 
                 copyMissingPersonIdentifiers(person, savedPerson);
                 personService.save(savedPerson);
-                personService.indexPerson(savedPerson);
+
+                var personIndex = personService.indexPerson(savedPerson);
+                personService.savePersonEmploymentHierarchyIds(savedPerson, personIndex);
                 return;
             }
         }

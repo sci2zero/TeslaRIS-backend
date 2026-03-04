@@ -14,7 +14,7 @@ public class HealthCheckControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testDeleteRelation() throws Exception {
+    public void testHealthCheck() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(

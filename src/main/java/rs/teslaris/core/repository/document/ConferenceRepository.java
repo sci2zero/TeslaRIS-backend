@@ -25,4 +25,12 @@ public interface ConferenceRepository extends JpaRepository<Conference, Integer>
 
     @Query(value = "SELECT * FROM conferences c WHERE c.id = :conferenceId", nativeQuery = true)
     Optional<Conference> findRaw(Integer conferenceId);
+
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Conference c WHERE c.confId = :confId AND (:id IS NULL OR c.id <> :id)")
+    boolean existsByConfId(String confId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Conference c WHERE c.openAlexId = :openAlexId AND (:id IS NULL OR c.id <> :id)")
+    boolean existsByOpenAlexId(String openAlexId, Integer id);
 }

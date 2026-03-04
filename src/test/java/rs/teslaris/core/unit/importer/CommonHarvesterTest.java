@@ -1,35 +1,60 @@
 package rs.teslaris.core.unit.importer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.LanguageTag;
+import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.commontypes.ScheduledTaskType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
-import rs.teslaris.core.service.interfaces.user.UserService;
+import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.importer.dto.LoadingConfigurationDTO;
+import rs.teslaris.importer.model.common.DocumentImport;
 import rs.teslaris.importer.service.impl.CommonHarvesterImpl;
+import rs.teslaris.importer.service.impl.worker.DocumentEnrichmentWorker;
 import rs.teslaris.importer.service.interfaces.BibTexHarvester;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.EndNoteHarvester;
+import rs.teslaris.importer.service.interfaces.LoadingConfigurationService;
 import rs.teslaris.importer.service.interfaces.OpenAlexHarvester;
 import rs.teslaris.importer.service.interfaces.RefManHarvester;
 import rs.teslaris.importer.service.interfaces.ScopusHarvester;
 import rs.teslaris.importer.service.interfaces.WebOfScienceHarvester;
+import rs.teslaris.importer.utility.CommonImportUtility;
 
 @SpringBootTest
 public class CommonHarvesterTest {
@@ -59,10 +84,25 @@ public class CommonHarvesterTest {
     private NotificationService notificationService;
 
     @Mock
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Mock
     private MultipartFile multipartFile;
+
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
+    @Mock
+    private MongoTemplate mongoTemplate;
+
+    @Mock
+    private LoadingConfigurationService loadingConfigurationService;
+
+    @Mock
+    private DocumentEnrichmentWorker documentEnrichmentWorker;
+
+    @Mock
+    private TaskManagerService taskManagerService;
 
     @InjectMocks
     private CommonHarvesterImpl commonHarvester;
@@ -79,6 +119,13 @@ public class CommonHarvesterTest {
         dateTo = LocalDate.of(2023, 12, 31);
         userId = 1;
         institutionId = 100;
+
+        Executor mockExecutor = Runnable::run;
+        ReflectionTestUtils.setField(
+            commonHarvester,
+            "metadataFetchExecutor",
+            mockExecutor
+        );
     }
 
     @Test
@@ -109,11 +156,11 @@ public class CommonHarvesterTest {
         when(webOfScienceHarvester.harvestDocumentsForAuthor(eq(userId), eq(dateFrom), eq(dateTo),
             any()))
             .thenReturn(wosResults);
-        when(userService.findOne(userId)).thenReturn(new User() {{
+        when(userRepository.findById(userId)).thenReturn(Optional.of(new User() {{
             setPreferredUILanguage(new LanguageTag() {{
                 setLanguageTag(LanguageAbbreviations.SERBIAN);
             }});
-        }});
+        }}));
 
         // when
         Integer result =
@@ -147,11 +194,11 @@ public class CommonHarvesterTest {
         when(webOfScienceHarvester.harvestDocumentsForInstitutionalEmployee(eq(userId), eq(null),
             eq(dateFrom), eq(dateTo), any()))
             .thenReturn(wosResults);
-        when(userService.findOne(userId)).thenReturn(new User() {{
+        when(userRepository.findById(userId)).thenReturn(Optional.of(new User() {{
             setPreferredUILanguage(new LanguageTag() {{
                 setLanguageTag(LanguageAbbreviations.SERBIAN);
             }});
-        }});
+        }}));
 
         // when
         Integer result =
@@ -184,11 +231,11 @@ public class CommonHarvesterTest {
         when(webOfScienceHarvester.harvestDocumentsForInstitutionalEmployee(eq(userId),
             eq(institutionId), eq(dateFrom), eq(dateTo), any()))
             .thenReturn(wosResults);
-        when(userService.findOne(userId)).thenReturn(new User() {{
+        when(userRepository.findById(userId)).thenReturn(Optional.of(new User() {{
             setPreferredUILanguage(new LanguageTag() {{
                 setLanguageTag(LanguageAbbreviations.SERBIAN);
             }});
-        }});
+        }}));
 
         // when
         Integer result =
@@ -216,11 +263,11 @@ public class CommonHarvesterTest {
         when(webOfScienceHarvester.harvestDocumentsForAuthor(eq(userId), eq(dateFrom), eq(dateTo),
             any()))
             .thenReturn(new HashMap<>());
-        when(userService.findOne(userId)).thenReturn(new User() {{
+        when(userRepository.findById(userId)).thenReturn(Optional.of(new User() {{
             setPreferredUILanguage(new LanguageTag() {{
                 setLanguageTag(LanguageAbbreviations.SERBIAN);
             }});
-        }});
+        }}));
 
         // when
         Integer result =
@@ -265,11 +312,11 @@ public class CommonHarvesterTest {
             webOfScienceHarvester.harvestDocumentsForInstitution(eq(userId), eq(null), eq(dateFrom),
                 eq(dateTo), eq(authorIds), eq(false), any()))
             .thenReturn(wosResults);
-        when(userService.findOne(userId)).thenReturn(new User() {{
+        when(userRepository.findById(userId)).thenReturn(Optional.of(new User() {{
             setPreferredUILanguage(new LanguageTag() {{
                 setLanguageTag(LanguageAbbreviations.SERBIAN);
             }});
-        }});
+        }}));
 
         // when
         Integer result = commonHarvester.performAuthorCentricHarvest(userId,
@@ -303,11 +350,11 @@ public class CommonHarvesterTest {
         when(webOfScienceHarvester.harvestDocumentsForInstitution(eq(userId), eq(institutionId),
             eq(dateFrom), eq(dateTo), eq(authorIds), eq(true), any()))
             .thenReturn(wosResults);
-        when(userService.findOne(userId)).thenReturn(new User() {{
+        when(userRepository.findById(userId)).thenReturn(Optional.of(new User() {{
             setPreferredUILanguage(new LanguageTag() {{
                 setLanguageTag(LanguageAbbreviations.SERBIAN);
             }});
-        }});
+        }}));
 
         // when
         Integer result =
@@ -374,5 +421,266 @@ public class CommonHarvesterTest {
 
         // then
         verify(csvHarvester).harvestDocumentsForAuthor(userId, multipartFile, counts);
+    }
+
+    @Test
+    void shouldReturnNullWhenDocumentNotFound() {
+        // given
+        Integer documentId = 1;
+
+        when(documentPublicationIndexRepository
+            .findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.empty());
+
+        // when
+        String result = commonHarvester.performDocumentCentricHarvest(documentId);
+
+        // then
+        assertNull(result);
+        verify(documentPublicationIndexRepository)
+            .findDocumentPublicationIndexByDatabaseId(documentId);
+    }
+
+    @Test
+    void shouldFetchOnlyJournalAndProceedingsWhenAutoupdateFalse() {
+        // given
+        List<Integer> institutionIds = List.of(1, 2);
+
+        when(documentPublicationIndexRepository.fetchForInstitutionsAndTypes(
+            eq(institutionIds),
+            eq(List.of(
+                DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                DocumentPublicationType.PROCEEDINGS_PUBLICATION.name()
+            )),
+            any()))
+            .thenReturn(Page.empty());
+        when(loadingConfigurationService.getLoadingConfigurationForInstitution(
+            any())).thenReturn(new LoadingConfigurationDTO());
+
+        // when
+        commonHarvester.enrichMetadataForInstitution(institutionIds, false);
+
+        // then
+        verify(documentPublicationIndexRepository)
+            .fetchForInstitutionsAndTypes(
+                eq(institutionIds),
+                eq(List.of(
+                    DocumentPublicationType.JOURNAL_PUBLICATION.name(),
+                    DocumentPublicationType.PROCEEDINGS_PUBLICATION.name()
+                )),
+                any());
+        verify(loadingConfigurationService, times(2))
+            .saveLoadingConfiguration(any(), any());
+    }
+
+    @Test
+    void shouldPerformHarvestWhenDoiExists() {
+        // given
+        var documentId = 1;
+        var doi = "10.1234/test";
+
+        var index = new DocumentPublicationIndex();
+        index.setDoi(doi);
+        index.setAuthorIds(List.of());
+        index.setOrganisationUnitIdsActive(List.of());
+
+        when(documentPublicationIndexRepository
+            .findDocumentPublicationIndexByDatabaseId(documentId))
+            .thenReturn(Optional.of(index));
+
+        var harvested = new DocumentImport();
+        harvested.setDoi(doi);
+
+        when(scopusHarvester.harvestDocumentForDoi(doi, true))
+            .thenReturn(Optional.of(harvested));
+        when(openAlexHarvester.harvestDocumentForDoi(doi, true))
+            .thenReturn(Optional.empty());
+        when(webOfScienceHarvester.harvestDocumentForDoi(doi, true))
+            .thenReturn(Optional.empty());
+
+        try (var mockedStatic = mockStatic(CommonImportUtility.class)) {
+
+            mockedStatic.when(() ->
+                    CommonImportUtility.findImportByDOIOrMetadata(any()))
+                .thenReturn(null);
+
+            mockedStatic.when(() ->
+                    CommonImportUtility.generateEmbedding(any()))
+                .thenReturn(null);
+
+            mockedStatic.when(CommonImportUtility::getAdminUserIds)
+                .thenReturn(Set.of(1));
+
+            var savedImport = new DocumentImport();
+            savedImport.setId("mongo-id");
+
+            when(mongoTemplate.save(any(), eq("documentImports")))
+                .thenReturn(savedImport);
+
+            // when
+            var result = commonHarvester.performDocumentCentricHarvest(documentId);
+
+            // then
+            assertEquals("mongo-id", result);
+            verify(scopusHarvester).harvestDocumentForDoi(doi, true);
+            verify(openAlexHarvester).harvestDocumentForDoi(doi, true);
+            verify(webOfScienceHarvester).harvestDocumentForDoi(doi, true);
+            verify(mongoTemplate).save(any(), eq("documentImports"));
+        }
+    }
+
+    @Test
+    void shouldScanEachFetchedDocument() {
+        // given
+        var institutionIds = List.of(1);
+        var doi = "10.5555/test";
+
+        var index = new DocumentPublicationIndex();
+        index.setDoi(doi);
+        index.setAuthorIds(List.of());
+        index.setOrganisationUnitIdsActive(List.of());
+
+        var page = new PageImpl<>(List.of(index));
+
+        when(documentPublicationIndexRepository.fetchForInstitutionsAndTypes(
+            any(), any(), any()))
+            .thenReturn(page);
+
+        var harvested = new DocumentImport();
+        harvested.setDoi(doi);
+
+        when(scopusHarvester.harvestDocumentForDoi(doi, true))
+            .thenReturn(Optional.of(harvested));
+        when(openAlexHarvester.harvestDocumentForDoi(doi, true))
+            .thenReturn(Optional.empty());
+        when(webOfScienceHarvester.harvestDocumentForDoi(doi, true))
+            .thenReturn(Optional.empty());
+
+        try (var mockedStatic = mockStatic(CommonImportUtility.class)) {
+            mockedStatic.when(() ->
+                    CommonImportUtility.findImportByDOIOrMetadata(any()))
+                .thenReturn(null);
+
+            mockedStatic.when(() ->
+                    CommonImportUtility.generateEmbedding(any()))
+                .thenReturn(null);
+
+            mockedStatic.when(CommonImportUtility::getAdminUserIds)
+                .thenReturn(Set.of(1));
+
+            when(mongoTemplate.save(any(), eq("documentImports")))
+                .thenReturn(new DocumentImport());
+            when(loadingConfigurationService.getLoadingConfigurationForInstitution(
+                any())).thenReturn(new LoadingConfigurationDTO());
+
+            // when
+            commonHarvester.enrichMetadataForInstitution(institutionIds, false);
+
+            // then
+            verify(scopusHarvester).harvestDocumentForDoi(doi, true);
+            verify(mongoTemplate).save(any(), eq("documentImports"));
+            verify(loadingConfigurationService).saveLoadingConfiguration(any(), any());
+        }
+    }
+
+    @Test
+    void shouldCallEnrichmentWorkerWhenAutoupdateTrueThroughPublicMethod() {
+        // given
+        var institutionIds = List.of(1);
+        var doi = "10.9999/test";
+        var documentId = 55;
+
+        var index = new DocumentPublicationIndex();
+        index.setDatabaseId(documentId);
+        index.setDoi(doi);
+        index.setAuthorIds(List.of());
+        index.setOrganisationUnitIdsActive(List.of());
+
+        var harvested = new DocumentImport();
+        harvested.setDoi(doi);
+
+        when(scopusHarvester.harvestDocumentForDoi(doi, false))
+            .thenReturn(Optional.of(harvested));
+        when(openAlexHarvester.harvestDocumentForDoi(doi, false))
+            .thenReturn(Optional.empty());
+        when(webOfScienceHarvester.harvestDocumentForDoi(doi, false))
+            .thenReturn(Optional.empty());
+
+        when(loadingConfigurationService.getLoadingConfigurationForInstitution(any()))
+            .thenReturn(new LoadingConfigurationDTO());
+
+        try (var functionalMock = mockStatic(FunctionalUtil.class);
+             var commonImportMock = mockStatic(CommonImportUtility.class)) {
+            commonImportMock.when(() ->
+                    CommonImportUtility.generateEmbedding(any()))
+                .thenReturn(null);
+
+            commonImportMock.when(() ->
+                    CommonImportUtility.findImportByDOIOrMetadata(any()))
+                .thenReturn(null);
+
+            functionalMock.when(() ->
+                    FunctionalUtil.performBulkOperation(any(), any(), any()))
+                .thenAnswer(invocation -> {
+                    var consumer =
+                        (Consumer<DocumentPublicationIndex>) invocation.getArgument(2);
+                    consumer.accept(index);
+                    return null;
+                });
+
+            // when
+            commonHarvester.enrichMetadataForInstitution(institutionIds, true);
+
+            // then
+            verify(documentEnrichmentWorker)
+                .enrichDocumentMetadata(eq(documentId), any(DocumentImport.class));
+            verify(loadingConfigurationService)
+                .saveLoadingConfiguration(eq(1), any(LoadingConfigurationDTO.class));
+        }
+    }
+
+    @Test
+    void shouldScheduleMetadataEnrichmentTaskWithCorrectParameters() {
+        // given
+        var institutionIds = List.of(1, 2, 3);
+        var timeToRun = LocalDateTime.now().plusHours(1);
+        var autoload = true;
+        var recurrenceType = RecurrenceType.ONCE;
+        var userId = 42;
+
+        var expectedTaskName = "Enrichment-1_2_3-AUTO";
+        var expectedTaskId = "task-123";
+
+        when(taskManagerService.scheduleTask(
+            eq(expectedTaskName),
+            eq(timeToRun),
+            any(Runnable.class),
+            eq(userId),
+            eq(recurrenceType)
+        )).thenReturn(expectedTaskId);
+
+        // when
+        commonHarvester.scheduleMetadataEnrichmentForInstitution(
+            timeToRun, institutionIds, autoload, recurrenceType, userId
+        );
+
+        // then
+        verify(taskManagerService).scheduleTask(
+            eq(expectedTaskName),
+            eq(timeToRun),
+            any(Runnable.class),
+            eq(userId),
+            eq(recurrenceType)
+        );
+
+        verify(taskManagerService).saveTaskMetadata(argThat(metadata ->
+            metadata.getTaskId().equals(expectedTaskId) &&
+                metadata.getTimeToRun().equals(timeToRun) &&
+                metadata.getType() == ScheduledTaskType.METADATA_ENRICHMENT &&
+                metadata.getRecurrenceType() == recurrenceType &&
+                metadata.getMetadata().get("institutionIds").equals(institutionIds) &&
+                metadata.getMetadata().get("autoload").equals(autoload) &&
+                metadata.getMetadata().get("userId").equals(userId)
+        ));
     }
 }

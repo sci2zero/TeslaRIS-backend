@@ -11,11 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -24,6 +20,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
 import rs.teslaris.core.model.document.Dataset;
+import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
@@ -40,6 +37,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
+import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -67,18 +65,19 @@ import rs.teslaris.exporter.service.interfaces.CommonExportService;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Traceable
 @Slf4j
 public class CommonExportServiceImpl implements CommonExportService {
 
-    private final MongoTemplate mongoTemplate;
+    private final CommonExportWorkerImpl commonExportWorker;
 
     private final OrganisationUnitRepository organisationUnitRepository;
 
     private final PersonRepository personRepository;
 
     private final ConferenceRepository conferenceRepository;
+
+    private final ExhibitionRepository exhibitionRepository;
 
     private final DatasetRepository datasetRepository;
 
@@ -119,6 +118,7 @@ public class CommonExportServiceImpl implements CommonExportService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public void exportOrganisationUnitsToCommonModel(boolean allTime) {
         if (!organisationUnitExportLock.tryLock()) {
             log.info("OU export already in progress, skipping this run.");
@@ -126,7 +126,7 @@ public class CommonExportServiceImpl implements CommonExportService {
         }
 
         try {
-            exportEntities(
+            commonExportWorker.exportEntities(
                 organisationUnitRepository::findAllModified,
                 ExportOrganisationUnitConverter::toCommonExportModel,
                 ExportOrganisationUnit.class,
@@ -142,6 +142,7 @@ public class CommonExportServiceImpl implements CommonExportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void exportPersonsToCommonModel(boolean allTime) {
         if (!personExportLock.tryLock()) {
             log.info("Person export already in progress, skipping this run.");
@@ -149,7 +150,7 @@ public class CommonExportServiceImpl implements CommonExportService {
         }
 
         try {
-            exportEntities(
+            commonExportWorker.exportEntities(
                 personRepository::findAllModified,
                 ExportPersonConverter::toCommonExportModel,
                 ExportPerson.class,
@@ -165,18 +166,28 @@ public class CommonExportServiceImpl implements CommonExportService {
     }
 
     @Override
-    public void exportConferencesToCommonModel(boolean allTime) {
+    @Transactional(readOnly = true)
+    public void exportEventsToCommonModel(boolean allTime) {
         if (!eventExportLock.tryLock()) {
             log.info("Event export already in progress, skipping this run.");
             return;
         }
 
         try {
-            exportEntities(
+            commonExportWorker.exportEntities(
                 conferenceRepository::findAllModified,
                 ExportEventConverter::toCommonExportModel,
                 ExportEvent.class,
                 Conference::getId,
+                allTime,
+                null
+            );
+
+            commonExportWorker.exportEntities(
+                exhibitionRepository::findAllModified,
+                ExportEventConverter::toCommonExportModel,
+                ExportEvent.class,
+                Exhibition::getId,
                 allTime,
                 null
             );
@@ -188,6 +199,7 @@ public class CommonExportServiceImpl implements CommonExportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void exportDocumentsToCommonModel(boolean allTime,
                                              List<ExportPublicationType> exportTypes) {
         if (!documentExportLock.tryLock()) {
@@ -344,52 +356,14 @@ public class CommonExportServiceImpl implements CommonExportService {
         ExportPublicationType exportPublicationType
     ) {
         try {
-            exportEntities(repositoryFunction, converter, exportClass, idGetter, allTime,
-                exportPublicationType);
+            commonExportWorker.exportEntities(repositoryFunction, converter, exportClass, idGetter,
+                allTime, exportPublicationType);
         } catch (Exception e) {
             log.error("{} export set not completed in async thread due to an error. Reason: {}",
                 exportClass.getName(), e.getMessage(), e);
         }
 
         return CompletableFuture.completedFuture(null);
-    }
-
-    private <T, E> void exportEntities(
-        BiFunction<Pageable, Boolean, Page<T>> repositoryFunction,
-        BiFunction<T, Boolean, E> converter,
-        Class<E> exportClass,
-        Function<T, Integer> idGetter,
-        boolean allTime,
-        ExportPublicationType exportPublicationType
-    ) {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-            List<T> chunk =
-                repositoryFunction.apply(PageRequest.of(pageNumber, chunkSize), allTime)
-                    .getContent();
-
-            for (T entity : chunk) {
-                var query = new Query();
-                query.addCriteria(Criteria.where("database_id").is(idGetter.apply(entity)));
-
-                if (Objects.nonNull(exportPublicationType)) {
-                    query.addCriteria(Criteria.where("type").is(exportPublicationType.name()));
-                }
-
-                query.limit(1);
-
-                var exportEntry = converter.apply(entity, true);
-
-                mongoTemplate.remove(query, exportClass);
-                mongoTemplate.save(exportEntry);
-            }
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     @Scheduled(cron = "${export-to-common.schedule.documents}")
@@ -407,7 +381,7 @@ public class CommonExportServiceImpl implements CommonExportService {
             return;
         }
 
-        exportConferencesToCommonModel(false);
+        exportEventsToCommonModel(false);
     }
 
     @Scheduled(cron = "${export-to-common.schedule.person}")

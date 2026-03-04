@@ -20,7 +20,8 @@ public abstract class BaseTest {
     @Autowired
     protected MockMvc mockMvc;
 
-    protected String authenticateAdminAndGetToken() throws Exception {
+
+    protected synchronized String authenticateAdminAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
                     .content("{\"email\": \"admin@admin.com\", \"password\": \"admin\"}")
@@ -34,7 +35,7 @@ public abstract class BaseTest {
         return authenticationResponseDTO.getToken();
     }
 
-    protected Pair<String, Cookie> authenticateAdminAndGetTokenWithFingerprintCookie()
+    protected synchronized Pair<String, Cookie> authenticateAdminAndGetTokenWithFingerprintCookie()
         throws Exception {
         var result = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
@@ -52,7 +53,7 @@ public abstract class BaseTest {
         return new Pair<>(authenticationResponseDTO.getToken(), fingerprintCookie);
     }
 
-    protected String authenticateInstitutionalEditorAndGetToken() throws Exception {
+    protected synchronized String authenticateInstitutionalEditorAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
                     .content("{\"email\": \"editor@editor.com\", \"password\": \"editor\"}")
@@ -66,7 +67,7 @@ public abstract class BaseTest {
         return authenticationResponseDTO.getToken();
     }
 
-    protected String authenticateLibrarianAndGetToken() throws Exception {
+    protected synchronized String authenticateLibrarianAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
                     .content("{\"email\": \"librarian@librarian.com\", \"password\": \"librarian\"}")
@@ -80,7 +81,7 @@ public abstract class BaseTest {
         return authenticationResponseDTO.getToken();
     }
 
-    protected String authenticateHeadOfLibraryAndGetToken() throws Exception {
+    protected synchronized String authenticateHeadOfLibraryAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
                     .content(
@@ -95,7 +96,7 @@ public abstract class BaseTest {
         return authenticationResponseDTO.getToken();
     }
 
-    protected String authenticateResearcherAndGetToken() throws Exception {
+    protected synchronized String authenticateResearcherAndGetToken() throws Exception {
         String authResponse = mockMvc.perform(
                 MockMvcRequestBuilders.post("http://localhost:8081/api/user/authenticate")
                     .content("{\"email\": \"author2@author.com\", \"password\": \"author2\"}")

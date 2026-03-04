@@ -10,7 +10,7 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 @Service
 public interface CommonLoader {
 
-    <R> R loadRecordsWizard(Integer userId, Integer institutionId);
+    <R> R loadRecordsWizard(Integer userId, Integer institutionId, String recordId);
 
     <R> R loadSkippedRecordsWizard(Integer userId, Integer institutionId);
 

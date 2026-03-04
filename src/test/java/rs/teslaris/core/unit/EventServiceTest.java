@@ -183,7 +183,8 @@ public class EventServiceTest {
 
         // When
         var result =
-            eventService.searchEvents(tokens, pageable, eventType, returnOnlyNonSerialEvents,
+            eventService.searchEvents(tokens, pageable, List.of(eventType),
+                returnOnlyNonSerialEvents,
                 returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
 
         // Then

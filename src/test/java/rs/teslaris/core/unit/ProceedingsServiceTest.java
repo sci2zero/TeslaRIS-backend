@@ -53,6 +53,7 @@ import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -113,6 +114,9 @@ public class ProceedingsServiceTest {
 
     @Mock
     private EventIndexRepository eventIndexRepository;
+
+    @Mock
+    private DocumentLookupService documentLookupService;
 
     @InjectMocks
     private ProceedingsServiceImpl proceedingsService;
@@ -239,8 +243,7 @@ public class ProceedingsServiceTest {
         var expected = new Proceedings();
         when(documentRepository.findDocumentByOldIdsContains(proceedingsId)).thenReturn(
             Optional.of(123));
-        when(documentRepository.findById(123)).thenReturn(
-            Optional.of(expected));
+        when(documentLookupService.fastDocumentLookup(123)).thenReturn(expected);
 
         // When
         var actual = proceedingsService.findDocumentByOldId(proceedingsId);
@@ -569,7 +572,7 @@ public class ProceedingsServiceTest {
         var oldId = 99;
         var proceedings = new Proceedings();
         proceedings.setOldIds(new HashSet<>());
-        when(documentRepository.findById(id)).thenReturn(Optional.of(proceedings));
+        when(documentLookupService.fastDocumentLookup(id)).thenReturn(proceedings);
 
         // When
         proceedingsService.addOldId(id, oldId);

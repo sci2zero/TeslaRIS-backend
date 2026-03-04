@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -9,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.MaterialProductConverter;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -25,6 +28,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -53,31 +57,33 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
 
 
     @Autowired
-    public MaterialProductServiceImpl(
-        MultilingualContentService multilingualContentService,
-        DocumentPublicationIndexRepository documentPublicationIndexRepository,
-        SearchService<DocumentPublicationIndex> searchService,
-        OrganisationUnitService organisationUnitService,
-        DocumentRepository documentRepository,
-        DocumentFileService documentFileService,
-        CitationService citationService,
-        ApplicationEventPublisher applicationEventPublisher,
-        PersonContributionService personContributionService,
-        ExpressionTransformer expressionTransformer,
-        EventService eventService,
-        CommissionRepository commissionRepository,
-        SearchFieldsLoader searchFieldsLoader,
-        OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
-        InvolvementRepository involvementRepository,
-        OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
-        MaterialProductJPAServiceImpl materialProductJPAService,
-        PublisherService publisherService, ResearchAreaService researchAreaService) {
+    public MaterialProductServiceImpl(MultilingualContentService multilingualContentService,
+                                      DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                      SearchService<DocumentPublicationIndex> searchService,
+                                      OrganisationUnitService organisationUnitService,
+                                      DocumentRepository documentRepository,
+                                      DocumentFileService documentFileService,
+                                      CitationService citationService,
+                                      ApplicationEventPublisher applicationEventPublisher,
+                                      PersonContributionService personContributionService,
+                                      ExpressionTransformer expressionTransformer,
+                                      EventService eventService,
+                                      CommissionRepository commissionRepository,
+                                      SearchFieldsLoader searchFieldsLoader,
+                                      OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
+                                      InvolvementRepository involvementRepository,
+                                      OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                      DocumentLookupService documentLookupService,
+                                      MaterialProductJPAServiceImpl materialProductJPAService,
+                                      PublisherService publisherService,
+                                      ResearchAreaService researchAreaService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.materialProductJPAService = materialProductJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;
@@ -127,7 +133,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             indexMaterialProduct(savedProduct, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedProduct);
+        sendNotifications(savedProduct, Collections.emptySet());
 
         return savedProduct;
     }
@@ -137,6 +143,12 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
     public void editMaterialProduct(Integer materialProductId,
                                     MaterialProductDTO materialProductDTO) {
         var materialProductToUpdate = materialProductJPAService.findOne(materialProductId);
+
+        var oldContributorIds =
+            materialProductToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(materialProductDTO);
         clearCommonFields(materialProductToUpdate);
@@ -152,7 +164,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
                     materialProductId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(materialProductToUpdate);
+        sendNotifications(materialProductToUpdate, oldContributorIds);
     }
 
     @Override
@@ -178,8 +190,10 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             materialProductJPAService::findAll,
-            materialProduct ->
-                indexMaterialProduct(materialProduct, new DocumentPublicationIndex())
+            materialProduct -> {
+                var index = indexMaterialProduct(materialProduct, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -215,8 +229,8 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         materialProduct.setResearchAreas(new HashSet<>(researchAreas));
     }
 
-    private void indexMaterialProduct(MaterialProduct materialProduct,
-                                      DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexMaterialProduct(MaterialProduct materialProduct,
+                                                          DocumentPublicationIndex index) {
         indexCommonFields(materialProduct, index);
 
         index.setType(DocumentPublicationType.MATERIAL_PRODUCT.name());
@@ -228,5 +242,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }

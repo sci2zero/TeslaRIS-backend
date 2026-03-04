@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -282,8 +283,47 @@ public class ClassificationPriorityMapping {
         return assessmentConfig.monographCodeToPublicationMapping.getOrDefault(code, null);
     }
 
+    @Nullable
+    public static String getContributionCodeFromEventAssessment(String code) {
+        return assessmentConfig.eventCodeToContributionMapping.getOrDefault(code, null);
+    }
+
+    public static String getDefaultJournalAssessmentCode() {
+        return assessmentConfig.defaultJournalAssessmentCode;
+    }
+
     public static AssessmentCodeSortingRule getAssessmentCodeStoringRule() {
         return assessmentConfig.assessmentCodeSortingRule;
+    }
+
+    public static double calculateSortingScore(String code) {
+        var sortingRule = getAssessmentCodeStoringRule();
+
+        if (Objects.isNull(code) || !code.startsWith(sortingRule.startsWithConstraint())) {
+            return Double.MAX_VALUE;
+        }
+
+        var pattern = Pattern.compile(sortingRule.codePattern());
+        var matcher = pattern.matcher(code);
+
+        if (!matcher.find()) {
+            return Double.MAX_VALUE;
+        }
+
+        var number = Integer.parseInt(matcher.group(1));
+        var suffix = matcher.group(2);
+
+        double score = number;
+
+        if (Objects.nonNull(suffix)) {
+            for (var key : sortingRule.scoreAdjustments().keySet()) {
+                if (suffix.contains(key)) {
+                    score += sortingRule.scoreAdjustments().get(key);
+                }
+            }
+        }
+
+        return score;
     }
 
     private record AssessmentConfig(
@@ -297,7 +337,9 @@ public class ClassificationPriorityMapping {
         @JsonProperty("minimumPageRequirements") Map<String, Integer> minimumPageRequirements,
         @JsonProperty("defendedThesesMapping") Map<ThesisType, String> defendedThesesMapping,
         @JsonProperty("monographCodeToPublicationMapping") Map<String, String> monographCodeToPublicationMapping,
-        @JsonProperty("assessmentCodeSortingRule") AssessmentCodeSortingRule assessmentCodeSortingRule
+        @JsonProperty("eventCodeToContributionMapping") Map<String, String> eventCodeToContributionMapping,
+        @JsonProperty("assessmentCodeSortingRule") AssessmentCodeSortingRule assessmentCodeSortingRule,
+        @JsonProperty("defaultJournalAssessmentCode") String defaultJournalAssessmentCode
     ) {
     }
 

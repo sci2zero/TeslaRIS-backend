@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.OrgUnitEditCheck;
 import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.RelativeDateDTO;
@@ -37,6 +38,7 @@ import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.importer.dto.AuthorCentricInstitutionHarvestRequestDTO;
 import rs.teslaris.importer.service.interfaces.CSVHarvester;
 import rs.teslaris.importer.service.interfaces.CommonHarvestService;
@@ -215,10 +217,33 @@ public class CommonHarvestController {
         return newDocumentImportCountByUser.getOrDefault(userId, 0);
     }
 
-    @GetMapping("/enriched-metadata/{documentId}")
+    @PostMapping("/metadata-scan/{documentId}")
+    @PreAuthorize("hasAuthority('ENRICH_DOCUMENT_METADATA')")
     @PublicationEditCheck
-    public void getEnrichedDocumentMetadata(@PathVariable Integer documentId) {
-        commonHarvester.performDocumentCentricHarvest(documentId);
+    public String scanForEnrichedDocumentMetadata(@PathVariable Integer documentId) {
+        return commonHarvester.performDocumentCentricHarvest(documentId);
+    }
+
+    @PostMapping("/institution-metadata-scan/{organisationUnitId}")
+    @PreAuthorize("hasAuthority('ENRICH_INSTITUTION_METADATA')")
+    @OrgUnitEditCheck
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void enrichMetadataForInstitution(@PathVariable Integer organisationUnitId,
+                                             @RequestParam boolean autoload) {
+        commonHarvester.enrichMetadataForInstitution(List.of(organisationUnitId), autoload);
+    }
+
+    @PostMapping("/schedule/metadata-enrichment")
+    @PreAuthorize("hasAuthority('SCHEDULE_METADATA_ENRICHMENT')")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void scheduleMetadataEnrichmentForInstitution(@RequestParam("timestamp")
+                                                         LocalDateTime timestamp,
+                                                         @RequestParam List<Integer> institutionIds,
+                                                         @RequestParam boolean autoload,
+                                                         @RequestParam("recurrence")
+                                                         RecurrenceType recurrenceType) {
+        commonHarvester.scheduleMetadataEnrichmentForInstitution(timestamp, institutionIds,
+            autoload, recurrenceType, SessionUtil.getLoggedInUser().getId());
     }
 
     private void validateFileMetadata(MultipartFile file) {

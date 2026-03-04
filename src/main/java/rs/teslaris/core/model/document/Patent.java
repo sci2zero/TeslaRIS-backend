@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 
 @Getter
 @Setter
@@ -26,4 +27,9 @@ public non-sealed class Patent extends Document implements PublisherPublishable 
 
     @Column(name = "author_reprint")
     private Boolean authorReprint = false;
+
+
+    public Patent() {
+        super(DocumentPublicationType.PATENT);
+    }
 }

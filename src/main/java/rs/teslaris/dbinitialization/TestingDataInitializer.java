@@ -17,6 +17,7 @@ import rs.teslaris.assessment.model.AssessmentResearchArea;
 import rs.teslaris.assessment.model.AssessmentRulebook;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.EventAssessmentClassification;
+import rs.teslaris.assessment.model.classification.PrizeAssessmentClassification;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
 import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
@@ -27,6 +28,7 @@ import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
 import rs.teslaris.assessment.repository.classification.AssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.EventAssessmentClassificationRepository;
+import rs.teslaris.assessment.repository.classification.PrizeAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;
 import rs.teslaris.assessment.repository.indicator.EventIndicatorRepository;
@@ -53,6 +55,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.DocumentFileSection;
 import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
+import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.GeneticMaterial;
 import rs.teslaris.core.model.document.GeneticMaterialType;
 import rs.teslaris.core.model.document.IntangibleProduct;
@@ -99,6 +102,7 @@ import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
+import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
 import rs.teslaris.core.repository.document.IntangibleProductRepository;
 import rs.teslaris.core.repository.document.JournalRepository;
@@ -194,6 +198,10 @@ public class TestingDataInitializer {
 
     private final GeneticMaterialRepository geneticMaterialRepository;
 
+    private final PrizeAssessmentClassificationRepository prizeAssessmentClassificationRepository;
+
+    private final ExhibitionRepository exhibitionRepository;
+
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
                                                  LanguageTag englishTag, LanguageTag germanTag,
@@ -236,7 +244,7 @@ public class TestingDataInitializer {
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
                 "Dragan", "Ivanovic", false, false, serbianTag, serbianTag,
                 researcherAuthority, person1,
-                null, null, UserNotificationPeriod.DAILY);
+                null, null, UserNotificationPeriod.DAILY, true);
         userRepository.save(researcherUser);
 
         var dummyOU = new OrganisationUnit();
@@ -529,7 +537,7 @@ public class TestingDataInitializer {
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
                 "Schöpfel", "Joachim", false, false, englishTag, germanTag,
                 researcherAuthority, person2,
-                null, null, UserNotificationPeriod.WEEKLY);
+                null, null, UserNotificationPeriod.WEEKLY, false);
         userRepository.save(researcherUser2);
 
         var person3 = new Person();
@@ -828,7 +836,7 @@ public class TestingDataInitializer {
                 "note note note",
                 "FTN", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
-                dummyOU, commission5, UserNotificationPeriod.WEEKLY);
+                dummyOU, commission5, UserNotificationPeriod.WEEKLY, true);
         userRepository.save(commissionUser);
 
         var commissionUser2 =
@@ -836,7 +844,7 @@ public class TestingDataInitializer {
                 "note note note",
                 "PMF", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
-                dummyOU2, commission6, UserNotificationPeriod.WEEKLY);
+                dummyOU2, commission6, UserNotificationPeriod.WEEKLY, true);
         userRepository.save(commissionUser2);
 
         var assessmentResearchArea = new AssessmentResearchArea();
@@ -850,14 +858,14 @@ public class TestingDataInitializer {
                 "Nikola", "Nikolic", false, false, serbianTag, serbianTag,
                 viceDeanForScienceAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, false);
 
         var institutionalEditorUser =
             new User("editor@editor.com", passwordEncoder.encode("editor"), "note note note",
                 "Nikola", "Markovic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, true);
 
         var institutionalLibrarianUser =
             new User("librarian@librarian.com", passwordEncoder.encode("librarian"),
@@ -865,7 +873,7 @@ public class TestingDataInitializer {
                 "Mirka", "Maric", false, false, serbianTag, serbianTag,
                 institutionalLibrarianAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, true);
 
         var headOfLibraryUser =
             new User("head_of_library@library.com", passwordEncoder.encode("head_of_library"),
@@ -873,7 +881,7 @@ public class TestingDataInitializer {
                 "Djordje", "Perovic", false, false, serbianTag, serbianTag,
                 headOfLibraryAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY);
+                dummyOU, null, UserNotificationPeriod.MONTHLY, true);
 
         var promotionRegistryAdminUser =
             new User("promotion@registry.com", passwordEncoder.encode("promotion_registry"),
@@ -881,14 +889,14 @@ public class TestingDataInitializer {
                 "Davor", "Kontić", false, false, serbianTag, serbianTag,
                 promotionRegistryAdminAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.DAILY);
+                dummyOU, null, UserNotificationPeriod.DAILY, true);
 
         var institutionalEditorUser2 =
             new User("editor2@editor.com", passwordEncoder.encode("editor2"), "note note note",
                 "Marko", "Nikolic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
-                dummyOU2, null, UserNotificationPeriod.WEEKLY);
+                dummyOU2, null, UserNotificationPeriod.WEEKLY, true);
 
         userRepository.saveAll(
             List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
@@ -1164,5 +1172,28 @@ public class TestingDataInitializer {
         geneticMaterial.setDocumentDate("2025-1-1");
         geneticMaterial.setGeneticMaterialType(GeneticMaterialType.STRAIN);
         geneticMaterialRepository.save(geneticMaterial);
+
+        var prizeAssessment = new PrizeAssessmentClassification();
+        prizeAssessment.setPrize(person1.getPrizes().stream().findFirst().get());
+        prizeAssessment.setAssessmentClassification(
+            assessmentClassification1);
+        prizeAssessment.setClassificationYear(2021);
+        prizeAssessment.setCommission(commission5);
+        prizeAssessment.setManual(true);
+        prizeAssessmentClassificationRepository.save(prizeAssessment);
+
+        var exhibition1 = new Exhibition();
+        exhibition1.setName(Set.of(new MultiLingualContent(serbianTag, "Izlozba 1", 1)));
+        exhibition1.setDateFrom(LocalDate.of(2025, 7, 1));
+        exhibition1.setDateTo(LocalDate.of(2025, 7, 7));
+        exhibition1.setSerialEvent(false);
+        exhibitionRepository.save(exhibition1);
+
+        var exhibition2 = new Exhibition();
+        exhibition2.setName(Set.of(new MultiLingualContent(serbianTag, "Izlozba 2", 1)));
+        exhibition2.setDateFrom(LocalDate.of(2024, 11, 15));
+        exhibition2.setDateTo(LocalDate.of(2024, 11, 17));
+        exhibition2.setSerialEvent(false);
+        exhibitionRepository.save(exhibition2);
     }
 }

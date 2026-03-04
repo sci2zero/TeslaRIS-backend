@@ -267,6 +267,7 @@ public class DocumentConverter {
         dto.setScopusId(document.getScopusId());
         dto.setWebOfScienceId(document.getWebOfScienceId());
         dto.setInternalIdentifiers(document.getInternalIdentifiers().stream().toList());
+        dto.setIsEnrichment(document.getSource().equals("ENRICHMENT"));
 
         setContributionInformation(document, dto);
     }

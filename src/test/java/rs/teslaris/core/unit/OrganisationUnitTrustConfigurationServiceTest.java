@@ -112,8 +112,6 @@ public class OrganisationUnitTrustConfigurationServiceTest {
             .thenReturn(Optional.empty());
         when(organisationUnitService.findOrganisationUnitById(organisationUnitId))
             .thenReturn(organisationUnit);
-
-        // Spy to verify save
         doAnswer(invocation -> invocation.getArgument(0))
             .when(configurationRepository).save(any());
 

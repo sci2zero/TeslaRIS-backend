@@ -1,0 +1,52 @@
+databaseChangeLog:
+- changeSet:
+    id: 1770806684998-1
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: substitute_for
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1770806684998-2
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: substituted_by
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1770806684998-3
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: substituted_by
+        baseTableName: theses
+        constraintName: fk1bo9a8w0h3k8df8qd5m415ayn
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: theses
+        validate: true
+- changeSet:
+    id: 1770806684998-4
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: substitute_for
+        baseTableName: theses
+        constraintName: fkaq1q1ec2xr5gj52gq4215ukt
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: theses
+        validate: true
+

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -13,12 +14,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.assessment.model.indicator.Indicator;
 import rs.teslaris.assessment.model.indicator.PublicationSeriesIndicator;
 import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRepository;
 import rs.teslaris.assessment.service.impl.indicator.PublicationSeriesIndicatorServiceImpl;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @SpringBootTest
 public class PublicationSeriesIndicatorServiceTest {
@@ -96,12 +99,17 @@ public class PublicationSeriesIndicatorServiceTest {
                 publicationSeriesIndicator3, publicationSeriesIndicator4));
 
         // When
-        var result =
-            publicationSeriesIndicatorService.getIFTableContent(publicationSeriesId, 2020, 2023);
+        try (MockedStatic<SessionUtil> sessionUtilMock = mockStatic(SessionUtil.class)) {
+            sessionUtilMock.when(SessionUtil::isUserLoggedIn)
+                .thenReturn(true);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.getIfTableContent().size());
+            var result = publicationSeriesIndicatorService.getIFTableContent(
+                publicationSeriesId, 2020, 2023
+            );
+
+            assertNotNull(result);
+            assertEquals(2, result.getIfTableContent().size());
+        }
     }
 
     private PublicationSeriesIndicator createPublicationSeriesIndicator(String category,

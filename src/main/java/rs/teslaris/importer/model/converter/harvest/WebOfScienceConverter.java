@@ -21,7 +21,7 @@ import rs.teslaris.importer.utility.webofscience.WebOfScienceImportUtility;
 public class WebOfScienceConverter {
 
     public static Optional<DocumentImport> toCommonImportModel(
-        WebOfScienceImportUtility.WosPublication record) {
+        WebOfScienceImportUtility.WosPublication record, boolean onlyLoadableTypes) {
         var document = new DocumentImport();
         document.setSource("WEB_OF_SCIENCE");
 
@@ -30,7 +30,7 @@ public class WebOfScienceConverter {
 
         addTitle(document, record);
         addDoiIfPresent(document, record);
-        if (!setPublicationMetadata(document, record)) {
+        if (!setPublicationMetadata(document, record, onlyLoadableTypes)) {
             return Optional.empty();
         }
         document.setDocumentDate(String.valueOf(record.source().publishYear()));
@@ -56,7 +56,8 @@ public class WebOfScienceConverter {
     }
 
     private static boolean setPublicationMetadata(DocumentImport document,
-                                                  WebOfScienceImportUtility.WosPublication record) {
+                                                  WebOfScienceImportUtility.WosPublication record,
+                                                  boolean onlyLoadableTypes) {
         var sourceTypes = record.sourceTypes();
 
         if (sourceTypes.contains("Article") || sourceTypes.contains("Meeting") ||
@@ -73,7 +74,7 @@ public class WebOfScienceConverter {
             document.setProceedingsPublicationType(ProceedingsPublicationType.REGULAR_FULL_ARTICLE);
             addProceedingsMetadata(document, record);
         } else {
-            return false;
+            return !onlyLoadableTypes;
         }
 
         return true;

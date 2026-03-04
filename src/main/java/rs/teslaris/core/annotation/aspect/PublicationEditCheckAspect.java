@@ -1,6 +1,8 @@
 package rs.teslaris.core.annotation.aspect;
 
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +23,7 @@ import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.user.UserRole;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -35,6 +38,8 @@ import rs.teslaris.core.util.jwt.JwtUtil;
 public class PublicationEditCheckAspect {
 
     private final DocumentPublicationService documentPublicationService;
+
+    private final DocumentLookupService documentLookupService;
 
     private final OrganisationUnitService organisationUnitService;
 
@@ -60,39 +65,69 @@ public class PublicationEditCheckAspect {
         var userId = tokenUtil.extractUserIdFromToken(tokenValue);
         int personId = userService.getPersonIdForUser(tokenUtil.extractUserIdFromToken(tokenValue));
 
-        List<Integer> contributors = getContributors(annotation, attributeMap, joinPoint);
-
-        var assessmentMode = false;
-        if (annotation.value().equalsIgnoreCase("ASSESS")) {
-            assessmentMode = true;
+        List<Integer> documentIds = new ArrayList<>();
+        if (attributeMap.containsKey("documentId")) {
+            documentIds.add(Integer.parseInt(attributeMap.get("documentId")));
+        } else if (attributeMap.containsKey("staleThesisId") &&
+            attributeMap.containsKey("substituteThesisId") &&
+            annotation.value().equalsIgnoreCase("THESIS")) {
+            documentIds.add(Integer.parseInt(attributeMap.get("staleThesisId")));
+            documentIds.add(Integer.parseInt(attributeMap.get("substituteThesisId")));
+        } else if (annotation.value().equalsIgnoreCase("CREATE")) {
+            documentIds.add(-1); // not checked
+        } else {
+            throw new IllegalArgumentException(
+                "Missing document identifiers."); // should never happen in prod, only for testing
         }
 
-        checkPermission(role, personId, userId, contributors, joinPoint, annotation,
-            attributeMap, assessmentMode);
+        var assessmentMode = annotation.value().equalsIgnoreCase("ASSESS");
+
+        for (var documentId : documentIds) {
+            if (annotation.value().equalsIgnoreCase("CREATE")) {
+
+                var contributors = getContributorsFromDTO(joinPoint);
+
+                checkPermission(role, personId, userId, contributors, joinPoint,
+                    annotation, assessmentMode, documentId);
+
+            } else {
+                var dbContributors =
+                    getContributorsFromDatabase(attributeMap, documentId);
+
+                var dtoContributors =
+                    getContributorsFromDTO(joinPoint);
+
+                checkPermission(role, personId, userId, dbContributors, joinPoint,
+                    annotation, assessmentMode, documentId);
+
+                if (Objects.nonNull(dtoContributors)) {
+                    checkPermission(role, personId, userId, dtoContributors, joinPoint,
+                        annotation, assessmentMode, documentId);
+                }
+            }
+        }
 
         return joinPoint.proceed();
     }
 
-    private List<Integer> getContributors(PublicationEditCheck annotation,
-                                          Map<String, String> attributeMap,
-                                          ProceedingJoinPoint joinPoint) {
-        if (annotation.value().equalsIgnoreCase("CREATE")) {
-            return getContributorsFromDTO(joinPoint);
-        } else {
-            return getContributorsFromDatabase(attributeMap);
-        }
-    }
-
+    @Nullable
     private List<Integer> getContributorsFromDTO(ProceedingJoinPoint joinPoint) {
-        var publicationDTO = (DocumentDTO) joinPoint.getArgs()[0];
-        return publicationDTO.getContributions().stream().map(PersonContributionDTO::getPersonId)
-            .filter(Objects::nonNull).collect(Collectors.toList());
+        for (Object arg : joinPoint.getArgs()) {
+            if (arg instanceof DocumentDTO publicationDTO) {
+                return publicationDTO.getContributions()
+                    .stream()
+                    .map(PersonContributionDTO::getPersonId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            }
+        }
+
+        return null;
     }
 
     private boolean isDocumentNotAThesis(ProceedingJoinPoint joinPoint,
                                          PublicationEditCheck annotation,
-                                         Map<String, String> attributeMap,
-                                         Integer userId) {
+                                         Integer userId, Integer documentId) {
         var userInstitutionId = userService.getUserOrganisationUnitId(userId);
         var institutionSubUnitIds =
             organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(userInstitutionId);
@@ -104,22 +139,22 @@ public class PublicationEditCheckAspect {
         }
 
         var document =
-            documentPublicationService.findOne(Integer.parseInt(attributeMap.get("documentId")));
+            documentLookupService.fastDocumentLookup(documentId);
         return !(document instanceof Thesis) || !institutionSubUnitIds.contains(
             ((Thesis) document).getOrganisationUnit().getId());
     }
 
-    private List<Integer> getContributorsFromDatabase(Map<String, String> attributeMap) {
-        int publicationId = Integer.parseInt(attributeMap.get("documentId"));
-        return documentPublicationService.getContributorIds(publicationId);
+    private List<Integer> getContributorsFromDatabase(Map<String, String> attributeMap,
+                                                      Integer documentId) {
+        return documentPublicationService.getContributorIds(documentId);
     }
 
     private void checkPermission(String role, int personId, int userId,
                                  List<Integer> contributors,
                                  ProceedingJoinPoint joinPoint,
                                  PublicationEditCheck annotation,
-                                 Map<String, String> attributeMap,
-                                 boolean assessmentMode) {
+                                 boolean assessmentMode,
+                                 Integer documentId) {
         UserRole userRole = UserRole.valueOf(role);
         switch (userRole) {
             case ADMIN:
@@ -140,19 +175,19 @@ public class PublicationEditCheckAspect {
                 break;
             case INSTITUTIONAL_EDITOR:
                 if (assessmentMode || noResearchersFromUserInstitution(contributors, userId) &&
-                    isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
+                    isDocumentNotAThesis(joinPoint, annotation, userId, documentId)) {
                     handleUnauthorisedUser();
                 }
                 break;
             case COMMISSION:
                 if (!assessmentMode || noResearchersFromUserInstitution(contributors, userId) &&
-                    isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
+                    isDocumentNotAThesis(joinPoint, annotation, userId, documentId)) {
                     handleUnauthorisedUser();
                 }
                 break;
             case INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY:
                 if (assessmentMode ||
-                    isDocumentNotAThesis(joinPoint, annotation, attributeMap, userId)) {
+                    isDocumentNotAThesis(joinPoint, annotation, userId, documentId)) {
                     handleUnauthorisedUser();
                 }
                 break;

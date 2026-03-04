@@ -30,7 +30,7 @@ public interface MonographService {
 
     void reindexMonographs();
 
-    void indexMonograph(Monograph monograph, DocumentPublicationIndex index);
+    DocumentPublicationIndex indexMonograph(Monograph monograph, DocumentPublicationIndex index);
 
     void indexMonograph(Monograph monograph);
 

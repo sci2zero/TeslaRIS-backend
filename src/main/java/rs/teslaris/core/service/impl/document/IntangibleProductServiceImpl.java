@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -9,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.IntangibleProductConverter;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -25,6 +28,7 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -69,6 +73,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                                         OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                         InvolvementRepository involvementRepository,
                                         OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                        DocumentLookupService documentLookupService,
                                         IntangibleProductJPAServiceImpl intangibleProductJPAService,
                                         PublisherService publisherService,
                                         ResearchAreaService researchAreaService) {
@@ -77,7 +82,8 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.intangibleProductJPAService = intangibleProductJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;
@@ -127,7 +133,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             indexIntangibleProduct(savedIntangibleProduct, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedIntangibleProduct);
+        sendNotifications(savedIntangibleProduct, Collections.emptySet());
 
         return savedIntangibleProduct;
     }
@@ -137,6 +143,12 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
     public void editIntangibleProduct(Integer intangibleProductId,
                                       IntangibleProductDTO intangibleProductDTO) {
         var intangibleProductToUpdate = intangibleProductJPAService.findOne(intangibleProductId);
+
+        var oldContributorIds =
+            intangibleProductToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(intangibleProductDTO);
         clearCommonFields(intangibleProductToUpdate);
@@ -150,7 +162,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                     intangibleProductId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(intangibleProductToUpdate);
+        sendNotifications(intangibleProductToUpdate, oldContributorIds);
     }
 
     private void setIntangibleProductRelatedFields(IntangibleProduct intangibleProduct,
@@ -199,8 +211,11 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             intangibleProductJPAService::findAll,
-            intangibleProduct ->
-                indexIntangibleProduct(intangibleProduct, new DocumentPublicationIndex())
+            intangibleProduct -> {
+                var index =
+                    indexIntangibleProduct(intangibleProduct, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -212,8 +227,8 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
                 intangibleProduct.getId()).orElse(new DocumentPublicationIndex()));
     }
 
-    private void indexIntangibleProduct(IntangibleProduct intangibleProduct,
-                                        DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexIntangibleProduct(IntangibleProduct intangibleProduct,
+                                                            DocumentPublicationIndex index) {
         indexCommonFields(intangibleProduct, index);
 
         index.setType(DocumentPublicationType.INTANGIBLE_PRODUCT.name());
@@ -225,5 +240,7 @@ public class IntangibleProductServiceImpl extends DocumentPublicationServiceImpl
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }

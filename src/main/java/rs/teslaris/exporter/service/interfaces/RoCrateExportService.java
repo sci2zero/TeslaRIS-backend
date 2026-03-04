@@ -1,12 +1,12 @@
 package rs.teslaris.exporter.service.interfaces;
 
-import java.io.OutputStream;
+import java.nio.file.Path;
 import org.springframework.stereotype.Service;
 
 @Service
 public interface RoCrateExportService {
 
-    void createRoCrateZip(Integer documentId, String exportId, OutputStream outputStream);
+    Path createRoCrateZip(Integer documentId, String exportId);
 
-    void createRoCrateBibliographyZip(Integer personId, String exportId, OutputStream outputStream);
+    Path createRoCrateBibliographyZip(Integer personId, String exportId);
 }

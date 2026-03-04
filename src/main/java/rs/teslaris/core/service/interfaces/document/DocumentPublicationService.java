@@ -23,11 +23,11 @@ import rs.teslaris.core.util.search.SearchRequestType;
 @Service
 public interface DocumentPublicationService extends JPAService<Document> {
 
+    Document findOne(Integer documentId);
+
     DocumentDTO readDocumentPublication(Integer documentId);
 
     String readBibliographicMetadataById(Integer datasetId, BibliographicFormat format);
-
-    Document findDocumentById(Integer documentId);
 
     Document findDocumentByOldId(Integer documentId);
 

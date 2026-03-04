@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -33,6 +35,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.converter.document.ThesisConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
@@ -75,6 +78,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -165,6 +169,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                              InvolvementRepository involvementRepository,
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                             DocumentLookupService documentLookupService,
                              ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              LanguageService languageService, LanguageTagService languageTagService,
@@ -173,14 +178,16 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              OrganisationUnitIndexRepository organisationUnitIndexRepository,
                              UserService userService, MessageSource messageSource,
                              BrandingInformationService brandingInformationService,
-                             EmailUtil emailUtil, DocumentFileService documentFileService1,
+                             EmailUtil emailUtil,
+                             DocumentFileService documentFileService1,
                              TaskManagerService taskManagerService, FileService fileService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;
@@ -209,6 +216,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         Thesis thesis;
         try {
             thesis = thesisJPAService.findOne(thesisId);
+            if (Objects.nonNull(thesis.getSubstitutedBy()) &&
+                !SessionUtil.isUserLoggedInAndAdmin() &&
+                !SessionUtil.isUserLoggedInAndLibrarian()) {
+                return new ThesisResponseDTO() {{
+                    setId(thesis.getSubstitutedBy().getId());
+                }};
+            }
         } catch (NotFoundException e) {
             log.info("Trying to read non-existent THESIS with ID {}. Clearing index.", thesisId);
             this.clearIndexWhenFailedRead(thesisId, DocumentPublicationType.THESIS);
@@ -268,7 +282,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             indexThesis(savedThesis, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedThesis);
+        sendNotifications(savedThesis, Collections.emptySet());
 
         return newThesis;
     }
@@ -277,6 +291,12 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     public void editThesis(Integer thesisId, ThesisDTO thesisDTO) {
         var thesisToUpdate = thesisJPAService.findOne(thesisId);
+
+        var oldContributorIds =
+            thesisToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkIfAvailableForEditing(thesisToUpdate);
 
@@ -306,7 +326,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(thesisToUpdate);
+        sendNotifications(thesisToUpdate, oldContributorIds);
     }
 
     @Override
@@ -329,7 +349,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             thesisJPAService::findAll,
-            thesis -> indexThesis(thesis, new DocumentPublicationIndex())
+            thesis -> {
+                var index = indexThesis(thesis, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -472,6 +495,43 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 put("publicReviewLengthDays", publicReviewLengthDays);
                 put("userId", userId);
             }}, recurrence));
+    }
+
+    @Override
+    @Transactional
+    public void addSubstituteThesis(Integer staleThesisId, Integer substituteId) {
+        var staleThesis = thesisJPAService.findOne(staleThesisId);
+        var substituteThesis = thesisJPAService.findOne(substituteId);
+
+        staleThesis.setSubstitute(substituteThesis);
+
+        thesisJPAService.save(staleThesis);
+        thesisJPAService.save(substituteThesis);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(staleThesisId)
+            .ifPresent(index -> {
+                index.setIsSubstituted(true);
+                documentPublicationIndexRepository.save(index);
+            });
+    }
+
+    @Override
+    @Transactional
+    public void removeSubstituteThesis(Integer thesisId) {
+        var thesis = thesisJPAService.findOne(thesisId);
+        var substitutionThesis = thesis.getSubstitutedBy();
+
+        thesis.setSubstitutedBy(null);
+        substitutionThesis.setSubstituteFor(null);
+
+        thesisJPAService.save(thesis);
+        thesisJPAService.save(substitutionThesis);
+
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId)
+            .ifPresent(index -> {
+                index.setIsSubstituted(false);
+                documentPublicationIndexRepository.save(index);
+            });
     }
 
     @Override
@@ -823,7 +883,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         );
     }
 
-    private void indexThesis(Thesis thesis, DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexThesis(Thesis thesis, DocumentPublicationIndex index) {
         indexCommonFields(thesis, index);
 
         index.setType(DocumentPublicationType.THESIS.name());
@@ -871,6 +931,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 
     private void checkIfAvailableForEditing(Thesis thesis) {

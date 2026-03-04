@@ -15,7 +15,6 @@ import rs.teslaris.assessment.dto.AssessmentResearchAreaDTO;
 import rs.teslaris.assessment.model.AssessmentResearchArea;
 import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.service.interfaces.AssessmentResearchAreaService;
-import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.util.ResearchAreasConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
@@ -23,6 +22,7 @@ import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -30,7 +30,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Traceable
 public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<AssessmentResearchArea>
     implements AssessmentResearchAreaService {
@@ -39,7 +38,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
 
     private final PersonService personService;
 
-    private final CommissionService commissionService;
+    private final CommissionRepository commissionRepository;
 
     private final UserRepository userRepository;
 
@@ -56,6 +55,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AssessmentResearchAreaDTO readPersonAssessmentResearchArea(Integer personId) {
         var researchArea = assessmentResearchAreaRepository.findForPersonId(personId).orElse(null);
 
@@ -73,6 +73,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<PersonIndex> readPersonAssessmentResearchAreaForCommission(
         Integer commissionId, String code, Pageable pageable) {
         var organisationUnitId = userRepository.findOUIdForCommission(commissionId);
@@ -85,6 +86,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional
     public void setPersonAssessmentResearchArea(Integer personId, String researchAreaCode,
                                                 List<Integer> researchSubAreaIds) {
         if (!ResearchAreasConfigurationLoader.codeExists(researchAreaCode)) {
@@ -116,6 +118,7 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional
     public void setPersonAssessmentResearchAreaForCommission(Integer personId,
                                                              String researchAreaCode,
                                                              Integer commissionId) {
@@ -126,19 +129,22 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
 
         var researchArea =
             assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId);
-        var commission = commissionService.findOne(commissionId);
+        var commission = commissionRepository.getReferenceById(commissionId);
 
         if (researchArea.isPresent()) {
             researchArea.get().setResearchAreaCode(researchAreaCode);
-            commission.getExcludedResearchers().remove(researchArea.get().getPerson());
+            commissionRepository.removeExcludedResearcher(commissionId, personId);
             researchArea.get().setCommission(commission);
             save(researchArea.get());
-            commissionService.save(commission);
+
+            applicationEventPublisher.publishEvent(
+                new ResearcherPointsReindexingEvent(List.of(personId)));
+
             return;
         }
 
         var person = personService.findOne(personId);
-        commission.getExcludedResearchers().remove(person);
+        commissionRepository.removeExcludedResearcher(commissionId, personId);
 
         var newResearchArea = new AssessmentResearchArea();
         newResearchArea.setPerson(person);
@@ -146,13 +152,13 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
         newResearchArea.setCommission(commission);
 
         save(newResearchArea);
-        commissionService.save(commission);
 
         applicationEventPublisher.publishEvent(
             new ResearcherPointsReindexingEvent(List.of(personId)));
     }
 
     @Override
+    @Transactional
     public void deletePersonAssessmentResearchArea(Integer personId) {
         var researchAreaToDelete = assessmentResearchAreaRepository.findForPersonId(personId);
         researchAreaToDelete.ifPresent(assessmentResearchAreaRepository::delete);
@@ -162,11 +168,10 @@ public class AssessmentResearchAreaServiceImpl extends JPAServiceImpl<Assessment
     }
 
     @Override
+    @Transactional
     public void removePersonAssessmentResearchAreaForCommission(Integer personId,
                                                                 Integer commissionId) {
-        var commission = commissionService.findOne(commissionId);
-        commission.getExcludedResearchers().add(personService.findOne(personId));
-        commissionService.save(commission);
+        commissionRepository.addExcludedResearcher(commissionId, personId);
 
         applicationEventPublisher.publishEvent(
             new ResearcherPointsReindexingEvent(List.of(personId)));

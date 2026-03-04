@@ -212,6 +212,7 @@ public class SecurityConfiguration {
 
                 // FILE
                 .requestMatchers(HttpMethod.GET, "/api/file/{serverFilename}").permitAll()
+                .requestMatchers(HttpMethod.HEAD, "/api/file/{serverFilename}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/file/logo/{organisationUnitId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/file/image/{personId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/file/raw-image/{personId}").permitAll()
@@ -244,6 +245,9 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/assessment/publication-series-indicator/{publicationSeriesId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/assessment/publication-series-indicator/if-table/{publicationSeriesId}")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET,
                     "/api/assessment/person-assessment-classification/assess/{personId}")

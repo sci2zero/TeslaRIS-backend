@@ -21,9 +21,11 @@ import rs.teslaris.core.dto.user.UserResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.person.InvolvementRepository;
+import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.session.SessionUtil;
 
@@ -32,8 +34,13 @@ public class PersonConverter {
 
     private static InvolvementRepository involvementRepository;
 
-    public PersonConverter(InvolvementRepository involvementRepository) {
+    private static PersonFieldVisibilityRepository personFieldVisibilityRepository;
+
+
+    public PersonConverter(InvolvementRepository involvementRepository,
+                           PersonFieldVisibilityRepository personFieldVisibilityRepository) {
         PersonConverter.involvementRepository = involvementRepository;
+        PersonConverter.personFieldVisibilityRepository = personFieldVisibilityRepository;
     }
 
     public static PersonResponseDTO toDTO(Person person) {
@@ -77,7 +84,7 @@ public class PersonConverter {
                     person.getPersonalInfo().getDisplayTitle())), biography,
             keyword, person.getApproveStatus(), employmentIds, educationIds, membershipIds,
             expertisesOrSkills, prizes, Objects.nonNull(person.getProfilePhoto()) ?
-            person.getProfilePhoto().getImageServerName() : null);
+            person.getProfilePhoto().getImageServerName() : null, false);
 
         filterSensitiveData(personResponse, person);
 
@@ -246,16 +253,41 @@ public class PersonConverter {
     }
 
     private static void filterSensitiveData(PersonResponseDTO personResponse, Person person) {
+        var fieldVisibilityConfiguration =
+            personFieldVisibilityRepository.getFieldVisibilityConfiguration(person.getId())
+                .orElse(new PersonFieldVisibility());
+
         if (!SessionUtil.isUserLoggedIn()) {
-            personResponse.getPersonalInfo().getContact().setPhoneNumber("");
-            personResponse.getPersonalInfo().getContact().setContactEmail("");
-            personResponse.getPersonalInfo().setPlaceOfBirth(null);
-            personResponse.getPersonalInfo().setLocalBirthDate(null);
+            if (!fieldVisibilityConfiguration.getContactEmailVisible()) {
+                personResponse.getPersonalInfo().getContact().setContactEmail("");
+            }
+
+            if (!fieldVisibilityConfiguration.getPhoneNumberVisible()) {
+                personResponse.getPersonalInfo().getContact().setPhoneNumber("");
+            }
+
+            if (!fieldVisibilityConfiguration.getBirthplaceVisible()) {
+                personResponse.getPersonalInfo().setPlaceOfBirth(null);
+            }
+
+            if (!fieldVisibilityConfiguration.getDateOfBirthVisible()) {
+                personResponse.getPersonalInfo().setLocalBirthDate(null);
+            }
+
+            if (!fieldVisibilityConfiguration.getSexVisible()) {
+                personResponse.getPersonalInfo().setSex(null);
+            }
+
             personResponse.getPersonalInfo().getPostalAddress().setCountryId(null);
             personResponse.getPersonalInfo().getPostalAddress().setCity(new ArrayList<>());
             personResponse.getPersonalInfo().getPostalAddress()
                 .setStreetAndNumber(new ArrayList<>());
         } else if (!SessionUtil.isUserLoggedInAndAdmin()) {
+            if (fieldVisibilityConfiguration.getDateOfBirthVisible()) {
+                personResponse.setShowFullBirthdate(true);
+                return;
+            }
+
             var userId = SessionUtil.getLoggedInUser().getId();
             if (Objects.isNull(userId)) {
                 userId = 0;

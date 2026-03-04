@@ -40,4 +40,7 @@ public class UserUpdateRequestDTO {
 
     @NotNull(message = "User notification period cannot be null.")
     private UserNotificationPeriod notificationPeriod;
+
+    @NotNull(message = "You have to provide whether you want to receive only new notifications.")
+    private Boolean sendOnlyNewNotifications;
 }

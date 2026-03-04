@@ -1,5 +1,6 @@
 package rs.teslaris.core.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -929,6 +930,128 @@ public class ThesisServiceTest {
 
         var taskIds = taskIdCaptor.getAllValues();
         assertNotEquals(taskIds.get(0), taskIds.get(1));
+    }
+
+    @Test
+    public void shouldAddSubstituteThesisAndUpdateIndex() {
+        // given
+        var staleThesisId = 1;
+        var substituteId = 2;
+
+        var staleThesis = new Thesis();
+        var substituteThesis = new Thesis();
+        var documentPublicationIndex = new DocumentPublicationIndex();
+
+        when(thesisJPAService.findOne(staleThesisId)).thenReturn(staleThesis);
+        when(thesisJPAService.findOne(substituteId)).thenReturn(substituteThesis);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            staleThesisId))
+            .thenReturn(Optional.of(documentPublicationIndex));
+
+        // when
+        thesisService.addSubstituteThesis(staleThesisId, substituteId);
+
+        // then
+        verify(thesisJPAService).findOne(staleThesisId);
+        verify(thesisJPAService).findOne(substituteId);
+        verify(thesisJPAService, times(2)).save(any(Thesis.class));
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            staleThesisId);
+        verify(documentPublicationIndexRepository).save(documentPublicationIndex);
+
+        assertThat(staleThesis.getSubstitutedBy()).isEqualTo(substituteThesis);
+        assertThat(documentPublicationIndex.getIsSubstituted()).isTrue();
+    }
+
+    @Test
+    public void shouldAddSubstituteThesisWhenIndexNotFound() {
+        // given
+        var staleThesisId = 1;
+        var substituteId = 2;
+
+        var staleThesis = new Thesis();
+        var substituteThesis = new Thesis();
+
+        when(thesisJPAService.findOne(staleThesisId)).thenReturn(staleThesis);
+        when(thesisJPAService.findOne(substituteId)).thenReturn(substituteThesis);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            staleThesisId))
+            .thenReturn(Optional.empty());
+
+        // when
+        thesisService.addSubstituteThesis(staleThesisId, substituteId);
+
+        // then
+        verify(thesisJPAService).findOne(staleThesisId);
+        verify(thesisJPAService).findOne(substituteId);
+        verify(thesisJPAService, times(2)).save(any(Thesis.class));
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            staleThesisId);
+        verify(documentPublicationIndexRepository, never()).save(any());
+
+        assertThat(staleThesis.getSubstitutedBy()).isEqualTo(substituteThesis);
+    }
+
+    @Test
+    public void shouldRemoveSubstituteThesisAndUpdateIndex() {
+        // given
+        var thesisId = 1;
+        var substitutionThesisId = 2;
+
+        var thesis = new Thesis();
+        var substitutionThesis = new Thesis();
+        var documentPublicationIndex = new DocumentPublicationIndex();
+
+        thesis.setSubstitutedBy(substitutionThesis);
+        substitutionThesis.setSubstituteFor(thesis);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId))
+            .thenReturn(Optional.of(documentPublicationIndex));
+
+        // when
+        thesisService.removeSubstituteThesis(thesisId);
+
+        // then
+        verify(thesisJPAService).findOne(thesisId);
+        verify(thesisJPAService, times(2)).save(any(Thesis.class));
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            thesisId);
+        verify(documentPublicationIndexRepository).save(documentPublicationIndex);
+
+        assertThat(thesis.getSubstitutedBy()).isNull();
+        assertThat(substitutionThesis.getSubstituteFor()).isNull();
+        assertThat(documentPublicationIndex.getIsSubstituted()).isFalse();
+    }
+
+    @Test
+    public void shouldRemoveSubstituteThesisWhenIndexNotFound() {
+        // given
+        var thesisId = 1;
+        var substitutionThesisId = 2;
+
+        var thesis = new Thesis();
+        var substitutionThesis = new Thesis();
+
+        thesis.setSubstitutedBy(substitutionThesis);
+        substitutionThesis.setSubstituteFor(thesis);
+
+        when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesisId))
+            .thenReturn(Optional.empty());
+
+        // when
+        thesisService.removeSubstituteThesis(thesisId);
+
+        // then
+        verify(thesisJPAService).findOne(thesisId);
+        verify(thesisJPAService, times(2)).save(any(Thesis.class));
+        verify(documentPublicationIndexRepository).findDocumentPublicationIndexByDatabaseId(
+            thesisId);
+        verify(documentPublicationIndexRepository, never()).save(any());
+
+        assertThat(thesis.getSubstitutedBy()).isNull();
+        assertThat(substitutionThesis.getSubstituteFor()).isNull();
     }
 
     private Set<DocumentFile> createMockDocuments(int count) {

@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import rs.teslaris.core.dto.person.involvement.EmploymentMigrationDTO;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
@@ -44,6 +45,9 @@ public class EmploymentMigrationWorkerTest {
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    private PersonIndexRepository personIndexRepository;
 
     @InjectMocks
     private EmploymentMigrationWorker employmentMigrationWorker;

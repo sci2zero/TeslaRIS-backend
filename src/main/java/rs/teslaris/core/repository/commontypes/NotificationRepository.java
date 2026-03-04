@@ -27,12 +27,22 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
     void deleteNewPotentialClaimsNotificationsForUser(Integer userId);
 
     @Query("SELECT n FROM Notification n " +
-        "WHERE n.user.id = :userId AND n.user.userNotificationPeriod = 0")
-    List<Notification> getDailyNotifications(Integer userId);
+        "WHERE n.user.id = :userId AND " +
+        "n.user.userNotificationPeriod = 0 AND " +
+        "(:notSent = FALSE OR n.sentByEmail = FALSE)")
+    List<Notification> getDailyNotifications(Integer userId, boolean notSent);
 
     @Query("SELECT n FROM Notification n " +
-        "WHERE n.user.id = :userId AND n.user.userNotificationPeriod = 1")
-    List<Notification> getWeeklyNotifications(Integer userId);
+        "WHERE n.user.id = :userId AND " +
+        "n.user.userNotificationPeriod = 1 AND " +
+        "(:notSent = FALSE OR n.sentByEmail = FALSE)")
+    List<Notification> getWeeklyNotifications(Integer userId, boolean notSent);
+
+    @Query("SELECT n FROM Notification n " +
+        "WHERE n.user.id = :userId AND " +
+        "n.user.userNotificationPeriod = 3 AND " +
+        "(:notSent = FALSE OR n.sentByEmail = FALSE)")
+    List<Notification> getMonthlyNotifications(Integer userId, boolean notSent);
 
     @Query("SELECT count(n) FROM Notification n WHERE n.user.id = :userId")
     long getNotificationCountForUser(Integer userId);

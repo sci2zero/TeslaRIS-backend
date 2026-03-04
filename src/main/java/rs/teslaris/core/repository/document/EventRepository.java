@@ -28,14 +28,6 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
         "old_ids @> to_jsonb(array[cast(?1 as int)])", nativeQuery = true)
     Optional<Conference> findEventByOldIdsContains(Integer oldId);
 
-    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Event e WHERE e.confId = :confId AND (:id IS NULL OR e.id <> :id)")
-    boolean existsByConfId(String confId, Integer id);
-
-    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM Event e WHERE e.openAlexId = :openAlexId AND (:id IS NULL OR e.id <> :id)")
-    boolean existsByOpenAlexId(String openAlexId, Integer id);
-
     @Query("SELECT DISTINCT inst.id " +
         "FROM ProceedingsPublication pp " +
         "JOIN pp.proceedings p " +
@@ -45,6 +37,19 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
         "WHERE e.id = :eventId " +
         "AND pc.contributionType = 0")
     Set<Integer> findInstitutionIdsByEventIdAndAuthorContribution(Integer eventId);
+
+    @Query("SELECT DISTINCT inst.id " +
+        "FROM PersonEventContribution pec " +
+        "JOIN pec.institutions inst " +
+        "WHERE pec.event.id = :eventId")
+    Set<Integer> findInstitutionIdsByEventIdAndEventContribution(Integer eventId);
+
+    @Query("SELECT DISTINCT p.id " +
+        "FROM PersonEventContribution pec " +
+        "JOIN pec.person p " +
+        "WHERE pec.event.id = :eventId AND " +
+        "p IS NOT NULL")
+    Set<Integer> findPersonIdsByEventIdAndEventContribution(Integer eventId);
 
     @Query("""
             SELECT DISTINCT inv.organisationUnit.id

@@ -170,4 +170,7 @@ public class ExportDocument extends BaseExportEntity {
 
     @Field("official_file_name")
     private String officialFileName;
+
+    @Field("substituted_by")
+    private Integer substitutedBy;
 }

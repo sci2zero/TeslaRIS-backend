@@ -1,6 +1,7 @@
 package rs.teslaris.core.service.impl.commontypes;
 
 import jakarta.annotation.Nullable;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,12 @@ import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.service.interfaces.commontypes.NavigationBackwardCompatibilityService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 @Traceable
 public class NavigationBackwardCompatibilityServiceImpl implements
@@ -40,6 +42,8 @@ public class NavigationBackwardCompatibilityServiceImpl implements
 
     private final DocumentRepository documentRepository;
 
+    private final DocumentLookupService documentLookupService;
+
     private final JournalRepository journalRepository;
 
     private final BookSeriesRepository bookSeriesRepository;
@@ -48,24 +52,23 @@ public class NavigationBackwardCompatibilityServiceImpl implements
 
 
     @Nullable
+    @Transactional(readOnly = true)
     public Pair<String, Integer> readResourceByOldId(Integer oldId, String source,
                                                      String language) {
         var documentIdOpt = documentRepository.findDocumentByOldIdsContains(oldId);
         if (documentIdOpt.isPresent()) {
             var documentId = documentIdOpt.get();
-            var documentOpt = documentRepository.findById(documentId);
+            var document = documentLookupService.fastDocumentLookup(documentId);
 
-            if (documentOpt.isEmpty()) {
+            if (Objects.isNull(document)) {
                 // Should not happen anymore but leave it JIC
                 documentIdOpt = documentRepository.findDocumentByMergedIdsContains(documentId);
                 if (documentIdOpt.isEmpty()) {
                     return new Pair<>("DELETED", documentId);
                 }
 
-                documentOpt = documentRepository.findById(documentId);
+                document = documentLookupService.fastDocumentLookup(documentId);
             }
-
-            var document = documentOpt.get();
 
             switch (document) {
                 case JournalPublication ignored -> {
@@ -94,10 +97,15 @@ public class NavigationBackwardCompatibilityServiceImpl implements
                         source, language);
                     return new Pair<>("PROCEEDINGS", document.getId());
                 }
-                case Thesis ignored -> {
+                case Thesis thesis -> {
                     log.info("NAVIGATION SUCCESS - THESIS {} from {} in LANGUAGE {}", document,
                         source, language);
-                    return new Pair<>("THESIS", document.getId());
+                    if (Objects.nonNull(thesis.getSubstitutedBy()) &&
+                        !SessionUtil.isUserLoggedInAndAdmin() &&
+                        !SessionUtil.isUserLoggedInAndLibrarian()) {
+                        thesis = thesis.getSubstitutedBy();
+                    }
+                    return new Pair<>("THESIS", thesis.getId());
                 }
                 case Patent ignored -> {
                     log.info("NAVIGATION SUCCESS - PATENT {} from {} in LANGUAGE {}",
@@ -170,6 +178,7 @@ public class NavigationBackwardCompatibilityServiceImpl implements
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Pair<String, String> readDocumentFileByOldId(String oldServerFilename, String source,
                                                         String language) {
         var documentFileOpt =

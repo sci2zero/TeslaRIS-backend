@@ -24,13 +24,13 @@ import org.springframework.data.domain.PageRequest;
 import rs.teslaris.assessment.model.AssessmentResearchArea;
 import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.service.impl.AssessmentResearchAreaServiceImpl;
-import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -57,7 +57,7 @@ public class AssessmentResearchAreaServiceTest {
     private ResearchAreaRepository researchAreaRepository;
 
     @Mock
-    private CommissionService commissionService;
+    private CommissionRepository commissionRepository;
 
     @Mock
     private PersonIndexRepository personIndexRepository;
@@ -166,7 +166,7 @@ public class AssessmentResearchAreaServiceTest {
             assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
             .thenReturn(Optional.empty());
         when(personService.findOne(personId)).thenReturn(new Person());
-        when(commissionService.findOne(commissionId)).thenReturn(new Commission());
+        when(commissionRepository.getReferenceById(commissionId)).thenReturn(new Commission());
 
         // When
         assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(personId,
@@ -186,7 +186,7 @@ public class AssessmentResearchAreaServiceTest {
         when(
             assessmentResearchAreaRepository.findForPersonIdAndCommissionId(personId, commissionId))
             .thenReturn(Optional.of(existingResearchArea));
-        when(commissionService.findOne(commissionId)).thenReturn(new Commission());
+        when(commissionRepository.getReferenceById(commissionId)).thenReturn(new Commission());
 
         // When
         assessmentResearchAreaService.setPersonAssessmentResearchAreaForCommission(personId,
@@ -208,16 +208,12 @@ public class AssessmentResearchAreaServiceTest {
 
     @Test
     void shouldRemovePersonAssessmentResearchAreaForCommission() {
-        // Given
-        when(commissionService.findOne(commissionId)).thenReturn(new Commission());
-        when(personService.findOne(personId)).thenReturn(new Person());
-
         // When
         assessmentResearchAreaService.removePersonAssessmentResearchAreaForCommission(personId,
             commissionId);
 
         // Then
-        verify(commissionService).save(any());
+        verify(commissionRepository).addExcludedResearcher(any(), any());
     }
 
     @Test

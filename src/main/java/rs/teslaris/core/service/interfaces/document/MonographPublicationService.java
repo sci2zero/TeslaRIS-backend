@@ -31,8 +31,8 @@ public interface MonographPublicationService {
 
     void reindexMonographPublications();
 
-    void indexMonographPublication(MonographPublication monographPublication,
-                                   DocumentPublicationIndex index);
+    DocumentPublicationIndex indexMonographPublication(MonographPublication monographPublication,
+                                                       DocumentPublicationIndex index);
 
     void indexMonographPublication(MonographPublication monographPublication);
 

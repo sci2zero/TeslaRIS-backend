@@ -265,6 +265,27 @@ public class AssessmentPointsRuleEngine {
                 if (researchArea.equals("NATURAL") || researchArea.equals("TECHNICAL")) {
                     return 8;
                 }
+                break;
+            case "M102":
+                if (researchArea.equals("TECHNICAL")) {
+                    return 5;
+                }
+                break;
+            case "M104":
+                if (researchArea.equals("TECHNICAL") || researchArea.equals("SOCIAL")) {
+                    return 2;
+                }
+                break;
+            case "M105", "M111":
+                if (researchArea.equals("TECHNICAL") || researchArea.equals("SOCIAL")) {
+                    return 1;
+                }
+                break;
+            case "M112":
+                if (researchArea.equals("TECHNICAL") || researchArea.equals("SOCIAL")) {
+                    return 0.5;
+                }
+                break;
         }
 
         // Sometimes, your work is worthless :( but it does not mean it's meaningless :)

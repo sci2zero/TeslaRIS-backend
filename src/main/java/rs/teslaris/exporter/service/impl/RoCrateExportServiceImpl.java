@@ -2,8 +2,9 @@ package rs.teslaris.exporter.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
@@ -82,21 +83,28 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
         previewTableStyles = styles;
     }
 
-
     @Override
     @Transactional(readOnly = true)
-    public void createRoCrateZip(Integer documentId, String exportId, OutputStream outputStream) {
-        try {
-            progressService.send(exportId, 5, getStatusMessage("statusMessage.fetchingDocument"));
+    public Path createRoCrateZip(Integer documentId, String exportId) {
+        Path tempFile;
 
-            var document = fetchDocumentForPacking(documentId);
-            if (Objects.isNull(document)) {
-                progressService.send(exportId, 100, getStatusMessage("statusMessage.notFound"));
+        try {
+            tempFile = Files.createTempFile("ro-crate-" + documentId + "-", ".zip");
+
+            progressService.send(exportId, 5,
+                getStatusMessage("statusMessage.fetchingDocument"));
+
+            var document = documentPublicationService.findOne(documentId);
+
+            if (document == null) {
+                progressService.send(exportId, 100,
+                    getStatusMessage("statusMessage.notFound"));
                 progressService.complete(exportId);
-                return;
+                return tempFile;
             }
 
-            progressService.send(exportId, 15, getStatusMessage("statusMessage.creatingMetadata"));
+            progressService.send(exportId, 15,
+                getStatusMessage("statusMessage.creatingMetadata"));
 
             var roCrate = new RoCrate();
             populateMetadataInfo(document, roCrate);
@@ -106,16 +114,17 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsBytes(roCrate);
 
-            progressService.send(exportId, 25, getStatusMessage("statusMessage.generatingPreview"));
+            progressService.send(exportId, 25,
+                getStatusMessage("statusMessage.generatingPreview"));
 
             var htmlPreview = ("<body><div class=\"json-view\">" +
-                Json2HtmlTable.toHtmlTable(objectMapper.readTree(
-                    objectMapper.writerWithDefaultPrettyPrinter()
-                        .writeValueAsString(roCrate.getGraph())))
-                + "</div>" + previewTableStyles + "</body>")
-                .getBytes();
+                Json2HtmlTable.toHtmlTable(
+                    objectMapper.readTree(
+                        objectMapper.writeValueAsString(roCrate.getGraph())))
+                + "</div>" + previewTableStyles + "</body>").getBytes();
 
-            try (var zipOut = new ZipOutputStream(outputStream)) {
+            try (var zipOut = new ZipOutputStream(
+                Files.newOutputStream(tempFile))) {
 
                 zipOut.putNextEntry(new ZipEntry("ro-crate-metadata.json"));
                 zipOut.write(metadataJsonBytes);
@@ -135,6 +144,7 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
 
                 for (var file : files) {
                     index++;
+
                     progressService.send(
                         exportId,
                         30 + (index * 60 / total),
@@ -143,90 +153,119 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     );
 
                     zipOut.putNextEntry(new ZipEntry("data/" + file.getFilename()));
+
                     try (var resource = fileService.loadAsResource(file.getServerFilename())) {
                         resource.transferTo(zipOut);
                     }
+
                     zipOut.closeEntry();
                 }
 
                 zipOut.finish();
             }
 
-            progressService.send(exportId, 100, getStatusMessage("statusMessage.completed"));
+            progressService.send(exportId, 100,
+                getStatusMessage("statusMessage.completed"));
             progressService.complete(exportId);
+
+            return tempFile;
+
         } catch (Exception e) {
-            progressService.send(exportId, 100, getStatusMessage("statusMessage.failed"));
+            progressService.send(exportId, 100,
+                getStatusMessage("statusMessage.failed"));
             progressService.complete(exportId);
-            throw new LoadingException("Failed to create RO-Crate ZIP. Reason: " + e.getMessage());
+
+            throw new LoadingException(
+                "Failed to create RO-Crate ZIP. Reason: " + e.getMessage());
         }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void createRoCrateBibliographyZip(Integer personId, String exportId,
-                                             OutputStream outputStream) {
-        var pageNumber = 0;
-        var chunkSize = 500;
-        var hasNextPage = true;
+    public Path createRoCrateBibliographyZip(Integer personId, String exportId) {
+        Path tempFile;
 
-        var roCrate = new RoCrate();
+        try {
+            tempFile = Files.createTempFile(
+                "ro-crate-bibliography-" + personId + "-", ".zip");
 
-        while (hasNextPage) {
-            var chunk = documentPublicationIndexRepository.findByAuthorIds(personId,
-                PageRequest.of(pageNumber, chunkSize));
+            var pageNumber = 0;
+            var chunkSize = 500;
+            var hasNextPage = true;
 
-            chunk.forEach(documentIndex -> {
-                progressService.send(exportId, 5, getStatusMessage(
-                    "statusMessage.creatingMetadata") +
-                    " (" + documentIndex.getTitleOther() + ")");
+            var roCrate = new RoCrate();
 
-                var document = fetchDocumentForPacking(documentIndex.getDatabaseId());
-                if (Objects.isNull(document)) {
-                    return;
-                }
+            while (hasNextPage) {
+                var chunk = documentPublicationIndexRepository.findByAuthorIds(personId,
+                    PageRequest.of(pageNumber, chunkSize));
 
-                populateMetadataInfo(document, roCrate);
-            });
+                chunk.forEach(documentIndex -> {
 
-            addRequiredMetadataDescriptor(roCrate, personService.findOne(personId));
+                    progressService.send(
+                        exportId,
+                        5,
+                        getStatusMessage("statusMessage.creatingMetadata")
+                            + " (" + documentIndex.getTitleOther() + ")"
+                    );
 
-            try {
-                var metadataJsonBytes = objectMapper
-                    .writerWithDefaultPrettyPrinter()
-                    .writeValueAsBytes(roCrate);
+                    var document =
+                        documentPublicationService.findOne(documentIndex.getDatabaseId());
 
-                var htmlPreview = ("<body><div class=\"json-view\">" +
-                    Json2HtmlTable.toHtmlTable(objectMapper.readTree(
-                        objectMapper.writerWithDefaultPrettyPrinter()
-                            .writeValueAsString(roCrate.getGraph())))
-                    + "</div>" + previewTableStyles + "</body>")
-                    .getBytes();
+                    if (document != null) {
+                        populateMetadataInfo(document, roCrate);
+                    }
+                });
 
-                var zipOut = new ZipOutputStream(outputStream);
+                pageNumber++;
+                hasNextPage = chunk.hasNext();
+            }
 
-                zipOut.putNextEntry(new ZipEntry("ro-crate-metadata.json"));
+            addRequiredMetadataDescriptor(
+                roCrate,
+                personService.findOne(personId));
+
+            var metadataJsonBytes = objectMapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsBytes(roCrate);
+
+            var htmlPreview =
+                ("<body><div class=\"json-view\">" +
+                    Json2HtmlTable.toHtmlTable(
+                        objectMapper.readTree(
+                            objectMapper.writeValueAsString(
+                                roCrate.getGraph())))
+                    + "</div>" + previewTableStyles +
+                    "</body>").getBytes();
+
+            try (var zipOut = new ZipOutputStream(Files.newOutputStream(tempFile))) {
+                zipOut.putNextEntry(
+                    new ZipEntry("ro-crate-metadata.json"));
                 zipOut.write(metadataJsonBytes);
                 zipOut.closeEntry();
 
-                zipOut.putNextEntry(new ZipEntry("ro-crate-preview.html"));
+                zipOut.putNextEntry(
+                    new ZipEntry("ro-crate-preview.html"));
                 zipOut.write(htmlPreview);
                 zipOut.closeEntry();
 
                 zipOut.finish();
-            } catch (Exception e) {
-                progressService.send(exportId, 100, getStatusMessage("statusMessage.failed"));
-                progressService.complete(exportId);
-
-                throw new LoadingException(
-                    "Failed to create RO-Crate ZIP. Reason: " + e.getMessage());
             }
 
-            pageNumber++;
-            hasNextPage = chunk.hasNext();
-        }
+            progressService.send(exportId, 100,
+                getStatusMessage("statusMessage.completed"));
+            progressService.complete(exportId);
 
-        progressService.send(exportId, 100, getStatusMessage("statusMessage.completed"));
-        progressService.complete(exportId);
+            return tempFile;
+
+        } catch (Exception e) {
+            progressService.send(exportId, 100,
+                getStatusMessage("statusMessage.failed"));
+            progressService.complete(exportId);
+
+            throw new LoadingException(
+                "Failed to create RO-Crate ZIP. Reason: "
+                    + e.getMessage());
+        }
     }
 
     private void populateMetadataInfo(Document document, RoCrate metadataInfo) {
@@ -278,10 +317,6 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
             default -> log.error("Unexpected document type: {}. ID: {}.", document.getClass(),
                 document.getId()); // Should never happen
         }
-    }
-
-    public Document fetchDocumentForPacking(Integer documentId) {
-        return documentPublicationService.findDocumentById(documentId);
     }
 
     public String constructDocumentIdentifier(Document document) {

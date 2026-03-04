@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -54,6 +53,12 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
         "WHERE eac.document.id = :documentId")
     List<Integer> findCommissionsThatAssessedDocument(Integer documentId);
 
+    @Query("SELECT c.id FROM Commission c " +
+        "LEFT JOIN PrizeAssessmentClassification pac " +
+        "ON pac.commission.id = c.id " +
+        "WHERE pac.prize.id = :prizeId")
+    List<Integer> findCommissionsThatAssessedPrize(Integer prizeId);
+
     @Query("""
             SELECT NEW rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo(
                 eac.commission.id, eac.assessmentClassification.code, eac.manual
@@ -65,19 +70,72 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
     List<AssessmentClassificationBasicInfo> findAssessmentClassificationBasicInfoForDocumentAndCommissions(
         Integer documentId, List<Integer> commissionIds);
 
+    @Query("""
+            SELECT NEW rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo(
+                pac.commission.id, pac.assessmentClassification.code, pac.manual
+            )
+            FROM PrizeAssessmentClassification pac
+            WHERE pac.prize.id = :prizeId
+              AND pac.commission.id IN :commissionIds
+        """)
+    List<AssessmentClassificationBasicInfo> findAssessmentClassificationBasicInfoForPrizeAndCommissions(
+        Integer prizeId, List<Integer> commissionIds);
+
+    @Query("""
+            SELECT NEW rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo(
+                eac.commission.id, eac.assessmentClassification.code, eac.manual
+            )
+            FROM EventAssessmentClassification eac
+            WHERE eac.event.id = :eventId
+              AND eac.commission.id IN :commissionIds
+        """)
+    List<AssessmentClassificationBasicInfo> findAssessmentClassificationBasicInfoForEventAndCommissions(
+        Integer eventId, List<Integer> commissionIds);
+
     @Modifying
     @Query("UPDATE Commission c SET c.isDefault = false WHERE c.id != :commissionId")
     void setOthersAsNonDefault(Integer commissionId);
 
     Optional<Commission> findCommissionByIsDefaultTrue();
 
-    @EntityGraph(attributePaths = {
-        "relations",
-        "relations.targetCommissions"
-    })
     @Query("""
             SELECT c FROM Commission c
             WHERE c.id IN :commissionIds
         """)
-    List<Commission> findCommissionsWithRelations(List<Integer> commissionIds);
+    List<Commission> findCommissionsByIds(List<Integer> commissionIds);
+
+    @Query(value = """
+            SELECT rel.id,
+                   rel.priority,
+                   ARRAY_AGG(tc.id ORDER BY tc.id),
+                   rel.result_calculation_method
+            FROM commission_relations rel
+            JOIN commission_relation_targets crt
+              ON rel.id = crt.commission_relation_id
+            JOIN commissions tc
+              ON crt.target_commission_id = tc.id
+            WHERE rel.source_commission = :commissionId AND
+                rel.deleted = FALSE
+            GROUP BY rel.id, rel.priority, rel.result_calculation_method
+            ORDER BY rel.priority
+        """, nativeQuery = true)
+    List<Object[]> findRelationsWithTargetIds(Integer commissionId);
+
+    @Modifying
+    @Query(
+        value = "INSERT INTO commissions_excluded_researchers " +
+            "(commission_id, excluded_researchers_id) " +
+            "VALUES (:commissionId, :personId)",
+        nativeQuery = true
+    )
+    void addExcludedResearcher(Integer commissionId, Integer personId);
+
+    @Modifying
+    @Query(
+        value = "DELETE FROM commissions_excluded_researchers " +
+            "WHERE commission_id = :commissionId AND excluded_researchers_id = :personId",
+        nativeQuery = true
+    )
+    void removeExcludedResearcher(Integer commissionId, Integer personId);
+
 }

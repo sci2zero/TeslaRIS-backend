@@ -39,4 +39,6 @@ public class PersonResponseDTO {
     private List<PrizeResponseDTO> prizes;
 
     private String imageServerFilename;
+
+    private Boolean showFullBirthdate = true;
 }

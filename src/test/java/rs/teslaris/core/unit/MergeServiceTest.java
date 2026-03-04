@@ -41,6 +41,7 @@ import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureCha
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
+import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalDTO;
@@ -61,6 +62,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
+import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
@@ -68,6 +70,7 @@ import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.IntangibleProduct;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.model.document.JournalPublication;
@@ -107,6 +110,7 @@ import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.GeneticMaterialService;
 import rs.teslaris.core.service.interfaces.document.IntangibleProductService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
@@ -159,6 +163,9 @@ public class MergeServiceTest {
 
     @Mock
     private ConferenceService conferenceService;
+
+    @Mock
+    private ExhibitionService exhibitionService;
 
     @Mock
     private ProceedingsService proceedingsService;
@@ -231,6 +238,9 @@ public class MergeServiceTest {
 
     @Mock
     private GeneticMaterialService geneticMaterialService;
+
+    @Mock
+    private PersonIndexRepository personIndexRepository;
 
     @InjectMocks
     private MergeServiceImpl mergeService;
@@ -446,7 +456,7 @@ public class MergeServiceTest {
         contribution.setPerson(contributor);
 
         publication.getContributors().add(contribution);
-        when(documentPublicationService.findDocumentById(publicationId)).thenReturn(publication);
+        when(documentPublicationService.findOne(publicationId)).thenReturn(publication);
 
         var otherPerson = new Person();
         otherPerson.setName(new PersonName());
@@ -499,9 +509,9 @@ public class MergeServiceTest {
         var publication2 = new JournalPublication();
         publication2.addDocumentContribution(contribution);
 
-        when(documentPublicationService.findDocumentById(
+        when(documentPublicationService.findOne(
             publicationIndex1.getDatabaseId())).thenReturn(publication1);
-        when(documentPublicationService.findDocumentById(
+        when(documentPublicationService.findOne(
             publicationIndex2.getDatabaseId())).thenReturn(publication2);
 
         var otherPerson = new Person();
@@ -531,7 +541,6 @@ public class MergeServiceTest {
         // then
         verify(personService).findOne(personId);
         verify(userService).updateResearcherCurrentOrganisationUnitIfBound(personId);
-        verify(personService).reindexPersonEmploymentDetails(person);
         verify(applicationEventPublisher).publishEvent(any(
             PersonEmploymentOUHierarchyStructureChangedEvent.class));
     }
@@ -976,6 +985,23 @@ public class MergeServiceTest {
     }
 
     @Test
+    public void shouldSaveMergedExhibitionsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new ExhibitionDTO();
+        var rightData = new ExhibitionDTO();
+
+        // when
+        mergeService.saveMergedExhibitionsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(exhibitionService, atLeastOnce()).updateExhibition(leftId, leftData);
+        verify(exhibitionService).updateExhibition(rightId, rightData);
+        verify(exhibitionService, times(2)).updateExhibition(leftId, leftData);
+    }
+
+    @Test
     public void shouldSaveMergedIntangibleProductMetadata() {
         // given
         var leftId = 1;
@@ -1125,18 +1151,18 @@ public class MergeServiceTest {
         leftDocument.setProofs(new HashSet<>(List.of(leftProof1, leftProof2)));
         rightDocument.setProofs(new HashSet<>(List.of(rightProof1, rightProof2)));
 
-        when(documentPublicationService.findDocumentById(leftId)).thenReturn(leftDocument);
-        when(documentPublicationService.findDocumentById(rightId)).thenReturn(rightDocument);
+        when(documentPublicationService.findOne(leftId)).thenReturn(leftDocument);
+        when(documentPublicationService.findOne(rightId)).thenReturn(rightDocument);
 
         // when
         mergeService.saveMergedDocumentFiles(leftId, rightId, leftProofs, rightProofs,
             leftFileItems, rightFileItems);
 
         // then
-        verify(documentPublicationService).findDocumentById(leftId);
-        verify(documentPublicationService).findDocumentById(rightId);
-        verify(documentPublicationService, times(1)).findDocumentById(leftId);
-        verify(documentPublicationService, times(1)).findDocumentById(rightId);
+        verify(documentPublicationService).findOne(leftId);
+        verify(documentPublicationService).findOne(rightId);
+        verify(documentPublicationService, times(1)).findOne(leftId);
+        verify(documentPublicationService, times(1)).findOne(rightId);
     }
 
     @Test
@@ -1539,22 +1565,41 @@ public class MergeServiceTest {
     }
 
     @Test
-    void testIdentifierMigrationForEvent() {
-        Conference deletion = new Conference();
+    void testIdentifierMigrationForConference() {
+        var deletion = new Conference();
         deletion.getMergedIds().add(104);
         deletion.getOldIds().add(204);
-        Conference merged = new Conference();
+        var merged = new Conference();
 
         when(conferenceService.findRaw(1)).thenReturn(deletion);
         when(conferenceService.findRaw(2)).thenReturn(merged);
 
-        mergeService.migratePersistentIdentifiers(1, 2, EntityType.EVENT);
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.CONFERENCE);
 
         assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(104, 1);
         assertThat(merged.getOldIds()).containsExactly(204);
         verify(conferenceService, atLeastOnce()).save(deletion);
         verify(conferenceService, atLeastOnce()).save(merged);
     }
+
+    @Test
+    void testIdentifierMigrationForExhibition() {
+        var deletion = new Exhibition();
+        deletion.getMergedIds().add(104);
+        deletion.getOldIds().add(204);
+        var merged = new Exhibition();
+
+        when(exhibitionService.findRaw(1)).thenReturn(deletion);
+        when(exhibitionService.findRaw(2)).thenReturn(merged);
+
+        mergeService.migratePersistentIdentifiers(1, 2, EntityType.EXHIBITION);
+
+        assertThat(merged.getMergedIds()).containsExactlyInAnyOrder(104, 1);
+        assertThat(merged.getOldIds()).containsExactly(204);
+        verify(exhibitionService, atLeastOnce()).save(deletion);
+        verify(exhibitionService, atLeastOnce()).save(merged);
+    }
+
 
     @Test
     void testIdentifierMigrationForJournal() {

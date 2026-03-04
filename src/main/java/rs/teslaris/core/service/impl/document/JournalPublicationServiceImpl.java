@@ -1,7 +1,9 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -11,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReassessEntityEvent;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.JournalPublicationConverter;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
@@ -29,6 +33,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -75,6 +80,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                          InvolvementRepository involvementRepository,
                                          OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                         DocumentLookupService documentLookupService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1,
@@ -84,7 +90,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
@@ -155,7 +162,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             indexJournalPublication(savedPublication, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedPublication);
+        sendNotifications(savedPublication, Collections.emptySet());
+
+        applicationEventPublisher.publishEvent(
+            new ReassessEntityEvent(DocumentPublicationType.JOURNAL_PUBLICATION,
+                savedPublication.getId()));
 
         return savedPublication;
     }
@@ -166,6 +177,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                        JournalPublicationDTO publicationDTO) {
         var publicationToUpdate = findJournalPublicationById(publicationId);
 
+        var oldContributorIds =
+            publicationToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
+
         clearCommonFields(publicationToUpdate);
         publicationToUpdate.getUris().clear();
 
@@ -174,16 +191,26 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
         var indexToUpdate = findDocumentPublicationIndexByDatabaseId(publicationId);
 
+        var journalUpdated = Objects.nonNull(publicationDTO.getJournalId()) &&
+            !publicationDTO.getJournalId().equals(indexToUpdate.getJournalId());
+        var yearUpdated = Objects.nonNull(publicationDTO.getDocumentDate()) &&
+            !publicationDTO.getDocumentDate().equals(indexToUpdate.getYear().toString());
+
         indexJournalPublication(publicationToUpdate, indexToUpdate);
         journalService.reindexJournalVolatileInformation(publicationToUpdate.getJournal().getId());
 
         journalPublicationJPAService.save(publicationToUpdate);
 
-        sendNotifications(publicationToUpdate);
+        sendNotifications(publicationToUpdate, oldContributorIds);
 
-        if (Objects.nonNull(publicationDTO.getJournalId()) &&
-            !publicationDTO.getJournalId().equals(indexToUpdate.getJournalId())) {
+        if (journalUpdated) {
             journalService.reindexJournalVolatileInformation(indexToUpdate.getJournalId());
+        }
+
+        if (journalUpdated || yearUpdated) {
+            applicationEventPublisher.publishEvent(
+                new ReassessEntityEvent(DocumentPublicationType.JOURNAL_PUBLICATION,
+                    publicationId));
         }
     }
 
@@ -203,8 +230,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
 
     @Override
     @Transactional(readOnly = true)
-    public void indexJournalPublication(JournalPublication publication,
-                                        DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexJournalPublication(JournalPublication publication,
+                                                            DocumentPublicationIndex index) {
         indexCommonFields(publication, index);
 
         index.setPublicationSeriesId(publication.getJournal().getId());
@@ -220,6 +247,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 
     @Override
@@ -273,8 +302,11 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             journalPublicationJPAService::findAll,
-            journalPublication ->
-                indexJournalPublication(journalPublication, new DocumentPublicationIndex())
+            journalPublication -> {
+                var index =
+                    indexJournalPublication(journalPublication, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 

@@ -19,6 +19,7 @@ public class MergeControllerTest extends BaseTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testSwitchJournalPublicationToOtherJournalWhenPublicationDoesNotExist()

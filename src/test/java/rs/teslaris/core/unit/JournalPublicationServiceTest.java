@@ -28,12 +28,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.applicationevent.ReassessEntityEvent;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -111,6 +113,9 @@ public class JournalPublicationServiceTest {
     @Mock
     private ProceedingsPublicationRepository proceedingsPublicationRepository;
 
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @InjectMocks
     private JournalPublicationServiceImpl journalPublicationService;
 
@@ -155,13 +160,14 @@ public class JournalPublicationServiceTest {
         SecurityContextHolder.setContext(securityContext);
 
         // When
-        var result = journalPublicationService.createJournalPublication(publicationDTO, true);
+        journalPublicationService.createJournalPublication(publicationDTO, true);
 
         // Then
         verify(multilingualContentService, times(5)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(publicationDTO));
         verify(journalPublicationJPAService).save(eq(document));
+        verify(applicationEventPublisher).publishEvent(any(ReassessEntityEvent.class));
     }
 
     @Test

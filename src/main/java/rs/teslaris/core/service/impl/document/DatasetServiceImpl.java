@@ -1,6 +1,8 @@
 package rs.teslaris.core.service.impl.document;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -8,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.DatasetConverter;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -24,6 +27,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitOutputConfigurationService;
@@ -64,6 +68,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                               InvolvementRepository involvementRepository,
                               OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                              DocumentLookupService documentLookupService,
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
@@ -71,7 +76,8 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }
@@ -117,7 +123,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             indexDataset(savedDataset, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedDataset);
+        sendNotifications(savedDataset, Collections.emptySet());
 
         return savedDataset;
     }
@@ -126,6 +132,12 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
     @Transactional
     public void editDataset(Integer datasetId, DatasetDTO datasetDTO) {
         var datasetToUpdate = datasetJPAService.findOne(datasetId);
+
+        var oldContributorIds =
+            datasetToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         checkForDocumentDate(datasetDTO);
         clearCommonFields(datasetToUpdate);
@@ -138,7 +150,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(datasetId)
                 .orElse(new DocumentPublicationIndex()));
 
-        sendNotifications(datasetToUpdate);
+        sendNotifications(datasetToUpdate, oldContributorIds);
     }
 
     private void setDatasetRelatedFields(Dataset dataset, DatasetDTO datasetDTO) {
@@ -177,7 +189,10 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             datasetJPAService::findAll,
-            dataset -> indexDataset(dataset, new DocumentPublicationIndex())
+            dataset -> {
+                var index = indexDataset(dataset, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -189,7 +204,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                 dataset.getId()).orElse(new DocumentPublicationIndex()));
     }
 
-    private void indexDataset(Dataset dataset, DocumentPublicationIndex index) {
+    private DocumentPublicationIndex indexDataset(Dataset dataset, DocumentPublicationIndex index) {
         indexCommonFields(dataset, index);
 
         index.setType(DocumentPublicationType.DATASET.name());
@@ -201,5 +216,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 }

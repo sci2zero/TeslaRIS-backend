@@ -44,4 +44,10 @@ public interface PersonIndicatorRepository extends JpaRepository<PersonIndicator
                                                                                   Integer fromYear,
                                                                                   Integer personId
     );
+
+    @Query("SELECT pi FROM PersonIndicator pi " +
+        "WHERE pi.person.id = :personId AND pi.source IN :sources " +
+        "ORDER BY pi.id ASC")
+    List<PersonIndicator> findIndicatorsForPersonAndSources(Integer personId,
+                                                            List<EntityIndicatorSource> sources);
 }

@@ -1,18 +1,20 @@
 package rs.teslaris.core.service.impl.document;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.MonographPublicationConverter;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -30,6 +32,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
@@ -38,6 +41,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitTrustConfigurationService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -73,6 +77,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                            InvolvementRepository involvementRepository,
                                            OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                           DocumentLookupService documentLookupService,
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService,
                                            MonographPublicationRepository monographPublicationRepository) {
@@ -81,7 +86,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
         this.monographPublicationRepository = monographPublicationRepository;
@@ -150,7 +156,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             indexMonographPublication(savedMonographPublication, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedMonographPublication);
+        sendNotifications(savedMonographPublication, Collections.emptySet());
 
         return savedMonographPublication;
     }
@@ -183,6 +189,12 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var monographPublicationToUpdate =
             monographPublicationJPAService.findOne(monographPublicationId);
 
+        var oldContributorIds =
+            monographPublicationToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
+
         clearCommonFields(monographPublicationToUpdate);
         setCommonFields(monographPublicationToUpdate, monographPublicationDTO);
         setMonographPublicationRelatedFields(monographPublicationToUpdate, monographPublicationDTO);
@@ -193,7 +205,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
         monographPublicationJPAService.save(monographPublicationToUpdate);
 
-        sendNotifications(monographPublicationToUpdate);
+        sendNotifications(monographPublicationToUpdate, oldContributorIds);
     }
 
     @Override
@@ -212,23 +224,16 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
     public void reindexMonographPublications() {
         // Super service does the initial deletion
 
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<MonographPublication> chunk =
-                monographPublicationJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((monographPublication) -> indexMonographPublication(monographPublication,
-                new DocumentPublicationIndex()));
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
+        FunctionalUtil.processAllPages(
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            monographPublicationJPAService::findAll,
+            monographPublication -> {
+                var index =
+                    indexMonographPublication(monographPublication, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
+        );
     }
 
     private void setMonographPublicationRelatedFields(MonographPublication monographPublication,
@@ -255,8 +260,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
     @Override
     @Transactional(readOnly = true)
-    public void indexMonographPublication(MonographPublication monographPublication,
-                                          DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexMonographPublication(
+        MonographPublication monographPublication,
+        DocumentPublicationIndex index) {
         var monographIds = new ArrayList<>(List.of(monographPublication.getMonograph().getId()));
         if (Objects.nonNull(index.getMonographId()) &&
             !monographIds.contains(index.getMonographId())) {
@@ -290,6 +296,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
 
                         documentPublicationIndexRepository.save(monographIndex);
                     }));
+
+        return index;
     }
 
     @Override

@@ -46,6 +46,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.JournalReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 
 @Service
@@ -264,35 +265,13 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
     public CompletableFuture<Void> reindexJournals() {
         journalIndexRepository.deleteAll();
 
-        performBulkReindex();
+        FunctionalUtil.performBulkOperation(
+            journalJPAService::findAll,
+            Sort.by(Sort.Direction.ASC, "id"),
+            (journal) -> indexJournal(journal, new JournalIndex())
+        );
 
         return null;
-    }
-
-    public void performBulkReindex() {
-        int pageNumber = 0;
-        int chunkSize = 100;
-        boolean hasNextPage = true;
-
-        while (hasNextPage) {
-
-            List<Journal> chunk =
-                journalJPAService.findAll(
-                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
-                    .getContent();
-
-            chunk.forEach((journal) -> {
-                try {
-                    indexJournal(journal, new JournalIndex());
-                } catch (Exception e) {
-                    log.warn("Skipping JOURNAL {} due to indexing error: {}",
-                        journal.getId(), e.getMessage());
-                }
-            });
-
-            pageNumber++;
-            hasNextPage = chunk.size() == chunkSize;
-        }
     }
 
     private void setJournalRelatedFields(Journal journal, PublicationSeriesDTO journalDTO) {
@@ -455,90 +434,140 @@ public class JournalServiceImpl extends PublicationSeriesServiceImpl implements 
             commissionRepository.findCommissionsThatClassifiedJournal(journal.getId()));
     }
 
-    private Query buildSimpleSearchQuery(List<String> tokens, Integer institutionId,
+    private Query buildSimpleSearchQuery(List<String> tokens,
+                                         Integer institutionId,
                                          Integer commissionId) {
-        var minShouldMatch = "2<-100% 5<-80% 10<-70%";
 
-        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
-            if (Objects.nonNull(institutionId) && institutionId > 0) {
-                b.must(sb -> sb.term(
-                    m -> m.field("related_institution_ids").value(institutionId)));
-            }
+        var minShouldMatch = computeMinimumShouldMatch(tokens.size());
+
+        return BoolQuery.of(q -> {
+            var textValueTokens = new ArrayList<String>();
 
             tokens.forEach(token -> {
-                if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
-                    b.must(mp ->
-                        mp.bool(m -> {
-                            {
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("title_sr")
-                                        .query(token.replace("\\\"", ""))));
-                                m.should(sb -> sb.matchPhrase(
-                                    mq -> mq.field("title_other")
-                                        .query(token.replace("\\\"", ""))));
-                            }
-                            return m;
-                        }));
-                } else if (token.contains("\\-") &&
+                if (token.contains("\\-") &&
                     issnPattern.matcher(token.replace("\\-", "-")).matches()) {
+
                     String normalizedToken = token.replace("\\-", "-");
 
-                    b.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("e_issn").value(normalizedToken)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("print_issn").value(normalizedToken)))
+                    q.should(s -> s.wildcard(w ->
+                        w.field("e_issn").value(normalizedToken)
                     ));
+                    q.should(s -> s.wildcard(w ->
+                        w.field("print_issn").value(normalizedToken)
+                    ));
+
                 } else if (token.contains("\\-") &&
                     partialIssnPattern.matcher(token.replace("\\-", "-")).matches()) {
+
                     String normalizedToken = token.replace("\\-", "-");
 
-                    b.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.prefix(
-                            p -> p.field("e_issn").value(normalizedToken)))
-                        .should(sb -> sb.prefix(
-                            p -> p.field("print_issn").value(normalizedToken)))
+                    q.should(s -> s.prefix(p ->
+                        p.field("e_issn").value(normalizedToken)
                     ));
-                } else if (token.endsWith("\\*") || token.endsWith(".")) {
-                    var wildcard = token.replace("\\*", "").replace(".", "");
-                    b.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr")
-                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
-                                .caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard + "*")
-                                .caseInsensitive(true)))
+                    q.should(s -> s.prefix(p ->
+                        p.field("print_issn").value(normalizedToken)
                     ));
                 } else {
-                    var wildcard = token + "*";
-                    b.should(mp -> mp.bool(m -> m
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_sr")
-                                .value(StringUtil.performSimpleLatinPreprocessing(wildcard) + "*")
-                                .caseInsensitive(true)))
-                        .should(sb -> sb.wildcard(
-                            mq -> mq.field("title_other").value(wildcard).caseInsensitive(true)))
-                        .should(sb -> sb.match(
-                            mq -> mq.field("title_sr").query(token)))
-                        .should(sb -> sb.match(
-                            mq -> mq.field("title_other").query(token)))
-                        .should(sb -> sb.prefix(
-                            p -> p.field("e_issn").value(token)))
-                        .should(sb -> sb.prefix(
-                            p -> p.field("print_issn").value(token)))
-                    ));
+                    textValueTokens.add(token);
                 }
             });
 
-            if (Objects.nonNull(commissionId)) {
-                b.mustNot(mnb -> {
-                    mnb.term(m -> m.field("classified_by").value(commissionId));
-                    return mnb;
-                });
+            if (!textValueTokens.isEmpty()) {
+                q.must(mainBool -> mainBool.bool(main -> {
+                    main.should(srBool -> srBool.bool(sr -> {
+                        textValueTokens.forEach(token -> {
+                            if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                                sr.must(m -> m.matchPhrase(mp ->
+                                    mp.field("title_sr")
+                                        .query(token.replace("\\\"", ""))
+                                ));
+                            } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                                var wildcard = token.replace("\\*", "").replace(".", "");
+                                sr.should(s -> s.wildcard(w ->
+                                    w.field("title_sr")
+                                        .value(
+                                            StringUtil.performSimpleLatinPreprocessing(wildcard) +
+                                                "*")
+                                        .caseInsensitive(true)
+                                ));
+                            } else {
+                                var normalized = StringUtil.performSimpleLatinPreprocessing(token);
+                                sr.should(s -> s.wildcard(w ->
+                                    w.field("title_sr")
+                                        .value(normalized + "*")
+                                        .caseInsensitive(true)
+                                ));
+                                sr.should(s -> s.match(m ->
+                                    m.field("title_sr")
+                                        .query(token)
+                                ));
+                            }
+
+                        });
+
+                        return sr.minimumShouldMatch(minShouldMatch);
+                    }));
+
+                    main.should(otherBool -> otherBool.bool(other -> {
+                        textValueTokens.forEach(token -> {
+                            if (token.startsWith("\\\"") && token.endsWith("\\\"")) {
+                                other.must(m -> m.matchPhrase(mp ->
+                                    mp.field("title_other")
+                                        .query(token.replace("\\\"", ""))
+                                ));
+                            } else if (token.endsWith("\\*") || token.endsWith(".")) {
+                                var wildcard = token.replace("\\*", "").replace(".", "");
+                                other.should(s -> s.wildcard(w ->
+                                    w.field("title_other")
+                                        .value(wildcard + "*")
+                                        .caseInsensitive(true)
+                                ));
+                            } else {
+                                other.should(s -> s.wildcard(w ->
+                                    w.field("title_other")
+                                        .value(token + "*")
+                                        .caseInsensitive(true)
+                                ));
+                                other.should(s -> s.match(m ->
+                                    m.field("title_other")
+                                        .query(token)
+                                ));
+                            }
+
+                        });
+
+                        return other.minimumShouldMatch(minShouldMatch);
+                    }));
+
+                    return main.minimumShouldMatch("1");
+                }));
             }
 
-            return b.minimumShouldMatch(minShouldMatch);
-        })))._toQuery();
+            if (Objects.nonNull(institutionId) && institutionId > 0) {
+                q.filter(f -> f.term(t ->
+                    t.field("related_institution_ids").value(institutionId)
+                ));
+            }
+
+            if (Objects.nonNull(commissionId)) {
+                q.mustNot(mn -> mn.term(t ->
+                    t.field("classified_by").value(commissionId)
+                ));
+            }
+
+            return q;
+        })._toQuery();
+    }
+
+    private String computeMinimumShouldMatch(int tokensCount) {
+        if (tokensCount <= 1) {
+            return "1";
+        }
+
+        if (tokensCount <= 6) {
+            return String.valueOf(tokensCount);
+        }
+
+        return String.valueOf((int) Math.floor(tokensCount * 0.75));
     }
 }

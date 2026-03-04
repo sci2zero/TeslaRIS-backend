@@ -204,7 +204,7 @@ public class UserController {
             newUser.getPreferredUILanguage().getLanguageTag(),
             newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(),
             registrationRequest.getOrganisationUnitId(), null, null, null,
-            newUser.getUserNotificationPeriod());
+            newUser.getUserNotificationPeriod(), newUser.getReceiveOnlyNewNotifications());
     }
 
     @PostMapping("/register-commission")
@@ -222,7 +222,7 @@ public class UserController {
             newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(),
             registrationRequest.getOrganisationUnitId(), registrationRequest.getCommissionId(),
             null, null,
-            newUser.getUserNotificationPeriod());
+            newUser.getUserNotificationPeriod(), newUser.getReceiveOnlyNewNotifications());
     }
 
     @PutMapping
@@ -322,6 +322,7 @@ public class UserController {
             newUser.getLastName(), newUser.getLocked(), newUser.getCanTakeRole(),
             newUser.getPreferredUILanguage().getLanguageTag(),
             newUser.getPreferredReferenceCataloguingLanguage().getLanguageTag(), null, null,
-            newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod());
+            newUser.getPerson().getId(), null, newUser.getUserNotificationPeriod(),
+            newUser.getReceiveOnlyNewNotifications());
     }
 }

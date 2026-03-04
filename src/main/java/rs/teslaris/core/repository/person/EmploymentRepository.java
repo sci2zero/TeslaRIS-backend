@@ -24,8 +24,7 @@ public interface EmploymentRepository extends JpaRepository<Employment, Integer>
     List<Employment> findByEmploymentInstitutionId(Integer institutionId);
 
     @Query("SELECT e FROM Employment e JOIN FETCH e.personInvolved pe " +
-        "WHERE e.dateTo IS NOT NULL AND " +
-        "e.dateTo <= CURRENT_DATE " +
+        "WHERE e.dateTo = CURRENT_DATE " +
         "ORDER BY e.id")
     List<Employment> findEmploymentsExpiringToday();
 }

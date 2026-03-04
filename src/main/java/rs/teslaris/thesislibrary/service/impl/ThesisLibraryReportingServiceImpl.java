@@ -113,10 +113,14 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
                     request.fromDate(), request.toDate(), request.thesisTypes(), institutionIds);
                 var notDefendedCount = thesisRepository.countNotDefendedThesesInPeriod(
                     request.fromDate(), request.toDate(), request.thesisTypes(), institutionIds);
-//                var acceptedCount = thesisRepository.countAcceptedThesesInPeriod(
-//                    request.fromDate(), request.toDate(), request.thesisTypes(), institutionIds);
-//                var publicReviewCount = thesisRepository.countThesesWithPublicReviewInPeriod(
-//                    request.fromDate(), request.toDate(), request.thesisTypes(), institutionIds);
+                var acceptedCount = thesisRepository.countAcceptedThesesInPeriod(
+                    request.fromDate(), request.toDate(), request.thesisTypes(), institutionIds);
+                var publicReviewCount = thesisRepository.countThesesWithPublicReviewInPeriod(
+                    request.fromDate(), request.toDate(), request.thesisTypes(), institutionIds);
+                var submittedCount = thesisRepository.countThesesSubmittedInPeriod(
+                    request.fromDate(), request.toDate(), request.thesisTypes(), institutionIds);
+                var archivedCount = thesisRepository.countThesesArchivedInPeriod(
+                    request.fromDate(), request.toDate(), request.thesisTypes(), institutionIds);
                 var openAccessCount =
                     thesisRepository.countPubliclyAvailableDefendedThesesThesesInPeriod(
                         request.fromDate(), request.toDate(), request.thesisTypes(),
@@ -127,7 +131,8 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
                         institutionIds);
 
                 if (defendedCount == 0 && notDefendedCount == 0 && closedAccessCount == 0 &&
-                    openAccessCount == 0) {
+                    openAccessCount == 0 && acceptedCount == 0 && publicReviewCount == 0 &&
+                    submittedCount == 0 && archivedCount == 0) {
                     return null;
                 }
 
@@ -135,7 +140,8 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
                     organisationUnitService.findOne(institutionId).getName());
 
                 return new ThesisReportCountsDTO(institutionId, institutionName, defendedCount,
-                    notDefendedCount, openAccessCount, closedAccessCount);
+                    notDefendedCount, openAccessCount, closedAccessCount, acceptedCount,
+                    publicReviewCount, submittedCount, archivedCount);
             })
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
@@ -202,6 +208,32 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
         var institutionIds = getAllSubInstitutionsForTopLevelOnes(request.topLevelInstitutionIds());
 
         return documentPublicationIndexRepository.fetchThesesWithPublicReviewInPeriod(
+            request.fromDate(),
+            request.toDate(), institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        );
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> fetchSubmittedThesesInPeriod(
+        ThesisReportRequestDTO request, Pageable pageable) {
+        var institutionIds = getAllSubInstitutionsForTopLevelOnes(request.topLevelInstitutionIds());
+
+        return documentPublicationIndexRepository.fetchThesesCreatedInPeriod(
+            request.fromDate(),
+            request.toDate(), institutionIds,
+            request.thesisTypes().stream().map(ThesisType::name).toList(),
+            pageable
+        );
+    }
+
+    @Override
+    public Page<DocumentPublicationIndex> fetchArchivedThesesInPeriod(
+        ThesisReportRequestDTO request, Pageable pageable) {
+        var institutionIds = getAllSubInstitutionsForTopLevelOnes(request.topLevelInstitutionIds());
+
+        return documentPublicationIndexRepository.fetchThesesArchivedInPeriod(
             request.fromDate(),
             request.toDate(), institutionIds,
             request.thesisTypes().stream().map(ThesisType::name).toList(),
@@ -277,21 +309,31 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
         var totalNotDefendedCount = new AtomicInteger(0);
         var totalPubliclyAvailableCount = new AtomicInteger(0);
         var totalClosedAccessCount = new AtomicInteger(0);
+        var totalPublicReviewCount = new AtomicInteger(0);
+        var totalAcceptedCount = new AtomicInteger(0);
+        var totalSubmittedCount = new AtomicInteger(0);
+        var totalArchivedCount = new AtomicInteger(0);
 
         reportCounts.forEach(countReport -> {
             totalDefendedCount.addAndGet(countReport.defendedCount());
             totalNotDefendedCount.addAndGet(countReport.notDefendedCount());
-//            totalPublicReviewCount.addAndGet(countReport.putOnPublicReviewCount());
-//            totalAcceptedCount.addAndGet(countReport.topicsAcceptedCount());
+            totalPublicReviewCount.addAndGet(countReport.publicReviewCount());
+            totalAcceptedCount.addAndGet(countReport.acceptedCount());
             totalPubliclyAvailableCount.addAndGet(countReport.publiclyAvailableCount());
             totalClosedAccessCount.addAndGet(countReport.closedAccessCount());
+            totalSubmittedCount.addAndGet(countReport.submittedCount());
+            totalArchivedCount.addAndGet(countReport.archivedCount());
 
             rowData.add(List.of(String.valueOf(counter.getAndIncrement()),
                 getContentFromMCField(countReport.institutionName(), locale),
                 String.valueOf(countReport.defendedCount()),
                 String.valueOf(countReport.notDefendedCount()),
                 String.valueOf(countReport.publiclyAvailableCount()),
-                String.valueOf(countReport.closedAccessCount())));
+                String.valueOf(countReport.closedAccessCount()),
+                String.valueOf(countReport.publicReviewCount()),
+                String.valueOf(countReport.acceptedCount()),
+                String.valueOf(countReport.submittedCount()),
+                String.valueOf(countReport.archivedCount())));
         });
 
         rowData.add(List.of(String.valueOf(counter.get()),
@@ -299,7 +341,11 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
             String.valueOf(totalDefendedCount.get()),
             String.valueOf(totalNotDefendedCount.get()),
             String.valueOf(totalPubliclyAvailableCount.get()),
-            String.valueOf(totalClosedAccessCount.get())
+            String.valueOf(totalClosedAccessCount.get()),
+            String.valueOf(totalPublicReviewCount.get()),
+            String.valueOf(totalAcceptedCount.get()),
+            String.valueOf(totalSubmittedCount.get()),
+            String.valueOf(totalArchivedCount.get())
         ));
 
         return new Pair<>(replacements, rowData);
@@ -307,24 +353,29 @@ public class ThesisLibraryReportingServiceImpl implements ThesisLibraryReporting
 
     private Map<String, String> constructReportHeaders(String locale, String fromYear,
                                                        String toYear) {
-        return Map.of(
-            "{header}",
-            LocalizationUtil.getMessage("reporting.phdReport.header",
-                new Object[] {fromYear, toYear},
-                locale),
-            "{col1}",
-            LocalizationUtil.getMessage("reporting.table.rowNumber", new Object[] {}, locale),
-            "{col2}",
-            LocalizationUtil.getMessage("reporting.phdReport.faculty", new Object[] {}, locale),
-            "{col3}",
-            LocalizationUtil.getMessage("reporting.phdReport.defended", new Object[] {}, locale),
-            "{col4}",
-            LocalizationUtil.getMessage("reporting.phdReport.notDefended", new Object[] {},
-                locale),
-            "{col5}",
-            LocalizationUtil.getMessage("reporting.phdReport.public", new Object[] {}, locale),
-            "{col6}",
-            LocalizationUtil.getMessage("reporting.phdReport.closed", new Object[] {}, locale)
+        return Map.ofEntries(
+            Map.entry("{header}", LocalizationUtil.getMessage("reporting.phdReport.header",
+                new Object[] {fromYear, toYear}, locale)),
+            Map.entry("{col1}", LocalizationUtil.getMessage("reporting.table.rowNumber",
+                new Object[] {}, locale)),
+            Map.entry("{col2}", LocalizationUtil.getMessage("reporting.phdReport.faculty",
+                new Object[] {}, locale)),
+            Map.entry("{col3}", LocalizationUtil.getMessage("reporting.phdReport.defended",
+                new Object[] {}, locale)),
+            Map.entry("{col4}", LocalizationUtil.getMessage("reporting.phdReport.notDefended",
+                new Object[] {}, locale)),
+            Map.entry("{col5}", LocalizationUtil.getMessage("reporting.phdReport.public",
+                new Object[] {}, locale)),
+            Map.entry("{col6}", LocalizationUtil.getMessage("reporting.phdReport.closed",
+                new Object[] {}, locale)),
+            Map.entry("{col7}", LocalizationUtil.getMessage("reporting.phdReport.publicReview",
+                new Object[] {}, locale)),
+            Map.entry("{col8}", LocalizationUtil.getMessage("reporting.phdReport.accepted",
+                new Object[] {}, locale)),
+            Map.entry("{col9}", LocalizationUtil.getMessage("reporting.phdReport.submitted",
+                new Object[] {}, locale)),
+            Map.entry("{col10}", LocalizationUtil.getMessage("reporting.phdReport.archived",
+                new Object[] {}, locale))
         );
     }
 

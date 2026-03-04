@@ -28,7 +28,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 @SQLRestriction("deleted=false")
 public class CommissionRelation extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_commission", nullable = false)
     private Commission sourceCommission;
 

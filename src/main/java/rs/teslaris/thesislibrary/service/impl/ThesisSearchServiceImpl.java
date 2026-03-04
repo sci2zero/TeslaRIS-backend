@@ -164,6 +164,11 @@ public class ThesisSearchServiceImpl implements ThesisSearchService {
                 b.must(q -> q.term(t -> t.field("is_approved").value(true)));
             }
 
+            if (!SessionUtil.isUserLoggedInAndAdmin() &&
+                !SessionUtil.isUserLoggedInAndLibrarian()) {
+                b.mustNot(q -> q.term(t -> t.field("is_substituted").value(true)));
+            }
+
             b.must(m -> m.exists(e -> e.field("thesis_defence_date")));
             return b;
         })._toQuery();

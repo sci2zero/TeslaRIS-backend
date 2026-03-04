@@ -50,4 +50,6 @@ public interface PersonContributionService extends JPAService<PersonContribution
                                                                         Integer documentId);
 
     List<Integer> getIdsOfNonRelatedDocuments(Integer organisationUnitId, Integer personId);
+
+    void createInvolvementsForRetroactiveExternalContributions();
 }

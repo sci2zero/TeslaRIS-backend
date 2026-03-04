@@ -47,7 +47,7 @@ public class IndicatorController {
     @GetMapping("/access-level/{indicatorId}")
     @PreAuthorize("hasAuthority('EDIT_INDICATORS')")
     public String readIndicatorAccessLevel(@PathVariable Integer indicatorId) {
-        return indicatorService.readIndicatorAccessLEvel(indicatorId).name();
+        return indicatorService.readIndicatorAccessLevel(indicatorId).name();
     }
 
     @PostMapping

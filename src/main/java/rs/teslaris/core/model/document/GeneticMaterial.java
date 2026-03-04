@@ -6,16 +6,13 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "genetic_materials")
 @SQLRestriction("deleted=false")
@@ -33,4 +30,9 @@ public non-sealed class GeneticMaterial extends Document implements PublisherPub
 
     @Column(name = "author_reprint")
     private Boolean authorReprint = false;
+
+
+    public GeneticMaterial() {
+        super(DocumentPublicationType.GENETIC_MATERIAL);
+    }
 }

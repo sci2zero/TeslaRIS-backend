@@ -22,6 +22,7 @@ import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.importer.service.interfaces.CommonLoader;
 
 @RestController
@@ -74,12 +75,13 @@ public class CommonLoadController {
     @SuppressWarnings("unchecked")
     public <R> R loadUsingWizard(
         @RequestParam(name = "institutionId", required = false) Integer providedInstitutionId,
+        @RequestParam(name = "recordId") String recordId,
         @RequestHeader("Authorization") String bearerToken) {
         var returnDto =
             loader.loadRecordsWizard(tokenUtil.extractUserIdFromToken(bearerToken),
-                getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));
+                getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId), recordId);
 
-        if (Objects.isNull(returnDto)) {
+        if (Objects.isNull(returnDto) && !StringUtil.valueExists(recordId)) {
             return loader.loadSkippedRecordsWizard(
                 tokenUtil.extractUserIdFromToken(bearerToken),
                 getOrganisationUnitIdFromToken(bearerToken, providedInstitutionId));

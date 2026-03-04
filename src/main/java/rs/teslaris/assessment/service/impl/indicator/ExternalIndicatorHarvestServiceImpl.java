@@ -10,9 +10,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -48,7 +50,10 @@ import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.util.ExternalMappingConstraintType;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
+import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.OrganisationUnitIndex;
+import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
@@ -96,6 +101,11 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
 
     private final int PROCESS_BATCH_SIZE = 100;
 
+    private final List<EntityIndicatorSource> EXTERNAL_INDICATOR_SOURCES =
+        List.of(EntityIndicatorSource.OPEN_ALEX,
+            EntityIndicatorSource.OPEN_CITATIONS,
+            EntityIndicatorSource.SCOPUS);
+
     private Map<String, String> externalIndicatorMapping;
 
     private Map<String, Integer> harvestPeriodOffsets;
@@ -105,11 +115,12 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
     @Value("${harvest-external-indicators.allowed}")
     private Boolean harvestAllowed;
 
+
     @Override
     public void performOUIndicatorDeduction() {
         var context = prepareInstitutionIndicatorDeductionContext();
 
-        var indicatorsToSave = new ArrayList<OrganisationUnitIndicator>();
+        var indicatorsToSave = new HashSet<OrganisationUnitIndicator>();
         FunctionalUtil.forEachChunked(
             PageRequest.of(0, PROCESS_BATCH_SIZE,
                 Sort.by(Sort.Direction.ASC, "databaseId")),
@@ -142,7 +153,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             organisationUnitId).ifPresent(institution -> {
             var context = prepareInstitutionIndicatorDeductionContext();
 
-            var indicatorsToSave = new ArrayList<OrganisationUnitIndicator>();
+            var indicatorsToSave = new HashSet<OrganisationUnitIndicator>();
 
             performInstitutionDeduction(
                 context.sources, institution,
@@ -207,17 +218,10 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var totalOutputIndicator = indicatorService.getIndicatorByCode(
             externalIndicatorMapping.getOrDefault("totalPublicationCount", null));
 
-        var entityIndicatorSources =
-            List.of(
-                EntityIndicatorSource.OPEN_ALEX,
-                EntityIndicatorSource.OPEN_CITATIONS,
-                EntityIndicatorSource.SCOPUS
-            );
-
         return new DeductionContext(
             totalCitationsIndicator,
             totalOutputIndicator,
-            entityIndicatorSources
+            EXTERNAL_INDICATOR_SOURCES
         );
     }
 
@@ -277,7 +281,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                                              OrganisationUnitIndex institution,
                                              Indicator totalCitationsIndicator,
                                              Indicator totalOutputIndicator,
-                                             List<OrganisationUnitIndicator> indicatorsToSave
+                                             Set<OrganisationUnitIndicator> indicatorsToSave
     ) {
         entityIndicatorSources.forEach(entityIndicatorSource -> {
             var totalCitationCount = new AtomicDouble(0);
@@ -383,7 +387,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         var objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        var documentIndicators = new ArrayList<DocumentIndicator>();
+        var documentIndicators = new HashSet<DocumentIndicator>();
         try {
             HashMap<String, Integer> personAggregatedCounts = new HashMap<>();
             List<Integer> allCitationCounts = new ArrayList<>();
@@ -546,7 +550,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
             var endYear = LocalDate.now().getYear();
             var startYear = endYear - harvestPeriodOffset;
 
-            var documentIndicators = new ArrayList<DocumentIndicator>();
+            var documentIndicators = new HashSet<DocumentIndicator>();
 
             ResponseEntity<String> responseEntity;
             var shouldRetry = true;
@@ -651,7 +655,7 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
         }
         var shouldUpdateIndex = source.equals(EntityIndicatorSource.OPEN_ALEX);
 
-        var personIndicators = new ArrayList<PersonIndicator>();
+        var personIndicators = new HashSet<PersonIndicator>();
 
         counts.forEach((key, value) -> {
             if (value == 0) {
@@ -889,6 +893,83 @@ public class ExternalIndicatorHarvestServiceImpl implements ExternalIndicatorHar
                     documentPublicationIndexRepository.save(docIndex);
                 });
         });
+    }
+
+    @EventListener
+    @Transactional(readOnly = true)
+    protected void handleExternalIndicatorReindexing(ReindexExternalIndicatorsEvent event) {
+        if (Objects.isNull(event) || Objects.isNull(event.index())) {
+            return;
+        }
+
+        if (event.index() instanceof PersonIndex) {
+            reindexPersonIndicators((PersonIndex) event.index(),
+                List.of(EntityIndicatorSource.OPEN_ALEX));
+        } else if (event.index() instanceof DocumentPublicationIndex) {
+            reindexDocumentIndicators((DocumentPublicationIndex) event.index(),
+                List.of(EntityIndicatorSource.OPEN_ALEX));
+        }
+    }
+
+    public void reindexPersonIndicators(PersonIndex index,
+                                        List<EntityIndicatorSource> externalSources) {
+        var personId = index.getDatabaseId();
+
+        var indicators =
+            personIndicatorRepository.findIndicatorsForPersonAndSources(personId, externalSources);
+
+        index.setTotalCitations(0L);
+        index.setHIndex(0);
+        index.getCitationsByYear().clear();
+
+        for (var indicator : indicators) {
+            var code = indicator.getIndicator().getCode();
+            var value = indicator.getNumericValue() != null ? indicator.getNumericValue() : 0.0;
+            var fromDate = indicator.getFromDate();
+
+            switch (code) {
+                case "totalCitations":
+                    index.setTotalCitations((long) value);
+                    break;
+                case "hIndex":
+                    index.setHIndex((int) value);
+                    break;
+                case "yearlyCitations":
+                    if (fromDate != null) {
+                        index.getCitationsByYear().put(fromDate.getYear(), (int) value);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        personIndexRepository.save(index);
+    }
+
+    public void reindexDocumentIndicators(DocumentPublicationIndex index,
+                                          List<EntityIndicatorSource> externalSources) {
+        var documentId = index.getDatabaseId();
+
+        var indicators = documentIndicatorRepository.findIndicatorsForDocumentAndSources(documentId,
+            externalSources);
+
+        index.setTotalCitations(0L);
+
+        for (var indicator : indicators) {
+            var code = indicator.getIndicator().getCode();
+            var value = indicator.getNumericValue() != null ? indicator.getNumericValue() : 0.0;
+
+            switch (code) {
+                case "totalCitations":
+                    index.setTotalCitations((long) value);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        documentPublicationIndexRepository.save(index);
     }
 
     @Async("taskExecutor")

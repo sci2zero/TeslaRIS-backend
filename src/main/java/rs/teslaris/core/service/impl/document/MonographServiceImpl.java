@@ -2,9 +2,11 @@ package rs.teslaris.core.service.impl.document;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.MonographDateChanged;
+import rs.teslaris.core.applicationevent.ReindexExternalIndicatorsEvent;
 import rs.teslaris.core.converter.document.MonographConverter;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
@@ -38,6 +41,7 @@ import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
@@ -101,9 +105,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 OrganisationUnitTrustConfigurationService organisationUnitTrustConfigurationService,
                                 InvolvementRepository involvementRepository,
                                 OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
+                                DocumentLookupService documentLookupService,
                                 MonographJPAServiceImpl monographJPAService,
-                                LanguageService languageService,
-                                JournalService journalService,
+                                LanguageService languageService, JournalService journalService,
                                 BookSeriesService bookSeriesService,
                                 ResearchAreaService researchAreaService,
                                 MonographRepository monographRepository,
@@ -115,7 +119,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
-            involvementRepository, organisationUnitOutputConfigurationService);
+            involvementRepository, organisationUnitOutputConfigurationService,
+            documentLookupService);
         this.monographJPAService = monographJPAService;
         this.languageService = languageService;
         this.journalService = journalService;
@@ -219,7 +224,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             indexMonograph(savedMonograph, new DocumentPublicationIndex());
         }
 
-        sendNotifications(savedMonograph);
+        sendNotifications(savedMonograph, Collections.emptySet());
 
         return savedMonograph;
     }
@@ -228,6 +233,12 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
     @Transactional
     public void editMonograph(Integer monographId, MonographDTO monographDTO) {
         var monographToUpdate = monographJPAService.findOne(monographId);
+
+        var oldContributorIds =
+            monographToUpdate.getContributors().stream()
+                .filter(c -> Objects.nonNull(c.getPerson()))
+                .map(c -> c.getPerson().getId())
+                .collect(Collectors.toSet());
 
         var updatePublicationDates =
             !monographDTO.getDocumentDate().equals(monographToUpdate.getDocumentDate());
@@ -254,7 +265,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             applicationEventPublisher.publishEvent(new MonographDateChanged(monographId, year));
         }
 
-        sendNotifications(monographToUpdate);
+        sendNotifications(monographToUpdate, oldContributorIds);
     }
 
     @Override
@@ -296,8 +307,10 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             monographJPAService::findAll,
-            monograph ->
-                indexMonograph(monograph, new DocumentPublicationIndex())
+            monograph -> {
+                var index = indexMonograph(monograph, new DocumentPublicationIndex());
+                applicationEventPublisher.publishEvent(new ReindexExternalIndicatorsEvent(index));
+            }
         );
     }
 
@@ -349,7 +362,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
     @Override
     @Transactional(readOnly = true)
-    public void indexMonograph(Monograph monograph, DocumentPublicationIndex index) {
+    public DocumentPublicationIndex indexMonograph(Monograph monograph,
+                                                   DocumentPublicationIndex index) {
         indexCommonFields(monograph, index);
 
         if (Objects.nonNull(monograph.getPublicationSeries())) {
@@ -382,6 +396,8 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         index.setApa(
             citationService.craftCitationInGivenStyle("apa", index, LanguageAbbreviations.ENGLISH));
         documentPublicationIndexRepository.save(index);
+
+        return index;
     }
 
     @Override

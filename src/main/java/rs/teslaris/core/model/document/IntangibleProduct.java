@@ -11,18 +11,15 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "intangible_products")
 @SQLRestriction("deleted=false")
@@ -46,4 +43,9 @@ public non-sealed class IntangibleProduct extends Document implements PublisherP
 
     @Column(name = "author_reprint")
     private Boolean authorReprint = false;
+
+
+    public IntangibleProduct() {
+        super(DocumentPublicationType.INTANGIBLE_PRODUCT);
+    }
 }

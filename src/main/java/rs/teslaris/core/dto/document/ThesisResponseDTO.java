@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 
 @Getter
 @Setter
@@ -33,4 +34,12 @@ public class ThesisResponseDTO extends ThesisDTO {
     private Boolean publicReviewCompleted;
 
     private Boolean isShortenedReview;
+
+    private Integer substituteFor;
+
+    private Integer substitutedBy;
+
+    private List<MultilingualContentDTO> substitutedTitle;
+
+    private List<MultilingualContentDTO> substituteTitle;
 }

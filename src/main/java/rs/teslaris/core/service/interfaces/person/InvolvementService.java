@@ -63,9 +63,10 @@ public interface InvolvementService extends JPAService<Involvement> {
 
     void migrateEmployeeInternalIdentifiers(InternalIdentifierMigrationDTO dto);
 
-    void addExternalInvolvementToBoardMember(Integer personId,
+    void addExternalInvolvementToContributor(Integer personId,
                                              List<MultilingualContentDTO> externalInstitutionName,
-                                             String employmentTitle);
+                                             String employmentTitle,
+                                             boolean performPersonUserCheck);
 
     List<List<MultilingualContentDTO>> getExternalInstitutionSuggestions(Integer personId);
 }

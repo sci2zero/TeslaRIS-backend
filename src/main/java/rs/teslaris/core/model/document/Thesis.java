@@ -17,6 +17,7 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -113,4 +114,22 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
 
     @Column(name = "shortened_review")
     private Boolean isShortenedReview = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "substituted_by")
+    private Thesis substitutedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "substitute_for")
+    private Thesis substituteFor;
+
+
+    public Thesis() {
+        super(DocumentPublicationType.THESIS);
+    }
+
+    public void setSubstitute(Thesis substitute) {
+        this.substitutedBy = substitute;
+        substitute.substituteFor = this;
+    }
 }

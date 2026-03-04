@@ -57,6 +57,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
+import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Slf4j
@@ -326,6 +327,16 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     @Override
     public IFTableResponseDTO getIFTableContent(Integer publicationSeriesId,
                                                 Integer fromYear, Integer toYear) {
+        var ifResponse = new IFTableResponseDTO();
+        ifResponse.setEditions(
+            publicationSeriesIndicatorRepository.getEditionsJournalIsListedIn(publicationSeriesId)
+                .stream().filter(edition -> Objects.nonNull(edition) && !edition.isBlank())
+                .toList());
+
+        if (!SessionUtil.isUserLoggedIn()) {
+            return ifResponse;
+        }
+
         var contentIndicators = IndicatorMappingConfigurationLoader.getIFTableContent();
         var indicatorValues = contentIndicators.stream()
             .flatMap(indicatorCode -> publicationSeriesIndicatorRepository
@@ -334,21 +345,18 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
                 .stream())
             .toList();
 
-        var ifResponse = new IFTableResponseDTO();
         ifResponse.setIf2Values(extractIFValues(indicatorValues, contentIndicators.getFirst()));
         ifResponse.setIf5Values(extractIFValues(indicatorValues, contentIndicators.get(2)));
         ifResponse.setJciValues(extractIFValues(indicatorValues, contentIndicators.get(4)));
         ifResponse.setJciPercentiles(extractIFValues(indicatorValues, contentIndicators.get(5)));
-        ifResponse.setEditions(
-            publicationSeriesIndicatorRepository.getEditionsJournalIsListedIn(publicationSeriesId));
 
         var groupedByCategory = indicatorValues.stream()
             .filter(ind -> Objects.nonNull(ind.getCategoryIdentifier()))
             .collect(Collectors.groupingBy(PublicationSeriesIndicator::getCategoryIdentifier));
 
         var tableContent = groupedByCategory.entrySet().stream()
-            .map(
-                entry -> createCategoryContent(entry.getKey(), entry.getValue(), contentIndicators))
+            .map(entry ->
+                createCategoryContent(entry.getKey(), entry.getValue(), contentIndicators))
             .toList();
 
         ifResponse.setIfTableContent(tableContent);

@@ -28,5 +28,5 @@ public interface ScopusHarvester {
                                                              boolean performImportForAllAuthors,
                                                              HashMap<Integer, Integer> newEntriesCount);
 
-    Optional<DocumentImport> harvestDocumentForDoi(String doi);
+    Optional<DocumentImport> harvestDocumentForDoi(String doi, boolean onlyLoadableTypes);
 }
