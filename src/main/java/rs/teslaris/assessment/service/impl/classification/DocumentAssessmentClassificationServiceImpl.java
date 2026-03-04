@@ -679,6 +679,10 @@ public class DocumentAssessmentClassificationServiceImpl
             return;
         }
 
+        var conferenceDate =
+            conferenceService.findConferenceById(proceedingsPublicationIndex.getEventId())
+                .getDateFrom();
+
         commissions.forEach(commission -> {
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
                 proceedingsPublicationIndex.getDatabaseId(), commission.getId(), false);
@@ -724,7 +728,8 @@ public class DocumentAssessmentClassificationServiceImpl
                 },
                 proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex,
                 proceedingsPublicationIndex.getPublicationType(), commission,
-                List.of(proceedingsPublicationIndex.getYear()),
+                List.of(Objects.nonNull(conferenceDate) ?
+                    conferenceDate.getYear() : proceedingsPublicationIndex.getYear()),
                 batchedClassifications
             );
         });

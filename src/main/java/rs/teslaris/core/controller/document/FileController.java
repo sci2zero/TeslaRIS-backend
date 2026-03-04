@@ -109,8 +109,12 @@ public class FileController {
                 return serveFile(filename, documentFile, file, inline);
             }
 
-            return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
-                "loginToViewDocumentMessage");
+            if (authenticatedUser) {
+                return handleUnauthorisedUser(request);
+            } else {
+                return ErrorResponseUtil.buildUnavailableStreamingResponse(request,
+                    "loginToViewDocumentMessage");
+            }
         }
 
         if (!isOpenAccess && !authenticatedUser) {

@@ -147,16 +147,15 @@ public class SearchServiceImplES<T> implements SearchService<T> {
         if (Objects.nonNull(originalSort) && originalSort.isSorted()) {
             originalSort.forEach(orders::add);
         } else {
-            // if unsorted search has been performed
             orders.add(Sort.Order.desc("_score"));
         }
 
-        boolean hasDocSort = orders.stream()
-            .anyMatch(order -> "_doc".equals(order.getProperty()));
+        boolean hasIdSort = orders.stream()
+            .anyMatch(
+                order -> "_id".equals(order.getProperty()) || "id".equals(order.getProperty()));
 
-        // final tie-breaker, when listing all
-        if (!hasDocSort) {
-            orders.add(Sort.Order.asc("_doc"));
+        if (!hasIdSort) {
+            orders.add(Sort.Order.asc("_id")); // stable tie-breaker
         }
 
         return Sort.by(orders);

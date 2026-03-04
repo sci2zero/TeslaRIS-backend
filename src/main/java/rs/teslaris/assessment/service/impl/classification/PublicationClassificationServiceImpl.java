@@ -30,7 +30,11 @@ public class PublicationClassificationServiceImpl implements PublicationClassifi
                                           Commission presetCommission,
                                           QuadConsumer<DocumentPublicationIndex, Integer, Commission, ArrayList<DocumentAssessmentClassification>> assessFunction,
                                           ArrayList<DocumentAssessmentClassification> batchClassifications) {
+        log.info("Assessing {} documents in chunk.", chunk.size());
+
         chunk.forEach(publicationIndex -> {
+            log.info("Assessing publication with ID {}", publicationIndex.getDatabaseId());
+
             if (publicationIndex.getType().equals(DocumentPublicationType.THESIS.name()) &&
                 Objects.isNull(publicationIndex.getThesisDefenceDate())) {
                 return;
