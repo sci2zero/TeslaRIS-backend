@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.CommissionInstitutionUpdatedEvent;
 import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -87,7 +89,6 @@ import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -157,9 +158,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final OAuthCodeRepository oAuthCodeRepository;
 
-    private final BrandingInformationService brandingInformationService;
-
     private final ApplicationConfigurationRepository applicationConfigurationRepository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -712,6 +713,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
 
+        if (newUser.getAuthority().getName().equals(UserRole.COMMISSION.name())) {
+            applicationEventPublisher.publishEvent(
+                new CommissionInstitutionUpdatedEvent(newUser.getCommission().getId()));
+        }
+
         Arrays.fill(generatedPassword, '\0');
         return savedUser;
     }
@@ -1073,6 +1079,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
         userAccountIndexRepository.findByDatabaseId(userId)
             .ifPresent(userAccountIndexRepository::delete);
+
+        if (userToDelete.getAuthority().getName().equals(UserRole.COMMISSION.name())) {
+            applicationEventPublisher.publishEvent(
+                new CommissionInstitutionUpdatedEvent(userToDelete.getCommission().getId()));
+        }
     }
 
     @Override

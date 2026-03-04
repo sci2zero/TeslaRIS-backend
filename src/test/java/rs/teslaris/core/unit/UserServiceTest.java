@@ -42,6 +42,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.applicationevent.CommissionInstitutionUpdatedEvent;
 import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.dto.commontypes.BrandingInformationDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -171,6 +173,9 @@ public class UserServiceTest {
 
     @Mock
     private BrandingInformationService brandingInformationService;
+
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Mock
     private ApplicationConfigurationRepository applicationConfigurationRepository;
@@ -539,6 +544,8 @@ public class UserServiceTest {
         assertEquals("Doe", savedUser.getLastName());
         assertEquals(language, savedUser.getPreferredUILanguage());
         assertEquals(authority, savedUser.getAuthority());
+        verify(applicationEventPublisher).publishEvent(
+            any(CommissionInstitutionUpdatedEvent.class));
     }
 
     @Test

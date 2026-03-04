@@ -39,7 +39,7 @@ public class FundingPartController {
     @PreAuthorize("hasAuthority('EDIT_FUNDING_PARTS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateFundingPart(@PathVariable Integer fundingPartId,
-                                   @RequestBody @Valid FundingPartDTO dto) {
+                                  @RequestBody @Valid FundingPartDTO dto) {
         fundingPartService.updateFundingPart(fundingPartId, dto);
     }
 

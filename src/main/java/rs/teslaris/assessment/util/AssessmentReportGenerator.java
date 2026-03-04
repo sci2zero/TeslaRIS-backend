@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,9 +19,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import rs.teslaris.assessment.dto.EnrichedResearcherAssessmentResponseDTO;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
+import rs.teslaris.core.applicationevent.CommissionInstitutionUpdatedEvent;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.indexrepository.OrganisationUnitIndexRepository;
@@ -43,17 +46,23 @@ public class AssessmentReportGenerator {
 
     private static OrganisationUnitService organisationUnitService;
 
-    private static final LoadingCache<Integer, List<Integer>> ouHierarchyCache =
+    private static final LoadingCache<Integer, List<Integer>> commissionHierarchyCache =
         CacheBuilder.newBuilder()
             .maximumSize(500)
             .expireAfterAccess(10, TimeUnit.MINUTES)
             .build(new CacheLoader<>() {
-
                 @Override
-                public List<Integer> load(Integer ouId) {
-                    return organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(ouId);
-                }
+                public List<Integer> load(Integer commissionId) {
+                    Integer ouId =
+                        userRepository.findOUIdForCommission(commissionId);
 
+                    if (Objects.isNull(ouId)) {
+                        return Collections.emptyList();
+                    }
+
+                    return organisationUnitService
+                        .getOrganisationUnitIdsFromSubHierarchy(ouId);
+                }
             });
 
     private static CommissionService commissionService;
@@ -601,8 +610,8 @@ public class AssessmentReportGenerator {
                         var assessmentCommissionId =
                             assessmentResponse.getPublicationToCommission().get(publication.c);
                         if (!assessmentCommissionId.equals(commissionId)) {
-                            commissionInstitutions = ouHierarchyCache.getUnchecked(
-                                userRepository.findOUIdForCommission(assessmentCommissionId));
+                            commissionInstitutions =
+                                commissionHierarchyCache.getUnchecked(assessmentCommissionId);
                         }
 
                         var institutionIds =
@@ -693,5 +702,10 @@ public class AssessmentReportGenerator {
         }
 
         return numbered;
+    }
+
+    @EventListener
+    protected void invalidateCommissionCache(CommissionInstitutionUpdatedEvent event) {
+        commissionHierarchyCache.invalidate(event.commissionId());
     }
 }
