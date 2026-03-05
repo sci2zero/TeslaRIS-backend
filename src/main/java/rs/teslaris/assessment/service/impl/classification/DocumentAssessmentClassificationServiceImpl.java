@@ -501,6 +501,10 @@ public class DocumentAssessmentClassificationServiceImpl
             assessmentClassificationService.readAssessmentClassificationByCode(assessmentCode);
 
         commissions.forEach(commission -> {
+            if (commission.getIsReportingCommission()) {
+                return;
+            }
+
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
                 thesisIndex.getDatabaseId(), commission.getId(), false);
 
@@ -528,6 +532,10 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         commissions.forEach(commission -> {
+            if (commission.getIsReportingCommission()) {
+                return;
+            }
+
             var monographAssessmentClassification =
                 documentAssessmentClassificationRepository.findAssessmentClassificationsForDocumentAndCommission(
                     monographPublicationIndex.getMonographId(), commission.getId());
@@ -608,6 +616,10 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         commissions.forEach(commission -> {
+            if (commission.getIsReportingCommission()) {
+                return;
+            }
+
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
                 publicationIndex.getDatabaseId(), commission.getId(), false);
 
@@ -684,6 +696,10 @@ public class DocumentAssessmentClassificationServiceImpl
                 .getDateFrom();
 
         commissions.forEach(commission -> {
+            if (commission.getIsReportingCommission()) {
+                return;
+            }
+
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
                 proceedingsPublicationIndex.getDatabaseId(), commission.getId(), false);
 

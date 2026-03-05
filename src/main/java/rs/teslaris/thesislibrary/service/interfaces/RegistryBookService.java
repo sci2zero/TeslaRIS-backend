@@ -2,6 +2,7 @@ package rs.teslaris.thesislibrary.service.interfaces;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -73,4 +74,6 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     void removeFromFinishedPromotion(Integer registryBookEntryId);
 
     void removeAllFromFinishedPromotion(Integer promotionId, boolean deletePromotion);
+
+    ByteArrayResource downloadPromoteesList(Integer promotionId);
 }

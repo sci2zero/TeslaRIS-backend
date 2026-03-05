@@ -1,5 +1,7 @@
 package rs.teslaris.thesislibrary.service.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -18,9 +20,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -51,6 +55,7 @@ import rs.teslaris.core.util.email.EmailUtil;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.PromotionException;
 import rs.teslaris.core.util.exceptionhandling.exception.RegistryBookException;
+import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.language.SerbianTransliteration;
@@ -662,6 +667,49 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             });
 
         return addresses;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ByteArrayResource downloadPromoteesList(Integer promotionId) {
+        var entries = registryBookEntryRepository
+            .getBookEntriesForPromotion(promotionId, Pageable.unpaged())
+            .getContent();
+
+        try (var workbook = new XSSFWorkbook();
+             var out = new ByteArrayOutputStream()) {
+
+            var sheet = workbook.createSheet("Sheet1");
+
+            int rowIndex = 1; // first row blank
+
+            for (var entry : entries) {
+                var authorName =
+                    entry.getPersonalInformation().getAuthorName().getFirstname() + " " +
+                        entry.getPersonalInformation().getAuthorName().getLastname();
+
+                var email = entry.getContactInformation().getContact().getContactEmail();
+                var acquiredTitle = entry.getDissertationInformation().getAcquiredTitle();
+
+                var row = sheet.createRow(rowIndex);
+
+                row.createCell(0).setCellValue(rowIndex);
+                row.createCell(1).setCellValue(authorName + ",");
+                row.createCell(2).setCellValue(acquiredTitle);
+                row.createCell(3).setCellValue(email);
+
+                row.createCell(4)
+                    .setCellFormula("B" + (rowIndex + 1) + "&\" \"&C" + (rowIndex + 1));
+
+                rowIndex++;
+            }
+
+            workbook.write(out);
+
+            return new ByteArrayResource(out.toByteArray());
+        } catch (IOException e) {
+            throw new StorageException("Failed to generate XLSX promotees export.");
+        }
     }
 
     @Override

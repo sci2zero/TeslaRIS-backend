@@ -18,6 +18,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -67,18 +68,24 @@ public class AssessmentReportGenerator {
 
     private static CommissionService commissionService;
 
+    private static Boolean colorByConcreteCommissionInstitution;
+
 
     @Autowired
     public AssessmentReportGenerator(MessageSource messageSource,
                                      OrganisationUnitIndexRepository organisationUnitIndexRepository,
                                      UserRepository userRepository,
                                      CommissionService commissionService,
-                                     OrganisationUnitService organisationUnitService) {
+                                     OrganisationUnitService organisationUnitService,
+                                     @Value("${assessment.report.color-by-concrete-commission-institution}")
+                                     Boolean colorByConcreteCommissionInstitution) {
         AssessmentReportGenerator.messageSource = messageSource;
         AssessmentReportGenerator.organisationUnitIndexRepository = organisationUnitIndexRepository;
         AssessmentReportGenerator.userRepository = userRepository;
         AssessmentReportGenerator.commissionService = commissionService;
         AssessmentReportGenerator.organisationUnitService = organisationUnitService;
+        AssessmentReportGenerator.colorByConcreteCommissionInstitution =
+            colorByConcreteCommissionInstitution;
     }
 
     public static Pair<Map<String, String>, List<List<String>>> constructDataForTable63(
@@ -607,11 +614,14 @@ public class AssessmentReportGenerator {
                 publications.forEach(publication -> {
                     if (!handledPublicationIds.contains(publication.c)) {
                         var commissionInstitutions = subOUs;
-                        var assessmentCommissionId =
-                            assessmentResponse.getPublicationToCommission().get(publication.c);
-                        if (!assessmentCommissionId.equals(commissionId)) {
-                            commissionInstitutions =
-                                commissionHierarchyCache.getUnchecked(assessmentCommissionId);
+
+                        if (colorByConcreteCommissionInstitution) {
+                            var assessmentCommissionId =
+                                assessmentResponse.getPublicationToCommission().get(publication.c);
+                            if (!assessmentCommissionId.equals(commissionId)) {
+                                commissionInstitutions =
+                                    commissionHierarchyCache.getUnchecked(assessmentCommissionId);
+                            }
                         }
 
                         var institutionIds =

@@ -119,7 +119,8 @@ public class RegistryBookReportServiceImpl implements RegistryBookReportService 
             loadGroupedRegistryBookRows(from, to, authorName, authorTitle, institutionId, lang);
 
         try (var out = new ByteArrayOutputStream()) {
-            var document = new Document(PageSize.A1, 36, 36, 54, 36);
+            var document = new Document(PageSize.A3.rotate(),
+                36, 36, 54, 36);
             var writer = PdfWriter.getInstance(document, out);
 
             var baseFont = loadBaseFont();

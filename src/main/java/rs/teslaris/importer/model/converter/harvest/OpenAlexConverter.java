@@ -189,7 +189,11 @@ public class OpenAlexConverter {
         }
 
         var personNameParts = authorship.author().displayName().split(" ");
-        person.setName(new PersonName(personNameParts[0], "", personNameParts[1]));
+
+        var first = personNameParts[0].contains(".") ? personNameParts[0] : personNameParts[1];
+        var last = personNameParts[0].contains(".") ? personNameParts[1] : personNameParts[0];
+        person.setName(new PersonName(first, "", last));
+
         return person;
     }
 }

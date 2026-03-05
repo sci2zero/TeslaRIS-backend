@@ -1071,4 +1071,92 @@ class RegistryBookServiceTest {
         verify(promotionService, times(1)).save(promotion);
         verify(registryBookEntryRepository, times(1)).save(entry);
     }
+
+    @Test
+    void shouldGeneratePromoteesXlsxFile() {
+        // Given
+        Integer promotionId = 5;
+
+        var entry = mock(RegistryBookEntry.class);
+        var personalInfo = mock(RegistryBookPersonalInformation.class);
+        var authorName = mock(PersonName.class);
+        var contactInfo = mock(RegistryBookContactInformation.class);
+        var contact = mock(Contact.class);
+        var dissertationInfo = mock(DissertationInformation.class);
+
+        when(authorName.getFirstname()).thenReturn("John");
+        when(authorName.getLastname()).thenReturn("Doe");
+
+        when(personalInfo.getAuthorName()).thenReturn(authorName);
+        when(entry.getPersonalInformation()).thenReturn(personalInfo);
+
+        when(contact.getContactEmail()).thenReturn("john.doe@test.com");
+        when(contactInfo.getContact()).thenReturn(contact);
+        when(entry.getContactInformation()).thenReturn(contactInfo);
+
+        when(dissertationInfo.getAcquiredTitle()).thenReturn("PhD");
+        when(entry.getDissertationInformation()).thenReturn(dissertationInfo);
+
+        var page = new PageImpl<>(List.of(entry));
+
+        when(registryBookEntryRepository.getBookEntriesForPromotion(
+            eq(promotionId), any())).thenReturn(page);
+
+        // When
+        var result = registryBookService.downloadPromoteesList(promotionId);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.contentLength() > 0);
+
+        verify(registryBookEntryRepository)
+            .getBookEntriesForPromotion(eq(promotionId), any());
+    }
+
+    @Test
+    void shouldReturnRegistryBookEntriesForInstitutionAndPeriod() {
+        // Given
+        Integer userId = 1;
+        Integer institutionId = 10;
+
+        LocalDate from = LocalDate.of(2023, 1, 1);
+        LocalDate to = LocalDate.of(2023, 12, 31);
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        var entry = new RegistryBookEntry();
+        entry.setThesis(new Thesis());
+        entry.setDissertationInformation(new DissertationInformation());
+        entry.setPersonalInformation(new RegistryBookPersonalInformation());
+        entry.setContactInformation(new RegistryBookContactInformation());
+        entry.setPreviousTitleInformation(new PreviousTitleInformation());
+        var page = new PageImpl<>(List.of(entry));
+
+        when(userRepository.findOrganisationUnitIdForUser(userId))
+            .thenReturn(institutionId);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(List.of(institutionId));
+
+        when(registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
+            any(), eq(from), eq(to), any(), any(), any(), any(), any(), eq(pageable)))
+            .thenReturn(page);
+
+        // When
+        var result = registryBookService.getRegistryBookForInstitutionAndPeriod(
+            userId, institutionId, from, to,
+            null, null, null,
+            pageable
+        );
+
+        // Then
+        assertEquals(1, result.getContent().size());
+
+        verify(userRepository).findOrganisationUnitIdForUser(userId);
+        verify(organisationUnitService, atLeastOnce())
+            .getOrganisationUnitIdsFromSubHierarchy(institutionId);
+        verify(registryBookEntryRepository)
+            .getRegistryBookEntriesForInstitutionAndPeriod(
+                any(), eq(from), eq(to), any(), any(), any(), any(), any(), eq(pageable));
+    }
 }
