@@ -422,8 +422,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         entry.setAttendanceIdentifier(UUID.randomUUID().toString());
         save(entry);
 
-        notifyCandidate(entry.getPromotion(), entry, true,
-            entry.getAttendanceIdentifier(), "sr", false);
+//        notifyCandidate(entry.getPromotion(), entry, true,
+//            entry.getAttendanceIdentifier(), "sr", false);
     }
 
     @Override
@@ -485,8 +485,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         save(entry);
 
         // TODO: Language is hardcoded for now, should we make it parametrized somewhere?
-        notifyCandidate(promotion, entry, false, entry.getAttendanceIdentifier(), "sr",
-            removedHimself);
+//        notifyCandidate(promotion, entry, false, entry.getAttendanceIdentifier(), "sr",
+//            removedHimself);
     }
 
     private void notifyCandidate(Promotion promotion, RegistryBookEntry entry, boolean added,
