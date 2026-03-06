@@ -868,7 +868,7 @@ public class ThesisServiceTest {
 
         // When
         thesisService.schedulePublicReviewEndCheck(
-            timestamp, types, publicReviewLengthDays, userId, recurrence
+            timestamp, types, publicReviewLengthDays, userId, recurrence, false
         );
 
         // Then
@@ -914,9 +914,9 @@ public class ThesisServiceTest {
 
         // When
         thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays, userId,
-            recurrence);
+            recurrence, false);
         thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays, userId,
-            recurrence);
+            recurrence, false);
 
         // Then
         var taskIdCaptor = org.mockito.ArgumentCaptor.forClass(String.class);

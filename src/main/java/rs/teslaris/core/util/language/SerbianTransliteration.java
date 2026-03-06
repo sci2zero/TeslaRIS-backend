@@ -26,7 +26,7 @@ public class SerbianTransliteration {
             d > д;
             l > л;
             n > н;
-            Ђ > Ђ;
+            Đ > Ђ;
             đ > ђ;
         
             A > А; B > Б; C > Ц; Č > Ч; Ć > Ћ; E > Е; F > Ф; G > Г; H > Х;

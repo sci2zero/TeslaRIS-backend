@@ -479,13 +479,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     public void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
                                              Integer publicReviewLengthDays, Integer userId,
-                                             RecurrenceType recurrence) {
+                                             RecurrenceType recurrence, Boolean shortened) {
         var taskId = taskManagerService.scheduleTask("PublicReviewEndCheck-" +
                 StringUtils.join(types.stream().map(ThesisType::name).toList(), "-") + "-" +
                 publicReviewLengthDays + "_DAYS-" +
                 UUID.randomUUID(),
             timestamp,
-            () -> completePublicReview(types, publicReviewLengthDays),
+            () -> completePublicReview(types, publicReviewLengthDays, shortened),
             userId, recurrence);
 
         taskManagerService.saveTaskMetadata(
@@ -493,6 +493,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK, new HashMap<>() {{
                 put("types", types);
                 put("publicReviewLengthDays", publicReviewLengthDays);
+                put("shortened", shortened);
                 put("userId", userId);
             }}, recurrence));
     }
@@ -905,7 +906,10 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         index.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());
         index.setThesisDefenceDate(thesis.getThesisDefenceDate());
 
-        index.setPublicReviewStartDates(thesis.getPublicReviewStartDates().stream().toList());
+        index.setPublicReviewStartDates(
+            thesis.getPublicReviewStartDates().stream().sorted().toList());
+        index.setPublicReviewEndDates(thesis.getPublicReviewEndDates().stream().sorted().toList());
+
         if (!index.getPublicReviewStartDates().isEmpty()) {
             index.getPublicReviewStartDates().stream()
                 .max(LocalDate::compareTo)
@@ -970,21 +974,32 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     protected void removeFromPublicReviewScheduledFallback() {
         if (Objects.nonNull(fallbackPublicReviewCheckEnabled) && fallbackPublicReviewCheckEnabled) {
             completePublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
-                PublicReviewConfigurationLoader.getLengthInDays(false));
+                PublicReviewConfigurationLoader.getLengthInDays(true), true);
+            completePublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
+                PublicReviewConfigurationLoader.getLengthInDays(false), false);
         }
     }
 
     private void completePublicReview(List<ThesisType> thesisTypes,
-                                      Integer publicReviewLengthDays) {
+                                      Integer publicReviewLengthDays, Boolean shortened) {
+        if (Objects.isNull(shortened)) {
+            shortened = false;
+        }
+
         var thesesOnPublicReview = thesisRepository.findAllOnPublicReviewOfGivenTypes(thesisTypes);
 
         var latestPossibleStartDate = LocalDate.now().minusDays(publicReviewLengthDays);
         var thesesByInstitution =
             new ConcurrentHashMap<Integer, List<Triple<String, Set<MultiLingualContent>, LocalDate>>>();
 
+        var finalShortened = shortened;
         thesesOnPublicReview.stream()
             .filter(thesis -> isPublicReviewExpired(thesis, latestPossibleStartDate))
             .forEach(thesis -> {
+                if (!thesis.getIsShortenedReview().equals(finalShortened)) {
+                    return;
+                }
+
                 updateThesisAndIndex(thesis);
 
                 var institutionId = thesis.getOrganisationUnit().getId();
@@ -1016,12 +1031,14 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     private void updateThesisAndIndex(Thesis thesis) {
         thesis.setIsOnPublicReview(false);
         thesis.setPublicReviewCompleted(true);
+        thesis.getPublicReviewEndDates().add(LocalDate.now());
         thesisJPAService.save(thesis);
 
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesis.getId())
             .ifPresent(index -> {
                 index.setIsOnPublicReview(false);
                 index.setIsPublicReviewCompleted(true);
+                index.getPublicReviewEndDates().add(LocalDate.now());
                 documentPublicationIndexRepository.save(index);
             });
     }
