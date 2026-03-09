@@ -25,6 +25,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryDissertationReportService;
@@ -103,11 +104,15 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 index.getThesisInstitutionNameOther(),
                 index.getScientificFieldSr(),
                 index.getScientificFieldOther(),
-                index.getLatestPublicReviewStartDate().toString(),
-                index.getLatestPublicReviewStartDate()
-                    .plusDays(
-                        PublicReviewConfigurationLoader.getLengthInDays(false)
-                    ).toString(),
+                index.getPublicReviewStartDates().stream().map(LocalDate::toString).toList(),
+                CollectionOperations.containsValues(index.getPublicReviewEndDates()) ?
+                    index.getPublicReviewEndDates().stream().map(LocalDate::toString).toList() :
+                    (Objects.requireNonNullElse(index.getIsOnPublicReview(), false) ? List.of() :
+                        index.getPublicReviewStartDates().stream()
+                            .map(startDate -> startDate.plusDays(
+                                PublicReviewConfigurationLoader.getLengthInDays(false)).toString())
+                            .toList()),
+                Objects.requireNonNullElse(index.getIsOnPublicReviewShortened(), false),
                 index.getDatabaseId()
             ));
     }

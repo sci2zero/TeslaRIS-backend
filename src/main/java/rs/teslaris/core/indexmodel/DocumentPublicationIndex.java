@@ -203,6 +203,9 @@ public class DocumentPublicationIndex implements ExternallyEnrichable {
     @Field(type = FieldType.Boolean, name = "is_on_public_review", store = true)
     private Boolean isOnPublicReview;
 
+    @Field(type = FieldType.Boolean, name = "is_on_public_review_shortened", store = true)
+    private Boolean isOnPublicReviewShortened;
+
     @Field(type = FieldType.Boolean, name = "is_public_review_completed", store = true)
     private Boolean isPublicReviewCompleted;
 

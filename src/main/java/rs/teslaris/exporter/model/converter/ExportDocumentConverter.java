@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -532,9 +533,14 @@ public class ExportDocumentConverter extends ExportConverterBase {
     private static Set<Integer> getRelatedInstitutions(Document document) {
         var relations = new HashSet<Integer>();
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            document.getId()).ifPresent(documentIndex -> {
-            relations.addAll(documentIndex.getOrganisationUnitIds());
-        });
+                document.getId())
+            .ifPresent(documentIndex -> {
+                relations.addAll(documentIndex.getOrganisationUnitIds());
+
+                if (documentIndex.getType().equals(DocumentPublicationType.THESIS.name())) {
+                    relations.addAll(documentIndex.getOrganisationUnitIdsActive());
+                }
+            });
 
         if (document instanceof Proceedings) {
             relations.addAll(

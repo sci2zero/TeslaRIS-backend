@@ -134,6 +134,7 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
     @Column(columnDefinition = "jsonb", name = "internal_identifiers")
     private Set<String> internalIdentifiers = new HashSet<>();
 
+
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {
             involvements = new HashSet<>();
@@ -144,7 +145,6 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
 
     public void removeInvolvement(Involvement involvement) {
         involvements.remove(involvement);
-        involvement.setPersonInvolved(null);
     }
 
     public void addPrize(Prize prize) {

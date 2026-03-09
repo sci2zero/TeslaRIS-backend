@@ -917,6 +917,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         }
 
         index.setIsOnPublicReview(thesis.getIsOnPublicReview());
+        index.setIsOnPublicReviewShortened(thesis.getIsShortenedReview());
         index.setIsPublicReviewCompleted(thesis.getPublicReviewCompleted());
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
@@ -1030,6 +1031,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private void updateThesisAndIndex(Thesis thesis) {
         thesis.setIsOnPublicReview(false);
+        thesis.setIsShortenedReview(false);
         thesis.setPublicReviewCompleted(true);
         thesis.getPublicReviewEndDates().add(LocalDate.now());
         thesisJPAService.save(thesis);
@@ -1037,6 +1039,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesis.getId())
             .ifPresent(index -> {
                 index.setIsOnPublicReview(false);
+                index.setIsOnPublicReviewShortened(false);
                 index.setIsPublicReviewCompleted(true);
                 index.getPublicReviewEndDates().add(LocalDate.now());
                 documentPublicationIndexRepository.save(index);

@@ -53,6 +53,7 @@ class ThesisLibraryDissertationReportServiceTest {
         mockIndex.setThesisInstitutionNameOther("Faculty");
         mockIndex.setScientificFieldSr("CS");
         mockIndex.setLatestPublicReviewStartDate(LocalDate.of(2023, 6, 1));
+        mockIndex.setPublicReviewStartDates(List.of(mockIndex.getLatestPublicReviewStartDate()));
         mockIndex.setDatabaseId(123);
 
         var mockPage = new PageImpl<>(List.of(mockIndex));
@@ -72,7 +73,7 @@ class ThesisLibraryDissertationReportServiceTest {
         assertThat(dto.nameAndSurname()).isEqualTo("Author A");
         assertThat(dto.titleSr()).isEqualTo("Naslov");
         assertThat(dto.titleOther()).isEqualTo("Title");
-        assertThat(dto.publicReviewEndDate()).isEqualTo("2023-07-01"); // 30 days added
+        assertThat(dto.publicReviewEndDates()).contains("2023-07-01"); // 30 days added
     }
 
     @Test
