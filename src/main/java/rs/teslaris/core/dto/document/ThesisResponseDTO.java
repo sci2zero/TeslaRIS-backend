@@ -23,6 +23,8 @@ public class ThesisResponseDTO extends ThesisDTO {
 
     private List<LocalDate> publicReviewDates;
 
+    private List<LocalDate> publicReviewEndDates;
+
     private LocalDate publicReviewEnd;
 
     private List<DocumentFileResponseDTO> preliminaryFiles = new ArrayList<>();

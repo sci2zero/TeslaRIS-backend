@@ -97,13 +97,14 @@ public class FileController {
         var accessRights = documentFile.getAccessRights();
         var isVerifiedDocument = documentFile.getIsVerifiedData();
         var authenticatedUser = isAuthenticatedUser(bearerToken, fingerprintCookie);
-        var isOpenAccess = isOpenAccess(accessRights);
+        var isOpenAccess = isOpenAccess(documentFile);
         var isThesisDocument = Objects.nonNull(documentFile.getDocument()) &&
             documentLookupService.getDocumentIndex(documentFile.getDocument().getId())
                 .getType().equals(DocumentPublicationType.THESIS.name());
 
         if (isThesisDocument) {
             if ((((Thesis) documentFile.getDocument()).getIsOnPublicReview() &&
+                Objects.requireNonNullElse(documentFile.getIsArchived(), false).equals(false) &&
                 List.of(ResourceType.PREPRINT, ResourceType.STATEMENT, ResourceType.SUPPLEMENT)
                     .contains(documentFile.getResourceType())) || isOpenAccess) {
                 return serveFile(filename, documentFile, file, inline);
@@ -347,8 +348,9 @@ public class FileController {
                 new ByteArrayResource(outputStream.toByteArray()));
     }
 
-    private boolean isOpenAccess(AccessRights accessRights) {
-        return accessRights.equals(AccessRights.OPEN_ACCESS);
+    private boolean isOpenAccess(DocumentFile documentFile) {
+        return documentFile.getAccessRights().equals(AccessRights.OPEN_ACCESS) &&
+            Objects.requireNonNullElse(documentFile.getIsArchived(), false).equals(false);
     }
 
     private boolean isAuthenticatedUser(String bearerToken, String fingerprintCookie) {
@@ -414,9 +416,8 @@ public class FileController {
                                                    @PathVariable String filename,
                                                    @PathVariable LinksetFormat linksetFormat) {
         var documentFile = documentFileService.getDocumentByServerFilename(filename);
-        var accessRights = documentFile.getAccessRights();
         var isVerifiedDocument = documentFile.getIsVerifiedData();
-        var isOpenAccess = isOpenAccess(accessRights);
+        var isOpenAccess = isOpenAccess(documentFile);
 
         if (isOpenAccess && isVerifiedDocument) {
             var headers = new HttpHeaders();

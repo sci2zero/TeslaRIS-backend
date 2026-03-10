@@ -34,4 +34,6 @@ public class DocumentFileDTO {
     private AccessRights accessRights;
 
     private License license;
+
+    private Boolean isArchived;
 }

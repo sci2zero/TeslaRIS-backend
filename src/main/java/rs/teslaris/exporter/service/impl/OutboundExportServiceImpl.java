@@ -200,7 +200,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         var recordsPage =
             findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get(),
-                publicationTypeFilters, concreteTypeFilters, additionalFilters);
+                publicationTypeFilters, concreteTypeFilters, additionalFilters,
+                matchedSet.get().includeActiveEmployments());
 
         if (recordsPage.getTotalElements() == 0) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
@@ -288,6 +289,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         Class<?> converterClass;
 
         String set;
+        var includeActiveEmployments = false;
         if (identifier.contains("/")) {
             try {
                 set = identifier.split("/")[0];
@@ -309,6 +311,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 return null;
             }
 
+            includeActiveEmployments = matchedSet.get().includeActiveEmployments();
+
             try {
                 recordClass = Class.forName(
                     EXPORT_ENTITY_BASE_PACKAGE + matchedSet.get().commonEntityClass());
@@ -328,7 +332,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         }
 
         var requestedRecordOptional =
-            findRequestedRecord(identifier, recordClass, handlerConfiguration.get());
+            findRequestedRecord(identifier, recordClass, handlerConfiguration.get(),
+                includeActiveEmployments);
         if (requestedRecordOptional.isEmpty()) {
             response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
             return null;
@@ -443,7 +448,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
     }
 
     private <E> Optional<E> findRequestedRecord(String identifier, Class<E> entityClass,
-                                                ExportHandlersConfigurationLoader.Handler handlerConfiguration) {
+                                                ExportHandlersConfigurationLoader.Handler handlerConfiguration,
+                                                Boolean includeActiveEmployments) {
         var query = new Query();
 
         if (identifier.contains("_")) {
@@ -488,76 +494,104 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 .in(getAllOUSubUnitsIds(
                     Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
         } else {
-            query.addCriteria(Criteria.where("related_institution_ids")
-                .in(getAllOUSubUnitsIds(
-                    Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
+            var ouIds = getAllOUSubUnitsIds(
+                Integer.parseInt(handlerConfiguration.internalInstitutionId()));
+
+            Criteria baseCriteria;
+
+            if (Boolean.TRUE.equals(includeActiveEmployments)) {
+                baseCriteria = new Criteria().orOperator(
+                    Criteria.where("related_institution_ids").in(ouIds),
+                    Criteria.where("actively_related_institution_ids").in(ouIds)
+                );
+            } else {
+                baseCriteria = Criteria.where("related_institution_ids").in(ouIds);
+            }
+
+            query.addCriteria(baseCriteria);
         }
         query.limit(1);
 
         return Optional.ofNullable(mongoTemplate.findOne(query, entityClass));
     }
 
-    private <E> Page<E> findRequestedRecords(Class<E> entityClass, String from, String until,
-                                             int page,
-                                             ExportHandlersConfigurationLoader.Handler handlerConfiguration,
-                                             List<ExportPublicationType> publicationTypeFilters,
-                                             HashMap<String, List<String>> concreteTypeFilters,
-                                             HashMap<String, String> additionalFilters) {
-        var query = new Query();
+    private <E> Page<E> findRequestedRecords(
+        Class<E> entityClass, String from, String until, int page,
+        ExportHandlersConfigurationLoader.Handler handlerConfiguration,
+        List<ExportPublicationType> publicationTypeFilters,
+        HashMap<String, List<String>> concreteTypeFilters,
+        HashMap<String, String> additionalFilters,
+        Boolean includeActiveEmployments) {
+        List<Criteria> rootCriteria = new ArrayList<>();
 
-        query.addCriteria(Criteria.where("last_updated").gte(Date.valueOf(
-                LocalDate.parse(from, DateTimeFormatter.ISO_DATE)))
-            .lte(Date.valueOf(
-                LocalDate.parse(until, DateTimeFormatter.ISO_DATE))));
+        rootCriteria.add(
+            Criteria.where("last_updated")
+                .gte(Date.valueOf(LocalDate.parse(from, DateTimeFormatter.ISO_DATE)))
+                .lte(Date.valueOf(LocalDate.parse(until, DateTimeFormatter.ISO_DATE)))
+        );
+
+        var ouIds = getAllOUSubUnitsIds(
+            Integer.parseInt(handlerConfiguration.internalInstitutionId()));
 
         if (handlerConfiguration.exportOnlyActiveEmployees()) {
-            query.addCriteria(Criteria.where("actively_related_institution_ids")
-                .in(getAllOUSubUnitsIds(
-                    Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
+            rootCriteria.add(
+                Criteria.where("actively_related_institution_ids").in(ouIds)
+            );
         } else {
-            query.addCriteria(Criteria.where("related_institution_ids")
-                .in(getAllOUSubUnitsIds(
-                    Integer.parseInt(handlerConfiguration.internalInstitutionId()))));
+            if (Boolean.TRUE.equals(includeActiveEmployments)) {
+                rootCriteria.add(new Criteria().orOperator(
+                    Criteria.where("related_institution_ids").in(ouIds),
+                    Criteria.where("actively_related_institution_ids").in(ouIds)
+                ));
+            } else {
+                rootCriteria.add(
+                    Criteria.where("related_institution_ids").in(ouIds)
+                );
+            }
         }
 
         if (!publicationTypeFilters.isEmpty()) {
-            query.addCriteria(Criteria.where("type").in(publicationTypeFilters));
+            rootCriteria.add(Criteria.where("type").in(publicationTypeFilters));
         }
 
         if (!additionalFilters.isEmpty()) {
             additionalFilters.forEach((field, value) -> {
                 if (value.startsWith("bool:")) {
-                    query.addCriteria(
-                        Criteria.where(field).is(
-                            Boolean.parseBoolean(value.replace("bool:", ""))
-                        )
+                    rootCriteria.add(
+                        Criteria.where(field)
+                            .is(Boolean.parseBoolean(value.substring(5)))
                     );
                 } else {
-                    query.addCriteria(Criteria.where(field).is(value));
+                    rootCriteria.add(Criteria.where(field).is(value));
                 }
             });
         }
 
-        List<Criteria> allFieldCriteria = new ArrayList<>();
+        if (!concreteTypeFilters.isEmpty()) {
+            List<Criteria> fieldBlocks = new ArrayList<>();
 
-        concreteTypeFilters.forEach((field, types) -> {
-            Criteria fieldCriteria = new Criteria().orOperator(
-                Criteria.where(field).in(types),
-                Criteria.where(field).exists(false)
-            );
-            allFieldCriteria.add(fieldCriteria);
-        });
+            concreteTypeFilters.forEach((field, types) -> {
+                fieldBlocks.add(new Criteria().orOperator(
+                    Criteria.where(field).in(types),
+                    Criteria.where(field).exists(false)
+                ));
+            });
 
-        if (!allFieldCriteria.isEmpty()) {
-            query.addCriteria(new Criteria().andOperator(
-                allFieldCriteria.toArray(new Criteria[0])
+            rootCriteria.add(new Criteria().andOperator(
+                fieldBlocks.toArray(new Criteria[0])
             ));
         }
+
+        Query query = new Query();
+        query.addCriteria(new Criteria().andOperator(
+            rootCriteria.toArray(new Criteria[0])
+        ));
 
         var totalCount = mongoTemplate.count(query, entityClass);
 
         var pageRequest = PageRequest.of(page, PAGE_SIZE);
         query.with(pageRequest);
+
         var records = mongoTemplate.find(query, entityClass);
 
         return new PageImpl<>(records, pageRequest, totalCount);

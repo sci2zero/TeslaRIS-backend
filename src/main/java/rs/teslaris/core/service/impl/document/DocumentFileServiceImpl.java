@@ -45,6 +45,7 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.ResourceType;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
@@ -326,6 +327,17 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
         }
 
         setCommonFields(documentFileToEdit, documentFile);
+
+        if (documentFile.getResourceType().equals(ResourceType.STATEMENT) &&
+            (SessionUtil.isUserLoggedInAndLibrarian() || SessionUtil.isUserLoggedInAndAdmin())) {
+            var thesis =
+                documentLookupService.fastDocumentLookup(documentFileToEdit.getDocument().getId());
+            if (thesis instanceof Thesis &&
+                !((Thesis) thesis).getPublicReviewEndDates().isEmpty()) {
+                documentFileToEdit.setIsArchived(
+                    Objects.requireNonNullElse(documentFile.getIsArchived(), false));
+            }
+        }
 
         if (!index) {
             documentFile.setResourceType(

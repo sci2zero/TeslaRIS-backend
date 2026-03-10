@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -600,10 +601,14 @@ public class ThesisServiceTest {
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 
         // When & Then
-        ThesisException exception =
-            assertThrows(ThesisException.class,
-                () -> thesisService.putOnPublicReview(thesisId, false, false));
-        assertEquals("missingAttachmentsMessage", exception.getMessage());
+        if (files > reports) {
+            ThesisException exception =
+                assertThrows(ThesisException.class,
+                    () -> thesisService.putOnPublicReview(thesisId, false, false));
+            assertEquals("missingAttachmentsMessage", exception.getMessage());
+        } else {
+            assertDoesNotThrow(() -> thesisService.putOnPublicReview(thesisId, false, false));
+        }
     }
 
     @Test

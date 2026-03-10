@@ -450,7 +450,7 @@ public class TestingDataInitializer {
                     new HashSet<>(), "application/pdf", 200L, ResourceType.SUPPLEMENT,
                     AccessRights.RESTRICTED_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
                     LocalDateTime.now(),
-                    false, false, null, null, person1)), person1));
+                    false, false, null, null, person1, false)), person1));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -467,7 +467,7 @@ public class TestingDataInitializer {
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "application/pdf", 127L, ResourceType.SUPPLEMENT,
                 AccessRights.OPEN_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
-                LocalDateTime.now(), false, false, null, null, person1)),
+                LocalDateTime.now(), false, false, null, null, person1, false)),
             LocalDate.of(2023, 4, 17), person1));
         personRepository.save(person1);
 
@@ -798,7 +798,7 @@ public class TestingDataInitializer {
             new HashSet<>(), "application/pdf", 127L, ResourceType.SUPPLEMENT,
             AccessRights.OPEN_ACCESS, License.BY_SA, ApproveStatus.APPROVED, true,
             LocalDateTime.now(),
-            false, false, "123.pdf", null, null));
+            false, false, "123.pdf", null, null, false));
         documentIndicatorRepository.save(documentIndicator1);
 
         var eventIndicator1 = new EventIndicator();
@@ -1054,6 +1054,7 @@ public class TestingDataInitializer {
                 "Doktorska disertacija, zavrsen uvid, odbranjena", 1)));
         thesis6.setLanguage(serbianLanguage);
         thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
+        thesis6.getPublicReviewEndDates().add(LocalDate.of(2025, 1, 20));
         thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
         thesis6.setPublicReviewCompleted(true);
 

@@ -577,7 +577,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         validateThesisForPublicReview(thesis);
 
         if (shortened && (Objects.isNull(thesis.getPublicReviewStartDates()) ||
-            thesis.getPublicReviewStartDates().isEmpty() || !thesis.getPublicReviewCompleted())) {
+            thesis.getPublicReviewStartDates().isEmpty() ||
+            thesis.getPublicReviewEndDates().isEmpty())) {
             throw new ThesisException(
                 "Thesis had to have been on one regular public review before being put on shortened one."
             );
@@ -615,7 +616,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             throw new ThesisException("noAttachmentsMessage");
         }
 
-        if (thesis.getPreliminaryFiles().size() != thesis.getCommissionReports().size()) {
+        if (thesis.getPreliminaryFiles().size() > thesis.getCommissionReports().size()) {
             throw new ThesisException("missingAttachmentsMessage");
         }
     }

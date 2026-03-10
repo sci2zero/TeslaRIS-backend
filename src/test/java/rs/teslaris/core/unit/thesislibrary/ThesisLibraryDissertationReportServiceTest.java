@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.thesislibrary.model.PublicReviewType;
 import rs.teslaris.thesislibrary.service.impl.ThesisLibraryDissertationReportServiceImpl;
 
 @SpringBootTest
@@ -63,7 +64,7 @@ class ThesisLibraryDissertationReportServiceTest {
 
         // When
         var result = service.fetchPublicReviewDissertations(
-            institutionId, year, notDefendedOnly, null, pageable
+            institutionId, year, notDefendedOnly, null, PublicReviewType.SHORTENED, pageable
         );
 
         // Then
@@ -101,7 +102,7 @@ class ThesisLibraryDissertationReportServiceTest {
 
         // When
         var result = service.fetchPublicReviewDissertations(
-            institutionId, year, notDefendedOnly, null, pageable
+            institutionId, year, notDefendedOnly, null, PublicReviewType.REGULAR, pageable
         );
 
         // Then
@@ -116,7 +117,8 @@ class ThesisLibraryDissertationReportServiceTest {
             .thenReturn(Page.empty());
 
         var result =
-            service.fetchPublicReviewDissertations(null, null, null, -1, PageRequest.of(0, 10));
+            service.fetchPublicReviewDissertations(null, null, null, -1, null,
+                PageRequest.of(0, 10));
 
         // Then
         assertThat(result).isNotNull();

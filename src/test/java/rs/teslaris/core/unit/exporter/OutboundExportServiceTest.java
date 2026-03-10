@@ -63,7 +63,7 @@ public class OutboundExportServiceTest {
                 List.of(new ExportHandlersConfigurationLoader.Set("openaire_cris_publications",
                     "OpenAIRE_CRIS_publications", "Publications", "ExportDocument",
                     "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,JOURNAL_PUBLICATION,THESIS",
-                    null, null, null, true)), List.of("oai_cerif_openaire", "dim"),
+                    null, null, null, true, false)), List.of("oai_cerif_openaire", "dim"),
                 null, false,
                 null, Map.of());
 

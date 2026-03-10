@@ -23,7 +23,7 @@ public class CommonExportWorkerImpl {
     private final MongoTemplate mongoTemplate;
 
 
-    @Transactional(propagation = Propagation.NESTED, readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public <T, E> void exportEntities(
         BiFunction<Pageable, Boolean, Page<T>> repositoryFunction,
         BiFunction<T, Boolean, E> converter,
