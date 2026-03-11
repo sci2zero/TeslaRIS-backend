@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,7 @@ import rs.teslaris.core.util.exceptionhandling.ErrorResponseUtil;
 import rs.teslaris.core.util.files.StreamingUtil;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.core.util.search.StringUtil;
+import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.core.util.signposting.FairSignpostingL1Utility;
 import rs.teslaris.core.util.signposting.FairSignpostingL2Utility;
 import rs.teslaris.core.util.signposting.LinksetFormat;
@@ -111,6 +113,13 @@ public class FileController {
             }
 
             if (authenticatedUser) {
+                var userAuthority = SessionUtil.getLoggedInUser().getAuthority().getAuthority();
+                if (Stream.of(UserRole.ADMIN, UserRole.INSTITUTIONAL_LIBRARIAN,
+                        UserRole.HEAD_OF_LIBRARY).map(Enum::name).toList()
+                    .contains(userAuthority)) {
+                    return serveFile(filename, documentFile, file, inline);
+                }
+
                 return handleUnauthorisedUser(request);
             } else {
                 return ErrorResponseUtil.buildUnavailableStreamingResponse(request,

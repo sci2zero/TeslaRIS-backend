@@ -45,6 +45,7 @@ import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -353,7 +354,8 @@ public class CommonLoaderImpl implements CommonLoader {
                         setPersonName(new PersonNameDTO(null,
                             contribution.getPerson().getName().getFirstName(),
                             contribution.getPerson().getName().getMiddleName(),
-                            contribution.getPerson().getName().getLastName(), null, null));
+                            contribution.getPerson().getName().getLastName(), null, null,
+                            PersonNameType.DISPLAY_NAME));
                     }};
                 }
 
@@ -1011,7 +1013,8 @@ public class CommonLoaderImpl implements CommonLoader {
         if (Objects.nonNull(potentialMatch)) {
             var existingRecordResponse = new rs.teslaris.core.model.person.Person();
             existingRecordResponse.setName(
-                new PersonName(potentialMatch.getName().trim(), "", "", null, null));
+                new PersonName(potentialMatch.getName().trim(), "", "", null, null,
+                    PersonNameType.DISPLAY_NAME));
             existingRecordResponse.setId(potentialMatch.getDatabaseId());
             return existingRecordResponse;
         }

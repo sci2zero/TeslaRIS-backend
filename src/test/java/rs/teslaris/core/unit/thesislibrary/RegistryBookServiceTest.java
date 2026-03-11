@@ -152,7 +152,7 @@ class RegistryBookServiceTest {
         dto.setDissertationInformation(dissertationInfo);
 
         var personalInfo = new RegistryBookPersonalInformationDTO();
-        var name = new PersonNameDTO(null, "John", "H", "Doe", null, null);
+        var name = new PersonNameDTO(null, "John", "H", "Doe", null, null, null);
         personalInfo.setAuthorName(name);
         personalInfo.setLocalBirthDate(LocalDate.of(1990, 1, 1));
         personalInfo.setPlaceOfBrith("City");
@@ -210,7 +210,7 @@ class RegistryBookServiceTest {
         // Given
         var personalInfo = new RegistryBookPersonalInformationDTO();
         personalInfo.setAuthorName(
-            new PersonNameDTO(null, "Ivan", "Radomir", "Mrsulja", null, null));
+            new PersonNameDTO(null, "Ivan", "Radomir", "Mrsulja", null, null, null));
         personalInfo.setMotherName("Maja");
         personalInfo.setFatherName("Nikola");
         personalInfo.setGuardianNameAndSurname("");
@@ -311,7 +311,7 @@ class RegistryBookServiceTest {
         author.setPerson(authorPerson);
         var affiliationStatement = new AffiliationStatement();
         affiliationStatement.setDisplayPersonName(
-            new PersonName("Ime", null, "Prezime", null, null));
+            new PersonName("Ime", null, "Prezime", null, null, null));
         author.setAffiliationStatement(affiliationStatement);
 
         var advisor = new PersonDocumentContribution();
@@ -320,7 +320,7 @@ class RegistryBookServiceTest {
         advisor.setEmploymentTitle(EmploymentTitle.ASSOCIATE_PROFESSOR);
         var affiliationStatement2 = new AffiliationStatement();
         affiliationStatement2.setDisplayPersonName(
-            new PersonName("Mentor", null, "Prezime", null, null));
+            new PersonName("Mentor", null, "Prezime", null, null, null));
         advisor.setAffiliationStatement(affiliationStatement2);
         var advisorInstitution = new OrganisationUnit();
         advisorInstitution.setName(Set.of());
@@ -380,7 +380,7 @@ class RegistryBookServiceTest {
         var promotionId = 2;
         var entry = new RegistryBookEntry();
         var personalInfo = new RegistryBookPersonalInformation();
-        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null));
+        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null, null));
         entry.setPersonalInformation(personalInfo);
         var contactInfo = new RegistryBookContactInformation();
         contactInfo.setContact(new Contact("email", "phone"));
@@ -420,7 +420,7 @@ class RegistryBookServiceTest {
         promotion.setPromotionDate(LocalDate.of(2025, 12, 15));
         var entry = new RegistryBookEntry();
         var personalInfo = new RegistryBookPersonalInformation();
-        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null));
+        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null, null));
         entry.setPersonalInformation(personalInfo);
         var contactInfo = new RegistryBookContactInformation();
         contactInfo.setContact(new Contact("email", "phone"));

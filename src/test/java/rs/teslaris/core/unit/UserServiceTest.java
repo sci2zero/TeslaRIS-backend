@@ -74,6 +74,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.EmailUpdateRequest;
 import rs.teslaris.core.model.user.OAuthCode;
@@ -280,7 +281,8 @@ public class UserServiceTest {
             Optional.of(authority));
 
         var person = new Person();
-        person.setName(new PersonName("John", "Something", "Doe", LocalDate.of(1995, 12, 3), null));
+        person.setName(new PersonName("John", "Something", "Doe", LocalDate.of(1995, 12, 3), null,
+            PersonNameType.FULL_NAME));
         when(personService.findOne(1)).thenReturn(person);
         when(organisationUnitService.findOrganisationUnitById(1)).thenReturn(
             new OrganisationUnit());
@@ -1394,7 +1396,8 @@ public class UserServiceTest {
         registrationRequest.setOrganisationUnitId(2);
 
         var person = new Person();
-        person.setName(new PersonName("Jane", "", "Doe", LocalDate.of(1990, 5, 12), null));
+        person.setName(new PersonName("Jane", "", "Doe", LocalDate.of(1990, 5, 12), null,
+            PersonNameType.FULL_NAME));
         person.setOrcid("orcid-identifier");
         when(personService.findOne(1)).thenReturn(person);
 
@@ -1438,7 +1441,8 @@ public class UserServiceTest {
         registrationRequest.setOrganisationUnitId(1);
 
         var person = new Person();
-        person.setName(new PersonName("Alice", "", "Smith", null, null));
+        person.setName(
+            new PersonName("Alice", "", "Smith", null, null, PersonNameType.PRESENTED_NAME));
         person.setOrcid("orcid-id");
         when(personService.createPersonWithBasicInfo(any(BasicPersonDTO.class), eq(true)))
             .thenReturn(person);
@@ -1969,7 +1973,8 @@ public class UserServiceTest {
 
         var person = new Person();
         person.setName(
-            new PersonName("Admin", null, "User", LocalDate.of(1990, 1, 1), null)
+            new PersonName("Admin", null, "User", LocalDate.of(1990, 1, 1), null,
+                PersonNameType.PRESENTED_NAME)
         );
         when(personService.findOne(1)).thenReturn(person);
         when(organisationUnitService.findOrganisationUnitById(1))

@@ -24,6 +24,7 @@ import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
@@ -88,7 +89,8 @@ public class PersonContributionServiceTest {
         contributionDTO1.setOrderNumber(1);
         contributionDTO1.setPersonId(1);
         contributionDTO1.setPersonName(
-            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null,
+                PersonNameType.DISPLAY_NAME));
 
         var contributionsDTO = new ArrayList<PersonDocumentContributionDTO>();
         contributionsDTO.add(contributionDTO1);

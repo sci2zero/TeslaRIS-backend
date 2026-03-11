@@ -334,7 +334,8 @@
           "publicationTypes": "PROCEEDINGS,PROCEEDINGS_PUBLICATION,MONOGRAPH,MONOGRAPH_PUBLICATION,JOURNAL,BOOK_SERIES,JOURNAL_PUBLICATION,THESIS",
           "concreteTypeFilters": "thesis_type:PHD,PHD_ART_PROJECT",
           "default": true,
-          "includeActiveEmployments": true
+          "includeActiveEmployments": false,
+          "includeYearOfPublicationEmployments": true
         }
       ],
       "metadataFormats": [

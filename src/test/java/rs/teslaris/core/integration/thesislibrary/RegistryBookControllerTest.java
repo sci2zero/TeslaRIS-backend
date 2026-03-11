@@ -53,7 +53,7 @@ public class RegistryBookControllerTest extends BaseTest {
         dto.setDissertationInformation(dissertationInfo);
 
         var personalInfo = new RegistryBookPersonalInformationDTO();
-        var name = new PersonNameDTO(null, "John", "H", "Doe", null, null);
+        var name = new PersonNameDTO(null, "John", "H", "Doe", null, null, null);
         personalInfo.setAuthorName(name);
         personalInfo.setLocalBirthDate(LocalDate.of(1990, 1, 1));
         personalInfo.setPlaceOfBrith("City");

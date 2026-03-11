@@ -463,13 +463,13 @@ public class DbInitializer implements ApplicationRunner {
         // RESEARCH AREAS - NOT COMPLETE
         var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
-            new HashSet<>(), null, "elektrotehnicko i racunarsko inzenjerstvo");
+            new HashSet<>(), null, "elektrotehnicko i racunarsko inzenjerstvo", "TEST");
         var researchArea2 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Softversko inzenjerstvo", 2))),
-            new HashSet<>(), researchArea1, "softversko inzenjerstvo");
+            new HashSet<>(), researchArea1, "softversko inzenjerstvo", "TEST");
         var researchArea3 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Cybersecurity", 2))),
-            new HashSet<>(), researchArea2, "cybersecurity");
+            new HashSet<>(), researchArea2, "cybersecurity", "TEST");
 
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
 

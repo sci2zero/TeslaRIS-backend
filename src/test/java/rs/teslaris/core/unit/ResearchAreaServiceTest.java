@@ -134,7 +134,7 @@ public class ResearchAreaServiceTest {
         when(multilingualContentService.getMultilingualContent(
             researchAreaDTO.getDescription())).thenReturn(descriptionMultilingualContent);
         when(researchAreaRepository.getReferenceById(1)).thenReturn(
-            new ResearchArea(new HashSet<>(), new HashSet<>(), null, ""));
+            new ResearchArea(new HashSet<>(), new HashSet<>(), null, "", "TEST"));
 
         // when
         researchAreaService.editResearchArea(researchAreaDTO, 1);

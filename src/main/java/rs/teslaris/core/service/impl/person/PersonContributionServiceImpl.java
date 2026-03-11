@@ -39,6 +39,7 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.repository.commontypes.NotificationRepository;
@@ -232,14 +233,18 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contributionDTO.getPersonName().getOtherName(),
             contributionDTO.getPersonName().getLastname(),
             contributionDTO.getPersonName().getDateFrom(),
-            contributionDTO.getPersonName().getDateTo());
+            contributionDTO.getPersonName().getDateTo(),
+            Objects.requireNonNullElse(contributionDTO.getPersonName().getPersonNameType(),
+                PersonNameType.DISPLAY_NAME));
         if (personName.getFirstname().isEmpty() && personName.getLastname().isEmpty() &&
             Objects.nonNull(contributor)) {
             personName = new PersonName(contributor.getName().getFirstname(),
                 contributor.getName().getOtherName(),
                 contributor.getName().getLastname(),
                 contributor.getName().getDateFrom(),
-                contributor.getName().getDateTo());
+                contributor.getName().getDateTo(),
+                Objects.requireNonNullElse(contributor.getName().getNameType(),
+                    PersonNameType.DISPLAY_NAME));
         } else if (Objects.nonNull(contributor)) {
             if (contributor.getName().equals(personName) ||
                 contributor.getOtherNames().contains(personName)) {

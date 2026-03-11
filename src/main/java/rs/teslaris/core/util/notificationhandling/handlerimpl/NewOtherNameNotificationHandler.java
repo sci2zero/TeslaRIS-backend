@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotificationException;
 import rs.teslaris.core.util.notificationhandling.NotificationAction;
@@ -28,7 +29,8 @@ public class NewOtherNameNotificationHandler implements NotificationHandler {
         var firstname = notification.getValues().get("firstname");
         var lastname = notification.getValues().get("lastname");
         var middlename = notification.getValues().get("middlename");
-        person.getOtherNames().add(new PersonName(firstname, middlename, lastname, null, null));
+        person.getOtherNames().add(new PersonName(firstname, middlename, lastname, null, null,
+            PersonNameType.DISPLAY_NAME));
 
         personService.indexPerson(personService.save(person));
     }

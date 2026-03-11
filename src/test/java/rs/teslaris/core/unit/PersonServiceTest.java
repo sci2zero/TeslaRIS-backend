@@ -73,6 +73,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
@@ -406,8 +407,10 @@ public class PersonServiceTest {
     @Test
     public void shouldSetPersonMainName() {
         // given
-        var personName1 = new PersonName("Stan", "John", "Doe", null, null);
-        var personName2 = new PersonName("Stan", "Jonny", "Doe", null, null);
+        var personName1 =
+            new PersonName("Stan", "John", "Doe", null, null, PersonNameType.PRESENTED_NAME);
+        var personName2 =
+            new PersonName("Stan", "Jonny", "Doe", null, null, PersonNameType.PRESENTED_NAME);
 
         var personalInfo = new PersonalInfo();
         personalInfo.setLocalBirthDate(LocalDate.now());
@@ -439,8 +442,10 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
-        personNameDTOList.add(new PersonNameDTO(null, "Jane", "Marie", "Doe", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null,
+            PersonNameType.PRESENTED_NAME));
+        personNameDTOList.add(new PersonNameDTO(null, "Jane", "Marie", "Doe", null, null,
+            PersonNameType.PRESENTED_NAME));
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
@@ -465,7 +470,8 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null,
+            PersonNameType.PRESENTED_NAME));
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
@@ -476,7 +482,8 @@ public class PersonServiceTest {
             Optional.of(new PersonFieldVisibility()));
 
         var personNames = new HashSet<PersonName>();
-        personNames.add(new PersonName("Jane", "Marie", "Doe", null, null));
+        personNames.add(
+            new PersonName("Jane", "Marie", "Doe", null, null, PersonNameType.DISPLAY_NAME));
         personToUpdate.setOtherNames(personNames);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
@@ -496,7 +503,8 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null,
+            PersonNameType.PRESENTED_NAME));
 
         when(personRepository.findById(personId)).thenReturn(Optional.empty());
 
@@ -909,11 +917,13 @@ public class PersonServiceTest {
     void shouldUpdateAndIndexPersonPrimaryNameWhenStatusIsApproved() {
         // Given
         var personId = 1;
-        var personNameDTO = new PersonNameDTO(null, "John", "Michael", "Doe", null, null);
+        var personNameDTO = new PersonNameDTO(null, "John", "Michael", "Doe", null, null,
+            PersonNameType.PRESENTED_NAME);
         var person = new Person();
         person.setId(personId);
         person.setPersonalInfo(new PersonalInfo());
-        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null));
+        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null,
+            PersonNameType.FULL_NAME));
         person.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(person));
@@ -935,10 +945,12 @@ public class PersonServiceTest {
     void shouldUpdateButNotIndexPersonPrimaryNameWhenStatusIsNotApproved() {
         // Given
         var personId = 2;
-        var personNameDTO = new PersonNameDTO(null, "Jane", "Alice", "Smith", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "Jane", "Alice", "Smith", null, null, PersonNameType.FULL_NAME);
         var person = new Person();
         person.setId(personId);
-        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null));
+        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null,
+            PersonNameType.FULL_NAME));
         person.setApproveStatus(ApproveStatus.REQUESTED);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(person));
@@ -958,7 +970,8 @@ public class PersonServiceTest {
     void shouldThrowNotFoundExceptionWhenPersonNotFound() {
         // Given
         var personId = 3;
-        var personNameDTO = new PersonNameDTO(null, "Test", "User", "Test", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "Test", "User", "Test", null, null, PersonNameType.FULL_NAME);
         when(personRepository.findById(personId)).thenThrow(
             new NotFoundException("Person not found"));
 
@@ -1358,7 +1371,7 @@ public class PersonServiceTest {
         // Given
         var personId = 123;
         var personNameDTO = new PersonNameDTO(null, "John", "Middle", "Doe",
-            LocalDate.of(2020, 1, 1), LocalDate.of(2023, 12, 31));
+            LocalDate.of(2020, 1, 1), LocalDate.of(2023, 12, 31), PersonNameType.PRESENTED_NAME);
 
         var existingPerson = new Person();
         existingPerson.setId(personId);
@@ -1392,7 +1405,8 @@ public class PersonServiceTest {
     void shouldAddPersonOtherNameWhenPersonNotApproved() {
         // Given
         var personId = 123;
-        var personNameDTO = new PersonNameDTO(null, "Jane", null, "Smith", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "Jane", null, "Smith", null, null, PersonNameType.FULL_NAME);
 
         var existingPerson = new Person();
         existingPerson.setId(personId);
@@ -1424,7 +1438,8 @@ public class PersonServiceTest {
     void shouldAddMultipleOtherNamesToExistingSet() {
         // Given
         var personId = 123;
-        var personNameDTO = new PersonNameDTO(null, "New", "Name", "User", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "New", "Name", "User", null, null, PersonNameType.DISPLAY_NAME);
 
         // Existing person with some other names already
         var existingPerson = new Person();
@@ -1432,7 +1447,8 @@ public class PersonServiceTest {
         existingPerson.setName(new PersonName());
         existingPerson.setPersonalInfo(new PersonalInfo());
         var existingOtherNames = new HashSet<PersonName>();
-        existingOtherNames.add(new PersonName("Existing", "Old", "Name", null, null));
+        existingOtherNames.add(
+            new PersonName("Existing", "Old", "Name", null, null, PersonNameType.DISPLAY_NAME));
         existingPerson.setOtherNames(existingOtherNames);
         existingPerson.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -1461,7 +1477,8 @@ public class PersonServiceTest {
     void shouldHandleNullOtherNamesSet() {
         // Given
         var personId = 123;
-        var personNameDTO = new PersonNameDTO(null, "Test", null, "User", null, null);
+        var personNameDTO = new PersonNameDTO(null, "Test", null, "User", null, null,
+            PersonNameType.PRESENTED_NAME);
 
         var existingPerson = new Person();
         existingPerson.setId(personId);
@@ -1492,7 +1509,8 @@ public class PersonServiceTest {
     void shouldNotUpdateNamesWhenPersonNotFound() {
         // Given
         var personId = 999;
-        var personNameDTO = new PersonNameDTO(null, "John", null, "Doe", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "John", null, "Doe", null, null, PersonNameType.FULL_NAME);
 
         when(personRepository.findApprovedByIdWithOtherNames(personId)).thenReturn(
             Optional.empty());
@@ -1508,7 +1526,8 @@ public class PersonServiceTest {
     void shouldHandleNullDatesInPersonNameDTO() {
         // Given
         var personId = 123;
-        var personNameDTO = new PersonNameDTO(null, "First", null, "Last", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "First", null, "Last", null, null, PersonNameType.FULL_NAME);
 
         var existingPerson = new Person();
         existingPerson.setId(personId);

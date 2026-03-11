@@ -201,7 +201,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         var recordsPage =
             findRequestedRecords(recordClass, from, until, page, handlerConfiguration.get(),
                 publicationTypeFilters, concreteTypeFilters, additionalFilters,
-                matchedSet.get().includeActiveEmployments());
+                matchedSet.get().includeActiveEmployments(),
+                matchedSet.get().includeYearOfPublicationEmployments());
 
         if (recordsPage.getTotalElements() == 0) {
             response.setError(OAIErrorFactory.constructNoRecordsMatchError());
@@ -290,6 +291,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         String set;
         var includeActiveEmployments = false;
+        var includeYearOfPublicationEmployments = false;
         if (identifier.contains("/")) {
             try {
                 set = identifier.split("/")[0];
@@ -312,6 +314,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             }
 
             includeActiveEmployments = matchedSet.get().includeActiveEmployments();
+            includeYearOfPublicationEmployments =
+                matchedSet.get().includeYearOfPublicationEmployments();
 
             try {
                 recordClass = Class.forName(
@@ -333,7 +337,7 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
         var requestedRecordOptional =
             findRequestedRecord(identifier, recordClass, handlerConfiguration.get(),
-                includeActiveEmployments);
+                includeActiveEmployments, includeYearOfPublicationEmployments);
         if (requestedRecordOptional.isEmpty()) {
             response.setError(OAIErrorFactory.constructNotFoundOrForbiddenError(identifier));
             return null;
@@ -449,7 +453,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
 
     private <E> Optional<E> findRequestedRecord(String identifier, Class<E> entityClass,
                                                 ExportHandlersConfigurationLoader.Handler handlerConfiguration,
-                                                Boolean includeActiveEmployments) {
+                                                Boolean includeActiveEmployments,
+                                                Boolean includeYearOfPublicationEmployments) {
         var query = new Query();
 
         if (identifier.contains("_")) {
@@ -497,15 +502,31 @@ public class OutboundExportServiceImpl implements OutboundExportService {
             var ouIds = getAllOUSubUnitsIds(
                 Integer.parseInt(handlerConfiguration.internalInstitutionId()));
 
-            Criteria baseCriteria;
+            var employmentCriteria = new ArrayList<Criteria>();
+            employmentCriteria.add(
+                Criteria.where("related_institution_ids").in(ouIds)
+            );
 
             if (Boolean.TRUE.equals(includeActiveEmployments)) {
-                baseCriteria = new Criteria().orOperator(
-                    Criteria.where("related_institution_ids").in(ouIds),
+                employmentCriteria.add(
                     Criteria.where("actively_related_institution_ids").in(ouIds)
                 );
+            }
+
+            if (Boolean.TRUE.equals(includeYearOfPublicationEmployments)) {
+                employmentCriteria.add(
+                    Criteria.where("year_of_publication_institution_ids").in(ouIds)
+                );
+            }
+
+            Criteria baseCriteria;
+
+            if (employmentCriteria.size() == 1) {
+                baseCriteria = employmentCriteria.getFirst(); // no need for OR
             } else {
-                baseCriteria = Criteria.where("related_institution_ids").in(ouIds);
+                baseCriteria = new Criteria().orOperator(
+                    employmentCriteria.toArray(new Criteria[0])
+                );
             }
 
             query.addCriteria(baseCriteria);
@@ -521,7 +542,8 @@ public class OutboundExportServiceImpl implements OutboundExportService {
         List<ExportPublicationType> publicationTypeFilters,
         HashMap<String, List<String>> concreteTypeFilters,
         HashMap<String, String> additionalFilters,
-        Boolean includeActiveEmployments) {
+        Boolean includeActiveEmployments,
+        Boolean includeYearOfPublicationEmployments) {
         List<Criteria> rootCriteria = new ArrayList<>();
 
         rootCriteria.add(
@@ -538,15 +560,30 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 Criteria.where("actively_related_institution_ids").in(ouIds)
             );
         } else {
+            var employmentCriteria = new ArrayList<Criteria>();
+
+            employmentCriteria.add(
+                Criteria.where("related_institution_ids").in(ouIds)
+            );
+
             if (Boolean.TRUE.equals(includeActiveEmployments)) {
-                rootCriteria.add(new Criteria().orOperator(
-                    Criteria.where("related_institution_ids").in(ouIds),
+                employmentCriteria.add(
                     Criteria.where("actively_related_institution_ids").in(ouIds)
-                ));
-            } else {
-                rootCriteria.add(
-                    Criteria.where("related_institution_ids").in(ouIds)
                 );
+            }
+
+            if (Boolean.TRUE.equals(includeYearOfPublicationEmployments)) {
+                employmentCriteria.add(
+                    Criteria.where("year_of_publication_institution_ids").in(ouIds)
+                );
+            }
+
+            if (employmentCriteria.size() == 1) {
+                rootCriteria.add(employmentCriteria.getFirst());
+            } else {
+                rootCriteria.add(new Criteria().orOperator(
+                    employmentCriteria.toArray(new Criteria[0])
+                ));
             }
         }
 

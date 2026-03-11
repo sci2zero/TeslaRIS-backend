@@ -44,6 +44,7 @@ import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
@@ -339,7 +340,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         var pi = new RegistryBookPersonalInformation();
         pi.setAuthorName(
             new PersonName(dto.getAuthorName().getFirstname(), dto.getAuthorName().getOtherName(),
-                dto.getAuthorName().getLastname(), null, null));
+                dto.getAuthorName().getLastname(), null, null, PersonNameType.PRESENTED_NAME));
         pi.setLocalBirthDate(dto.getLocalBirthDate());
         pi.setPlaceOfBrith(dto.getPlaceOfBrith());
         pi.setMunicipalityOfBrith(dto.getMunicipalityOfBrith());

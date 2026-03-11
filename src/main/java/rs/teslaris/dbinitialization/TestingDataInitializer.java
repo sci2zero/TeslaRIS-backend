@@ -88,6 +88,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Prize;
@@ -232,7 +233,8 @@ public class TestingDataInitializer {
         }
 
         person1.setName(
-            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
+            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null,
+                PersonNameType.FULL_NAME));
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);
         person1.setOrcid("0009-0008-0599-0599");
@@ -356,7 +358,8 @@ public class TestingDataInitializer {
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
         person2.setName(
-            new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null,
+                PersonNameType.FULL_NAME));
         person2.setScopusAuthorId("14619562900");
         person2.setOrcid("0000-0002-8096-5149");
         person2.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 2, 1));
@@ -478,7 +481,8 @@ public class TestingDataInitializer {
         countryRepository.saveAll(List.of(country, country2));
 
         datasetContribution.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null,
+                PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(datasetContribution);
 
         var intangibleProductContribution = new PersonDocumentContribution();
@@ -494,7 +498,8 @@ public class TestingDataInitializer {
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
         intangibleProductContribution.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Ivan", "", "M.", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Ivan", "", "M.", LocalDate.of(2000, 1, 31), null,
+                PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(intangibleProductContribution);
 
         dummyOU.getResearchAreas().add(researchArea3);
@@ -517,7 +522,7 @@ public class TestingDataInitializer {
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
         monographContribution.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Joachim", "N.", "S.", null, null));
+            new PersonName("Joachim", "N.", "S.", null, null, PersonNameType.DISPLAY_NAME));
 
         monograph1.getContributors().add(monographContribution);
         monographRepository.save(monograph1);
@@ -551,7 +556,8 @@ public class TestingDataInitializer {
         person3.setApproveStatus(ApproveStatus.APPROVED);
         person3.setPersonalInfo(personalInfo3);
         person3.setName(
-            new PersonName("Dusan", "", "Nikolic", LocalDate.of(1976, 7, 16), null));
+            new PersonName("Dusan", "", "Nikolic", LocalDate.of(1976, 7, 16), null,
+                PersonNameType.DISPLAY_NAME));
         person3.setScopusAuthorId("14419566900");
         personRepository.save(person3);
 
@@ -567,7 +573,7 @@ public class TestingDataInitializer {
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
         intangibleProductContribution2.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Dušan", "", "N.", null, null));
+            new PersonName("Dušan", "", "N.", null, null, PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(intangibleProductContribution2);
 
         intangibleProduct.addDocumentContribution(intangibleProductContribution);
@@ -583,7 +589,8 @@ public class TestingDataInitializer {
         person4.setApproveStatus(ApproveStatus.APPROVED);
         person4.setPersonalInfo(personalInfo4);
         person4.setName(
-            new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null));
+            new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null,
+                PersonNameType.DISPLAY_NAME));
         person4.setScopusAuthorId("14419566900");
 //        person4.setOrcid("0009-0008-0599-0599");
         personRepository.save(person4);
@@ -926,7 +933,8 @@ public class TestingDataInitializer {
             new AffiliationStatement(new HashSet<>(), new PersonName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
         intangibleProductContribution3.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Ivan", "", "R. M.", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Ivan", "", "R. M.", LocalDate.of(2000, 1, 31), null,
+                PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(intangibleProductContribution3);
 
         intangibleProduct2.addDocumentContribution(intangibleProductContribution3);
@@ -1038,7 +1046,7 @@ public class TestingDataInitializer {
         thesisContribution3.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person2.getName().getFirstname(), "",
-                    person2.getName().getLastname(), null, null),
+                    person2.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
 
         thesis5.getContributors().add(thesisContribution3);
@@ -1074,7 +1082,7 @@ public class TestingDataInitializer {
         thesisContribution4.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person3.getName().getFirstname(), "",
-                    person3.getName().getLastname(), null, null),
+                    person3.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
 
         thesis6.getContributors().add(thesisContribution4);
@@ -1151,7 +1159,7 @@ public class TestingDataInitializer {
         thesisContribution5.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person3.getName().getFirstname(), "",
-                    person3.getName().getLastname(), null, null),
+                    person3.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
 
         thesis7.getContributors().add(thesisContribution5);

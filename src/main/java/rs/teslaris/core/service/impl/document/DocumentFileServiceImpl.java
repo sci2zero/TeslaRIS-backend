@@ -328,7 +328,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         setCommonFields(documentFileToEdit, documentFile);
 
-        if (documentFile.getResourceType().equals(ResourceType.STATEMENT) &&
+        if ((documentFile.getResourceType().equals(ResourceType.STATEMENT) ||
+            documentFile.getResourceType().equals(ResourceType.PREPRINT)) &&
             (SessionUtil.isUserLoggedInAndLibrarian() || SessionUtil.isUserLoggedInAndAdmin())) {
             var thesis =
                 documentLookupService.fastDocumentLookup(documentFileToEdit.getDocument().getId());

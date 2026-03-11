@@ -23,6 +23,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
@@ -66,7 +67,7 @@ public class PersonConverter {
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
-                person.getName().getDateTo()), otherNames,
+                person.getName().getDateTo(), person.getName().getNameType()), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo()
@@ -126,7 +127,8 @@ public class PersonConverter {
 
         otherNames.forEach(otherName -> otherNamesDTO.add(
             new PersonNameDTO(otherName.getId(), otherName.getFirstname(), otherName.getOtherName(),
-                otherName.getLastname(), otherName.getDateFrom(), otherName.getDateTo())));
+                otherName.getLastname(), otherName.getDateFrom(), otherName.getDateTo(),
+                Objects.requireNonNullElse(otherName.getNameType(), PersonNameType.DISPLAY_NAME))));
 
         return otherNamesDTO;
     }
@@ -239,7 +241,9 @@ public class PersonConverter {
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
-                person.getName().getDateTo()), otherNames,
+                person.getName().getDateTo(),
+                Objects.requireNonNullElse(person.getName().getNameType(),
+                    PersonNameType.DISPLAY_NAME)), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),

@@ -70,6 +70,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.User;
@@ -299,7 +300,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personNameDTO.getOtherName(),
             personNameDTO.getLastname(),
             personDTO.getLocalBirthDate(),
-            null
+            null, PersonNameType.FULL_NAME
         );
 
         var contact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
@@ -449,7 +450,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         personNameDTO.stream().map(
                 personName -> new PersonName(personName.getFirstname(), personName.getOtherName(),
-                    personName.getLastname(), personName.getDateFrom(), personName.getDateTo()))
+                    personName.getLastname(), personName.getDateFrom(), personName.getDateTo(),
+                    personName.getPersonNameType()))
             .forEach(personName -> {
                 personToUpdate.getOtherNames().add(personName);
                 personRepository.save(personToUpdate);
@@ -468,7 +470,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personToUpdate.getOtherNames().add(
                 new PersonName(personNameDTO.getFirstname(), personNameDTO.getOtherName(),
                     personNameDTO.getLastname(), personNameDTO.getDateFrom(),
-                    personNameDTO.getDateTo()));
+                    personNameDTO.getDateTo(), personNameDTO.getPersonNameType()));
             personRepository.save(personToUpdate);
 
             var savedPerson = save(personToUpdate);

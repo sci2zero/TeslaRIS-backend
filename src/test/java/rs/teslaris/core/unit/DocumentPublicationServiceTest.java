@@ -72,6 +72,7 @@ import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
@@ -1229,7 +1230,8 @@ public class DocumentPublicationServiceTest {
         var doc = new Dataset();
         doc.setContributors(new HashSet<>(Set.of(new PersonDocumentContribution() {{
             setAffiliationStatement(new AffiliationStatement() {{
-                setDisplayPersonName(new PersonName("John", null, "Doe", null, null));
+                setDisplayPersonName(
+                    new PersonName("John", null, "Doe", null, null, PersonNameType.DISPLAY_NAME));
             }});
             setContributionType(DocumentContributionType.AUTHOR);
             setIsCorrespondingContributor(false);

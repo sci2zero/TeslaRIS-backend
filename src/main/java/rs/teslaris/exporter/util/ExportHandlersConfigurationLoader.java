@@ -116,7 +116,8 @@ public class ExportHandlersConfigurationLoader {
         @JsonProperty("converterClass") String converterClass,
         @JsonProperty("additionalFilters") String additionalFilters,
         @JsonProperty(value = "default", defaultValue = "false") Boolean isDefaultSet,
-        @JsonProperty(value = "includeActiveEmployments", defaultValue = "false") Boolean includeActiveEmployments
+        @JsonProperty(value = "includeActiveEmployments", defaultValue = "false") Boolean includeActiveEmployments,
+        @JsonProperty(value = "includeYearOfPublicationEmployments", defaultValue = "false") Boolean includeYearOfPublicationEmployments
     ) {
     }
 }

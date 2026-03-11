@@ -28,6 +28,7 @@ import rs.teslaris.core.dto.document.PrepopulatedMetadataDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
@@ -319,7 +320,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
 
     private PersonNameDTO inferAuthorName(List<String> authorNameTokens) {
         return new PersonNameDTO(null, authorNameTokens.getLast(), "", authorNameTokens.getFirst(),
-            null, null);
+            null, null, PersonNameType.DISPLAY_NAME);
     }
 
     @Nullable

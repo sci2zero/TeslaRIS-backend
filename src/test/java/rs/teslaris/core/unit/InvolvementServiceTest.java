@@ -733,7 +733,7 @@ public class InvolvementServiceTest {
         // Given
         var migrationDTO = List.of(new ExtraEmploymentMigrationDTO(
             12345, EmploymentPosition.FULL_PROFESSOR, LocalDate.of(2020, 1, 1),
-            "Non Existent University", new PersonNameDTO(null, "John", "", "Doe", null, null)
+            "Non Existent University", new PersonNameDTO(null, "John", "", "Doe", null, null, null)
         ));
 
         when(organisationUnitService.searchOrganisationUnits(any(), any(), any(), any(), any(),
@@ -755,7 +755,7 @@ public class InvolvementServiceTest {
         // Given
         var migrationDTO = List.of(new ExtraEmploymentMigrationDTO(
             12345, EmploymentPosition.FULL_PROFESSOR, LocalDate.of(2020, 1, 1),
-            "University of Belgrade", new PersonNameDTO(null, "John", "", "Doe", null, null)
+            "University of Belgrade", new PersonNameDTO(null, "John", "", "Doe", null, null, null)
         ));
 
         var result = new OrganisationUnitIndex();
