@@ -20,7 +20,11 @@ public class ImportPersonDTO extends BasicPersonDTO {
 
     private List<MultilingualContentDTO> addressCity = new ArrayList<>();
 
+    private List<MultilingualContentDTO> addressState = new ArrayList<>();
+
     private List<MultilingualContentDTO> biography = new ArrayList<>();
 
     private List<MultilingualContentDTO> keywords = new ArrayList<>();
+
+    private String postalNumber;
 }

@@ -592,8 +592,8 @@ public class CommonLoaderTest {
         var createdPerson = new rs.teslaris.core.model.person.Person();
         createdPerson.setName(new rs.teslaris.core.model.person.PersonName());
         var personalInfo = new PersonalInfo();
-        personalInfo.setPostalAddress(new PostalAddress());
-        personalInfo.setContact(new Contact());
+        personalInfo.setProfessionalPostalAddress(new PostalAddress());
+        personalInfo.setProfessionalContact(new Contact());
         createdPerson.setPersonalInfo(personalInfo);
         when(personService.importPersonWithBasicInfo(any(), any())).thenReturn(
             createdPerson);

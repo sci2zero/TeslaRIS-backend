@@ -60,6 +60,7 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -303,7 +304,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             null, PersonNameType.FULL_NAME
         );
 
-        var contact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber());
+        var contact = new Contact(personDTO.getContactEmail(), personDTO.getPhoneNumber(),
+            personDTO.getFaxNumber(), personDTO.getMobilePhoneNumber());
 
         PostalAddress address;
         if (isImport) {
@@ -312,10 +314,15 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                 multilingualContentService.getMultilingualContent(
                     ((ImportPersonDTO) personDTO).getAddressLine()),
                 multilingualContentService.getMultilingualContent(
-                    ((ImportPersonDTO) personDTO).getAddressCity())
+                    ((ImportPersonDTO) personDTO).getAddressCity()),
+                multilingualContentService.getMultilingualContent(
+                    ((ImportPersonDTO) personDTO).getAddressState()),
+                ((ImportPersonDTO) personDTO).getPostalNumber(),
+                new GeoLocation()
             );
         } else {
-            address = new PostalAddress(null, new HashSet<>(), new HashSet<>());
+            address = new PostalAddress(null, new HashSet<>(), new HashSet<>(),
+                new HashSet<>(), null, new GeoLocation());
         }
 
         var personalInfo = new PersonalInfo(
@@ -412,6 +419,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personToUpdate.getName().setLastname(personNameDTO.getLastname());
         personToUpdate.getName().setDateFrom(personNameDTO.getDateFrom());
         personToUpdate.getName().setDateTo(personNameDTO.getDateTo());
+        personToUpdate.getName().setNameType(
+            Objects.requireNonNullElse(personNameDTO.getPersonNameType(),
+                PersonNameType.PRESENTED_NAME));
 
         save(personToUpdate);
 
@@ -505,50 +515,71 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
         var countryId = personalInfo.getPostalAddress().getCountryId();
 
-        personalInfoToUpdate.getPostalAddress()
+        personalInfoToUpdate.getProfessionalPostalAddress()
             .setCountry(countryId != null ? countryService.findOne(countryId) : null);
 
-        personToUpdate.getPersonalInfo().getPostalAddress().getStreetAndNumber().clear();
+        personToUpdate.getPersonalInfo().getProfessionalPostalAddress().getStreetAndNumber()
+            .clear();
         setPersonStreetAndNumberInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
-        personToUpdate.getPersonalInfo().getPostalAddress().getCity().clear();
+        personToUpdate.getPersonalInfo().getProfessionalPostalAddress().getCity().clear();
         setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
 
+        personToUpdate.getPersonalInfo().getProfessionalPostalAddress().getState().clear();
+        setPersonStateInfo(personToUpdate, personalInfoToUpdate, personalInfo);
+
+        personToUpdate.getPersonalInfo().getProfessionalPostalAddress()
+            .setPostalNumber(personalInfo.getPostalAddress().getPostalNumber());
+
         if (Objects.nonNull(personalInfo.getContact())) {
-            if (Objects.isNull(personalInfoToUpdate.getContact())) {
-                personalInfoToUpdate.setContact(new Contact());
+            if (Objects.isNull(personalInfoToUpdate.getProfessionalContact())) {
+                personalInfoToUpdate.setProfessionalContact(new Contact());
             }
 
-            personalInfoToUpdate.getContact()
+            personalInfoToUpdate.getProfessionalContact()
                 .setContactEmail(personalInfo.getContact().getContactEmail());
+            personalInfoToUpdate.getProfessionalContact()
+                .setFaxNumber(personalInfo.getContact().getFaxNumber());
 
-            var rawNumber = personalInfo.getContact().getPhoneNumber();
-            if (Objects.nonNull(rawNumber)) {
-                String phoneNumber;
-                var phoneUtil = PhoneNumberUtil.getInstance();
+            personalInfoToUpdate.getProfessionalContact().setPhoneNumber(
+                formatPhoneNumber(personalInfo.getContact().getPhoneNumber(), defaultRegionCode)
+            );
 
-                try {
-                    if (rawNumber.startsWith("+")) {
-                        phoneNumber = phoneUtil.format(
-                            phoneUtil.parse(rawNumber, null),
-                            PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL); // Country code is in number
-                    } else {
-                        phoneNumber =
-                            phoneUtil.format(phoneUtil.parse(rawNumber, defaultRegionCode),
-                                PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-                    }
-                } catch (NumberParseException ignored) {
-                    phoneNumber = rawNumber;
-                }
-
-                personalInfoToUpdate.getContact().setPhoneNumber(phoneNumber);
-            }
+            personalInfoToUpdate.getProfessionalContact().setMobilePhoneNumber(
+                formatPhoneNumber(personalInfo.getContact().getMobilePhoneNumber(),
+                    defaultRegionCode)
+            );
         }
 
         save(personToUpdate);
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate);
+        }
+    }
+
+    @Nullable
+    private String formatPhoneNumber(String rawNumber, String defaultRegionCode) {
+        if (Objects.isNull(rawNumber)) {
+            return null;
+        }
+
+        var phoneUtil = PhoneNumberUtil.getInstance();
+
+        try {
+            if (rawNumber.startsWith("+")) {
+                return phoneUtil.format(
+                    phoneUtil.parse(rawNumber, null),
+                    PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL
+                );
+            } else {
+                return phoneUtil.format(
+                    phoneUtil.parse(rawNumber, defaultRegionCode),
+                    PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL
+                );
+            }
+        } catch (NumberParseException ignored) {
+            return rawNumber;
         }
     }
 
@@ -870,7 +901,7 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             return new MultiLingualContent(languageTag, streetAndNumber.getContent(),
                 streetAndNumber.getPriority());
         }).forEach(streetAndNumberContent -> {
-            personalInfoToUpdate.getPostalAddress().getStreetAndNumber()
+            personalInfoToUpdate.getProfessionalPostalAddress().getStreetAndNumber()
                 .add(streetAndNumberContent);
             this.save(personToUpdate);
         });
@@ -883,7 +914,19 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             var languageTag = languageTagService.findOne(city.getLanguageTagId());
             return new MultiLingualContent(languageTag, city.getContent(), city.getPriority());
         }).forEach(city -> {
-            personalInfoToUpdate.getPostalAddress().getCity().add(city);
+            personalInfoToUpdate.getProfessionalPostalAddress().getCity().add(city);
+            this.save(personToUpdate);
+        });
+    }
+
+    @Transactional
+    private void setPersonStateInfo(Person personToUpdate, PersonalInfo personalInfoToUpdate,
+                                    PersonalInfoDTO personalInfo) {
+        personalInfo.getPostalAddress().getState().stream().map(state -> {
+            var languageTag = languageTagService.findOne(state.getLanguageTagId());
+            return new MultiLingualContent(languageTag, state.getContent(), state.getPriority());
+        }).forEach(state -> {
+            personalInfoToUpdate.getProfessionalPostalAddress().getState().add(state);
             this.save(personToUpdate);
         });
     }
@@ -1383,6 +1426,47 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             "eNaukaIdExistsError"
         );
 
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getScholarId(),
+            person.getId(),
+            "^[a-zA-Z0-9_-]{12,}$",
+            personRepository::existsByScholarId,
+            person::setScholarId,
+            "scholarIdFormatError",
+            "scholarIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getAuthenticusId(),
+            person.getId(),
+            "^A-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$",
+            personRepository::existsByAuthenticusId,
+            person::setAuthenticusId,
+            "authenticusIdFormatError",
+            "authenticusIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getLattesId(),
+            person.getId(),
+            "^\\d{16}$",
+            personRepository::existsByLattesId,
+            person::setLattesId,
+            "lattesIdFormatError",
+            "lattesIdExistsError"
+        );
+
+        // TODO: Maybe add configurable regex validation for this, maybe based on OU or system-wide
+        IdentifierUtil.validateAndSetIdentifier(
+            personDTO.getNationalScienceId(),
+            person.getId(),
+            "^.*$",  // Matches any string of any length (including empty)
+            personRepository::existsByNationalScienceId,
+            person::setNationalScienceId,
+            "nationalScienceIdFormatError",
+            "nationalScienceIdExistsError"
+        );
+
         if (Objects.nonNull(personDTO.getOrcid()) &&
             personDTO.getOrcid().contains("https://orcid.org/")) {
             personDTO.setOrcid(personDTO.getOrcid().replace("https://orcid.org/", ""));
@@ -1436,7 +1520,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personRepository.existsByApvnt(identifier, personId) ||
             personRepository.existsByeCrisId(identifier, personId) ||
             personRepository.existsByeNaukaId(identifier, personId) ||
-            personRepository.existsByOpenAlexId(identifier, personId);
+            personRepository.existsByOpenAlexId(identifier, personId) ||
+            personRepository.existsByNationalScienceId(identifier, personId) ||
+            personRepository.existsByScholarId(identifier, personId) ||
+            personRepository.existsByAuthenticusId(identifier, personId) ||
+            personRepository.existsByLattesId(identifier, personId);
     }
 
     @Override

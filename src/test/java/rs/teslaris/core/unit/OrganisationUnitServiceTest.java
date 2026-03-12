@@ -442,7 +442,7 @@ public class OrganisationUnitServiceTest {
         organisationUnitDTORequest.setKeyword(new ArrayList<>());
         organisationUnitDTORequest.setResearchAreasId(List.of(1));
         organisationUnitDTORequest.setLocation(new GeoLocationDTO(1.0, 2.0, "NOWHERE"));
-        organisationUnitDTORequest.setContact(new ContactDTO("a", "b"));
+        organisationUnitDTORequest.setContact(new ContactDTO("a", "b", "c", "d"));
 
         when(
             multilingualContentService.getMultilingualContent(organisationUnitDTORequest.getName()))
@@ -481,7 +481,7 @@ public class OrganisationUnitServiceTest {
         organisationUnitDTORequest.setKeyword(List.of(new MultilingualContentDTO()));
         organisationUnitDTORequest.setResearchAreasId(List.of(1));
         organisationUnitDTORequest.setLocation(new GeoLocationDTO(10.0, 20.0, "NOWHERE"));
-        organisationUnitDTORequest.setContact(new ContactDTO("b", "b"));
+        organisationUnitDTORequest.setContact(new ContactDTO("b", "b", "b", "b"));
 
         OrganisationUnit organisationUnit = new OrganisationUnit();
         organisationUnit.setName(
@@ -491,7 +491,7 @@ public class OrganisationUnitServiceTest {
         organisationUnit.setResearchAreas(
             Stream.of(new ResearchArea()).collect(Collectors.toSet()));
         organisationUnit.setLocation(new GeoLocation(1.0, 2.0, "NOWHERE"));
-        organisationUnit.setContact(new Contact("a", "a"));
+        organisationUnit.setContact(new Contact("a", "a", "a", "a"));
 
         organisationUnit.getName().clear();
         organisationUnit.setApproveStatus(ApproveStatus.APPROVED);

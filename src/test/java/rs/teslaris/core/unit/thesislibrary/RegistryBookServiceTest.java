@@ -171,7 +171,7 @@ class RegistryBookServiceTest {
         contactInfo.setPlace("Place");
         contactInfo.setMunicipality("Municipality");
         contactInfo.setPostalCode("10000");
-        contactInfo.setContact(new ContactDTO("john@example.com", "+123456"));
+        contactInfo.setContact(new ContactDTO("john@example.com", "+123456", "", ""));
         dto.setContactInformation(contactInfo);
 
         var prevTitle = new PreviousTitleInformationDTO();
@@ -305,8 +305,8 @@ class RegistryBookServiceTest {
         var personalInfo = new PersonalInfo();
         personalInfo.setLocalBirthDate(LocalDate.of(1990, 1, 1));
         personalInfo.setPlaceOfBrith("Novi Sad");
-        personalInfo.setPostalAddress(new PostalAddress());
-        personalInfo.setContact(new Contact("email@example.com", "+381111111"));
+        personalInfo.setProfessionalPostalAddress(new PostalAddress());
+        personalInfo.setProfessionalContact(new Contact("email@example.com", "+381111111", "", ""));
         authorPerson.setPersonalInfo(personalInfo);
         author.setPerson(authorPerson);
         var affiliationStatement = new AffiliationStatement();
@@ -383,7 +383,7 @@ class RegistryBookServiceTest {
         personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null, null));
         entry.setPersonalInformation(personalInfo);
         var contactInfo = new RegistryBookContactInformation();
-        contactInfo.setContact(new Contact("email", "phone"));
+        contactInfo.setContact(new Contact("email", "phone", "", ""));
         entry.setContactInformation(contactInfo);
         var promotion = new Promotion();
         promotion.setPromotionDate(LocalDate.of(2025, 12, 15));
@@ -423,7 +423,7 @@ class RegistryBookServiceTest {
         personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null, null));
         entry.setPersonalInformation(personalInfo);
         var contactInfo = new RegistryBookContactInformation();
-        contactInfo.setContact(new Contact("email", "phone"));
+        contactInfo.setContact(new Contact("email", "phone", "", ""));
         entry.setContactInformation(contactInfo);
         entry.setPromotion(promotion);
 

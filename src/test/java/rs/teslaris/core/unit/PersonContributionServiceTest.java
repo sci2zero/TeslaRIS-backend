@@ -77,8 +77,9 @@ public class PersonContributionServiceTest {
         var contributor = new Person();
         contributor.setName(new PersonName());
         var personalInfo = new PersonalInfo();
-        personalInfo.setPostalAddress(new PostalAddress(null, new HashSet<>(), new HashSet<>()));
-        personalInfo.setContact(new Contact("email", "phone number"));
+        personalInfo.setProfessionalPostalAddress(
+            new PostalAddress(null, new HashSet<>(), new HashSet<>(), new HashSet<>(), null, null));
+        personalInfo.setProfessionalContact(new Contact("email", "phone number", "", ""));
         contributor.setPersonalInfo(personalInfo);
 
         var contributionDTO1 = new PersonDocumentContributionDTO();
