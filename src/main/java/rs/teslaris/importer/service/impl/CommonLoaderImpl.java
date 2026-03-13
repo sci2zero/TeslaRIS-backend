@@ -378,7 +378,7 @@ public class CommonLoaderImpl implements CommonLoader {
                         var currentEmployment =
                             new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
                                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                                employmentInstitution, null, new HashSet<>());
+                                employmentInstitution, false, null, new HashSet<>());
                         savedPerson.addInvolvement(currentEmployment);
 
                         pastContributionInstitutionIdentifiers.add(institution.getImportId());
@@ -427,7 +427,7 @@ public class CommonLoaderImpl implements CommonLoader {
                 var currentEmployment =
                     new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
                         InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                        employmentInstitution, null, new HashSet<>());
+                        employmentInstitution, false, null, new HashSet<>());
                 savedPerson.addInvolvement(currentEmployment);
             });
 

@@ -46,11 +46,12 @@ public class Education extends Involvement {
                      Set<MultiLingualContent> affiliationStatement,
                      Person personInvolved,
                      OrganisationUnit organisationUnit,
+                     boolean favorite,
                      Set<MultiLingualContent> thesisTitle,
                      Set<MultiLingualContent> title,
                      Set<MultiLingualContent> abbreviationTitle) {
         super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit);
+            personInvolved, organisationUnit, favorite);
         this.thesisTitle = thesisTitle;
         this.title = title;
         this.abbreviationTitle = abbreviationTitle;

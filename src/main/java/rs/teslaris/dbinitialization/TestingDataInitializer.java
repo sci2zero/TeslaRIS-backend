@@ -422,18 +422,18 @@ public class TestingDataInitializer {
             "Machine Learning\nCybersecurity\nReverse Engineering\nWeb Security", 1));
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
-                new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null, dummyOU,
+                new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null, dummyOU, false,
                 EmploymentPosition.TEACHING_ASSISTANT, Set.of(new MultiLingualContent(englishTag,
                 "Courses: Digital Documents Management, Secure IntangibleProduct Development",
                 1))));
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
-                new HashSet<>(), InvolvementType.HIRED_BY, new HashSet<>(), null, sci2zero,
+                new HashSet<>(), InvolvementType.HIRED_BY, new HashSet<>(), null, sci2zero, true,
                 EmploymentPosition.COLLABORATOR, Set.of(new MultiLingualContent(englishTag,
                 "TeslaRIS - reingeneering of CRIS at the university of Novi Sad.", 1))));
         person1.addInvolvement(
             new Membership(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
-                new HashSet<>(), InvolvementType.MEMBER_OF, new HashSet<>(), null, sci2zero,
+                new HashSet<>(), InvolvementType.MEMBER_OF, new HashSet<>(), null, sci2zero, false,
                 Set.of(new MultiLingualContent(englishTag,
                     "I just wanted to be around cool kids...", 1)),
                 Set.of(new MultiLingualContent(englishTag,
@@ -441,7 +441,7 @@ public class TestingDataInitializer {
         person1.addInvolvement(
             new Education(LocalDate.of(2018, 10, 1), LocalDate.of(2023, 9, 1),
                 ApproveStatus.APPROVED,
-                new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null, dummyOU,
+                new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null, dummyOU, false,
                 Set.of(new MultiLingualContent(englishTag, "Reverse Image Search System", 1),
                     new MultiLingualContent(englishTag, "Sistem za reverznu pretragu slika", 1)),
                 Set.of(new MultiLingualContent(englishTag, "Master in IntangibleProduct", 1),

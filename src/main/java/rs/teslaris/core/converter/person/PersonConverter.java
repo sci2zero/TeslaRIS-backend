@@ -183,8 +183,10 @@ public class PersonConverter {
                                                 ArrayList<Integer> membershipIds) {
         for (var inv : involvementRepository.findIdsTypesAndDatesByPersonId(person.getId())) {
             switch (inv.getInvolvementType()) {
-                case HIRED_BY, EMPLOYED_AT, CANDIDATE -> employmentIds.add(inv.getId());
-                case MEMBER_OF -> membershipIds.add(inv.getId());
+                case HIRED_BY, EMPLOYED_AT, CANDIDATE, FOUNDER, CONSULTANT, COORDINATOR, DIRECTOR ->
+                    employmentIds.add(inv.getId());
+                case MEMBER_OF, BOARD_MEMBER, PRESIDENT, VICE_PRESIDENT ->
+                    membershipIds.add(inv.getId());
                 default -> educationIds.add(inv.getId());
             }
         }

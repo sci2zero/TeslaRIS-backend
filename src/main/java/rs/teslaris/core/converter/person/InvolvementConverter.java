@@ -78,6 +78,7 @@ public class InvolvementConverter {
                 Collectors.toList()));
         dto.setInvolvementType(involvement.getInvolvementType());
         dto.setAffiliationStatement(affiliationStatements);
+        dto.setFavorite(involvement.getFavorite());
 
         if (Objects.nonNull(involvement.getOrganisationUnit())) {
             dto.setOrganisationUnitId(involvement.getOrganisationUnit().getId());

@@ -434,7 +434,8 @@ public class MergeServiceImpl implements MergeService {
             rightData,
             dto -> new String[] {dto.getApvnt(), dto.getECrisId(), dto.getENaukaId(),
                 dto.getScopusAuthorId(), dto.getOrcid(), dto.getOpenAlexId(),
-                dto.getWebOfScienceResearcherId()},
+                dto.getWebOfScienceResearcherId(), dto.getNationalScienceId(), dto.getScholarId(),
+                dto.getAuthenticusId(), dto.getLattesId()},
             (dto, values) -> {
                 dto.setApvnt(values[0]);
                 dto.setECrisId(values[1]);
@@ -443,6 +444,10 @@ public class MergeServiceImpl implements MergeService {
                 dto.setOrcid(values[4]);
                 dto.setOpenAlexId(values[5]);
                 dto.setWebOfScienceResearcherId(values[6]);
+                dto.setNationalScienceId(values[7]);
+                dto.setScholarId(values[8]);
+                dto.setAuthenticusId(values[9]);
+                dto.setLattesId(values[10]);
             });
     }
 
