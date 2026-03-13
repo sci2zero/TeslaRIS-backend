@@ -313,7 +313,7 @@ package person {
     ApproveStatus approveStatus
     PersonalInfo personalInfo
     Set<SDGoal> sdgs ' !!!
-    ProfilePhotoOrLogo logo
+    ProfilePhotoOrLogo photo ' !!! renamed from logo
     LocalDate dateOfLastIndicatorharvest
     Set<Integer> employmentInstitutionsIdHierarchy
   }
@@ -1326,8 +1326,8 @@ package activity {
         Set<MultiLingualContent> keywords
         Set<ResearchArea> researchAreas
         Set<String> uris
-        LocalDate startDate
-        LocalDate endDate 
+        LocalDate dateFrom
+        LocalDate dateTo 
         Set<SDGoal> sdgs        
     }
     
@@ -1458,8 +1458,8 @@ package project {
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas ' !!!
     Set<String> uris
-    LocalDate projectStarted ' !!! renamed from dateFrom
-    LocalDate projectCompleted ' !!! renamed from dateTo
+    LocalDate dateFrom
+    LocalDate dateTo
     ProjectStatus status 
     ProjectCollaborationType collaborationType ' !!! two levels instead of previous one type (ProjectType)
     ProjectResearchType researchType ' !!!
@@ -1630,14 +1630,14 @@ package project {
   
   ' !!! new
   class FundingApplication {
-    MonetaryAmount requestedBudget
+    MonetaryAmount requestedAmount
     MonetaryAmount selfFunding
-    MonetaryAmount otherSourceFunding
+    MonetaryAmount otherFundingSourceAmount
     Set<MultiLingualContent> description
     Set<MultiLingualContent> responseSummary
     LocalDate submissionDate
-    LocalDate reviewStartDate
-    LocalDate reviewEndDate
+    LocalDate reviewDateFrom
+    LocalDate reviewDateTo
     LocalDate decisionDate
     LocalDate revisedProposalOrNextRoundDeadlineDate
     ProjectProposalResult result
@@ -1667,7 +1667,7 @@ package project {
     Set<MultiLingualContent> displayProgram
     Set<MultiLingualContent> displayFunder
     Set<FundingType> types
-    MonetaryAmount grant
+    MonetaryAmount amount
     Boolean competitive 
     Boolean renewable 
     LocalDate dateSubmitted
@@ -1687,7 +1687,7 @@ package project {
   
   class FundingPart{
     Set<MultiLingualContent> description
-    MonetaryAmount costs
+    MonetaryAmount amount
   }
   
   
@@ -1700,9 +1700,9 @@ package project {
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
     Set<FundingType> types
-    MonetaryAmount total
-    LocalDate callOpens
-    LocalDate callCloses
+    MonetaryAmount amount
+    LocalDate dateFrom
+    LocalDate dateTo
     String url
     Boolean OAMandated
     String OAMandateUrl
@@ -1743,9 +1743,9 @@ package project {
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
     Set<FundingType> types
-    MonetaryAmount total
-    LocalDate programOpens
-    LocalDate programCloses
+    MonetaryAmount totalAmount
+    LocalDate dateFrom
+    LocalDate dateTo
     String url
     Boolean OAMandated
     String OAMandateUrl
