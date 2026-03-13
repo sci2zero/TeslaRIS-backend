@@ -145,7 +145,7 @@ public class CommonExportServiceTest {
         person.setId(1);
         person.setName(new PersonName());
         var personalInfo = new PersonalInfo();
-        personalInfo.setContact(new Contact());
+        personalInfo.setProfessionalContact(new Contact());
         person.setPersonalInfo(personalInfo);
 
         var page = new PageImpl<>(List.of(person));

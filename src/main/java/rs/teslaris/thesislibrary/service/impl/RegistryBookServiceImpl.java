@@ -370,7 +370,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         ci.setMunicipality(dto.getMunicipality());
         ci.setPostalCode(dto.getPostalCode());
         ci.setContact(
-            new Contact(dto.getContact().getContactEmail(), dto.getContact().getPhoneNumber()));
+            new Contact(dto.getContact().getContactEmail(), dto.getContact().getPhoneNumber(),
+                null, null));
         return ci;
     }
 
@@ -926,13 +927,23 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
                     var info = person.getPersonalInfo();
                     dto.setLocalBirthDate(info.getLocalBirthDate());
                     dto.setPlaceOfBirth(info.getPlaceOfBrith());
-                    dto.setPostalAddress(PostalAddressConverter.toDto(info.getPostalAddress()));
+                    dto.setPostalAddress(
+                        PostalAddressConverter.toDto(info.getProfessionalPostalAddress()));
 
-                    if (Objects.nonNull(info.getContact())) {
-                        dto.setContact(new ContactDTO(info.getContact().getContactEmail(),
-                            info.getContact().getPhoneNumber()));
+                    if (Objects.nonNull(info.getProfessionalContact())) {
+                        dto.setContact(
+                            new ContactDTO(
+                                info.getProfessionalContact().getContactEmail(),
+                                info.getProfessionalContact().getPhoneNumber(),
+                                info.getProfessionalContact().getFaxNumber(),
+                                info.getProfessionalContact().getMobilePhoneNumber()
+                            ));
                     } else {
-                        dto.setContact(new ContactDTO("", ""));
+                        dto.setContact(
+                            new ContactDTO(
+                                "", "",
+                                "", "")
+                        );
                     }
                 }
             });

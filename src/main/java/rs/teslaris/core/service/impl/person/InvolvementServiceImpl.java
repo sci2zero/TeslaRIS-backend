@@ -503,6 +503,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvement.setDateTo(commonFields.getDateTo());
         involvement.setApproveStatus(ApproveStatus.APPROVED);
         involvement.setInvolvementType(commonFields.getInvolvementType());
+        involvement.setFavorite(
+            Objects.requireNonNullElse(commonFields.getFavorite(), false));
     }
 
     private void clearCommonCollections(Involvement involvement) {

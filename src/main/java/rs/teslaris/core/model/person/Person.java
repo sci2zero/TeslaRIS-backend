@@ -91,6 +91,9 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
     @Column(name = "e_nauka_id")
     private String eNaukaId;
 
+    @Column(name = "national_science_id")
+    private String nationalScienceId;
+
     @Column(name = "scholar_id")
     private String scholarId;
 

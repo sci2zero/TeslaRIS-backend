@@ -34,8 +34,17 @@ import rs.teslaris.core.model.commontypes.ResearchArea;
 @SQLRestriction("deleted=false")
 public class Project extends BaseEntity {
 
-    @Column(name = "internal_identifier")
-    private String internalIdentifier;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "internal_identifiers")
+    private Set<String> internalIdentifiers;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "old_ids")
+    private Set<String> oldIds;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "merged_ids")
+    private Set<String> mergedIds;
 
     @Column(name = "doi")
     private String doi;

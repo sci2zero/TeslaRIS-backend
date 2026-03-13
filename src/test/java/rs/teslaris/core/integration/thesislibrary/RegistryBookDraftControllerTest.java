@@ -53,7 +53,7 @@ public class RegistryBookDraftControllerTest extends BaseTest {
         var contactInfo = new RegistryBookContactInformationDTO();
         contactInfo.setMunicipality("Municipality");
         contactInfo.setPostalCode("10000");
-        contactInfo.setContact(new ContactDTO("john@example.com", "+123456"));
+        contactInfo.setContact(new ContactDTO("john@example.com", "+123456", "", ""));
         dto.setContactInformation(contactInfo);
 
         var prevTitle = new PreviousTitleInformationDTO();

@@ -186,7 +186,7 @@ public class PersonServiceTest {
         expectedPerson.setId(10);
         expectedPerson.setName(new PersonName());
         var personalInfo = new PersonalInfo();
-        personalInfo.setPostalAddress(new PostalAddress());
+        personalInfo.setProfessionalPostalAddress(new PostalAddress());
         expectedPerson.setPersonalInfo(personalInfo);
 
         when(personRepository.findPersonByOldIdsContains(1)).thenReturn(
@@ -282,10 +282,11 @@ public class PersonServiceTest {
         assertEquals("John", result.getName().getFirstname());
         assertEquals("Doe", result.getName().getLastname());
         assertEquals("john.doe@example.com",
-            result.getPersonalInfo().getContact().getContactEmail());
+            result.getPersonalInfo().getProfessionalContact().getContactEmail());
         assertEquals(Sex.MALE, result.getPersonalInfo().getSex());
         assertEquals(LocalDate.of(1985, 5, 15), result.getPersonalInfo().getLocalBirthDate());
-        assertEquals("+1-555-555-5555", result.getPersonalInfo().getContact().getPhoneNumber());
+        assertEquals("+1-555-555-5555",
+            result.getPersonalInfo().getProfessionalContact().getPhoneNumber());
         assertEquals("12345", result.getApvnt());
         assertEquals("67890", result.getECrisId());
         assertEquals("rp67890", result.getENaukaId());
@@ -347,10 +348,11 @@ public class PersonServiceTest {
         assertEquals("Jane", result.getName().getFirstname());
         assertEquals("Smith", result.getName().getLastname());
         assertEquals("jane.smith@example.com",
-            result.getPersonalInfo().getContact().getContactEmail());
+            result.getPersonalInfo().getProfessionalContact().getContactEmail());
         assertEquals(Sex.FEMALE, result.getPersonalInfo().getSex());
         assertEquals(LocalDate.of(1990, 3, 10), result.getPersonalInfo().getLocalBirthDate());
-        assertEquals("+1-444-444-4444", result.getPersonalInfo().getContact().getPhoneNumber());
+        assertEquals("+1-444-444-4444",
+            result.getPersonalInfo().getProfessionalContact().getPhoneNumber());
         assertEquals("23456", result.getApvnt());
         assertEquals("78901", result.getECrisId());
         assertEquals("rp78901", result.getENaukaId());
@@ -528,8 +530,8 @@ public class PersonServiceTest {
         personalInfoDTO.setOrcid("0000-0000-0000-0000");
         personalInfoDTO.setScopusAuthorId("1234567");
         personalInfoDTO.setPostalAddress(
-            new PostalAddressDTO(1, new ArrayList<>(), new ArrayList<>()));
-        personalInfoDTO.setContact(new ContactDTO("email", "phone"));
+            new PostalAddressDTO(1, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), null));
+        personalInfoDTO.setContact(new ContactDTO("email", "phone", "", ""));
         personalInfoDTO.setLocalBirthDate(LocalDate.of(1990, 1, 1));
         personalInfoDTO.setSex(Sex.MALE);
 
@@ -537,10 +539,10 @@ public class PersonServiceTest {
 
         var postalAddress = new PostalAddress();
         postalAddress.setCountry(new Country());
-        personalInfo.setPostalAddress(postalAddress);
+        personalInfo.setProfessionalPostalAddress(postalAddress);
 
         var contact = new Contact();
-        personalInfo.setContact(contact);
+        personalInfo.setProfessionalContact(contact);
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
@@ -570,11 +572,11 @@ public class PersonServiceTest {
         assertEquals("City", personalInfo.getPlaceOfBrith());
         assertEquals(LocalDate.of(1990, 1, 1), personalInfo.getLocalBirthDate());
         assertEquals(Sex.MALE, personalInfo.getSex());
-        assertNotNull(personalInfo.getPostalAddress().getCountry());
-        assertEquals(0, personalInfo.getPostalAddress().getStreetAndNumber().size());
-        assertEquals(0, personalInfo.getPostalAddress().getCity().size());
-        assertEquals("email", personalInfo.getContact().getContactEmail());
-        assertEquals("phone", personalInfo.getContact().getPhoneNumber());
+        assertNotNull(personalInfo.getProfessionalPostalAddress().getCountry());
+        assertEquals(0, personalInfo.getProfessionalPostalAddress().getStreetAndNumber().size());
+        assertEquals(0, personalInfo.getProfessionalPostalAddress().getCity().size());
+        assertEquals("email", personalInfo.getProfessionalContact().getContactEmail());
+        assertEquals("phone", personalInfo.getProfessionalContact().getPhoneNumber());
     }
 
     @Test

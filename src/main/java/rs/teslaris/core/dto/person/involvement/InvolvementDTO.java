@@ -34,6 +34,8 @@ public class InvolvementDTO {
 
     private Integer organisationUnitId;
 
+    private Boolean favorite;
+
     // Only for responses
     private List<MultilingualContentDTO> organisationUnitName;
 }

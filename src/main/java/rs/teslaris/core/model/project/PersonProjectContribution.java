@@ -48,5 +48,6 @@ public class PersonProjectContribution extends PersonContribution {
     private Project project;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<Funding> funding = new HashSet<>(); // must be funding allocated only to this person
+    private Set<FundingPart> fundingParts = new HashSet<>();
+        // must be funding allocated only to this person
 }

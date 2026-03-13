@@ -7,5 +7,12 @@ public enum InvolvementType {
     MEMBER_OF,
     EMPLOYED_AT,
     HIRED_BY,
-    CANDIDATE
+    CANDIDATE,
+    BOARD_MEMBER,
+    PRESIDENT,
+    VICE_PRESIDENT,
+    FOUNDER,
+    CONSULTANT,
+    COORDINATOR,
+    DIRECTOR
 }

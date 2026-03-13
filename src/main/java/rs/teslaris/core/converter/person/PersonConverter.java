@@ -49,7 +49,8 @@ public class PersonConverter {
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
 
-        var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
+        var postalAddress =
+            getPostalAddressDTO(person.getPersonalInfo().getProfessionalPostalAddress());
 
         var employmentIds = new ArrayList<Integer>();
         var educationIds = new ArrayList<Integer>();
@@ -72,14 +73,20 @@ public class PersonConverter {
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo()
                     .getSex(), postalAddress,
-                new ContactDTO(Objects.nonNull(person.getPersonalInfo().getContact()) ?
-                    person.getPersonalInfo().getContact().getContactEmail() : null,
-                    Objects.nonNull(person.getPersonalInfo().getContact()) ?
-                        person.getPersonalInfo().getContact().getPhoneNumber() : null),
+                new ContactDTO(Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
+                    person.getPersonalInfo().getProfessionalContact().getContactEmail() : null,
+                    Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
+                        person.getPersonalInfo().getProfessionalContact().getPhoneNumber() : null,
+                    Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
+                        person.getPersonalInfo().getProfessionalContact().getFaxNumber() : null,
+                    Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
+                        person.getPersonalInfo().getProfessionalContact().getMobilePhoneNumber() :
+                        null),
                 person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getOpenAlexId(),
-                person.getWebOfScienceResearcherId(),
+                person.getWebOfScienceResearcherId(), person.getNationalScienceId(),
+                person.getScholarId(), person.getAuthenticusId(), person.getLattesId(),
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,
@@ -100,6 +107,7 @@ public class PersonConverter {
 
         var streetAndNumberContent = new ArrayList<MultilingualContentDTO>();
         var cityContent = new ArrayList<MultilingualContentDTO>();
+        var stateContent = new ArrayList<MultilingualContentDTO>();
 
         for (var streetAndNumber : postalAddress.getStreetAndNumber()) {
             streetAndNumberContent.add(
@@ -117,8 +125,19 @@ public class PersonConverter {
                     city.getPriority()));
         }
 
+        for (var state : postalAddress.getState()) {
+            stateContent.add(
+                new MultilingualContentDTO(state.getLanguage().getId(),
+                    state.getLanguage().getLanguageTag(),
+                    state.getContent(),
+                    state.getPriority()));
+        }
+
         postalAddressDto.setStreetAndNumber(streetAndNumberContent);
         postalAddressDto.setCity(cityContent);
+        postalAddressDto.setState(stateContent);
+        postalAddressDto.setPostalNumber(postalAddress.getPostalNumber());
+
         return postalAddressDto;
     }
 
@@ -164,8 +183,10 @@ public class PersonConverter {
                                                 ArrayList<Integer> membershipIds) {
         for (var inv : involvementRepository.findIdsTypesAndDatesByPersonId(person.getId())) {
             switch (inv.getInvolvementType()) {
-                case HIRED_BY, EMPLOYED_AT, CANDIDATE -> employmentIds.add(inv.getId());
-                case MEMBER_OF -> membershipIds.add(inv.getId());
+                case HIRED_BY, EMPLOYED_AT, CANDIDATE, FOUNDER, CONSULTANT, COORDINATOR, DIRECTOR ->
+                    employmentIds.add(inv.getId());
+                case MEMBER_OF, BOARD_MEMBER, PRESIDENT, VICE_PRESIDENT ->
+                    membershipIds.add(inv.getId());
                 default -> educationIds.add(inv.getId());
             }
         }
@@ -212,7 +233,8 @@ public class PersonConverter {
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
 
-        var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
+        var postalAddress =
+            getPostalAddressDTO(person.getPersonalInfo().getProfessionalPostalAddress());
 
         UserResponseDTO userDTO = null;
         if (Objects.nonNull(person.getUser())) {
@@ -220,9 +242,11 @@ public class PersonConverter {
         }
 
         var contact = new ContactDTO();
-        if (Objects.nonNull(person.getPersonalInfo().getContact())) {
-            contact.setContactEmail(person.getPersonalInfo().getContact().getContactEmail());
-            contact.setPhoneNumber(person.getPersonalInfo().getContact().getPhoneNumber());
+        if (Objects.nonNull(person.getPersonalInfo().getProfessionalContact())) {
+            contact.setContactEmail(
+                person.getPersonalInfo().getProfessionalContact().getContactEmail());
+            contact.setPhoneNumber(
+                person.getPersonalInfo().getProfessionalContact().getPhoneNumber());
         }
 
         var instituion = new Pair<Integer, List<MultilingualContentDTO>>(null, null);
@@ -249,7 +273,8 @@ public class PersonConverter {
                 person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getOpenAlexId(),
-                person.getWebOfScienceResearcherId(),
+                person.getWebOfScienceResearcherId(), person.getNationalScienceId(),
+                person.getScholarId(), person.getAuthenticusId(), person.getLattesId(),
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,

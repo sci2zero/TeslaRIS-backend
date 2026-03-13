@@ -1,10 +1,15 @@
 package rs.teslaris.core.model.person;
 
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AssociationOverrides;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -34,10 +39,25 @@ public class PersonalInfo {
     private Sex sex;
 
     @Embedded
-    private PostalAddress postalAddress;
+    @AttributeOverrides({
+        @AttributeOverride(name = "postalNumber", column = @Column(name = "professional_postal_number"))
+    })
+    @AssociationOverrides({
+        @AssociationOverride(name = "country", joinColumns = @JoinColumn(name = "professional_country_id")),
+        @AssociationOverride(name = "streetAndNumber", joinColumns = @JoinColumn(name = "professional_street_id")),
+        @AssociationOverride(name = "city", joinColumns = @JoinColumn(name = "professional_city_id")),
+        @AssociationOverride(name = "state", joinColumns = @JoinColumn(name = "professional_state_id"))
+    })
+    private PostalAddress professionalPostalAddress;
 
     @Embedded
-    private Contact contact;
+    @AttributeOverrides({
+        @AttributeOverride(name = "contactEmail", column = @Column(name = "professional_contact_email")),
+        @AttributeOverride(name = "phoneNumber", column = @Column(name = "professional_phone_number")),
+        @AttributeOverride(name = "faxNumber", column = @Column(name = "professional_fax_number")),
+        @AttributeOverride(name = "mobilePhoneNumber", column = @Column(name = "professional_mobile_phone_number"))
+    })
+    private Contact professionalContact;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")

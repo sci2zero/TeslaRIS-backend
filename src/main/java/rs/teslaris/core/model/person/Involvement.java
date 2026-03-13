@@ -73,6 +73,9 @@ public class Involvement extends BaseEntity {
     @JoinColumn(name = "organisation_unit_id")
     private OrganisationUnit organisationUnit;
 
+    @Column(name = "favorite")
+    private Boolean favorite = false;
+
 
     @Override
     public boolean equals(Object o) {

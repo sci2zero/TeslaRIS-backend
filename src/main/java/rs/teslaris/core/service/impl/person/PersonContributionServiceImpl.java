@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
+import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.commontypes.NotificationType;
@@ -212,18 +213,27 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         var personName = getPersonName(contributionDTO, contributor);
 
         Contact contact = null;
-        if (Objects.nonNull(contributor.getPersonalInfo().getContact())) {
-            contact = new Contact(contributor.getPersonalInfo().getContact().getContactEmail(),
-                contributor.getPersonalInfo().getContact().getPhoneNumber());
+        if (Objects.nonNull(contributor.getPersonalInfo().getProfessionalContact())) {
+            contact = new Contact(
+                contributor.getPersonalInfo().getProfessionalContact().getContactEmail(),
+                contributor.getPersonalInfo().getProfessionalContact().getPhoneNumber(),
+                contributor.getPersonalInfo().getProfessionalContact().getFaxNumber(),
+                contributor.getPersonalInfo().getProfessionalContact().getMobilePhoneNumber());
         }
 
         contribution.setAffiliationStatement(new AffiliationStatement(
             new HashSet<>(), personName,
-            new PostalAddress(contributor.getPersonalInfo().getPostalAddress().getCountry(),
+            new PostalAddress(
+                contributor.getPersonalInfo().getProfessionalPostalAddress().getCountry(),
                 multilingualContentService.deepCopy(
-                    contributor.getPersonalInfo().getPostalAddress().getStreetAndNumber()),
+                    contributor.getPersonalInfo().getProfessionalPostalAddress()
+                        .getStreetAndNumber()),
                 multilingualContentService.deepCopy(
-                    contributor.getPersonalInfo().getPostalAddress().getCity())),
+                    contributor.getPersonalInfo().getProfessionalPostalAddress().getCity()),
+                multilingualContentService.deepCopy(
+                    contributor.getPersonalInfo().getProfessionalPostalAddress().getState()),
+                contributor.getPersonalInfo().getProfessionalPostalAddress().getPostalNumber(),
+                new GeoLocation()),
             contact));
     }
 

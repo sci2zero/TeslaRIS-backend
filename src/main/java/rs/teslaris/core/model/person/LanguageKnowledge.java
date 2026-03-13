@@ -1,5 +1,6 @@
 package rs.teslaris.core.model.person;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -24,7 +25,22 @@ public class LanguageKnowledge extends ExpertiseOrSkill {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "language_id", nullable = false)
     private Language language;
-//    int speakingLevel;
-//    int readingLevel;
-//    int writingLevel;
+
+    @Column(name = "mother-tongue")
+    private Boolean motherTongue;
+
+    @Column(name = "read")
+    private LanguageLevel read;
+
+    @Column(name = "write")
+    private LanguageLevel write;
+
+    @Column(name = "speak")
+    private LanguageLevel speak;
+
+    @Column(name = "understand-spoken")
+    private LanguageLevel understandSpoken;
+
+    @Column(name = "peer-review")
+    private LanguageLevel peerReview;
 }

@@ -80,6 +80,22 @@ public interface PersonRepository extends JpaRepository<Person, Integer> {
     boolean existsByeNaukaId(String eNaukaId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.nationalScienceId = :nationalScienceId AND (:id IS NULL OR p.id <> :id)")
+    boolean existsByNationalScienceId(String nationalScienceId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.scholarId = :scholarId AND (:id IS NULL OR p.id <> :id)")
+    boolean existsByScholarId(String scholarId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.authenticusId = :authenticusId AND (:id IS NULL OR p.id <> :id)")
+    boolean existsByAuthenticusId(String authenticusId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Person p WHERE p.lattesId = :lattesId AND (:id IS NULL OR p.id <> :id)")
+    boolean existsByLattesId(String lattesId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Person p WHERE p.orcid = :orcid AND (:id IS NULL OR p.id <> :id)")
     boolean existsByOrcid(String orcid, Integer id);
 

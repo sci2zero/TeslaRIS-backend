@@ -453,8 +453,9 @@ public class RoCrateConverter {
             DEFAULT_RO_CRATE_LANGUAGE));
 
         if (Objects.nonNull(person.getPersonalInfo()) &&
-            Objects.nonNull(person.getPersonalInfo().getContact())) {
-            personMetadata.setEmail(person.getPersonalInfo().getContact().getContactEmail());
+            Objects.nonNull(person.getPersonalInfo().getProfessionalContact())) {
+            personMetadata.setEmail(
+                person.getPersonalInfo().getProfessionalContact().getContactEmail());
         }
 
         setAffiliationInfo(person, personMetadata, metadataInfo);

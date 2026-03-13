@@ -43,10 +43,11 @@ public class Membership extends Involvement {
                       Set<MultiLingualContent> affiliationStatement,
                       Person personInvolved,
                       OrganisationUnit organisationUnit,
+                      boolean favorite,
                       Set<MultiLingualContent> contributionDescription,
                       Set<MultiLingualContent> role) {
         super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit);
+            personInvolved, organisationUnit, favorite);
         this.contributionDescription = contributionDescription;
         this.role = role;
     }
