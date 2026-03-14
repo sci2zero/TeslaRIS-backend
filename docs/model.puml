@@ -367,11 +367,13 @@ package person {
   class LanguageKnowledge extends ExpertiseOrSkill {
     Language language
     Boolean motherTongue ' !!!
-    LanguageLevel read ' !!!
-    LanguageLevel write ' !!!
-    LanguageLevel speak ' !!!
-    LanguageLevel understand-spoken ' !!!
-    LanguageLevel peer-review ' !!!
+    LanguageLevel reading ' !!!
+    LanguageLevel writing ' !!!
+    LanguageLevel speaking ' !!!
+    LanguageLevel listening ' !!!
+    LanguageLevel academicReview ' !!!
+	LanguageLevel academicWriting ' !!!
+	LanguageLevel overall ' !!!
   }
   ' the another example of expertise might be usage of some complex piece of equipment
 
@@ -401,16 +403,9 @@ package person {
     COMPLETED_COURSE_AT
     POSTDOC_AT
     MEMBER_OF
-    BOARD_MEMBER ' !!!
-    PRESIDENT ' !!!
-    VICE_PRESIDENT ' !!!
     EMPLOYED_AT 
-    FOUNDER ' !!! 
     HIRED_BY ' or selfemployed
     CANDIDATE 
-    CONSULTANT  ' !!!
-    COORDINATOR  ' !!!
-    DIRECTOR  ' !!!
   }
 
   Involvement "*" -- "1" Person : involvements / personInvolved
@@ -419,9 +414,9 @@ package person {
 
   class Education extends Involvement {
     DegreeType degreeType ' !!!
-    Set<MultiLingualContent> degreeTitle ' !!! former title
+    Set<MultiLingualContent> degreeTitle ' !!! former title, skip for now
     Set<MultiLingualContent> degreeCode ' !!! 
-    Set<MultiLingualContent> degreeMajor ' !!! former abbreviationTitle
+    Set<MultiLingualContent> degreeMajor ' !!! former abbreviationTitle, skip for now
     Set<MultiLingualContent> description ' !!!
     Set<MultiLingualContent> degreeClassification ' !!!
     EducationStatus educationStatus ' !!!
@@ -462,11 +457,16 @@ package person {
     SCIENCE_AND_TECHNOLOGY_MANAGEMENT 
     UNIVERSITY_TEACHER
     INVITED_TEACHER
-    ' employment-position-type-enum
+	' !!! TODO:  align with employment-position-type-enum - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
+	' !!! TODO: consider to be vocabulary in database, such as ResearchArea with basic UI for CRUD operations
   }
   
   enum EmploymentPosition {
-    SCIENTIFIC_ADVISOR  
+    CONSULTANT  ' !!!
+    COORDINATOR  ' !!!
+    DIRECTOR  ' !!!
+	FOUNDER ' !!! 
+	SCIENTIFIC_ADVISOR  
     ASSISTANT_TRAINEE
     EXPERT_ASSOCIATE
     ASSISTANT
@@ -497,12 +497,20 @@ package person {
     SENIOR_SCIENTIFIC_COLLABORATOR
     TEACHING_ASSOCIATE
     ASSOCIATE_WITHOUT_TITLE
-    ' !!! TODO: ALIGN_WITH_EMPLOYMENT_POSITION_TITLE_ENUM
+    ' !!! TODO: ALIGN WITH EMPLOYMENT_POSITION_TITLE_ENUM - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
+	' !!! TODO: consider to be vocabulary in database, such as ResearchArea with basic UI for CRUD operations
   }
 
   class Membership extends Involvement {
-    Set<MultiLingualContent> contributionDescription
+    MembershipType membershipType
+	Set<MultiLingualContent> contributionDescription
     Set<MultiLingualContent> role
+  }
+
+  enum MembeshipType {
+	BOARD_MEMBER ' !!!
+    PRESIDENT ' !!!
+    VICE_PRESIDENT ' !!!
   }
 
   class ExpertiseOrSkill {
