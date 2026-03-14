@@ -64,13 +64,13 @@ public class FundingCall extends BaseEntity {
     private Set<FundingType> types = new HashSet<>();
 
     @Embedded
-    private MonetaryAmount total;
+    private MonetaryAmount amount;
 
-    @Column(name = "call_opens")
-    private LocalDate callOpens;
+    @Column(name = "date_from")
+    private LocalDate dateFrom;
 
-    @Column(name = "call_closes")
-    private LocalDate callCloses;
+    @Column(name = "date_to")
+    private LocalDate dateTo;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")

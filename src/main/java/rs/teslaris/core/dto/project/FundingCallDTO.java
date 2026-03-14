@@ -49,9 +49,9 @@ public class FundingCallDTO {
 
     private MonetaryAmountDTO monetaryAmount;
 
-    private LocalDate callOpens;
+    private LocalDate dateFrom;
 
-    private LocalDate callCloses;
+    private LocalDate dateTo;
 
     private Set<String> uris = new HashSet<>();
 

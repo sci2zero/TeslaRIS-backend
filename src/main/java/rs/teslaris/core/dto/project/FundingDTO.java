@@ -61,7 +61,7 @@ public class FundingDTO {
     @NotNull(message = "You have to provide funding types.")
     private Set<FundingType> fundingTypes = new HashSet<>();
 
-    private MonetaryAmountDTO grant;
+    private MonetaryAmountDTO amount;
 
     private Boolean competitive;
 

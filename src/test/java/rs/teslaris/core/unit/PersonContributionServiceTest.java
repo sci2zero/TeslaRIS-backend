@@ -78,7 +78,7 @@ public class PersonContributionServiceTest {
         contributor.setName(new PersonName());
         var personalInfo = new PersonalInfo();
         personalInfo.setProfessionalPostalAddress(
-            new PostalAddress(null, new HashSet<>(), new HashSet<>(), new HashSet<>(), null, null));
+            new PostalAddress(null, new HashSet<>(), new HashSet<>(), new HashSet<>(), null));
         personalInfo.setProfessionalContact(new Contact("email", "phone number", "", ""));
         contributor.setPersonalInfo(personalInfo);
 

@@ -180,27 +180,27 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         var fundingProgram = fundingProgramService.findOne(fundingCallDTO.getFundingProgramId());
         fundingCall.setFundingProgram(fundingProgram);
 
-        if (Objects.nonNull(fundingCallDTO.getCallOpens()) &&
-            Objects.nonNull(fundingCallDTO.getCallCloses()) &&
-            fundingCallDTO.getCallCloses().isBefore(fundingCallDTO.getCallOpens())) {
+        if (Objects.nonNull(fundingCallDTO.getDateFrom()) &&
+            Objects.nonNull(fundingCallDTO.getDateTo()) &&
+            fundingCallDTO.getDateTo().isBefore(fundingCallDTO.getDateFrom())) {
             throw new DateRangeException(
                 "Funding call must opened before closing.");
         }
 
-        if (Objects.nonNull(fundingProgram.getProgramOpens()) &&
-            fundingProgram.getProgramOpens().isAfter(fundingCallDTO.getCallOpens())) {
+        if (Objects.nonNull(fundingProgram.getDateFrom()) &&
+            fundingProgram.getDateFrom().isAfter(fundingCallDTO.getDateFrom())) {
             throw new DateRangeException(
                 "Funding call opening must be equal or after program opening.");
         }
 
-        if (Objects.nonNull(fundingProgram.getProgramCloses()) &&
-            fundingProgram.getProgramCloses().isBefore(fundingCallDTO.getCallCloses())) {
+        if (Objects.nonNull(fundingProgram.getDateTo()) &&
+            fundingProgram.getDateTo().isBefore(fundingCallDTO.getDateTo())) {
             throw new DateRangeException(
                 "Funding call closing must be equal or before program closing.");
         }
 
-        fundingCall.setCallOpens(fundingCallDTO.getCallOpens());
-        fundingCall.setCallCloses(fundingCallDTO.getCallCloses());
+        fundingCall.setDateFrom(fundingCallDTO.getDateFrom());
+        fundingCall.setDateTo(fundingCallDTO.getDateTo());
 
         fundingCall.setName(
             multilingualContentService.getMultilingualContent(fundingCallDTO.getName()));
@@ -220,15 +220,15 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         fundingCall.setTypes(fundingCallDTO.getFundingTypes());
 
         if (Objects.nonNull(fundingCallDTO.getMonetaryAmount())) {
-            if (Objects.isNull(fundingCall.getTotal())) {
-                fundingCall.setTotal(new MonetaryAmount());
+            if (Objects.isNull(fundingCall.getAmount())) {
+                fundingCall.setAmount(new MonetaryAmount());
             }
 
-            fundingCall.getTotal().setCurrency(
+            fundingCall.getAmount().setCurrency(
                 currencyService.findOne(fundingCallDTO.getMonetaryAmount().getCurrencyId()));
-            fundingCall.getTotal().setAmount(fundingCallDTO.getMonetaryAmount().getAmount());
+            fundingCall.getAmount().setAmount(fundingCallDTO.getMonetaryAmount().getAmount());
         } else {
-            fundingCall.setTotal(null);
+            fundingCall.setAmount(null);
         }
 
         fundingCall.setUris(fundingCallDTO.getUris());
@@ -271,8 +271,8 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
 
         index.setProgramId(fundingCall.getFundingProgram().getId());
         index.setDatabaseId(fundingCall.getId());
-        index.setCallOpens(fundingCall.getCallOpens());
-        index.setCallCloses(fundingCall.getCallCloses());
+        index.setDateFrom(fundingCall.getDateFrom());
+        index.setDateTo(fundingCall.getDateTo());
 
         return index;
     }

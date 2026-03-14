@@ -96,10 +96,10 @@ public class FundingProgramControllerTest extends BaseTest {
         var monetaryAmount = new MonetaryAmountDTO();
         monetaryAmount.setAmount(100);
         monetaryAmount.setCurrencyId(1);
-        dto.setMonetaryAmount(monetaryAmount);
+        dto.setTotalAmount(monetaryAmount);
 
-        dto.setProgramOpens(LocalDate.now().plusMonths(1));
-        dto.setProgramCloses(LocalDate.now().plusYears(1));
+        dto.setDateFrom(LocalDate.now().plusMonths(1));
+        dto.setDateTo(LocalDate.now().plusYears(1));
 
         var uris = new HashSet<String>();
         uris.add("https://example.com/funding-program");

@@ -195,10 +195,10 @@ public class FundingProgramServiceTest {
         var monetaryAmountDTO = new MonetaryAmountDTO();
         monetaryAmountDTO.setCurrencyId(1);
         monetaryAmountDTO.setAmount(10000.0);
-        fundingProgramDTO.setMonetaryAmount(monetaryAmountDTO);
+        fundingProgramDTO.setTotalAmount(monetaryAmountDTO);
 
-        fundingProgramDTO.setProgramOpens(LocalDate.now());
-        fundingProgramDTO.setProgramCloses(LocalDate.now().plusYears(1));
+        fundingProgramDTO.setDateFrom(LocalDate.now());
+        fundingProgramDTO.setDateTo(LocalDate.now().plusYears(1));
         fundingProgramDTO.setUris(Set.of("https://example.com"));
         fundingProgramDTO.setOaMandated(true);
         fundingProgramDTO.setOaMandateUrl("https://example.com/mandate");
@@ -247,8 +247,8 @@ public class FundingProgramServiceTest {
         fundingProgramDTO.setFunderId(10);
         fundingProgramDTO.setFundingTypes(Set.of(FundingType.GRANT));
 
-        fundingProgramDTO.setProgramCloses(LocalDate.now());
-        fundingProgramDTO.setProgramOpens(LocalDate.now().plusYears(1));
+        fundingProgramDTO.setDateTo(LocalDate.now());
+        fundingProgramDTO.setDateFrom(LocalDate.now().plusYears(1));
         fundingProgramDTO.setUris(Set.of("https://example.com"));
         fundingProgramDTO.setOaMandated(true);
         fundingProgramDTO.setOaMandateUrl("https://example.com/mandate");
@@ -270,7 +270,7 @@ public class FundingProgramServiceTest {
         fundingProgramDTO.setResearchAreasId(Set.of());
         fundingProgramDTO.setFunderId(10);
         fundingProgramDTO.setFundingTypes(Set.of(FundingType.GRANT));
-        fundingProgramDTO.setMonetaryAmount(null);
+        fundingProgramDTO.setTotalAmount(null);
 
         var savedFundingProgram = new FundingProgram();
         savedFundingProgram.setId(1);

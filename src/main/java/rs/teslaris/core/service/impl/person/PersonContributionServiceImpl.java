@@ -23,7 +23,6 @@ import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.Notification;
 import rs.teslaris.core.model.commontypes.NotificationType;
@@ -232,8 +231,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                     contributor.getPersonalInfo().getProfessionalPostalAddress().getCity()),
                 multilingualContentService.deepCopy(
                     contributor.getPersonalInfo().getProfessionalPostalAddress().getState()),
-                contributor.getPersonalInfo().getProfessionalPostalAddress().getPostalNumber(),
-                new GeoLocation()),
+                contributor.getPersonalInfo().getProfessionalPostalAddress().getPostalNumber()),
             contact));
     }
 

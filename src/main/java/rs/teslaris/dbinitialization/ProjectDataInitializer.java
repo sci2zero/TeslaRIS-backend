@@ -59,15 +59,15 @@ public class ProjectDataInitializer {
         var fundingProgram1 = new FundingProgram();
         fundingProgram1.setName(
             Set.of(new MultiLingualContent(englishTag, "Horizon Europe", 1)));
-        fundingProgram1.setProgramOpens(LocalDate.of(2020, 1, 1));
-        fundingProgram1.setProgramCloses(LocalDate.of(2035, 5, 14));
+        fundingProgram1.setDateFrom(LocalDate.of(2020, 1, 1));
+        fundingProgram1.setDateTo(LocalDate.of(2035, 5, 14));
         fundingProgram1.setFunder(funder1);
 
         var fundingProgram2 = new FundingProgram();
         fundingProgram2.setName(
             Set.of(new MultiLingualContent(englishTag, "Ministry of Science", 1)));
-        fundingProgram2.setProgramOpens(LocalDate.of(2022, 12, 1));
-        fundingProgram2.setProgramCloses(LocalDate.of(2025, 2, 1));
+        fundingProgram2.setDateFrom(LocalDate.of(2022, 12, 1));
+        fundingProgram2.setDateTo(LocalDate.of(2025, 2, 1));
         fundingProgram2.setFunder(funder1);
 
         fundingProgramRepository.saveAll(List.of(fundingProgram1, fundingProgram2));
@@ -75,30 +75,30 @@ public class ProjectDataInitializer {
         var fundingCall1 = new FundingCall();
         fundingCall1.setName(
             Set.of(new MultiLingualContent(englishTag, "Funding Call 1", 1)));
-        fundingCall1.setCallOpens(LocalDate.of(2020, 2, 1));
-        fundingCall1.setCallCloses(LocalDate.of(2021, 2, 1));
+        fundingCall1.setDateFrom(LocalDate.of(2020, 2, 1));
+        fundingCall1.setDateTo(LocalDate.of(2021, 2, 1));
         fundingCall1.setFundingProgram(fundingProgram1);
 
         var fundingCall2 = new FundingCall();
         fundingCall2.setName(
             Set.of(new MultiLingualContent(englishTag, "Funding Call 2", 1)));
-        fundingCall2.setCallOpens(LocalDate.of(2022, 7, 6));
-        fundingCall2.setCallCloses(LocalDate.of(2023, 3, 17));
+        fundingCall2.setDateFrom(LocalDate.of(2022, 7, 6));
+        fundingCall2.setDateTo(LocalDate.of(2023, 3, 17));
         fundingCall2.setFundingProgram(fundingProgram1);
 
         fundingCallRepository.saveAll(List.of(fundingCall1, fundingCall2));
 
         var funding1 = new Funding();
         funding1.setName(Set.of(new MultiLingualContent(englishTag, "Funding 1", 1)));
-        funding1.setGrant(new MonetaryAmount(1000000, currencyEuro));
+        funding1.setAmount(new MonetaryAmount(1000000, currencyEuro));
 
         var funding2 = new Funding();
         funding2.setName(Set.of(new MultiLingualContent(englishTag, "Funding 2", 1)));
-        funding2.setGrant(new MonetaryAmount(1000000, currencyEuro));
+        funding2.setAmount(new MonetaryAmount(1000000, currencyEuro));
 
         var funding3 = new Funding();
         funding3.setName(Set.of(new MultiLingualContent(englishTag, "Big Funding", 1)));
-        funding3.setGrant(new MonetaryAmount(1000000000, currencyEuro));
+        funding3.setAmount(new MonetaryAmount(1000000000, currencyEuro));
 
         fundingRepository.saveAll(List.of(funding1, funding2, funding3));
 

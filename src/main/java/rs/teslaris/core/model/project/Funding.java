@@ -93,7 +93,7 @@ public class Funding extends BaseEntity {
     private Set<FundingType> fundingTypes = new HashSet<>();
 
     @Embedded
-    private MonetaryAmount grant;
+    private MonetaryAmount amount;
 
     @Column(name = "competitive")
     private Boolean competitive;

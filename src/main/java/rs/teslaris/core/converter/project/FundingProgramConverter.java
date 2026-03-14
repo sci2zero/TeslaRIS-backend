@@ -30,16 +30,17 @@ public class FundingProgramConverter {
             dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
         });
 
-        dto.setMonetaryAmount(new MonetaryAmountDTO());
-        if (Objects.nonNull(fundingProgram.getTotal())) {
-            dto.getMonetaryAmount().setAmount(fundingProgram.getTotal().getAmount());
-            dto.getMonetaryAmount().setCurrencyId(fundingProgram.getTotal().getCurrency().getId());
+        dto.setTotalAmount(new MonetaryAmountDTO());
+        if (Objects.nonNull(fundingProgram.getTotalAmount())) {
+            dto.getTotalAmount().setAmount(fundingProgram.getTotalAmount().getAmount());
+            dto.getTotalAmount()
+                .setCurrencyId(fundingProgram.getTotalAmount().getCurrency().getId());
         }
 
         dto.setFundingTypes(fundingProgram.getTypes());
         dto.setUris(fundingProgram.getUris());
-        dto.setProgramOpens(fundingProgram.getProgramOpens());
-        dto.setProgramCloses(fundingProgram.getProgramCloses());
+        dto.setDateFrom(fundingProgram.getDateFrom());
+        dto.setDateTo(fundingProgram.getDateTo());
 
         dto.setFunderId(fundingProgram.getFunder().getId());
         dto.setFunderName(MultilingualContentConverter.getMultilingualContentDTO(

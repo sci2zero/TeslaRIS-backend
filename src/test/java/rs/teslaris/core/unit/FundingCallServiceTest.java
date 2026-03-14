@@ -197,8 +197,8 @@ public class FundingCallServiceTest {
         monetaryAmountDTO.setAmount(10000.0);
         fundingCallDTO.setMonetaryAmount(monetaryAmountDTO);
 
-        fundingCallDTO.setCallOpens(LocalDate.now());
-        fundingCallDTO.setCallCloses(LocalDate.now().plusYears(1));
+        fundingCallDTO.setDateFrom(LocalDate.now());
+        fundingCallDTO.setDateTo(LocalDate.now().plusYears(1));
         fundingCallDTO.setUris(Set.of("https://example.com"));
         fundingCallDTO.setOaMandated(true);
         fundingCallDTO.setOaMandateUrl("https://example.com/mandate");
@@ -247,8 +247,8 @@ public class FundingCallServiceTest {
         fundingCallDTO.setFundingProgramId(10);
         fundingCallDTO.setFundingTypes(Set.of(FundingType.GRANT));
 
-        fundingCallDTO.setCallCloses(LocalDate.now());
-        fundingCallDTO.setCallOpens(LocalDate.now().plusYears(1));
+        fundingCallDTO.setDateTo(LocalDate.now());
+        fundingCallDTO.setDateFrom(LocalDate.now().plusYears(1));
         fundingCallDTO.setUris(Set.of("https://example.com"));
         fundingCallDTO.setOaMandated(true);
         fundingCallDTO.setOaMandateUrl("https://example.com/mandate");

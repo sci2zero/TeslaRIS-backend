@@ -173,9 +173,9 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
     private void setCommonFields(FundingProgram fundingProgram,
                                  FundingProgramDTO fundingProgramDTO) {
-        if (Objects.nonNull(fundingProgramDTO.getProgramOpens()) &&
-            Objects.nonNull(fundingProgramDTO.getProgramCloses()) &&
-            fundingProgramDTO.getProgramCloses().isBefore(fundingProgramDTO.getProgramOpens())) {
+        if (Objects.nonNull(fundingProgramDTO.getDateFrom()) &&
+            Objects.nonNull(fundingProgramDTO.getDateTo()) &&
+            fundingProgramDTO.getDateTo().isBefore(fundingProgramDTO.getDateFrom())) {
             throw new DateRangeException(
                 "Funding program must opened before closing.");
         }
@@ -199,20 +199,21 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
         fundingProgram.setTypes(fundingProgramDTO.getFundingTypes());
 
-        if (Objects.nonNull(fundingProgramDTO.getMonetaryAmount())) {
-            if (Objects.isNull(fundingProgram.getTotal())) {
-                fundingProgram.setTotal(new MonetaryAmount());
+        if (Objects.nonNull(fundingProgramDTO.getTotalAmount())) {
+            if (Objects.isNull(fundingProgram.getTotalAmount())) {
+                fundingProgram.setTotalAmount(new MonetaryAmount());
             }
 
-            fundingProgram.getTotal().setCurrency(
-                currencyService.findOne(fundingProgramDTO.getMonetaryAmount().getCurrencyId()));
-            fundingProgram.getTotal().setAmount(fundingProgramDTO.getMonetaryAmount().getAmount());
+            fundingProgram.getTotalAmount().setCurrency(
+                currencyService.findOne(fundingProgramDTO.getTotalAmount().getCurrencyId()));
+            fundingProgram.getTotalAmount()
+                .setAmount(fundingProgramDTO.getTotalAmount().getAmount());
         } else {
-            fundingProgram.setTotal(null);
+            fundingProgram.setTotalAmount(null);
         }
 
-        fundingProgram.setProgramOpens(fundingProgramDTO.getProgramOpens());
-        fundingProgram.setProgramCloses(fundingProgramDTO.getProgramCloses());
+        fundingProgram.setDateFrom(fundingProgramDTO.getDateFrom());
+        fundingProgram.setDateTo(fundingProgramDTO.getDateTo());
         fundingProgram.setUris(fundingProgramDTO.getUris());
         fundingProgram.setOaMandated(fundingProgramDTO.getOaMandated());
         fundingProgram.setOaMandateUrl(fundingProgramDTO.getOaMandateUrl());
@@ -253,8 +254,8 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
         index.setFunderId(fundingProgram.getFunder().getId());
         index.setDatabaseId(fundingProgram.getId());
-        index.setProgramOpens(fundingProgram.getProgramOpens());
-        index.setProgramCloses(fundingProgram.getProgramCloses());
+        index.setDateFrom(fundingProgram.getDateFrom());
+        index.setDateTo(fundingProgram.getDateTo());
 
         return index;
     }

@@ -185,8 +185,7 @@ public class DatasetServiceTest {
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
-            new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                null));
+            new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null));
         contribution.setAffiliationStatement(affiliationStatement);
         dataset.setContributors(Set.of(contribution));
 

@@ -43,9 +43,9 @@ public class FundingProgramIndex {
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 
-    @Field(type = FieldType.Date, name = "program_opens")
-    private LocalDate programOpens;
+    @Field(type = FieldType.Date, name = "date_from")
+    private LocalDate dateFrom;
 
-    @Field(type = FieldType.Date, name = "program_closes")
-    private LocalDate programCloses;
+    @Field(type = FieldType.Date, name = "date_to")
+    private LocalDate dateTo;
 }

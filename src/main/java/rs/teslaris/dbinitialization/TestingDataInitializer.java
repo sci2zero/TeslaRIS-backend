@@ -222,7 +222,7 @@ public class TestingDataInitializer {
         countryRepository.save(country);
 
         var postalAddress = new PostalAddress(country, new HashSet<>(),
-            new HashSet<>(), new HashSet<>(), null, null);
+            new HashSet<>(), new HashSet<>(), null);
         var personalInfo =
             new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
                 new Contact("john@ftn.uns.ac.com", "021555666", null, null), new HashSet<>(),
@@ -352,7 +352,7 @@ public class TestingDataInitializer {
 
         var person2 = new Person();
         var postalAddress2 = new PostalAddress(country, new HashSet<>(),
-            new HashSet<>(), new HashSet<>(), null, null);
+            new HashSet<>(), new HashSet<>(), null);
         var personalInfo2 =
             new PersonalInfo(LocalDate.of(2000, 1, 31), "Germany", Sex.MALE, postalAddress2,
                 new Contact("joakim@email.com", "021555769", null, null), new HashSet<>(),
@@ -401,8 +401,8 @@ public class TestingDataInitializer {
         datasetContribution.setApproveStatus(ApproveStatus.APPROVED);
         datasetContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         dataset.setContributors(Set.of(datasetContribution));
         datasetRepository.save(dataset);
@@ -499,8 +499,8 @@ public class TestingDataInitializer {
         intangibleProductContribution.getInstitutions().add(dummyOU);
         intangibleProductContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
         intangibleProductContribution.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Ivan", "", "M.", LocalDate.of(2000, 1, 31), null,
                 PersonNameType.DISPLAY_NAME));
@@ -524,8 +524,8 @@ public class TestingDataInitializer {
         monographContribution.setApproveStatus(ApproveStatus.APPROVED);
         monographContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
         monographContribution.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Joachim", "N.", "S.", null, null, PersonNameType.DISPLAY_NAME));
 
@@ -554,7 +554,7 @@ public class TestingDataInitializer {
 
         var person3 = new Person();
         var postalAddress3 = new PostalAddress(country, new HashSet<>(),
-            new HashSet<>(), new HashSet<>(), null, null);
+            new HashSet<>(), new HashSet<>(), null);
         var personalInfo3 =
             new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress3,
                 new Contact("test@email.com", "021555769", "", ""), new HashSet<>(),
@@ -577,8 +577,8 @@ public class TestingDataInitializer {
         intangibleProductContribution2.setApproveStatus(ApproveStatus.APPROVED);
         intangibleProductContribution2.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
         intangibleProductContribution2.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Dušan", "", "N.", null, null, PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(intangibleProductContribution2);
@@ -589,7 +589,7 @@ public class TestingDataInitializer {
 
         var person4 = new Person();
         var postalAddress4 = new PostalAddress(country, new HashSet<>(),
-            new HashSet<>(), new HashSet<>(), null, null);
+            new HashSet<>(), new HashSet<>(), null);
         var personalInfo4 =
             new PersonalInfo(LocalDate.of(1976, 6, 24), "Serbia", Sex.FEMALE, postalAddress4,
                 new Contact("test1@email.com", "021555769", "", "065342221"), new HashSet<>(),
@@ -667,7 +667,7 @@ public class TestingDataInitializer {
         thesisContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), person1.getName(),
                 new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(),
-                    "21000", null), new Contact("", "", "", "")));
+                    "21000"), new Contact("", "", "", "")));
 
         thesis1.setContributors(Set.of(thesisContribution));
         thesisRepository.save(thesis1);
@@ -940,8 +940,8 @@ public class TestingDataInitializer {
         intangibleProductContribution3.getInstitutions().add(dummyOU);
         intangibleProductContribution3.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
         intangibleProductContribution3.getAffiliationStatement().setDisplayPersonName(
             new PersonName("Ivan", "", "R. M.", LocalDate.of(2000, 1, 31), null,
                 PersonNameType.DISPLAY_NAME));
@@ -978,8 +978,8 @@ public class TestingDataInitializer {
         thesisContribution2.setInstitutions(Set.of(dummyOU));
         thesisContribution2.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), person1.getName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         thesis3.setContributors(Set.of(thesisContribution2));
         thesisRepository.save(thesis3);
@@ -1013,8 +1013,8 @@ public class TestingDataInitializer {
         publicationSeriesContribution.setInstitutions(Set.of(dummyOU));
         publicationSeriesContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), person1.getName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         yetAnotherJournal.addContribution(publicationSeriesContribution);
 
@@ -1029,8 +1029,8 @@ public class TestingDataInitializer {
         publicationSeriesContribution2.setInstitutions(Set.of(dummyOU));
         publicationSeriesContribution2.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), person1.getName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         yetAnotherJournal.addContribution(publicationSeriesContribution2);
         journalRepository.save(yetAnotherJournal);
@@ -1060,8 +1060,8 @@ public class TestingDataInitializer {
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person2.getName().getFirstname(), "",
                     person2.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         thesis5.getContributors().add(thesisContribution3);
         thesisRepository.save(thesis5);
@@ -1097,8 +1097,8 @@ public class TestingDataInitializer {
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person3.getName().getFirstname(), "",
                     person3.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         thesis6.getContributors().add(thesisContribution4);
         thesisRepository.save(thesis6);
@@ -1175,8 +1175,8 @@ public class TestingDataInitializer {
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person3.getName().getFirstname(), "",
                     person3.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                    null), new Contact("", "", "", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         thesis7.getContributors().add(thesisContribution5);
         thesisRepository.save(thesis7);

@@ -31,15 +31,15 @@ public class FundingCallConverter {
         });
 
         dto.setMonetaryAmount(new MonetaryAmountDTO());
-        if (Objects.nonNull(fundingCall.getTotal())) {
-            dto.getMonetaryAmount().setAmount(fundingCall.getTotal().getAmount());
-            dto.getMonetaryAmount().setCurrencyId(fundingCall.getTotal().getCurrency().getId());
+        if (Objects.nonNull(fundingCall.getAmount())) {
+            dto.getMonetaryAmount().setAmount(fundingCall.getAmount().getAmount());
+            dto.getMonetaryAmount().setCurrencyId(fundingCall.getAmount().getCurrency().getId());
         }
 
         dto.setFundingTypes(fundingCall.getTypes());
         dto.setUris(fundingCall.getUris());
-        dto.setCallOpens(fundingCall.getCallOpens());
-        dto.setCallCloses(fundingCall.getCallCloses());
+        dto.setDateFrom(fundingCall.getDateFrom());
+        dto.setDateTo(fundingCall.getDateTo());
 
         dto.setFundingProgramId(fundingCall.getFundingProgram().getId());
         dto.setFundingProgramName(MultilingualContentConverter.getMultilingualContentDTO(

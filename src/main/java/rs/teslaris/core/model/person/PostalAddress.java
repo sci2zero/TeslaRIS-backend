@@ -3,7 +3,6 @@ package rs.teslaris.core.model.person;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -15,7 +14,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.model.commontypes.Country;
-import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Getter
@@ -40,7 +38,4 @@ public class PostalAddress {
 
     @Column(name = "postal_number")
     private String postalNumber;
-
-    @Embedded
-    private GeoLocation location;
 }

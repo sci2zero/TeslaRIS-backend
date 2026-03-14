@@ -74,7 +74,7 @@ package commonTypes {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     String processedName
-    String schemeName ' !!!
+    String schemeName
   }
   ResearchArea "*" --> "0..1" ResearchArea : superResearchArea
   
@@ -118,7 +118,7 @@ package commonTypes {
     String updatedBy
     String adminNote
     Boolean deleted
-    String source ' !!!
+    String source
   }
   
   enum ExportableEndpointType {
@@ -297,29 +297,29 @@ package person {
     Set<ResearchArea> researchAreas
     String apvnt
     String eCrisId
-    String nationalScienceId ' !!! changed attribute name, eNaukaId for instance or CienciaID
+    String eNaukaId
+    String nationalScienceId ' for instance CienciaID
     String orcid
     String scopusAuthorId
     String openAlexId
     String webOfScienceResearcherId ' WoS author identifier
-    String scholarID ' !!! Goolge scholar identifier
-    String authenticusId ' !!! https://bioregistry.io/registry/authenticus
-    String lattesId ' !!! https://bioregistry.io/registry/lattes
+    String scholarID ' Goolge scholar identifier
+    String authenticusId ' https://bioregistry.io/registry/authenticus
+    String lattesId ' https://bioregistry.io/registry/lattes
     Set<String> internalIds
     Set<String> accountingIds
-    Set<String> oldIds ' !!! changed type
-    Set<String> mergedIds ' !!! changed type
+    Set<String> oldIds ' !!! changed type, skip for now
+    Set<String> mergedIds ' !!! changed type, skip for now
     Set<String> urls
     ApproveStatus approveStatus
     PersonalInfo personalInfo
-    Set<SDGoal> sdgs ' !!!
-    ProfilePhotoOrLogo photo ' !!! renamed from logo
+    Set<SDGoal> sdgs ' !!! will be done by using indicators
+    ProfilePhotoOrLogo profilePhoto
     LocalDate dateOfLastIndicatorharvest
     Set<Integer> employmentInstitutionsIdHierarchy
   }
 
   Person "0..1" --> "0..1" User : user
-
   Person "1" --> "0..*" PersonName : otherNames 
   
   class PersonName {
@@ -328,8 +328,7 @@ package person {
     String lastname
     LocalDate dateFrom
     LocalDate dateTo
-    PersonNameType personNameType ' !!!
-    Boolean isDefault ' !!! do we need this
+    PersonNameType personNameType
   }
   
   enum PersonNameType {
@@ -344,26 +343,25 @@ package person {
     String placeOfBirth
     Sex sex
     PostalAddress privatePostalAddress ' !!!
-    PostalAddress professionalPostalAddress ' !!! former postalAddress
+    PostalAddress professionalPostalAddress
     Contact privateContact ' !!!
-    Contact professionalContact ' !!! former contact
+    Contact professionalContact
     Set<MultilingualContent> displayTitle
   }
 
   class Contact {
      String contactEmail
      String phoneNumber
-     String faxNumber ' !!!
-     String mobilePhoneNumber ' !!!
+     String faxNumber
+     String mobilePhoneNumber
   }
 
   class PostalAddress {
      Country country
      Set<MultiLingualContent> streetAndNumber
      Set<MultiLingualContent> city
-     Set<MultiLingualContent> state ' !!! region, for instance Vojvodina
-     String postalNumber ' !!!
-     GeoLocation location ' !!!
+     Set<MultiLingualContent> state
+     String postalNumber
   }
  
   class LanguageKnowledge extends ExpertiseOrSkill {
@@ -376,8 +374,7 @@ package person {
     LanguageLevel peer-review ' !!!
   }
   ' the another example of expertise might be usage of some complex piece of equipment
-    
-  ' !!!
+
   enum LanguageLevel{
     A1
     A2 
@@ -386,7 +383,6 @@ package person {
     C1
     C2
   }
-  
 
   class Involvement {
     LocalDate dateFrom
@@ -395,7 +391,7 @@ package person {
     Set<DocumentFile> proofs
     InvolvementType involvementType
     Set<MultiLingualContent> affiliationStatement
-    Boolean favorite ' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity
+    Boolean favorite ' we might implemente later highlight section with most important involvement, output, project, skills and activity
     ' an entity OrganisationUnit can be linked with Involvement, or it should be only specified in affiliationStatement
     ' it means if I studied in Germany, that institution record wouldn't be created in the database, it will be only specified in affiliationStatement
   }
@@ -419,7 +415,7 @@ package person {
 
   Involvement "*" -- "1" Person : involvements / personInvolved
   Involvement "*" --> "0..1" OrganisationUnit : organisationUnit
-  Involvement "*" --> "*" OrganisationUnit : otherInstitutions ' !!! or host institutions
+  Involvement "*" --> "*" OrganisationUnit : otherInstitutions ' !!! or host institutions, skip for now
 
   class Education extends Involvement {
     DegreeType degreeType ' !!!
@@ -564,7 +560,8 @@ package institution {
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
     String numberOfEmployees ' !!!
-    PostalAddress postalAddress ' !!! instead of GeoLocation
+    GeoLocation location
+    PostalAddress postalAddress ' !!!
     ApproveStatus approveStatus
     Set<String> oldIds ' !!! changed type
     Set<String> mergedIds ' !!! changed type

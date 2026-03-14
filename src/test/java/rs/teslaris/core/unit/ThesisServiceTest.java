@@ -270,8 +270,7 @@ public class ThesisServiceTest {
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
-            new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null,
-                null));
+            new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null));
         contribution.setAffiliationStatement(affiliationStatement);
         thesis.setContributors(Set.of(contribution));
 

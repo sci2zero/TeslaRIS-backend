@@ -91,11 +91,11 @@ public class Project extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY)
     private Set<ProjectEvent> events = new HashSet<>();
 
-    @Column(name = "project_started")
-    private LocalDate projectStarted;
+    @Column(name = "date_from")
+    private LocalDate dateFrom;
 
-    @Column(name = "project_completed")
-    private LocalDate projectCompleted;
+    @Column(name = "date_to")
+    private LocalDate dateTo;
 
     @Column(name = "status", nullable = false)
     private ProjectStatus projectStatus;

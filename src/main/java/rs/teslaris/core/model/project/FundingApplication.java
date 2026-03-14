@@ -54,14 +54,14 @@ public class FundingApplication extends BaseEntity {
         name = "amount", column = @Column(name = "requested_amount"))
     @AssociationOverride(
         name = "currency", joinColumns = @JoinColumn(name = "requested_currency_id"))
-    private MonetaryAmount requestedBudget;
+    private MonetaryAmount requestedAmount;
 
     @Embedded
     @AttributeOverride(
-        name = "amount", column = @Column(name = "self_funding_amount"))
+        name = "amount", column = @Column(name = "other_funding_amount"))
     @AssociationOverride(
-        name = "currency", joinColumns = @JoinColumn(name = "self_funding_currency_id"))
-    private MonetaryAmount selfFunding;
+        name = "currency", joinColumns = @JoinColumn(name = "pother_funding_currency_id"))
+    private MonetaryAmount otherFundingSourceAmount;
 
     @Embedded
     @AttributeOverride(
@@ -79,11 +79,11 @@ public class FundingApplication extends BaseEntity {
     @Column(name = "submission_date")
     private LocalDate submissionDate;
 
-    @Column(name = "review_start_date")
-    private LocalDate reviewStartDate;
+    @Column(name = "review_date_from")
+    private LocalDate reviewDateFrom;
 
-    @Column(name = "review_end_date")
-    private LocalDate reviewEndDate;
+    @Column(name = "review_date_to")
+    private LocalDate reviewDateTo;
 
     @Column(name = "decision_date")
     private LocalDate decisionDate;

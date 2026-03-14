@@ -48,11 +48,11 @@ public class FundingProgramDTO {
     private Set<FundingType> fundingTypes = new HashSet<>();
 
     @Valid
-    private MonetaryAmountDTO monetaryAmount;
+    private MonetaryAmountDTO totalAmount;
 
-    private LocalDate programOpens;
+    private LocalDate dateFrom;
 
-    private LocalDate programCloses;
+    private LocalDate dateTo;
 
     private Set<String> uris = new HashSet<>();
 

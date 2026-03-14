@@ -98,8 +98,8 @@ public class FundingCallControllerTest extends BaseTest {
         monetaryAmount.setCurrencyId(1);
         dto.setMonetaryAmount(monetaryAmount);
 
-        dto.setCallOpens(LocalDate.of(2025, 1, 1));
-        dto.setCallCloses(LocalDate.of(2026, 3, 1));
+        dto.setDateFrom(LocalDate.of(2025, 1, 1));
+        dto.setDateTo(LocalDate.of(2026, 3, 1));
 
         var uris = new HashSet<String>();
         uris.add("https://example.com/funding-call");

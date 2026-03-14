@@ -43,9 +43,9 @@ public class FundingCallIndex {
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 
-    @Field(type = FieldType.Date, name = "call_opens")
-    private LocalDate callOpens;
+    @Field(type = FieldType.Date, name = "date_from")
+    private LocalDate dateFrom;
 
-    @Field(type = FieldType.Date, name = "call_closes")
-    private LocalDate callCloses;
+    @Field(type = FieldType.Date, name = "date_to")
+    private LocalDate dateTo;
 }

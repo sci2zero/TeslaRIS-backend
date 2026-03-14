@@ -60,7 +60,6 @@ import rs.teslaris.core.indexmodel.PersonIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
-import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
@@ -317,12 +316,11 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     ((ImportPersonDTO) personDTO).getAddressCity()),
                 multilingualContentService.getMultilingualContent(
                     ((ImportPersonDTO) personDTO).getAddressState()),
-                ((ImportPersonDTO) personDTO).getPostalNumber(),
-                new GeoLocation()
+                ((ImportPersonDTO) personDTO).getPostalNumber()
             );
         } else {
-            address = new PostalAddress(null, new HashSet<>(), new HashSet<>(),
-                new HashSet<>(), null, new GeoLocation());
+            address =
+                new PostalAddress(null, new HashSet<>(), new HashSet<>(), new HashSet<>(), null);
         }
 
         var personalInfo = new PersonalInfo(
