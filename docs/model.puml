@@ -446,59 +446,82 @@ package person {
   }
 
   class Employment extends Involvement {
-    EmploymentPositionType employmentPositionType ' !!!
-    EmploymentPosition employmentPosition
+    EmploymentPosition employmentPosition ' !!! in UI selection of this should go at three levels, 
+			' !!! firstly employment category is selected, then some of its EmploymentPositionTypes can be selected, and then EmploymentPosition 
     Set<MultiLingualContent> role
   }
 
   ' !!!
-  enum EmploymentPositionType {
-    RESEARCH
-    SCIENCE_AND_TECHNOLOGY_MANAGEMENT 
-    UNIVERSITY_TEACHER
-    INVITED_TEACHER
-	' !!! TODO:  align with employment-position-type-enum - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
-	' !!! TODO: consider to be vocabulary in database, such as ResearchArea with basic UI for CRUD operations
+  class EmploymentCategory {
+  	Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    String processedName 
+	' !!! TODO:  ingest employment-category-enum in the database - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
+	' !!! it is for Portugal portal 
+	' !!! SCIENCE - some of existing CRIS UNS position are here
+	' !!! TEACHING - some of existing CRIS UNS position are here (full professor, associate professor, teaching assistant, etc)
+	' !!! POSITIONS_APPOINTMENTS
+	' !!! OTHER_CAREERS
+	' !!! OTHERS
+	' !!! For CRIS UNS
+	' !!! SCIENCE
+	' !!! TEACHING
   }
   
-  enum EmploymentPosition {
-    CONSULTANT  ' !!!
-    COORDINATOR  ' !!!
-    DIRECTOR  ' !!!
-	FOUNDER ' !!! 
-	SCIENTIFIC_ADVISOR  
-    ASSISTANT_TRAINEE
-    EXPERT_ASSOCIATE
-    ASSISTANT
-    SENIOR_EXPERT_ASSOCIATE
-    INSTRUCTOR
-    EXPERT_ADVISOR
-    COLLABORATOR
-    SENIOR_INSTRUCTOR
-    TEACHER
-    TEACHER_OF_FOREIGN_LANGUAGES_AND_SKILLS
-    RESEARCHER
-    PROFESSOR_ENGINEER_HABILITATED
-    ASSISTANT_WITH_MASTER
-    ASSISTANT_WITH_MAGISTRATE
-    ASSISTANT_WITH_DOCTORATE
-    LECTURER
-    SENIOR_LECTURER
-    PROFESSOR_OF_VOCATIONAL_STUDIES
-    ASSISTANT_PROFESSOR
-    ASSOCIATE_PROFESSOR
-    TEACHING_ASSISTANT
-    FULL_PROFESSOR
-    PROFESSOR_EMERITUS
-    RETIRED_PROFESSOR
-    RESEARCH_TRAINEE
-    RESEARCH_ASSOCIATE
-    SCIENTIFIC_COLLABORATOR
-    SENIOR_SCIENTIFIC_COLLABORATOR
-    TEACHING_ASSOCIATE
-    ASSOCIATE_WITHOUT_TITLE
-    ' !!! TODO: ALIGN WITH EMPLOYMENT_POSITION_TITLE_ENUM - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
-	' !!! TODO: consider to be vocabulary in database, such as ResearchArea with basic UI for CRUD operations
+  ' !!!
+  class EmploymentPositionType {
+    EmploymentCategory category
+	Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    String processedName 
+	' !!! TODO: for Portugal portal ingest employment-position-type-enum in the database - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
+	' !!! for CRIS UNS ingest RESEARCH and UNIVERSITY TEACHER 
+  }
+  
+  
+  class EmploymentPosition {
+	EmploymentPositionType type
+	Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    String processedName 
+	' !!! TODO:  for Portugal portal ingest employment-position-title-enum in the database - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd    
+	' !!! plus 
+	' !!! CONSULTANT  
+    ' !!! COORDINATOR  
+    ' !!! DIRECTOR  
+	' !!! FOUNDER 
+	' !!! For CRIS UNS ingest in the database table
+	' !!! SCIENTIFIC_ADVISOR  
+    ' !!! ASSISTANT_TRAINEE
+    ' !!! EXPERT_ASSOCIATE
+    ' !!! ASSISTANT
+    ' !!! SENIOR_EXPERT_ASSOCIATE
+    ' !!! INSTRUCTOR
+    ' !!! EXPERT_ADVISOR
+    ' !!! COLLABORATOR
+    ' !!! SENIOR_INSTRUCTOR
+    ' !!! TEACHER
+    ' !!! TEACHER_OF_FOREIGN_LANGUAGES_AND_SKILLS
+    ' !!! RESEARCHER
+    ' !!! PROFESSOR_ENGINEER_HABILITATED
+    ' !!! ASSISTANT_WITH_MASTER
+    ' !!! ASSISTANT_WITH_MAGISTRATE
+    ' !!! ASSISTANT_WITH_DOCTORATE
+    ' !!! LECTURER
+    ' !!! SENIOR_LECTURER
+    ' !!! PROFESSOR_OF_VOCATIONAL_STUDIES
+    ' !!! ASSISTANT_PROFESSOR
+    ' !!! ASSOCIATE_PROFESSOR
+    ' !!! TEACHING_ASSISTANT
+    ' !!! FULL_PROFESSOR
+    ' !!! PROFESSOR_EMERITUS
+    ' !!! RETIRED_PROFESSOR
+    ' !!! RESEARCH_TRAINEE
+    ' !!! RESEARCH_ASSOCIATE
+    ' !!! SCIENTIFIC_COLLABORATOR
+    ' !!! SENIOR_SCIENTIFIC_COLLABORATOR
+    ' !!! TEACHING_ASSOCIATE
+    ' !!! ASSOCIATE_WITHOUT_TITLE
   }
 
   class Membership extends Involvement {
@@ -507,10 +530,16 @@ package person {
     Set<MultiLingualContent> role
   }
 
+  ' !!!
   enum MembeshipType {
-	BOARD_MEMBER ' !!!
-    PRESIDENT ' !!!
-    VICE_PRESIDENT ' !!!
+	PRESIDENT
+	VICE_PRESIDENT
+	CHAIR
+	VICE_CHAIR
+	BOARD_MEMBER
+	REGULAR_MEMBER
+	ASSOCIATE_MEMBER
+	OBSERVER
   }
 
   class ExpertiseOrSkill {
@@ -530,7 +559,7 @@ package person {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
-    LocalDate effectiveDate ' !!! former date 
+    LocalDate effectiveDate ' !!! former date, skip for now 
     LocalDate endDate ' !!!
     Set<MultiLingualContent> keywords ' !!!
     Set<ResearchArea> researchAreas ' !!!
