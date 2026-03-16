@@ -446,51 +446,24 @@ package person {
   }
 
   class Employment extends Involvement {
-    EmploymentPosition employmentPosition ' !!! in UI selection of this should go at three levels, 
-			' !!! firstly employment category is selected, then some of its EmploymentPositionTypes can be selected, and then EmploymentPosition 
+    EmploymentPosition employmentPosition ' !!! in UI selection it should support hierarchy, just as ResearchArea selection
     Set<MultiLingualContent> role
   }
 
-  ' !!!
-  class EmploymentCategory {
-  	Set<MultiLingualContent> name
-    Set<MultiLingualContent> description
-    String processedName 
-	' !!! TODO:  ingest employment-category-enum in the database - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
-	' !!! it is for Portugal portal 
-	' !!! SCIENCE - some of existing CRIS UNS position are here
-	' !!! TEACHING - some of existing CRIS UNS position are here (full professor, associate professor, teaching assistant, etc)
-	' !!! POSITIONS_APPOINTMENTS
-	' !!! OTHER_CAREERS
-	' !!! OTHERS
-	' !!! For CRIS UNS
-	' !!! SCIENCE
-	' !!! TEACHING
-  }
   
-  ' !!!
-  class EmploymentPositionType {
-    EmploymentCategory category
-	Set<MultiLingualContent> name
-    Set<MultiLingualContent> description
-    String processedName 
-	' !!! TODO: for Portugal portal ingest employment-position-type-enum in the database - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
-	' !!! for CRIS UNS ingest RESEARCH and UNIVERSITY TEACHER 
-  }
-  
-  
+  ' !!! new class, it was previously enum
   class EmploymentPosition {
-	EmploymentPositionType type
 	Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     String processedName 
-	' !!! TODO:  for Portugal portal ingest employment-position-title-enum in the database - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd    
-	' !!! plus 
+	String schemeName
+    ' !!! TODO:  for Portugal portal ingest three levels of position, the first one is employment-category-enum, the second one is employment-position-type-enum, and the third one is employment-position-title-enum - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd    
+	' !!! plus add to some level 
 	' !!! CONSULTANT  
-    ' !!! COORDINATOR  
-    ' !!! DIRECTOR  
+    ' !!! COORDINATOR -> T01V01C01 (Coordinating Researcher) 
+    ' !!! DIRECTOR -> T04V08 (UNIT DIrector) 
 	' !!! FOUNDER 
-	' !!! For CRIS UNS ingest in the database table
+	' !!! For CRIS UNS ingest in the database table (just one level, no hierarchy)
 	' !!! SCIENTIFIC_ADVISOR  
     ' !!! ASSISTANT_TRAINEE
     ' !!! EXPERT_ASSOCIATE
@@ -523,6 +496,7 @@ package person {
     ' !!! TEACHING_ASSOCIATE
     ' !!! ASSOCIATE_WITHOUT_TITLE
   }
+  EmploymentPosition "*" --> "0..1" EmploymentPosition : superEmploymentPosition
 
   class Membership extends Involvement {
     MembershipType membershipType
