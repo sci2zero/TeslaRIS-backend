@@ -5,8 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.commontypes.CurrencyDTO;
-import rs.teslaris.core.model.project.Currency;
 import rs.teslaris.core.service.interfaces.JPAService;
+import rs.teslaris.project.model.common.Currency;
 
 @Service
 public interface CurrencyService extends JPAService<Currency> {

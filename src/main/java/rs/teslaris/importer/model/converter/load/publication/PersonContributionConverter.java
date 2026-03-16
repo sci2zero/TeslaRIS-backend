@@ -162,14 +162,14 @@ public class PersonContributionConverter {
                 if (nameParts.length == 2) {
                     contribution.setPersonName(
                         new PersonNameDTO(null, nameParts[1], "", nameParts[0], null, null,
-                            PersonNameType.DISPLAY_NAME));
+                            PersonNameType.CITATION_NAME));
                     return;
                 }
             }
 
             contribution.setPersonName(
                 new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null,
-                    PersonNameType.DISPLAY_NAME));
+                    PersonNameType.CITATION_NAME));
         }
     }
 

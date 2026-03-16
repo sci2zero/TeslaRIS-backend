@@ -30,7 +30,7 @@ public class NewOtherNameNotificationHandler implements NotificationHandler {
         var lastname = notification.getValues().get("lastname");
         var middlename = notification.getValues().get("middlename");
         person.getOtherNames().add(new PersonName(firstname, middlename, lastname, null, null,
-            PersonNameType.DISPLAY_NAME));
+            PersonNameType.CITATION_NAME));
 
         personService.indexPerson(personService.save(person));
     }

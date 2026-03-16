@@ -29,9 +29,15 @@ public class PersonalInfoDTO implements PersonIdentifierable {
     @Valid
     private PostalAddressDTO postalAddress;
 
+    @Valid
+    private PostalAddressDTO privatePostalAddress;
+
     @NotNull(message = "You have to provide a contact info.")
     @Valid
     private ContactDTO contact;
+
+    @Valid
+    private ContactDTO privateContact;
 
     private String apvnt;
 

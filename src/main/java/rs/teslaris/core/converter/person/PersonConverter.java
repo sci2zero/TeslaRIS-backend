@@ -49,8 +49,11 @@ public class PersonConverter {
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
 
-        var postalAddress =
+        var professionalostalAddress =
             getPostalAddressDTO(person.getPersonalInfo().getProfessionalPostalAddress());
+
+        var privatePostalAddress =
+            getPostalAddressDTO(person.getPersonalInfo().getPrivatePostalAddress());
 
         var employmentIds = new ArrayList<Integer>();
         var educationIds = new ArrayList<Integer>();
@@ -61,7 +64,7 @@ public class PersonConverter {
         setExpertisesAndSkills(person, expertisesOrSkills);
 
         var prizes = new ArrayList<PrizeResponseDTO>();
-        setPrizes(person, prizes);
+        person.getPrizes().forEach(prize -> prizes.add(PrizeConverter.toDTO(prize)));
 
         var personResponse = new PersonResponseDTO(
             person.getId(),
@@ -72,7 +75,7 @@ public class PersonConverter {
             new PersonalInfoDTO(person.getPersonalInfo()
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo()
-                    .getSex(), postalAddress,
+                    .getSex(), professionalostalAddress, privatePostalAddress,
                 new ContactDTO(Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
                     person.getPersonalInfo().getProfessionalContact().getContactEmail() : null,
                     Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
@@ -81,6 +84,15 @@ public class PersonConverter {
                         person.getPersonalInfo().getProfessionalContact().getFaxNumber() : null,
                     Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
                         person.getPersonalInfo().getProfessionalContact().getMobilePhoneNumber() :
+                        null),
+                new ContactDTO(Objects.nonNull(person.getPersonalInfo().getPrivateContact()) ?
+                    person.getPersonalInfo().getPrivateContact().getContactEmail() : null,
+                    Objects.nonNull(person.getPersonalInfo().getPrivateContact()) ?
+                        person.getPersonalInfo().getPrivateContact().getPhoneNumber() : null,
+                    Objects.nonNull(person.getPersonalInfo().getPrivateContact()) ?
+                        person.getPersonalInfo().getPrivateContact().getFaxNumber() : null,
+                    Objects.nonNull(person.getPersonalInfo().getPrivateContact()) ?
+                        person.getPersonalInfo().getPrivateContact().getMobilePhoneNumber() :
                         null),
                 person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
@@ -183,10 +195,8 @@ public class PersonConverter {
                                                 ArrayList<Integer> membershipIds) {
         for (var inv : involvementRepository.findIdsTypesAndDatesByPersonId(person.getId())) {
             switch (inv.getInvolvementType()) {
-                case HIRED_BY, EMPLOYED_AT, CANDIDATE, FOUNDER, CONSULTANT, COORDINATOR, DIRECTOR ->
-                    employmentIds.add(inv.getId());
-                case MEMBER_OF, BOARD_MEMBER, PRESIDENT, VICE_PRESIDENT ->
-                    membershipIds.add(inv.getId());
+                case HIRED_BY, EMPLOYED_AT, CANDIDATE -> employmentIds.add(inv.getId());
+                case MEMBER_OF -> membershipIds.add(inv.getId());
                 default -> educationIds.add(inv.getId());
             }
         }
@@ -210,43 +220,44 @@ public class PersonConverter {
         });
     }
 
-    private static void setPrizes(Person person, ArrayList<PrizeResponseDTO> prizes) {
-        person.getPrizes().forEach(prize -> {
-            var dto = new PrizeResponseDTO();
-            dto.setId(prize.getId());
-            dto.setTitle(
-                MultilingualContentConverter.getMultilingualContentDTO(prize.getTitle()));
-            dto.setDescription(
-                MultilingualContentConverter.getMultilingualContentDTO(prize.getDescription()));
-            dto.setDate(prize.getDate());
-
-            dto.setProofs(new ArrayList<>());
-            prize.getProofs().forEach(proof -> {
-                dto.getProofs().add(DocumentFileConverter.toDTO(proof));
-            });
-            prizes.add(dto);
-        });
-    }
-
     public static PersonUserResponseDTO toDTOWithUser(Person person) {
         var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
 
-        var postalAddress =
+        var professionalPostalAddress =
             getPostalAddressDTO(person.getPersonalInfo().getProfessionalPostalAddress());
+
+        var privatePostalAddress =
+            getPostalAddressDTO(person.getPersonalInfo().getPrivatePostalAddress());
 
         UserResponseDTO userDTO = null;
         if (Objects.nonNull(person.getUser())) {
             userDTO = UserConverter.toUserResponseDTO(person.getUser());
         }
 
-        var contact = new ContactDTO();
+        var professionalContact = new ContactDTO();
         if (Objects.nonNull(person.getPersonalInfo().getProfessionalContact())) {
-            contact.setContactEmail(
+            professionalContact.setContactEmail(
                 person.getPersonalInfo().getProfessionalContact().getContactEmail());
-            contact.setPhoneNumber(
+            professionalContact.setPhoneNumber(
                 person.getPersonalInfo().getProfessionalContact().getPhoneNumber());
+            professionalContact.setFaxNumber(
+                person.getPersonalInfo().getProfessionalContact().getFaxNumber());
+            professionalContact.setMobilePhoneNumber(
+                person.getPersonalInfo().getProfessionalContact().getMobilePhoneNumber());
+        }
+
+        var privateContact = new ContactDTO();
+        if (Objects.nonNull(person.getPersonalInfo().getPrivateContact())) {
+            privateContact.setContactEmail(
+                person.getPersonalInfo().getPrivateContact().getContactEmail());
+            privateContact.setPhoneNumber(
+                person.getPersonalInfo().getPrivateContact().getPhoneNumber());
+            privateContact.setFaxNumber(
+                person.getPersonalInfo().getPrivateContact().getFaxNumber());
+            privateContact.setMobilePhoneNumber(
+                person.getPersonalInfo().getPrivateContact().getMobilePhoneNumber());
         }
 
         var instituion = new Pair<Integer, List<MultilingualContentDTO>>(null, null);
@@ -270,7 +281,8 @@ public class PersonConverter {
                     PersonNameType.DISPLAY_NAME)), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
-                person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),
+                person.getPersonalInfo().getSex(), professionalPostalAddress, privatePostalAddress,
+                professionalContact, privateContact, person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getOpenAlexId(),
                 person.getWebOfScienceResearcherId(), person.getNationalScienceId(),
@@ -289,10 +301,15 @@ public class PersonConverter {
         if (!SessionUtil.isUserLoggedIn()) {
             if (!fieldVisibilityConfiguration.getContactEmailVisible()) {
                 personResponse.getPersonalInfo().getContact().setContactEmail("");
+                personResponse.getPersonalInfo().getPrivateContact().setContactEmail("");
             }
 
             if (!fieldVisibilityConfiguration.getPhoneNumberVisible()) {
                 personResponse.getPersonalInfo().getContact().setPhoneNumber("");
+                personResponse.getPersonalInfo().getPrivateContact().setPhoneNumber("");
+
+                personResponse.getPersonalInfo().getContact().setMobilePhoneNumber("");
+                personResponse.getPersonalInfo().getPrivateContact().setMobilePhoneNumber("");
             }
 
             if (!fieldVisibilityConfiguration.getBirthplaceVisible()) {
@@ -310,6 +327,11 @@ public class PersonConverter {
             personResponse.getPersonalInfo().getPostalAddress().setCountryId(null);
             personResponse.getPersonalInfo().getPostalAddress().setCity(new ArrayList<>());
             personResponse.getPersonalInfo().getPostalAddress()
+                .setStreetAndNumber(new ArrayList<>());
+
+            personResponse.getPersonalInfo().getPrivatePostalAddress().setCountryId(null);
+            personResponse.getPersonalInfo().getPrivatePostalAddress().setCity(new ArrayList<>());
+            personResponse.getPersonalInfo().getPrivatePostalAddress()
                 .setStreetAndNumber(new ArrayList<>());
         } else if (!SessionUtil.isUserLoggedInAndAdmin()) {
             if (fieldVisibilityConfiguration.getDateOfBirthVisible()) {

@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.converter.commontypes.CurrencyConverter;
 import rs.teslaris.core.dto.commontypes.CurrencyDTO;
-import rs.teslaris.core.model.project.Currency;
-import rs.teslaris.core.repository.project.CurrencyRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
+import rs.teslaris.project.model.common.Currency;
+import rs.teslaris.project.repository.common.CurrencyRepository;
 
 @Service
 @RequiredArgsConstructor

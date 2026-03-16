@@ -92,6 +92,7 @@ import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Prize;
+import rs.teslaris.core.model.person.PrizeType;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.PasswordResetToken;
@@ -224,9 +225,11 @@ public class TestingDataInitializer {
         var postalAddress = new PostalAddress(country, new HashSet<>(),
             new HashSet<>(), new HashSet<>(), null);
         var personalInfo =
-            new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
-                new Contact("john@ftn.uns.ac.com", "021555666", null, null), new HashSet<>(),
-                new HashSet<>());
+            new PersonalInfo(LocalDate.of(
+                2000, 1, 25), "Serbia", Sex.MALE,
+                postalAddress, new PostalAddress(),
+                new Contact("john@ftn.uns.ac.com", "021555666", null, null),
+                new Contact(), new HashSet<>(), new HashSet<>());
         var person1 = new Person();
 
         if (addOldIdData) {
@@ -354,9 +357,10 @@ public class TestingDataInitializer {
         var postalAddress2 = new PostalAddress(country, new HashSet<>(),
             new HashSet<>(), new HashSet<>(), null);
         var personalInfo2 =
-            new PersonalInfo(LocalDate.of(2000, 1, 31), "Germany", Sex.MALE, postalAddress2,
-                new Contact("joakim@email.com", "021555769", null, null), new HashSet<>(),
-                new HashSet<>());
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Germany", Sex.MALE,
+                postalAddress2, new PostalAddress(),
+                new Contact("joakim@email.com", "021555769", null, null), new Contact(),
+                new HashSet<>(), new HashSet<>());
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
         person2.setName(
@@ -470,11 +474,14 @@ public class TestingDataInitializer {
             Set.of(new MultiLingualContent(englishTag,
                 "1st place on a national cybersecurity competition finals. The competition is conducted in 5-man teams.",
                 1)),
+            Set.of(new MultiLingualContent(englishTag,
+                "cybersecurity\nnational competition\nfirst place\nteams",
+                1)),
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "application/pdf", 127L, ResourceType.SUPPLEMENT,
                 AccessRights.OPEN_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
                 LocalDateTime.now(), false, false, null, null, person1, false)),
-            LocalDate.of(2023, 4, 17), person1));
+            LocalDate.of(2023, 4, 17), null, person1, PrizeType.AWARD, new HashSet<>(), true));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
@@ -557,8 +564,10 @@ public class TestingDataInitializer {
             new HashSet<>(), new HashSet<>(), null);
         var personalInfo3 =
             new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress3,
-                new Contact("test@email.com", "021555769", "", ""), new HashSet<>(),
-                new HashSet<>());
+                new PostalAddress(),
+                new Contact("test@email.com", "021555769", "", ""),
+                new Contact("private@email.com", "021111222", "", "067211332"),
+                new HashSet<>(), new HashSet<>());
         person3.setApproveStatus(ApproveStatus.APPROVED);
         person3.setPersonalInfo(personalInfo3);
         person3.setName(
@@ -568,7 +577,6 @@ public class TestingDataInitializer {
         personRepository.save(person3);
 
         var intangibleProductContribution2 = new PersonDocumentContribution();
-//        intangibleProductContribution2.setPerson(person3);
         intangibleProductContribution2.setContributionType(DocumentContributionType.AUTHOR);
         intangibleProductContribution2.setIsMainContributor(false);
         intangibleProductContribution2.setIsCorrespondingContributor(false);
@@ -592,15 +600,15 @@ public class TestingDataInitializer {
             new HashSet<>(), new HashSet<>(), null);
         var personalInfo4 =
             new PersonalInfo(LocalDate.of(1976, 6, 24), "Serbia", Sex.FEMALE, postalAddress4,
-                new Contact("test1@email.com", "021555769", "", "065342221"), new HashSet<>(),
-                new HashSet<>());
+                new PostalAddress(),
+                new Contact("test1@email.com", "021555769", "", "065342221"),
+                null, new HashSet<>(), new HashSet<>());
         person4.setApproveStatus(ApproveStatus.APPROVED);
         person4.setPersonalInfo(personalInfo4);
         person4.setName(
             new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null,
                 PersonNameType.DISPLAY_NAME));
         person4.setScopusAuthorId("14419566900");
-//        person4.setOrcid("0009-0008-0599-0599");
         personRepository.save(person4);
 
         var conferenceEvent3 = new Conference();

@@ -48,12 +48,14 @@ import rs.teslaris.core.converter.person.PersonConverter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ProfilePhotoOrLogoDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
+import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.ImportPersonDTO;
 import rs.teslaris.core.dto.person.PersonIdentifierable;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.dto.person.PersonResponseDTO;
 import rs.teslaris.core.dto.person.PersonUserResponseDTO;
 import rs.teslaris.core.dto.person.PersonalInfoDTO;
+import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.dto.person.involvement.InvolvementDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.PersonIndex;
@@ -327,8 +329,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             personDTO.getLocalBirthDate(),
             isImport ? ((ImportPersonDTO) personDTO).getPlaceOfBirth() : null,
             personDTO.getSex(),
-            address,
-            contact,
+            address, new PostalAddress(),
+            contact, new Contact(),
             new HashSet<>(),
             multilingualContentService.getMultilingualContent(personDTO.getDisplayTitle())
         );
@@ -511,49 +513,86 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personalInfoToUpdate.setDisplayTitle(
             multilingualContentService.getMultilingualContent(personalInfo.getDisplayTitle()));
 
-        var countryId = personalInfo.getPostalAddress().getCountryId();
-
-        personalInfoToUpdate.getProfessionalPostalAddress()
-            .setCountry(countryId != null ? countryService.findOne(countryId) : null);
-
-        personToUpdate.getPersonalInfo().getProfessionalPostalAddress().getStreetAndNumber()
-            .clear();
-        setPersonStreetAndNumberInfo(personToUpdate, personalInfoToUpdate, personalInfo);
-
-        personToUpdate.getPersonalInfo().getProfessionalPostalAddress().getCity().clear();
-        setPersonCityInfo(personToUpdate, personalInfoToUpdate, personalInfo);
-
-        personToUpdate.getPersonalInfo().getProfessionalPostalAddress().getState().clear();
-        setPersonStateInfo(personToUpdate, personalInfoToUpdate, personalInfo);
-
-        personToUpdate.getPersonalInfo().getProfessionalPostalAddress()
-            .setPostalNumber(personalInfo.getPostalAddress().getPostalNumber());
-
-        if (Objects.nonNull(personalInfo.getContact())) {
-            if (Objects.isNull(personalInfoToUpdate.getProfessionalContact())) {
-                personalInfoToUpdate.setProfessionalContact(new Contact());
-            }
-
-            personalInfoToUpdate.getProfessionalContact()
-                .setContactEmail(personalInfo.getContact().getContactEmail());
-            personalInfoToUpdate.getProfessionalContact()
-                .setFaxNumber(personalInfo.getContact().getFaxNumber());
-
-            personalInfoToUpdate.getProfessionalContact().setPhoneNumber(
-                formatPhoneNumber(personalInfo.getContact().getPhoneNumber(), defaultRegionCode)
-            );
-
-            personalInfoToUpdate.getProfessionalContact().setMobilePhoneNumber(
-                formatPhoneNumber(personalInfo.getContact().getMobilePhoneNumber(),
-                    defaultRegionCode)
-            );
+        if (Objects.isNull(personToUpdate.getPersonalInfo().getProfessionalPostalAddress())) {
+            personToUpdate.getPersonalInfo().setProfessionalPostalAddress(new PostalAddress());
         }
+        updatePostalAddress(personToUpdate,
+            personToUpdate.getPersonalInfo().getProfessionalPostalAddress(),
+            personalInfo.getPostalAddress());
+
+        if (Objects.isNull(personToUpdate.getPersonalInfo().getPrivatePostalAddress())) {
+            personToUpdate.getPersonalInfo().setPrivatePostalAddress(new PostalAddress());
+        }
+        updatePostalAddress(personToUpdate,
+            personToUpdate.getPersonalInfo().getPrivatePostalAddress(),
+            personalInfo.getPrivatePostalAddress());
+
+        if (Objects.isNull(personalInfoToUpdate.getProfessionalContact())) {
+            personalInfoToUpdate.setProfessionalContact(new Contact());
+        }
+        updateContact(personalInfoToUpdate.getProfessionalContact(), personalInfo.getContact(),
+            defaultRegionCode);
+
+        if (Objects.isNull(personalInfoToUpdate.getPrivateContact())) {
+            personalInfoToUpdate.setPrivateContact(new Contact());
+        }
+        updateContact(personalInfoToUpdate.getPrivateContact(), personalInfo.getPrivateContact(),
+            defaultRegionCode);
 
         save(personToUpdate);
 
         if (personToUpdate.getApproveStatus().equals(ApproveStatus.APPROVED)) {
             indexPerson(personToUpdate);
         }
+    }
+
+    private void updateContact(Contact target, ContactDTO source, String defaultRegionCode) {
+        if (Objects.isNull(source)) {
+            target.setContactEmail(null);
+            target.setPhoneNumber(null);
+            target.setFaxNumber(null);
+            target.setMobilePhoneNumber(null);
+            return;
+        }
+
+        target.setContactEmail(source.getContactEmail());
+
+        target.setPhoneNumber(
+            formatPhoneNumber(source.getPhoneNumber(), defaultRegionCode)
+        );
+
+        target.setFaxNumber(
+            formatPhoneNumber(source.getFaxNumber(), defaultRegionCode)
+        );
+
+        target.setMobilePhoneNumber(
+            formatPhoneNumber(source.getMobilePhoneNumber(), defaultRegionCode)
+        );
+    }
+
+    private void updatePostalAddress(Person person, PostalAddress target, PostalAddressDTO source) {
+        if (Objects.isNull(source)) {
+            target.setCountry(null);
+            target.getStreetAndNumber().clear();
+            target.getCity().clear();
+            target.getState().clear();
+            target.setPostalNumber(null);
+            return;
+        }
+
+        var countryId = source.getCountryId();
+        target.setCountry(Objects.nonNull(countryId) ? countryService.findOne(countryId) : null);
+
+        target.getStreetAndNumber().clear();
+        setPersonStreetAndNumberInfo(person, target, source);
+
+        target.getCity().clear();
+        setPersonCityInfo(person, target, source);
+
+        target.getState().clear();
+        setPersonStateInfo(person, target, source);
+
+        target.setPostalNumber(source.getPostalNumber());
     }
 
     @Nullable
@@ -891,40 +930,39 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
 
     @Transactional
     private void setPersonStreetAndNumberInfo(Person personToUpdate,
-                                              PersonalInfo personalInfoToUpdate,
-                                              PersonalInfoDTO personalInfo) {
-        personalInfo.getPostalAddress().getStreetAndNumber().stream().map(streetAndNumber -> {
+                                              PostalAddress postalAddress,
+                                              PostalAddressDTO postalAddressDTO) {
+        postalAddressDTO.getStreetAndNumber().stream().map(streetAndNumber -> {
             var languageTag =
                 languageTagService.findOne(streetAndNumber.getLanguageTagId());
             return new MultiLingualContent(languageTag, streetAndNumber.getContent(),
                 streetAndNumber.getPriority());
         }).forEach(streetAndNumberContent -> {
-            personalInfoToUpdate.getProfessionalPostalAddress().getStreetAndNumber()
-                .add(streetAndNumberContent);
+            postalAddress.getStreetAndNumber().add(streetAndNumberContent);
             this.save(personToUpdate);
         });
     }
 
     @Transactional
-    private void setPersonCityInfo(Person personToUpdate, PersonalInfo personalInfoToUpdate,
-                                   PersonalInfoDTO personalInfo) {
-        personalInfo.getPostalAddress().getCity().stream().map(city -> {
+    private void setPersonCityInfo(Person personToUpdate, PostalAddress postalAddress,
+                                   PostalAddressDTO postalAddressDTO) {
+        postalAddressDTO.getCity().stream().map(city -> {
             var languageTag = languageTagService.findOne(city.getLanguageTagId());
             return new MultiLingualContent(languageTag, city.getContent(), city.getPriority());
         }).forEach(city -> {
-            personalInfoToUpdate.getProfessionalPostalAddress().getCity().add(city);
+            postalAddress.getCity().add(city);
             this.save(personToUpdate);
         });
     }
 
     @Transactional
-    private void setPersonStateInfo(Person personToUpdate, PersonalInfo personalInfoToUpdate,
-                                    PersonalInfoDTO personalInfo) {
-        personalInfo.getPostalAddress().getState().stream().map(state -> {
+    private void setPersonStateInfo(Person personToUpdate, PostalAddress postalAddress,
+                                    PostalAddressDTO postalAddressDTO) {
+        postalAddressDTO.getState().stream().map(state -> {
             var languageTag = languageTagService.findOne(state.getLanguageTagId());
             return new MultiLingualContent(languageTag, state.getContent(), state.getPriority());
         }).forEach(state -> {
-            personalInfoToUpdate.getProfessionalPostalAddress().getState().add(state);
+            postalAddress.getState().add(state);
             this.save(personToUpdate);
         });
     }

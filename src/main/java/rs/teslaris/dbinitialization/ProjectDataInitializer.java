@@ -9,17 +9,17 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.core.model.project.Currency;
-import rs.teslaris.core.model.project.Funding;
-import rs.teslaris.core.model.project.FundingCall;
-import rs.teslaris.core.model.project.FundingPart;
-import rs.teslaris.core.model.project.FundingProgram;
-import rs.teslaris.core.model.project.MonetaryAmount;
-import rs.teslaris.core.repository.project.CurrencyRepository;
-import rs.teslaris.core.repository.project.FundingCallRepository;
-import rs.teslaris.core.repository.project.FundingPartRepository;
-import rs.teslaris.core.repository.project.FundingProgramRepository;
-import rs.teslaris.core.repository.project.FundingRepository;
+import rs.teslaris.project.model.common.Currency;
+import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.project.model.funding.Funding;
+import rs.teslaris.project.model.funding.FundingCall;
+import rs.teslaris.project.model.funding.FundingPart;
+import rs.teslaris.project.model.funding.FundingProgram;
+import rs.teslaris.project.repository.common.CurrencyRepository;
+import rs.teslaris.project.repository.funding.FundingCallRepository;
+import rs.teslaris.project.repository.funding.FundingPartRepository;
+import rs.teslaris.project.repository.funding.FundingProgramRepository;
+import rs.teslaris.project.repository.funding.FundingRepository;
 
 @Component
 @RequiredArgsConstructor

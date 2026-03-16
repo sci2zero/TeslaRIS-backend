@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -123,7 +124,7 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
     @Column(columnDefinition = "jsonb", name = "merged_ids")
     private Set<Integer> mergedIds = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas;
 
     @Column(name = "approve_status", nullable = false)

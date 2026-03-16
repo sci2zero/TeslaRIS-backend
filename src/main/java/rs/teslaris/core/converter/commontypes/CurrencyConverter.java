@@ -1,7 +1,7 @@
 package rs.teslaris.core.converter.commontypes;
 
 import rs.teslaris.core.dto.commontypes.CurrencyDTO;
-import rs.teslaris.core.model.project.Currency;
+import rs.teslaris.project.model.common.Currency;
 
 public class CurrencyConverter {
 

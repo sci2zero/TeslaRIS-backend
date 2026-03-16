@@ -41,6 +41,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.person.PrizeServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -75,6 +76,9 @@ public class PrizeServiceTest {
 
     @Mock
     private OrganisationUnitService organisationUnitService;
+
+    @Mock
+    private ResearchAreaService researchAreaService;
 
     @InjectMocks
     private PrizeServiceImpl prizeService;

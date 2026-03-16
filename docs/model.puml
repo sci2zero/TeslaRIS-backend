@@ -342,9 +342,9 @@ package person {
     LocalDate localBirthDate
     String placeOfBirth
     Sex sex
-    PostalAddress privatePostalAddress ' !!!
+    PostalAddress privatePostalAddress
     PostalAddress professionalPostalAddress
-    Contact privateContact ' !!!
+    Contact privateContact
     Contact professionalContact
     Set<MultilingualContent> displayTitle
   }
@@ -366,14 +366,14 @@ package person {
  
   class LanguageKnowledge extends ExpertiseOrSkill {
     Language language
-    Boolean motherTongue ' !!!
-    LanguageLevel reading ' !!!
-    LanguageLevel writing ' !!!
-    LanguageLevel speaking ' !!!
-    LanguageLevel listening ' !!!
-    LanguageLevel academicReview ' !!!
-	LanguageLevel academicWriting ' !!!
-	LanguageLevel overall ' !!!
+    Boolean motherTongue
+    LanguageLevel reading
+    LanguageLevel writing
+    LanguageLevel speaking
+    LanguageLevel listening
+    LanguageLevel academicReview
+	LanguageLevel academicWriting
+	LanguageLevel overall
   }
   ' the another example of expertise might be usage of some complex piece of equipment
 
@@ -529,18 +529,17 @@ package person {
     
 
   class Prize { 
-    PrizeType type ' !!!
+    PrizeType type
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
     LocalDate effectiveDate ' !!! former date, skip for now 
-    LocalDate endDate ' !!!
-    Set<MultiLingualContent> keywords ' !!!
-    Set<ResearchArea> researchAreas ' !!!
-    Boolean favorite ' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity
+    LocalDate endDate
+    Set<MultiLingualContent> keywords
+    Set<ResearchArea> researchAreas
+    Boolean favorite ' we might implemente later highlight section with most important involvement, output, project, skills and activity
   }
 
-  ' !!!
   enum PrizeType {
     AWARD
     TITLE 
@@ -574,8 +573,8 @@ package institution {
     GeoLocation location
     PostalAddress postalAddress ' !!!
     ApproveStatus approveStatus
-    Set<String> oldIds ' !!! changed type
-    Set<String> mergedIds ' !!! changed type
+    Set<String> oldIds ' !!! changed type, skip for now
+    Set<String> mergedIds ' !!! changed type, skip for now
     Set<String> accountingIds 
     Set<String> internalIds ' !!!
     String scopusAfid
@@ -648,9 +647,8 @@ package institution {
     MEMBER_OF
     SPIN_OF
   }
-  
-  ' !!!
-  class OrganizationUnitOutputConfiguration {
+
+  class OrganisationUnitOutputConfiguration {
     Boolean showOutputs
     Boolean showBySpecifiedAffiliation
     Boolean showByPublicationYearEmployments
@@ -674,7 +672,6 @@ package document {
     REVIEWER
     ADVISOR
     BOARD_MEMBER
-    BOARD_PRESIDENT ' !!! not necessary, there is a flag isBoardPresident
     MAIN_ARGUER ' !!! should this be only EventContributionType at THESIS_DEFENCE?
     ARGUER ' !!!
     OWNER ' !!!

@@ -243,7 +243,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contributionDTO.getPersonName().getDateFrom(),
             contributionDTO.getPersonName().getDateTo(),
             Objects.requireNonNullElse(contributionDTO.getPersonName().getPersonNameType(),
-                PersonNameType.DISPLAY_NAME));
+                PersonNameType.CITATION_NAME));
         if (personName.getFirstname().isEmpty() && personName.getLastname().isEmpty() &&
             Objects.nonNull(contributor)) {
             personName = new PersonName(contributor.getName().getFirstname(),
@@ -252,7 +252,7 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                 contributor.getName().getDateFrom(),
                 contributor.getName().getDateTo(),
                 Objects.requireNonNullElse(contributor.getName().getNameType(),
-                    PersonNameType.DISPLAY_NAME));
+                    PersonNameType.CITATION_NAME));
         } else if (Objects.nonNull(contributor)) {
             if (contributor.getName().equals(personName) ||
                 contributor.getOtherNames().contains(personName)) {

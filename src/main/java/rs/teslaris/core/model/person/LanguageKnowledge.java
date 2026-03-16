@@ -26,21 +26,27 @@ public class LanguageKnowledge extends ExpertiseOrSkill {
     @JoinColumn(name = "language_id", nullable = false)
     private Language language;
 
-    @Column(name = "mother-tongue")
+    @Column(name = "mother_tongue")
     private Boolean motherTongue;
 
-    @Column(name = "read")
-    private LanguageLevel read;
+    @Column(name = "reading")
+    private LanguageLevel reading;
 
-    @Column(name = "write")
-    private LanguageLevel write;
+    @Column(name = "writing")
+    private LanguageLevel writing;
 
-    @Column(name = "speak")
-    private LanguageLevel speak;
+    @Column(name = "speaking")
+    private LanguageLevel speaking;
 
-    @Column(name = "understand-spoken")
-    private LanguageLevel understandSpoken;
+    @Column(name = "listening")
+    private LanguageLevel listening;
 
-    @Column(name = "peer-review")
-    private LanguageLevel peerReview;
+    @Column(name = "academic_review")
+    private LanguageLevel academicReview;
+
+    @Column(name = "academic_writing")
+    private LanguageLevel academicWriting;
+
+    @Column(name = "overall")
+    private LanguageLevel overall;
 }

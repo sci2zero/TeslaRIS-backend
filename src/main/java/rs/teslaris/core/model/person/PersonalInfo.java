@@ -52,12 +52,33 @@ public class PersonalInfo {
 
     @Embedded
     @AttributeOverrides({
+        @AttributeOverride(name = "postalNumber", column = @Column(name = "private_postal_number"))
+    })
+    @AssociationOverrides({
+        @AssociationOverride(name = "country", joinColumns = @JoinColumn(name = "private_country_id")),
+        @AssociationOverride(name = "streetAndNumber", joinColumns = @JoinColumn(name = "private_street_id")),
+        @AssociationOverride(name = "city", joinColumns = @JoinColumn(name = "private_city_id")),
+        @AssociationOverride(name = "state", joinColumns = @JoinColumn(name = "private_state_id"))
+    })
+    private PostalAddress privatePostalAddress;
+
+    @Embedded
+    @AttributeOverrides({
         @AttributeOverride(name = "contactEmail", column = @Column(name = "professional_contact_email")),
         @AttributeOverride(name = "phoneNumber", column = @Column(name = "professional_phone_number")),
         @AttributeOverride(name = "faxNumber", column = @Column(name = "professional_fax_number")),
         @AttributeOverride(name = "mobilePhoneNumber", column = @Column(name = "professional_mobile_phone_number"))
     })
     private Contact professionalContact;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "contactEmail", column = @Column(name = "private_contact_email")),
+        @AttributeOverride(name = "phoneNumber", column = @Column(name = "private_phone_number")),
+        @AttributeOverride(name = "faxNumber", column = @Column(name = "private_fax_number")),
+        @AttributeOverride(name = "mobilePhoneNumber", column = @Column(name = "private_mobile_phone_number"))
+    })
+    private Contact privateContact;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")
