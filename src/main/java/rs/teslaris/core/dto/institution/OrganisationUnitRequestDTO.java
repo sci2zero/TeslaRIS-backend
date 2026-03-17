@@ -2,6 +2,7 @@ package rs.teslaris.core.dto.institution;
 
 
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.institution.OrganisationUnitSector;
 
 @Getter
 @Setter
@@ -23,7 +25,10 @@ public class OrganisationUnitRequestDTO {
     private List<MultilingualContentDTO> name;
 
     @NotNull(message = "You have to provide name abbreviation.")
-    private String nameAbbreviation;
+    private List<MultilingualContentDTO> nameAbbreviation;
+
+    @NotNull(message = "You have to provide organisation description.")
+    private List<MultilingualContentDTO> description;
 
     @NotNull(message = "You have to provide organisation keywords.")
     private List<MultilingualContentDTO> keyword;
@@ -40,6 +45,22 @@ public class OrganisationUnitRequestDTO {
     private String openAlexId;
 
     private String ror;
+
+    private String ringgold;
+
+    private String fundref;
+
+    private String isni;
+
+    private String athensId;
+
+    private String ncesId;
+
+    private String fctId;
+
+    private String dgeecId;
+
+    private String nifId;
 
     private Integer oldId;
 
@@ -64,4 +85,10 @@ public class OrganisationUnitRequestDTO {
     private boolean allowingSubdomainsDl;
 
     private boolean legalEntity;
+
+    private OrganisationUnitSector sector;
+
+    private Boolean startup;
+
+    private LocalDate dateEstablished;
 }

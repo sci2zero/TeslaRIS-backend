@@ -1162,21 +1162,46 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             employmentsSr.append(
                 institutionNameSr.toString().isEmpty() ? institutionNameOther :
                     institutionNameSr);
+            employmentsOther.append(
+                institutionNameOther.toString().isEmpty() ? institutionNameSr :
+                    institutionNameOther);
 
-            if (Objects.nonNull(employment.getOrganisationUnit()) &&
-                Objects.nonNull(employment.getOrganisationUnit().getNameAbbreviation()) &&
-                !employment.getOrganisationUnit().getNameAbbreviation().isBlank()) {
-                employmentsSr
-                    .append(employment.getOrganisationUnit().getNameAbbreviation().trim())
-                    .append("; ");
-            } else {
-                employmentsSr.append("; ");
+            Set<MultiLingualContent> abbreviation = null;
+
+            if (Objects.nonNull(employment.getOrganisationUnit())) {
+                abbreviation = employment.getOrganisationUnit().getNameAbbreviation();
             }
 
-            employmentsOther.append(institutionNameOther.toString().isEmpty() ?
-                institutionNameSr.delete(institutionNameSr.length() - 3,
-                    institutionNameSr.length()) :
-                institutionNameOther).append("; ");
+            if (Objects.nonNull(abbreviation) && !abbreviation.isEmpty()) {
+
+                StringBuilder abbrSr = new StringBuilder();
+                StringBuilder abbrOther = new StringBuilder();
+
+                abbreviation.forEach(mc -> {
+                    var lang = mc.getLanguage().getLanguageTag();
+
+                    if (lang.startsWith(LanguageAbbreviations.SERBIAN)) {
+                        abbrSr.append(mc.getContent());
+                    } else {
+                        if (lang.equals(LanguageAbbreviations.ENGLISH)) {
+                            abbrOther.insert(0, mc.getContent());
+                        } else {
+                            if (!abbrOther.isEmpty()) {
+                                abbrOther.append(", ");
+                            }
+                            abbrOther.append(mc.getContent());
+                        }
+                    }
+                });
+
+                if (!institutionNameSr.isEmpty() && !abbrSr.isEmpty()) {
+                    employmentsSr.append(abbrSr);
+                } else if (!institutionNameOther.isEmpty() && !abbrOther.isEmpty()) {
+                    employmentsSr.append(abbrOther);
+                }
+            }
+
+            employmentsSr.append("; ");
         }
 
         StringUtil.removeTrailingDelimiters(employmentsSr, employmentsOther);

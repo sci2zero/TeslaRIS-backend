@@ -256,7 +256,9 @@ public class TestingDataInitializer {
         userRepository.save(researcherUser);
 
         var dummyOU = new OrganisationUnit();
-        dummyOU.setNameAbbreviation("FTN");
+        dummyOU.setNameAbbreviation(
+            new HashSet<>(List.of(
+                new MultiLingualContent[] {new MultiLingualContent(englishTag, "FTN", 1)})));
 
         if (addOldIdData) {
             dummyOU.getOldIds().add(2);
@@ -288,7 +290,9 @@ public class TestingDataInitializer {
         journalRepository.save(dummyJournal);
 
         var dummyOU2 = new OrganisationUnit();
-        dummyOU2.setNameAbbreviation("PMF");
+        dummyOU2.setNameAbbreviation(
+            new HashSet<>(List.of(
+                new MultiLingualContent[] {new MultiLingualContent(englishTag, "PMF", 1)})));
         dummyOU2.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(englishTag, "Faculty of Sciences", 1),
             new MultiLingualContent(serbianTag, "Prirodno matematicki fakultet", 2)})));
@@ -412,7 +416,9 @@ public class TestingDataInitializer {
         datasetRepository.save(dataset);
 
         var sci2zero = new OrganisationUnit();
-        sci2zero.setNameAbbreviation("Sci2zero");
+        sci2zero.setNameAbbreviation(
+            new HashSet<>(List.of(
+                new MultiLingualContent[] {new MultiLingualContent(englishTag, "Sci2zero", 1)})));
         sci2zero.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(serbianTag, "Science 2.0 Alliance", 1)})));
         sci2zero.setApproveStatus(ApproveStatus.APPROVED);

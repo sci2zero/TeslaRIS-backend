@@ -1658,7 +1658,13 @@ public class PersonServiceTest {
             }},
             "University of Belgrade", 2));
         orgUnit.setName(orgName);
-        orgUnit.setNameAbbreviation("UB");
+        orgUnit.setNameAbbreviation(Set.of(
+            new MultiLingualContent(
+                new LanguageTag() {{
+                    setLanguageTag(LanguageAbbreviations.SERBIAN);
+                }},
+                "UB", 2)
+        ));
         employment.setOrganisationUnit(orgUnit);
 
         savedPerson.setInvolvements(Set.of(employment));

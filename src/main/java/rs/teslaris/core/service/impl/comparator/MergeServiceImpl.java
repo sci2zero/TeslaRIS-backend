@@ -460,11 +460,22 @@ public class MergeServiceImpl implements MergeService {
             leftId, rightId,
             leftData,
             rightData,
-            dto -> new String[] {dto.getScopusAfid(), dto.getOpenAlexId(), dto.getRor()},
+            dto -> new String[] {
+                dto.getScopusAfid(), dto.getOpenAlexId(), dto.getRor(),
+                dto.getRinggold(), dto.getFundref(), dto.getIsni(), dto.getAthensId(),
+                dto.getNcesId(), dto.getNifId(), dto.getDgeecId(), dto.getFctId()},
             (dto, values) -> {
                 dto.setScopusAfid(values[0]);
                 dto.setOpenAlexId(values[1]);
                 dto.setRor(values[2]);
+                dto.setRinggold(values[3]);
+                dto.setFundref(values[4]);
+                dto.setIsni(values[5]);
+                dto.setAthensId(values[6]);
+                dto.setNcesId(values[7]);
+                dto.setNifId(values[8]);
+                dto.setDgeecId(values[9]);
+                dto.setFctId(values[10]);
             });
     }
 

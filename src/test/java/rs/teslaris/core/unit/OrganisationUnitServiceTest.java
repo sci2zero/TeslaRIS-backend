@@ -223,7 +223,7 @@ public class OrganisationUnitServiceTest {
         // given
         Pageable pageable = PageRequest.of(0, 10);
         OrganisationUnit organisationUnit = new OrganisationUnit();
-        organisationUnit.setNameAbbreviation("ID1");
+        organisationUnit.setNameAbbreviation(new HashSet<>());
         organisationUnit.setLocation(new GeoLocation());
         organisationUnit.setContact(new Contact());
         Page<OrganisationUnit>
@@ -236,8 +236,8 @@ public class OrganisationUnitServiceTest {
         Page<OrganisationUnitDTO> result = organisationUnitService.findOrganisationUnits(pageable);
 
         assertEquals(1, result.getContent().size());
-        assertEquals(organisationUnit.getNameAbbreviation(),
-            result.getContent().get(0).getNameAbbreviation());
+        assertEquals(organisationUnit.getNameAbbreviation().size(),
+            result.getContent().getFirst().getNameAbbreviation().size());
         verify(organisationUnitRepository, times(1)).findAllWithLangData(pageable);
     }
 
@@ -439,6 +439,7 @@ public class OrganisationUnitServiceTest {
         List<ResearchArea> researchAreas = List.of(researchArea);
 
         organisationUnitDTORequest.setName(new ArrayList<>());
+        organisationUnitDTORequest.setNameAbbreviation(new ArrayList<>());
         organisationUnitDTORequest.setKeyword(new ArrayList<>());
         organisationUnitDTORequest.setResearchAreasId(List.of(1));
         organisationUnitDTORequest.setLocation(new GeoLocationDTO(1.0, 2.0, "NOWHERE"));
@@ -463,11 +464,10 @@ public class OrganisationUnitServiceTest {
         var result =
             organisationUnitService.createOrganisationUnit(organisationUnitDTORequest, true);
 
-        assertEquals(organisationUnitDTORequest.getNameAbbreviation(),
-            result.getNameAbbreviation());
+        assertEquals(1, result.getNameAbbreviation().size());
         assertEquals(keyword.getContent(), result.getKeyword().getFirst().getContent());
 
-        verify(multilingualContentService, times(2)).getMultilingualContent(any());
+        verify(multilingualContentService, times(4)).getMultilingualContent(any());
         verify(researchAreaService, times(1)).getResearchAreasByIds(
             organisationUnitDTORequest.getResearchAreasId());
         verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));
@@ -521,7 +521,7 @@ public class OrganisationUnitServiceTest {
         assertEquals(
             organisationUnitDTORequest.getKeyword().stream().findFirst().get().getContent(),
             editedOrganisationUnit.getKeyword().stream().findFirst().get().getContent());
-        verify(multilingualContentService, times(2)).getMultilingualContent(any());
+        verify(multilingualContentService, times(4)).getMultilingualContent(any());
         verify(researchAreaService, times(1)).getResearchAreasByIds(any());
         verify(organisationUnitRepository, times(1)).save(any(OrganisationUnit.class));
     }

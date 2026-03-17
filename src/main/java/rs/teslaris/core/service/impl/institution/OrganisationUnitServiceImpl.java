@@ -576,7 +576,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setName(
             multilingualContentService.getMultilingualContent(organisationUnitDTO.getName())
         );
-        organisationUnit.setNameAbbreviation(organisationUnitDTO.getNameAbbreviation());
+        organisationUnit.setNameAbbreviation(
+            multilingualContentService.getMultilingualContent(
+                organisationUnitDTO.getNameAbbreviation())
+        );
+        organisationUnit.setDescription(
+            multilingualContentService.getMultilingualContent(organisationUnitDTO.getDescription())
+        );
         organisationUnit.setKeyword(
             multilingualContentService.getMultilingualContent(
                 organisationUnitDTO.getKeyword())
@@ -612,6 +618,86 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             "rorExistsError"
         );
 
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getRinggold(),
+            organisationUnit.getId(),
+            "^[0-9]+$",
+            organisationUnitRepository::existsByRinggold,
+            organisationUnit::setRinggold,
+            "ringgoldFormatError",
+            "ringgoldExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getFundref(),
+            organisationUnit.getId(),
+            "^[0-9]+$",
+            organisationUnitRepository::existsByFundref,
+            organisationUnit::setFundref,
+            "fundrefFormatError",
+            "fundrefExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getIsni(),
+            organisationUnit.getId(),
+            "^[0-9X]{16}$",
+            organisationUnitRepository::existsByIsni,
+            organisationUnit::setIsni,
+            "isniFormatError",
+            "isniExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getAthensId(),
+            organisationUnit.getId(),
+            ".*", // no strict format
+            organisationUnitRepository::existsByAthensId,
+            organisationUnit::setAthensId,
+            "athensIdFormatError",
+            "athensIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getNcesId(),
+            organisationUnit.getId(),
+            "^[0-9]+$",
+            organisationUnitRepository::existsByNcesId,
+            organisationUnit::setNcesId,
+            "ncesIdFormatError",
+            "ncesIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getFctId(),
+            organisationUnit.getId(),
+            "^[0-9A-Za-z\\-]+$",
+            organisationUnitRepository::existsByFctId,
+            organisationUnit::setFctId,
+            "fctIdFormatError",
+            "fctIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getDgeecId(),
+            organisationUnit.getId(),
+            "^[0-9A-Za-z\\-]+$",
+            organisationUnitRepository::existsByDgeecId,
+            organisationUnit::setDgeecId,
+            "dgeecIdFormatError",
+            "dgeecIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getNifId(),
+            organisationUnit.getId(),
+            "^[0-9]+$",
+            organisationUnitRepository::existsByNifId,
+            organisationUnit::setNifId,
+            "nifIdFormatError",
+            "nifIdExistsError"
+        );
+
         if (Objects.nonNull(organisationUnitDTO.getOldId())) {
             organisationUnit.getOldIds().add(organisationUnitDTO.getOldId());
         }
@@ -625,6 +711,11 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
+
+        organisationUnit.setSector(organisationUnitDTO.getSector());
+        organisationUnit.setStartup(
+            Objects.requireNonNullElse(organisationUnitDTO.getStartup(), false));
+        organisationUnit.setDateEstablished(organisationUnitDTO.getDateEstablished());
 
         if (Objects.nonNull(organisationUnitDTO.getUris())) {
             IdentifierUtil.setUris(organisationUnit.getUris(), organisationUnitDTO.getUris());
@@ -799,7 +890,16 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getName,
             OrganisationUnitIndex::setNameSr,
             OrganisationUnitIndex::setNameOther);
-        index.setNameSr(index.getNameSr() + " " + organisationUnit.getNameAbbreviation());
+
+        var srNameAbbreviation = new StringBuilder();
+        var otherNameAbbreviation = new StringBuilder();
+        multilingualContentService.buildLanguageStrings(srNameAbbreviation, otherNameAbbreviation,
+            organisationUnit.getNameAbbreviation(), true);
+        StringUtil.removeTrailingDelimiters(srNameAbbreviation, otherNameAbbreviation);
+
+        index.setNameSr(index.getNameSr() + " " + srNameAbbreviation);
+        index.setNameSr(index.getNameOther() + " " + otherNameAbbreviation);
+
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());
 

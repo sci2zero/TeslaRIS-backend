@@ -469,7 +469,8 @@ public class RoCrateConverter {
         organization.setId(identifier);
         organization.setName(StringUtil.getStringContent(institution.getName(),
             DEFAULT_RO_CRATE_LANGUAGE));
-        organization.setAlternateName(institution.getNameAbbreviation());
+        organization.setAlternateName(StringUtil.getStringContent(institution.getNameAbbreviation(),
+            DEFAULT_RO_CRATE_LANGUAGE));
 
         organization.setUrl(institution.getUris().stream().findFirst().orElse(null));
         organization.setFoundingLocation(

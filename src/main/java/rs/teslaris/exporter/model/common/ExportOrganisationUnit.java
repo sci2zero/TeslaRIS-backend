@@ -20,7 +20,7 @@ public class ExportOrganisationUnit extends BaseExportEntity {
     private List<ExportMultilingualContent> name = new ArrayList<>();
 
     @Field("name_abbreviation")
-    private String nameAbbreviation;
+    private List<ExportMultilingualContent> nameAbbreviation = new ArrayList<>();
 
     @Field("scopus_afid")
     private String scopusAfid;

@@ -563,35 +563,35 @@ package person {
 
 package institution {
   class OrganisationUnit {
-    OrganisationUnitSector sector ' !!!
+    OrganisationUnitSector sector
     Set<MultiLingualContent> name
     Set<MultiLingualContent> nameAbbreviation ' !!! changed type
-    Set<MultilingualContent> description ' !!! added
+    Set<MultilingualContent> description
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    String numberOfEmployees ' !!!
+    String numberOfEmployees ' !!! more research required
     GeoLocation location
     PostalAddress postalAddress ' !!!
     ApproveStatus approveStatus
     Set<String> oldIds ' !!! changed type, skip for now
     Set<String> mergedIds ' !!! changed type, skip for now
     Set<String> accountingIds 
-    Set<String> internalIds ' !!!
+    Set<String> internalIds
     String scopusAfid
     String openAlexId
     String ror
-    String ringgold ' !!!
-    String fundref ' !!! https://bioregistry.io/registry/funderregistry
-    String isni ' !!! https://bioregistry.io/registry/isni
-    String athensId ' !!!
-    String ncesId ' !!!
-    String fctId ' !!!
-    String dgeecId ' !!!
-    String nifId ' !!!
+    String ringgold
+    String fundref ' https://bioregistry.io/registry/funderregistry
+    String isni ' https://bioregistry.io/registry/isni
+    String athensId
+    String ncesId
+    String fctId
+    String dgeecId
+    String nifId
     Contact contact
     Set<String> uris
-    Boolean startup ' !!!
-    LocaLDate dateEstablished ' !!!
+    Boolean startup
+    LocaLDate dateEstablished
     Set<String> allowedThesisTypes
     Boolean isClientInstitutionCris
     Boolean isClientInstitutionDl
@@ -606,7 +606,6 @@ package institution {
     String institutionEmailDomain
   }
 
-  ' !!!  
   enum OrganisationUnitSector { 
     ACADEMIC
     COMPANY
@@ -811,9 +810,9 @@ package document {
     String authenticusId ' !!!
     String arkId ' !!!
     String halId ' !!!
-    Set<String> internalIds ' !!! changed title
-    Set<String> oldIds ' !!! changed type
-    Set<String> mergedIds ' !!! changed type
+    Set<String> internalIds ' !!! changed title, skip for now
+    Set<String> oldIds ' !!! changed type, skip for now
+    Set<String> mergedIds ' !!! changed type, skip for now
     Boolean peerReviewed ' !!! refereed
     Boolean openAccess ' !!!
     Set<MultiLingualContent> city ' !!!

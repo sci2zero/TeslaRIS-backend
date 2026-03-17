@@ -927,6 +927,10 @@ public class CommonLoaderImpl implements CommonLoader {
 
     private void setMultilingualContent(List<MultilingualContentDTO> targetList,
                                         List<MultilingualContent> sourceList) {
+        if (Objects.isNull(sourceList)) {
+            return;
+        }
+
         sourceList.forEach(sourceItem -> {
             if (Objects.isNull(sourceItem.getContent())) {
                 return;
@@ -952,9 +956,10 @@ public class CommonLoaderImpl implements CommonLoader {
         organisationUnitDTO.setName(new ArrayList<>());
         setMultilingualContent(organisationUnitDTO.getName(), institution.getName());
 
-        organisationUnitDTO.setNameAbbreviation(
-            Objects.nonNull(institution.getNameAbbreviation()) ?
-                institution.getNameAbbreviation() : "");
+        organisationUnitDTO.setNameAbbreviation(new ArrayList<>());
+        setMultilingualContent(organisationUnitDTO.getNameAbbreviation(),
+            institution.getNameAbbreviation());
+
         organisationUnitDTO.setScopusAfid(institution.getScopusAfid());
         organisationUnitDTO.setOpenAlexId(institution.getOpenAlexId());
         organisationUnitDTO.setKeyword(new ArrayList<>());

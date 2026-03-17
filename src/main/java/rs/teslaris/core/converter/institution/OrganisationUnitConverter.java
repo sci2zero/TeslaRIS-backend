@@ -20,7 +20,10 @@ public class OrganisationUnitConverter {
         dto.setName(MultilingualContentConverter.getMultilingualContentDTO(
             organisationUnit.getName()));
 
-        dto.setNameAbbreviation(organisationUnit.getNameAbbreviation());
+        dto.setNameAbbreviation(MultilingualContentConverter.getMultilingualContentDTO(
+            organisationUnit.getNameAbbreviation()));
+        dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
+            organisationUnit.getDescription()));
 
         dto.setKeyword(MultilingualContentConverter.getMultilingualContentDTO(
             organisationUnit.getKeyword()));
@@ -34,9 +37,20 @@ public class OrganisationUnitConverter {
         dto.setScopusAfid(organisationUnit.getScopusAfid());
         dto.setOpenAlexId(organisationUnit.getOpenAlexId());
         dto.setRor(organisationUnit.getRor());
+        dto.setRinggold(organisationUnit.getRinggold());
+        dto.setFundref(organisationUnit.getFundref());
+        dto.setIsni(organisationUnit.getIsni());
+        dto.setAthensId(organisationUnit.getAthensId());
+        dto.setNcesId(organisationUnit.getNcesId());
+        dto.setNifId(organisationUnit.getNifId());
+        dto.setDgeecId(organisationUnit.getDgeecId());
+        dto.setFctId(organisationUnit.getFctId());
         dto.setUris(organisationUnit.getUris());
         dto.setAllowedThesisTypes(
             organisationUnit.getAllowedThesisTypes().stream().map(ThesisType::valueOf).toList());
+        dto.setSector(organisationUnit.getSector());
+        dto.setStartup(organisationUnit.getStartup());
+        dto.setDateEstablished(organisationUnit.getDateEstablished());
 
         dto.setClientInstitutionCris(
             Objects.nonNull(organisationUnit.getIsClientInstitutionCris()) ?
