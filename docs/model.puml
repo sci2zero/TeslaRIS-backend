@@ -680,8 +680,8 @@ package document {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> place
     Set<MultiLingualContent> state ' !!! region, Vojvodina
-    Set<String> oldIds ' !!! changed type
-    Set<String> mergedIds ' !!! changed type
+    Set<String> oldIds ' !!! changed type, skip for now
+    Set<String> mergedIds ' !!! changed type, skip for now
     Country country
   }
 
