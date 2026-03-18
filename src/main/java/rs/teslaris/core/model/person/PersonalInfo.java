@@ -10,6 +10,7 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -43,10 +44,30 @@ public class PersonalInfo {
         @AttributeOverride(name = "postalNumber", column = @Column(name = "professional_postal_number"))
     })
     @AssociationOverrides({
-        @AssociationOverride(name = "country", joinColumns = @JoinColumn(name = "professional_country_id")),
-        @AssociationOverride(name = "streetAndNumber", joinColumns = @JoinColumn(name = "professional_street_id")),
-        @AssociationOverride(name = "city", joinColumns = @JoinColumn(name = "professional_city_id")),
-        @AssociationOverride(name = "state", joinColumns = @JoinColumn(name = "professional_state_id"))
+        @AssociationOverride(
+            name = "country",
+            joinColumns = @JoinColumn(name = "professional_country_id")
+        ),
+        @AssociationOverride(
+            name = "streetAndNumber",
+            joinTable = @JoinTable(
+                name = "person_prof_street",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+        @AssociationOverride(
+            name = "city",
+            joinTable = @JoinTable(
+                name = "person_prof_city",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+        @AssociationOverride(
+            name = "state",
+            joinTable = @JoinTable(
+                name = "person_prof_state",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id")
+            )
+        )
     })
     private PostalAddress professionalPostalAddress;
 
@@ -55,10 +76,27 @@ public class PersonalInfo {
         @AttributeOverride(name = "postalNumber", column = @Column(name = "private_postal_number"))
     })
     @AssociationOverrides({
-        @AssociationOverride(name = "country", joinColumns = @JoinColumn(name = "private_country_id")),
-        @AssociationOverride(name = "streetAndNumber", joinColumns = @JoinColumn(name = "private_street_id")),
-        @AssociationOverride(name = "city", joinColumns = @JoinColumn(name = "private_city_id")),
-        @AssociationOverride(name = "state", joinColumns = @JoinColumn(name = "private_state_id"))
+        @AssociationOverride(
+            name = "country",
+            joinColumns = @JoinColumn(name = "private_country_id")),
+        @AssociationOverride(
+            name = "streetAndNumber",
+            joinTable = @JoinTable(
+                name = "person_priv_street",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+        @AssociationOverride(
+            name = "city",
+            joinTable = @JoinTable(
+                name = "person_priv_city",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+        @AssociationOverride(
+            name = "state",
+            joinTable = @JoinTable(
+                name = "person_priv_state",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id")))
     })
     private PostalAddress privatePostalAddress;
 
