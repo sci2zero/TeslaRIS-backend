@@ -61,12 +61,14 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -81,7 +83,9 @@ import rs.teslaris.core.util.files.ImageUtil;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -124,6 +128,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final FileService fileService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final CountryService countryService;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -702,12 +708,26 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnit.getOldIds().add(organisationUnitDTO.getOldId());
         }
 
+        setPostalAddressInfo(organisationUnit, organisationUnitDTO);
+
         var researchAreas = researchAreaService.getResearchAreasByIds(
             organisationUnitDTO.getResearchAreasId());
         organisationUnit.setResearchAreas(new HashSet<>(researchAreas));
 
         organisationUnit.setLocation(
             GeoLocationConverter.fromDTO(organisationUnitDTO.getLocation()));
+
+        if (!StringUtil.valueExists(organisationUnit.getLocation().getAddress()) &&
+            CollectionOperations.containsValues(
+                organisationUnit.getPostalAddress().getStreetAndNumber()) &&
+            CollectionOperations.containsValues(
+                organisationUnit.getPostalAddress().getCity())) {
+            organisationUnit.getLocation().setAddress(StringUtil.getStringContent(
+                organisationUnit.getPostalAddress().getStreetAndNumber(),
+                LanguageAbbreviations.SERBIAN) + ", " +
+                StringUtil.getStringContent(organisationUnit.getPostalAddress().getCity(),
+                    LanguageAbbreviations.SERBIAN));
+        }
 
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
@@ -773,6 +793,42 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             .setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomainCris());
         organisationUnit.getDlConfig()
             .setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomainDl());
+    }
+
+    private void setPostalAddressInfo(OrganisationUnit organisationUnit,
+                                      OrganisationUnitRequestDTO organisationUnitDTO) {
+        if (Objects.nonNull(organisationUnitDTO.getPostalAddress())) {
+            if (Objects.isNull(organisationUnit.getPostalAddress())) {
+                organisationUnit.setPostalAddress(new PostalAddress());
+            }
+
+            organisationUnit.getPostalAddress().setStreetAndNumber(
+                multilingualContentService.getMultilingualContent(
+                    organisationUnitDTO.getPostalAddress().getStreetAndNumber())
+            );
+
+            organisationUnit.getPostalAddress().setStreetAndNumber(
+                multilingualContentService.getMultilingualContent(
+                    organisationUnitDTO.getPostalAddress().getStreetAndNumber())
+            );
+
+            organisationUnit.getPostalAddress().setStreetAndNumber(
+                multilingualContentService.getMultilingualContent(
+                    organisationUnitDTO.getPostalAddress().getStreetAndNumber())
+            );
+
+            organisationUnit.getPostalAddress()
+                .setPostalNumber(organisationUnitDTO.getPostalAddress().getPostalNumber());
+
+            if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId())) {
+                organisationUnit.getPostalAddress().setCountry(
+                    countryService.findOne(organisationUnitDTO.getPostalAddress().getCountryId()));
+            } else {
+                organisationUnit.getPostalAddress().setCountry(null);
+            }
+        } else {
+            organisationUnit.setPostalAddress(null);
+        }
     }
 
     @Override

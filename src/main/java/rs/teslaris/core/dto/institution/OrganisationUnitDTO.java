@@ -12,6 +12,7 @@ import rs.teslaris.core.dto.commontypes.GeoLocationDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
+import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnitSector;
 
@@ -66,6 +67,8 @@ public class OrganisationUnitDTO {
     private Boolean startup;
 
     private LocalDate dateEstablished;
+
+    private PostalAddressDTO postalAddress;
 
     // Only for responses
 

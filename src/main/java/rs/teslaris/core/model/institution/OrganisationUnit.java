@@ -31,6 +31,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.util.deduplication.Accounted;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
@@ -159,6 +160,9 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     @Column(name = "date_established")
     private LocalDate dateEstablished;
+
+    @Embedded
+    private PostalAddress postalAddress;
 
 
     public EmailConfiguration getCrisConfig() {

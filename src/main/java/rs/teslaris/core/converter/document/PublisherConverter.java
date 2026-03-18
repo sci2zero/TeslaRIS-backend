@@ -9,9 +9,11 @@ public class PublisherConverter {
 
     public static PublisherDTO toDTO(Publisher publisher) {
         var dto = new PublisherDTO();
+
         dto.setId(publisher.getId());
         dto.setName(MultilingualContentConverter.getMultilingualContentDTO(publisher.getName()));
         dto.setPlace(MultilingualContentConverter.getMultilingualContentDTO(publisher.getPlace()));
+        dto.setState(MultilingualContentConverter.getMultilingualContentDTO(publisher.getState()));
 
         if (Objects.nonNull(publisher.getCountry())) {
             dto.setCountryId(publisher.getCountry().getId());

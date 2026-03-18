@@ -24,9 +24,15 @@ public class PublisherControllerTest extends BaseTest {
 
     private PublisherDTO getTestPayload() {
         var publisherDTO = new PublisherDTO();
-        publisherDTO.setName(List.of(new MultilingualContentDTO(1, "EN", "Name", 1)));
-        publisherDTO.setPlace(List.of(new MultilingualContentDTO(1, "EN", "Place", 1)));
+
+        publisherDTO.setName(
+            List.of(new MultilingualContentDTO(1, "EN", "Name", 1)));
+        publisherDTO.setPlace(
+            List.of(new MultilingualContentDTO(1, "EN", "Place", 1)));
+        publisherDTO.setState(
+            List.of(new MultilingualContentDTO(1, "EN", "State", 1)));
         publisherDTO.setCountryId(1);
+
         return publisherDTO;
     }
 
