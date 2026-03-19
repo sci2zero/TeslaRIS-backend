@@ -25,7 +25,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
-import rs.teslaris.project.model.funding.FundingProposal;
+import rs.teslaris.project.model.funding.FundingApplication;
 
 @Getter
 @Setter
@@ -39,15 +39,15 @@ public class Project extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "internal_identifiers")
-    private Set<String> internalIdentifiers;
+    private Set<String> internalIdentifiers = new HashSet<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "old_ids")
-    private Set<String> oldIds;
+    private Set<String> oldIds = new HashSet<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "merged_ids")
-    private Set<String> mergedIds;
+    private Set<String> mergedIds = new HashSet<>();
 
     @Column(name = "doi")
     private String doi;
@@ -69,9 +69,6 @@ public class Project extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
-
-    @Column(name = "admin_note")
-    private String adminNote;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")
@@ -101,19 +98,19 @@ public class Project extends BaseEntity {
     private LocalDate dateTo;
 
     @Column(name = "status", nullable = false)
-    private ProjectStatus projectStatus;
+    private ProjectStatus status;
 
     @Column(name = "collaboration_type", nullable = false)
-    private ProjectCollaborationType type;
+    private ProjectCollaborationType collaborationType;
 
     @Column(name = "research_type", nullable = false)
-    private ProjectResearchType projectResearchType;
+    private ProjectResearchType researchType;
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<Funding> funding = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<FundingProposal> proposals;
+    private Set<FundingApplication> fundingApplications;
 
     @Column(name = "not_funded")
     private Boolean notFunded;

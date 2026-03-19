@@ -1461,13 +1461,12 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    ' !!! String adminNote is in BaseEntity
     Set<String> uris
     LocalDate dateFrom
     LocalDate dateTo
-    ProjectStatus status ' !!! projectStatus in model
-    ProjectCollaborationType collaborationType ' !!! type in the model
-    ProjectResearchType researchType ' !!! projectResearchType in the model
+    ProjectStatus status
+    ProjectCollaborationType collaborationType
+    ProjectResearchType researchType
     Boolean notFunded 
     MonetaryAmount costs
     Set<SDGoal> sdgs ' !!! skip for now
@@ -1510,9 +1509,8 @@ package project {
   }
     
   OrganisationUnitProjectContribution "*" --> "0..1" institution.OrganisationUnit : organisationUnit
-  OrganisationUnitProjectContribution "0..1" --> "*" FundingPart : fundingParts ' !!! it is funding in model, name and type should be changed
-  
-  ' !!! new  
+  OrganisationUnitProjectContribution "0..1" --> "*" FundingPart : fundingParts
+
   enum OrganisationUnitProjectContributionType {
     COORDINATOR
     PARTNER
@@ -1521,26 +1519,22 @@ package project {
     CONTRACTOR
     BENEFICIARY
   }
-  
-    
+
   class PersonProjectContribution extends PersonContribution {
     PersonProjectContributionType contributionType
     PersonProjectInvestigationRole investigationRole 
-    Set<MultiLingualContent> otherRoleDescription 
-    ' !!! dateFrom and dateTo removed, it can be expressed through PersonActivity
+    Set<MultiLingualContent> otherRoleDescription
   }
     
   PersonProjectContribution "0..1" --> "*" FundingPart : fundingParts      
-  
-  ' !!! renamed from ProjectContributionType  
+
   enum PersonProjectContributionType {
     PRINCIPLE_INVESTIGATOR
-    ' !!! removed COPRINCIPLE_INVESTIGATOR, should be moved from enumeration in the model, and enumeration should be renamed    
-    TEAM_MEMBER 
+    TEAM_MEMBER
     CONTACT 
     INKIND_CONTRIBUTOR 
     CONTRACTOR 
-    PARTICIPATION ' !!! 
+    PARTICIPATION
   }
   
   enum PersonProjectInvestigationRole {
@@ -1557,7 +1551,7 @@ package project {
     RESEARCH_TECHNICIAN_FELLOW
     INVITED_SCIENTIST_FELLOW
     SCIENCE_AND_TECHNOLOGY_MANAGEMENT_FELLOW
-    SCIENTIFIC_EXPEDITION ' !!!
+    SCIENTIFIC_EXPEDITION
     OTHER
   }
     
@@ -1566,8 +1560,8 @@ package project {
     
   class ProjectsRelation {
     ProjectsRelationType relationType
-    LocalDate dateFrom ' !!! from in model
-    LocalDate dateTo ' !!! to in model
+    LocalDate dateFrom
+    LocalDate dateTo
   }
     
   enum ProjectsRelationType {
@@ -1623,16 +1617,16 @@ package project {
     LocalDate reviewDateTo
     LocalDate decisionDate
     LocalDate revisedProposalOrNextRoundDeadlineDate
-    FundingApplicationResult result ' !!! type renamed from ProjectProposalResult to FundingApplicationResult, also move to funding package
+    FundingApplicationResult result
     Set<SDGoal> sdgs ' !!! skip for now
     Set<DocumentFile> documents ' proposal, review result, supplement
   }
   
-  FundingApplication "*" -- "0..1" Project : fundingApplications / project ' !!! in model in class Project the field should be fundingApplications instead of proposal (type should be also changed)
+  FundingApplication "*" -- "0..1" Project : fundingApplications / project
   FundingApplication "*" --> "1" FundingCall : fundingCall
-  FundingApplication "1" --> "0..1" FundingApplication : revisedFundingApplication ' !!! in the model fundingApplication (field) should be renamed to revisedFundingApplication
+  FundingApplication "1" --> "0..1" FundingApplication : revisedFundingApplication
   FundingApplication "1" --> "0..1" Funding : funding
-  FundingApplication "0..1" --> "*" FundingPart : otherFundingSources ' !!! this will be instead of MonetaryAmount otherSourceFunding and MonetaryAmount otherFundingSourceAmount, description of the FundingPart will be used to define is that self-funding or what
+  FundingApplication "0..1" --> "*" FundingPart : otherFundingSources
   
   class FundingApplicationResult {
     AWARDED
@@ -1642,17 +1636,16 @@ package project {
   }
   
   class Funding {
-    Set<String> internalIdentifiers ' !!! it is just one in model, it should be multiple
+    Set<String> internalIdentifiers
     Set<String> oldIds ' !!!
-    Set<String> mergedIds ' !!!
+    Set<String> mergedIds ' !!! i think this should stay as integer, not just here but everywhere, but I have to check, for now it's string
     String doi
     String grantAgreementId
     Set<MultiLingualContent> name 
     Set<MultiLingualContent> description 
     Set<MultiLingualContent> nameAbbreviation 
     Set<MultiLingualContent> keywords 
-    Set<ResearchArea> researchAreas 
-    ' !!! String adminNote is in BaseEntity
+    Set<ResearchArea> researchAreas
     Set<String> uris
     Set<MultiLingualContent> displayCall
     Set<MultiLingualContent> displayProgram
@@ -1672,17 +1665,13 @@ package project {
   }
   
   Funding "*" -- "0..1" FundingCall : funding / call
-  Funding "*" --> "0..1" institution.OrganisationUnit : funder ' !!! should be added to the model
+  Funding "*" --> "0..1" institution.OrganisationUnit : funder ' !!! if we can access it from FundingCall, should it be added just for denormalized faster lookup?
   Funding "1" -- "*" FundingPart : funding / fundingParts
   Funding "*" -- "0..1" Project : fundings/project
   
   class FundingPart{
     Set<MultiLingualContent> description
-    MonetaryAmount amount ' !!! rename to amount (instead of costs)
-    ' !!! can be linked with funding, projectEvent, projectDocument, it is ok
-    ' !!! can't be linked with fundingProposal, but can be linked with fundingApplication
-    ' !!! can't be linked with forFunding, it should be removed
-    ' !!! can be also linked with PersonProjectContribution, OrganisationUnitProjectContribution
+    MonetaryAmount amount
   }
   
   class FundingCall {
@@ -1702,16 +1691,15 @@ package project {
     Set<DocumentFile> callDocuments
   }
   
-  FundingCall "0..1" --> "*" PersonFundingCallContribution : contributors ' !!!
-  FundingCall "*" --> "0..1" institution.OrganisationUnit : funder ' !!!
+  FundingCall "0..1" --> "*" PersonFundingCallContribution : contributors
+  FundingCall "*" --> "0..1" institution.OrganisationUnit : funder ' !! if we can access it from FundingProgram, should it be added just for denormalized faster lookup?
   
   enum FundingType {
     GRANT 
     CALL 
     OTHER
   }
-  
-  ' !!! 
+
   enum FundingCallContributionType {
     ORGANIZER
     COORDINATOR
@@ -1724,8 +1712,7 @@ package project {
     APPLICANT
     OTHER_CONTRIBUTORS
   }
-  
-  ' !!!    
+
   class PersonFundingCallContribution extends PersonContribution {
     FundingCallContributionType contributionType
   }
@@ -1737,7 +1724,6 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    ' !!! String adminNote is in BaseEntity
     Set<FundingType> types
     MonetaryAmount totalAmount
     LocalDate dateFrom
@@ -1748,7 +1734,7 @@ package project {
     Set<DocumentFile> programDocuments
   }
   
-  FundingProgram "0..1" -- "*" FundingCall : fundingProgram / calls ' !!! no calls relation from the side of FundingProgram
+  FundingProgram "0..1" -- "*" FundingCall : fundingProgram / calls
   FundingProgram "*" --> "0..1" institution.OrganisationUnit : funder
 }
 

@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
@@ -64,6 +65,10 @@ public class FundingCall extends BaseEntity {
     @Column(columnDefinition = "jsonb", name = "types")
     private Set<FundingType> types = new HashSet<>();
 
+    @OneToMany(mappedBy = "fundingCall", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @BatchSize(size = 50)
+    private Set<PersonFundingCallContribution> contributors = new HashSet<>();
+
     @Embedded
     private MonetaryAmount amount;
 
@@ -82,4 +87,9 @@ public class FundingCall extends BaseEntity {
 
     @Column(name = "oa_mandate_url")
     private String oaMandateUrl;
+
+
+    public void addContributor(PersonFundingCallContribution contributor) {
+        this.contributors.add(contributor);
+    }
 }

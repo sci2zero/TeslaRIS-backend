@@ -27,10 +27,10 @@ public class ProjectsRelation extends BaseEntity {
     private ProjectsRelationType relationType;
 
     @Column(name = "date_from", nullable = false)
-    private LocalDate from;
+    private LocalDate dateFrom;
 
     @Column(name = "date_to", nullable = false)
-    private LocalDate to;
+    private LocalDate dateTo;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "source_project_id")

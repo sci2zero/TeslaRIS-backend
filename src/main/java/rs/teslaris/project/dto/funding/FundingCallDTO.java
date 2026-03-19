@@ -47,6 +47,9 @@ public class FundingCallDTO {
     @NotNull(message = "You have to provide funding types.")
     private Set<FundingType> fundingTypes = new HashSet<>();
 
+    @NotNull(message = "You have to provide contributors list.")
+    private List<PersonFundingCallContributionDTO> contributors = new ArrayList<>();
+
     private MonetaryAmountDTO monetaryAmount;
 
     private LocalDate dateFrom;

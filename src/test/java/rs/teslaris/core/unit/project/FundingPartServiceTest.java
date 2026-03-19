@@ -29,14 +29,18 @@ import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.common.Currency;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
+import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingPart;
-import rs.teslaris.project.model.funding.FundingProposal;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
+import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.model.project.ProjectEvent;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.service.impl.funding.FundingPartServiceImpl;
-import rs.teslaris.project.service.interfaces.funding.FundingProposalService;
+import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
+import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
+import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
 import rs.teslaris.project.service.interfaces.project.ProjectEventService;
 
@@ -62,7 +66,13 @@ public class FundingPartServiceTest {
     private ProjectDocumentService projectDocumentService;
 
     @Mock
-    private FundingProposalService fundingProposalService;
+    private FundingApplicationService fundingApplicationService;
+
+    @Mock
+    private PersonProjectContributionService personProjectContributionService;
+
+    @Mock
+    private OrganisationUnitProjectContributionService organisationUnitProjectContributionService;
 
     @InjectMocks
     private FundingPartServiceImpl fundingPartService;
@@ -91,7 +101,7 @@ public class FundingPartServiceTest {
         fundingPartDTO = new FundingPartDTO();
         fundingPartDTO.setFundingId(1);
         fundingPartDTO.setDescription(List.of());
-        fundingPartDTO.setCosts(monetaryAmountDTO);
+        fundingPartDTO.setAmount(monetaryAmountDTO);
     }
 
     @Test
@@ -122,23 +132,23 @@ public class FundingPartServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getFunding()).isEqualTo(funding);
         assertThat(result.getDescription()).isEqualTo(description);
-        assertThat(result.getCosts().getCurrency()).isEqualTo(currency);
-        assertThat(result.getCosts().getAmount()).isEqualTo(100);
+        assertThat(result.getAmount().getCurrency()).isEqualTo(currency);
+        assertThat(result.getAmount().getAmount()).isEqualTo(100);
         assertThat(result.getProjectEvent()).isEqualTo(projectEvent);
     }
 
     @Test
-    public void shouldCreateFundingPartWithFundingProposalSuccessfully() {
+    public void shouldCreateFundingPartWithFundingApplicationSuccessfully() {
         // given
-        fundingPartDTO.setFundingProposalId(2);
+        fundingPartDTO.setFundingApplicationId(2);
 
-        var fundingProposal = new FundingProposal();
-        fundingProposal.setId(2);
+        var fundingApplication = new FundingApplication();
+        fundingApplication.setId(2);
 
         when(fundingService.findOne(1)).thenReturn(funding);
         when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(description);
         when(currencyService.findOne(1)).thenReturn(currency);
-        when(fundingProposalService.findOne(2)).thenReturn(fundingProposal);
+        when(fundingApplicationService.findOne(2)).thenReturn(fundingApplication);
         when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
             i -> i.getArguments()[0]);
 
@@ -149,11 +159,11 @@ public class FundingPartServiceTest {
         verify(fundingService).findOne(1);
         verify(multilingualContentService).getMultilingualContent(anyList());
         verify(currencyService).findOne(1);
-        verify(fundingProposalService).findOne(2);
+        verify(fundingApplicationService).findOne(2);
         verify(projectEventService, never()).findOne(anyInt());
         verify(fundingPartRepository).save(any(FundingPart.class));
 
-        assertThat(result.getFundingProposal()).isEqualTo(fundingProposal);
+        assertThat(result.getFundingApplication()).isEqualTo(fundingApplication);
     }
 
     @Test
@@ -185,15 +195,15 @@ public class FundingPartServiceTest {
     }
 
     @Test
-    public void shouldCreateFundingPartWithForFundingSuccessfully() {
+    public void shouldCreateFundingPartWithPersonProjectContributionSuccessfully() {
         // given
-        fundingPartDTO.setForFundingId(4);
+        fundingPartDTO.setPersonProjectContributionId(4);
 
-        var forFunding = new Funding();
-        forFunding.setId(4);
+        var contribution = new PersonProjectContribution();
+        contribution.setId(4);
 
         when(fundingService.findOne(1)).thenReturn(funding);
-        when(fundingService.findOne(4)).thenReturn(forFunding);
+        when(personProjectContributionService.findOne(4)).thenReturn(contribution);
         when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(description);
         when(currencyService.findOne(1)).thenReturn(currency);
         when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
@@ -204,18 +214,46 @@ public class FundingPartServiceTest {
 
         // then
         verify(fundingService).findOne(1);
-        verify(fundingService).findOne(4);
+        verify(personProjectContributionService).findOne(4);
         verify(multilingualContentService).getMultilingualContent(anyList());
         verify(currencyService).findOne(1);
         verify(fundingPartRepository).save(any(FundingPart.class));
 
-        assertThat(result.getForFunding()).isEqualTo(forFunding);
+        assertThat(result.getPersonProjectContribution()).isEqualTo(contribution);
+    }
+
+    @Test
+    public void shouldCreateFundingPartWithOUProjectContributionSuccessfully() {
+        // given
+        fundingPartDTO.setOrganisationUnitProjectContributionId(4);
+
+        var contribution = new OrganisationUnitProjectContribution();
+        contribution.setId(4);
+
+        when(fundingService.findOne(1)).thenReturn(funding);
+        when(organisationUnitProjectContributionService.findOne(4)).thenReturn(contribution);
+        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(description);
+        when(currencyService.findOne(1)).thenReturn(currency);
+        when(fundingPartRepository.save(any(FundingPart.class))).thenAnswer(
+            i -> i.getArguments()[0]);
+
+        // when
+        var result = fundingPartService.createFundingPart(fundingPartDTO);
+
+        // then
+        verify(fundingService).findOne(1);
+        verify(organisationUnitProjectContributionService).findOne(4);
+        verify(multilingualContentService).getMultilingualContent(anyList());
+        verify(currencyService).findOne(1);
+        verify(fundingPartRepository).save(any(FundingPart.class));
+
+        assertThat(result.getOrganisationUnitProjectContribution()).isEqualTo(contribution);
     }
 
     @Test
     public void shouldThrowExceptionWhenCreatingFundingPartWithNoReference() {
         // given
-        when(fundingService.findOne(1)).thenReturn(funding);
+        fundingPartDTO.setFundingId(null);
         when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(description);
         when(currencyService.findOne(1)).thenReturn(currency);
 
@@ -233,7 +271,7 @@ public class FundingPartServiceTest {
         var fundingPartId = 1;
         var existingFundingPart = new FundingPart();
         existingFundingPart.setId(fundingPartId);
-        existingFundingPart.setCosts(null);
+        existingFundingPart.setAmount(null);
 
         fundingPartDTO.setProjectEventId(1);
 
@@ -258,9 +296,9 @@ public class FundingPartServiceTest {
         verify(projectEventService).findOne(1);
         verify(fundingPartRepository).save(existingFundingPart);
 
-        assertThat(existingFundingPart.getCosts()).isNotNull();
-        assertThat(existingFundingPart.getCosts().getCurrency()).isEqualTo(currency);
-        assertThat(existingFundingPart.getCosts().getAmount()).isEqualTo(100);
+        assertThat(existingFundingPart.getAmount()).isNotNull();
+        assertThat(existingFundingPart.getAmount().getCurrency()).isEqualTo(currency);
+        assertThat(existingFundingPart.getAmount().getAmount()).isEqualTo(100);
     }
 
     @Test
@@ -271,7 +309,7 @@ public class FundingPartServiceTest {
         existingFundingPart.setId(fundingPartId);
 
         var existingCosts = new MonetaryAmount();
-        existingFundingPart.setCosts(existingCosts);
+        existingFundingPart.setAmount(existingCosts);
 
         fundingPartDTO.setProjectEventId(1);
 
@@ -298,8 +336,8 @@ public class FundingPartServiceTest {
 
         assertThat(existingFundingPart.getFunding()).isEqualTo(funding);
         assertThat(existingFundingPart.getDescription()).isEqualTo(description);
-        assertThat(existingFundingPart.getCosts().getCurrency()).isEqualTo(currency);
-        assertThat(existingFundingPart.getCosts().getAmount()).isEqualTo(100);
+        assertThat(existingFundingPart.getAmount().getCurrency()).isEqualTo(currency);
+        assertThat(existingFundingPart.getAmount().getAmount()).isEqualTo(100);
         assertThat(existingFundingPart.getProjectEvent()).isEqualTo(projectEvent);
     }
 
@@ -364,31 +402,31 @@ public class FundingPartServiceTest {
         existingFundingPart.setProjectEvent(existingProjectEvent);
 
         var existingCosts = new MonetaryAmount();
-        existingFundingPart.setCosts(existingCosts);
+        existingFundingPart.setAmount(existingCosts);
 
-        fundingPartDTO.setFundingProposalId(2);
+        fundingPartDTO.setFundingApplicationId(2);
         fundingPartDTO.setProjectEventId(null);
 
-        var fundingProposal = new FundingProposal();
-        fundingProposal.setId(2);
+        var fundingApplication = new FundingApplication();
+        fundingApplication.setId(2);
 
         when(fundingPartRepository.findById(fundingPartId)).thenReturn(
             Optional.of(existingFundingPart));
         when(fundingService.findOne(1)).thenReturn(funding);
         when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(description);
         when(currencyService.findOne(1)).thenReturn(currency);
-        when(fundingProposalService.findOne(2)).thenReturn(fundingProposal);
+        when(fundingApplicationService.findOne(2)).thenReturn(fundingApplication);
 
         // when
         fundingPartService.updateFundingPart(fundingPartId, fundingPartDTO);
 
         // then
         verify(fundingPartRepository).findById(fundingPartId);
-        verify(fundingProposalService).findOne(2);
+        verify(fundingApplicationService).findOne(2);
         verify(projectEventService, never()).findOne(anyInt());
         verify(fundingPartRepository).save(existingFundingPart);
 
         assertThat(existingFundingPart.getProjectEvent()).isNull();
-        assertThat(existingFundingPart.getFundingProposal()).isEqualTo(fundingProposal);
+        assertThat(existingFundingPart.getFundingApplication()).isEqualTo(fundingApplication);
     }
 }

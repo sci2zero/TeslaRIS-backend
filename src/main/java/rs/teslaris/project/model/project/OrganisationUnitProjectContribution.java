@@ -20,7 +20,7 @@ import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.institution.OrganisationUnit;
-import rs.teslaris.project.model.funding.Funding;
+import rs.teslaris.project.model.funding.FundingPart;
 
 @Getter
 @Setter
@@ -41,7 +41,8 @@ public class OrganisationUnitProjectContribution extends BaseEntity {
     private LocalDate dateTo;
 
     @OneToMany(fetch = FetchType.LAZY)
-    private Set<Funding> funding = new HashSet<>(); // must be funding allocated only to this OU
+    private Set<FundingPart> fundingParts = new HashSet<>();
+        // must be funding parts allocated only to this OU
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id")

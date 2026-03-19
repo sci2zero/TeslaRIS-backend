@@ -57,9 +57,6 @@ public class FundingProgram extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<DocumentFile> programDocuments = new HashSet<>();
 
-    @Column(name = "admin_note")
-    private String adminNote;
-
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "funder_id")
     private OrganisationUnit funder;
@@ -86,4 +83,7 @@ public class FundingProgram extends BaseEntity {
 
     @Column(name = "oa_mandate_url")
     private String oaMandateUrl;
+
+    @OneToMany(mappedBy = "fundingProgram", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FundingCall> fundingCalls = new HashSet<>();
 }

@@ -25,7 +25,6 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.Project;
-import rs.teslaris.project.model.project.ProjectProposalResult;
 
 @Getter
 @Setter
@@ -46,11 +45,14 @@ public class FundingApplication extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "funding_application_id")
-    private FundingApplication fundingApplication;
+    private FundingApplication revisedFundingApplication;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "funding_id")
     private Funding funding;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<FundingPart> otherFundingSources;
 
     @Embedded
     @AttributeOverride(
@@ -58,20 +60,6 @@ public class FundingApplication extends BaseEntity {
     @AssociationOverride(
         name = "currency", joinColumns = @JoinColumn(name = "requested_currency_id"))
     private MonetaryAmount requestedAmount;
-
-    @Embedded
-    @AttributeOverride(
-        name = "amount", column = @Column(name = "other_funding_amount"))
-    @AssociationOverride(
-        name = "currency", joinColumns = @JoinColumn(name = "pother_funding_currency_id"))
-    private MonetaryAmount otherFundingSourceAmount;
-
-    @Embedded
-    @AttributeOverride(
-        name = "amount", column = @Column(name = "other_source_amount"))
-    @AssociationOverride(
-        name = "currency", joinColumns = @JoinColumn(name = "other_source_currency_id"))
-    private MonetaryAmount otherSourceFunding;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
@@ -95,7 +83,7 @@ public class FundingApplication extends BaseEntity {
     private LocalDate revisedProposalOrNextRoundDeadlineDate;
 
     @Column(name = "result")
-    private ProjectProposalResult result;
+    private FundingApplicationResult result;
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<DocumentFile> documents = new HashSet<>();

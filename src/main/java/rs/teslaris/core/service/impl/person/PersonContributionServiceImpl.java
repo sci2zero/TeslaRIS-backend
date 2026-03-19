@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,7 @@ import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.search.CollectionOperations;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 @Traceable
 public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribution>
@@ -115,10 +117,10 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contribution.setPersonalTitle(contributionDTO.getPersonalTitle());
             contribution.setEmploymentTitle(contributionDTO.getEmploymentTitle());
 
-            var addedPrevoiusly = document.getContributors().stream().anyMatch(
+            var addedPreviously = document.getContributors().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
 
-            if (!addedPrevoiusly) {
+            if (!addedPreviously) {
                 document.addDocumentContribution(contribution);
 
                 if (CollectionOperations.containsValues(
@@ -150,10 +152,10 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contribution.setDateFrom(contributionDTO.getDateFrom());
             contribution.setDateTo(contributionDTO.getDateTo());
 
-            var addedPrevoiusly = publicationSeries.getContributions().stream().anyMatch(
+            var addedPreviously = publicationSeries.getContributions().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
 
-            if (!addedPrevoiusly) {
+            if (!addedPreviously) {
                 publicationSeries.addContribution(contribution);
             }
         });
@@ -173,10 +175,10 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contribution.setDateFrom(contributionDTO.getDateFrom());
             contribution.setDateTo(contributionDTO.getDateTo());
 
-            var addedPrevoiusly = publicationSeries.getContributions().stream().anyMatch(
+            var addedPreviously = publicationSeries.getContributions().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
 
-            if (!addedPrevoiusly) {
+            if (!addedPreviously) {
                 publicationSeries.addContribution(contribution);
             }
         });
@@ -191,10 +193,10 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
             contribution.setContributionType(contributionDTO.getEventContributionType());
 
-            var addedPrevoiusly = event.getContributions().stream().anyMatch(
+            var addedPreviously = event.getContributions().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
 
-            if (!addedPrevoiusly) {
+            if (!addedPreviously) {
                 event.addContribution(contribution);
             }
         });
@@ -275,8 +277,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
         return personName;
     }
 
-    private void setPersonContributionCommonFields(PersonContribution contribution,
-                                                   PersonContributionDTO contributionDTO) {
+    protected void setPersonContributionCommonFields(PersonContribution contribution,
+                                                     PersonContributionDTO contributionDTO) {
         var affiliationStatement = new AffiliationStatement();
 
         if (Objects.nonNull(contributionDTO.getPersonId())) {
@@ -310,8 +312,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contributionApprovedByDefault ? ApproveStatus.APPROVED : ApproveStatus.REQUESTED);
     }
 
-    private boolean compareContributions(PersonContribution previousContribution,
-                                         PersonContribution contribution) {
+    protected boolean compareContributions(PersonContribution previousContribution,
+                                           PersonContribution contribution) {
         if (contribution instanceof PersonDocumentContribution &&
             !((PersonDocumentContribution) previousContribution).getContributionType()
                 .equals(((PersonDocumentContribution) contribution).getContributionType())) {

@@ -8,7 +8,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -30,19 +29,13 @@ import rs.teslaris.project.model.funding.FundingPart;
 public class PersonProjectContribution extends PersonContribution {
 
     @Column(name = "contribution_type", nullable = false)
-    private ProjectContributionType contributionType;
+    private PersonProjectContributionType contributionType;
 
     @Column(name = "investigation_role", nullable = false)
     private PersonProjectInvestigationRole investigationRole;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> otherRoleDescription = new HashSet<>();
-
-    @Column(name = "date_from")
-    private LocalDate dateFrom;
-
-    @Column(name = "date_to")
-    private LocalDate dateTo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)

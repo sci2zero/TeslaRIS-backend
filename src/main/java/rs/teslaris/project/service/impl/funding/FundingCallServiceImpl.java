@@ -37,6 +37,7 @@ import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
+import rs.teslaris.project.service.interfaces.funding.PersonFundingCallContributionService;
 
 @Service
 @RequiredArgsConstructor
@@ -58,6 +59,8 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
     private final CurrencyService currencyService;
 
     private final FundingCallIndexRepository fundingCallIndexRepository;
+
+    private final PersonFundingCallContributionService personFundingCallContributionService;
 
 
     @Override
@@ -117,7 +120,7 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             throw new ReferenceConstraintException("fundingCallHasFundingMessage");
         }
 
-        if (fundingCallRepository.hasFundingProposals(fundingCallId)) {
+        if (fundingCallRepository.hasFundingApplications(fundingCallId)) {
             throw new ReferenceConstraintException("fundingCallHasProposalsMessage");
         }
 
@@ -234,6 +237,9 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
         fundingCall.setUris(fundingCallDTO.getUris());
         fundingCall.setOaMandated(fundingCallDTO.getOaMandated());
         fundingCall.setOaMandateUrl(fundingCallDTO.getOaMandateUrl());
+
+        personFundingCallContributionService.setPersonFundingContributionsForFundingCall(
+            fundingCall, fundingCallDTO);
     }
 
     private void clearCommonFields(FundingCall fundingCall) {

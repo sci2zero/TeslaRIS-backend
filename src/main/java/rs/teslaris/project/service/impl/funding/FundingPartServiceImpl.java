@@ -13,9 +13,11 @@ import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
+import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingPartService;
-import rs.teslaris.project.service.interfaces.funding.FundingProposalService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
+import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
+import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
 import rs.teslaris.project.service.interfaces.project.ProjectEventService;
 
@@ -36,7 +38,12 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
 
     private final ProjectDocumentService projectDocumentService;
 
-    private final FundingProposalService fundingProposalService;
+    private final FundingApplicationService fundingApplicationService;
+
+    private final PersonProjectContributionService personProjectContributionService;
+
+    private final OrganisationUnitProjectContributionService
+        organisationUnitProjectContributionService;
 
 
     @Override
@@ -72,38 +79,71 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
     }
 
     private void setCommonFields(FundingPart fundingPart, FundingPartDTO dto) {
-        fundingPart.setFunding(fundingService.findOne(dto.getFundingId()));
         fundingPart.setDescription(
             multilingualContentService.getMultilingualContent(dto.getDescription()));
 
-        if (Objects.isNull(fundingPart.getCosts())) {
-            fundingPart.setCosts(new MonetaryAmount());
+        if (Objects.isNull(fundingPart.getAmount())) {
+            fundingPart.setAmount(new MonetaryAmount());
         }
 
-        fundingPart.getCosts().setCurrency(currencyService.findOne(dto.getCosts().getCurrencyId()));
-        fundingPart.getCosts().setAmount(dto.getCosts().getAmount());
+        fundingPart.getAmount()
+            .setCurrency(currencyService.findOne(dto.getAmount().getCurrencyId()));
+        fundingPart.getAmount().setAmount(dto.getAmount().getAmount());
+
+        var commonAttributeSet = false;
+
+        if (Objects.nonNull(dto.getFundingId())) {
+            fundingPart.setFunding(fundingService.findOne(dto.getFundingId()));
+            commonAttributeSet = true;
+        }
 
         if (Objects.nonNull(dto.getProjectEventId())) {
             fundingPart.setProjectEvent(projectEventService.findOne(dto.getProjectEventId()));
-        } else if (Objects.nonNull(dto.getFundingProposalId())) {
-            fundingPart.setFundingProposal(
-                fundingProposalService.findOne(dto.getFundingProposalId()));
-        } else if (Objects.nonNull(dto.getProjectDocumentId())) {
+
+            commonAttributeSet = true;
+        }
+
+        if (Objects.nonNull(dto.getFundingApplicationId())) {
+            fundingPart.setFundingApplication(
+                fundingApplicationService.findOne(dto.getFundingApplicationId()));
+
+            commonAttributeSet = true;
+        }
+
+        if (Objects.nonNull(dto.getProjectDocumentId())) {
             fundingPart.setProjectDocument(
                 projectDocumentService.findOne(dto.getProjectDocumentId()));
-        } else if (Objects.nonNull(dto.getForFundingId())) {
-            fundingPart.setForFunding(fundingService.findOne(dto.getForFundingId()));
-        } else {
+
+            commonAttributeSet = true;
+        }
+
+        if (Objects.nonNull(dto.getPersonProjectContributionId())) {
+            fundingPart.setPersonProjectContribution(
+                personProjectContributionService.findOne(dto.getPersonProjectContributionId()));
+
+            commonAttributeSet = true;
+        }
+
+        if (Objects.nonNull(dto.getOrganisationUnitProjectContributionId())) {
+            fundingPart.setOrganisationUnitProjectContribution(
+                organisationUnitProjectContributionService.findOne(
+                    dto.getOrganisationUnitProjectContributionId()));
+
+            commonAttributeSet = true;
+        }
+
+        if (!commonAttributeSet) {
             throw new ReferenceConstraintException(
-                "Funding part must belong to one of the following: funding, funding proposal, project event or project event.");
+                "Funding part must belong to one of the following: funding, funding application, " +
+                    "project event, person project contribution or OU project contribution.");
         }
     }
 
     private void clearCommonFields(FundingPart fundingPart) {
         fundingPart.setProjectEvent(null);
         fundingPart.setProjectDocument(null);
-        fundingPart.setFundingProposal(null);
-        fundingPart.setForFunding(null);
-
+        fundingPart.setFundingApplication(null);
+        fundingPart.setPersonProjectContribution(null);
+        fundingPart.setOrganisationUnitProjectContribution(null);
     }
 }
