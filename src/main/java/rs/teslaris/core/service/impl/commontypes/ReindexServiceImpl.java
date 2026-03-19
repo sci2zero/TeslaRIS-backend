@@ -173,6 +173,7 @@ public class ReindexServiceImpl implements ReindexService {
     public CompletableFuture<Void> reindexPublications() {
         safeReindex(documentPublicationService::deleteIndexes,
             "Error deleting document publication indexes");
+        safeReindex(thesisService::reindexTheses, "Error reindexing theses");
         safeReindex(proceedingsService::reindexProceedings, "Error reindexing proceedings");
         safeReindex(journalPublicationService::reindexJournalPublications,
             "Error reindexing journal publications");
@@ -185,7 +186,6 @@ public class ReindexServiceImpl implements ReindexService {
         safeReindex(monographService::reindexMonographs, "Error reindexing monographs");
         safeReindex(monographPublicationService::reindexMonographPublications,
             "Error reindexing monograph publications");
-        safeReindex(thesisService::reindexTheses, "Error reindexing theses");
         safeReindex(materialProductService::reindexMaterialProducts,
             "Error reindexing material products");
         safeReindex(geneticMaterialService::reindexGeneticMaterials,
