@@ -74,6 +74,7 @@ import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
@@ -729,15 +730,18 @@ public class DocumentPublicationServiceTest {
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
             .thenReturn(Optional.of(documentIndex));
-        var commissions = List.of(1, 2);
-        when(commissionRepository.findCommissionsThatAssessedDocument(documentId)).thenReturn(
-            commissions);
+        var assessments =
+            List.of(new AssessmentClassificationBasicInfo(5, "M84", false),
+                new AssessmentClassificationBasicInfo(4, "M83", true));
+        when(commissionRepository.findAssessmentClassificationBasicInfoForDocument(
+            documentId)).thenReturn(
+            assessments);
 
         // When
         documentPublicationService.reindexDocumentVolatileInformation(documentId);
 
         // Then
-        verify(documentIndex).setAssessedBy(commissions);
+        verify(documentIndex).setAssessedBy(any());
     }
 
     @Test

@@ -736,22 +736,34 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private void setAdditionalMetadata(Integer documentId, DocumentPublicationIndex index) {
-        index.setAssessedBy(
-            commissionRepository.findCommissionsThatAssessedDocument(documentId));
+        var assessments =
+            commissionRepository.findAssessmentClassificationBasicInfoForDocument(documentId);
 
         index.getCommissionAssessmentGroups().clear();
         index.getCommissionAssessments().clear();
-        commissionRepository.findAssessmentClassificationBasicInfoForDocumentAndCommissions(
-            documentId, index.getAssessedBy()).forEach(assessment -> {
+
+        var assessedBy = new HashSet<Integer>();
+        for (var assessment : assessments) {
+            assessedBy.add(assessment.commissionId());
+
             index.getCommissionAssessmentGroups().add(
-                new Triple<>(assessment.commissionId(),
+                new Triple<>(
+                    assessment.commissionId(),
                     ClassificationPriorityMapping.getGroupCode(assessment.assessmentCode()),
-                    assessment.manual()));
+                    assessment.manual()
+                )
+            );
+
             index.getCommissionAssessments().add(
-                new Triple<>(assessment.commissionId(),
+                new Triple<>(
+                    assessment.commissionId(),
                     assessment.assessmentCode(),
-                    assessment.manual()));
-        });
+                    assessment.manual()
+                )
+            );
+        }
+
+        index.setAssessedBy(new ArrayList<>(assessedBy));
     }
 
     @Override
