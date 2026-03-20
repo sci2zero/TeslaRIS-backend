@@ -19,6 +19,8 @@ import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.project.model.common.MonetaryAmount;
+import rs.teslaris.project.model.project.OrganisationUnitProjectContribution;
+import rs.teslaris.project.model.project.PersonProjectContribution;
 import rs.teslaris.project.model.project.ProjectDocument;
 import rs.teslaris.project.model.project.ProjectEvent;
 
@@ -30,37 +32,42 @@ import rs.teslaris.project.model.project.ProjectEvent;
 @Table(name = "funding_parts",
     indexes = {
         @Index(name = "idx_funding_parts_project_event", columnList = "project_event_id"),
-        @Index(name = "idx_funding_parts_proposal", columnList = "funding_proposal_id"),
+        @Index(name = "idx_funding_parts_application", columnList = "funding_application_id"),
         @Index(name = "idx_funding_parts_project_document", columnList = "project_document_id"),
-        @Index(name = "idx_funding_parts_for_funding", columnList = "for_funding_id"),
-        @Index(name = "idx_funding_parts_funding", columnList = "funding_id")
+        @Index(name = "idx_funding_parts_funding", columnList = "funding_id"),
+        @Index(name = "idx_funding_parts_person_cont", columnList = "person_project_contribution_id"),
+        @Index(name = "idx_funding_parts_ou_cont", columnList = "ou_project_contribution_id")
     })
 @SQLRestriction("deleted=false")
 public class FundingPart extends BaseEntity {
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "funding_id")
-    private Funding funding;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> description = new HashSet<>();
 
     @Embedded
-    private MonetaryAmount costs;
+    private MonetaryAmount amount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "funding_id")
+    private Funding funding;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_event_id")
     private ProjectEvent projectEvent;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "funding_proposal_id")
-    private FundingProposal fundingProposal;
+    @JoinColumn(name = "funding_application_id")
+    private FundingApplication fundingApplication;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_document_id")
     private ProjectDocument projectDocument;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "for_funding_id")
-    private Funding forFunding;
+    @JoinColumn(name = "person_project_contribution_id")
+    private PersonProjectContribution personProjectContribution;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ou_project_contribution_id")
+    private OrganisationUnitProjectContribution organisationUnitProjectContribution;
 }

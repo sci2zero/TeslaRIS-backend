@@ -104,15 +104,13 @@ public class ProjectDataInitializer {
 
         var fundingPart1 = new FundingPart();
         fundingPart1.setDescription(Set.of(new MultiLingualContent(englishTag, "Small Part", 1)));
-        fundingPart1.setCosts(new MonetaryAmount(3000, currencyEuro));
+        fundingPart1.setAmount(new MonetaryAmount(3000, currencyEuro));
         fundingPart1.setFunding(funding3);
-        fundingPart1.setForFunding(funding1);
 
         var fundingPart2 = new FundingPart();
         fundingPart2.setDescription(Set.of(new MultiLingualContent(englishTag, "Big Part", 1)));
-        fundingPart2.setCosts(new MonetaryAmount(10000, currencyEuro));
+        fundingPart2.setAmount(new MonetaryAmount(10000, currencyEuro));
         fundingPart2.setFunding(funding3);
-        fundingPart2.setForFunding(funding1);
 
         fundingPartRepository.saveAll(List.of(fundingPart1, fundingPart2));
     }

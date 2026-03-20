@@ -12,7 +12,7 @@ public interface FundingCallRepository extends JpaRepository<FundingCall, Intege
         "WHERE f.fundingCall.id = :fundingCallId")
     boolean hasFunding(Integer fundingCallId);
 
-    @Query("SELECT COUNT(fp) > 0 FROM FundingProposal fp " +
+    @Query("SELECT COUNT(fp) > 0 FROM FundingApplication fp " +
         "WHERE fp.fundingCall.id = :fundingCallId")
-    boolean hasFundingProposals(Integer fundingCallId);
+    boolean hasFundingApplications(Integer fundingCallId);
 }

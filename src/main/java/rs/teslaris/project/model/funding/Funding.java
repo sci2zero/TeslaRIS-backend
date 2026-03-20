@@ -36,8 +36,17 @@ import rs.teslaris.project.model.project.Project;
 @SQLRestriction("deleted=false")
 public class Funding extends BaseEntity {
 
-    @Column(name = "internal_identifier")
-    private String internalIdentifier;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "internal_identifiers")
+    private Set<String> internalIdentifiers = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "old_ids")
+    private Set<String> oldIds = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "merged_ids")
+    private Set<String> mergedIds = new HashSet<>();
 
     @Column(name = "doi")
     private String doi;
@@ -67,9 +76,6 @@ public class Funding extends BaseEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
 
-    @Column(name = "admin_note")
-    private String adminNote;
-
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
@@ -87,7 +93,7 @@ public class Funding extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> displayFunder = new HashSet<>();
 
-    @OneToMany(mappedBy = "forFunding", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "funding", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<FundingPart> fundingParts = new HashSet<>();
 
     @JdbcTypeCode(SqlTypes.JSON)

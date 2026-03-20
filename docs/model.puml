@@ -694,7 +694,7 @@ package document {
   }
     
   PersonContribution "*" --> "0..*" institution.OrganisationUnit : institutions
-  PersonContribution "*" --> "1" Person : contributions / person
+  PersonContribution "*" -- "1" Person : contributions / person
   
   class AffiliationStatement {
     Set<MultiLingualContent> displayAffiliationStatement
@@ -1336,9 +1336,9 @@ package activity {
     
     PersonActivity "*" --> "*" institution.OrganisationUnit : targetInstitutions     
     
-    PersonActivity "*" --> "0..1" PersonContribution : activities / contribution
+    PersonActivity "*" -- "0..1" PersonContribution : activities / contribution
     
-    PersonActivity "*" --> "0..1" Involvement : activities / involvement 
+    PersonActivity "*" -- "0..1" Involvement : activities / involvement 
     ' !!! it should be one or the another, not both (involvement or  contribution)
     
     class PersonTeachingActivity extends PersonActivity {
@@ -1525,8 +1525,7 @@ package project {
     CONTRACTOR
     BENEFICIARY
   }
-  
-    
+
   class PersonProjectContribution extends PersonContribution {
     PersonProjectContributionType contributionType
     PersonProjectInvestigationRole investigationRole 

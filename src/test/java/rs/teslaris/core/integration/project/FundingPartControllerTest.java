@@ -45,12 +45,11 @@ public class FundingPartControllerTest extends BaseTest {
         keywordsList.add(keyword1);
 
         dto.setFundingId(3);
-        dto.setForFundingId(1);
 
         var monetaryAmount = new MonetaryAmountDTO();
         monetaryAmount.setAmount(100);
         monetaryAmount.setCurrencyId(1);
-        dto.setCosts(monetaryAmount);
+        dto.setAmount(monetaryAmount);
 
         return dto;
     }

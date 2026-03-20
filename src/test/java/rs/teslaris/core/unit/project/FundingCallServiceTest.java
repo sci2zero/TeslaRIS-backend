@@ -53,6 +53,7 @@ import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.service.impl.funding.FundingCallServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
+import rs.teslaris.project.service.interfaces.funding.PersonFundingCallContributionService;
 
 @SpringBootTest
 public class FundingCallServiceTest {
@@ -80,6 +81,9 @@ public class FundingCallServiceTest {
 
     @Mock
     private FundingCallIndexRepository fundingCallIndexRepository;
+
+    @Mock
+    private PersonFundingCallContributionService personFundingCallContributionService;
 
     @InjectMocks
     private FundingCallServiceImpl fundingCallService;
@@ -367,7 +371,7 @@ public class FundingCallServiceTest {
         // given
         var fundingCallId = 1;
 
-        when(fundingCallRepository.hasFundingProposals(fundingCallId))
+        when(fundingCallRepository.hasFundingApplications(fundingCallId))
             .thenReturn(false);
         when(fundingCallRepository.hasFunding(fundingCallId))
             .thenReturn(false);
@@ -379,7 +383,7 @@ public class FundingCallServiceTest {
         fundingCallService.deleteFundingCall(fundingCallId);
 
         // then
-        verify(fundingCallRepository).hasFundingProposals(fundingCallId);
+        verify(fundingCallRepository).hasFundingApplications(fundingCallId);
         verify(fundingCallRepository).hasFunding(fundingCallId);
         verify(fundingCallRepository).save(any());
     }
@@ -389,7 +393,7 @@ public class FundingCallServiceTest {
         // given
         var fundingCallId = 1;
 
-        when(fundingCallRepository.hasFundingProposals(fundingCallId))
+        when(fundingCallRepository.hasFundingApplications(fundingCallId))
             .thenReturn(true);
         when(fundingCallRepository.hasFunding(fundingCallId))
             .thenReturn(false);
@@ -397,7 +401,7 @@ public class FundingCallServiceTest {
         // when & then
         assertThrows(ReferenceConstraintException.class, () ->
             fundingCallService.deleteFundingCall(fundingCallId));
-        verify(fundingCallRepository).hasFundingProposals(fundingCallId);
+        verify(fundingCallRepository).hasFundingApplications(fundingCallId);
         verify(fundingCallRepository).hasFunding(fundingCallId);
         verify(fundingCallRepository, never()).deleteById(anyInt());
     }
@@ -407,7 +411,7 @@ public class FundingCallServiceTest {
         // given
         var fundingCallId = 1;
 
-        when(fundingCallRepository.hasFundingProposals(fundingCallId))
+        when(fundingCallRepository.hasFundingApplications(fundingCallId))
             .thenReturn(false);
         when(fundingCallRepository.hasFunding(fundingCallId))
             .thenReturn(true);
