@@ -686,7 +686,6 @@ package document {
   }
 
   class PersonContribution {
-    Person person
     Set<MultiLingualContent> contributionDescription
     AffiliationStatement affiliationStatement
     Integer orderNumber
@@ -695,7 +694,7 @@ package document {
   }
     
   PersonContribution "*" --> "0..*" institution.OrganisationUnit : institutions
-  PersonContribution "*" --> "1" Person : person
+  PersonContribution "*" --> "1" Person : contributions / person
   
   class AffiliationStatement {
     Set<MultiLingualContent> displayAffiliationStatement
@@ -1335,8 +1334,12 @@ package activity {
         Set<SDGoal> sdgs        
     }
     
-    PersonActivity "*" --> "*" institution.OrganisationUnit : targetInstitutions
-          
+    PersonActivity "*" --> "*" institution.OrganisationUnit : targetInstitutions     
+    
+    PersonActivity "*" --> "0..1" PersonContribution : activities / contribution
+    
+    PersonActivity "*" --> "0..1" Involvement : activities / involvement 
+    ' !!! it should be one or the another, not both (involvement or  contribution)
     
     class PersonTeachingActivity extends PersonActivity {
         PersonTeachingActivityCategory category
@@ -1347,11 +1350,11 @@ package activity {
         String otherContactHoursPerWeek
     }
     
-    PersonTeachingActivity "*" --> "0..1" PersonContribution : contribution
+    ' !!! link to PersonContribution subclasses
     ' for GRADUATE_EXAMINATION it should be PersonDocumentContribution, in the case it is linked with thesis, 
     ' otherwise it will be PersonEventContribution
     ' for COURSE_TAUGHT it should be PersonEventContribution 
-    PersonTeachingActivity "*" --> "0..1" Involvement : involvement
+    ' !!! link to Involvement subclasses
     ' for INVITED_TEACHING it might be Employment
     
     enum PersonTechingActivityCategory {
@@ -1365,7 +1368,7 @@ package activity {
         PersonSupervisingActivityCategory category
     }
     
-    PersonSupervisingActivity "*" --> "0..1" Involvement : involvement
+    ' !!! link to Involvement subclasses
     ' for RESEARCH_BASED_DEGREE_SUPERVISION it might be Education, the certain person (activity owner) should be in 
     ' the list of supervisors (field in the Education)
     ' for MENTORING it might be Education with DegreeType INFORMAL_EDUCATION, the certain person (activity owner) should be in 
@@ -1382,11 +1385,12 @@ package activity {
         Integer numberOfReviewsOrAssessment                            
     }
     
-    PersonAssessmentActivity "*" --> "0..1" PersonContribution : contribution
+    ' !!! link to PersonContribution subclasses
     ' for CONFERENCE_REVIEWING_REFEREEING it should be PersonEventContribution, 
     ' for JOURNAL_REVIEWING_REFEREEING, ADHOC_JOURNAL_ARTICLE_REVIEW it should be PersonPublicationSeriesContribution, 
     ' for GRANT_APPLICATION_ASSESSMENT it should be PersonFundingCallContribution
-    PersonAssessmentActivity "*" --> "0..1" Involvement : involvement
+    
+    ' !!! link to Involvement subclasses
     ' for PROMOTION_TENURE_ASSESSMENT it might be Membership, probably the linked Membership is without OrgUnit, just affiliationStatement, because Committee is not a legal entity
     ' We have commission for assessment, which is an important entity for TeslaRIS internal process of assessment. However, it is not a public entity for person references, 
     ' therefore, suggestion is to use Membership for this purpose 
@@ -1404,7 +1408,7 @@ package activity {
         PersonMembershipActivityCategory category                  
     }
     
-    PersonAssessmentActivity "*" --> "0..1" Involvement : involvement
+    ' !!! link to Involvement subclasses
     ' for CONSULTING_ADVISORY it might be Employment,  
     ' for MEMBERSHIP it might be Membership 
     ' for COMMITTEE_MEMBERSHIP it might be Membership, probably the linked Membership is without OrgUnit, just affiliationStatement, because Committee is not a legal entity
@@ -1426,7 +1430,7 @@ package activity {
         Set<MultilingualContent> location-jurisdiction  ' only for EXPERT_WITNESS                           
     }
     
-    PersonEventActivity "*" --> "0..1" PersonContribution : contribution
+    ' !!! link to PersonContribution subclasses
     '  it should be PersonEventContribution     
         
     enum PersonEventActivityCategory {
@@ -1440,7 +1444,7 @@ package activity {
         PersonProjectContribution contribution                              
     }
     
-    PersonProjectActivity "*" --> "0..1" PersonContribution : contribution
+    ' !!! link to PersonContribution subclasses
     '  it should be PersonProjectContribution
         
     enum PersonProjectActivityCategory {
@@ -1540,7 +1544,6 @@ package project {
     CONTACT 
     INKIND_CONTRIBUTOR 
     CONTRACTOR 
-    PARTICIPATION ' !!! 
   }
   
   enum PersonProjectInvestigationRole {
