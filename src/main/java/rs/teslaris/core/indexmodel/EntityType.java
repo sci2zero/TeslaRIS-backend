@@ -14,5 +14,6 @@ public enum EntityType {
     DOCUMENT_FILE,
     PRIZE,
     CONFERENCE,
-    EXHIBITION
+    EXHIBITION,
+    ASSESSMENT_POINTS
 }

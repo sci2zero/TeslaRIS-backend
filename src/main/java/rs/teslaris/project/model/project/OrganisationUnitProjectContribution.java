@@ -42,7 +42,7 @@ public class OrganisationUnitProjectContribution extends BaseEntity {
 
     @OneToMany(fetch = FetchType.LAZY)
     private Set<FundingPart> fundingParts = new HashSet<>();
-        // must be funding parts allocated only to this OU
+    // must be funding parts allocated only to this OU
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id")

@@ -820,7 +820,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             organisationUnit.getPostalAddress()
                 .setPostalNumber(organisationUnitDTO.getPostalAddress().getPostalNumber());
 
-            if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId())) {
+            if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId()) &&
+                organisationUnitDTO.getPostalAddress().getCountryId() > 0) {
                 organisationUnit.getPostalAddress().setCountry(
                     countryService.findOne(organisationUnitDTO.getPostalAddress().getCountryId()));
             } else {

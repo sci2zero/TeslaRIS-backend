@@ -157,7 +157,8 @@ public class ReindexServiceImpl implements ReindexService {
             }
 
             if (indexesToRepopulate.contains(EntityType.PUBLICATION) ||
-                indexesToRepopulate.contains(EntityType.PERSON)) {
+                indexesToRepopulate.contains(EntityType.PERSON) ||
+                indexesToRepopulate.contains(EntityType.ASSESSMENT_POINTS)) {
                 applicationEventPublisher.publishEvent(new AllResearcherPointsReindexingEvent());
             }
 
