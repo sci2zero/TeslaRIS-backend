@@ -150,12 +150,11 @@ public class SearchServiceImplES<T> implements SearchService<T> {
             orders.add(Sort.Order.desc("_score"));
         }
 
-        boolean hasIdSort = orders.stream()
-            .anyMatch(
-                order -> "_id".equals(order.getProperty()) || "id".equals(order.getProperty()));
+        boolean hasStableSort = orders.stream()
+            .anyMatch(order -> "databaseId".equals(order.getProperty()));
 
-        if (!hasIdSort) {
-            orders.add(Sort.Order.asc("_id")); // stable tie-breaker
+        if (!hasStableSort) {
+            orders.add(Sort.Order.asc("databaseId"));
         }
 
         return Sort.by(orders);
