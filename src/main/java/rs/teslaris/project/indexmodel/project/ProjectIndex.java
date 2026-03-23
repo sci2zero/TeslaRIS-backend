@@ -35,4 +35,7 @@ public class ProjectIndex {
 
     @Field(type = FieldType.Keyword, name = "name_other_sortable", normalizer = "english_normalizer")
     private String nameOtherSortable;
+
+    @Field(type = FieldType.Integer, name = "databaseId", store = true)
+    private Integer databaseId;
 }

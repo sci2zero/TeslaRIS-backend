@@ -85,7 +85,6 @@ import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
-import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -717,16 +716,29 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setLocation(
             GeoLocationConverter.fromDTO(organisationUnitDTO.getLocation()));
 
-        if (!StringUtil.valueExists(organisationUnit.getLocation().getAddress()) &&
-            CollectionOperations.containsValues(
-                organisationUnit.getPostalAddress().getStreetAndNumber()) &&
-            CollectionOperations.containsValues(
-                organisationUnit.getPostalAddress().getCity())) {
-            organisationUnit.getLocation().setAddress(StringUtil.getStringContent(
+        if (!StringUtil.valueExists(organisationUnit.getLocation().getAddress())) {
+            var street = StringUtil.getStringContent(
                 organisationUnit.getPostalAddress().getStreetAndNumber(),
-                LanguageAbbreviations.SERBIAN) + ", " +
-                StringUtil.getStringContent(organisationUnit.getPostalAddress().getCity(),
-                    LanguageAbbreviations.SERBIAN));
+                LanguageAbbreviations.SERBIAN);
+            var city = StringUtil.getStringContent(organisationUnit.getPostalAddress().getCity(),
+                LanguageAbbreviations.SERBIAN);
+            var state = StringUtil.getStringContent(organisationUnit.getPostalAddress().getState(),
+                LanguageAbbreviations.SERBIAN);
+
+            var parts = new ArrayList<String>();
+            if (StringUtil.valueExists(street)) {
+                parts.add(street);
+            }
+            if (StringUtil.valueExists(city)) {
+                parts.add(city);
+            }
+            if (StringUtil.valueExists(state)) {
+                parts.add(state);
+            }
+
+            String address = String.join(", ", parts);
+
+            organisationUnit.getLocation().setAddress(address);
         }
 
         organisationUnit.setContact(
@@ -802,25 +814,29 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
                 organisationUnit.setPostalAddress(new PostalAddress());
             }
 
-            organisationUnit.getPostalAddress().setStreetAndNumber(
+            organisationUnit.getPostalAddress().getStreetAndNumber().clear();
+            organisationUnit.getPostalAddress().getStreetAndNumber().addAll(
                 multilingualContentService.getMultilingualContent(
                     organisationUnitDTO.getPostalAddress().getStreetAndNumber())
             );
 
-            organisationUnit.getPostalAddress().setStreetAndNumber(
+            organisationUnit.getPostalAddress().getCity().clear();
+            organisationUnit.getPostalAddress().getCity().addAll(
                 multilingualContentService.getMultilingualContent(
-                    organisationUnitDTO.getPostalAddress().getStreetAndNumber())
+                    organisationUnitDTO.getPostalAddress().getCity())
             );
 
-            organisationUnit.getPostalAddress().setStreetAndNumber(
+            organisationUnit.getPostalAddress().getState().clear();
+            organisationUnit.getPostalAddress().getState().addAll(
                 multilingualContentService.getMultilingualContent(
-                    organisationUnitDTO.getPostalAddress().getStreetAndNumber())
+                    organisationUnitDTO.getPostalAddress().getState())
             );
 
             organisationUnit.getPostalAddress()
                 .setPostalNumber(organisationUnitDTO.getPostalAddress().getPostalNumber());
 
-            if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId())) {
+            if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId()) &&
+                organisationUnitDTO.getPostalAddress().getCountryId() > 0) {
                 organisationUnit.getPostalAddress().setCountry(
                     countryService.findOne(organisationUnitDTO.getPostalAddress().getCountryId()));
             } else {
@@ -954,7 +970,7 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         StringUtil.removeTrailingDelimiters(srNameAbbreviation, otherNameAbbreviation);
 
         index.setNameSr(index.getNameSr() + " " + srNameAbbreviation);
-        index.setNameSr(index.getNameOther() + " " + otherNameAbbreviation);
+        index.setNameOther(index.getNameOther() + " " + otherNameAbbreviation);
 
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());

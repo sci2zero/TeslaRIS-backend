@@ -15,16 +15,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.document.ThesisResponseDTO;
+import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
 import rs.teslaris.core.dto.person.ContactDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
@@ -45,6 +50,9 @@ public class RegistryBookDraftServiceTest {
     @Mock
     private ThesisService thesisService;
 
+    @Mock
+    private OrganisationUnitService organisationUnitService;
+
     @InjectMocks
     private RegistryBookDraftServiceImpl registryBookDraftService;
 
@@ -64,6 +72,8 @@ public class RegistryBookDraftServiceTest {
         draftDTO.setPersonalInformation(new RegistryBookPersonalInformationDTO());
         draftDTO.setContactInformation(new RegistryBookContactInformationDTO());
         draftDTO.setPreviousTitleInformation(new PreviousTitleInformationDTO());
+        draftDTO.setThesisId(1);
+        draftDTO.getDissertationInformation().setOrganisationUnitId(1);
 
         savedDraft = new RegistryBookEntryDraft();
         savedDraft.setId(1);
@@ -118,6 +128,13 @@ public class RegistryBookDraftServiceTest {
         savedDraft.setDraftData(jsonDraft);
         when(registryBookEntryDraftRepository.findByThesisId(thesisId)).thenReturn(
             Optional.of(savedDraft));
+        when(thesisService.readThesisById(thesisId)).thenReturn(new ThesisResponseDTO() {{
+            setOrganisationUnitId(1);
+        }});
+        when(organisationUnitService.readOrganisationUnitById(1)).thenReturn(
+            new OrganisationUnitDTO() {{
+                setName(List.of(new MultilingualContentDTO(1, "EN", "Test", 1)));
+            }});
 
         // When
         var result = registryBookDraftService.fetchRegistryBookEntryDraft(thesisId);
@@ -206,7 +223,10 @@ public class RegistryBookDraftServiceTest {
         // Given
         var thesisId = 1;
         var partialDraftDTO = new RegistryBookEntryDTO();
-        partialDraftDTO.setDissertationInformation(new DissertationInformationDTO());
+        partialDraftDTO.setThesisId(thesisId);
+        partialDraftDTO.setDissertationInformation(new DissertationInformationDTO() {{
+            setOrganisationUnitId(1);
+        }});
         partialDraftDTO.getDissertationInformation().setDefenceDate(LocalDate.of(2024, 5, 15));
 
         when(thesisService.getThesisById(thesisId)).thenReturn(thesis);
@@ -265,6 +285,15 @@ public class RegistryBookDraftServiceTest {
         nullDraftDTO.setPreviousTitleInformation(null);
 
         when(thesisService.getThesisById(thesisId)).thenReturn(thesis);
+        when(thesisService.readThesisById(thesisId)).thenReturn(new ThesisResponseDTO() {{
+            setId(thesisId);
+            setOrganisationUnitId(1);
+        }});
+        when(organisationUnitService.readOrganisationUnitById(1)).thenReturn(
+            new OrganisationUnitDTO() {{
+                setName(List.of(new MultilingualContentDTO(1, "EN", "Test", 1)));
+            }});
+
         when(registryBookEntryDraftRepository.save(any(RegistryBookEntryDraft.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -286,10 +315,12 @@ public class RegistryBookDraftServiceTest {
         // Given
         var thesisId = 1;
         var complexDraftDTO = new RegistryBookEntryDTO();
+        complexDraftDTO.setThesisId(1);
 
         var dissertationInfo = new DissertationInformationDTO();
         dissertationInfo.setDefenceDate(LocalDate.of(2024, 5, 15));
         dissertationInfo.setDissertationTitle("Advanced AI Research");
+        dissertationInfo.setOrganisationUnitId(1);
         complexDraftDTO.setDissertationInformation(dissertationInfo);
 
         var personalInfo = new RegistryBookPersonalInformationDTO();

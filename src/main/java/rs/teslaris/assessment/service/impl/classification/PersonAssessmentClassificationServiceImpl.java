@@ -2,6 +2,7 @@ package rs.teslaris.assessment.service.impl.classification;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import java.time.LocalDate;
@@ -312,24 +313,55 @@ public class PersonAssessmentClassificationServiceImpl
         boolean hasNextPage = true;
 
         while (hasNextPage) {
-            var persons =
-                searchService.runQuery(buildPersonReindexQuery(personIds, institutionIds),
-                        PageRequest.of(pageNumber, CHUNK_SIZE), PersonIndex.class, "person")
+            try {
+                var pageable = PageRequest.of(
+                    pageNumber,
+                    CHUNK_SIZE,
+                    Sort.by(Sort.Direction.ASC, "databaseId")
+                );
+
+                var query = buildPersonReindexQuery(personIds, institutionIds);
+
+                log.info("Executing ES query for page {}: {}", pageNumber, query.toString());
+                log.info("Pageable: {}", pageable);
+
+                var persons = searchService.runQuery(
+                        query,
+                        pageable,
+                        PersonIndex.class,
+                        "person"
+                    )
                     .getContent();
 
-            persons.forEach(personIndex -> {
-                    log.info("reindexPublicationPointsForAllResearchers REINDEXING points for {} ({})",
-                        personIndex.getName(), personIndex.getDatabaseId());
-                    reindexPublicationPointsForResearcher(personIndex, assessmentMeasures);
-                    log.info(
-                        "reindexPublicationPointsForAllResearchers REINDEXING FINISHED for {} ({})",
-                        personIndex.getName(), personIndex.getDatabaseId());
-                }
-            );
+                log.info("Fetched {} persons for page {}", persons.size(), pageNumber);
 
-            pageNumber++;
-            hasNextPage = persons.size() == CHUNK_SIZE;
+                persons.forEach(personIndex -> {
+                    log.info("REINDEXING points for {} ({})",
+                        personIndex.getName(), personIndex.getDatabaseId());
+
+                    reindexPublicationPointsForResearcher(personIndex, assessmentMeasures);
+
+                    log.info("REINDEXING FINISHED for {} ({})",
+                        personIndex.getName(), personIndex.getDatabaseId());
+                });
+
+                pageNumber++;
+                hasNextPage = persons.size() == CHUNK_SIZE;
+            } catch (Exception ex) {
+                log.error("ERROR during reindex on page {}", pageNumber);
+                if (ex instanceof org.springframework.data.elasticsearch.UncategorizedElasticsearchException esEx) {
+                    log.error("Spring ES exception message: {}", esEx.getResponseBody());
+                }
+
+                log.error("FAILED INPUT personIds: {}", personIds);
+                log.error("FAILED INPUT institutionIds: {}", institutionIds);
+                log.error("FAILED pageNumber: {}, chunkSize: {}", pageNumber, CHUNK_SIZE);
+
+                throw ex; // rethrow so transaction caller sees failure
+            }
         }
+
+        log.info("END reindexPublicationPointsForAllResearchers");
     }
 
     @Override
@@ -977,6 +1009,12 @@ public class PersonAssessmentClassificationServiceImpl
         List<Integer> personIds,
         List<Integer> institutionIds
     ) {
+        if (!CollectionOperations.containsValues(personIds) &&
+            !CollectionOperations.containsValues(institutionIds)) {
+
+            return MatchAllQuery.of(m -> m)._toQuery();
+        }
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             if (CollectionOperations.containsValues(personIds)) {
                 b.must(m -> m.terms(t ->
