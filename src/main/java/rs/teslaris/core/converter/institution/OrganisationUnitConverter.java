@@ -8,6 +8,7 @@ import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.converter.person.ContactConverter;
 import rs.teslaris.core.dto.institution.OrganisationUnitDTO;
+import rs.teslaris.core.dto.person.PostalAddressDTO;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 
@@ -51,6 +52,21 @@ public class OrganisationUnitConverter {
         dto.setSector(organisationUnit.getSector());
         dto.setStartup(organisationUnit.getStartup());
         dto.setDateEstablished(organisationUnit.getDateEstablished());
+
+        if (Objects.nonNull(organisationUnit.getPostalAddress())) {
+            dto.setPostalAddress(new PostalAddressDTO());
+            dto.getPostalAddress().setStreetAndNumber(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    organisationUnit.getPostalAddress().getStreetAndNumber()));
+            dto.getPostalAddress().setCity(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    organisationUnit.getPostalAddress().getCity()));
+            dto.getPostalAddress().setState(
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    organisationUnit.getPostalAddress().getState()));
+            dto.getPostalAddress()
+                .setPostalNumber(organisationUnit.getPostalAddress().getPostalNumber());
+        }
 
         dto.setClientInstitutionCris(
             Objects.nonNull(organisationUnit.getIsClientInstitutionCris()) ?

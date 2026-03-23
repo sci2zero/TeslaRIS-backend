@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.Nullable;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -13,8 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
+import rs.teslaris.thesislibrary.dto.DissertationInformationDTO;
 import rs.teslaris.thesislibrary.dto.RegistryBookEntryDTO;
 import rs.teslaris.thesislibrary.model.RegistryBookEntryDraft;
 import rs.teslaris.thesislibrary.repository.RegistryBookEntryDraftRepository;
@@ -29,6 +32,8 @@ public class RegistryBookDraftServiceImpl extends JPAServiceImpl<RegistryBookEnt
     private final RegistryBookEntryDraftRepository registryBookEntryDraftRepository;
 
     private final ThesisService thesisService;
+
+    private final OrganisationUnitService organisationUnitService;
 
     private final ObjectMapper draftMapper = new ObjectMapper()
         .setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -45,7 +50,7 @@ public class RegistryBookDraftServiceImpl extends JPAServiceImpl<RegistryBookEnt
 
     @Override
     @Nullable
-    @Transactional(readOnly = true)
+    @Transactional
     public RegistryBookEntryDTO fetchRegistryBookEntryDraft(Integer thesisId) {
         var optionalDraft = registryBookEntryDraftRepository.findByThesisId(thesisId);
 
@@ -54,8 +59,11 @@ public class RegistryBookDraftServiceImpl extends JPAServiceImpl<RegistryBookEnt
         }
 
         try {
-            return draftMapper.readValue(optionalDraft.get().getDraftData(),
+            var draft = draftMapper.readValue(optionalDraft.get().getDraftData(),
                 RegistryBookEntryDTO.class);
+            ensureCoreDataIsPersisted(draft, thesisId, true);
+
+            return draft;
         } catch (JsonProcessingException e) {
             throw new LoadingException("failedToParseDraftMessage"); // should never happen
         }
@@ -77,9 +85,36 @@ public class RegistryBookDraftServiceImpl extends JPAServiceImpl<RegistryBookEnt
 
         var newDraft = new RegistryBookEntryDraft();
         newDraft.setThesis(thesis);
+
+        ensureCoreDataIsPersisted(registryBookEntryDTO, thesisId, false);
         newDraft.setDraftData(jsonDraft);
 
         registryBookEntryDraftRepository.save(newDraft);
+    }
+
+    private void ensureCoreDataIsPersisted(RegistryBookEntryDTO draft, Integer thesisId,
+                                           boolean readPath) {
+        if (Objects.isNull(draft.getThesisId()) ||
+            Objects.isNull(draft.getDissertationInformation()) ||
+            Objects.isNull(draft.getDissertationInformation().getOrganisationUnitId())) {
+            draft.setThesisId(thesisId);
+
+            if (Objects.isNull(draft.getDissertationInformation())) {
+                draft.setDissertationInformation(new DissertationInformationDTO());
+            }
+
+            var thesis = thesisService.readThesisById(thesisId);
+            draft.getDissertationInformation()
+                .setOrganisationUnitId(thesis.getOrganisationUnitId());
+
+            var thesisInstitution = organisationUnitService.readOrganisationUnitById(
+                thesis.getOrganisationUnitId());
+            draft.getDissertationInformation().setInstitutionName(thesisInstitution.getName());
+
+            if (readPath) {
+                saveRegistryBookEntryDraft(draft, thesisId);
+            }
+        }
     }
 
     @Override
