@@ -387,13 +387,14 @@ package person {
   }
 
   class Involvement {
-    LocalDate dateFrom
-    LocalDate dateTo
+    LocalDate dateFrom ' !!! can we move this to PersonActivity (represents details about contribution/involvement)
+    LocalDate dateTo ' !!! can we move this to PersonActivity (represents details about contribution/involvement)
     ApproveStatus approveStatus
-    Set<DocumentFile> proofs
+    Set<DocumentFile> proofs ' !!! can we move this to PersonActivity (represents details about contribution/involvement)
     InvolvementType involvementType
     Set<MultiLingualContent> affiliationStatement
-    Boolean favorite ' we might implemente later highlight section with most important involvement, output, project, skills and activity
+    Boolean favorite 
+    ' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity
     ' an entity OrganisationUnit can be linked with Involvement, or it should be only specified in affiliationStatement
     ' it means if I studied in Germany, that institution record wouldn't be created in the database, it will be only specified in affiliationStatement
   }
@@ -428,7 +429,7 @@ package person {
   }
   
   Education "0..1" --> "1" Thesis : thesis ' !!!
-  Education "*" --> "*" Person : thesisSupervisors ' !!!
+  Education "*" --> "*" Person : supervising / supervisors ' !!!
   
   ' !!!  
   enum DegreeType {
@@ -514,6 +515,7 @@ package person {
 	REGULAR_MEMBER
 	ASSOCIATE_MEMBER
 	OBSERVER
+	OTHER
   }
 
   class ExpertiseOrSkill {
@@ -1322,6 +1324,8 @@ package document {
 ' !!! complete new package
 package activity {
     
+    ' !!! maybe we can use one class per all hierarchy, there is no so many attributes in subclasses. 
+    ' !!! Also, maybe we can organize UI to have just one form which adopts based on activity type. Activity represents details about contribution/involvement. 
     class PersonActivity {
         Set<MultilingualContent> name
         Set<MultiLingualContent> description
@@ -1331,7 +1335,8 @@ package activity {
         Set<String> uris
         LocalDate dateFrom
         LocalDate dateTo 
-        Set<SDGoal> sdgs        
+        Set<SDGoal> sdgs ' !!! skip for now
+        Set<DocumentFile> proofs       
     }
     
     PersonActivity "*" --> "*" institution.OrganisationUnit : targetInstitutions     
@@ -1342,8 +1347,6 @@ package activity {
     ' !!! it should be one or the another, not both (involvement or  contribution)
     
     class PersonTeachingActivity extends PersonActivity {
-        PersonTeachingActivityCategory category
-        
         String lectureHoursPerWeek
         String tutorialHoursPerWeek
         String labHoursPerWeek
@@ -1357,15 +1360,7 @@ package activity {
     ' !!! link to Involvement subclasses
     ' for INVITED_TEACHING it might be Employment
     
-    enum PersonTechingActivityCategory {
-        GRADUATE_EXAMINATION
-        COURSE_TAUGHT
-        INVITED_TEACHING
-    }
-    
-    
     class PersonSupervisingActivity extends PersonActivity {
-        PersonSupervisingActivityCategory category
     }
     
     ' !!! link to Involvement subclasses
@@ -1374,14 +1369,7 @@ package activity {
     ' for MENTORING it might be Education with DegreeType INFORMAL_EDUCATION, the certain person (activity owner) should be in 
     ' the list of supervisors (field in the Education), topic of mentorship can be preserved in the field description (the Education entity)
     
-    enum PersonSupervisingActivityCategory {
-        MENTORING 
-        RESEARCH_BASED_DEGREE_SUPERVISION
-    }
-    
     class PersonAssessmentActivity extends PersonActivity {
-        PersonAssessmentActivityCategory category
-
         Integer numberOfReviewsOrAssessment                            
     }
     
@@ -1395,17 +1383,7 @@ package activity {
     ' We have commission for assessment, which is an important entity for TeslaRIS internal process of assessment. However, it is not a public entity for person references, 
     ' therefore, suggestion is to use Membership for this purpose 
     
-        
-    enum PersonAssessmentActivityCategory {
-        JOURNAL_REVIEWING_REFEREEING
-        CONFERENCE_REVIEWING_REFEREEING
-        GRANT_APPLICATION_ASSESSMENT
-        ADHOC_JOURNAL_ARTICLE_REVIEW
-        PROMOTION_TENURE_ASSESSMENT         
-    }
-    
     class PersonMembershipActivity extends PersonActivity {
-        PersonMembershipActivityCategory category                  
     }
     
     ' !!! link to Involvement subclasses
@@ -1415,17 +1393,7 @@ package activity {
     ' We have commission for assessment, which is an important entity for TeslaRIS internal process of assessment. However, it is not a public entity for person references, 
     ' therefore, suggestion is to use Membership for this purpose    
         
-    enum PersonMembershipActivityCategory {
-        MEMBERSHIP 
-        COMMITTEE_MEMBERSHIP
-        CONSULTING_ADVISORY        
-    }
-    
     class PersonEventActivity extends PersonActivity {
-        PersonEventActivityCategory category
-        
-        PersonEventContribution contribution  
-        
         Set<MultilingualContent> case ' only for EXPERT_WITNESS
         Set<MultilingualContent> location-jurisdiction  ' only for EXPERT_WITNESS                           
     }
@@ -1433,23 +1401,11 @@ package activity {
     ' !!! link to PersonContribution subclasses
     '  it should be PersonEventContribution     
         
-    enum PersonEventActivityCategory {
-        EVENT_ADMINISTRATION
-        EVENT_PARTICIPATION
-        EXPERT_WITNESS        
-    }
-    
     class PersonProjectActivity extends PersonActivity {
-        PersonProjectActivityCategory category
-        PersonProjectContribution contribution                              
     }
     
     ' !!! link to PersonContribution subclasses
     '  it should be PersonProjectContribution
-        
-    enum PersonProjectActivityCategory {
-        PROJECT_PARTICIPATION       
-    }
 }
 
 package project {
@@ -1465,7 +1421,6 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    ' !!! String adminNote is in BaseEntity
     Set<String> uris
     LocalDate dateFrom
     LocalDate dateTo
@@ -1478,7 +1433,7 @@ package project {
   }
   
   Project "0..1" -- "*" OrganisationUnitProjectContribution : project / consortium 
-  Project "0..1" --> "*" PersonProjectContribution : project / team  
+  Project "0..1" -- "*" PersonProjectContribution : project / team  
   Project "1" --> "*" ProjectDocument : documents
   Project "1" --> "*" ProjectEvent : events 
 
@@ -1505,18 +1460,19 @@ package project {
     OrganisationUnitProjectContributionType contributionType
     LocalDate dateFrom
     LocalDate dateTo
+    ' !!! let's keep as is for now. Later, we might consider decoupling orgunit contributions/involvements also into two levels
+    ' !!! similar as for PersonActivity. If that is the case, we will move timeframe from here to OrgUnitActivity. Org Unit involvements are 
+    ' !!! defined by OrganisationUnitsRelations (Member), moreover, we don't have option that org unit is creator (author) of a document
     Set<MultiLingualContent> displayOU
     Set<MultiLingualContent> description
     Set<MultilingualContent> contactPoint
     Integer orderNumber
     ApproveStatus approveStatus
-    ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
   }
     
   OrganisationUnitProjectContribution "*" --> "0..1" institution.OrganisationUnit : organisationUnit
-  OrganisationUnitProjectContribution "0..1" --> "*" FundingPart : fundingParts ' !!! it is funding in model, name and type should be changed
+  OrganisationUnitProjectContribution "0..1" --> "*" FundingPart : fundingParts
   
-  ' !!! new  
   enum OrganisationUnitProjectContributionType {
     COORDINATOR
     PARTNER
@@ -1535,14 +1491,13 @@ package project {
     
   PersonProjectContribution "0..1" --> "*" FundingPart : fundingParts      
   
-  ' !!! renamed from ProjectContributionType  
   enum PersonProjectContributionType {
     PRINCIPLE_INVESTIGATOR
-    ' !!! removed COPRINCIPLE_INVESTIGATOR, should be moved from enumeration in the model, and enumeration should be renamed    
     TEAM_MEMBER 
     CONTACT 
     INKIND_CONTRIBUTOR 
-    CONTRACTOR 
+    CONTRACTOR
+    PARTICIPATION 
   }
   
   enum PersonProjectInvestigationRole {
@@ -1559,7 +1514,7 @@ package project {
     RESEARCH_TECHNICIAN_FELLOW
     INVITED_SCIENTIST_FELLOW
     SCIENCE_AND_TECHNOLOGY_MANAGEMENT_FELLOW
-    SCIENTIFIC_EXPEDITION ' !!!
+    SCIENTIFIC_EXPEDITION
     OTHER
   }
     
@@ -1568,8 +1523,8 @@ package project {
     
   class ProjectsRelation {
     ProjectsRelationType relationType
-    LocalDate dateFrom ' !!! from in model
-    LocalDate dateTo ' !!! to in model
+    LocalDate dateFrom 
+    LocalDate dateTo
   }
     
   enum ProjectsRelationType {
@@ -1625,16 +1580,16 @@ package project {
     LocalDate reviewDateTo
     LocalDate decisionDate
     LocalDate revisedProposalOrNextRoundDeadlineDate
-    FundingApplicationResult result ' !!! type renamed from ProjectProposalResult to FundingApplicationResult, also move to funding package
+    FundingApplicationResult result 
     Set<SDGoal> sdgs ' !!! skip for now
     Set<DocumentFile> documents ' proposal, review result, supplement
   }
   
-  FundingApplication "*" -- "0..1" Project : fundingApplications / project ' !!! in model in class Project the field should be fundingApplications instead of proposal (type should be also changed)
+  FundingApplication "*" -- "0..1" Project : fundingApplications / project 
   FundingApplication "*" --> "1" FundingCall : fundingCall
-  FundingApplication "1" --> "0..1" FundingApplication : revisedFundingApplication ' !!! in the model fundingApplication (field) should be renamed to revisedFundingApplication
+  FundingApplication "1" --> "0..1" FundingApplication : revisedFundingApplication 
   FundingApplication "1" --> "0..1" Funding : funding
-  FundingApplication "0..1" --> "*" FundingPart : otherFundingSources ' !!! this will be instead of MonetaryAmount otherSourceFunding and MonetaryAmount otherFundingSourceAmount, description of the FundingPart will be used to define is that self-funding or what
+  FundingApplication "0..1" --> "*" FundingPart : otherFundingSources 
   
   class FundingApplicationResult {
     AWARDED
@@ -1644,9 +1599,9 @@ package project {
   }
   
   class Funding {
-    Set<String> internalIdentifiers ' !!! it is just one in model, it should be multiple
-    Set<String> oldIds ' !!!
-    Set<String> mergedIds ' !!!
+    Set<String> internalIdentifiers
+    Set<String> oldIds
+    Set<String> mergedIds
     String doi
     String grantAgreementId
     Set<MultiLingualContent> name 
@@ -1654,7 +1609,6 @@ package project {
     Set<MultiLingualContent> nameAbbreviation 
     Set<MultiLingualContent> keywords 
     Set<ResearchArea> researchAreas 
-    ' !!! String adminNote is in BaseEntity
     Set<String> uris
     Set<MultiLingualContent> displayCall
     Set<MultiLingualContent> displayProgram
@@ -1680,11 +1634,7 @@ package project {
   
   class FundingPart{
     Set<MultiLingualContent> description
-    MonetaryAmount amount ' !!! rename to amount (instead of costs)
-    ' !!! can be linked with funding, projectEvent, projectDocument, it is ok
-    ' !!! can't be linked with fundingProposal, but can be linked with fundingApplication
-    ' !!! can't be linked with forFunding, it should be removed
-    ' !!! can be also linked with PersonProjectContribution, OrganisationUnitProjectContribution
+    MonetaryAmount amount
   }
   
   class FundingCall {
@@ -1704,7 +1654,7 @@ package project {
     Set<DocumentFile> callDocuments
   }
   
-  FundingCall "0..1" --> "*" PersonFundingCallContribution : contributors ' !!!
+  FundingCall "0..1" -- "*" PersonFundingCallContribution : fundingCall / contributors
   FundingCall "*" --> "0..1" institution.OrganisationUnit : funder ' !!!
   
   enum FundingType {
@@ -1712,8 +1662,7 @@ package project {
     CALL 
     OTHER
   }
-  
-  ' !!! 
+   
   enum FundingCallContributionType {
     ORGANIZER
     COORDINATOR
@@ -1727,7 +1676,6 @@ package project {
     OTHER_CONTRIBUTORS
   }
   
-  ' !!!    
   class PersonFundingCallContribution extends PersonContribution {
     FundingCallContributionType contributionType
   }
@@ -1739,7 +1687,6 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    ' !!! String adminNote is in BaseEntity
     Set<FundingType> types
     MonetaryAmount totalAmount
     LocalDate dateFrom
@@ -1750,7 +1697,7 @@ package project {
     Set<DocumentFile> programDocuments
   }
   
-  FundingProgram "0..1" -- "*" FundingCall : fundingProgram / calls ' !!! no calls relation from the side of FundingProgram
+  FundingProgram "0..1" -- "*" FundingCall : fundingProgram / fundingCalls
   FundingProgram "*" --> "0..1" institution.OrganisationUnit : funder
 }
 
