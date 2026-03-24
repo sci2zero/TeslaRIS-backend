@@ -101,6 +101,7 @@ public class PersonFieldVisibilityServiceTest {
             false, // contactEmailVisible
             true,  // dateOfBirthVisible
             false, // sexVisible
+            false, // biographyVisible
             true   // birthplaceVisible
         );
 
@@ -110,6 +111,7 @@ public class PersonFieldVisibilityServiceTest {
         existingConfig.setContactEmailVisible(true);
         existingConfig.setDateOfBirthVisible(false);
         existingConfig.setSexVisible(true);
+        existingConfig.setBiographyVisible(true);
         existingConfig.setBirthplaceVisible(false);
 
         when(personFieldVisibilityRepository.getFieldVisibilityConfiguration(personId))
@@ -129,6 +131,7 @@ public class PersonFieldVisibilityServiceTest {
                 config.getContactEmailVisible() == dto.contactEmailVisible() &&
                 config.getDateOfBirthVisible() == dto.dateOfBirthVisible() &&
                 config.getSexVisible() == dto.sexVisible() &&
+                config.getBiographyVisible() == dto.biographyVisible() &&
                 config.getBirthplaceVisible() == dto.birthplaceVisible()
         ));
         verify(personService, never()).findOne(anyInt());
@@ -147,6 +150,7 @@ public class PersonFieldVisibilityServiceTest {
             true,  // contactEmailVisible
             false, // dateOfBirthVisible
             true,  // sexVisible
+            true,  // biographyVisible
             false  // birthplaceVisible
         );
 
@@ -169,6 +173,7 @@ public class PersonFieldVisibilityServiceTest {
                 config.getContactEmailVisible() == dto.contactEmailVisible() &&
                 config.getDateOfBirthVisible() == dto.dateOfBirthVisible() &&
                 config.getSexVisible() == dto.sexVisible() &&
+                config.getBiographyVisible() == dto.biographyVisible() &&
                 config.getBirthplaceVisible() == dto.birthplaceVisible()
         ));
         verify(personService).findOne(personId);

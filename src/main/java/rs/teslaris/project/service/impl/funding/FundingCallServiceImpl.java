@@ -24,6 +24,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
@@ -59,6 +60,8 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
     private final CurrencyService currencyService;
 
     private final FundingCallIndexRepository fundingCallIndexRepository;
+
+    private final OrganisationUnitService organisationUnitService;
 
     private final PersonFundingCallContributionService personFundingCallContributionService;
 
@@ -180,9 +183,6 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
 
     private void setCommonFields(FundingCall fundingCall,
                                  FundingCallDTO fundingCallDTO) {
-        var fundingProgram = fundingProgramService.findOne(fundingCallDTO.getFundingProgramId());
-        fundingCall.setFundingProgram(fundingProgram);
-
         if (Objects.nonNull(fundingCallDTO.getDateFrom()) &&
             Objects.nonNull(fundingCallDTO.getDateTo()) &&
             fundingCallDTO.getDateTo().isBefore(fundingCallDTO.getDateFrom())) {
@@ -190,16 +190,30 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
                 "Funding call must opened before closing.");
         }
 
-        if (Objects.nonNull(fundingProgram.getDateFrom()) &&
-            fundingProgram.getDateFrom().isAfter(fundingCallDTO.getDateFrom())) {
-            throw new DateRangeException(
-                "Funding call opening must be equal or after program opening.");
-        }
+        if (Objects.nonNull(fundingCallDTO.getFundingProgramId())) {
+            var fundingProgram =
+                fundingProgramService.findOne(fundingCallDTO.getFundingProgramId());
 
-        if (Objects.nonNull(fundingProgram.getDateTo()) &&
-            fundingProgram.getDateTo().isBefore(fundingCallDTO.getDateTo())) {
-            throw new DateRangeException(
-                "Funding call closing must be equal or before program closing.");
+            fundingCall.setFundingProgram(fundingProgram);
+            fundingCall.setFunder(fundingProgram.getFunder());
+
+            if (Objects.nonNull(fundingProgram.getDateFrom()) &&
+                fundingProgram.getDateFrom().isAfter(fundingCallDTO.getDateFrom())) {
+                throw new DateRangeException(
+                    "Funding call opening must be equal or after program opening.");
+            }
+
+            if (Objects.nonNull(fundingProgram.getDateTo()) &&
+                fundingProgram.getDateTo().isBefore(fundingCallDTO.getDateTo())) {
+                throw new DateRangeException(
+                    "Funding call closing must be equal or before program closing.");
+            }
+        } else if (Objects.nonNull(fundingCallDTO.getFunderId())) {
+            fundingCall.setFunder(organisationUnitService.findOne(fundingCallDTO.getFunderId()));
+            fundingCall.setFundingProgram(null);
+        } else {
+            throw new ReferenceConstraintException(
+                "Funding Call must be bound to either a funding program or a funder.");
         }
 
         fundingCall.setDateFrom(fundingCallDTO.getDateFrom());
@@ -275,7 +289,12 @@ public class FundingCallServiceImpl extends JPAServiceImpl<FundingCall>
             !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
-        index.setProgramId(fundingCall.getFundingProgram().getId());
+        if (Objects.nonNull(fundingCall.getFundingProgram())) {
+            index.setProgramId(fundingCall.getFundingProgram().getId());
+        }
+
+        index.setFunderId(fundingCall.getFunder().getId());
+
         index.setDatabaseId(fundingCall.getId());
         index.setDateFrom(fundingCall.getDateFrom());
         index.setDateTo(fundingCall.getDateTo());

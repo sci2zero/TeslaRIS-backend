@@ -40,9 +40,9 @@ public class FundingCallDTO {
 
     private Set<Integer> researchAreasId = new HashSet<>();
 
-    @NotNull(message = "You have to provide funder program ID.")
-    @Positive(message = "Funder program ID cannot be a negative number.")
     private Integer fundingProgramId;
+
+    private Integer funderId;
 
     @NotNull(message = "You have to provide funding types.")
     private Set<FundingType> fundingTypes = new HashSet<>();

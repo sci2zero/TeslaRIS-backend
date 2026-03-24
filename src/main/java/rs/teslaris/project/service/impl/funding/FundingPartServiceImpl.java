@@ -90,51 +90,30 @@ public class FundingPartServiceImpl extends JPAServiceImpl<FundingPart>
             .setCurrency(currencyService.findOne(dto.getAmount().getCurrencyId()));
         fundingPart.getAmount().setAmount(dto.getAmount().getAmount());
 
-        var commonAttributeSet = false;
-
         if (Objects.nonNull(dto.getFundingId())) {
             fundingPart.setFunding(fundingService.findOne(dto.getFundingId()));
-            commonAttributeSet = true;
+        } else {
+            fundingPart.setFunding(null);
         }
 
         if (Objects.nonNull(dto.getProjectEventId())) {
             fundingPart.setProjectEvent(projectEventService.findOne(dto.getProjectEventId()));
-
-            commonAttributeSet = true;
-        }
-
-        if (Objects.nonNull(dto.getFundingApplicationId())) {
+        } else if (Objects.nonNull(dto.getFundingApplicationId())) {
             fundingPart.setFundingApplication(
                 fundingApplicationService.findOne(dto.getFundingApplicationId()));
-
-            commonAttributeSet = true;
-        }
-
-        if (Objects.nonNull(dto.getProjectDocumentId())) {
+        } else if (Objects.nonNull(dto.getProjectDocumentId())) {
             fundingPart.setProjectDocument(
                 projectDocumentService.findOne(dto.getProjectDocumentId()));
-
-            commonAttributeSet = true;
-        }
-
-        if (Objects.nonNull(dto.getPersonProjectContributionId())) {
+        } else if (Objects.nonNull(dto.getPersonProjectContributionId())) {
             fundingPart.setPersonProjectContribution(
                 personProjectContributionService.findOne(dto.getPersonProjectContributionId()));
-
-            commonAttributeSet = true;
-        }
-
-        if (Objects.nonNull(dto.getOrganisationUnitProjectContributionId())) {
+        } else if (Objects.nonNull(dto.getOrganisationUnitProjectContributionId())) {
             fundingPart.setOrganisationUnitProjectContribution(
                 organisationUnitProjectContributionService.findOne(
                     dto.getOrganisationUnitProjectContributionId()));
-
-            commonAttributeSet = true;
-        }
-
-        if (!commonAttributeSet) {
+        } else {
             throw new ReferenceConstraintException(
-                "Funding part must belong to one of the following: funding, funding application, " +
+                "Funding part must belong to one of the following: funding application, " +
                     "project event, person project contribution or OU project contribution.");
         }
     }

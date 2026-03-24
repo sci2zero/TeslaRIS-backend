@@ -9,5 +9,11 @@ public enum JournalPublicationType implements PublicationType {
     LEXICOGRAPHIC_UNIT,
     POLEMICS,
     SCIENTIFIC_CRITIC,
-    EDITORIAL
+    EDITORIAL,
+    POSTFACE,
+    BOOK_REVIEW,
+    TRANSLATION,
+    PREPRINT,
+    SHORT_FICTION,
+    ANNOTATION
 }

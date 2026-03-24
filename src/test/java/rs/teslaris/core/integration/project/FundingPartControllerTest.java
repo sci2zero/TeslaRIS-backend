@@ -45,6 +45,7 @@ public class FundingPartControllerTest extends BaseTest {
         keywordsList.add(keyword1);
 
         dto.setFundingId(3);
+        dto.setFundingApplicationId(1);
 
         var monetaryAmount = new MonetaryAmountDTO();
         monetaryAmount.setAmount(100);

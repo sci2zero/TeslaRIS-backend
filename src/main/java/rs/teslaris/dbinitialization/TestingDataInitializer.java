@@ -526,7 +526,7 @@ public class TestingDataInitializer {
         monograph1.setApproveStatus(ApproveStatus.APPROVED);
         monograph1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 1", 1)));
-        monograph1.setMonographType(MonographType.BOOK);
+        monograph1.setMonographType(MonographType.EDITED_BOOK);
         var monographContribution = new PersonDocumentContribution();
         monographContribution.setPerson(person2);
         monographContribution.setContributionType(DocumentContributionType.AUTHOR);
@@ -554,7 +554,7 @@ public class TestingDataInitializer {
 
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
-        monograph2.setMonographType(MonographType.BOOK);
+        monograph2.setMonographType(MonographType.EDITED_BOOK);
         monograph2.setDocumentDate("2024");
         monographRepository.save(monograph2);
 

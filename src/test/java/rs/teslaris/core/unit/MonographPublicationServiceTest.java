@@ -164,7 +164,7 @@ public class MonographPublicationServiceTest {
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
-            setMonographType(MonographType.BOOK);
+            setMonographType(MonographType.EDITED_BOOK);
         }});
         when(monographPublicationJPAService.save(any(MonographPublication.class))).thenReturn(
             newMonographPublication);
@@ -191,7 +191,7 @@ public class MonographPublicationServiceTest {
         newMonographPublication.setApproveStatus(ApproveStatus.REQUESTED);
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
-            setMonographType(MonographType.BOOK);
+            setMonographType(MonographType.EDITED_BOOK);
         }});
         when(monographPublicationJPAService.save(any(MonographPublication.class))).thenReturn(
             newMonographPublication);
@@ -218,7 +218,7 @@ public class MonographPublicationServiceTest {
         newMonographPublication.setApproveStatus(ApproveStatus.APPROVED);
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
-            setMonographType(MonographType.BOOK);
+            setMonographType(MonographType.EDITED_BOOK);
         }});
         when(monographPublicationJPAService.save(any(MonographPublication.class))).thenReturn(
             newMonographPublication);
@@ -250,7 +250,7 @@ public class MonographPublicationServiceTest {
         when(monographPublicationJPAService.findOne(monographPublicationId)).thenReturn(
             monographPublicationToUpdate);
         when(monographService.findMonographById(anyInt())).thenReturn(new Monograph() {{
-            setMonographType(MonographType.BOOK);
+            setMonographType(MonographType.EDITED_BOOK);
             setId(3);
         }});
         when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
@@ -279,7 +279,7 @@ public class MonographPublicationServiceTest {
         }});
 
         when(monographService.findMonographById(any())).thenReturn(new Monograph() {{
-            setMonographType(MonographType.BOOK);
+            setMonographType(MonographType.EDITED_BOOK);
             setId(3);
         }});
         when(monographPublicationJPAService.findOne(monographPublicationId)).thenReturn(

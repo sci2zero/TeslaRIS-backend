@@ -324,6 +324,10 @@ public class PersonConverter {
                 personResponse.getPersonalInfo().setSex(null);
             }
 
+            if (!fieldVisibilityConfiguration.getBiographyVisible()) {
+                personResponse.setBiography(new ArrayList<>());
+            }
+
             personResponse.getPersonalInfo().getPostalAddress().setCountryId(null);
             personResponse.getPersonalInfo().getPostalAddress().setCity(new ArrayList<>());
             personResponse.getPersonalInfo().getPostalAddress()

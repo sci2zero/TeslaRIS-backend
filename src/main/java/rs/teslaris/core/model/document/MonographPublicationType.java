@@ -7,4 +7,7 @@ public enum MonographPublicationType {
     LEXICOGRAPHIC_UNIT,
     POLEMICS,
     SCIENTIFIC_CRITIC,
+    POSTFACE,
+    BOOK_REVIEW,
+    ENTRY
 }

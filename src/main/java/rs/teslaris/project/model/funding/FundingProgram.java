@@ -85,5 +85,5 @@ public class FundingProgram extends BaseEntity {
     private String oaMandateUrl;
 
     @OneToMany(mappedBy = "fundingProgram", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<FundingCall> fundingCalls = new HashSet<>();
+    private Set<FundingCall> calls = new HashSet<>();
 }
