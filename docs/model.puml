@@ -387,16 +387,24 @@ package person {
   }
 
   class Involvement {
-    LocalDate dateFrom ' !!! can we move this to PersonActivity (represents details about contribution/involvement)
-    LocalDate dateTo ' !!! can we move this to PersonActivity (represents details about contribution/involvement)
     ApproveStatus approveStatus
-    Set<DocumentFile> proofs ' !!! can we move this to PersonActivity (represents details about contribution/involvement)
     InvolvementType involvementType
     Set<MultiLingualContent> affiliationStatement
     Boolean favorite 
     ' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity
     ' an entity OrganisationUnit can be linked with Involvement, or it should be only specified in affiliationStatement
     ' it means if I studied in Germany, that institution record wouldn't be created in the database, it will be only specified in affiliationStatement
+    
+    ' !!! the fields below are available in additional dialog in UI, it represents details about involvement
+    ' !!! if some of those fields are filled it is indexed as activity linked with person
+    Set<MultiLingualContent> involvementDescription
+    Set<MultiLingualContent> keywords ' !!!
+    Set<ResearchArea> researchAreas ' !!!
+    LocalDate dateFrom ' !!!
+    LocalDate dateTo ' !!!
+    Set<SDGoal> sdgs ' !!! skip for now, there is a sense in this only if involvementDescription is there
+    Set<DocumentFile> proofs ' !!!
+    Set<String> uris ' !!! involvement might be proved by url or attached file (uris or proofs)
   }
 
   enum InvolvementType {
@@ -501,7 +509,7 @@ package person {
 
   class Membership extends Involvement {
     MembershipType membershipType
-	Set<MultiLingualContent> contributionDescription
+	' !!! Set<MultiLingualContent> contributionDescription should be removed, it is moved to Involvement - involvementDescription 
     Set<MultiLingualContent> role
   }
 
@@ -693,6 +701,15 @@ package document {
     Integer orderNumber
     ApproveStatus approveStatus
     ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
+    ' !!! the fields below are available in additional dialog in UI, it represents details contribution
+    ' !!! if some of those fields are filled it is indexed as activity linked with person
+    Set<MultiLingualContent> keywords ' !!!
+    Set<ResearchArea> researchAreas ' !!!
+    LocalDate dateFrom ' !!!
+    LocalDate dateTo ' !!!
+    Set<SDGoal> sdgs ' !!! skip for now, there is a sense in this only if contributionDescription is there
+    Set<DocumentFile> proofs ' !!!
+    Set<String> uris ' !!! contribution might be proved by url or attached file (uris or proofs)
   }
     
   PersonContribution "*" --> "0..*" institution.OrganisationUnit : institutions
@@ -935,6 +952,19 @@ package document {
 
   class PersonEventContribution extends PersonContribution {
      EventContributionType contributionType
+     
+     ' !!! only available if Event is a Course and contributionType is SPEAKER
+     String lectureHoursPerWeek
+     String tutorialHoursPerWeek
+     String labHoursPerWeek
+     String otherContactHoursPerWeek
+     
+     ' !!! only available if Event is a Conference and contributionType is REVIEWER
+     Integer numberOfReviewsOrAssessment
+     
+     ' !!! only available if Event is a TRIAL and contributionType is WITNESS
+     Set<MultilingualContent> case
+     Set<MultilingualContent> locationJurisdiction  
   }
 
   EventsRelation "*" --> "0..1" Event : source
@@ -1005,10 +1035,9 @@ package document {
       SCIENTIFIC_CRITIC
       EDITORIAL
       BOOK_REVIEW ' !!!
-      TRANSLATION ' !!!
-      PREPRINT ' !!!
-      SHORT_FICTION ' !!!
-      ANNOTATION ' !!!
+      CREATIVE_WORK ' !!!
+      ANNOTATED_NOTE ' !!!
+      OTHER ' !!!
     }
 
   class PublicationSeries {
@@ -1044,7 +1073,10 @@ package document {
 
   class PersonPublicationSeriesContribution extends PersonContribution {
     PublicationSeriesContributionType contributionType
-    ' !!! dateFrom and dateTo removed to PersonActivity which represent details of PersonContribution(s)
+    ' !!! dateFrom and dateTo removed to PersonContribution
+    
+    ' !!! only available if contributionType is REGULAR_REVIEWER or ADHOC_REVIEWER
+    Integer numberOfReviewsOrAssessment
   }
 
   enum PublicationSeriesContributionType {
@@ -1106,6 +1138,7 @@ package document {
     MANUAL ' !!!
     DATA_MANAGEMENT_PLAN ' !!!
     PROCEEDINGS ' !!!
+    OTHER ' !!!
   }
 
   Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
@@ -1133,7 +1166,7 @@ package document {
     ART_PERFORMANCE
     THEATRIC_PLAY
     CURATORIAL_MUSEUM_EXHIBITION
-    LITIGATION_REPORT
+    LITIGATION
     BROADCAST_INTERVIEW
     TEXT_INTERVIEW
     NON_RESEARCH_PRESENTATION
@@ -1257,6 +1290,7 @@ package document {
     TEST ' !!!
     WEBSITE ' !!!
     AUDIO_RECORDING ' !!!
+    MUSICAL_COMPOSITION ' !!!
     RADIO_TV_PROGRAM ' !!!
     VIDEO_RECORDING ' !!!
     SOUND_DESIGN ' !!!
@@ -1319,93 +1353,6 @@ package document {
     ' Moreover, it might be that a *Product (software, dataset, online resource) is the main topic of some journal article, etc. 
   }
 
-}
-
-' !!! complete new package
-package activity {
-    
-    ' !!! maybe we can use one class per all hierarchy, there is no so many attributes in subclasses. 
-    ' !!! Also, maybe we can organize UI to have just one form which adopts based on activity type. Activity represents details about contribution/involvement. 
-    class PersonActivity {
-        Set<MultilingualContent> name
-        Set<MultiLingualContent> description
-        Set<MultiLingualContent> nameAbbreviation
-        Set<MultiLingualContent> keywords
-        Set<ResearchArea> researchAreas
-        Set<String> uris
-        LocalDate dateFrom
-        LocalDate dateTo 
-        Set<SDGoal> sdgs ' !!! skip for now
-        Set<DocumentFile> proofs       
-    }
-    
-    PersonActivity "*" --> "*" institution.OrganisationUnit : targetInstitutions     
-    
-    PersonActivity "*" -- "0..1" PersonContribution : activities / contribution
-    
-    PersonActivity "*" -- "0..1" Involvement : activities / involvement 
-    ' !!! it should be one or the another, not both (involvement or  contribution)
-    
-    class PersonTeachingActivity extends PersonActivity {
-        String lectureHoursPerWeek
-        String tutorialHoursPerWeek
-        String labHoursPerWeek
-        String otherContactHoursPerWeek
-    }
-    
-    ' !!! link to PersonContribution subclasses
-    ' for GRADUATE_EXAMINATION it should be PersonDocumentContribution, in the case it is linked with thesis, 
-    ' otherwise it will be PersonEventContribution
-    ' for COURSE_TAUGHT it should be PersonEventContribution 
-    ' !!! link to Involvement subclasses
-    ' for INVITED_TEACHING it might be Employment
-    
-    class PersonSupervisingActivity extends PersonActivity {
-    }
-    
-    ' !!! link to Involvement subclasses
-    ' for RESEARCH_BASED_DEGREE_SUPERVISION it might be Education, the certain person (activity owner) should be in 
-    ' the list of supervisors (field in the Education)
-    ' for MENTORING it might be Education with DegreeType INFORMAL_EDUCATION, the certain person (activity owner) should be in 
-    ' the list of supervisors (field in the Education), topic of mentorship can be preserved in the field description (the Education entity)
-    
-    class PersonAssessmentActivity extends PersonActivity {
-        Integer numberOfReviewsOrAssessment                            
-    }
-    
-    ' !!! link to PersonContribution subclasses
-    ' for CONFERENCE_REVIEWING_REFEREEING it should be PersonEventContribution, 
-    ' for JOURNAL_REVIEWING_REFEREEING, ADHOC_JOURNAL_ARTICLE_REVIEW it should be PersonPublicationSeriesContribution, 
-    ' for GRANT_APPLICATION_ASSESSMENT it should be PersonFundingCallContribution
-    
-    ' !!! link to Involvement subclasses
-    ' for PROMOTION_TENURE_ASSESSMENT it might be Membership, probably the linked Membership is without OrgUnit, just affiliationStatement, because Committee is not a legal entity
-    ' We have commission for assessment, which is an important entity for TeslaRIS internal process of assessment. However, it is not a public entity for person references, 
-    ' therefore, suggestion is to use Membership for this purpose 
-    
-    class PersonMembershipActivity extends PersonActivity {
-    }
-    
-    ' !!! link to Involvement subclasses
-    ' for CONSULTING_ADVISORY it might be Employment,  
-    ' for MEMBERSHIP it might be Membership 
-    ' for COMMITTEE_MEMBERSHIP it might be Membership, probably the linked Membership is without OrgUnit, just affiliationStatement, because Committee is not a legal entity
-    ' We have commission for assessment, which is an important entity for TeslaRIS internal process of assessment. However, it is not a public entity for person references, 
-    ' therefore, suggestion is to use Membership for this purpose    
-        
-    class PersonEventActivity extends PersonActivity {
-        Set<MultilingualContent> case ' only for EXPERT_WITNESS
-        Set<MultilingualContent> location-jurisdiction  ' only for EXPERT_WITNESS                           
-    }
-    
-    ' !!! link to PersonContribution subclasses
-    '  it should be PersonEventContribution     
-        
-    class PersonProjectActivity extends PersonActivity {
-    }
-    
-    ' !!! link to PersonContribution subclasses
-    '  it should be PersonProjectContribution
 }
 
 package project {
@@ -1678,6 +1625,9 @@ package project {
   
   class PersonFundingCallContribution extends PersonContribution {
     FundingCallContributionType contributionType
+    
+    ' !!! only available if contributionType is ASSESSMENT_EVALUATOR
+    Integer numberOfReviewsOrAssessment
   }
   
   class FundingProgram {
