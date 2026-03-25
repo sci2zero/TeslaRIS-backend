@@ -400,8 +400,8 @@ package person {
     Set<MultiLingualContent> involvementDescription
     Set<MultiLingualContent> keywords ' !!!
     Set<ResearchArea> researchAreas ' !!!
-    LocalDate dateFrom ' !!!
-    LocalDate dateTo ' !!!
+    LocalDate dateFrom
+    LocalDate dateTo
     Set<SDGoal> sdgs ' !!! skip for now, there is a sense in this only if involvementDescription is there
     Set<DocumentFile> proofs ' !!!
     Set<String> uris ' !!! involvement might be proved by url or attached file (uris or proofs)
@@ -422,32 +422,28 @@ package person {
   Involvement "*" --> "*" OrganisationUnit : otherInstitutions ' !!! or host institutions, skip for now
 
   class Education extends Involvement {
-    DegreeType degreeType ' !!!
+    DegreeType degreeType
     Set<MultiLingualContent> degreeTitle ' !!! former title, skip for now
-    Set<MultiLingualContent> degreeCode ' !!! 
+    Set<MultiLingualContent> degreeCode
     Set<MultiLingualContent> degreeMajor ' !!! former abbreviationTitle, skip for now
-    Set<MultiLingualContent> description ' !!!
-    Set<MultiLingualContent> degreeClassification ' !!!
-    EducationStatus educationStatus ' !!!
+    Set<MultiLingualContent> degreeClassification
+    EducationStatus educationStatus
     Set<MultiLingualContent> thesisTitle
     Set<MultiLingualContent> displayThesisInstitution ' !!!
     Set<MultiLingualContent> displayThesisSupervisors ' !!!
-    Set<MultiLingualContent> keywords ' !!!
-    Set<ResearchArea> researchAreas ' !!!
+    Set<ResearchArea> researchAreas
   }
   
   Education "0..1" --> "1" Thesis : thesis ' !!!
   Education "*" --> "*" Person : supervising / supervisors ' !!!
-  
-  ' !!!  
+
   enum DegreeType {
     BACHELOR
     MASTER
     PHD
     INFORMAL_EDUCATION
   }
-  
-  ' !!!
+
   enum EducationStatus {
     ONGOING
     ATTENDED
@@ -513,7 +509,6 @@ package person {
     Set<MultiLingualContent> role
   }
 
-  ' !!!
   enum MembeshipType {
 	PRESIDENT
 	VICE_PRESIDENT

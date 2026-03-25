@@ -542,7 +542,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             var employment = new Employment(
                 null, null, ApproveStatus.APPROVED, new HashSet<>(),
                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                institution, false, null, new HashSet<>()
+                institution, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                null, new HashSet<>()
             );
             person.addInvolvement(employment);
         }

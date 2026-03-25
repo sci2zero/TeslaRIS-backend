@@ -43,6 +43,7 @@ import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.worker.EmploymentMigrationWorker;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
@@ -76,6 +77,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
     private final EmploymentMigrationWorker employmentMigrationWorker;
 
+    private final ResearchAreaService researchAreaService;
+
 
     @Override
     protected JpaRepository<Involvement, Integer> getEntityRepository() {
@@ -107,12 +110,33 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         var title = multilingualContentService.getMultilingualContent(education.getTitle());
         var abbreviationTitle =
             multilingualContentService.getMultilingualContent(education.getAbbreviationTitle());
+        var degreeCode =
+            multilingualContentService.getMultilingualContent(education.getDegreeCode());
+        var degreeClassification =
+            multilingualContentService.getMultilingualContent(education.getDegreeClassification());
+        var description =
+            multilingualContentService.getMultilingualContent(education.getDescription());
+        var keywords =
+            multilingualContentService.getMultilingualContent(education.getKeywords());
 
         var newEducation = new Education();
         setCommonFields(newEducation, education);
         newEducation.setThesisTitle(thesisTitle);
         newEducation.setTitle(title);
         newEducation.setAbbreviationTitle(abbreviationTitle);
+
+        newEducation.setDegreeType(education.getDegreeType());
+        newEducation.setEducationStatus(education.getEducationStatus());
+        newEducation.setDegreeCode(degreeCode);
+        newEducation.setDegreeClassification(degreeClassification);
+        newEducation.setDescription(description);
+        newEducation.setKeywords(keywords);
+
+        if (CollectionOperations.containsValues(education.getResearchAreasId())) {
+            var researchAreas = researchAreaService.getResearchAreasByIds(
+                education.getResearchAreasId().stream().toList());
+            newEducation.setResearchAreas(new HashSet<>(researchAreas));
+        }
 
         personInvolved.addInvolvement(newEducation);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
@@ -133,6 +157,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         setCommonFields(newMembership, membership);
         newMembership.setContributionDescription(contributorDescription);
         newMembership.setRole(role);
+        newMembership.setMembershipType(membership.getMembershipType());
 
         personInvolved.addInvolvement(newMembership);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
@@ -343,16 +368,42 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         var title = multilingualContentService.getMultilingualContent(education.getTitle());
         var abbreviationTitle =
             multilingualContentService.getMultilingualContent(education.getAbbreviationTitle());
+        var degreeCode =
+            multilingualContentService.getMultilingualContent(education.getDegreeCode());
+        var degreeClassification =
+            multilingualContentService.getMultilingualContent(education.getDegreeClassification());
 
         clearCommonCollections(educationToUpdate);
         educationToUpdate.getThesisTitle().clear();
         educationToUpdate.getTitle().clear();
         educationToUpdate.getAbbreviationTitle().clear();
 
+        if (Objects.nonNull(educationToUpdate.getDegreeCode())) {
+            educationToUpdate.getDegreeCode().clear();
+        }
+
+        if (Objects.nonNull(educationToUpdate.getDegreeClassification())) {
+            educationToUpdate.getDegreeClassification().clear();
+        }
+
         setCommonFields(educationToUpdate, education);
         educationToUpdate.setThesisTitle(thesisTitle);
         educationToUpdate.setTitle(title);
         educationToUpdate.setAbbreviationTitle(abbreviationTitle);
+        educationToUpdate.setDegreeType(education.getDegreeType());
+        educationToUpdate.setEducationStatus(education.getEducationStatus());
+        educationToUpdate.setDegreeCode(degreeCode);
+        educationToUpdate.setDegreeClassification(degreeClassification);
+
+        if (Objects.nonNull(educationToUpdate.getResearchAreas())) {
+            educationToUpdate.getResearchAreas().clear();
+        }
+
+        if (CollectionOperations.containsValues(education.getResearchAreasId())) {
+            var researchAreas = researchAreaService.getResearchAreasByIds(
+                education.getResearchAreasId().stream().toList());
+            educationToUpdate.setResearchAreas(new HashSet<>(researchAreas));
+        }
 
         involvementRepository.save(educationToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
@@ -375,6 +426,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         setCommonFields(membershipToUpdate, membership);
         membershipToUpdate.setContributionDescription(contributorDescription);
         membershipToUpdate.setRole(role);
+        membershipToUpdate.setMembershipType(membership.getMembershipType());
 
         involvementRepository.save(membershipToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
@@ -505,11 +557,34 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvement.setInvolvementType(commonFields.getInvolvementType());
         involvement.setFavorite(
             Objects.requireNonNullElse(commonFields.getFavorite(), false));
+
+        if (Objects.nonNull(commonFields.getUris())) {
+            if (Objects.isNull(involvement.getUris())) {
+                involvement.setUris(new HashSet<>());
+            }
+
+            involvement.getUris().addAll(commonFields.getUris());
+        }
+
+        var description =
+            multilingualContentService.getMultilingualContent(commonFields.getDescription());
+        var keywords =
+            multilingualContentService.getMultilingualContent(commonFields.getKeywords());
+        involvement.setDescription(description);
+        involvement.setKeywords(keywords);
     }
 
     private void clearCommonCollections(Involvement involvement) {
         involvement.getAffiliationStatement().clear();
         involvement.getProofs().clear();
+
+        if (Objects.nonNull(involvement.getDescription())) {
+            involvement.getDescription().clear();
+        }
+
+        if (Objects.nonNull(involvement.getKeywords())) {
+            involvement.getKeywords().clear();
+        }
     }
 
     @Override

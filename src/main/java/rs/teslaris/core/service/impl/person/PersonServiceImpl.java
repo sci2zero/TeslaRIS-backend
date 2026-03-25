@@ -361,7 +361,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             var employment = new Employment(
                 null, null, status, new HashSet<>(),
                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                institution, false, personDTO.getEmploymentPosition(), new HashSet<>()
+                institution, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                personDTO.getEmploymentPosition(), new HashSet<>()
             );
             person.addInvolvement(employment);
         }

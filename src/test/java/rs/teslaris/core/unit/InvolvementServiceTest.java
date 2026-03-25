@@ -164,6 +164,10 @@ public class InvolvementServiceTest {
         educationDTO.setThesisTitle(List.of(mc));
         educationDTO.setTitle(List.of(mc));
         educationDTO.setAbbreviationTitle(List.of(mc));
+        educationDTO.setDegreeCode(List.of());
+        educationDTO.setDegreeClassification(List.of());
+        educationDTO.setDescription(List.of(mc));
+        educationDTO.setKeywords(List.of());
 
         when(personService.findOne(1)).thenReturn(person);
         when(involvementRepository.save(any())).thenReturn(new Education());
@@ -233,6 +237,10 @@ public class InvolvementServiceTest {
         educationDTO.setThesisTitle(List.of(mc2));
         educationDTO.setTitle(List.of(mc2));
         educationDTO.setAbbreviationTitle(List.of(mc2));
+        educationDTO.setDegreeCode(List.of(mc2));
+        educationDTO.setDegreeClassification(List.of(mc2));
+        educationDTO.setDescription(List.of());
+        educationDTO.setKeywords(List.of());
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(Set.of(mc1));
