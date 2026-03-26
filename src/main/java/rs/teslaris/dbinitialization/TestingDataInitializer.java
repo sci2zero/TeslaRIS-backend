@@ -463,7 +463,7 @@ public class TestingDataInitializer {
                 dummyOU, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 Set.of(new MultiLingualContent(englishTag, "Reverse Image Search System", 1),
                     new MultiLingualContent(englishTag, "Sistem za reverznu pretragu slika", 1)),
-                Set.of(new MultiLingualContent(englishTag, "Master in IntangibleProduct", 1),
+                Set.of(new MultiLingualContent(englishTag, "Master in Software", 1),
                     new MultiLingualContent(englishTag, "Master inženjer softvera", 1)),
                 Set.of(new MultiLingualContent(englishTag, "Msc", 1)),
                 DegreeType.MASTER, EducationStatus.CONCLUDED,

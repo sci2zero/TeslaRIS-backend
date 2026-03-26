@@ -369,7 +369,8 @@ public class DbInitializer implements ApplicationRunner {
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
                 unarchiveThesis, performThesisReport, generateThesisLibraryBackup, readRegistryBook,
-                readDigitalLibraryAnalytics, readPromotions, archiveThesis, substituteThesis
+                readDigitalLibraryAnalytics, readPromotions, archiveThesis, substituteThesis,
+                createUserBasic
             )));
 
         var promotionRegistryAdministratorAuthority =

@@ -36,6 +36,8 @@ public class InvolvementConverter {
             education.getDegreeCode()));
         dto.setDegreeClassification(MultilingualContentConverter.getMultilingualContentDTO(
             education.getDegreeClassification()));
+        dto.setDegreeType(education.getDegreeType());
+        dto.setEducationStatus(education.getEducationStatus());
 
         education.getResearchAreas().forEach(researchArea -> {
             dto.getResearchAreasId().add(researchArea.getId());
