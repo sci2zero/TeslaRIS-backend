@@ -12,10 +12,12 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.project.model.common.Currency;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
+import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingProgram;
 import rs.teslaris.project.repository.common.CurrencyRepository;
+import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.funding.FundingProgramRepository;
@@ -35,6 +37,8 @@ public class ProjectDataInitializer {
     private final FundingRepository fundingRepository;
 
     private final FundingPartRepository fundingPartRepository;
+
+    private final FundingApplicationRepository fundingApplicationRepository;
 
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1) {
@@ -113,5 +117,10 @@ public class ProjectDataInitializer {
         fundingPart2.setFunding(funding3);
 
         fundingPartRepository.saveAll(List.of(fundingPart1, fundingPart2));
+
+        var fundingApplication1 = new FundingApplication();
+        fundingApplication1.setFundingCall(fundingCall1);
+
+        fundingApplicationRepository.save(fundingApplication1);
     }
 }

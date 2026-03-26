@@ -361,7 +361,8 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             var employment = new Employment(
                 null, null, status, new HashSet<>(),
                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                institution, false, personDTO.getEmploymentPosition(), new HashSet<>()
+                institution, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                personDTO.getEmploymentPosition(), new HashSet<>()
             );
             person.addInvolvement(employment);
         }
@@ -1064,6 +1065,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setDisplayBirthdate(
             personFieldVisibilityRepository.getFieldVisibilityConfiguration(savedPerson.getId())
                 .orElse(new PersonFieldVisibility()).getDateOfBirthVisible());
+        personIndex.setDisplayBiography(
+            personFieldVisibilityRepository.getFieldVisibilityConfiguration(savedPerson.getId())
+                .orElse(new PersonFieldVisibility()).getBiographyVisible());
     }
 
     private void indexPersonBiography(PersonIndex personIndex, Person savedPerson) {
@@ -1722,13 +1726,17 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     private void filterSensitiveInformation(Page<PersonIndex> page) {
         if (!SessionUtil.isUserLoggedIn()) {
             page.forEach(personIndex -> {
-                if (Objects.nonNull(personIndex.getDisplayBirthdate()) &&
-                    personIndex.getDisplayBirthdate()) {
-                    return;
+                if (Objects.isNull(personIndex.getDisplayBirthdate()) ||
+                    !personIndex.getDisplayBirthdate()) {
+                    personIndex.setBirthdate("");
+                    personIndex.setBirthdateSortable("");
                 }
 
-                personIndex.setBirthdate("");
-                personIndex.setBirthdateSortable("");
+                if (Objects.isNull(personIndex.getDisplayBiography()) ||
+                    !personIndex.getDisplayBiography()) {
+                    personIndex.setBiographySr("");
+                    personIndex.setBiographyOther("");
+                }
             });
         } else if (!SessionUtil.isUserLoggedInAndAdmin()) {
             var userId = SessionUtil.getLoggedInUser().getId();

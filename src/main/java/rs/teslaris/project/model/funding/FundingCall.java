@@ -25,6 +25,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.project.model.common.MonetaryAmount;
 
 @Getter
@@ -54,9 +55,13 @@ public class FundingCall extends BaseEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "funding_program_id")
     private FundingProgram fundingProgram;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "funder_id")
+    private OrganisationUnit funder;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<DocumentFile> callDocuments = new HashSet<>();

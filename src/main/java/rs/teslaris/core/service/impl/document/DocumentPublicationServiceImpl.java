@@ -625,8 +625,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var activeEmploymentInstitutions = new HashSet<Integer>();
         var yearOfPublicationEmploymentInstitutions = new HashSet<Integer>();
 
-        contributions.forEach(contribution -> {
-            if (Objects.nonNull(contribution.getPerson())) {
+        contributions.stream()
+            .filter(contribution -> contribution.getContributionType()
+                .equals(DocumentContributionType.AUTHOR) &&
+                Objects.nonNull(contribution.getPerson()))
+            .forEach(contribution ->
                 involvementRepository.findEmploymentsForPerson(contribution.getPerson().getId())
                     .forEach(employment -> {
                         var orgId = employment.getOrganisationUnit().getId();
@@ -650,14 +653,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                 index.getYear() >= employment.getDateFrom().getYear()
                                 && index.getYear() <= employment.getDateTo().getYear()) {
                                 var superIds =
-                                    organisationUnitService.getSuperOUsHierarchyRecursive(orgId);
+                                    organisationUnitService.getSuperOUsHierarchyRecursive(
+                                        orgId);
                                 yearOfPublicationEmploymentInstitutions.add(orgId);
                                 yearOfPublicationEmploymentInstitutions.addAll(superIds);
                             }
                         }
-                    });
-            }
-        });
+                    }));
 
         index.setOrganisationUnitIdsSpecified(new ArrayList<>(specifiedContributionInstitutions));
         index.setOrganisationUnitIdsActive(new ArrayList<>(activeEmploymentInstitutions));
@@ -679,7 +681,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contributorName =
             contribution.getAffiliationStatement().getDisplayPersonName().toString();
 
-        if (!isThesis) {
+        if (!isThesis &&
+            contribution.getContributionType().equals(DocumentContributionType.AUTHOR)) {
             organisationUnitIds.addAll(contribution.getInstitutions().stream()
                 .map(BaseEntity::getId)
                 .toList());

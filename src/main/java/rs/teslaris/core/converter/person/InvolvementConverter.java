@@ -3,6 +3,7 @@ package rs.teslaris.core.converter.person;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
@@ -31,6 +32,15 @@ public class InvolvementConverter {
         dto.setThesisTitle(thesisTitle);
         dto.setTitle(title);
         dto.setAbbreviationTitle(abbreviationTitle);
+        dto.setDegreeCode(MultilingualContentConverter.getMultilingualContentDTO(
+            education.getDegreeCode()));
+        dto.setDegreeClassification(MultilingualContentConverter.getMultilingualContentDTO(
+            education.getDegreeClassification()));
+
+        education.getResearchAreas().forEach(researchArea -> {
+            dto.getResearchAreasId().add(researchArea.getId());
+            dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+        });
 
         return dto;
     }
@@ -47,6 +57,7 @@ public class InvolvementConverter {
 
         dto.setContributionDescription(contributionDescription);
         dto.setRole(role);
+        dto.setMembershipType(membership.getMembershipType());
 
         return dto;
     }
@@ -79,6 +90,14 @@ public class InvolvementConverter {
         dto.setInvolvementType(involvement.getInvolvementType());
         dto.setAffiliationStatement(affiliationStatements);
         dto.setFavorite(involvement.getFavorite());
+        dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
+            involvement.getDescription()));
+        dto.setKeywords(MultilingualContentConverter.getMultilingualContentDTO(
+            involvement.getKeywords()));
+
+        if (Objects.nonNull(involvement.getUris())) {
+            dto.setUris(involvement.getUris());
+        }
 
         if (Objects.nonNull(involvement.getOrganisationUnit())) {
             dto.setOrganisationUnitId(involvement.getOrganisationUnit().getId());

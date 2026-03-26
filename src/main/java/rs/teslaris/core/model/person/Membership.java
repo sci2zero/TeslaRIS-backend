@@ -1,6 +1,7 @@
 package rs.teslaris.core.model.person;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
@@ -35,20 +36,22 @@ public class Membership extends Involvement {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> role = new HashSet<>();
 
-    public Membership(LocalDate dateFrom,
-                      LocalDate dateTo,
-                      ApproveStatus approveStatus,
-                      Set<DocumentFile> proofs,
-                      InvolvementType involvementType,
-                      Set<MultiLingualContent> affiliationStatement,
-                      Person personInvolved,
-                      OrganisationUnit organisationUnit,
-                      boolean favorite,
+    @Column(name = "membership_type")
+    private MembershipType membershipType;
+
+
+    public Membership(LocalDate dateFrom, LocalDate dateTo, ApproveStatus approveStatus,
+                      Set<DocumentFile> proofs, InvolvementType involvementType,
+                      Set<MultiLingualContent> affiliationStatement, Person personInvolved,
+                      OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
+                      Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
                       Set<MultiLingualContent> contributionDescription,
-                      Set<MultiLingualContent> role) {
+                      Set<MultiLingualContent> role,
+                      MembershipType membershipType) {
         super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit, favorite);
+            personInvolved, organisationUnit, favorite, uris, description, keywords);
         this.contributionDescription = contributionDescription;
         this.role = role;
+        this.membershipType = membershipType;
     }
 }

@@ -15,6 +15,9 @@ public record PersonFieldVisibilityDTO(
     @NotNull(message = "You have to provide sex visibility configuration.")
     Boolean sexVisible,
 
+    @NotNull(message = "You have to provide biography visibility configuration.")
+    Boolean biographyVisible,
+
     @NotNull(message = "You have to provide birthplace visibility configuration.")
     Boolean birthplaceVisible
 ) {

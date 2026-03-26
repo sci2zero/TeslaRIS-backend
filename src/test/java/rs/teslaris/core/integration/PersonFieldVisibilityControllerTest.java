@@ -40,7 +40,7 @@ public class PersonFieldVisibilityControllerTest extends BaseTest {
 
         var configurationDTO = new PersonFieldVisibilityDTO(
             true, false,
-            true, true, false);
+            true, true, true, false);
 
         String requestBody = objectMapper.writeValueAsString(configurationDTO);
         mockMvc.perform(

@@ -29,6 +29,7 @@ public class MonographConverter extends DocumentPublicationConverter {
         monographResponseDTO.setMonographType(monograph.getMonographType());
         monographResponseDTO.setNumber(monograph.getNumber());
         monographResponseDTO.setVolume(monograph.getVolume());
+        monographResponseDTO.setUdc(monograph.getUdc());
 
         monographResponseDTO.setLanguageIds(new ArrayList<>());
 

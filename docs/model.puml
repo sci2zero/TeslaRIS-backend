@@ -420,7 +420,7 @@ package person {
 
   Involvement "*" -- "1" Person : involvements / personInvolved
   Involvement "*" --> "0..1" OrganisationUnit : organisationUnit
-  Involvement "*" --> "*" OrganisationUnit : otherInstitutions /' !!! or host institutions, skip for now '/
+  Involvement "*" --> "*" OrganisationUnit : otherInstitutions ' !!! or host institutions, skip for now
 
   class Education extends Involvement {
     DegreeType degreeType /' !!! '/
@@ -1024,8 +1024,8 @@ package document {
   ProceedingsPublication "1..*" --> "1" Proceedings : proceedings 
   ' there is also DocumentsRelation PART_OF which can be used instead, 
   ' for instance for Proceedings - Conference relation, we are using generic Document - Event relation
-  ' Proceedings "1..*" --> "1" Conference the relation below should replace this one. However, the conference should have one or more linked proceedings,
-  ' but also any event (for instance plenary presentation is an event which is part of conference) could have linked documents (presentation, dataset, etc.)
+' Proceedings "1..*" --> "1" Conference the relation below should replace this one. However, the conference should have one or more linked proceedings,
+' but also any event (for instance plenary presentation is an event which is part of conference) could have linked documents (presentation, dataset, etc.)
 
   Document "*" --> "0..1" Event
   
@@ -1044,7 +1044,7 @@ package document {
       REVIEW_ARTICLE
       RESEARCH_ARTICLE
       PREFACE
-      POSTFACE /' !!! '/
+      POSTFACE
       COMMENT
       CORRECTION
       LEXICOGRAPHIC_UNIT
@@ -1128,12 +1128,12 @@ package document {
     CHAPTER
     RESEARCH_ARTICLE
     PREFACE
-    POSTFACE /' !!! '/
+    POSTFACE
     LEXICOGRAPHIC_UNIT
     POLEMICS
     SCIENTIFIC_CRITIC
-    BOOK_REVIEW /' !!! '/
-    ENTRY /' !!! '/
+    BOOK_REVIEW
+    ENTRY
   }
 
   /' !!! to consider renaming to PublicationUnit '/
@@ -1146,7 +1146,7 @@ package document {
     /' volume and number are defined only in the case publicationSeries is defined. '/
     String number
     Set<LanguageTag> languages
-    String udc /' !!! moved from Thesis class '/
+    String udc
   }
 
   enum MonographType {
@@ -1172,7 +1172,7 @@ package document {
   Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
 
   MonographPublication "1..*" --> "1" Monograph 
-  /' can we use DocumentsRelation (PART_OF) instead of this? '/
+  ' can we use DocumentsRelation (PART_OF) instead of this? 
   
   ' !!!
   class PerformanceRelatedOutput extends Document {
@@ -1180,15 +1180,15 @@ package document {
       Set<LanguageTag> languages
       Set<MultilingualContent> producer
       Set<MultilingualContent> distributor
-      Set<MultilingualContent> sourceTitle /' program, exhibition catalogue title, topic  '/  
-      Set<MultilingualContent> otherActors /' interviewer, person-acted for, etc. '/
+      Set<MultilingualContent> sourceTitle ' program, exhibition catalogue title, topic  
+      Set<MultilingualContent> otherActors ' interviewer, person-acted for, etc.
   }
   
   ' !!!
   enum PerformanceRelatedOutputType {
     SLIDES
     POSTER
-    CATALOGUE /' exhibition catalogue '/
+    CATALOGUE ' exhibition catalogue
     ARTISTIC_EXHIBITION
     MUSICAL_PERFORMANCE
     ART_PERFORMANCE
@@ -1204,11 +1204,10 @@ package document {
   class IntellectualProperty extends Document {
     IntellectualPropertyType type
     String number
-    IntellectualPropertyApplicationStatus applicationStatus /' !!! this should use different enumeration comparing to Document publicationStatus field '/
-    LocalDate dateRequested /' !!! documentDate from Document should be used for date-issued '/
-    LocalDate dateFilingPriority /' !!! '/
-    LocalDate dateEndTerm /' !!! '/
-    Set<MultilingualContent> owner /' !!! '/
+    IntellectualPropertyApplicationStatus publicationStatus ' !!! this should use different enumeration comparing to Document publicationStatus field
+    LocalDate dateRequested ' !!! documentDate from Document should be used for date-issued
+    LocalDate dateFilingPriority ' !!!
+    LocalDate dateEndTerm ' !!!
   }
   
   ' !!!
@@ -1222,17 +1221,17 @@ package document {
 
   ' !!!
   enum IntellectualPropertyApplicationStatus {
-    DISCLOSED /' DISCLOSURE '/
-    PENDING /' PATENT, TRADEMARK '/
-    IN_NEGOTIATION /' LICENSE '/
-    ALLOWED /' PATENT '/ 
-    GRANTED_OR_REGISTERED /' PATENT, REGISTERED_COPYRIGHT, TRADEMARK '/
-    PROTECTED /' DISCLOSURE '/
-    ASSIGNED /' LICENSE '/
-    FIRST_FIXATION /' REGISTERED_COPYRIGHT '/
-    EXPIRED /' PATENT '/
-    WITHDRAWN /' PATENT '/
-    ELIMINATED /' REGISTERED_COPYRIGHT '/
+    DISCLOSED ' DISCLOSURE
+    PENDING ' PATENT, TRADEMARK
+    IN_NEGOTIATION ' LICENSE,
+    ALLOWED ' PATENT, 
+    GRANTED_OR_REGISTERED ' PATENT, REGISTERED_COPYRIGHT, TRADEMARK
+    PROTECTED ' DISCLOSURE
+    ASSIGNED ' LICENSE,
+    FIRST_FIXATION ' REGISTERED_COPYRIGHT
+    EXPIRED ' PATENT,
+    WITHDRAWN ' PATENT,
+    ELIMINATED ' REGISTERED_COPYRIGHT
   } 
 
   ' !!! changed superclass, therefore, eISBN, printISBN, publisher, authorReprint are not needed anymore
@@ -1245,8 +1244,8 @@ package document {
     LocalDate thesisDefenceDate
     ThesisPhysicalDescription physicalDescription
     Language language
-    Set<MultilingualContent> scientificAreaFreeForm /' !!! renamed from scientificArea '/
-    Set<MultilingualContent> scientificSubAreaFreeForm /' !!! renamed from scientificSubArea '/
+    Set<MultilingualContent> scientificAreaFreeForm ' !!! renamed from scientificArea
+    Set<MultilingualContent> scientificSubAreaFreeForm ' !!! renamed from scientificSubArea
     LanguageTag writingLanguage
     boolean isOnPublicReview
     boolean isOnPublicReviewPause
@@ -1273,7 +1272,7 @@ package document {
     PHD_ART_PROJECT
     BACHELOR_WITH_HONORS
     UNDERGRADUATE_THESIS
-    OTHER /' !!! '/
+    OTHER
   }
   
   ' !!! do we need this?
@@ -1312,23 +1311,23 @@ package document {
     PROCESS
     METHOD 
     STRATEGY
-    STANDARD /' !!! '/
+    STANDARD
     POLICY
     FRAMEWORK
-    INVENTION /' !!! '/
-    RESEARCH_TECHNIQUE /' !!! '/
-    ONLINE_RESOURCE /' !!! '/
-    TEST /' !!! '/
-    WEBSITE /' !!! '/
-    AUDIO_RECORDING /' !!! '/
+    INVENTION
+    RESEARCH_TECHNIQUE
+    ONLINE_RESOURCE
+    TEST
+    WEBSITE
+    AUDIO_RECORDING
     MUSICAL_COMPOSITION /' !!! '/
-    RADIO_TV_PROGRAM /' !!! '/
-    VIDEO_RECORDING /' !!! '/
-    SOUND_DESIGN /' !!! '/
-    SET_DESIGN /' !!! '/
-    LIGHT_DESIGN /' !!! '/
-    CHOREOGRAPHY /' !!! '/
-    DATASET /' !!! class Dataset does not exist anymore, it is a type of Intangible product '/
+    RADIO_TV_PROGRAM
+    VIDEO_RECORDING
+    SOUND_DESIGN
+    SET_DESIGN
+    LIGHT_DESIGN
+    CHOREOGRAPHY
+    DATASET ' !!! class Dataset does not exist anymore, it is a type of Intangible product
     OTHER 
   }
   
@@ -1345,7 +1344,7 @@ package document {
     INDUSTRIAL_PRODUCT
     INFRASTRUCTURE_OBJECT
     DERIVATIVE_WORK
-    VISUAL_ARTWORK /' !!! '/
+    VISUAL_ARTWORK
     OTHER /' any physical object '/
   }
   
@@ -1403,9 +1402,9 @@ package project {
     Set<String> uris
     LocalDate dateFrom
     LocalDate dateTo
-    ProjectStatus status /' !!! projectStatus in model '/
-    ProjectCollaborationType collaborationType /' !!! type in the model '/
-    ProjectResearchType researchType /' !!! projectResearchType in the model '/
+    ProjectStatus status
+    ProjectCollaborationType collaborationType
+    ProjectResearchType researchType
     Boolean notFunded 
     MonetaryAmount costs
     Set<SDGoal> sdgs /' !!! skip for now '/
@@ -1563,12 +1562,12 @@ package project {
     Set<SDGoal> sdgs /' !!! skip for now '/
     Set<DocumentFile> documents /' proposal, review result, supplement '/
   }
-  
+
   FundingApplication "*" -- "0..1" Project : fundingApplications / project 
   FundingApplication "*" --> "1" FundingCall : fundingCall
   FundingApplication "1" --> "0..1" FundingApplication : revisedFundingApplication 
   FundingApplication "1" --> "0..1" Funding : funding
-  FundingApplication "0..1" --> "*" FundingPart : otherFundingSources 
+  FundingApplication "0..1" --> "*" FundingPart : otherFundingSources
   
   class FundingApplicationResult {
     AWARDED
@@ -1580,14 +1579,14 @@ package project {
   class Funding {
     Set<String> internalIdentifiers
     Set<String> oldIds
-    Set<String> mergedIds
+    Set<String> mergedIds ' this should stay int in my opinion
     String doi
     String grantAgreementId
     Set<MultiLingualContent> name 
     Set<MultiLingualContent> description 
     Set<MultiLingualContent> nameAbbreviation 
-    Set<MultiLingualContent> keywords 
-    Set<ResearchArea> researchAreas 
+    Set<MultiLingualContent> keywords
+    Set<ResearchArea> researchAreas
     Set<String> uris
     Set<MultiLingualContent> displayCall
     Set<MultiLingualContent> displayProgram
@@ -1607,7 +1606,7 @@ package project {
   }
   
   Funding "*" -- "0..1" FundingCall : funding / call
-  Funding "*" --> "0..1" institution.OrganisationUnit : funder /' !!! should be added to the model '/
+  Funding "*" --> "0..1" institution.OrganisationUnit : funder
   Funding "1" -- "*" FundingPart : funding / fundingParts
   Funding "*" -- "0..1" Project : fundings/project
   
@@ -1632,16 +1631,16 @@ package project {
     String OAMandateUrl
     Set<DocumentFile> callDocuments
   }
-  
+
   FundingCall "0..1" -- "*" PersonFundingCallContribution : fundingCall / contributors
-  FundingCall "*" --> "0..1" institution.OrganisationUnit : funder /' !!! '/
+  FundingCall "*" --> "0..1" institution.OrganisationUnit : funder
   
   enum FundingType {
     GRANT 
     CALL 
     OTHER
   }
-   
+
   enum FundingCallContributionType {
     ORGANIZER
     COORDINATOR
@@ -1654,7 +1653,7 @@ package project {
     APPLICANT
     OTHER_CONTRIBUTORS
   }
-  
+
   class PersonFundingCallContribution extends PersonContribution {
     FundingCallContributionType contributionType
     
@@ -1722,7 +1721,7 @@ package Assessment {
 
   enum ApplicableEntityType {
     MONOGRAPH
-    EVENT
+    EVENT ' !!! do we need this
     DOCUMENT
     PERSON
     ORGANISATION_UNIT
@@ -1731,18 +1730,18 @@ package Assessment {
     MONOGRAPH_PUBLICATION
     JOURNAL_PUBLICATION
     PROCEEDINGS_PUBLICATION
-    /' !!! PATENT renamed to  INTELLECTUAL_PROPERTY, should be removed '/
-    INTELLECTUAL_PROPERTY /' !!! former PATENT '/
-    INTANGIBLE_PRODUCT /' !!! do we need this '/
-    /' !!! DATASET moved to INTANGIBLE_PRODUCT, should be removed '/
+    PATENT ' 
+    INTELLECTUAL_PROPERTY ' !!! former PATENT
+    INTANGIBLE_PRODUCT ' !!! do we need this
+    ' !!! DATASET moved to INTANGIBLE_PRODUCT
     THESIS
     MATERIAL_PRODUCT
     GENETIC_MATERIAL
-    PERFORMANCE_RELATED_OUTPUT /' !!! '/
+    PERFORMANCE_RELATED_OUTPUT ' !!!
     PRIZE 
     CONFERENCE  
     EXHIBITION 
-    OTHER_EVENTS /' !!! do we need this '/
+    OTHER_EVENTS ' !!! do we need this
   }
 
   class Commission {
@@ -1776,7 +1775,7 @@ package Assessment {
   }
 
   CommissionReport "0..*" --> "1" Commission
-    
+
   class EntityAssessmentClassification {
     LocalDateTime timestamp
     Boolean manual

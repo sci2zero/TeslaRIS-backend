@@ -24,6 +24,7 @@ import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.document.DocumentFile;
+import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.Project;
 
@@ -46,7 +47,7 @@ public class Funding extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "merged_ids")
-    private Set<String> mergedIds = new HashSet<>();
+    private Set<Integer> mergedIds = new HashSet<>();
 
     @Column(name = "doi")
     private String doi;
@@ -83,6 +84,10 @@ public class Funding extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "funding_call_id")
     private FundingCall fundingCall;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "funder_id")
+    private OrganisationUnit funder;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> displayCall = new HashSet<>();

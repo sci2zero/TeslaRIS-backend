@@ -40,6 +40,9 @@ public class FundingCallIndex {
     @Field(type = FieldType.Integer, name = "program_id", store = true)
     private Integer programId;
 
+    @Field(type = FieldType.Integer, name = "funder_id", store = true)
+    private Integer funderId;
+
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;
 
