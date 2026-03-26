@@ -13,7 +13,7 @@ package commonTypes {
   }
 
   class Language {
-    String languageCode ' ISO 639-1 - https://www.loc.gov/standards/iso639-2/php/English_list.php
+    String languageCode /' ISO 639-1 - https://www.loc.gov/standards/iso639-2/php/English_list.php '/
     Set<MultiLingualContent> name
   }
 
@@ -48,12 +48,12 @@ package commonTypes {
   }
 
   class LanguageTag {
-    String languageTag ' https://github.com/EuroCRIS/CERIF-Core/blob/main/datatypes/Language_Tag.md
+    String languageTag /' https://github.com/EuroCRIS/CERIF-Core/blob/main/datatypes/Language_Tag.md '/
     String display
   }
   
   class Country {
-    String code ' ISO_3166_Alpha2_Code - iso-3166-country-enum at https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
+    String code /' ISO_3166_Alpha2_Code - iso-3166-country-enum at https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd '/
     Set<MultiLingualContent> name
     String processedName
   }
@@ -106,8 +106,8 @@ package commonTypes {
     
   class Currency {
     Set<MultiLingualContent> name
-    String symbol ' for instance - $
-    String code  ' for instance USD - iso-4217-currency-enum from https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd
+    String symbol /' for instance - $ '/
+    String code  /' for instance USD - iso-4217-currency-enum from https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd '/
   }
   
   abstract class BaseEntity {
@@ -118,7 +118,8 @@ package commonTypes {
     String updatedBy
     String adminNote
     Boolean deleted
-    String source
+    String importSource
+    Boolean privateInfo /' !!! '/
   }
   
   enum ExportableEndpointType {
@@ -298,22 +299,22 @@ package person {
     String apvnt
     String eCrisId
     String eNaukaId
-    String nationalScienceId ' for instance CienciaID
+    String nationalScienceId /' for instance CienciaID '/
     String orcid
     String scopusAuthorId
     String openAlexId
-    String webOfScienceResearcherId ' WoS author identifier
-    String scholarID ' Goolge scholar identifier
-    String authenticusId ' https://bioregistry.io/registry/authenticus
-    String lattesId ' https://bioregistry.io/registry/lattes
+    String webOfScienceResearcherId /' WoS author identifier '/
+    String scholarID /' Goolge scholar identifier '/
+    String authenticusId /' https://bioregistry.io/registry/authenticus '/
+    String lattesId /' https://bioregistry.io/registry/lattes '/
     Set<String> internalIds
     Set<String> accountingIds
-    Set<String> oldIds ' !!! changed type, skip for now
-    Set<String> mergedIds ' !!! changed type, skip for now
+    Set<String> oldIds /' !!! changed type, skip for now '/
+    Set<String> mergedIds /' !!! changed type, skip for now '/
     Set<String> urls
     ApproveStatus approveStatus
     PersonalInfo personalInfo
-    Set<SDGoal> sdgs ' !!! will be done by using indicators
+    Set<SDGoal> sdgs /' !!! will be done by using indicators '/
     ProfilePhotoOrLogo profilePhoto
     LocalDate dateOfLastIndicatorharvest
     Set<Integer> employmentInstitutionsIdHierarchy
@@ -398,13 +399,13 @@ package person {
     ' !!! the fields below are available in additional dialog in UI, it represents details about involvement
     ' !!! if some of those fields are filled it is indexed as activity linked with person
     Set<MultiLingualContent> involvementDescription
-    Set<MultiLingualContent> keywords ' !!!
-    Set<ResearchArea> researchAreas ' !!!
-    LocalDate dateFrom ' !!!
-    LocalDate dateTo ' !!!
-    Set<SDGoal> sdgs ' !!! skip for now, there is a sense in this only if involvementDescription is there
-    Set<DocumentFile> proofs ' !!!
-    Set<String> uris ' !!! involvement might be proved by url or attached file (uris or proofs)
+    Set<MultiLingualContent> keywords /' !!! '/
+    Set<ResearchArea> researchAreas /' !!! '/
+    LocalDate dateFrom /' !!! '/
+    LocalDate dateTo /' !!! '/
+    Set<SDGoal> sdgs /' !!!  skip for now, there is a sense in this only if involvementDescription is there '/
+    Set<DocumentFile> proofs /' !!! '/
+    Set<String> uris /' !!! involvement might be proved by url or attached file (uris or proofs) '/
   }
 
   enum InvolvementType {
@@ -413,31 +414,29 @@ package person {
     POSTDOC_AT
     MEMBER_OF
     EMPLOYED_AT 
-    HIRED_BY ' or selfemployed
+    HIRED_BY /' or selfemployed '/
     CANDIDATE 
   }
 
   Involvement "*" -- "1" Person : involvements / personInvolved
   Involvement "*" --> "0..1" OrganisationUnit : organisationUnit
-  Involvement "*" --> "*" OrganisationUnit : otherInstitutions ' !!! or host institutions, skip for now
+  Involvement "*" --> "*" OrganisationUnit : otherInstitutions /' !!! or host institutions, skip for now '/
 
   class Education extends Involvement {
-    DegreeType degreeType ' !!!
-    Set<MultiLingualContent> degreeTitle ' !!! former title, skip for now
-    Set<MultiLingualContent> degreeCode ' !!! 
-    Set<MultiLingualContent> degreeMajor ' !!! former abbreviationTitle, skip for now
-    Set<MultiLingualContent> description ' !!!
-    Set<MultiLingualContent> degreeClassification ' !!!
-    EducationStatus educationStatus ' !!!
+    DegreeType degreeType /' !!! '/
+    Set<MultiLingualContent> degreeTitle /' !!! former title, skip for now '/
+    Set<MultiLingualContent> courseCode /' !!! '/
+    Set<MultiLingualContent> degreeMajor /' !!! former abbreviationTitle, skip for now '/
+    Set<MultiLingualContent> description /' !!! '/
+    Set<MultiLingualContent> degreeClassification /' !!! '/
+    EducationStatus educationStatus /' !!! '/
     Set<MultiLingualContent> thesisTitle
-    Set<MultiLingualContent> displayThesisInstitution ' !!!
-    Set<MultiLingualContent> displayThesisSupervisors ' !!!
-    Set<MultiLingualContent> keywords ' !!!
-    Set<ResearchArea> researchAreas ' !!!
+    Set<MultiLingualContent> displayThesisInstitution /' !!! '/
+    Set<MultiLingualContent> displayThesisSupervisors /' !!! '/
   }
   
-  Education "0..1" --> "1" Thesis : thesis ' !!!
-  Education "*" --> "*" Person : supervising / supervisors ' !!!
+  Education "0..1" --> "1" Thesis : thesis /' !!! '/
+  Education "*" --> "*" Person : supervising / supervisors /' !!! '/
   
   ' !!!  
   enum DegreeType {
@@ -455,7 +454,7 @@ package person {
   }
 
   class Employment extends Involvement {
-    EmploymentPosition employmentPosition ' !!! in UI selection it should support hierarchy, just as ResearchArea selection
+    EmploymentPosition employmentPosition /' !!! in UI selection it should support hierarchy, just as ResearchArea selection '/
     Set<MultiLingualContent> role
   }
 
@@ -511,6 +510,9 @@ package person {
     MembershipType membershipType
 	' !!! Set<MultiLingualContent> contributionDescription should be removed, it is moved to Involvement - involvementDescription 
     Set<MultiLingualContent> role
+    
+    ' !!! only available if COMMISSION_MEMBER is membershipType
+    Integer numberOfReviewsOrAssessment
   }
 
   ' !!!
@@ -523,6 +525,7 @@ package person {
 	REGULAR_MEMBER
 	ASSOCIATE_MEMBER
 	OBSERVER
+	COMMISSION_MEMBER /' !!! '/
 	OTHER
   }
 
@@ -530,9 +533,9 @@ package person {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
-    Boolean favorite ' we might implemente later highlight section with most important involvement, output, project, skills and activity
-    Set<MultiLingualContent> keywords ' !!!
-    Set<ResearchArea> researchAreas ' !!!
+    Boolean favorite /' we might implemente later highlight section with most important involvement, output, project, skills and activity '/
+    Set<MultiLingualContent> keywords /' !!! '/
+    Set<ResearchArea> researchAreas /' !!! '/
   }
 
   ExpertiseOrSkill "*" -- "1" Person : expertisesAndSkills / person
@@ -543,11 +546,11 @@ package person {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
-    LocalDate effectiveDate ' !!! former date, skip for now 
+    LocalDate effectiveDate /' !!! former date, skip for now '/
     LocalDate endDate
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    Boolean favorite ' we might implemente later highlight section with most important involvement, output, project, skills and activity
+    Boolean favorite /' we might implemente later highlight section with most important involvement, output, project, skills and activity '/
   }
 
   enum PrizeType {
@@ -579,20 +582,20 @@ package institution {
     Set<MultilingualContent> description
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    String numberOfEmployees ' !!! more research required
+    String numberOfEmployees /' !!! more research required '/
     GeoLocation location
     PostalAddress postalAddress
     ApproveStatus approveStatus
-    Set<String> oldIds ' !!! changed type, skip for now
-    Set<String> mergedIds ' !!! changed type, skip for now
+    Set<String> oldIds /' !!! changed type, skip for now '/
+    Set<String> mergedIds /' !!! changed type, skip for now '/
     Set<String> accountingIds 
     Set<String> internalIds
     String scopusAfid
     String openAlexId
     String ror
     String ringgold
-    String fundref ' https://bioregistry.io/registry/funderregistry
-    String isni ' https://bioregistry.io/registry/isni
+    String fundref /' https://bioregistry.io/registry/funderregistry '/
+    String isni /' https://bioregistry.io/registry/isni '/
     String athensId
     String ncesId
     String fctId
@@ -661,7 +664,7 @@ package institution {
     Boolean showOutputs
     Boolean showBySpecifiedAffiliation
     Boolean showByPublicationYearEmployments
-    Boolean showByCurrenctEmployments
+    Boolean showByCurrentEmployments
   }
 
   OrganizationUnitOutputConfiguration "0..1" --> "1" OrganisationUnit : organisationUnit
@@ -672,26 +675,26 @@ package document {
 
   enum DocumentContributionType {
     AUTHOR
-    PRESENTER ' !!!
-    TRANSLATOR ' !!!
-    ASSISTANT_STAFF ' !!!
+    PRESENTER /' !!! '/
+    TRANSLATOR /' !!! '/
+    ASSISTANT_STAFF /' !!! '/
     EDITOR
-    ASSOCIATED_EDITOR ' !!!
-    INVITED_EDITOR ' !!!
+    ASSOCIATED_EDITOR /' !!! '/
+    INVITED_EDITOR /' !!! '/
     REVIEWER
     ADVISOR
     BOARD_MEMBER
-    MAIN_ARGUER ' !!! should this be only EventContributionType at THESIS_DEFENCE?
-    ARGUER ' !!!
-    OWNER ' !!!
+    MAIN_ARGUER /' !!! should this be only EventContributionType at THESIS_DEFENCE? '/
+    ARGUER /' !!! '/
+    OWNER /' !!! '/
   }
   
   class Publisher {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> place
-    Set<MultiLingualContent> state ' region, Vojvodina
-    Set<String> oldIds ' !!! changed type, skip for now
-    Set<String> mergedIds ' !!! changed type, skip for now
+    Set<MultiLingualContent> state /' region, Vojvodina '/
+    Set<String> oldIds /' !!! changed type, skip for now '/
+    Set<String> mergedIds /' !!! changed type, skip for now '/
     Country country
   }
 
@@ -703,13 +706,13 @@ package document {
     ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
     ' !!! the fields below are available in additional dialog in UI, it represents details contribution
     ' !!! if some of those fields are filled it is indexed as activity linked with person
-    Set<MultiLingualContent> keywords ' !!!
-    Set<ResearchArea> researchAreas ' !!!
-    LocalDate dateFrom ' !!!
-    LocalDate dateTo ' !!!
-    Set<SDGoal> sdgs ' !!! skip for now, there is a sense in this only if contributionDescription is there
-    Set<DocumentFile> proofs ' !!!
-    Set<String> uris ' !!! contribution might be proved by url or attached file (uris or proofs)
+    Set<MultiLingualContent> keywords /' !!! '/
+    Set<ResearchArea> researchAreas /' !!! '/
+    LocalDate dateFrom /' !!! '/
+    LocalDate dateTo /' !!! '/
+    Set<SDGoal> sdgs /' !!! skip for now, there is a sense in this only if contributionDescription is there '/
+    Set<DocumentFile> proofs /' !!! '/
+    Set<String> uris /' !!! contribution might be proved by url or attached file (uris or proofs) '/
   }
     
   PersonContribution "*" --> "0..*" institution.OrganisationUnit : institutions
@@ -729,8 +732,8 @@ package document {
     boolean isBoardPresident
     EmploymentTitle employmentTitle
     PersonalTitle personalTitle
-    Set<MultilingualContent> documentDescription ' !!! in the case Document is not linked, it will be rarely used, only meaningful if it has been started from PersonActivity
-    Boolean favorite ' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity
+    Set<MultilingualContent> documentDescription /' !!! in the case Document is not linked, it will be rarely used, only meaningful if it has been started from PersonActivity '/
+    Boolean favorite /' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity '/
   }
   
   enum EmploymentTitle {
@@ -807,56 +810,56 @@ package document {
     Set<MultiLingualContent> description
     Set<MultiLingualContent> remark
     Set<MultiLingualContent> keywords
-    Set<ResearchArea> researchAreas ' !!!
-    Set<MultilingualContent> geoSpaceDescription ' !!!
-    Set<MultilingualContent> chronologicalSpaceDescription ' !!!
+    Set<ResearchArea> researchAreas /' !!! '/
+    Set<MultilingualContent> geoSpaceDescription /' !!! '/
+    Set<MultilingualContent> chronologicalSpaceDescription /' !!! '/
     Set<String> uris
     String documentDate
     Set<DocumentFile> fileItems
     Set<DocumentFile> proofs
     ApproveStatus approveStatus
-    PublicationStatus publicationStatus ' !!!
+    PublicationStatus publicationStatus /' !!! '/
     String doi
     String scopusId
     String openAlexId
     String wosId
-    String arXivId ' !!!
-    String lccnId ' !!!
-    String lensId ' !!!
-    String pubmedId ' !!!
-    String ssrnId ' !!!
-    String authenticusId ' !!!
-    String arkId ' !!!
-    String halId ' !!!
-    Set<String> internalIds ' !!! changed title, skip for now
-    Set<String> oldIds ' !!! changed type, skip for now
-    Set<String> mergedIds ' !!! changed type, skip for now
-    Boolean peerReviewed ' !!! refereed
-    Boolean openAccess ' !!!
-    Set<MultiLingualContent> city ' !!!
-    Country country ' !!!
-    Set<MultilingualContent> edition ' !!! version
-    Set<SDGoal> sdgs ' !!!
+    String arXivId /' !!! '/
+    String lccnId /' !!! '/
+    String lensId /' !!! '/
+    String pubmedId /' !!! '/
+    String ssrnId /' !!! '/
+    String authenticusId /' !!! '/
+    String arkId /' !!! '/
+    String halId /' !!! '/
+    Set<String> internalIds /' !!! changed title, skip for now '/
+    Set<String> oldIds /' !!! changed type, skip for now '/
+    Set<String> mergedIds /' !!! changed type, skip for now '/
+    Boolean peerReviewed /' !!! refereed '/
+    Boolean openAccess /' !!! '/
+    Set<MultiLingualContent> city /' !!! '/
+    Country country /' !!! '/
+    Set<MultilingualContent> edition /' !!! version '/
+    Set<SDGoal> sdgs /' !!! '/
     Boolean isMetadataValid
     Boolean areFilesValid
     Boolean isArchived
     DocumentPublicationType documentType
-    Boolean authorReprint ' !!! moved from Monograph and Patent
+    Boolean authorReprint /' !!! moved from Monograph and Patent '/
   }
   
   enum DocumentPublicationType {
       JOURNAL_PUBLICATION
-      PROCEEDINGS
+      PROCEEDINGS /' !!! moved to be a subclass of Monograph '/
       PROCEEDINGS_PUBLICATION
       MONOGRAPH
-      INTELLECTUAL_PROPERTY ' !!! former PATENT
+      INTELLECTUAL_PROPERTY /' !!! former PATENT '/
       INTANGIBLE_PRODUCT
       ' !!! DATASET moved to INTANGIBLE_PRODUCT
       MONOGRAPH_PUBLICATION
       THESIS
       MATERIAL_PRODUCT
       GENETIC_MATERIAL
-      PERFORMANCE_RELATED_OUTPUT ' !!!
+      PERFORMANCE_RELATED_OUTPUT /' !!! '/
   }
    
   ' !!! 
@@ -866,14 +869,24 @@ package document {
     ACCEPTED
     IN_PRINT
     PUBLISHED
-  }
+  } 
 
+  /' !!! to consider adding PublicationPart abstract class for Proceedings, Monograph and journal publications
+      abstract class PublicationPart extends Document {
+        String startPage
+        String endPage
+        Integer numberOfPages
+        String articleNumber
+        Set<MultilingualContent> section
+      }
+  '/
   class ProceedingsPublication extends Document {
     ProceedingsPublicationType proceedingsPublicationType
     String startPage
     String endPage
     Integer numberOfPages
     String articleNumber
+    Set<MultilingualContent> section /' !!! '/
   }
 
   enum ProceedingsPublicationType {
@@ -882,16 +895,16 @@ package document {
     INVITED_ABSTRACT_ARTICLE
     REGULAR_ABSTRACT_ARTICLE
     PREFACE
-    POSTFACE ' !!!
+    POSTFACE /' !!! '/
     LEXICOGRAPHIC_UNIT
     POLEMICS
     SCIENTIFIC_CRITIC
-    BOOK_REVIEW ' !!!
+    BOOK_REVIEW /' !!! '/
   }
 
-' !!! changed superclass
+' !!! changed superclass, therefore some attributes moved to superclass
   class Proceedings extends Monograph {
-    Set<MultilingualContent> nameAbbreviation
+    Set<MultilingualContent> nameAbbreviation /' !!! to consider to move to Document, it might be titleAbbreviation or just abbreviation '/
   }
 
   abstract class Event {
@@ -899,16 +912,17 @@ package document {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> description
     Set<MultiLingualContent> keywords
-    Set<ResearchArea> researchAreas ' !!!
+    Set<ResearchArea> researchAreas /' !!! '/
     Boolean serialEvent
     LocalDate dateFrom
     LocalDate dateTo
     Country country
     Set<MultiLingualContent> place
-    Set<String> oldIds ' !!! changed type
-    Set<String> mergedIds ' !!! changed type
+    Set<MultilingualContent> displayOrganizer /' !!! '/
+    Set<String> oldIds /' !!! changed type '/
+    Set<String> mergedIds /' !!! changed type '/
     Set<String> uris
-    Set<SDGoal> sdgs ' !!!
+    Set<SDGoal> sdgs /' !!! '/
   }
     
   ' !!!  
@@ -929,25 +943,27 @@ package document {
   }
 
   enum EventContributionType {
-    ORGANIZER ' !!!
+    ORGANIZER /' !!! '/
     ORGANIZATION_BOARD_CHAIR
     ORGANIZATION_BOARD_MEMBER
-    PROGRAMME_BOARD_MEMBER  ' TODO: check other types here - https://github.com/EuroCRIS/CERIF-Vocabularies/blob/master/PersonEventInvolvements.xml
+    PROGRAMME_BOARD_MEMBER 
     REVIEWER
     SPEAKER
+    INVITED_SPEAKER /' !!! '/
+    KEYNOTE_SPEAKER /' !!! '/
     PANELISTS
     CHAIR
     AUDIENCE
     DEMONSTRATOR
-    PERFORMER ' !!!
-    PRODUCER ' !!!
-    INSTRUCTOR ' !!!
-    TEACHER ' !!!
-    EXAMINER ' !!!
-    WITNESS ' !!!
-    MAIN_ARGUER ' !!!
-    ARGUER ' !!!
-    OTHER_CONTRIBUTORS ' !!!
+    PERFORMER /' !!! '/
+    PRODUCER /' !!! '/
+    INSTRUCTOR /' !!! '/
+    TEACHER /' !!! '/
+    EXAMINER /' !!! '/
+    WITNESS /' !!! '/
+    MAIN_ARGUER /' !!! '/
+    ARGUER /' !!! '/
+    OTHER /' !!! '/
   }
 
   class PersonEventContribution extends PersonContribution {
@@ -977,11 +993,11 @@ package document {
 
   enum EventsRelationType {
     PART_OF
-' the relation type above is used to link one event which is part of the another event (for instance, workshop at a conference)
+    ' the relation type above is used to link one event which is part of the another event (for instance, workshop at a conference)
     BELONGS_TO_SERIES
-' the relation type above is used to link an event occurence (conference, for instance ICIST 2023) with event series (event with data property serialEvent=true, for instance ICIST)
+    ' the relation type above is used to link an event occurence (conference, for instance ICIST 2023) with event series (event with data property serialEvent=true, for instance ICIST)
     COLLOCATED_WITH
-' the relation type above is used to link two events organized together
+    ' the relation type above is used to link two events organized together
   }
   
   class Conference extends Event{
@@ -1008,8 +1024,8 @@ package document {
   ProceedingsPublication "1..*" --> "1" Proceedings : proceedings 
   ' there is also DocumentsRelation PART_OF which can be used instead, 
   ' for instance for Proceedings - Conference relation, we are using generic Document - Event relation
-' Proceedings "1..*" --> "1" Conference the relation below should replace this one. However, the conference should have one or more linked proceedings,
-' but also any event (for instance plenary presentation is an event which is part of conference) could have linked documents (presentation, dataset, etc.)
+  ' Proceedings "1..*" --> "1" Conference the relation below should replace this one. However, the conference should have one or more linked proceedings,
+  ' but also any event (for instance plenary presentation is an event which is part of conference) could have linked documents (presentation, dataset, etc.)
 
   Document "*" --> "0..1" Event
   
@@ -1019,6 +1035,7 @@ package document {
     String endPage
     Integer numberOfPages
     String articleNumber
+    Set<MultilingualContent> section /' !!! '/
     String volume
     String issue
   }
@@ -1027,17 +1044,17 @@ package document {
       REVIEW_ARTICLE
       RESEARCH_ARTICLE
       PREFACE
-      POSTFACE ' !!!
+      POSTFACE /' !!! '/
       COMMENT
       CORRECTION
       LEXICOGRAPHIC_UNIT
       POLEMICS
       SCIENTIFIC_CRITIC
       EDITORIAL
-      BOOK_REVIEW ' !!!
-      CREATIVE_WORK ' !!!
-      ANNOTATED_NOTE ' !!!
-      OTHER ' !!!
+      BOOK_REVIEW /' !!! '/
+      CREATIVE_WORK /' !!! '/
+      ANNOTATED_NOTE /' !!! '/
+      OTHER /' !!! '/
     }
 
   class PublicationSeries {
@@ -1047,18 +1064,28 @@ package document {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> subtitle
     Set<MultiLingualContent> nameAbbreviation
-    Set<String> oldIds ' !!! changed type
-    Set<String> mergedIds ' !!! changed type
+    Set<String> oldIds /' !!! changed type '/
+    Set<String> mergedIds /' !!! changed type '/
     String openAlexId
     Set<String> uris
   }
+  
+  /' !!! '/
+  class PublicationSeriesPublisher {
+    Set<MultilingualContent> displayPublisher
+    TeslaRISDate fromDate
+    TeslaRISDate toDate
+  }
+    
+  PublicationSerierPublisher "*" -- "1" PublicationSeries : publishers / publicationSeries /' !!! '/
+  PublicationSerierPublisher "*" -- "0..1" Publisher : publicationSeries / publisher /' !!! '/
   
   class BookSeries extends PublicationSeries {
    ' for instance https://www.springer.com/gp/computer-science/lncs
   }
 
   class Journal extends PublicationSeries {
-    ArticleCollectionSeriesType type ' !!!
+    ArticleCollectionSeriesType type /' !!! '/
   }
   
   ' !!!
@@ -1082,69 +1109,70 @@ package document {
   enum PublicationSeriesContributionType {
     EDITOR
     ASSOCIATED_EDITOR
-    INVITED_EDITOR ' !!!
-    REGULAR_REVIEWER ' !!! former REVIEWER
-    ADHOC_REVIEWER ' !!!
+    INVITED_EDITOR /' !!! '/
+    REVIEWER
+    ADHOC_REVIEWER /' !!! '/
     SCIENTIFIC_BOARD_MEMBER
   }
 
   class MonographPublication extends Document {
     MonographPublicationType monographPublicationType
-    String startPage;
+    String startPage
 	String endPage
     Integer numberOfPages
     String articleNumber
+    Set<MultilingualContent> section /' !!! '/
   }
 
   enum MonographPublicationType {
     CHAPTER
     RESEARCH_ARTICLE
     PREFACE
-    POSTFACE ' !!!
+    POSTFACE /' !!! '/
     LEXICOGRAPHIC_UNIT
     POLEMICS
     SCIENTIFIC_CRITIC
-    BOOK_REVIEW ' !!!
-    ENTRY ' !!!
+    BOOK_REVIEW /' !!! '/
+    ENTRY /' !!! '/
   }
 
+  /' !!! to consider renaming to PublicationUnit '/
   class Monograph extends Document {
     MonographType monographType
     String printISBN
     String eISBN
     Integer numberOfPages
     String volume
-    ' volume and number are defined only in the case publicationSeries is defined.
-    ' We can even model that with link entity PublicationToPublicationSeriesRelation (with volume and number)
+    /' volume and number are defined only in the case publicationSeries is defined. '/
     String number
     Set<LanguageTag> languages
-    String udc ' !!! moved from Thesis class
+    String udc /' !!! moved from Thesis class '/
   }
 
   enum MonographType {
     RESEARCH_MONOGRAPH
     BOOK
-    EDITED_BOOK ' !!! existing Book type should be EDITED_BOOK, it includes MonographPublications (chapters)
+    EDITED_BOOK /' !!! existing Book type should be EDITED_BOOK, it includes MonographPublications (chapters) '/
     BIBLIOGRAPHY
     TRANSLATION
     STUDY
-    JOURNAL_ISSUE ' !!!
-    SCRIPT ' !!!
-    ENCYCLOPEDIA ' !!!
-    DICTIONARY ' !!!
-    REPORT ' !!!
-    WORKING_PAPER ' !!!
-    PREPRINT ' !!!
-    MANUAL ' !!!
-    DATA_MANAGEMENT_PLAN ' !!!
-    PROCEEDINGS ' !!!
-    OTHER ' !!!
+    JOURNAL_ISSUE /' !!! '/
+    SCRIPT /' !!! '/
+    ENCYCLOPEDIA /' !!! '/
+    DICTIONARY /' !!! '/
+    REPORT /' !!! '/
+    WORKING_PAPER /' !!! '/
+    PREPRINT /' !!! '/
+    MANUAL /' !!! '/
+    DATA_MANAGEMENT_PLAN /' !!! '/
+    PROCEEDINGS /' !!! '/
+    OTHER /' !!! '/
   }
 
   Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
 
   MonographPublication "1..*" --> "1" Monograph 
-  ' can we use DocumentsRelation (PART_OF) instead of this? 
+  /' can we use DocumentsRelation (PART_OF) instead of this? '/
   
   ' !!!
   class PerformanceRelatedOutput extends Document {
@@ -1152,15 +1180,15 @@ package document {
       Set<LanguageTag> languages
       Set<MultilingualContent> producer
       Set<MultilingualContent> distributor
-      Set<MultilingualContent> sourceTitle ' program, exhibition catalogue title, topic  
-      Set<MultilingualContent> otherActors ' interviewer, person-acted for, etc.
+      Set<MultilingualContent> sourceTitle /' program, exhibition catalogue title, topic  '/  
+      Set<MultilingualContent> otherActors /' interviewer, person-acted for, etc. '/
   }
   
   ' !!!
   enum PerformanceRelatedOutputType {
     SLIDES
     POSTER
-    CATALOGUE ' exhibition catalogue
+    CATALOGUE /' exhibition catalogue '/
     ARTISTIC_EXHIBITION
     MUSICAL_PERFORMANCE
     ART_PERFORMANCE
@@ -1176,10 +1204,11 @@ package document {
   class IntellectualProperty extends Document {
     IntellectualPropertyType type
     String number
-    IntellectualPropertyApplicationStatus publicationStatus ' !!! this should use different enumeration comparing to Document publicationStatus field
-    LocalDate dateRequested ' !!! documentDate from Document should be used for date-issued
-    LocalDate dateFilingPriority ' !!!
-    LocalDate dateEndTerm ' !!!
+    IntellectualPropertyApplicationStatus applicationStatus /' !!! this should use different enumeration comparing to Document publicationStatus field '/
+    LocalDate dateRequested /' !!! documentDate from Document should be used for date-issued '/
+    LocalDate dateFilingPriority /' !!! '/
+    LocalDate dateEndTerm /' !!! '/
+    Set<MultilingualContent> owner /' !!! '/
   }
   
   ' !!!
@@ -1193,17 +1222,17 @@ package document {
 
   ' !!!
   enum IntellectualPropertyApplicationStatus {
-    DISCLOSED ' DISCLOSURE
-    PENDING ' PATENT, TRADEMARK
-    IN_NEGOTIATION ' LICENSE,
-    ALLOWED ' PATENT, 
-    GRANTED_OR_REGISTERED ' PATENT, REGISTERED_COPYRIGHT, TRADEMARK
-    PROTECTED ' DISCLOSURE
-    ASSIGNED ' LICENSE,
-    FIRST_FIXATION ' REGISTERED_COPYRIGHT
-    EXPIRED ' PATENT,
-    WITHDRAWN ' PATENT,
-    ELIMINATED ' REGISTERED_COPYRIGHT
+    DISCLOSED /' DISCLOSURE '/
+    PENDING /' PATENT, TRADEMARK '/
+    IN_NEGOTIATION /' LICENSE '/
+    ALLOWED /' PATENT '/ 
+    GRANTED_OR_REGISTERED /' PATENT, REGISTERED_COPYRIGHT, TRADEMARK '/
+    PROTECTED /' DISCLOSURE '/
+    ASSIGNED /' LICENSE '/
+    FIRST_FIXATION /' REGISTERED_COPYRIGHT '/
+    EXPIRED /' PATENT '/
+    WITHDRAWN /' PATENT '/
+    ELIMINATED /' REGISTERED_COPYRIGHT '/
   } 
 
   ' !!! changed superclass, therefore, eISBN, printISBN, publisher, authorReprint are not needed anymore
@@ -1216,8 +1245,8 @@ package document {
     LocalDate thesisDefenceDate
     ThesisPhysicalDescription physicalDescription
     Language language
-    Set<MultilingualContent> scientificAreaFreeForm ' !!! renamed from scientificArea
-    Set<MultilingualContent> scientificSubAreaFreeForm ' !!! renamed from scientificSubArea
+    Set<MultilingualContent> scientificAreaFreeForm /' !!! renamed from scientificArea '/
+    Set<MultilingualContent> scientificSubAreaFreeForm /' !!! renamed from scientificSubArea '/
     LanguageTag writingLanguage
     boolean isOnPublicReview
     boolean isOnPublicReviewPause
@@ -1244,7 +1273,7 @@ package document {
     PHD_ART_PROJECT
     BACHELOR_WITH_HONORS
     UNDERGRADUATE_THESIS
-    OTHER ' !!!
+    OTHER /' !!! '/
   }
   
   ' !!! do we need this?
@@ -1255,7 +1284,7 @@ package document {
   }
   
   class ThesisPhysicalDescription {
-    Integer numberOfPages ' !!! this exist in Monograph (superclass of Thesis)
+    Integer numberOfPages /' !!! this exist in Monograph (superclass of Thesis) '/
     Integer numberOfChapters
     Integer numberOfReferences
     Integer numberOfTables
@@ -1264,15 +1293,17 @@ package document {
     Integer numberOfAppendices
   }
   
-  Thesis "*" --> "*" Document : thesisResearchOutput ' !!! might be a link class ThesisResearchOutput
+  Thesis "*" --> "*" Document : thesisResearchOutput 
   ' !!! can we use DocumentsRelation RESULT_OF instead ?
   
   class IntangibleProduct extends Document {
     IntangibleProductType type
-    Set<MultilingualContent> customers ' or audience, target !!! renamed from productUsers
-    Set<MultilingualContent> environmentDescription ' !!!
+    Set<MultilingualContent> customers /' or audience, target !!! renamed from productUsers, skip for now '/
+    Set<MultilingualContent> environmentDescription /' !!! '/
     ' !!! removed internalNumber, there is internalId in superclass
     ' !!! removed researchAreas, publisher, authorReprint, exist in superclass
+    Set<MultilingualContent> producer /' !!! '/
+    Set<MultilingualContent> distributor /' !!! '/
   }
   
   enum IntangibleProductType {
@@ -1281,30 +1312,30 @@ package document {
     PROCESS
     METHOD 
     STRATEGY
-    STANDARD ' !!!
+    STANDARD /' !!! '/
     POLICY
     FRAMEWORK
-    INVENTION ' !!!
-    RESEARCH_TECHNIQUE ' !!!
-    ONLINE_RESOURCE ' !!!
-    TEST ' !!!
-    WEBSITE ' !!!
-    AUDIO_RECORDING ' !!!
-    MUSICAL_COMPOSITION ' !!!
-    RADIO_TV_PROGRAM ' !!!
-    VIDEO_RECORDING ' !!!
-    SOUND_DESIGN ' !!!
-    SET_DESIGN ' !!!
-    LIGHT_DESIGN ' !!!
-    CHOREOGRAPHY ' !!!
-    DATASET ' !!! class Dataset does not exist anymore, it is a type of Intangible product
+    INVENTION /' !!! '/
+    RESEARCH_TECHNIQUE /' !!! '/
+    ONLINE_RESOURCE /' !!! '/
+    TEST /' !!! '/
+    WEBSITE /' !!! '/
+    AUDIO_RECORDING /' !!! '/
+    MUSICAL_COMPOSITION /' !!! '/
+    RADIO_TV_PROGRAM /' !!! '/
+    VIDEO_RECORDING /' !!! '/
+    SOUND_DESIGN /' !!! '/
+    SET_DESIGN /' !!! '/
+    LIGHT_DESIGN /' !!! '/
+    CHOREOGRAPHY /' !!! '/
+    DATASET /' !!! class Dataset does not exist anymore, it is a type of Intangible product '/
     OTHER 
   }
   
   class MaterialProduct extends Document {
     MaterialProductType type
-    Set<MultilingualContent> customers ' or audience, target !!! renamed from productUsers
-    Integer numberOfUnitsProduced ' !!! renamed from numberProduced
+    Set<MultilingualContent> customers /' or audience, target !!! renamed from productUsers, skip for now '/
+    Integer numberOfUnitsProduced /' !!! renamed from numberProduced '/
     ' !!! removed internalNumber, there is internalId in superclass
     ' !!! removed researchAreas, publisher, authorReprint, exist in superclass
   }
@@ -1314,8 +1345,8 @@ package document {
     INDUSTRIAL_PRODUCT
     INFRASTRUCTURE_OBJECT
     DERIVATIVE_WORK
-    VISUAL_ARTWORK ' !!!
-    OTHER ' any physical object
+    VISUAL_ARTWORK /' !!! '/
+    OTHER /' any physical object '/
   }
   
   class GeneticMaterial extends Document {
@@ -1334,6 +1365,7 @@ package document {
 
   PublicationSeries "1" -- "*" PersonPublicationSeriesContribution : publicationSeries / contributors
   Event "1" --> "*" PersonEventContribution : contributors
+  Event "*" --> "0..1" OrganisationUnit : organizer /' !!! '/
   Document "*" --> "0..1" Publisher : publisher
   
   DocumentsRelation "*" --> "1" Document : source
@@ -1348,9 +1380,9 @@ package document {
     USED_BY
     CITED_BY
     REPLACED_BY
-    RESULT_OF ' also can link PREPRINT
-    TOPIC_OF ' if a document is BOOK_REVIEW, SCIENTIFIC_CRITIC, TRANSLATION, then we can point to original document
-    ' Moreover, it might be that a *Product (software, dataset, online resource) is the main topic of some journal article, etc. 
+    RESULT_OF /' also can link PREPRINT '/
+    TOPIC_OF /' if a document is BOOK_REVIEW, SCIENTIFIC_CRITIC, TRANSLATION, then we can point to original document '/
+    /' Moreover, it might be that a *Product (software, dataset, online resource) is the main topic of some journal article, etc. '/
   }
 
 }
@@ -1371,12 +1403,12 @@ package project {
     Set<String> uris
     LocalDate dateFrom
     LocalDate dateTo
-    ProjectStatus status ' !!! projectStatus in model
-    ProjectCollaborationType collaborationType ' !!! type in the model
-    ProjectResearchType researchType ' !!! projectResearchType in the model
+    ProjectStatus status /' !!! projectStatus in model '/
+    ProjectCollaborationType collaborationType /' !!! type in the model '/
+    ProjectResearchType researchType /' !!! projectResearchType in the model '/
     Boolean notFunded 
     MonetaryAmount costs
-    Set<SDGoal> sdgs ' !!! skip for now
+    Set<SDGoal> sdgs /' !!! skip for now '/
   }
   
   Project "0..1" -- "*" OrganisationUnitProjectContribution : project / consortium 
@@ -1528,8 +1560,8 @@ package project {
     LocalDate decisionDate
     LocalDate revisedProposalOrNextRoundDeadlineDate
     FundingApplicationResult result 
-    Set<SDGoal> sdgs ' !!! skip for now
-    Set<DocumentFile> documents ' proposal, review result, supplement
+    Set<SDGoal> sdgs /' !!! skip for now '/
+    Set<DocumentFile> documents /' proposal, review result, supplement '/
   }
   
   FundingApplication "*" -- "0..1" Project : fundingApplications / project 
@@ -1575,7 +1607,7 @@ package project {
   }
   
   Funding "*" -- "0..1" FundingCall : funding / call
-  Funding "*" --> "0..1" institution.OrganisationUnit : funder ' !!! should be added to the model
+  Funding "*" --> "0..1" institution.OrganisationUnit : funder /' !!! should be added to the model '/
   Funding "1" -- "*" FundingPart : funding / fundingParts
   Funding "*" -- "0..1" Project : fundings/project
   
@@ -1602,7 +1634,7 @@ package project {
   }
   
   FundingCall "0..1" -- "*" PersonFundingCallContribution : fundingCall / contributors
-  FundingCall "*" --> "0..1" institution.OrganisationUnit : funder ' !!!
+  FundingCall "*" --> "0..1" institution.OrganisationUnit : funder /' !!! '/
   
   enum FundingType {
     GRANT 
@@ -1690,7 +1722,7 @@ package Assessment {
 
   enum ApplicableEntityType {
     MONOGRAPH
-    EVENT ' !!! do we need this
+    EVENT
     DOCUMENT
     PERSON
     ORGANISATION_UNIT
@@ -1699,18 +1731,18 @@ package Assessment {
     MONOGRAPH_PUBLICATION
     JOURNAL_PUBLICATION
     PROCEEDINGS_PUBLICATION
-    PATENT ' 
-    INTELLECTUAL_PROPERTY ' !!! former PATENT
-    INTANGIBLE_PRODUCT ' !!! do we need this
-    ' !!! DATASET moved to INTANGIBLE_PRODUCT
+    /' !!! PATENT renamed to  INTELLECTUAL_PROPERTY, should be removed '/
+    INTELLECTUAL_PROPERTY /' !!! former PATENT '/
+    INTANGIBLE_PRODUCT /' !!! do we need this '/
+    /' !!! DATASET moved to INTANGIBLE_PRODUCT, should be removed '/
     THESIS
     MATERIAL_PRODUCT
     GENETIC_MATERIAL
-    PERFORMANCE_RELATED_OUTPUT ' !!!
+    PERFORMANCE_RELATED_OUTPUT /' !!! '/
     PRIZE 
     CONFERENCE  
     EXHIBITION 
-    OTHER_EVENTS ' !!! do we need this
+    OTHER_EVENTS /' !!! do we need this '/
   }
 
   class Commission {
@@ -1744,7 +1776,7 @@ package Assessment {
   }
 
   CommissionReport "0..*" --> "1" Commission
-
+    
   class EntityAssessmentClassification {
     LocalDateTime timestamp
     Boolean manual
