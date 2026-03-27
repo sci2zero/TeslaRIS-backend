@@ -14,8 +14,8 @@ public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
     @Query("SELECT p FROM Promotion p WHERE p.finished = :finished")
     List<Promotion> getPromotionsBasedOnStatus(boolean finished);
 
-    @Query("SELECT p FROM Promotion p WHERE p.finished = :finished AND p.institution.id = :institutionId")
-    List<Promotion> getPromotionsBasedOnStatus(Integer institutionId, boolean finished);
+    @Query("SELECT p FROM Promotion p WHERE p.finished = :finished AND p.institution.id IN :institutionIds")
+    List<Promotion> getPromotionsBasedOnStatus(List<Integer> institutionIds, boolean finished);
 
     @Query("SELECT p FROM Promotion p WHERE " +
         "(:institutionId IS NULL OR p.institution.id = :institutionId) " +

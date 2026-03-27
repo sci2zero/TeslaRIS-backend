@@ -1,5 +1,6 @@
 package rs.teslaris.thesislibrary.service.impl;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -59,8 +60,17 @@ public class PromotionServiceImpl extends JPAServiceImpl<Promotion> implements P
     @Transactional(readOnly = true)
     public List<PromotionDTO> getPromotionsBasedOnStatus(Integer institutionId, boolean finished) {
         if (Objects.nonNull(institutionId)) {
-            return promotionRepository.getPromotionsBasedOnStatus(institutionId, finished).stream()
-                .map(PromotionConverter::toDTO).toList();
+            var institutionIds = new HashSet<Integer>();
+            institutionIds.addAll(
+                organisationUnitService.getSuperOUsHierarchyRecursive(institutionId));
+            institutionIds.addAll(
+                organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId));
+
+            return promotionRepository.getPromotionsBasedOnStatus(
+                    institutionIds.stream().toList(), finished)
+                .stream()
+                .map(PromotionConverter::toDTO)
+                .toList();
         }
 
         return promotionRepository.getPromotionsBasedOnStatus(finished).stream()

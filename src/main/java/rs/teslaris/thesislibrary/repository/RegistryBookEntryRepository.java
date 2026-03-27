@@ -14,9 +14,11 @@ import rs.teslaris.thesislibrary.model.RegistryBookEntry;
 public interface RegistryBookEntryRepository extends JpaRepository<RegistryBookEntry, Integer> {
 
     @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE " +
+        "(:institutionId IS NULL OR rbe.registryBookInstitution.id = :institutionId) AND " +
         "rbe.promotion.id = :promotionId AND " +
         "rbe.promotion.finished = FALSE")
-    Page<RegistryBookEntry> getBookEntriesForPromotion(Integer promotionId, Pageable pageable);
+    Page<RegistryBookEntry> getBookEntriesForPromotion(Integer promotionId, Integer institutionId,
+                                                       Pageable pageable);
 
     @Query("SELECT rbe FROM RegistryBookEntry rbe WHERE rbe.promotion IS NULL")
     Page<RegistryBookEntry> getNonPromotedBookEntries(Pageable pageable);

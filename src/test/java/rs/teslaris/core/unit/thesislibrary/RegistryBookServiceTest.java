@@ -279,17 +279,18 @@ class RegistryBookServiceTest {
         entry2.setPreviousTitleInformation(new PreviousTitleInformation());
 
         var page = new PageImpl<>(List.of(entry1, entry2), pageable, 2);
-        when(registryBookEntryRepository.getBookEntriesForPromotion(promotionId,
+        when(registryBookEntryRepository.getBookEntriesForPromotion(promotionId, null,
             pageable)).thenReturn(page);
 
         // When
-        var result = registryBookService.getRegistryBookEntriesForPromotion(promotionId, pageable);
+        var result =
+            registryBookService.getRegistryBookEntriesForPromotion(promotionId, null, pageable);
 
         // Then
         assertNotNull(result);
         assertEquals(2, result.getTotalElements());
         assertTrue(result.getContent().stream().allMatch(Objects::nonNull));
-        verify(registryBookEntryRepository).getBookEntriesForPromotion(promotionId, pageable);
+        verify(registryBookEntryRepository).getBookEntriesForPromotion(promotionId, null, pageable);
     }
 
     @Test
@@ -497,7 +498,7 @@ class RegistryBookServiceTest {
 
         when(promotionService.findOne(promotionId)).thenReturn(promotion);
         when(registryBookEntryRepository.getLastRegistryBookNumber(1)).thenReturn(5);
-        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any()))
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any(), any()))
             .thenReturn(new PageImpl<>(List.of(entry1, entry2)));
 
         // When
@@ -539,7 +540,7 @@ class RegistryBookServiceTest {
 
         when(promotionService.findOne(promotionId)).thenReturn(promotion);
         when(registryBookEntryRepository.getLastRegistryBookNumber(1)).thenReturn(5);
-        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any()))
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any(), any()))
             .thenReturn(new PageImpl<>(entries));
 
         var groupedRows = new TreeMap<String, List<List<String>>>();
@@ -694,7 +695,7 @@ class RegistryBookServiceTest {
         when(entry.getDissertationInformation()).thenReturn(dissertationInfo);
         when(entry.getContactInformation()).thenReturn(contactInfo);
 
-        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId),
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any(),
             eq(Pageable.unpaged())))
             .thenReturn(new PageImpl<>(List.of(entry)));
 
@@ -733,7 +734,7 @@ class RegistryBookServiceTest {
         when(entry.getPersonalInformation()).thenReturn(personalInfo);
         when(entry.getContactInformation()).thenReturn(contactInfo);
 
-        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId),
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any(),
             eq(Pageable.unpaged())))
             .thenReturn(new PageImpl<>(List.of(entry)));
 
@@ -1100,7 +1101,7 @@ class RegistryBookServiceTest {
         var page = new PageImpl<>(List.of(entry));
 
         when(registryBookEntryRepository.getBookEntriesForPromotion(
-            eq(promotionId), any())).thenReturn(page);
+            eq(promotionId), any(), any())).thenReturn(page);
 
         // When
         var result = registryBookService.downloadPromoteesList(promotionId);
@@ -1110,7 +1111,7 @@ class RegistryBookServiceTest {
         assertTrue(result.contentLength() > 0);
 
         verify(registryBookEntryRepository)
-            .getBookEntriesForPromotion(eq(promotionId), any());
+            .getBookEntriesForPromotion(eq(promotionId), any(), any());
     }
 
     @Test
