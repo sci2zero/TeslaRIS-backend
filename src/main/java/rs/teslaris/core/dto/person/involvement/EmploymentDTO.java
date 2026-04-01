@@ -1,6 +1,7 @@
 package rs.teslaris.core.dto.person.involvement;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,6 +17,9 @@ import rs.teslaris.core.model.person.EmploymentPosition;
 public class EmploymentDTO extends InvolvementDTO {
 
     private EmploymentPosition employmentPosition;
+
+    @Positive(message = "Employment position id must be a positive number.")
+    private Integer employmentPositionId;
 
     @Valid
     private List<MultilingualContentDTO> role;

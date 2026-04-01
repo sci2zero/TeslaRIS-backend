@@ -47,6 +47,7 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.EmploymentPositionService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -81,6 +82,8 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     private final ResearchAreaService researchAreaService;
 
     private final ThesisRepository thesisRepository;
+
+    private final EmploymentPositionService employmentPositionService;
 
 
     @Override
@@ -615,6 +618,14 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
     private void setEmploymentCommonFields(Employment target, EmploymentDTO dto) {
         target.setEmploymentPosition(dto.getEmploymentPosition());
+
+        if (Objects.nonNull(dto.getEmploymentPositionId())) {
+            target.setEmploymentPositionHierarchy(
+                employmentPositionService.findOne(dto.getEmploymentPositionId())
+            );
+        } else {
+            target.setEmploymentPositionHierarchy(null);
+        }
 
         if (Objects.nonNull(dto.getRole())) {
             target.setRole(

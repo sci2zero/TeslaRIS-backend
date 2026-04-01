@@ -338,7 +338,7 @@ public class DocumentPublicationServiceTest {
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
                 pageable, SearchRequestType.SIMPLE, institutionId, commissionId, false, false,
-                null, false, false, false);
+                null, false, false, false, null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -359,7 +359,7 @@ public class DocumentPublicationServiceTest {
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
                 pageable, SearchRequestType.ADVANCED, null, null,
                 null, null, new ArrayList<>(), false,
-                false, false);
+                false, false, null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -1285,7 +1285,7 @@ public class DocumentPublicationServiceTest {
         doReturn(emptyPage)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any(), any(), any());
+                any(), any(), any(), any(), any());
 
         // When
         spyService.deleteNonManagedDocuments();
@@ -1308,7 +1308,7 @@ public class DocumentPublicationServiceTest {
         doReturn(page)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any(), any(), any());
+                any(), any(), any(), any(), any());
         doNothing()
             .when(spyService)
             .deleteDocumentPublication(any());
@@ -1336,7 +1336,7 @@ public class DocumentPublicationServiceTest {
         doReturn(firstPage)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any(), any(), any());
+                any(), any(), any(), any(), any());
         doNothing()
             .when(spyService)
             .deleteDocumentPublication(any());
@@ -1347,7 +1347,7 @@ public class DocumentPublicationServiceTest {
         // Then
         verify(spyService).deleteDocumentPublication(10);
         verify(spyService, times(1)).searchDocumentPublications(any(), any(), any(), any(), any(),
-            any(), anyBoolean(), any(), any(), any(), any());
+            any(), anyBoolean(), any(), any(), any(), any(), any());
     }
 
     @Test
