@@ -21,9 +21,6 @@ import rs.teslaris.core.model.person.EducationStatus;
 public class EducationDTO extends InvolvementDTO {
 
     @Valid
-    private List<MultilingualContentDTO> thesisTitle;
-
-    @Valid
     private List<MultilingualContentDTO> title;
 
     @Valid
@@ -41,7 +38,18 @@ public class EducationDTO extends InvolvementDTO {
 
     private Set<Integer> researchAreasId = new HashSet<>();
 
+    private Integer thesisId;
+
+    private List<Integer> supervisorIds = new ArrayList<>();
+
+    @Valid
+    private List<MultilingualContentDTO> displaySupervisors;
+
     // used only for responses
 
     private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
+
+    private List<String> supervisorNames = new ArrayList<>();
+
+    private List<MultilingualContentDTO> thesisTitle;
 }

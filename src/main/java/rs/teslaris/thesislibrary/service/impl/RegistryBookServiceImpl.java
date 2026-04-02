@@ -147,9 +147,11 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Override
     @Transactional(readOnly = true)
     public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
+                                                                         Integer institutionId,
                                                                          Pageable pageable) {
-        return registryBookEntryRepository.getBookEntriesForPromotion(promotionId, pageable)
-            .map(RegistryBookEntryConverter::toDTO);
+        return registryBookEntryRepository.getBookEntriesForPromotion(
+            promotionId, institutionId, pageable
+        ).map(RegistryBookEntryConverter::toDTO);
     }
 
     @Override
@@ -559,7 +561,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     public void promoteAll(Integer promotionId) {
         var promotion = promotionService.findOne(promotionId);
         var entriesToPromote = registryBookEntryRepository
-            .getBookEntriesForPromotion(promotionId, Pageable.unpaged()).getContent();
+            .getBookEntriesForPromotion(promotionId, null, Pageable.unpaged()).getContent();
 
         if (entriesToPromote.isEmpty()) {
             throw new PromotionException("Can't promote empty promotion.");
@@ -577,7 +579,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     public List<List<String>> previewPromotedEntries(Integer promotionId, String lang) {
         var promotion = promotionService.findOne(promotionId);
         var entriesToPromote = registryBookEntryRepository
-            .getBookEntriesForPromotion(promotionId, Pageable.unpaged()).getContent();
+            .getBookEntriesForPromotion(promotionId, null, Pageable.unpaged()).getContent();
 
         if (entriesToPromote.isEmpty()) {
             throw new PromotionException("Can't promote empty promotion.");
@@ -638,7 +640,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Transactional(readOnly = true)
     public List<String> getPromoteesList(Integer promotionId) {
         var promotees = new ArrayList<String>();
-        registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
+        registryBookEntryRepository.getBookEntriesForPromotion(promotionId, null,
+                Pageable.unpaged())
             .forEach(entry -> {
                 String sb = entry.getPersonalInformation().getAuthorName().toString() + ",\n" +
                     entry.getDissertationInformation().getAcquiredTitle() +
@@ -654,7 +657,8 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Transactional(readOnly = true)
     public List<String> getAddressesList(Integer promotionId) {
         var addresses = new ArrayList<String>();
-        registryBookEntryRepository.getBookEntriesForPromotion(promotionId, Pageable.unpaged())
+        registryBookEntryRepository.getBookEntriesForPromotion(promotionId, null,
+                Pageable.unpaged())
             .forEach(entry -> {
                 var contactInfo = entry.getContactInformation();
                 String sb = entry.getPersonalInformation().getAuthorName().toString() + "\n" +
@@ -675,7 +679,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
     @Transactional(readOnly = true)
     public ByteArrayResource downloadPromoteesList(Integer promotionId) {
         var entries = registryBookEntryRepository
-            .getBookEntriesForPromotion(promotionId, Pageable.unpaged())
+            .getBookEntriesForPromotion(promotionId, null, Pageable.unpaged())
             .getContent();
 
         try (var workbook = new XSSFWorkbook();

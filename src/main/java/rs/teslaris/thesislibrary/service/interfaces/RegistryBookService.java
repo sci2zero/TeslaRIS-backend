@@ -1,5 +1,6 @@
 package rs.teslaris.thesislibrary.service.interfaces;
 
+import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.core.io.ByteArrayResource;
@@ -20,6 +21,7 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Integer userId, Pageable pageable);
 
     Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
+                                                                  @Nullable Integer institutionId,
                                                                   Pageable pageable);
 
     RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO registryBookEntryDTO,

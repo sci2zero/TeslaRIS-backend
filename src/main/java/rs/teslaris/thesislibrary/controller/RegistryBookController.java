@@ -97,8 +97,11 @@ public class RegistryBookController {
     @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRY_BOOK', 'REMOVE_FROM_PROMOTION', 'READ_REGISTRY_BOOK')")
     @PromotionEditAndUsageCheck
     public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(
-        @PathVariable Integer promotionId, Pageable pageable) {
-        return registryBookService.getRegistryBookEntriesForPromotion(promotionId, pageable);
+        @PathVariable Integer promotionId,
+        @RequestParam(required = false) Integer institutionId,
+        Pageable pageable) {
+        return registryBookService.getRegistryBookEntriesForPromotion(promotionId, institutionId,
+            pageable);
     }
 
     @GetMapping("/non-promoted")

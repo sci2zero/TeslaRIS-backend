@@ -13,6 +13,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 public class InvolvementConverter {
 
@@ -20,22 +21,36 @@ public class InvolvementConverter {
         var dto = new EducationDTO();
         setCommonFields(education, dto);
 
-        var thesisTitle =
-            MultilingualContentConverter.getMultilingualContentDTO(
-                education.getThesisTitle());
         var title = MultilingualContentConverter.getMultilingualContentDTO(
             education.getTitle());
         var abbreviationTitle =
             MultilingualContentConverter.getMultilingualContentDTO(
                 education.getAbbreviationTitle());
 
-        dto.setThesisTitle(thesisTitle);
+        if (Objects.nonNull(education.getThesis())) {
+            dto.setThesisId(education.getThesis().getId());
+            dto.setThesisTitle(MultilingualContentConverter.getMultilingualContentDTO(
+                education.getThesis().getTitle()));
+        }
+
+        if (CollectionOperations.containsValues(education.getSupervisors())) {
+            education.getSupervisors().forEach(supervisor -> {
+                dto.getSupervisorIds().add(supervisor.getId());
+                dto.getSupervisorNames().add(supervisor.getName().toText());
+            });
+        } else {
+            dto.setDisplaySupervisors(MultilingualContentConverter.getMultilingualContentDTO(
+                education.getDisplayThesisSupervisors()));
+        }
+
         dto.setTitle(title);
         dto.setAbbreviationTitle(abbreviationTitle);
         dto.setDegreeCode(MultilingualContentConverter.getMultilingualContentDTO(
             education.getDegreeCode()));
         dto.setDegreeClassification(MultilingualContentConverter.getMultilingualContentDTO(
             education.getDegreeClassification()));
+        dto.setDegreeType(education.getDegreeType());
+        dto.setEducationStatus(education.getEducationStatus());
 
         education.getResearchAreas().forEach(researchArea -> {
             dto.getResearchAreasId().add(researchArea.getId());

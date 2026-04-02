@@ -85,6 +85,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.EducationStatus;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
+import rs.teslaris.core.model.person.EmploymentPositionHierarchy;
 import rs.teslaris.core.model.person.ExpertiseOrSkill;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Membership;
@@ -120,6 +121,7 @@ import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
+import rs.teslaris.core.repository.person.EmploymentPositionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -208,6 +210,8 @@ public class TestingDataInitializer {
     private final ExhibitionRepository exhibitionRepository;
 
     private final ProjectDataInitializer projectDataInitializer;
+
+    private final EmploymentPositionRepository employmentPositionRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -461,13 +465,12 @@ public class TestingDataInitializer {
                 ApproveStatus.APPROVED,
                 new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null,
                 dummyOU, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
-                Set.of(new MultiLingualContent(englishTag, "Reverse Image Search System", 1),
-                    new MultiLingualContent(englishTag, "Sistem za reverznu pretragu slika", 1)),
-                Set.of(new MultiLingualContent(englishTag, "Master in IntangibleProduct", 1),
+                Set.of(new MultiLingualContent(englishTag, "Master in Software", 1),
                     new MultiLingualContent(englishTag, "Master inženjer softvera", 1)),
                 Set.of(new MultiLingualContent(englishTag, "Msc", 1)),
                 DegreeType.MASTER, EducationStatus.CONCLUDED,
-                new HashSet<>(), new HashSet<>(), new HashSet<>()));
+                new HashSet<>(), new HashSet<>(), new HashSet<>(), null, new HashSet<>(),
+                new HashSet<>()));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "Cybersecurity", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -1247,6 +1250,25 @@ public class TestingDataInitializer {
         exhibition2.setDateTo(LocalDate.of(2024, 11, 17));
         exhibition2.setSerialEvent(false);
         exhibitionRepository.save(exhibition2);
+
+        var position1 = new EmploymentPositionHierarchy();
+        position1.setName(Set.of(new MultiLingualContent(serbianTag, "Position Root", 1)));
+        position1.setProcessedName("ROOT");
+        position1.setSchemeName("test");
+
+        var position2 = new EmploymentPositionHierarchy();
+        position2.setName(Set.of(new MultiLingualContent(serbianTag, "Position Level 1", 1)));
+        position2.setProcessedName("LEVEL_1");
+        position2.setSchemeName("test");
+        position2.setSuperEmploymentPosition(position1);
+
+        var position3 = new EmploymentPositionHierarchy();
+        position3.setName(Set.of(new MultiLingualContent(serbianTag, "Position Leaf", 1)));
+        position3.setProcessedName("LEAF");
+        position3.setSchemeName("test");
+        position3.setSuperEmploymentPosition(position2);
+
+        employmentPositionRepository.saveAll(List.of(position1, position2, position3));
 
         projectDataInitializer.initializeProjectTestingData(englishTag, dummyOU);
     }
