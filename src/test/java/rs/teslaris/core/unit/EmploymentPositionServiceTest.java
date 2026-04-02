@@ -17,12 +17,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.person.involvement.EmploymentPositionDTO;
 import rs.teslaris.core.model.person.EmploymentPositionHierarchy;
 import rs.teslaris.core.repository.person.EmploymentPositionRepository;
 import rs.teslaris.core.service.impl.person.EmploymentPositionServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 
 @SpringBootTest
 class EmploymentPositionServiceTest {
@@ -277,5 +280,27 @@ class EmploymentPositionServiceTest {
         assertTrue(result.isEmpty());
         verify(employmentPositionRepository).getTopLevelEmploymentPositions();
         verify(employmentPositionRepository, never()).getChildEmploymentPositions(any());
+    }
+
+    @Test
+    public void shouldSearchEmploymentPositions() {
+        // given
+        var searchTerm = "Search Term";
+        var employmentPositionPage = new PageImpl<>(List.of(new EmploymentPositionHierarchy()));
+        var pageable = PageRequest.of(0, 10);
+        when(
+            employmentPositionRepository.searchEmploymentPositions(searchTerm.toLowerCase(),
+                LanguageAbbreviations.SERBIAN,
+                pageable)).thenReturn(
+            employmentPositionPage);
+
+        // when
+        var result = employmentPositionService.searchEmploymentPositions(pageable, searchTerm,
+            LanguageAbbreviations.SERBIAN);
+
+        // then
+        assertNotNull(result);
+        verify(employmentPositionRepository).searchEmploymentPositions(searchTerm.toLowerCase(),
+            LanguageAbbreviations.SERBIAN, pageable);
     }
 }
