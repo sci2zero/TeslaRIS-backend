@@ -204,6 +204,12 @@ package commonTypes {
     Boolean sentByEmail
   }
   
+  class FlexibleDate {
+    Integer year 
+    Integer month 
+    Integer day
+  }
+  
 }
 
 
@@ -310,7 +316,7 @@ package person {
     Set<String> internalIds
     Set<String> accountingIds
     Set<String> oldIds /' !!! changed type, skip for now '/
-    Set<String> mergedIds /' !!! changed type, skip for now '/
+    Set<Integer> mergedIds 
     Set<String> urls
     ApproveStatus approveStatus
     PersonalInfo personalInfo
@@ -327,8 +333,8 @@ package person {
     String firstname
     String otherName
     String lastname
-    LocalDate dateFrom
-    LocalDate dateTo
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
     PersonNameType personNameType
   }
   
@@ -340,7 +346,7 @@ package person {
   }
 
   class PersonalInfo {
-    LocalDate localBirthDate
+    FlexibleDate localBirthDate
     String placeOfBirth
     Sex sex
     PostalAddress privatePostalAddress
@@ -395,16 +401,15 @@ package person {
     ' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity
     ' an entity OrganisationUnit can be linked with Involvement, or it should be only specified in affiliationStatement
     ' it means if I studied in Germany, that institution record wouldn't be created in the database, it will be only specified in affiliationStatement
-    
     ' !!! the fields below are available in additional dialog in UI, it represents details about involvement
     ' !!! if some of those fields are filled it is indexed as activity linked with person
-    Set<MultiLingualContent> involvementDescription
-    Set<MultiLingualContent> keywords /' !!! '/
+    Set<MultiLingualContent> description
+    Set<MultiLingualContent> keywords 
     Set<ResearchArea> researchAreas /' !!! '/
-    LocalDate dateFrom /' !!! '/
-    LocalDate dateTo /' !!! '/
+    FlexibleDate dateFrom 
+    FlexibleDate dateTo 
     Set<SDGoal> sdgs /' !!!  skip for now, there is a sense in this only if involvementDescription is there '/
-    Set<DocumentFile> proofs /' !!! '/
+    Set<DocumentFile> proofs /' ??? '/
     Set<String> uris /' !!! involvement might be proved by url or attached file (uris or proofs) '/
   }
 
@@ -414,7 +419,7 @@ package person {
     POSTDOC_AT
     MEMBER_OF
     EMPLOYED_AT 
-    HIRED_BY /' or selfemployed '/
+    HIRED_BY
     CANDIDATE 
   }
 
@@ -423,22 +428,20 @@ package person {
   Involvement "*" --> "*" OrganisationUnit : otherInstitutions ' !!! or host institutions, skip for now
 
   class Education extends Involvement {
-    DegreeType degreeType /' !!! '/
+    DegreeType degreeType 
     Set<MultiLingualContent> degreeTitle /' !!! former title, skip for now '/
-    Set<MultiLingualContent> courseCode /' !!! '/
+    Set<MultiLingualContent> courseCode /' !!! rename degreeCode to courseCode'/
     Set<MultiLingualContent> degreeMajor /' !!! former abbreviationTitle, skip for now '/
     Set<MultiLingualContent> description /' !!! '/
-    Set<MultiLingualContent> degreeClassification /' !!! '/
-    EducationStatus educationStatus /' !!! '/
+    Set<MultiLingualContent> degreeClassification 
+    EducationStatus educationStatus 
     Set<MultiLingualContent> thesisTitle
-    Set<MultiLingualContent> displayThesisInstitution /' !!! '/
     Set<MultiLingualContent> displayThesisSupervisors /' !!! '/
   }
   
-  Education "0..1" --> "1" Thesis : thesis /' !!! '/
-  Education "*" --> "*" Person : supervising / supervisors /' !!! '/
+  Education "0..1" --> "1" Thesis : thesis 
+  Education "*" --> "*" Person : supervising / supervisors 
   
-  ' !!!  
   enum DegreeType {
     BACHELOR
     MASTER
@@ -446,7 +449,6 @@ package person {
     INFORMAL_EDUCATION
   }
   
-  ' !!!
   enum EducationStatus {
     ONGOING
     ATTENDED
@@ -454,15 +456,15 @@ package person {
   }
 
   class Employment extends Involvement {
-    EmploymentPosition employmentPosition /' !!! in UI selection it should support hierarchy, just as ResearchArea selection '/
+    EmploymentPosition employmentPosition /' ??? '/
+    EmploymentPositionHierarchy employmentPositionHierarchy
     Set<MultiLingualContent> role
   }
 
   
-  ' !!! new class, it was previously enum
-  class EmploymentPosition {
+  class EmploymentPositionHierarchy {
 	Set<MultiLingualContent> name
-    Set<MultiLingualContent> description
+    Set<MultiLingualContent> description /' !!! '/
     String processedName 
 	String schemeName
     ' !!! TODO:  for Portugal portal ingest three levels of position, the first one is employment-category-enum, the second one is employment-position-type-enum, and the third one is employment-position-title-enum - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd    
@@ -471,40 +473,8 @@ package person {
     ' !!! COORDINATOR -> T01V01C01 (Coordinating Researcher) 
     ' !!! DIRECTOR -> T04V08 (UNIT DIrector) 
 	' !!! FOUNDER 
-	' !!! For CRIS UNS ingest in the database table (just one level, no hierarchy)
-	' !!! SCIENTIFIC_ADVISOR  
-    ' !!! ASSISTANT_TRAINEE
-    ' !!! EXPERT_ASSOCIATE
-    ' !!! ASSISTANT
-    ' !!! SENIOR_EXPERT_ASSOCIATE
-    ' !!! INSTRUCTOR
-    ' !!! EXPERT_ADVISOR
-    ' !!! COLLABORATOR
-    ' !!! SENIOR_INSTRUCTOR
-    ' !!! TEACHER
-    ' !!! TEACHER_OF_FOREIGN_LANGUAGES_AND_SKILLS
-    ' !!! RESEARCHER
-    ' !!! PROFESSOR_ENGINEER_HABILITATED
-    ' !!! ASSISTANT_WITH_MASTER
-    ' !!! ASSISTANT_WITH_MAGISTRATE
-    ' !!! ASSISTANT_WITH_DOCTORATE
-    ' !!! LECTURER
-    ' !!! SENIOR_LECTURER
-    ' !!! PROFESSOR_OF_VOCATIONAL_STUDIES
-    ' !!! ASSISTANT_PROFESSOR
-    ' !!! ASSOCIATE_PROFESSOR
-    ' !!! TEACHING_ASSISTANT
-    ' !!! FULL_PROFESSOR
-    ' !!! PROFESSOR_EMERITUS
-    ' !!! RETIRED_PROFESSOR
-    ' !!! RESEARCH_TRAINEE
-    ' !!! RESEARCH_ASSOCIATE
-    ' !!! SCIENTIFIC_COLLABORATOR
-    ' !!! SENIOR_SCIENTIFIC_COLLABORATOR
-    ' !!! TEACHING_ASSOCIATE
-    ' !!! ASSOCIATE_WITHOUT_TITLE
   }
-  EmploymentPosition "*" --> "0..1" EmploymentPosition : superEmploymentPosition
+  EmploymentPositionHierarchy "*" --> "0..1" EmploymentPositionHierarchy : superEmploymentPosition
 
   class Membership extends Involvement {
     MembershipType membershipType
@@ -515,7 +485,6 @@ package person {
     Integer numberOfReviewsOrAssessment
   }
 
-  ' !!!
   enum MembeshipType {
 	PRESIDENT
 	VICE_PRESIDENT
@@ -546,11 +515,11 @@ package person {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
-    LocalDate effectiveDate /' !!! former date, skip for now '/
-    LocalDate endDate
+    FlexibleDate effectiveDate /' !!! former date, skip for now '/
+    FlexibleDate endDate
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    Boolean favorite /' we might implemente later highlight section with most important involvement, output, project, skills and activity '/
+    Boolean favorite
   }
 
   enum PrizeType {
@@ -567,11 +536,6 @@ package person {
     FEMALE
   }
   
-  class DeclinedDocumentClaim {
-    Person person
-    Document document
-  }
-
 }
 
 package institution {
@@ -587,7 +551,7 @@ package institution {
     PostalAddress postalAddress
     ApproveStatus approveStatus
     Set<String> oldIds /' !!! changed type, skip for now '/
-    Set<String> mergedIds /' !!! changed type, skip for now '/
+    Set<Integer> mergedIds
     Set<String> accountingIds 
     Set<String> internalIds
     String scopusAfid
@@ -604,7 +568,7 @@ package institution {
     Contact contact
     Set<String> uris
     Boolean startup
-    LocaLDate dateEstablished
+    FlexibleDate dateEstablished
     Set<String> allowedThesisTypes
     Boolean isClientInstitutionCris
     Boolean isClientInstitutionDl
@@ -642,8 +606,8 @@ package institution {
     Set<MultiLingualContent> sourceAffiliationStatement
     Set<MultiLingualContent> targetAffiliationStatement
     OrganisationUnitRelationType relationType
-    LocalDate dateFrom
-    LocalDate dateTo
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
     ApproveStatus approveStatus
     Set<DocumentFile> proofs
   }
@@ -694,7 +658,7 @@ package document {
     Set<MultiLingualContent> place
     Set<MultiLingualContent> state /' region, Vojvodina '/
     Set<String> oldIds /' !!! changed type, skip for now '/
-    Set<String> mergedIds /' !!! changed type, skip for now '/
+    Set<Integer> mergedIds
     Country country
   }
 
@@ -708,8 +672,8 @@ package document {
     ' !!! if some of those fields are filled it is indexed as activity linked with person
     Set<MultiLingualContent> keywords /' !!! '/
     Set<ResearchArea> researchAreas /' !!! '/
-    LocalDate dateFrom /' !!! '/
-    LocalDate dateTo /' !!! '/
+    FlexibleDate dateFrom /' !!! '/
+    FlexibleDate dateTo /' !!! '/
     Set<SDGoal> sdgs /' !!! skip for now, there is a sense in this only if contributionDescription is there '/
     Set<DocumentFile> proofs /' !!! '/
     Set<String> uris /' !!! contribution might be proved by url or attached file (uris or proofs) '/
@@ -820,6 +784,7 @@ package document {
     ApproveStatus approveStatus
     PublicationStatus publicationStatus /' !!! '/
     String doi
+    String handleId /' !!! '/
     String scopusId
     String openAlexId
     String wosId
@@ -833,7 +798,7 @@ package document {
     String halId /' !!! '/
     Set<String> internalIds /' !!! changed title, skip for now '/
     Set<String> oldIds /' !!! changed type, skip for now '/
-    Set<String> mergedIds /' !!! changed type, skip for now '/
+    Set<Integer> mergedIds /' !!! changed type, skip for now '/
     Boolean peerReviewed /' !!! refereed '/
     Boolean openAccess /' !!! '/
     Set<MultiLingualContent> city /' !!! '/
@@ -861,6 +826,9 @@ package document {
       GENETIC_MATERIAL
       PERFORMANCE_RELATED_OUTPUT /' !!! '/
   }
+  
+  DeclinedDocumentClaim "*" --> "1" Person : person
+  DeclinedDocumentClaim "*" --> "1" Document : document
    
   ' !!! 
   enum PublicationStatus {
@@ -914,13 +882,13 @@ package document {
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas /' !!! '/
     Boolean serialEvent
-    LocalDate dateFrom
-    LocalDate dateTo
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
     Country country
     Set<MultiLingualContent> place
     Set<MultilingualContent> displayOrganizer /' !!! '/
     Set<String> oldIds /' !!! changed type '/
-    Set<String> mergedIds /' !!! changed type '/
+    Set<Integer> mergedIds /' !!! changed type '/
     Set<String> uris
     Set<SDGoal> sdgs /' !!! '/
   }
@@ -1065,7 +1033,7 @@ package document {
     Set<MultiLingualContent> subtitle
     Set<MultiLingualContent> nameAbbreviation
     Set<String> oldIds /' !!! changed type '/
-    Set<String> mergedIds /' !!! changed type '/
+    Set<Integer> mergedIds /' !!! changed type '/
     String openAlexId
     Set<String> uris
   }
@@ -1180,15 +1148,15 @@ package document {
       Set<LanguageTag> languages
       Set<MultilingualContent> producer
       Set<MultilingualContent> distributor
-      Set<MultilingualContent> sourceTitle ' program, exhibition catalogue title, topic  
-      Set<MultilingualContent> otherActors ' interviewer, person-acted for, etc.
+      Set<MultilingualContent> sourceTitle /' program, exhibition catalogue title, topic '/ 
+      Set<MultilingualContent> otherActors /' interviewer, person-acted for, etc. '/
   }
   
   ' !!!
   enum PerformanceRelatedOutputType {
     SLIDES
     POSTER
-    CATALOGUE ' exhibition catalogue
+    CATALOGUE /' exhibition catalogue '/
     ARTISTIC_EXHIBITION
     MUSICAL_PERFORMANCE
     ART_PERFORMANCE
@@ -1205,9 +1173,9 @@ package document {
     IntellectualPropertyType type
     String number
     IntellectualPropertyApplicationStatus publicationStatus ' !!! this should use different enumeration comparing to Document publicationStatus field
-    LocalDate dateRequested ' !!! documentDate from Document should be used for date-issued
-    LocalDate dateFilingPriority ' !!!
-    LocalDate dateEndTerm ' !!!
+    FlexibleDate dateRequested /' !!! documentDate from Document should be used for date-issued '/
+    FlexibleDate dateFilingPriority /' !!! '/
+    FlexibleDate dateEndTerm /' !!! '/
   }
   
   ' !!!
@@ -1221,17 +1189,17 @@ package document {
 
   ' !!!
   enum IntellectualPropertyApplicationStatus {
-    DISCLOSED ' DISCLOSURE
-    PENDING ' PATENT, TRADEMARK
-    IN_NEGOTIATION ' LICENSE,
-    ALLOWED ' PATENT, 
-    GRANTED_OR_REGISTERED ' PATENT, REGISTERED_COPYRIGHT, TRADEMARK
-    PROTECTED ' DISCLOSURE
-    ASSIGNED ' LICENSE,
-    FIRST_FIXATION ' REGISTERED_COPYRIGHT
-    EXPIRED ' PATENT,
-    WITHDRAWN ' PATENT,
-    ELIMINATED ' REGISTERED_COPYRIGHT
+    DISCLOSED /' DISCLOSURE '/
+    PENDING /' PATENT, TRADEMARK '/
+    IN_NEGOTIATION /' LICENSE '/
+    ALLOWED /' PATENT '/ 
+    GRANTED_OR_REGISTERED /' PATENT, REGISTERED_COPYRIGHT, TRADEMARK '/
+    PROTECTED /' DISCLOSURE '/
+    ASSIGNED /' LICENSE '/
+    FIRST_FIXATION /' REGISTERED_COPYRIGHT '/
+    EXPIRED /' PATENT '/
+    WITHDRAWN /' PATENT '/
+    ELIMINATED /' REGISTERED_COPYRIGHT '/
   } 
 
   ' !!! changed superclass, therefore, eISBN, printISBN, publisher, authorReprint are not needed anymore
@@ -1240,8 +1208,8 @@ package document {
     Set<MultilingualContent> alternateTitle
     Set<MultilingualContent> extendedAbstract
     ThesisType thesisType
-    LocalDate topicAcceptanceDate
-    LocalDate thesisDefenceDate
+    FlexibleDate topicAcceptanceDate
+    FlexibleDate thesisDefenceDate
     ThesisPhysicalDescription physicalDescription
     Language language
     Set<MultilingualContent> scientificAreaFreeForm ' !!! renamed from scientificArea
@@ -1249,7 +1217,7 @@ package document {
     LanguageTag writingLanguage
     boolean isOnPublicReview
     boolean isOnPublicReviewPause
-    Set<LocalDate> publicReviewStartDates
+    Set<FlexibleDate> publicReviewStartDates
     Set<DocumentFile> preliminaryFiles
     Set<DocumentFile> prpreliminarySupplementsoofs
     Set<DocumentFile> commissionReports
@@ -1327,7 +1295,7 @@ package document {
     SET_DESIGN
     LIGHT_DESIGN
     CHOREOGRAPHY
-    DATASET ' !!! class Dataset does not exist anymore, it is a type of Intangible product
+    DATASET /' !!! class Dataset does not exist anymore, it is a type of Intangible product '/
     OTHER 
   }
   
@@ -1350,8 +1318,8 @@ package document {
   
   class GeneticMaterial extends Document {
     GeneticMaterialType type
-    ' !!! removed internalNumber, there is internalId in superclass
-    ' !!! removed publisher, authorReprint, exist in superclass
+    /' !!! removed internalNumber, there is internalId in superclass '/
+    /' !!! removed publisher, authorReprint, exist in superclass '/
   }
     
   enum GeneticMaterialType {
@@ -1391,7 +1359,7 @@ package project {
   class Project {
     Set<String> internalIds
     Set<String> oldIds 
-    Set<String> mergedIds 
+    Set<Integer> mergedIds 
     String doi 
     String raid
     Set<MultiLingualContent> name
@@ -1400,8 +1368,8 @@ package project {
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
     Set<String> uris
-    LocalDate dateFrom
-    LocalDate dateTo
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
     ProjectStatus status
     ProjectCollaborationType collaborationType
     ProjectResearchType researchType
@@ -1436,8 +1404,8 @@ package project {
   
   class OrganisationUnitProjectContribution {
     OrganisationUnitProjectContributionType contributionType
-    LocalDate dateFrom
-    LocalDate dateTo
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
     ' !!! let's keep as is for now. Later, we might consider decoupling orgunit contributions/involvements also into two levels
     ' !!! similar as for PersonActivity. If that is the case, we will move timeframe from here to OrgUnitActivity. Org Unit involvements are 
     ' !!! defined by OrganisationUnitsRelations (Member), moreover, we don't have option that org unit is creator (author) of a document
@@ -1464,7 +1432,6 @@ package project {
     PersonProjectContributionType contributionType
     PersonProjectInvestigationRole investigationRole 
     Set<MultiLingualContent> otherRoleDescription 
-    ' !!! dateFrom and dateTo removed, it can be expressed through PersonActivity
   }
     
   PersonProjectContribution "0..1" --> "*" FundingPart : fundingParts      
@@ -1501,8 +1468,8 @@ package project {
     
   class ProjectsRelation {
     ProjectsRelationType relationType
-    LocalDate dateFrom 
-    LocalDate dateTo
+    FlexibleDate dateFrom 
+    FlexibleDate dateTo
   }
     
   enum ProjectsRelationType {
@@ -1553,11 +1520,11 @@ package project {
     MonetaryAmount requestedAmount
     Set<MultiLingualContent> description
     Set<MultiLingualContent> responseSummary
-    LocalDate submissionDate
-    LocalDate reviewDateFrom
-    LocalDate reviewDateTo
-    LocalDate decisionDate
-    LocalDate revisedProposalOrNextRoundDeadlineDate
+    FlexibleDate submissionDate
+    FlexibleDate reviewDateFrom
+    FlexibleDate reviewDateTo
+    FlexibleDate decisionDate
+    FlexibleDate revisedProposalOrNextRoundDeadlineDate
     FundingApplicationResult result 
     Set<SDGoal> sdgs /' !!! skip for now '/
     Set<DocumentFile> documents /' proposal, review result, supplement '/
@@ -1579,7 +1546,7 @@ package project {
   class Funding {
     Set<String> internalIdentifiers
     Set<String> oldIds
-    Set<String> mergedIds ' this should stay int in my opinion
+    Set<Integer> mergedIds 
     String doi
     String grantAgreementId
     Set<MultiLingualContent> name 
@@ -1595,10 +1562,10 @@ package project {
     MonetaryAmount amount
     Boolean competitive 
     Boolean renewable 
-    LocalDate dateSubmitted
-    LocalDate dateAwarded
-    LocalDate dateFrom
-    LocalDate dateTo
+    FlexibleDate dateSubmitted
+    FlexibleDate dateAwarded
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
     Boolean OAMandated
     String OAMandateUrl
     Boolean internalInvestment
@@ -1624,8 +1591,8 @@ package project {
     Set<ResearchArea> researchAreas
     Set<FundingType> types
     MonetaryAmount amount
-    LocalDate dateFrom
-    LocalDate dateTo
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
     Set<String> uris
     Boolean OAMandated
     String OAMandateUrl
@@ -1670,8 +1637,8 @@ package project {
     Set<ResearchArea> researchAreas
     Set<FundingType> types
     MonetaryAmount totalAmount
-    LocalDate dateFrom
-    LocalDate dateTo
+    FlexibleDate dateFrom
+    FlexibleDate dateTo
     Set<String> uris
     Boolean OAMandated
     String OAMandateUrl
@@ -1686,7 +1653,7 @@ package Assessment {
   class AssessmentRulebook {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
-    LocalDate issueDate
+    FlexibleDate issueDate
     boolean isDefault
     DocumentFile pdf
   }
@@ -1721,7 +1688,7 @@ package Assessment {
 
   enum ApplicableEntityType {
     MONOGRAPH
-    EVENT ' !!! do we need this
+    EVENT /' !!! do we need this '/
     DOCUMENT
     PERSON
     ORGANISATION_UNIT
@@ -1730,26 +1697,26 @@ package Assessment {
     MONOGRAPH_PUBLICATION
     JOURNAL_PUBLICATION
     PROCEEDINGS_PUBLICATION
-    PATENT ' 
-    INTELLECTUAL_PROPERTY ' !!! former PATENT
-    INTANGIBLE_PRODUCT ' !!! do we need this
-    ' !!! DATASET moved to INTANGIBLE_PRODUCT
+    /' !!! PATENT renamed to  INTELLECTUAL_PROPERTY, should be removed '/
+    INTELLECTUAL_PROPERTY /' !!! former PATENT '/
+    INTANGIBLE_PRODUCT /' !!! do we need this '/
+    /' !!! DATASET moved to INTANGIBLE_PRODUCT, should be removed '/
     THESIS
     MATERIAL_PRODUCT
     GENETIC_MATERIAL
-    PERFORMANCE_RELATED_OUTPUT ' !!!
+    PERFORMANCE_RELATED_OUTPUT /' !!! '/
     PRIZE 
     CONFERENCE  
     EXHIBITION 
-    OTHER_EVENTS ' !!! do we need this
+    OTHER_EVENTS /' !!! do we need this '/
   }
 
   class Commission {
     MultiLingualContent description
     ' it might be description of the commission goal, for instance comission for promotion to higher position, or Faculty of Sciences commission, or national/Serbian ministry of science commission
     Set<String> sources
-    LocalDate assessmentDateFrom
-    LocalDate assessmentDateTo
+    FlexibleDate assessmentDateFrom
+    FlexibleDate assessmentDateTo
     Set<Document> documentsForAssessment
     Set<Person> personsForAssessment
     Set<OrganisationUnit> organisationUnitsForAssessment
@@ -1862,8 +1829,8 @@ package Assessment {
     String textualValue
     LocalDateTime timestamp
     EntityIndicatorSource source
-    LocalDate fromDate
-    LocalDate toDate
+    FlexibleDate fromDate
+    FlexibleDate toDate
     Set<DocumentFile> proofs
     Set<String> urls ' !!! 
   }
