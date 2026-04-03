@@ -827,6 +827,9 @@ package document {
       PERFORMANCE_RELATED_OUTPUT /' !!! '/
   }
   
+  class DeclinedDocumentClaim {
+  }
+  
   DeclinedDocumentClaim "*" --> "1" Person : person
   DeclinedDocumentClaim "*" --> "1" Document : document
    
