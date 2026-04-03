@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
@@ -15,6 +17,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.person.EmploymentPositionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,19 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     @Override
     protected JpaRepository<EmploymentPositionHierarchy, Integer> getEntityRepository() {
         return employmentPositionRepository;
+    }
+
+    @Override
+    public Page<EmploymentPositionDTO> searchEmploymentPositions(Pageable pageable,
+                                                                 String searchExpression,
+                                                                 String languageTag) {
+        if (searchExpression.equals("*")) {
+            searchExpression = "";
+        }
+
+        return employmentPositionRepository.searchEmploymentPositions(
+                StringUtil.performSimpleLatinPreprocessing(searchExpression), languageTag, pageable)
+            .map(EmploymentPositionConverter::toDTO);
     }
 
     @Override

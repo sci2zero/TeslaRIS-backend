@@ -225,7 +225,7 @@ public class ResearchAreaServiceTest {
     }
 
     @Test
-    public void shouldSearchCountries() {
+    public void shouldSearchResearchAreas() {
         // given
         var searchTerm = "Search Term";
         var researchAreaPage = new PageImpl<>(List.of(new ResearchArea()));
