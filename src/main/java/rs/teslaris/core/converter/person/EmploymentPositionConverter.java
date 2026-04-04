@@ -1,5 +1,6 @@
 package rs.teslaris.core.converter.person;
 
+import java.util.Collections;
 import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.person.involvement.EmploymentPositionDTO;
@@ -16,7 +17,11 @@ public class EmploymentPositionConverter {
             Objects.requireNonNullElse(
                 employmentPosition.getSuperEmploymentPosition(),
                 new EmploymentPositionHierarchy()
-            ).getId()
+            ).getId(),
+            Objects.nonNull(employmentPosition.getSuperEmploymentPosition()) ?
+                MultilingualContentConverter.getMultilingualContentDTO(
+                    employmentPosition.getSuperEmploymentPosition().getName()) :
+                Collections.emptyList()
         );
     }
 }

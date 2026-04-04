@@ -16,6 +16,8 @@ public record EmploymentPositionDTO(
     String schemeName,
 
     @Positive(message = "Super employment position ID must be a positive number.")
-    Integer superEmploymentPositionId
+    Integer superEmploymentPositionId,
+
+    List<MultilingualContentDTO> superEmploymentPositionName
 ) {
 }

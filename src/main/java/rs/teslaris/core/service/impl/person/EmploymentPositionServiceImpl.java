@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.person.EmploymentPositionConverter;
 import rs.teslaris.core.dto.person.involvement.EmploymentPositionDTO;
@@ -36,6 +37,7 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<EmploymentPositionDTO> searchEmploymentPositions(Pageable pageable,
                                                                  String searchExpression,
                                                                  String languageTag) {
@@ -49,6 +51,7 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     }
 
     @Override
+    @Transactional
     public EmploymentPositionHierarchy createEmploymentPosition(
         EmploymentPositionDTO employmentPositionDTO) {
         var newEmploymentPosition = new EmploymentPositionHierarchy();
@@ -59,6 +62,7 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     }
 
     @Override
+    @Transactional
     public void editEmploymentPosition(EmploymentPositionDTO employmentPositionDTO,
                                        Integer employmentPositionId) {
         var employmentPositionToUpdate = findOne(employmentPositionId);
@@ -71,7 +75,8 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     private void setCommonFields(EmploymentPositionHierarchy employmentPosition,
                                  EmploymentPositionDTO employmentPositionDTO) {
         employmentPosition.setName(
-            multilingualContentService.getMultilingualContent(employmentPositionDTO.name()));
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                employmentPositionDTO.name()));
         employmentPosition.setProcessedName(employmentPositionDTO.processedName());
         employmentPosition.setSchemeName(employmentPositionDTO.schemeName());
 
@@ -84,6 +89,7 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     }
 
     @Override
+    @Transactional
     public void deleteEmploymentPosition(Integer employmentPositionId) {
         if (!employmentPositionRepository.getChildEmploymentPositions(employmentPositionId)
             .isEmpty()) {
@@ -94,6 +100,7 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EmploymentPositionDTO> getChildEmploymentPositions(Integer parentId) {
         List<EmploymentPositionHierarchy> fetchedEmploymentPositions;
         if (Objects.isNull(parentId) || parentId == 0) {
