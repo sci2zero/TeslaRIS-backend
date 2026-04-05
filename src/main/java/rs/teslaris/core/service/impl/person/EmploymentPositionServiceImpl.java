@@ -51,14 +51,20 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public EmploymentPositionDTO readEmploymentPosition(Integer employmentPositionId) {
+        return EmploymentPositionConverter.toDTO(findOne(employmentPositionId));
+    }
+
+    @Override
     @Transactional
-    public EmploymentPositionHierarchy createEmploymentPosition(
+    public EmploymentPositionDTO createEmploymentPosition(
         EmploymentPositionDTO employmentPositionDTO) {
         var newEmploymentPosition = new EmploymentPositionHierarchy();
 
         setCommonFields(newEmploymentPosition, employmentPositionDTO);
 
-        return save(newEmploymentPosition);
+        return EmploymentPositionConverter.toDTO(save(newEmploymentPosition));
     }
 
     @Override
