@@ -171,15 +171,27 @@ public class ScopusConverter {
                     new PersonName(givenNameParts[0], givenNameParts[1], author.surname()));
             }
         } else {
-            var authorName = author.authName().split(" ");
-            if (authorName.length == 2) {
-                person.setName(new PersonName(authorName[0], "", authorName[1]));
-            } else if (authorName.length == 3) {
-                person.setName(new PersonName(authorName[0], authorName[1], authorName[2]));
+            var parts = author.authName().trim().split("\\s+");
+
+            String first = "";
+            String middle = "";
+            String last = "";
+
+            if (parts.length == 2) {
+                first = parts[0].contains(".") ? parts[1] : parts[0];
+                last = parts[1];
+            } else if (parts.length == 3) {
+                first = parts[0].contains(".") ? parts[1] : parts[0];
+                middle = parts[1];
+                last = parts[2];
             } else {
                 person.setName(new PersonName(author.authName(), "", ""));
+                return person;
             }
+
+            person.setName(new PersonName(first, middle, last));
         }
+
         return person;
     }
 

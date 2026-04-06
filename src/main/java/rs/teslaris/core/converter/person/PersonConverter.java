@@ -23,6 +23,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.person.PersonFieldVisibilityRepository;
@@ -48,7 +49,11 @@ public class PersonConverter {
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
 
-        var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
+        var professionalostalAddress =
+            getPostalAddressDTO(person.getPersonalInfo().getProfessionalPostalAddress());
+
+        var privatePostalAddress =
+            getPostalAddressDTO(person.getPersonalInfo().getPrivatePostalAddress());
 
         var employmentIds = new ArrayList<Integer>();
         var educationIds = new ArrayList<Integer>();
@@ -59,26 +64,41 @@ public class PersonConverter {
         setExpertisesAndSkills(person, expertisesOrSkills);
 
         var prizes = new ArrayList<PrizeResponseDTO>();
-        setPrizes(person, prizes);
+        person.getPrizes().forEach(prize -> prizes.add(PrizeConverter.toDTO(prize)));
 
         var personResponse = new PersonResponseDTO(
             person.getId(),
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
-                person.getName().getDateTo()), otherNames,
+                person.getName().getDateTo(), person.getName().getNameType()), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
                 person.getPersonalInfo()
-                    .getSex(), postalAddress,
-                new ContactDTO(Objects.nonNull(person.getPersonalInfo().getContact()) ?
-                    person.getPersonalInfo().getContact().getContactEmail() : null,
-                    Objects.nonNull(person.getPersonalInfo().getContact()) ?
-                        person.getPersonalInfo().getContact().getPhoneNumber() : null),
+                    .getSex(), professionalostalAddress, privatePostalAddress,
+                new ContactDTO(Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
+                    person.getPersonalInfo().getProfessionalContact().getContactEmail() : null,
+                    Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
+                        person.getPersonalInfo().getProfessionalContact().getPhoneNumber() : null,
+                    Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
+                        person.getPersonalInfo().getProfessionalContact().getFaxNumber() : null,
+                    Objects.nonNull(person.getPersonalInfo().getProfessionalContact()) ?
+                        person.getPersonalInfo().getProfessionalContact().getMobilePhoneNumber() :
+                        null),
+                new ContactDTO(Objects.nonNull(person.getPersonalInfo().getPrivateContact()) ?
+                    person.getPersonalInfo().getPrivateContact().getContactEmail() : null,
+                    Objects.nonNull(person.getPersonalInfo().getPrivateContact()) ?
+                        person.getPersonalInfo().getPrivateContact().getPhoneNumber() : null,
+                    Objects.nonNull(person.getPersonalInfo().getPrivateContact()) ?
+                        person.getPersonalInfo().getPrivateContact().getFaxNumber() : null,
+                    Objects.nonNull(person.getPersonalInfo().getPrivateContact()) ?
+                        person.getPersonalInfo().getPrivateContact().getMobilePhoneNumber() :
+                        null),
                 person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getOpenAlexId(),
-                person.getWebOfScienceResearcherId(),
+                person.getWebOfScienceResearcherId(), person.getNationalScienceId(),
+                person.getScholarId(), person.getAuthenticusId(), person.getLattesId(),
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,
@@ -99,6 +119,7 @@ public class PersonConverter {
 
         var streetAndNumberContent = new ArrayList<MultilingualContentDTO>();
         var cityContent = new ArrayList<MultilingualContentDTO>();
+        var stateContent = new ArrayList<MultilingualContentDTO>();
 
         for (var streetAndNumber : postalAddress.getStreetAndNumber()) {
             streetAndNumberContent.add(
@@ -116,8 +137,19 @@ public class PersonConverter {
                     city.getPriority()));
         }
 
+        for (var state : postalAddress.getState()) {
+            stateContent.add(
+                new MultilingualContentDTO(state.getLanguage().getId(),
+                    state.getLanguage().getLanguageTag(),
+                    state.getContent(),
+                    state.getPriority()));
+        }
+
         postalAddressDto.setStreetAndNumber(streetAndNumberContent);
         postalAddressDto.setCity(cityContent);
+        postalAddressDto.setState(stateContent);
+        postalAddressDto.setPostalNumber(postalAddress.getPostalNumber());
+
         return postalAddressDto;
     }
 
@@ -126,7 +158,8 @@ public class PersonConverter {
 
         otherNames.forEach(otherName -> otherNamesDTO.add(
             new PersonNameDTO(otherName.getId(), otherName.getFirstname(), otherName.getOtherName(),
-                otherName.getLastname(), otherName.getDateFrom(), otherName.getDateTo())));
+                otherName.getLastname(), otherName.getDateFrom(), otherName.getDateTo(),
+                Objects.requireNonNullElse(otherName.getNameType(), PersonNameType.DISPLAY_NAME))));
 
         return otherNamesDTO;
     }
@@ -187,40 +220,44 @@ public class PersonConverter {
         });
     }
 
-    private static void setPrizes(Person person, ArrayList<PrizeResponseDTO> prizes) {
-        person.getPrizes().forEach(prize -> {
-            var dto = new PrizeResponseDTO();
-            dto.setId(prize.getId());
-            dto.setTitle(
-                MultilingualContentConverter.getMultilingualContentDTO(prize.getTitle()));
-            dto.setDescription(
-                MultilingualContentConverter.getMultilingualContentDTO(prize.getDescription()));
-            dto.setDate(prize.getDate());
-
-            dto.setProofs(new ArrayList<>());
-            prize.getProofs().forEach(proof -> {
-                dto.getProofs().add(DocumentFileConverter.toDTO(proof));
-            });
-            prizes.add(dto);
-        });
-    }
-
     public static PersonUserResponseDTO toDTOWithUser(Person person) {
         var otherNames = getPersonOtherNamesDTO(person.getOtherNames());
         var biography = getPersonBiographyDTO(person.getBiography());
         var keyword = getPersonKeywordDTO(person.getKeyword());
 
-        var postalAddress = getPostalAddressDTO(person.getPersonalInfo().getPostalAddress());
+        var professionalPostalAddress =
+            getPostalAddressDTO(person.getPersonalInfo().getProfessionalPostalAddress());
+
+        var privatePostalAddress =
+            getPostalAddressDTO(person.getPersonalInfo().getPrivatePostalAddress());
 
         UserResponseDTO userDTO = null;
         if (Objects.nonNull(person.getUser())) {
             userDTO = UserConverter.toUserResponseDTO(person.getUser());
         }
 
-        var contact = new ContactDTO();
-        if (Objects.nonNull(person.getPersonalInfo().getContact())) {
-            contact.setContactEmail(person.getPersonalInfo().getContact().getContactEmail());
-            contact.setPhoneNumber(person.getPersonalInfo().getContact().getPhoneNumber());
+        var professionalContact = new ContactDTO();
+        if (Objects.nonNull(person.getPersonalInfo().getProfessionalContact())) {
+            professionalContact.setContactEmail(
+                person.getPersonalInfo().getProfessionalContact().getContactEmail());
+            professionalContact.setPhoneNumber(
+                person.getPersonalInfo().getProfessionalContact().getPhoneNumber());
+            professionalContact.setFaxNumber(
+                person.getPersonalInfo().getProfessionalContact().getFaxNumber());
+            professionalContact.setMobilePhoneNumber(
+                person.getPersonalInfo().getProfessionalContact().getMobilePhoneNumber());
+        }
+
+        var privateContact = new ContactDTO();
+        if (Objects.nonNull(person.getPersonalInfo().getPrivateContact())) {
+            privateContact.setContactEmail(
+                person.getPersonalInfo().getPrivateContact().getContactEmail());
+            privateContact.setPhoneNumber(
+                person.getPersonalInfo().getPrivateContact().getPhoneNumber());
+            privateContact.setFaxNumber(
+                person.getPersonalInfo().getPrivateContact().getFaxNumber());
+            privateContact.setMobilePhoneNumber(
+                person.getPersonalInfo().getPrivateContact().getMobilePhoneNumber());
         }
 
         var instituion = new Pair<Integer, List<MultilingualContentDTO>>(null, null);
@@ -239,13 +276,17 @@ public class PersonConverter {
             new PersonNameDTO(person.getName().getId(), person.getName().getFirstname(),
                 person.getName().getOtherName(),
                 person.getName().getLastname(), person.getName().getDateFrom(),
-                person.getName().getDateTo()), otherNames,
+                person.getName().getDateTo(),
+                Objects.requireNonNullElse(person.getName().getNameType(),
+                    PersonNameType.DISPLAY_NAME)), otherNames,
             new PersonalInfoDTO(person.getPersonalInfo()
                 .getLocalBirthDate(), person.getPersonalInfo().getPlaceOfBrith(),
-                person.getPersonalInfo().getSex(), postalAddress, contact, person.getApvnt(),
+                person.getPersonalInfo().getSex(), professionalPostalAddress, privatePostalAddress,
+                professionalContact, privateContact, person.getApvnt(),
                 person.getECrisId(), person.getENaukaId(), person.getOrcid(),
                 person.getScopusAuthorId(), person.getOpenAlexId(),
-                person.getWebOfScienceResearcherId(),
+                person.getWebOfScienceResearcherId(), person.getNationalScienceId(),
+                person.getScholarId(), person.getAuthenticusId(), person.getLattesId(),
                 person.getPersonalInfo().getUris(),
                 MultilingualContentConverter.getMultilingualContentDTO(
                     person.getPersonalInfo().getDisplayTitle())), biography,
@@ -260,10 +301,15 @@ public class PersonConverter {
         if (!SessionUtil.isUserLoggedIn()) {
             if (!fieldVisibilityConfiguration.getContactEmailVisible()) {
                 personResponse.getPersonalInfo().getContact().setContactEmail("");
+                personResponse.getPersonalInfo().getPrivateContact().setContactEmail("");
             }
 
             if (!fieldVisibilityConfiguration.getPhoneNumberVisible()) {
                 personResponse.getPersonalInfo().getContact().setPhoneNumber("");
+                personResponse.getPersonalInfo().getPrivateContact().setPhoneNumber("");
+
+                personResponse.getPersonalInfo().getContact().setMobilePhoneNumber("");
+                personResponse.getPersonalInfo().getPrivateContact().setMobilePhoneNumber("");
             }
 
             if (!fieldVisibilityConfiguration.getBirthplaceVisible()) {
@@ -278,9 +324,18 @@ public class PersonConverter {
                 personResponse.getPersonalInfo().setSex(null);
             }
 
+            if (!fieldVisibilityConfiguration.getBiographyVisible()) {
+                personResponse.setBiography(new ArrayList<>());
+            }
+
             personResponse.getPersonalInfo().getPostalAddress().setCountryId(null);
             personResponse.getPersonalInfo().getPostalAddress().setCity(new ArrayList<>());
             personResponse.getPersonalInfo().getPostalAddress()
+                .setStreetAndNumber(new ArrayList<>());
+
+            personResponse.getPersonalInfo().getPrivatePostalAddress().setCountryId(null);
+            personResponse.getPersonalInfo().getPrivatePostalAddress().setCity(new ArrayList<>());
+            personResponse.getPersonalInfo().getPrivatePostalAddress()
                 .setStreetAndNumber(new ArrayList<>());
         } else if (!SessionUtil.isUserLoggedInAndAdmin()) {
             if (fieldVisibilityConfiguration.getDateOfBirthVisible()) {

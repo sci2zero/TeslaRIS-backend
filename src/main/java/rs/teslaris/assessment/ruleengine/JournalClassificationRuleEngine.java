@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Function;
 import lombok.Getter;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
@@ -63,7 +64,8 @@ public abstract class JournalClassificationRuleEngine {
 
         while (hasNextPage) {
             List<JournalIndex> chunk =
-                journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+                journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize,
+                    Sort.by(Sort.Direction.ASC, "databaseId"))).getContent();
 
             FunctionalUtil.batch(chunk.stream().map(JournalIndex::getDatabaseId), 100)
                 .forEach(idBatch ->

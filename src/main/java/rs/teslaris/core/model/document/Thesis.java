@@ -16,7 +16,9 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.Language;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -84,6 +86,10 @@ public non-sealed class Thesis extends Document implements PublisherPublishable 
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<LocalDate> publicReviewStartDates = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "public_review_end_dates")
+    private Set<LocalDate> publicReviewEndDates = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<DocumentFile> preliminaryFiles = new HashSet<>();

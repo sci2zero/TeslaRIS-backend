@@ -42,6 +42,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
+import rs.teslaris.core.applicationevent.CommissionInstitutionUpdatedEvent;
 import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.dto.commontypes.BrandingInformationDTO;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -72,6 +74,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.EmailUpdateRequest;
 import rs.teslaris.core.model.user.OAuthCode;
@@ -173,6 +176,9 @@ public class UserServiceTest {
     private BrandingInformationService brandingInformationService;
 
     @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
     private ApplicationConfigurationRepository applicationConfigurationRepository;
 
     @InjectMocks
@@ -209,7 +215,7 @@ public class UserServiceTest {
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null, null,
                 new Authority("RESEARCHER", null), null, null, null, UserNotificationPeriod.NEVER,
-                true);
+                true, null);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -229,7 +235,8 @@ public class UserServiceTest {
         var user =
             new User("email@email.com", "passwd", "",
                 "Ime", "Prezime", false, true, null, null,
-                new Authority("ADMIN", null), null, null, null, UserNotificationPeriod.NEVER, true);
+                new Authority("ADMIN", null), null, null, null, UserNotificationPeriod.NEVER, true,
+                null);
         user.setId(1);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -274,7 +281,8 @@ public class UserServiceTest {
             Optional.of(authority));
 
         var person = new Person();
-        person.setName(new PersonName("John", "Something", "Doe", LocalDate.of(1995, 12, 3), null));
+        person.setName(new PersonName("John", "Something", "Doe", LocalDate.of(1995, 12, 3), null,
+            PersonNameType.FULL_NAME));
         when(personService.findOne(1)).thenReturn(person);
         when(organisationUnitService.findOrganisationUnitById(1)).thenReturn(
             new OrganisationUnit());
@@ -286,7 +294,7 @@ public class UserServiceTest {
         var newUser = new User("johndoe@example.com", "Password123", "",
             "John", "Doe", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.NEVER, true);
+            UserNotificationPeriod.NEVER, true, null);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -343,7 +351,7 @@ public class UserServiceTest {
         var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.NEVER, true);
+            UserNotificationPeriod.NEVER, true, null);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -398,7 +406,7 @@ public class UserServiceTest {
         var newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.NEVER, true);
+            UserNotificationPeriod.NEVER, true, null);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -456,7 +464,7 @@ public class UserServiceTest {
         var newUser = new User("regadmin@example.com", "password123", "",
             "Promotion", "Admin", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.WEEKLY, true);
+            UserNotificationPeriod.WEEKLY, true, null);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -515,7 +523,7 @@ public class UserServiceTest {
         User newUser = new User("johndoe@example.com", "password123", "",
             "John", "Doe", true,
             false, language, language, authority, null, organisationUnit, null,
-            UserNotificationPeriod.NEVER, true);
+            UserNotificationPeriod.NEVER, true, null);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         var activationToken = new UserAccountActivation(UUID.randomUUID().toString(), newUser);
@@ -538,6 +546,8 @@ public class UserServiceTest {
         assertEquals("Doe", savedUser.getLastName());
         assertEquals(language, savedUser.getPreferredUILanguage());
         assertEquals(authority, savedUser.getAuthority());
+        verify(applicationEventPublisher).publishEvent(
+            any(CommissionInstitutionUpdatedEvent.class));
     }
 
     @Test
@@ -546,6 +556,7 @@ public class UserServiceTest {
         ReflectionTestUtils.setField(userService, "allowNewResearcherCreation", true);
 
         var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("test@test.com");
         registrationRequest.setPassword("Password123");
 
         when(applicationConfigurationRepository.isApplicationInMaintenanceMode()).thenReturn(false);
@@ -562,6 +573,7 @@ public class UserServiceTest {
     public void shouldThrowPasswordExceptionWhenPasswordIsWeak() {
         // given
         var registrationRequest = new ResearcherRegistrationRequestDTO();
+        registrationRequest.setEmail("test@test.com");
         registrationRequest.setPassword("weak_password");
 
         when(authorityRepository.findById(2)).thenReturn(Optional.empty());
@@ -594,7 +606,7 @@ public class UserServiceTest {
             new User("johndoe@example.com", "password123", "",
                 "John", "Doe", true,
                 true, new LanguageTag(), new LanguageTag(), new Authority(), null, null, null,
-                UserNotificationPeriod.NEVER, true));
+                UserNotificationPeriod.NEVER, true, null));
         when(
             userAccountActivationRepository.findByActivationToken(activationTokenValue)).thenReturn(
             Optional.of(accountActivation));
@@ -1384,7 +1396,8 @@ public class UserServiceTest {
         registrationRequest.setOrganisationUnitId(2);
 
         var person = new Person();
-        person.setName(new PersonName("Jane", "", "Doe", LocalDate.of(1990, 5, 12), null));
+        person.setName(new PersonName("Jane", "", "Doe", LocalDate.of(1990, 5, 12), null,
+            PersonNameType.FULL_NAME));
         person.setOrcid("orcid-identifier");
         when(personService.findOne(1)).thenReturn(person);
 
@@ -1394,7 +1407,7 @@ public class UserServiceTest {
 
         var newUser = new User("oauthuser@example.com", "EncodedPassword", "",
             "Jane", "Doe", true, false, language, language, authority,
-            person, organisationUnit, null, UserNotificationPeriod.NEVER, true);
+            person, organisationUnit, null, UserNotificationPeriod.NEVER, true, null);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
@@ -1428,7 +1441,8 @@ public class UserServiceTest {
         registrationRequest.setOrganisationUnitId(1);
 
         var person = new Person();
-        person.setName(new PersonName("Alice", "", "Smith", null, null));
+        person.setName(
+            new PersonName("Alice", "", "Smith", null, null, PersonNameType.PRESENTED_NAME));
         person.setOrcid("orcid-id");
         when(personService.createPersonWithBasicInfo(any(BasicPersonDTO.class), eq(true)))
             .thenReturn(person);
@@ -1442,7 +1456,7 @@ public class UserServiceTest {
 
         var newUser = new User("newperson@example.com", "EncodedPassword", "",
             "Alice", "Smith", true, false, language, language, authority,
-            person, null, null, UserNotificationPeriod.NEVER, true);
+            person, null, null, UserNotificationPeriod.NEVER, true, null);
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 
         when(brandingInformationService.readBrandingInformation()).thenReturn(
@@ -1959,7 +1973,8 @@ public class UserServiceTest {
 
         var person = new Person();
         person.setName(
-            new PersonName("Admin", null, "User", LocalDate.of(1990, 1, 1), null)
+            new PersonName("Admin", null, "User", LocalDate.of(1990, 1, 1), null,
+                PersonNameType.PRESENTED_NAME)
         );
         when(personService.findOne(1)).thenReturn(person);
         when(organisationUnitService.findOrganisationUnitById(1))
@@ -1980,7 +1995,7 @@ public class UserServiceTest {
             new OrganisationUnit(),
             null,
             UserNotificationPeriod.NEVER,
-            true
+            true, null
         );
         when(userRepository.save(any(User.class))).thenReturn(newUser);
 

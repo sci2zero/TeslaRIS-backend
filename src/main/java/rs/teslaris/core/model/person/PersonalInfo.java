@@ -1,10 +1,16 @@
 package rs.teslaris.core.model.person;
 
+import jakarta.persistence.AssociationOverride;
+import jakarta.persistence.AssociationOverrides;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -34,10 +40,83 @@ public class PersonalInfo {
     private Sex sex;
 
     @Embedded
-    private PostalAddress postalAddress;
+    @AttributeOverrides({
+        @AttributeOverride(name = "postalNumber", column = @Column(name = "professional_postal_number"))
+    })
+    @AssociationOverrides({
+        @AssociationOverride(
+            name = "country",
+            joinColumns = @JoinColumn(name = "professional_country_id")
+        ),
+        @AssociationOverride(
+            name = "streetAndNumber",
+            joinTable = @JoinTable(
+                name = "person_prof_street",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+        @AssociationOverride(
+            name = "city",
+            joinTable = @JoinTable(
+                name = "person_prof_city",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+        @AssociationOverride(
+            name = "state",
+            joinTable = @JoinTable(
+                name = "person_prof_state",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id")
+            )
+        )
+    })
+    private PostalAddress professionalPostalAddress;
 
     @Embedded
-    private Contact contact;
+    @AttributeOverrides({
+        @AttributeOverride(name = "postalNumber", column = @Column(name = "private_postal_number"))
+    })
+    @AssociationOverrides({
+        @AssociationOverride(
+            name = "country",
+            joinColumns = @JoinColumn(name = "private_country_id")),
+        @AssociationOverride(
+            name = "streetAndNumber",
+            joinTable = @JoinTable(
+                name = "person_priv_street",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+        @AssociationOverride(
+            name = "city",
+            joinTable = @JoinTable(
+                name = "person_priv_city",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id"))),
+        @AssociationOverride(
+            name = "state",
+            joinTable = @JoinTable(
+                name = "person_priv_state",
+                joinColumns = @JoinColumn(name = "person_id"),
+                inverseJoinColumns = @JoinColumn(name = "mlc_id")))
+    })
+    private PostalAddress privatePostalAddress;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "contactEmail", column = @Column(name = "professional_contact_email")),
+        @AttributeOverride(name = "phoneNumber", column = @Column(name = "professional_phone_number")),
+        @AttributeOverride(name = "faxNumber", column = @Column(name = "professional_fax_number")),
+        @AttributeOverride(name = "mobilePhoneNumber", column = @Column(name = "professional_mobile_phone_number"))
+    })
+    private Contact professionalContact;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "contactEmail", column = @Column(name = "private_contact_email")),
+        @AttributeOverride(name = "phoneNumber", column = @Column(name = "private_phone_number")),
+        @AttributeOverride(name = "faxNumber", column = @Column(name = "private_fax_number")),
+        @AttributeOverride(name = "mobilePhoneNumber", column = @Column(name = "private_mobile_phone_number"))
+    })
+    private Contact privateContact;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")

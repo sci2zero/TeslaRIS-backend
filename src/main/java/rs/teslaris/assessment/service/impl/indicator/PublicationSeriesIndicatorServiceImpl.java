@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityIndicatorConverter;
@@ -134,7 +135,8 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
 
         while (hasNextPage) {
             List<JournalIndex> chunk =
-                journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize)).getContent();
+                journalIndexRepository.findAll(PageRequest.of(pageNumber, chunkSize,
+                    Sort.by(Sort.Direction.ASC, "databaseId"))).getContent();
 
             chunk.forEach((journalIndex) -> {
                 var currentJournal = journalService.findJournalById(journalIndex.getDatabaseId());

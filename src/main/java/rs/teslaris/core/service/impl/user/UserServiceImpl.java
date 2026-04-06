@@ -12,6 +12,7 @@ import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -27,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.applicationevent.CommissionInstitutionUpdatedEvent;
 import rs.teslaris.core.configuration.OAuth2Provider;
 import rs.teslaris.core.converter.person.UserConverter;
 import rs.teslaris.core.dto.person.BasicPersonDTO;
@@ -86,7 +89,6 @@ import rs.teslaris.core.repository.user.RefreshTokenRepository;
 import rs.teslaris.core.repository.user.UserAccountActivationRepository;
 import rs.teslaris.core.repository.user.UserRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -156,9 +158,9 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
 
     private final OAuthCodeRepository oAuthCodeRepository;
 
-    private final BrandingInformationService brandingInformationService;
-
     private final ApplicationConfigurationRepository applicationConfigurationRepository;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${frontend.application.address}")
     private String clientAppAddress;
@@ -395,7 +397,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
                 "You have to deactivate user in order to change his email.");
         }
 
-        if (userRepository.findByEmailIncludingDeleted(newEmail).isPresent()) {
+        if (userRepository.findByEmailIncludingDeleted(newEmail.trim()).isPresent()) {
             throw new UserAlreadyExistsException("userWithEmailExistsMessage");
         }
 
@@ -540,7 +542,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             var employment = new Employment(
                 null, null, ApproveStatus.APPROVED, new HashSet<>(),
                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                institution, null, new HashSet<>()
+                institution, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                null, new HashSet<>()
             );
             person.addInvolvement(employment);
         }
@@ -554,11 +557,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var language = languageTagService.findOne(preferredLanguageId);
 
         return new User(
-            email, encodedPassword, "",
+            email.toLowerCase().trim(), encodedPassword, "",
             person.getName().getFirstname(), person.getName().getLastname(), true, false,
             language, language, authority, person,
             Objects.nonNull(involvement) ? involvement.getOrganisationUnit() : null,
-            null, UserNotificationPeriod.WEEKLY, true
+            null, UserNotificationPeriod.WEEKLY, true, null
         );
     }
 
@@ -662,7 +665,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         var generatedPassword = PasswordUtil.generatePassword(12 + random.nextInt(6));
 
         var newUser = new User(
-            email,
+            email.toLowerCase().trim(),
             passwordEncoder.encode(new String(generatedPassword)),
             note,
             name.trim(),
@@ -676,7 +679,8 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             organisationUnit,
             commission,
             UserNotificationPeriod.WEEKLY,
-            true
+            true,
+            null
         );
 
         var savedUser = userRepository.save(newUser);
@@ -709,6 +713,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
             emailUtil.constructBodyWithSignature(message, systemName, language);
 
         emailUtil.sendSimpleEmail(newUser.getEmail(), subject, message);
+
+        if (newUser.getAuthority().getName().equals(UserRole.COMMISSION.name())) {
+            applicationEventPublisher.publishEvent(
+                new CommissionInstitutionUpdatedEvent(newUser.getCommission().getId()));
+        }
 
         Arrays.fill(generatedPassword, '\0');
         return savedUser;
@@ -745,7 +754,7 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     }
 
     private void validateEmailUniqueness(String email) {
-        if (userRepository.findByEmailIncludingDeleted(email).isPresent()) {
+        if (userRepository.findByEmailIncludingDeleted(email.trim()).isPresent()) {
             throw new UserAlreadyExistsException("emailInUseMessage");
         }
     }
@@ -1066,10 +1075,16 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
         userToDelete.setPerson(null);
         userToDelete.setLocked(true);
         userToDelete.setDeleted(true);
+        userToDelete.setTombstone(LocalDate.now().plusMonths(1));
         userRepository.save(userToDelete);
 
         userAccountIndexRepository.findByDatabaseId(userId)
             .ifPresent(userAccountIndexRepository::delete);
+
+        if (userToDelete.getAuthority().getName().equals(UserRole.COMMISSION.name())) {
+            applicationEventPublisher.publishEvent(
+                new CommissionInstitutionUpdatedEvent(userToDelete.getCommission().getId()));
+        }
     }
 
     @Override
@@ -1297,5 +1312,11 @@ public class UserServiceImpl extends JPAServiceImpl<User> implements UserService
     @Transactional
     public void cleanupExpiredTokens() {
         tokenUtil.cleanupExpiredTokens();
+    }
+
+    @Scheduled(cron = "0 30 0 * * *") // every day at 00:30
+    @Transactional
+    public void cleanupDeletedUsers() {
+        userRepository.deleteAllThatExpireOnDate(LocalDate.now());
     }
 }

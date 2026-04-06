@@ -80,17 +80,23 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.DegreeType;
 import rs.teslaris.core.model.person.Education;
+import rs.teslaris.core.model.person.EducationStatus;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.EmploymentPosition;
+import rs.teslaris.core.model.person.EmploymentPositionHierarchy;
 import rs.teslaris.core.model.person.ExpertiseOrSkill;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.model.person.MembershipType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Prize;
+import rs.teslaris.core.model.person.PrizeType;
 import rs.teslaris.core.model.person.Sex;
 import rs.teslaris.core.model.user.Authority;
 import rs.teslaris.core.model.user.PasswordResetToken;
@@ -115,6 +121,7 @@ import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
+import rs.teslaris.core.repository.person.EmploymentPositionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
 import rs.teslaris.core.repository.user.PasswordResetTokenRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -202,6 +209,10 @@ public class TestingDataInitializer {
 
     private final ExhibitionRepository exhibitionRepository;
 
+    private final ProjectDataInitializer projectDataInitializer;
+
+    private final EmploymentPositionRepository employmentPositionRepository;
+
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
                                                  LanguageTag englishTag, LanguageTag germanTag,
@@ -219,10 +230,13 @@ public class TestingDataInitializer {
         countryRepository.save(country);
 
         var postalAddress = new PostalAddress(country, new HashSet<>(),
-            new HashSet<>());
+            new HashSet<>(), new HashSet<>(), null);
         var personalInfo =
-            new PersonalInfo(LocalDate.of(2000, 1, 25), "Serbia", Sex.MALE, postalAddress,
-                new Contact("john@ftn.uns.ac.com", "021555666"), new HashSet<>(), new HashSet<>());
+            new PersonalInfo(LocalDate.of(
+                2000, 1, 25), "Serbia", Sex.MALE,
+                postalAddress, new PostalAddress(),
+                new Contact("john@ftn.uns.ac.com", "021555666", null, null),
+                new Contact(), new HashSet<>(), new HashSet<>());
         var person1 = new Person();
 
         if (addOldIdData) {
@@ -230,7 +244,8 @@ public class TestingDataInitializer {
         }
 
         person1.setName(
-            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null));
+            new PersonName("Ivan", "Radomir", "Mrsulja", LocalDate.of(2000, 1, 25), null,
+                PersonNameType.FULL_NAME));
         person1.setApproveStatus(ApproveStatus.APPROVED);
         person1.setPersonalInfo(personalInfo);
         person1.setOrcid("0009-0008-0599-0599");
@@ -244,11 +259,13 @@ public class TestingDataInitializer {
             new User("author@author.com", passwordEncoder.encode("author"), "note note note",
                 "Dragan", "Ivanovic", false, false, serbianTag, serbianTag,
                 researcherAuthority, person1,
-                null, null, UserNotificationPeriod.DAILY, true);
+                null, null, UserNotificationPeriod.DAILY, true, null);
         userRepository.save(researcherUser);
 
         var dummyOU = new OrganisationUnit();
-        dummyOU.setNameAbbreviation("FTN");
+        dummyOU.setNameAbbreviation(
+            new HashSet<>(List.of(
+                new MultiLingualContent[] {new MultiLingualContent(englishTag, "FTN", 1)})));
 
         if (addOldIdData) {
             dummyOU.getOldIds().add(2);
@@ -262,7 +279,7 @@ public class TestingDataInitializer {
         dummyOU.setRor("00xa57a59");
         dummyOU.setOpenAlexId("I4401727005");
         dummyOU.setLocation(new GeoLocation(19.850885, 45.245688, "NOWHERE"));
-        dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666"));
+        dummyOU.setContact(new Contact("office@ftn.uns.ac.com", "021555666", null, null));
         dummyOU.getAllowedThesisTypes().addAll(
             List.of(ThesisType.PHD.name(), ThesisType.PHD_ART_PROJECT.name(),
                 ThesisType.MASTER.name(), ThesisType.BACHELOR.name(),
@@ -280,13 +297,15 @@ public class TestingDataInitializer {
         journalRepository.save(dummyJournal);
 
         var dummyOU2 = new OrganisationUnit();
-        dummyOU2.setNameAbbreviation("PMF");
+        dummyOU2.setNameAbbreviation(
+            new HashSet<>(List.of(
+                new MultiLingualContent[] {new MultiLingualContent(englishTag, "PMF", 1)})));
         dummyOU2.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(englishTag, "Faculty of Sciences", 1),
             new MultiLingualContent(serbianTag, "Prirodno matematicki fakultet", 2)})));
         dummyOU2.setApproveStatus(ApproveStatus.APPROVED);
         dummyOU2.setLocation(new GeoLocation(19.8502021, 45.2454147, "NOWHERE"));
-        dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667"));
+        dummyOU2.setContact(new Contact("office@pmf.uns.ac.com", "021555667", null, null));
         dummyOU2.setScopusAfid("60068802");
         dummyOU2.setIsClientInstitutionDl(true);
         dummyOU2.setLegalEntity(true);
@@ -347,14 +366,17 @@ public class TestingDataInitializer {
 
         var person2 = new Person();
         var postalAddress2 = new PostalAddress(country, new HashSet<>(),
-            new HashSet<>());
+            new HashSet<>(), new HashSet<>(), null);
         var personalInfo2 =
-            new PersonalInfo(LocalDate.of(2000, 1, 31), "Germany", Sex.MALE, postalAddress2,
-                new Contact("joakim@email.com", "021555769"), new HashSet<>(), new HashSet<>());
+            new PersonalInfo(LocalDate.of(2000, 1, 31), "Germany", Sex.MALE,
+                postalAddress2, new PostalAddress(),
+                new Contact("joakim@email.com", "021555769", null, null), new Contact(),
+                new HashSet<>(), new HashSet<>());
         person2.setApproveStatus(ApproveStatus.APPROVED);
         person2.setPersonalInfo(personalInfo2);
         person2.setName(
-            new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Schöpfel", "", "Joachim", LocalDate.of(2000, 1, 31), null,
+                PersonNameType.FULL_NAME));
         person2.setScopusAuthorId("14619562900");
         person2.setOrcid("0000-0002-8096-5149");
         person2.setDateOfLastIndicatorHarvest(LocalDate.of(2025, 2, 1));
@@ -394,17 +416,20 @@ public class TestingDataInitializer {
         datasetContribution.setApproveStatus(ApproveStatus.APPROVED);
         datasetContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         dataset.setContributors(Set.of(datasetContribution));
         datasetRepository.save(dataset);
 
         var sci2zero = new OrganisationUnit();
-        sci2zero.setNameAbbreviation("Sci2zero");
+        sci2zero.setNameAbbreviation(
+            new HashSet<>(List.of(
+                new MultiLingualContent[] {new MultiLingualContent(englishTag, "Sci2zero", 1)})));
         sci2zero.setName(new HashSet<>(List.of(new MultiLingualContent[] {
             new MultiLingualContent(serbianTag, "Science 2.0 Alliance", 1)})));
         sci2zero.setApproveStatus(ApproveStatus.APPROVED);
-        sci2zero.setContact(new Contact("info@sci2zero.com", "021555666"));
+        sci2zero.setContact(new Contact("info@sci2zero.com", "021555666", "12345", null));
         organisationUnitRepository.save(sci2zero);
 
         person1.getBiography()
@@ -414,31 +439,38 @@ public class TestingDataInitializer {
             "Machine Learning\nCybersecurity\nReverse Engineering\nWeb Security", 1));
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
-                new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null, dummyOU,
-                EmploymentPosition.TEACHING_ASSISTANT, Set.of(new MultiLingualContent(englishTag,
-                "Courses: Digital Documents Management, Secure IntangibleProduct Development",
-                1))));
+                new HashSet<>(), InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
+                dummyOU, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                EmploymentPosition.TEACHING_ASSISTANT,
+                Set.of(new MultiLingualContent(englishTag,
+                    "Courses: Digital Documents Management, Secure IntangibleProduct Development",
+                    1))));
         person1.addInvolvement(
             new Employment(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
-                new HashSet<>(), InvolvementType.HIRED_BY, new HashSet<>(), null, sci2zero,
-                EmploymentPosition.COLLABORATOR, Set.of(new MultiLingualContent(englishTag,
-                "TeslaRIS - reingeneering of CRIS at the university of Novi Sad.", 1))));
+                new HashSet<>(), InvolvementType.HIRED_BY, new HashSet<>(), null,
+                sci2zero, true, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                EmploymentPosition.COLLABORATOR,
+                Set.of(new MultiLingualContent(englishTag,
+                    "TeslaRIS - reingeneering of CRIS at the university of Novi Sad.", 1))));
         person1.addInvolvement(
-            new Membership(LocalDate.of(2021, 10, 3), null, ApproveStatus.APPROVED,
-                new HashSet<>(), InvolvementType.MEMBER_OF, new HashSet<>(), null, sci2zero,
+            new Membership(LocalDate.of(2021, 10, 3), null,
+                ApproveStatus.APPROVED, new HashSet<>(), InvolvementType.MEMBER_OF, new HashSet<>(),
+                null, sci2zero, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
                 Set.of(new MultiLingualContent(englishTag,
                     "I just wanted to be around cool kids...", 1)),
                 Set.of(new MultiLingualContent(englishTag,
-                    "Gold member", 1))));
+                    "Gold member", 1)), MembershipType.ASSOCIATE_MEMBER));
         person1.addInvolvement(
             new Education(LocalDate.of(2018, 10, 1), LocalDate.of(2023, 9, 1),
                 ApproveStatus.APPROVED,
-                new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null, dummyOU,
-                Set.of(new MultiLingualContent(englishTag, "Reverse Image Search System", 1),
-                    new MultiLingualContent(englishTag, "Sistem za reverznu pretragu slika", 1)),
-                Set.of(new MultiLingualContent(englishTag, "Master in IntangibleProduct", 1),
+                new HashSet<>(), InvolvementType.STUDIED_AT, new HashSet<>(), null,
+                dummyOU, false, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                Set.of(new MultiLingualContent(englishTag, "Master in Software", 1),
                     new MultiLingualContent(englishTag, "Master inženjer softvera", 1)),
-                Set.of(new MultiLingualContent(englishTag, "Msc", 1))));
+                Set.of(new MultiLingualContent(englishTag, "Msc", 1)),
+                DegreeType.MASTER, EducationStatus.CONCLUDED,
+                new HashSet<>(), new HashSet<>(), new HashSet<>(), null, new HashSet<>(),
+                new HashSet<>()));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "Cybersecurity", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -448,7 +480,7 @@ public class TestingDataInitializer {
                     new HashSet<>(), "application/pdf", 200L, ResourceType.SUPPLEMENT,
                     AccessRights.RESTRICTED_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
                     LocalDateTime.now(),
-                    false, false, null, null, person1)), person1));
+                    false, false, null, null, person1, false)), person1));
         person1.getExpertisesAndSkills().add(new ExpertiseOrSkill(
             Set.of(new MultiLingualContent(englishTag, "CERIF-based systems", 1)),
             Set.of(new MultiLingualContent(englishTag,
@@ -462,11 +494,14 @@ public class TestingDataInitializer {
             Set.of(new MultiLingualContent(englishTag,
                 "1st place on a national cybersecurity competition finals. The competition is conducted in 5-man teams.",
                 1)),
+            Set.of(new MultiLingualContent(englishTag,
+                "cybersecurity\nnational competition\nfirst place\nteams",
+                1)),
             Set.of(new DocumentFile("1st place certificate.pdf", "2222.pdf",
                 new HashSet<>(), "application/pdf", 127L, ResourceType.SUPPLEMENT,
                 AccessRights.OPEN_ACCESS, License.BY_NC, ApproveStatus.APPROVED, true,
-                LocalDateTime.now(), false, false, null, null, person1)),
-            LocalDate.of(2023, 4, 17), person1));
+                LocalDateTime.now(), false, false, null, null, person1, false)),
+            LocalDate.of(2023, 4, 17), null, person1, PrizeType.AWARD, new HashSet<>(), true));
         personRepository.save(person1);
 
         country.getName().add(new MultiLingualContent(serbianTag, "Srbija", 1));
@@ -476,7 +511,8 @@ public class TestingDataInitializer {
         countryRepository.saveAll(List.of(country, country2));
 
         datasetContribution.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Ivan", "R.", "M.", LocalDate.of(2000, 1, 31), null,
+                PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(datasetContribution);
 
         var intangibleProductContribution = new PersonDocumentContribution();
@@ -490,9 +526,11 @@ public class TestingDataInitializer {
         intangibleProductContribution.getInstitutions().add(dummyOU);
         intangibleProductContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
         intangibleProductContribution.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Ivan", "", "M.", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Ivan", "", "M.", LocalDate.of(2000, 1, 31), null,
+                PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(intangibleProductContribution);
 
         dummyOU.getResearchAreas().add(researchArea3);
@@ -502,7 +540,7 @@ public class TestingDataInitializer {
         monograph1.setApproveStatus(ApproveStatus.APPROVED);
         monograph1.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 1", 1)));
-        monograph1.setMonographType(MonographType.BOOK);
+        monograph1.setMonographType(MonographType.EDITED_BOOK);
         var monographContribution = new PersonDocumentContribution();
         monographContribution.setPerson(person2);
         monographContribution.setContributionType(DocumentContributionType.AUTHOR);
@@ -513,9 +551,10 @@ public class TestingDataInitializer {
         monographContribution.setApproveStatus(ApproveStatus.APPROVED);
         monographContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
         monographContribution.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Joachim", "N.", "S.", null, null));
+            new PersonName("Joachim", "N.", "S.", null, null, PersonNameType.DISPLAY_NAME));
 
         monograph1.getContributors().add(monographContribution);
         monographRepository.save(monograph1);
@@ -529,7 +568,7 @@ public class TestingDataInitializer {
 
         monograph2.setTitle(
             Set.of(new MultiLingualContent(serbianTag, "Monografija 2", 1)));
-        monograph2.setMonographType(MonographType.BOOK);
+        monograph2.setMonographType(MonographType.EDITED_BOOK);
         monograph2.setDocumentDate("2024");
         monographRepository.save(monograph2);
 
@@ -537,24 +576,27 @@ public class TestingDataInitializer {
             new User("author2@author.com", passwordEncoder.encode("author2"), "note note note",
                 "Schöpfel", "Joachim", false, false, englishTag, germanTag,
                 researcherAuthority, person2,
-                null, null, UserNotificationPeriod.WEEKLY, false);
+                null, null, UserNotificationPeriod.WEEKLY, false, null);
         userRepository.save(researcherUser2);
 
         var person3 = new Person();
         var postalAddress3 = new PostalAddress(country, new HashSet<>(),
-            new HashSet<>());
+            new HashSet<>(), new HashSet<>(), null);
         var personalInfo3 =
             new PersonalInfo(LocalDate.of(2000, 1, 31), "Serbia", Sex.MALE, postalAddress3,
-                new Contact("test@email.com", "021555769"), new HashSet<>(), new HashSet<>());
+                new PostalAddress(),
+                new Contact("test@email.com", "021555769", "", ""),
+                new Contact("private@email.com", "021111222", "", "067211332"),
+                new HashSet<>(), new HashSet<>());
         person3.setApproveStatus(ApproveStatus.APPROVED);
         person3.setPersonalInfo(personalInfo3);
         person3.setName(
-            new PersonName("Dusan", "", "Nikolic", LocalDate.of(1976, 7, 16), null));
+            new PersonName("Dusan", "", "Nikolic", LocalDate.of(1976, 7, 16), null,
+                PersonNameType.DISPLAY_NAME));
         person3.setScopusAuthorId("14419566900");
         personRepository.save(person3);
 
         var intangibleProductContribution2 = new PersonDocumentContribution();
-//        intangibleProductContribution2.setPerson(person3);
         intangibleProductContribution2.setContributionType(DocumentContributionType.AUTHOR);
         intangibleProductContribution2.setIsMainContributor(false);
         intangibleProductContribution2.setIsCorrespondingContributor(false);
@@ -563,9 +605,10 @@ public class TestingDataInitializer {
         intangibleProductContribution2.setApproveStatus(ApproveStatus.APPROVED);
         intangibleProductContribution2.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
         intangibleProductContribution2.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Dušan", "", "N.", null, null));
+            new PersonName("Dušan", "", "N.", null, null, PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(intangibleProductContribution2);
 
         intangibleProduct.addDocumentContribution(intangibleProductContribution);
@@ -574,16 +617,18 @@ public class TestingDataInitializer {
 
         var person4 = new Person();
         var postalAddress4 = new PostalAddress(country, new HashSet<>(),
-            new HashSet<>());
+            new HashSet<>(), new HashSet<>(), null);
         var personalInfo4 =
             new PersonalInfo(LocalDate.of(1976, 6, 24), "Serbia", Sex.FEMALE, postalAddress4,
-                new Contact("test1@email.com", "021555769"), new HashSet<>(), new HashSet<>());
+                new PostalAddress(),
+                new Contact("test1@email.com", "021555769", "", "065342221"),
+                null, new HashSet<>(), new HashSet<>());
         person4.setApproveStatus(ApproveStatus.APPROVED);
         person4.setPersonalInfo(personalInfo4);
         person4.setName(
-            new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null));
+            new PersonName("Jovana", "", "Stankovic", LocalDate.of(1976, 7, 16), null,
+                PersonNameType.DISPLAY_NAME));
         person4.setScopusAuthorId("14419566900");
-//        person4.setOrcid("0009-0008-0599-0599");
         personRepository.save(person4);
 
         var conferenceEvent3 = new Conference();
@@ -649,7 +694,8 @@ public class TestingDataInitializer {
         thesisContribution.setInstitutions(Set.of(dummyOU));
         thesisContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), person1.getName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(),
+                    "21000"), new Contact("", "", "", "")));
 
         thesis1.setContributors(Set.of(thesisContribution));
         thesisRepository.save(thesis1);
@@ -796,7 +842,7 @@ public class TestingDataInitializer {
             new HashSet<>(), "application/pdf", 127L, ResourceType.SUPPLEMENT,
             AccessRights.OPEN_ACCESS, License.BY_SA, ApproveStatus.APPROVED, true,
             LocalDateTime.now(),
-            false, false, "123.pdf", null, null));
+            false, false, "123.pdf", null, null, false));
         documentIndicatorRepository.save(documentIndicator1);
 
         var eventIndicator1 = new EventIndicator();
@@ -836,7 +882,7 @@ public class TestingDataInitializer {
                 "note note note",
                 "FTN", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
-                dummyOU, commission5, UserNotificationPeriod.WEEKLY, true);
+                dummyOU, commission5, UserNotificationPeriod.WEEKLY, true, null);
         userRepository.save(commissionUser);
 
         var commissionUser2 =
@@ -844,7 +890,7 @@ public class TestingDataInitializer {
                 "note note note",
                 "PMF", "", false, false, serbianTag, serbianTag, commissionAuthority,
                 null,
-                dummyOU2, commission6, UserNotificationPeriod.WEEKLY, true);
+                dummyOU2, commission6, UserNotificationPeriod.WEEKLY, true, null);
         userRepository.save(commissionUser2);
 
         var assessmentResearchArea = new AssessmentResearchArea();
@@ -858,14 +904,14 @@ public class TestingDataInitializer {
                 "Nikola", "Nikolic", false, false, serbianTag, serbianTag,
                 viceDeanForScienceAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY, false);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, false, null);
 
         var institutionalEditorUser =
             new User("editor@editor.com", passwordEncoder.encode("editor"), "note note note",
                 "Nikola", "Markovic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY, true);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, true, null);
 
         var institutionalLibrarianUser =
             new User("librarian@librarian.com", passwordEncoder.encode("librarian"),
@@ -873,7 +919,7 @@ public class TestingDataInitializer {
                 "Mirka", "Maric", false, false, serbianTag, serbianTag,
                 institutionalLibrarianAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.WEEKLY, true);
+                dummyOU, null, UserNotificationPeriod.WEEKLY, true, null);
 
         var headOfLibraryUser =
             new User("head_of_library@library.com", passwordEncoder.encode("head_of_library"),
@@ -881,7 +927,7 @@ public class TestingDataInitializer {
                 "Djordje", "Perovic", false, false, serbianTag, serbianTag,
                 headOfLibraryAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.MONTHLY, true);
+                dummyOU, null, UserNotificationPeriod.MONTHLY, true, null);
 
         var promotionRegistryAdminUser =
             new User("promotion@registry.com", passwordEncoder.encode("promotion_registry"),
@@ -889,14 +935,14 @@ public class TestingDataInitializer {
                 "Davor", "Kontić", false, false, serbianTag, serbianTag,
                 promotionRegistryAdminAuthority,
                 null,
-                dummyOU, null, UserNotificationPeriod.DAILY, true);
+                dummyOU, null, UserNotificationPeriod.DAILY, true, null);
 
         var institutionalEditorUser2 =
             new User("editor2@editor.com", passwordEncoder.encode("editor2"), "note note note",
                 "Marko", "Nikolic", false, false, serbianTag, serbianTag,
                 institutionalEditorAuthority,
                 null,
-                dummyOU2, null, UserNotificationPeriod.WEEKLY, true);
+                dummyOU2, null, UserNotificationPeriod.WEEKLY, true, null);
 
         userRepository.saveAll(
             List.of(viceDeanUser, institutionalEditorUser, institutionalLibrarianUser,
@@ -922,9 +968,11 @@ public class TestingDataInitializer {
         intangibleProductContribution3.getInstitutions().add(dummyOU);
         intangibleProductContribution3.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), new PersonName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
         intangibleProductContribution3.getAffiliationStatement().setDisplayPersonName(
-            new PersonName("Ivan", "", "R. M.", LocalDate.of(2000, 1, 31), null));
+            new PersonName("Ivan", "", "R. M.", LocalDate.of(2000, 1, 31), null,
+                PersonNameType.DISPLAY_NAME));
         personContributionRepository.save(intangibleProductContribution3);
 
         intangibleProduct2.addDocumentContribution(intangibleProductContribution3);
@@ -958,7 +1006,8 @@ public class TestingDataInitializer {
         thesisContribution2.setInstitutions(Set.of(dummyOU));
         thesisContribution2.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), person1.getName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         thesis3.setContributors(Set.of(thesisContribution2));
         thesisRepository.save(thesis3);
@@ -992,7 +1041,8 @@ public class TestingDataInitializer {
         publicationSeriesContribution.setInstitutions(Set.of(dummyOU));
         publicationSeriesContribution.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), person1.getName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         yetAnotherJournal.addContribution(publicationSeriesContribution);
 
@@ -1007,7 +1057,8 @@ public class TestingDataInitializer {
         publicationSeriesContribution2.setInstitutions(Set.of(dummyOU));
         publicationSeriesContribution2.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(), person1.getName(),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         yetAnotherJournal.addContribution(publicationSeriesContribution2);
         journalRepository.save(yetAnotherJournal);
@@ -1036,8 +1087,9 @@ public class TestingDataInitializer {
         thesisContribution3.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person2.getName().getFirstname(), "",
-                    person2.getName().getLastname(), null, null),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                    person2.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         thesis5.getContributors().add(thesisContribution3);
         thesisRepository.save(thesis5);
@@ -1052,6 +1104,7 @@ public class TestingDataInitializer {
                 "Doktorska disertacija, zavrsen uvid, odbranjena", 1)));
         thesis6.setLanguage(serbianLanguage);
         thesis6.getPublicReviewStartDates().add(LocalDate.of(2024, 12, 20));
+        thesis6.getPublicReviewEndDates().add(LocalDate.of(2025, 1, 20));
         thesis6.setThesisDefenceDate(LocalDate.of(2025, 2, 20));
         thesis6.setPublicReviewCompleted(true);
 
@@ -1071,8 +1124,9 @@ public class TestingDataInitializer {
         thesisContribution4.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person3.getName().getFirstname(), "",
-                    person3.getName().getLastname(), null, null),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                    person3.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         thesis6.getContributors().add(thesisContribution4);
         thesisRepository.save(thesis6);
@@ -1148,8 +1202,9 @@ public class TestingDataInitializer {
         thesisContribution5.setAffiliationStatement(
             new AffiliationStatement(new HashSet<>(),
                 new PersonName(person3.getName().getFirstname(), "",
-                    person3.getName().getLastname(), null, null),
-                new PostalAddress(country, new HashSet<>(), new HashSet<>()), new Contact("", "")));
+                    person3.getName().getLastname(), null, null, PersonNameType.DISPLAY_NAME),
+                new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null),
+                new Contact("", "", "", "")));
 
         thesis7.getContributors().add(thesisContribution5);
         thesisRepository.save(thesis7);
@@ -1195,5 +1250,26 @@ public class TestingDataInitializer {
         exhibition2.setDateTo(LocalDate.of(2024, 11, 17));
         exhibition2.setSerialEvent(false);
         exhibitionRepository.save(exhibition2);
+
+        var position1 = new EmploymentPositionHierarchy();
+        position1.setName(Set.of(new MultiLingualContent(serbianTag, "Position Root", 1)));
+        position1.setProcessedName("ROOT");
+        position1.setSchemeName("test");
+
+        var position2 = new EmploymentPositionHierarchy();
+        position2.setName(Set.of(new MultiLingualContent(serbianTag, "Position Level 1", 1)));
+        position2.setProcessedName("LEVEL_1");
+        position2.setSchemeName("test");
+        position2.setSuperEmploymentPosition(position1);
+
+        var position3 = new EmploymentPositionHierarchy();
+        position3.setName(Set.of(new MultiLingualContent(serbianTag, "Position Leaf", 1)));
+        position3.setProcessedName("LEAF");
+        position3.setSchemeName("test");
+        position3.setSuperEmploymentPosition(position2);
+
+        employmentPositionRepository.saveAll(List.of(position1, position2, position3));
+
+        projectDataInitializer.initializeProjectTestingData(englishTag, dummyOU);
     }
 }

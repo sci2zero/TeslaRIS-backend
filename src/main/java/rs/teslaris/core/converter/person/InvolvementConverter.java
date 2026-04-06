@@ -3,6 +3,7 @@ package rs.teslaris.core.converter.person;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
+import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.person.involvement.EducationDTO;
 import rs.teslaris.core.dto.person.involvement.EmploymentDTO;
@@ -12,6 +13,7 @@ import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 public class InvolvementConverter {
 
@@ -19,18 +21,41 @@ public class InvolvementConverter {
         var dto = new EducationDTO();
         setCommonFields(education, dto);
 
-        var thesisTitle =
-            MultilingualContentConverter.getMultilingualContentDTO(
-                education.getThesisTitle());
         var title = MultilingualContentConverter.getMultilingualContentDTO(
             education.getTitle());
         var abbreviationTitle =
             MultilingualContentConverter.getMultilingualContentDTO(
                 education.getAbbreviationTitle());
 
-        dto.setThesisTitle(thesisTitle);
+        if (Objects.nonNull(education.getThesis())) {
+            dto.setThesisId(education.getThesis().getId());
+            dto.setThesisTitle(MultilingualContentConverter.getMultilingualContentDTO(
+                education.getThesis().getTitle()));
+        }
+
+        if (CollectionOperations.containsValues(education.getSupervisors())) {
+            education.getSupervisors().forEach(supervisor -> {
+                dto.getSupervisorIds().add(supervisor.getId());
+                dto.getSupervisorNames().add(supervisor.getName().toText());
+            });
+        } else {
+            dto.setDisplaySupervisors(MultilingualContentConverter.getMultilingualContentDTO(
+                education.getDisplayThesisSupervisors()));
+        }
+
         dto.setTitle(title);
         dto.setAbbreviationTitle(abbreviationTitle);
+        dto.setDegreeCode(MultilingualContentConverter.getMultilingualContentDTO(
+            education.getDegreeCode()));
+        dto.setDegreeClassification(MultilingualContentConverter.getMultilingualContentDTO(
+            education.getDegreeClassification()));
+        dto.setDegreeType(education.getDegreeType());
+        dto.setEducationStatus(education.getEducationStatus());
+
+        education.getResearchAreas().forEach(researchArea -> {
+            dto.getResearchAreasId().add(researchArea.getId());
+            dto.getResearchAreas().add(ResearchAreaConverter.toDTO(researchArea));
+        });
 
         return dto;
     }
@@ -47,6 +72,7 @@ public class InvolvementConverter {
 
         dto.setContributionDescription(contributionDescription);
         dto.setRole(role);
+        dto.setMembershipType(membership.getMembershipType());
 
         return dto;
     }
@@ -78,6 +104,15 @@ public class InvolvementConverter {
                 Collectors.toList()));
         dto.setInvolvementType(involvement.getInvolvementType());
         dto.setAffiliationStatement(affiliationStatements);
+        dto.setFavorite(involvement.getFavorite());
+        dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
+            involvement.getDescription()));
+        dto.setKeywords(MultilingualContentConverter.getMultilingualContentDTO(
+            involvement.getKeywords()));
+
+        if (Objects.nonNull(involvement.getUris())) {
+            dto.setUris(involvement.getUris());
+        }
 
         if (Objects.nonNull(involvement.getOrganisationUnit())) {
             dto.setOrganisationUnitId(involvement.getOrganisationUnit().getId());

@@ -1,6 +1,7 @@
 package rs.teslaris.exporter.model.converter.skgif;
 
 import java.util.List;
+import java.util.Objects;
 import rs.teslaris.core.model.skgif.common.SKGIFIdentifier;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.search.StringUtil;
@@ -10,6 +11,10 @@ import rs.teslaris.exporter.model.common.ExportMultilingualContent;
 public class BaseConverter {
 
     protected static String extractTitleFromMC(List<ExportMultilingualContent> exportMC) {
+        if (Objects.isNull(exportMC)) {
+            return "";
+        }
+
         return exportMC.stream()
             .filter(
                 mc -> mc.getLanguageTag().equalsIgnoreCase(LanguageAbbreviations.ENGLISH))

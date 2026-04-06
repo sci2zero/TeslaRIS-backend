@@ -67,6 +67,7 @@ public class AgentConverter extends BaseConverter {
 
     public static List<SKGIFOrganisation> toSKGIF(ExportOrganisationUnit institution) {
         var institutionName = extractTitleFromMC(institution.getName());
+        var institutionNameAbbreviation = extractTitleFromMC(institution.getNameAbbreviation());
 
         var otherNames = Optional.ofNullable(institution.getName())
             .orElse(Collections.emptyList())
@@ -103,7 +104,7 @@ public class AgentConverter extends BaseConverter {
             .entityType("organisation")
             .name(institutionName)
             .otherNames(otherNames)
-            .shortName(institution.getNameAbbreviation())
+            .shortName(institutionNameAbbreviation)
             .website(website.isBlank() ? null : website)
             .country(institution.getCountry())
             .identifiers(identifiers)

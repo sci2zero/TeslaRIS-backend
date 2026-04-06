@@ -100,4 +100,7 @@ public class PersonIndex implements ExternallyEnrichable {
 
     @Field(type = FieldType.Boolean, name = "display_birthdate")
     private Boolean displayBirthdate = false;
+
+    @Field(type = FieldType.Boolean, name = "display_biography")
+    private Boolean displayBiography = false;
 }

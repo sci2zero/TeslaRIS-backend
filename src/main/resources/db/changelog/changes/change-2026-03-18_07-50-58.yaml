@@ -1,0 +1,448 @@
+databaseChangeLog:
+- changeSet:
+    id: 1773820289465-26
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: multi_lingual_content
+        constraintName: fk1ficaimvtsh8yneun79aiyjyf
+- changeSet:
+    id: 1773820289465-27
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: multi_lingual_content
+        constraintName: fk5v0vkdtv4jt4txdcmpyen4j40
+- changeSet:
+    id: 1773820289465-28
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: multi_lingual_content
+        constraintName: fk9qx52vrlfr8ukpynbuyw9t8t5
+- changeSet:
+    id: 1773820289465-29
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: multi_lingual_content
+        constraintName: fkd3pao6yara2unybabn6x1vx15
+- changeSet:
+    id: 1773820289465-30
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: multi_lingual_content
+        constraintName: fkdgjmcfy38ac9iiw3j8rxgsj62
+- changeSet:
+    id: 1773820289465-31
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: multi_lingual_content
+        constraintName: fkjga7g7dwfedlu5sjtmsb42v53
+- changeSet:
+    id: 1773820289465-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_priv_city_pkey
+            name: mlc_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_priv_city_pkey
+            name: person_id
+            type: INTEGER
+        tableName: person_priv_city
+- changeSet:
+    id: 1773820289465-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_priv_state_pkey
+            name: mlc_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_priv_state_pkey
+            name: person_id
+            type: INTEGER
+        tableName: person_priv_state
+- changeSet:
+    id: 1773820289465-4
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_priv_street_pkey
+            name: mlc_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_priv_street_pkey
+            name: person_id
+            type: INTEGER
+        tableName: person_priv_street
+- changeSet:
+    id: 1773820289465-5
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_prof_city_pkey
+            name: mlc_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_prof_city_pkey
+            name: person_id
+            type: INTEGER
+        tableName: person_prof_city
+- changeSet:
+    id: 1773820289465-6
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_prof_state_pkey
+            name: mlc_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_prof_state_pkey
+            name: person_id
+            type: INTEGER
+        tableName: person_prof_state
+- changeSet:
+    id: 1773820289465-7
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_prof_street_pkey
+            name: mlc_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_prof_street_pkey
+            name: person_id
+            type: INTEGER
+        tableName: person_prof_street
+- changeSet:
+    id: 1773820289465-8
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: person_priv_city_mlc_id_key
+        tableName: person_priv_city
+- changeSet:
+    id: 1773820289465-9
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: person_priv_state_mlc_id_key
+        tableName: person_priv_state
+- changeSet:
+    id: 1773820289465-10
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: person_priv_street_mlc_id_key
+        tableName: person_priv_street
+- changeSet:
+    id: 1773820289465-11
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: person_prof_city_mlc_id_key
+        tableName: person_prof_city
+- changeSet:
+    id: 1773820289465-12
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: person_prof_state_mlc_id_key
+        tableName: person_prof_state
+- changeSet:
+    id: 1773820289465-13
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: mlc_id
+        constraintName: person_prof_street_mlc_id_key
+        tableName: person_prof_street
+- changeSet:
+    id: 1773820289465-14
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: person_prof_city
+        constraintName: fk3kyc9mcgp2wnnkhjnkxwuqr78
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773820289465-15
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: person_prof_street
+        constraintName: fk4hq2bnux88uxo4b2x7stw5xib
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773820289465-16
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: person_priv_city
+        constraintName: fk8rvrb2rr8p665fpm44kkl8rg1
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773820289465-17
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_id
+        baseTableName: person_priv_state
+        constraintName: fk9wrhsos6xc989ao21mmr7u5cg
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773820289465-18
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: person_priv_state
+        constraintName: fkasxej4yuswxgj2v0oyw0tg77a
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773820289465-19
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_id
+        baseTableName: person_prof_state
+        constraintName: fke6wcxtjgf458vgx6ev3bqynrb
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773820289465-20
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_id
+        baseTableName: person_prof_city
+        constraintName: fklyr0wkdllx5ysta2rstyml6uo
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773820289465-21
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_id
+        baseTableName: person_priv_city
+        constraintName: fkmeva6k4rfxj22hib0dar9t7cd
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773820289465-22
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_id
+        baseTableName: person_prof_street
+        constraintName: fknhvrc3l4s7tacpo9gpyi551m8
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773820289465-23
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_id
+        baseTableName: person_priv_street
+        constraintName: fknteflaqpy0ibna2u52615b38j
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773820289465-24
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: person_prof_state
+        constraintName: fks6vr0xfseb6088c8t78aqw5vw
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773820289465-25
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: mlc_id
+        baseTableName: person_priv_street
+        constraintName: fkst3vcxcqf862w3u4cl6guolga
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773820289465-32
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: private_city_id
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773820289465-33
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: private_state_id
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773820289465-34
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: private_street_id
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773820289465-35
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: professional_city_id
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773820289465-36
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: professional_state_id
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773820289465-37
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: professional_street_id
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773820289465-1
+    author: milospopovic (generated)
+    changes:
+    - dropDefaultValue:
+        columnDataType: boolean
+        columnName: favorite
+        tableName: prizes
+

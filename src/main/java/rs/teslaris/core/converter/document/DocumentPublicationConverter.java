@@ -83,13 +83,11 @@ public class DocumentPublicationConverter {
             publicationDTO.setEventId(publication.getEvent().getId());
         }
 
-        publication.getFileItems().forEach(fileItem -> {
-            publicationDTO.getFileItems().add(DocumentFileConverter.toDTO(fileItem));
-        });
+        publication.getFileItems().forEach(
+            fileItem -> publicationDTO.getFileItems().add(DocumentFileConverter.toDTO(fileItem)));
 
-        publication.getProofs().forEach(proof -> {
-            publicationDTO.getProofs().add(DocumentFileConverter.toDTO(proof));
-        });
+        publication.getProofs()
+            .forEach(proof -> publicationDTO.getProofs().add(DocumentFileConverter.toDTO(proof)));
     }
 
     public static void setCommonFields(Document publication, BibTeXEntry entry,

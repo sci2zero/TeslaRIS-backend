@@ -262,7 +262,7 @@ public class ProceedingsPublicationServiceTest {
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
-            new PostalAddress(country, new HashSet<>(), new HashSet<>()));
+            new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), ""));
         contribution.setAffiliationStatement(affiliationStatement);
         publication.setContributors(Set.of(contribution));
 

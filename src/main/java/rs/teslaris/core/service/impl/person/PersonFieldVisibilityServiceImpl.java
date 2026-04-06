@@ -44,6 +44,7 @@ public class PersonFieldVisibilityServiceImpl extends JPAServiceImpl<PersonField
             savedConfiguration.getContactEmailVisible(),
             savedConfiguration.getDateOfBirthVisible(),
             savedConfiguration.getSexVisible(),
+            savedConfiguration.getBiographyVisible(),
             savedConfiguration.getBirthplaceVisible()
         );
     }
@@ -64,6 +65,7 @@ public class PersonFieldVisibilityServiceImpl extends JPAServiceImpl<PersonField
         savedConfiguration.setContactEmailVisible(configuration.contactEmailVisible());
         savedConfiguration.setDateOfBirthVisible(configuration.dateOfBirthVisible());
         savedConfiguration.setSexVisible(configuration.sexVisible());
+        savedConfiguration.setBiographyVisible(configuration.biographyVisible());
         savedConfiguration.setBirthplaceVisible(configuration.birthplaceVisible());
 
         personFieldVisibilityRepository.save(savedConfiguration);

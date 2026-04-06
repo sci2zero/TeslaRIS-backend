@@ -16,4 +16,8 @@ public class ContactDTO {
     private String contactEmail;
 
     private String phoneNumber;
+
+    private String faxNumber;
+
+    private String mobilePhoneNumber;
 }

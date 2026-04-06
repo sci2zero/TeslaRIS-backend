@@ -5,9 +5,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -93,8 +97,11 @@ public class RegistryBookController {
     @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRY_BOOK', 'REMOVE_FROM_PROMOTION', 'READ_REGISTRY_BOOK')")
     @PromotionEditAndUsageCheck
     public Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(
-        @PathVariable Integer promotionId, Pageable pageable) {
-        return registryBookService.getRegistryBookEntriesForPromotion(promotionId, pageable);
+        @PathVariable Integer promotionId,
+        @RequestParam(required = false) Integer institutionId,
+        Pageable pageable) {
+        return registryBookService.getRegistryBookEntriesForPromotion(promotionId, institutionId,
+            pageable);
     }
 
     @GetMapping("/non-promoted")
@@ -284,5 +291,21 @@ public class RegistryBookController {
     public void removeAllFromFinishedPromotion(@PathVariable Integer promotionId,
                                                @RequestParam Boolean deletePromotion) {
         registryBookService.removeAllFromFinishedPromotion(promotionId, deletePromotion);
+    }
+
+    @GetMapping("/promotees-file/{promotionId}")
+    @PromotionEditAndUsageCheck
+    public ResponseEntity<ByteArrayResource> downloadPromoteesList(
+        @PathVariable Integer promotionId) {
+        var file = registryBookService.downloadPromoteesList(promotionId);
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(
+                HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=promotees_" + promotionId + ".xlsx"
+            )
+            .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(file.contentLength()))
+            .body(file);
     }
 }

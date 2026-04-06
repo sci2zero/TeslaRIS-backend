@@ -24,6 +24,7 @@ import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -448,8 +449,9 @@ public class DocumentAssessmentClassificationServiceImpl
                 .runQuery(findAllDocumentPublicationsByFilters(fromDate.toString(),
                         publicationTypes.stream().map(Enum::name).toList(),
                         authorIds, orgUnitIds, entityIds),
-                    PageRequest.of(pageNumber, chunkSize), DocumentPublicationIndex.class,
-                    "document_publication").getContent();
+                    PageRequest.of(pageNumber, chunkSize,
+                        Sort.by(Sort.Direction.ASC, "databaseId")),
+                    DocumentPublicationIndex.class, "document_publication").getContent();
 
             publicationClassificationService.classifyPublicationsChunk(chunk, presetCommission,
                 assessFunction, batchClassifications);
@@ -499,6 +501,10 @@ public class DocumentAssessmentClassificationServiceImpl
             assessmentClassificationService.readAssessmentClassificationByCode(assessmentCode);
 
         commissions.forEach(commission -> {
+            if (commission.getIsReportingCommission()) {
+                return;
+            }
+
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
                 thesisIndex.getDatabaseId(), commission.getId(), false);
 
@@ -526,6 +532,10 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         commissions.forEach(commission -> {
+            if (commission.getIsReportingCommission()) {
+                return;
+            }
+
             var monographAssessmentClassification =
                 documentAssessmentClassificationRepository.findAssessmentClassificationsForDocumentAndCommission(
                     monographPublicationIndex.getMonographId(), commission.getId());
@@ -606,6 +616,10 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         commissions.forEach(commission -> {
+            if (commission.getIsReportingCommission()) {
+                return;
+            }
+
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
                 publicationIndex.getDatabaseId(), commission.getId(), false);
 
@@ -650,7 +664,7 @@ public class DocumentAssessmentClassificationServiceImpl
                         ).ifPresent(classifications::add);
                     }
                 },
-                publicationIndex.getYear(), publicationIndex.getDatabaseId(),
+                publicationIndex.getYear(), publicationIndex,
                 publicationIndex.getPublicationType(), commission,
                 List.of(
                     publicationIndex.getYear(),
@@ -677,7 +691,15 @@ public class DocumentAssessmentClassificationServiceImpl
             return;
         }
 
+        var conferenceDate =
+            conferenceService.findConferenceById(proceedingsPublicationIndex.getEventId())
+                .getDateFrom();
+
         commissions.forEach(commission -> {
+            if (commission.getIsReportingCommission()) {
+                return;
+            }
+
             documentAssessmentClassificationRepository.deleteByDocumentIdAndCommissionId(
                 proceedingsPublicationIndex.getDatabaseId(), commission.getId(), false);
 
@@ -720,9 +742,10 @@ public class DocumentAssessmentClassificationServiceImpl
                         }
                     }
                 },
-                proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex.getDatabaseId(),
+                proceedingsPublicationIndex.getYear(), proceedingsPublicationIndex,
                 proceedingsPublicationIndex.getPublicationType(), commission,
-                List.of(proceedingsPublicationIndex.getYear()),
+                List.of(Objects.nonNull(conferenceDate) ?
+                    conferenceDate.getYear() : proceedingsPublicationIndex.getYear()),
                 batchedClassifications
             );
         });
@@ -833,7 +856,7 @@ public class DocumentAssessmentClassificationServiceImpl
 
     private void performPublicationAssessment(
         TriConsumer<Integer, ArrayList<Pair<AssessmentClassification, Set<MultiLingualContent>>>, Commission> yearHandler,
-        Integer classificationYear, Integer documentId, String documentPublicationType,
+        Integer classificationYear, DocumentPublicationIndex index, String documentPublicationType,
         Commission commission, List<Integer> yearsToConsider,
         ArrayList<DocumentAssessmentClassification> batchedClassifications) {
         var classifications =
@@ -843,8 +866,10 @@ public class DocumentAssessmentClassificationServiceImpl
             yearHandler.accept(year, classifications, commission)
         );
 
-        if (classifications.isEmpty()) {
+        if (classifications.isEmpty() && Objects.nonNull(index.getJournalId())) {
             addFallbackJournalClassification(classifications);
+        } else if (classifications.isEmpty()) {
+            return;
         }
 
         var bestClassification =
@@ -853,7 +878,7 @@ public class DocumentAssessmentClassificationServiceImpl
         bestClassification.ifPresent((documentClassification) -> {
             handleClassification(
                 documentClassification.a, commission,
-                documentId, documentPublicationType,
+                index.getDatabaseId(), documentPublicationType,
                 classificationYear, batchedClassifications,
                 true
             );
@@ -1065,7 +1090,6 @@ public class DocumentAssessmentClassificationServiceImpl
         List<Integer> authorIds,
         List<Integer> organisationUnitIds,
         List<Integer> publishedInIds) {
-
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(sb -> sb.range(r -> r.field("last_edited").gte(JsonData.of(date))));
             b.must(sb -> sb.terms(t -> t.field("type")

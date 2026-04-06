@@ -72,7 +72,9 @@ import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.repository.document.DocumentRepository;
+import rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.DocumentPublicationServiceImpl;
@@ -336,7 +338,7 @@ public class DocumentPublicationServiceTest {
         var result =
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
                 pageable, SearchRequestType.SIMPLE, institutionId, commissionId, false, false,
-                null, false, false, false);
+                null, false, false, false, null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -357,7 +359,7 @@ public class DocumentPublicationServiceTest {
             documentPublicationService.searchDocumentPublications(new ArrayList<>(tokens),
                 pageable, SearchRequestType.ADVANCED, null, null,
                 null, null, new ArrayList<>(), false,
-                false, false);
+                false, false, null);
 
         // then
         assertEquals(result.getTotalElements(), 2L);
@@ -728,15 +730,18 @@ public class DocumentPublicationServiceTest {
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
             .thenReturn(Optional.of(documentIndex));
-        var commissions = List.of(1, 2);
-        when(commissionRepository.findCommissionsThatAssessedDocument(documentId)).thenReturn(
-            commissions);
+        var assessments =
+            List.of(new AssessmentClassificationBasicInfo(5, "M84", false),
+                new AssessmentClassificationBasicInfo(4, "M83", true));
+        when(commissionRepository.findAssessmentClassificationBasicInfoForDocument(
+            documentId)).thenReturn(
+            assessments);
 
         // When
         documentPublicationService.reindexDocumentVolatileInformation(documentId);
 
         // Then
-        verify(documentIndex).setAssessedBy(commissions);
+        verify(documentIndex).setAssessedBy(any());
     }
 
     @Test
@@ -1229,7 +1234,8 @@ public class DocumentPublicationServiceTest {
         var doc = new Dataset();
         doc.setContributors(new HashSet<>(Set.of(new PersonDocumentContribution() {{
             setAffiliationStatement(new AffiliationStatement() {{
-                setDisplayPersonName(new PersonName("John", null, "Doe", null, null));
+                setDisplayPersonName(
+                    new PersonName("John", null, "Doe", null, null, PersonNameType.DISPLAY_NAME));
             }});
             setContributionType(DocumentContributionType.AUTHOR);
             setIsCorrespondingContributor(false);
@@ -1279,7 +1285,7 @@ public class DocumentPublicationServiceTest {
         doReturn(emptyPage)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any(), any(), any());
+                any(), any(), any(), any(), any());
 
         // When
         spyService.deleteNonManagedDocuments();
@@ -1302,7 +1308,7 @@ public class DocumentPublicationServiceTest {
         doReturn(page)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any(), any(), any());
+                any(), any(), any(), any(), any());
         doNothing()
             .when(spyService)
             .deleteDocumentPublication(any());
@@ -1330,7 +1336,7 @@ public class DocumentPublicationServiceTest {
         doReturn(firstPage)
             .when(spyService)
             .searchDocumentPublications(any(), any(), any(), any(), any(), any(), anyBoolean(),
-                any(), any(), any(), any());
+                any(), any(), any(), any(), any());
         doNothing()
             .when(spyService)
             .deleteDocumentPublication(any());
@@ -1341,7 +1347,7 @@ public class DocumentPublicationServiceTest {
         // Then
         verify(spyService).deleteDocumentPublication(10);
         verify(spyService, times(1)).searchDocumentPublications(any(), any(), any(), any(), any(),
-            any(), anyBoolean(), any(), any(), any(), any());
+            any(), anyBoolean(), any(), any(), any(), any(), any());
     }
 
     @Test

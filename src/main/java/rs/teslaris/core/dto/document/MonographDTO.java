@@ -38,4 +38,6 @@ public class MonographDTO extends DocumentDTO implements PublishableDTO, InSerie
     private Integer publisherId;
 
     private Boolean authorReprint;
+
+    private String udc;
 }

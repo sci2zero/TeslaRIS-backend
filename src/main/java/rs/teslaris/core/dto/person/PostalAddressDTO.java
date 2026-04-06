@@ -26,4 +26,10 @@ public class PostalAddressDTO {
     @Valid
     @NotNull(message = "You have to provide a city.")
     private List<MultilingualContentDTO> city;
+
+    @Valid
+    @NotNull(message = "You have to provide a state.")
+    private List<MultilingualContentDTO> state;
+
+    private String postalNumber;
 }

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
@@ -59,6 +60,7 @@ import rs.teslaris.core.model.oaipmh.publication.Publication;
 import rs.teslaris.core.model.oaipmh.publication.PublishedIn;
 import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.document.ThesisResearchOutputRepository;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.StringUtil;
@@ -454,8 +456,9 @@ public class ExportDocumentConverter extends ExportConverterBase {
 
         if (computeRelations) {
             var relations = getRelatedInstitutions(document);
-            commonExportDocument.getRelatedInstitutionIds().addAll(relations);
-            commonExportDocument.getActivelyRelatedInstitutionIds().addAll(relations);
+            commonExportDocument.getRelatedInstitutionIds().addAll(relations.a);
+            commonExportDocument.getActivelyRelatedInstitutionIds().addAll(relations.b);
+            commonExportDocument.getYearOfPublicationInstitutionIds().addAll(relations.c);
         }
 
         commonExportDocument.setOpenAccess(false);
@@ -529,24 +532,39 @@ public class ExportDocumentConverter extends ExportConverterBase {
         return exportContribution;
     }
 
-    private static Set<Integer> getRelatedInstitutions(Document document) {
+    private static Triple<Set<Integer>, Set<Integer>, Set<Integer>> getRelatedInstitutions(
+        Document document) {
         var relations = new HashSet<Integer>();
+        var activeRelations = new HashSet<Integer>();
+        var yearOfPublicationRelations = new HashSet<Integer>();
+
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
-            document.getId()).ifPresent(documentIndex -> {
-            relations.addAll(documentIndex.getOrganisationUnitIds());
-        });
+                document.getId())
+            .ifPresent(documentIndex -> {
+                relations.addAll(documentIndex.getOrganisationUnitIds());
+                yearOfPublicationRelations.addAll(
+                    documentIndex.getOrganisationUnitIdsYearOfPublication());
+
+                if (documentIndex.getType().equals(DocumentPublicationType.THESIS.name())) {
+                    activeRelations.addAll(documentIndex.getOrganisationUnitIdsActive());
+                } else {
+                    activeRelations.addAll(relations);
+                }
+            });
 
         if (document instanceof Proceedings) {
             relations.addAll(
                 documentRepository.findInstitutionIdsByProceedingsIdAndAuthorContribution(
                     document.getId()));
+            activeRelations.addAll(relations);
         } else if (document instanceof Monograph) {
             relations.addAll(
                 documentRepository.findInstitutionIdsByMonographIdAndAuthorContribution(
                     document.getId()));
+            activeRelations.addAll(relations);
         }
 
-        return relations;
+        return new Triple<>(relations, activeRelations, yearOfPublicationRelations);
     }
 
     private static void addPublisherInfo(ExportDocument commonExportDocument, Publisher publisher) {

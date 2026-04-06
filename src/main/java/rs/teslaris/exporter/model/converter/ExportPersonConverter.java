@@ -65,9 +65,9 @@ public class ExportPersonConverter extends ExportConverterBase {
         commonExportPerson.setOrcid(person.getOrcid());
         commonExportPerson.setScopusAuthorId(person.getScopusAuthorId());
         commonExportPerson.setSex(person.getPersonalInfo().getSex());
-        if (Objects.nonNull(person.getPersonalInfo().getContact())) {
+        if (Objects.nonNull(person.getPersonalInfo().getProfessionalContact())) {
             commonExportPerson.getElectronicAddresses()
-                .add(person.getPersonalInfo().getContact().getContactEmail());
+                .add(person.getPersonalInfo().getProfessionalContact().getContactEmail());
         }
         commonExportPerson.getOldIds().addAll(person.getOldIds());
 

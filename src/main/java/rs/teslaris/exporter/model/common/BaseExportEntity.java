@@ -36,4 +36,7 @@ public abstract class BaseExportEntity {
 
     @Field("actively_related_institution_ids")
     private Set<Integer> activelyRelatedInstitutionIds = new HashSet<>();
+
+    @Field("year_of_publication_institution_ids")
+    private Set<Integer> yearOfPublicationInstitutionIds = new HashSet<>();
 }

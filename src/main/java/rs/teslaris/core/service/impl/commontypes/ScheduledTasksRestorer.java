@@ -195,6 +195,7 @@ public class ScheduledTasksRestorer {
         Map<String, Object> data = metadata.getMetadata();
 
         var userId = (Integer) data.get("userId");
+        var shortened = Boolean.parseBoolean((String) data.get("shortened"));
         var publicReviewLengthDays = (Integer) data.get("publicReviewLengthDays");
         var types = objectMapper.convertValue(
             data.get("types"), new TypeReference<ArrayList<ThesisType>>() {
@@ -208,7 +209,7 @@ public class ScheduledTasksRestorer {
         }
 
         thesisService.schedulePublicReviewEndCheck(timeToRun, types, publicReviewLengthDays, userId,
-            metadata.getRecurrenceType());
+            metadata.getRecurrenceType(), shortened);
     }
 
     private void restoreMaintenanceMode(ScheduledTaskMetadata metadata) {

@@ -48,11 +48,6 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
             "WHERE psac.publicationSeries.id = :journalId")
     List<Integer> findCommissionsThatClassifiedJournal(Integer journalId);
 
-    @Query("SELECT c.id FROM Commission c LEFT JOIN DocumentAssessmentClassification eac " +
-        "ON eac.commission.id = c.id " +
-        "WHERE eac.document.id = :documentId")
-    List<Integer> findCommissionsThatAssessedDocument(Integer documentId);
-
     @Query("SELECT c.id FROM Commission c " +
         "LEFT JOIN PrizeAssessmentClassification pac " +
         "ON pac.commission.id = c.id " +
@@ -65,10 +60,10 @@ public interface CommissionRepository extends JpaRepository<Commission, Integer>
             )
             FROM DocumentAssessmentClassification eac
             WHERE eac.document.id = :documentId
-              AND eac.commission.id IN :commissionIds
         """)
-    List<AssessmentClassificationBasicInfo> findAssessmentClassificationBasicInfoForDocumentAndCommissions(
-        Integer documentId, List<Integer> commissionIds);
+    List<AssessmentClassificationBasicInfo> findAssessmentClassificationBasicInfoForDocument(
+        Integer documentId
+    );
 
     @Query("""
             SELECT NEW rs.teslaris.core.repository.institution.AssessmentClassificationBasicInfo(

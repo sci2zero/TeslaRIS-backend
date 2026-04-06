@@ -61,12 +61,14 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.institution.OrganisationUnitsRelation;
+import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.cruddelegate.OrganisationUnitsRelationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
@@ -81,6 +83,7 @@ import rs.teslaris.core.util.files.ImageUtil;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.functional.Triple;
+import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
@@ -124,6 +127,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
     private final FileService fileService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final CountryService countryService;
 
     @Value("${relation.approved_by_default}")
     private Boolean relationApprovedByDefault;
@@ -576,7 +581,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setName(
             multilingualContentService.getMultilingualContent(organisationUnitDTO.getName())
         );
-        organisationUnit.setNameAbbreviation(organisationUnitDTO.getNameAbbreviation());
+        organisationUnit.setNameAbbreviation(
+            multilingualContentService.getMultilingualContent(
+                organisationUnitDTO.getNameAbbreviation())
+        );
+        organisationUnit.setDescription(
+            multilingualContentService.getMultilingualContent(organisationUnitDTO.getDescription())
+        );
         organisationUnit.setKeyword(
             multilingualContentService.getMultilingualContent(
                 organisationUnitDTO.getKeyword())
@@ -612,9 +623,91 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             "rorExistsError"
         );
 
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getRinggold(),
+            organisationUnit.getId(),
+            "^[0-9]+$",
+            organisationUnitRepository::existsByRinggold,
+            organisationUnit::setRinggold,
+            "ringgoldFormatError",
+            "ringgoldExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getFundref(),
+            organisationUnit.getId(),
+            "^[0-9]+$",
+            organisationUnitRepository::existsByFundref,
+            organisationUnit::setFundref,
+            "fundrefFormatError",
+            "fundrefExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getIsni(),
+            organisationUnit.getId(),
+            "^[0-9X]{16}$",
+            organisationUnitRepository::existsByIsni,
+            organisationUnit::setIsni,
+            "isniFormatError",
+            "isniExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getAthensId(),
+            organisationUnit.getId(),
+            ".*", // no strict format
+            organisationUnitRepository::existsByAthensId,
+            organisationUnit::setAthensId,
+            "athensIdFormatError",
+            "athensIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getNcesId(),
+            organisationUnit.getId(),
+            "^[0-9]+$",
+            organisationUnitRepository::existsByNcesId,
+            organisationUnit::setNcesId,
+            "ncesIdFormatError",
+            "ncesIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getFctId(),
+            organisationUnit.getId(),
+            "^[0-9A-Za-z\\-]+$",
+            organisationUnitRepository::existsByFctId,
+            organisationUnit::setFctId,
+            "fctIdFormatError",
+            "fctIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getDgeecId(),
+            organisationUnit.getId(),
+            "^[0-9A-Za-z\\-]+$",
+            organisationUnitRepository::existsByDgeecId,
+            organisationUnit::setDgeecId,
+            "dgeecIdFormatError",
+            "dgeecIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            organisationUnitDTO.getNifId(),
+            organisationUnit.getId(),
+            "^[0-9]+$",
+            organisationUnitRepository::existsByNifId,
+            organisationUnit::setNifId,
+            "nifIdFormatError",
+            "nifIdExistsError"
+        );
+
         if (Objects.nonNull(organisationUnitDTO.getOldId())) {
             organisationUnit.getOldIds().add(organisationUnitDTO.getOldId());
         }
+
+        setPostalAddressInfo(organisationUnit, organisationUnitDTO);
 
         var researchAreas = researchAreaService.getResearchAreasByIds(
             organisationUnitDTO.getResearchAreasId());
@@ -623,8 +716,38 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         organisationUnit.setLocation(
             GeoLocationConverter.fromDTO(organisationUnitDTO.getLocation()));
 
+        if (!StringUtil.valueExists(organisationUnit.getLocation().getAddress())) {
+            var street = StringUtil.getStringContent(
+                organisationUnit.getPostalAddress().getStreetAndNumber(),
+                LanguageAbbreviations.SERBIAN);
+            var city = StringUtil.getStringContent(organisationUnit.getPostalAddress().getCity(),
+                LanguageAbbreviations.SERBIAN);
+            var state = StringUtil.getStringContent(organisationUnit.getPostalAddress().getState(),
+                LanguageAbbreviations.SERBIAN);
+
+            var parts = new ArrayList<String>();
+            if (StringUtil.valueExists(street)) {
+                parts.add(street);
+            }
+            if (StringUtil.valueExists(city)) {
+                parts.add(city);
+            }
+            if (StringUtil.valueExists(state)) {
+                parts.add(state);
+            }
+
+            String address = String.join(", ", parts);
+
+            organisationUnit.getLocation().setAddress(address);
+        }
+
         organisationUnit.setContact(
             ContactConverter.fromDTO(organisationUnitDTO.getContact()));
+
+        organisationUnit.setSector(organisationUnitDTO.getSector());
+        organisationUnit.setStartup(
+            Objects.requireNonNullElse(organisationUnitDTO.getStartup(), false));
+        organisationUnit.setDateEstablished(organisationUnitDTO.getDateEstablished());
 
         if (Objects.nonNull(organisationUnitDTO.getUris())) {
             IdentifierUtil.setUris(organisationUnit.getUris(), organisationUnitDTO.getUris());
@@ -682,6 +805,46 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
             .setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomainCris());
         organisationUnit.getDlConfig()
             .setInstitutionEmailDomain(organisationUnitDTO.getInstitutionEmailDomainDl());
+    }
+
+    private void setPostalAddressInfo(OrganisationUnit organisationUnit,
+                                      OrganisationUnitRequestDTO organisationUnitDTO) {
+        if (Objects.nonNull(organisationUnitDTO.getPostalAddress())) {
+            if (Objects.isNull(organisationUnit.getPostalAddress())) {
+                organisationUnit.setPostalAddress(new PostalAddress());
+            }
+
+            organisationUnit.getPostalAddress().getStreetAndNumber().clear();
+            organisationUnit.getPostalAddress().getStreetAndNumber().addAll(
+                multilingualContentService.getMultilingualContent(
+                    organisationUnitDTO.getPostalAddress().getStreetAndNumber())
+            );
+
+            organisationUnit.getPostalAddress().getCity().clear();
+            organisationUnit.getPostalAddress().getCity().addAll(
+                multilingualContentService.getMultilingualContent(
+                    organisationUnitDTO.getPostalAddress().getCity())
+            );
+
+            organisationUnit.getPostalAddress().getState().clear();
+            organisationUnit.getPostalAddress().getState().addAll(
+                multilingualContentService.getMultilingualContent(
+                    organisationUnitDTO.getPostalAddress().getState())
+            );
+
+            organisationUnit.getPostalAddress()
+                .setPostalNumber(organisationUnitDTO.getPostalAddress().getPostalNumber());
+
+            if (Objects.nonNull(organisationUnitDTO.getPostalAddress().getCountryId()) &&
+                organisationUnitDTO.getPostalAddress().getCountryId() > 0) {
+                organisationUnit.getPostalAddress().setCountry(
+                    countryService.findOne(organisationUnitDTO.getPostalAddress().getCountryId()));
+            } else {
+                organisationUnit.getPostalAddress().setCountry(null);
+            }
+        } else {
+            organisationUnit.setPostalAddress(null);
+        }
     }
 
     @Override
@@ -799,7 +962,16 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         indexMultilingualContent(index, organisationUnit, OrganisationUnit::getName,
             OrganisationUnitIndex::setNameSr,
             OrganisationUnitIndex::setNameOther);
-        index.setNameSr(index.getNameSr() + " " + organisationUnit.getNameAbbreviation());
+
+        var srNameAbbreviation = new StringBuilder();
+        var otherNameAbbreviation = new StringBuilder();
+        multilingualContentService.buildLanguageStrings(srNameAbbreviation, otherNameAbbreviation,
+            organisationUnit.getNameAbbreviation(), true);
+        StringUtil.removeTrailingDelimiters(srNameAbbreviation, otherNameAbbreviation);
+
+        index.setNameSr(index.getNameSr() + " " + srNameAbbreviation);
+        index.setNameOther(index.getNameOther() + " " + otherNameAbbreviation);
+
         index.setNameSrSortable(index.getNameSr());
         index.setNameOtherSortable(index.getNameOther());
 
@@ -962,7 +1134,8 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
 
             List<Thesis> chunk =
                 organisationUnitRepository.fetchAllThesesForOU(organisationUnitId,
-                    PageRequest.of(pageNumber, chunkSize)).getContent();
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
+                    .getContent();
 
             chunk.forEach((thesis) -> {
                 thesis.getOrganisationUnit().getName().forEach(mc -> {

@@ -324,6 +324,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
         monograph.setNumberOfPages(monographDTO.getNumberOfPages());
         monograph.setVolume(monographDTO.getVolume());
         monograph.setNumber(monographDTO.getNumber());
+        monograph.setUdc(monographDTO.getUdc());
 
         if (Objects.nonNull(monographDTO.getLanguageIds())) {
             monographDTO.getLanguageIds()
@@ -556,7 +557,9 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
 
             if (onlyBooks) {
                 b.must(sb -> sb.match(
-                    m -> m.field("publication_type").query(MonographType.BOOK.name())));
+                    m -> m.field("publication_type")
+                        .query(MonographType.EDITED_BOOK.name()))
+                );
             }
             return b;
         })))._toQuery();

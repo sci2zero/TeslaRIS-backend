@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.person.MembershipType;
 
 @Getter
 @Setter
@@ -20,4 +21,5 @@ public class MembershipDTO extends InvolvementDTO {
     @Valid
     private List<MultilingualContentDTO> role;
 
+    private MembershipType membershipType;
 }

@@ -53,7 +53,7 @@ public class RegistryBookControllerTest extends BaseTest {
         dto.setDissertationInformation(dissertationInfo);
 
         var personalInfo = new RegistryBookPersonalInformationDTO();
-        var name = new PersonNameDTO(null, "John", "H", "Doe", null, null);
+        var name = new PersonNameDTO(null, "John", "H", "Doe", null, null, null);
         personalInfo.setAuthorName(name);
         personalInfo.setLocalBirthDate(LocalDate.of(1990, 1, 1));
         personalInfo.setPlaceOfBrith("City");
@@ -72,7 +72,7 @@ public class RegistryBookControllerTest extends BaseTest {
         contactInfo.setPlace("Place");
         contactInfo.setMunicipality("Municipality");
         contactInfo.setPostalCode("10000");
-        contactInfo.setContact(new ContactDTO("john@example.com", "+123456"));
+        contactInfo.setContact(new ContactDTO("john@example.com", "+123456", "", ""));
         dto.setContactInformation(contactInfo);
 
         var prevTitle = new PreviousTitleInformationDTO();

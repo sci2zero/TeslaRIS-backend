@@ -74,7 +74,7 @@ public class MonographPublicationConverter extends DocumentConverter implements
         dto.setMonographId(monograph.getId());
 
         if (((Monograph) monograph).getMonographType().equals(MonographType.RESEARCH_MONOGRAPH)) {
-            ((Monograph) monograph).setMonographType(MonographType.BOOK);
+            ((Monograph) monograph).setMonographType(MonographType.EDITED_BOOK);
             monographRepository.save((Monograph) monograph);
         }
 

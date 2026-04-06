@@ -1,6 +1,7 @@
 package rs.teslaris.core.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -269,7 +270,7 @@ public class ThesisServiceTest {
         affiliationStatement.setContact(new Contact());
         affiliationStatement.setDisplayPersonName(new PersonName());
         affiliationStatement.setPostalAddress(
-            new PostalAddress(country, new HashSet<>(), new HashSet<>()));
+            new PostalAddress(country, new HashSet<>(), new HashSet<>(), new HashSet<>(), null));
         contribution.setAffiliationStatement(affiliationStatement);
         thesis.setContributors(Set.of(contribution));
 
@@ -600,10 +601,14 @@ public class ThesisServiceTest {
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
 
         // When & Then
-        ThesisException exception =
-            assertThrows(ThesisException.class,
-                () -> thesisService.putOnPublicReview(thesisId, false, false));
-        assertEquals("missingAttachmentsMessage", exception.getMessage());
+        if (files > reports) {
+            ThesisException exception =
+                assertThrows(ThesisException.class,
+                    () -> thesisService.putOnPublicReview(thesisId, false, false));
+            assertEquals("missingAttachmentsMessage", exception.getMessage());
+        } else {
+            assertDoesNotThrow(() -> thesisService.putOnPublicReview(thesisId, false, false));
+        }
     }
 
     @Test
@@ -868,7 +873,7 @@ public class ThesisServiceTest {
 
         // When
         thesisService.schedulePublicReviewEndCheck(
-            timestamp, types, publicReviewLengthDays, userId, recurrence
+            timestamp, types, publicReviewLengthDays, userId, recurrence, false
         );
 
         // Then
@@ -914,9 +919,9 @@ public class ThesisServiceTest {
 
         // When
         thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays, userId,
-            recurrence);
+            recurrence, false);
         thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays, userId,
-            recurrence);
+            recurrence, false);
 
         // Then
         var taskIdCaptor = org.mockito.ArgumentCaptor.forClass(String.class);

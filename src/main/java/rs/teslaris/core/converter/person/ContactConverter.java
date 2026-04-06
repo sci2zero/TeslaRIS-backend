@@ -35,5 +35,7 @@ public class ContactConverter {
 
         contactResponse.setContactEmail("");
         contactResponse.setPhoneNumber("");
+        contactResponse.setFaxNumber("");
+        contactResponse.setMobilePhoneNumber("");
     }
 }

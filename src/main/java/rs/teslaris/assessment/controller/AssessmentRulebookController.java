@@ -101,8 +101,8 @@ public class AssessmentRulebookController {
     @DeleteMapping("/{assessmentRulebookId}/{documentFileId}")
     @PreAuthorize("hasAuthority('EDIT_ASSESSMENT_RULEBOOKS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void addPDFFile(@PathVariable Integer assessmentRulebookId,
-                    @PathVariable Integer documentFileId) {
+    void deletePDFFile(@PathVariable Integer assessmentRulebookId,
+                       @PathVariable Integer documentFileId) {
         assessmentRulebookService.deletePDFFile(assessmentRulebookId, documentFileId);
     }
 

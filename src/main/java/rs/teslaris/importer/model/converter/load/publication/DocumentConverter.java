@@ -28,6 +28,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.importer.dto.DocumentLoadDTO;
 import rs.teslaris.importer.dto.OrganisationUnitLoadDTO;
 import rs.teslaris.importer.dto.PersonDocumentContributionLoadDTO;
@@ -314,7 +315,12 @@ public class DocumentConverter {
             var institution = new OrganisationUnitLoadDTO();
             institution.setName(
                 multilingualContentConverter.toLoaderDTO(importInstitution.getName()));
-            institution.setNameAbbreviation(importInstitution.getNameAbbreviation());
+
+            if (CollectionOperations.containsValues(importInstitution.getNameAbbreviation())) {
+                institution.setNameAbbreviation(
+                    importInstitution.getNameAbbreviation().getFirst().getContent());
+            }
+
             institution.setScopusAfid(importInstitution.getScopusAfid());
             institution.setOpenAlexId(importInstitution.getOpenAlexId());
             institution.setImportId(importInstitution.getImportId());

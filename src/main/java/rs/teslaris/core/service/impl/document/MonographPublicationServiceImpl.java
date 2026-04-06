@@ -248,8 +248,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         var monograph =
             monographService.findMonographById(monographPublicationDTO.getMonographId());
 
-        if (!monograph.getMonographType().equals(MonographType.BOOK)) {
-            throw new NotFoundException("Book monograph with given ID does not exist.");
+        if (!monograph.getMonographType().equals(MonographType.EDITED_BOOK)) {
+            throw new NotFoundException("Edited Book monograph with given ID does not exist.");
         }
 
         monographPublication.setMonograph(monograph);

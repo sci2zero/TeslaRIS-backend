@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
@@ -197,7 +198,8 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
 
             while (hasNextPage) {
                 var chunk = documentPublicationIndexRepository.findByAuthorIds(personId,
-                    PageRequest.of(pageNumber, chunkSize));
+                    PageRequest.of(pageNumber, chunkSize,
+                        Sort.by(Sort.Direction.ASC, "databaseId")));
 
                 chunk.forEach(documentIndex -> {
 

@@ -80,7 +80,8 @@ public interface DocumentPublicationService extends JPAService<Document> {
                                                               List<DocumentPublicationType> allowedTypes,
                                                               Boolean notArchivedOnly,
                                                               Boolean showProceedings,
-                                                              Boolean emptyProceedingsOnly);
+                                                              Boolean emptyProceedingsOnly,
+                                                              Integer authorId);
 
     Page<DocumentPublicationIndex> findDocumentDuplicates(List<String> titles, String doi,
                                                           String scopusId, String openAlexId,

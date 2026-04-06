@@ -1,7 +1,9 @@
 package rs.teslaris.thesislibrary.service.interfaces;
 
+import jakarta.annotation.Nullable;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     Page<RegistryBookEntryDTO> getNonPromotedRegistryBookEntries(Integer userId, Pageable pageable);
 
     Page<RegistryBookEntryDTO> getRegistryBookEntriesForPromotion(Integer promotionId,
+                                                                  @Nullable Integer institutionId,
                                                                   Pageable pageable);
 
     RegistryBookEntry createRegistryBookEntry(RegistryBookEntryDTO registryBookEntryDTO,
@@ -73,4 +76,6 @@ public interface RegistryBookService extends JPAService<RegistryBookEntry> {
     void removeFromFinishedPromotion(Integer registryBookEntryId);
 
     void removeAllFromFinishedPromotion(Integer promotionId, boolean deletePromotion);
+
+    ByteArrayResource downloadPromoteesList(Integer promotionId);
 }

@@ -479,13 +479,13 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     public void schedulePublicReviewEndCheck(LocalDateTime timestamp, List<ThesisType> types,
                                              Integer publicReviewLengthDays, Integer userId,
-                                             RecurrenceType recurrence) {
+                                             RecurrenceType recurrence, Boolean shortened) {
         var taskId = taskManagerService.scheduleTask("PublicReviewEndCheck-" +
                 StringUtils.join(types.stream().map(ThesisType::name).toList(), "-") + "-" +
                 publicReviewLengthDays + "_DAYS-" +
                 UUID.randomUUID(),
             timestamp,
-            () -> removeFromPublicReview(types, publicReviewLengthDays),
+            () -> completePublicReview(types, publicReviewLengthDays, shortened),
             userId, recurrence);
 
         taskManagerService.saveTaskMetadata(
@@ -493,6 +493,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                 ScheduledTaskType.PUBLIC_REVIEW_END_DATE_CHECK, new HashMap<>() {{
                 put("types", types);
                 put("publicReviewLengthDays", publicReviewLengthDays);
+                put("shortened", shortened);
                 put("userId", userId);
             }}, recurrence));
     }
@@ -576,13 +577,15 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
         validateThesisForPublicReview(thesis);
 
         if (shortened && (Objects.isNull(thesis.getPublicReviewStartDates()) ||
-            thesis.getPublicReviewStartDates().isEmpty() || !thesis.getPublicReviewCompleted())) {
+            thesis.getPublicReviewStartDates().isEmpty() ||
+            thesis.getPublicReviewEndDates().isEmpty())) {
             throw new ThesisException(
                 "Thesis had to have been on one regular public review before being put on shortened one."
             );
         }
 
         thesis.setIsOnPublicReview(true);
+        thesis.setPublicReviewCompleted(false);
         thesis.setIsShortenedReview(shortened);
         updatePublicReviewDates(thesis, continueLastReview, false);
 
@@ -613,7 +616,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             throw new ThesisException("noAttachmentsMessage");
         }
 
-        if (thesis.getPreliminaryFiles().size() != thesis.getCommissionReports().size()) {
+        if (thesis.getPreliminaryFiles().size() > thesis.getCommissionReports().size()) {
             throw new ThesisException("missingAttachmentsMessage");
         }
     }
@@ -903,20 +906,29 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             thesisResearchOutputRepository.findResearchOutputIdsForThesis(thesis.getId()));
         index.setTopicAcceptanceDate(thesis.getTopicAcceptanceDate());
         index.setThesisDefenceDate(thesis.getThesisDefenceDate());
-        index.setPublicReviewStartDates(thesis.getPublicReviewStartDates().stream().toList());
+
+        index.setPublicReviewStartDates(
+            thesis.getPublicReviewStartDates().stream().sorted().toList());
+        index.setPublicReviewEndDates(thesis.getPublicReviewEndDates().stream().sorted().toList());
+
         if (!index.getPublicReviewStartDates().isEmpty()) {
-            index.setLatestPublicReviewStartDate(index.getPublicReviewStartDates().getLast());
+            index.getPublicReviewStartDates().stream()
+                .max(LocalDate::compareTo)
+                .ifPresent(index::setLatestPublicReviewStartDate);
         }
+
         index.setIsOnPublicReview(thesis.getIsOnPublicReview());
+        index.setIsOnPublicReviewShortened(thesis.getIsShortenedReview());
         index.setIsPublicReviewCompleted(thesis.getPublicReviewCompleted());
 
         if (Objects.nonNull(thesis.getOrganisationUnit())) {
             index.setThesisInstitutionId(thesis.getOrganisationUnit().getId());
             organisationUnitIndexRepository.findOrganisationUnitIndexByDatabaseId(
-                thesis.getOrganisationUnit().getId()).ifPresent(institutionIndex -> {
-                index.setThesisInstitutionNameSr(institutionIndex.getNameSr());
-                index.setThesisInstitutionNameOther(institutionIndex.getNameOther());
-            });
+                    thesis.getOrganisationUnit().getId())
+                .ifPresent(institutionIndex -> {
+                    index.setThesisInstitutionNameSr(institutionIndex.getNameSr());
+                    index.setThesisInstitutionNameOther(institutionIndex.getNameOther());
+                });
         }
 
         indexScientificArea(thesis, index);
@@ -963,22 +975,33 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
     @Transactional
     protected void removeFromPublicReviewScheduledFallback() {
         if (Objects.nonNull(fallbackPublicReviewCheckEnabled) && fallbackPublicReviewCheckEnabled) {
-            removeFromPublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
-                PublicReviewConfigurationLoader.getLengthInDays(false));
+            completePublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
+                PublicReviewConfigurationLoader.getLengthInDays(true), true);
+            completePublicReview(List.of(ThesisType.PHD, ThesisType.PHD_ART_PROJECT),
+                PublicReviewConfigurationLoader.getLengthInDays(false), false);
         }
     }
 
-    private void removeFromPublicReview(List<ThesisType> thesisTypes,
-                                        Integer publicReviewLengthDays) {
+    private void completePublicReview(List<ThesisType> thesisTypes,
+                                      Integer publicReviewLengthDays, Boolean shortened) {
+        if (Objects.isNull(shortened)) {
+            shortened = false;
+        }
+
         var thesesOnPublicReview = thesisRepository.findAllOnPublicReviewOfGivenTypes(thesisTypes);
 
         var latestPossibleStartDate = LocalDate.now().minusDays(publicReviewLengthDays);
         var thesesByInstitution =
             new ConcurrentHashMap<Integer, List<Triple<String, Set<MultiLingualContent>, LocalDate>>>();
 
+        var finalShortened = shortened;
         thesesOnPublicReview.stream()
             .filter(thesis -> isPublicReviewExpired(thesis, latestPossibleStartDate))
             .forEach(thesis -> {
+                if (!thesis.getIsShortenedReview().equals(finalShortened)) {
+                    return;
+                }
+
                 updateThesisAndIndex(thesis);
 
                 var institutionId = thesis.getOrganisationUnit().getId();
@@ -1009,13 +1032,17 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
 
     private void updateThesisAndIndex(Thesis thesis) {
         thesis.setIsOnPublicReview(false);
+        thesis.setIsShortenedReview(false);
         thesis.setPublicReviewCompleted(true);
+        thesis.getPublicReviewEndDates().add(LocalDate.now());
         thesisJPAService.save(thesis);
 
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(thesis.getId())
             .ifPresent(index -> {
                 index.setIsOnPublicReview(false);
+                index.setIsOnPublicReviewShortened(false);
                 index.setIsPublicReviewCompleted(true);
+                index.getPublicReviewEndDates().add(LocalDate.now());
                 documentPublicationIndexRepository.save(index);
             });
     }

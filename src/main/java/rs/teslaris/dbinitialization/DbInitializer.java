@@ -224,6 +224,12 @@ public class DbInitializer implements ApplicationRunner {
         var enrichDocumentMetadata = new Privilege("ENRICH_DOCUMENT_METADATA");
         var enrichInstitutionMetadata = new Privilege("ENRICH_INSTITUTION_METADATA");
         var scheduleMetadataEnrichment = new Privilege("SCHEDULE_METADATA_ENRICHMENT");
+        var readFundingPrograms = new Privilege("READ_FUNDING_PROGRAMS");
+        var editFundingPrograms = new Privilege("EDIT_FUNDING_PROGRAMS");
+        var readFundingCalls = new Privilege("READ_FUNDING_CALLS");
+        var editFundingCalls = new Privilege("EDIT_FUNDING_CALLS");
+        var editFundingParts = new Privilege("EDIT_FUNDING_PARTS");
+        var editEmploymentPositions = new Privilege("EDIT_EMPLOYMENT_POSITIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -264,7 +270,9 @@ public class DbInitializer implements ApplicationRunner {
                 performSKGIFHarvest, readPromotions, configureAppSettings, registerResearcher,
                 unpromoteRbEntries, changePublicationType, assessPrizes, editExhibitions,
                 createExhibitions, mergeExhibitions, substituteThesis, setPersonFieldVisibility,
-                enrichDocumentMetadata, enrichInstitutionMetadata, scheduleMetadataEnrichment));
+                enrichDocumentMetadata, enrichInstitutionMetadata, scheduleMetadataEnrichment,
+                editFundingPrograms, readFundingPrograms, readFundingCalls, editFundingCalls,
+                editFundingParts, editEmploymentPositions));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -304,7 +312,8 @@ public class DbInitializer implements ApplicationRunner {
                 registerResearcher, unpromoteRbEntries, changePublicationType, assessPrizes,
                 editExhibitions, createExhibitions, mergeExhibitions, substituteThesis,
                 setPersonFieldVisibility, enrichDocumentMetadata, enrichInstitutionMetadata,
-                scheduleMetadataEnrichment
+                scheduleMetadataEnrichment, editFundingPrograms, readFundingPrograms,
+                readFundingCalls, editFundingCalls, editFundingParts, editEmploymentPositions
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
@@ -361,7 +370,8 @@ public class DbInitializer implements ApplicationRunner {
                 updateProfile, allowAccountTakeover, deleteThesisAttachments, editDocumentFiles,
                 removeThesisFromPublicReview, putThesisOnPublicReview, manageThesisAttachments,
                 unarchiveThesis, performThesisReport, generateThesisLibraryBackup, readRegistryBook,
-                readDigitalLibraryAnalytics, readPromotions, archiveThesis, substituteThesis
+                readDigitalLibraryAnalytics, readPromotions, archiveThesis, substituteThesis,
+                createUserBasic
             )));
 
         var promotionRegistryAdministratorAuthority =
@@ -449,19 +459,19 @@ public class DbInitializer implements ApplicationRunner {
             new User("admin@admin.com", passwordEncoder.encode("admin"), "note", "Marko",
                 "Markovic", false, false, serbianTag, englishTag, adminAuthority, null,
                 null, null,
-                UserNotificationPeriod.DAILY, true);
+                UserNotificationPeriod.DAILY, true, null);
         userRepository.save(adminUser);
 
         // RESEARCH AREAS - NOT COMPLETE
         var researchArea1 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Elektrotehnicko i racunarsko inzenjerstvo", 2))),
-            new HashSet<>(), null, "elektrotehnicko i racunarsko inzenjerstvo");
+            new HashSet<>(), null, "elektrotehnicko i racunarsko inzenjerstvo", "TEST");
         var researchArea2 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Softversko inzenjerstvo", 2))),
-            new HashSet<>(), researchArea1, "softversko inzenjerstvo");
+            new HashSet<>(), researchArea1, "softversko inzenjerstvo", "TEST");
         var researchArea3 = new ResearchArea(new HashSet<>(Set.of(
             new MultiLingualContent(serbianTag, "Cybersecurity", 2))),
-            new HashSet<>(), researchArea2, "cybersecurity");
+            new HashSet<>(), researchArea2, "cybersecurity", "TEST");
 
         researchAreaRepository.saveAll(List.of(researchArea1, researchArea2, researchArea3));
 

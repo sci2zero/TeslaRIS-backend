@@ -136,6 +136,7 @@ public class DocumentPublicationController {
         @RequestParam(value = "showProceedings", required = false) Boolean showProceedings,
         @RequestParam(value = "emptyProceedingsOnly", required = false)
         Boolean emptyProceedingsOnly,
+        @RequestParam(value = "authorId", required = false) Integer authorId,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
@@ -153,7 +154,7 @@ public class DocumentPublicationController {
             SearchRequestType.SIMPLE, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
                 null, authorReprint, unmanaged, allowedTypes, notArchivedOnly, showProceedings,
-            emptyProceedingsOnly);
+            emptyProceedingsOnly, authorId);
     }
 
     @GetMapping("/advanced-search")
@@ -168,6 +169,7 @@ public class DocumentPublicationController {
         @RequestParam(value = "showProceedings", required = false) Boolean showProceedings,
         @RequestParam(value = "emptyProceedingsOnly", required = false)
         Boolean emptyProceedingsOnly,
+        @RequestParam(value = "authorId", required = false) Integer authorId,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         if (bearerToken.isEmpty() ||
@@ -183,7 +185,7 @@ public class DocumentPublicationController {
             SearchRequestType.ADVANCED, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
                 null, null, null, allowedTypes, notArchivedOnly, showProceedings,
-            emptyProceedingsOnly);
+            emptyProceedingsOnly, authorId);
     }
 
     @GetMapping("/deduplication-search")

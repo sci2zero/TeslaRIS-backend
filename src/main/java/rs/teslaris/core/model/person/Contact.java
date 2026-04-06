@@ -22,4 +22,9 @@ public class Contact {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Column(name = "fax_number")
+    private String faxNumber;
+
+    @Column(name = "mobile_phone_number")
+    private String mobilePhoneNumber;
 }

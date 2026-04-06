@@ -169,6 +169,8 @@ public class ThesisConverter extends DocumentPublicationConverter {
         thesisDTO.setIsOnPublicReviewPause(thesis.getIsOnPublicReviewPause());
         thesisDTO.setPublicReviewDates(
             thesis.getPublicReviewStartDates().stream().sorted().toList());
+        thesisDTO.setPublicReviewEndDates(
+            thesis.getPublicReviewEndDates().stream().sorted().toList());
 
         thesisDTO.setAlternateTitle(
             MultilingualContentConverter.getMultilingualContentDTO(thesis.getAlternateTitle()));

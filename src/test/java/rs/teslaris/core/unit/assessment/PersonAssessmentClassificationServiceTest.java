@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import rs.teslaris.assessment.model.AssessmentMeasure;
 import rs.teslaris.assessment.model.AssessmentResearchArea;
 import rs.teslaris.assessment.model.AssessmentRulebook;
@@ -118,9 +119,11 @@ public class PersonAssessmentClassificationServiceTest {
         var researcher2 = new PersonIndex();
         researcher2.setDatabaseId(2);
 
-        when(searchService.runQuery(any(), eq(PageRequest.of(0, 1000)), any(), any()))
+        when(searchService.runQuery(any(),
+            eq(PageRequest.of(0, 1000, Sort.by(Sort.Direction.ASC, "databaseId"))), any(), any()))
             .thenReturn(
-                new PageImpl<>(List.of(researcher1, researcher2), PageRequest.of(0, 1000), 2));
+                new PageImpl<>(List.of(researcher1, researcher2),
+                    PageRequest.of(0, 1000, Sort.by(Sort.Direction.ASC, "databaseId")), 2));
 
         when(assessmentRulebookRepository.readAssessmentMeasuresForRulebook(any(), any()))
             .thenReturn(new PageImpl<>(Collections.emptyList()));
@@ -360,7 +363,8 @@ public class PersonAssessmentClassificationServiceTest {
     @Test
     void shouldStopWhenNoMoreResearchers() {
         // Given
-        when(searchService.runQuery(any(), eq(PageRequest.of(0, 1000)), any(), any()))
+        when(searchService.runQuery(any(),
+            eq(PageRequest.of(0, 1000, Sort.by(Sort.Direction.ASC, "databaseId"))), any(), any()))
             .thenReturn(new PageImpl<>(Collections.emptyList()));
         when(assessmentRulebookRepository.findDefaultRulebook()).thenReturn(
             Optional.of(new AssessmentRulebook()));

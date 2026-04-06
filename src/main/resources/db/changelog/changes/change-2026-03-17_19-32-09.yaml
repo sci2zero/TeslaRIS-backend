@@ -1,0 +1,2785 @@
+databaseChangeLog:
+- changeSet:
+    id: 1773776003216-215
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons_street_and_number
+        constraintName: fk6hltjy0rrs5vrlafvkg70lcob
+- changeSet:
+    id: 1773776003216-216
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: person_project_contribution_funding
+        constraintName: fk9hah5p0f68vkkb8hwnakuus9r
+- changeSet:
+    id: 1773776003216-217
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: person_project_contribution_funding
+        constraintName: fkc0ihmwcck30vyydoocjfscrk8
+- changeSet:
+    id: 1773776003216-218
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons_city
+        constraintName: fkdiv3n9ftiu05j8w9y4ohx59c0
+- changeSet:
+    id: 1773776003216-219
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons
+        constraintName: fkerkc4hn581s5tffbfj3xlu864
+- changeSet:
+    id: 1773776003216-220
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons_city
+        constraintName: fkphbb4vg5wa8iu8pdcob0abpn7
+- changeSet:
+    id: 1773776003216-221
+    author: milospopovic (generated)
+    changes:
+    - dropForeignKeyConstraint:
+        baseTableName: persons_street_and_number
+        constraintName: fkq1nl15nghfsc8wh5d8gajsdgi
+- changeSet:
+    id: 1773776003216-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            name: decision_date
+            type: date
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: deleted
+            type: BOOLEAN
+        - column:
+            name: funding_application_id
+            type: INTEGER
+        - column:
+            name: funding_call_id
+            type: INTEGER
+        - column:
+            name: funding_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: funding_applications_pkey
+            name: id
+            type: INTEGER
+        - column:
+            name: other_funding_amount
+            type: FLOAT8
+        - column:
+            name: other_source_amount
+            type: FLOAT8
+        - column:
+            name: other_source_currency_id
+            type: INTEGER
+        - column:
+            name: pother_funding_currency_id
+            type: INTEGER
+        - column:
+            name: project_id
+            type: INTEGER
+        - column:
+            name: requested_amount
+            type: FLOAT8
+        - column:
+            name: requested_currency_id
+            type: INTEGER
+        - column:
+            name: result
+            type: SMALLINT
+        - column:
+            name: review_date_from
+            type: date
+        - column:
+            name: review_date_to
+            type: date
+        - column:
+            name: revised_proposal_date
+            type: date
+        - column:
+            name: submission_date
+            type: date
+        - column:
+            name: created_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: last_modification
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: admin_note
+            type: VARCHAR(2000)
+        - column:
+            name: created_by
+            type: VARCHAR(255)
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        - column:
+            name: updated_by
+            type: VARCHAR(255)
+        tableName: funding_applications
+- changeSet:
+    id: 1773776003216-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: affiliation_statements_state_pkey
+            name: affiliation_statement_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: affiliation_statements_state_pkey
+            name: state_id
+            type: INTEGER
+        tableName: affiliation_statements_state
+- changeSet:
+    id: 1773776003216-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: funding_applications_description_pkey
+            name: description_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: funding_applications_description_pkey
+            name: funding_application_id
+            type: INTEGER
+        tableName: funding_applications_description
+- changeSet:
+    id: 1773776003216-4
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: funding_applications_response_summary_pkey
+            name: funding_application_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: funding_applications_response_summary_pkey
+            name: response_summary_id
+            type: INTEGER
+        tableName: funding_applications_response_summary
+- changeSet:
+    id: 1773776003216-5
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_units_description_pkey
+            name: description_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_units_description_pkey
+            name: organisation_unit_id
+            type: INTEGER
+        tableName: organisation_units_description
+- changeSet:
+    id: 1773776003216-6
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_units_name_abbreviation_pkey
+            name: name_abbreviation_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: organisation_units_name_abbreviation_pkey
+            name: organisation_unit_id
+            type: INTEGER
+        tableName: organisation_units_name_abbreviation
+- changeSet:
+    id: 1773776003216-7
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_project_contribution_funding_parts_pkey
+            name: funding_parts_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: person_project_contribution_funding_parts_pkey
+            name: person_project_contribution_id
+            type: INTEGER
+        tableName: person_project_contribution_funding_parts
+- changeSet:
+    id: 1773776003216-8
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: prizes_keywords_pkey
+            name: keywords_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: prizes_keywords_pkey
+            name: prize_id
+            type: INTEGER
+        tableName: prizes_keywords
+- changeSet:
+    id: 1773776003216-9
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: state_id
+        constraintName: affiliation_statements_state_state_id_key
+        tableName: affiliation_statements_state
+- changeSet:
+    id: 1773776003216-10
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: description_id
+        constraintName: funding_applications_description_description_id_key
+        tableName: funding_applications_description
+- changeSet:
+    id: 1773776003216-11
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: response_summary_id
+        constraintName: funding_applications_response_summary_response_summary_id_key
+        tableName: funding_applications_response_summary
+- changeSet:
+    id: 1773776003216-12
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: description_id
+        constraintName: organisation_units_description_description_id_key
+        tableName: organisation_units_description
+- changeSet:
+    id: 1773776003216-13
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: name_abbreviation_id
+        constraintName: organisation_units_name_abbreviation_name_abbreviation_id_key
+        tableName: organisation_units_name_abbreviation
+- changeSet:
+    id: 1773776003216-14
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: funding_parts_id
+        constraintName: person_project_contribution_funding_parts_funding_parts_id_key
+        tableName: person_project_contribution_funding_parts
+- changeSet:
+    id: 1773776003216-15
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: keywords_id
+        constraintName: prizes_keywords_keywords_id_key
+        tableName: prizes_keywords
+- changeSet:
+    id: 1773776003216-16
+    author: milospopovic (generated)
+    changes:
+    - createSequence:
+        cacheSize: 1
+        cycle: false
+        dataType: bigint
+        incrementBy: 50
+        maxValue: 9223372036854775807
+        minValue: 1
+        sequenceName: funding_applications_seq
+        startValue: 1
+- changeSet:
+    id: 1773776003216-17
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: funding_applications_documents_pkey
+            name: documents_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: funding_applications_documents_pkey
+            name: funding_application_id
+            type: INTEGER
+        tableName: funding_applications_documents
+- changeSet:
+    id: 1773776003216-18
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: prizes_research_areas_pkey
+            name: prize_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: prizes_research_areas_pkey
+            name: research_areas_id
+            type: INTEGER
+        tableName: prizes_research_areas
+- changeSet:
+    id: 1773776003216-19
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: academic_review
+            type: SMALLINT
+        tableName: language_knowledges
+- changeSet:
+    id: 1773776003216-20
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: academic_writing
+            type: SMALLINT
+        tableName: language_knowledges
+- changeSet:
+    id: 1773776003216-21
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_established
+            type: date
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-22
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_from
+            type: date
+        tableName: funding_calls
+- changeSet:
+    id: 1773776003216-23
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_from
+            type: date
+        tableName: funding_programs
+- changeSet:
+    id: 1773776003216-24
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: end_date
+            type: date
+        tableName: prizes
+- changeSet:
+    id: 1773776003216-25
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_from
+            type: date
+        tableName: projects
+- changeSet:
+    id: 1773776003216-26
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_to
+            type: date
+        tableName: funding_calls
+- changeSet:
+    id: 1773776003216-27
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_to
+            type: date
+        tableName: funding_programs
+- changeSet:
+    id: 1773776003216-28
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+            defaultValueBoolean: false
+        tableName: prizes
+    - sql:
+        sql: |
+          UPDATE prizes
+          SET favorite = false
+          WHERE favorite IS NULL;
+- changeSet:
+    id: 1773776003216-29
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: date_to
+            type: date
+        tableName: projects
+- changeSet:
+    id: 1773776003216-30
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: educations
+- changeSet:
+    id: 1773776003216-31
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: involvements
+- changeSet:
+    id: 1773776003216-32
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: memberships
+- changeSet:
+    id: 1773776003216-33
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: listening
+            type: SMALLINT
+        tableName: language_knowledges
+- changeSet:
+    id: 1773776003216-34
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: name_type
+            type: SMALLINT
+        tableName: person_names
+    - sql:
+        sql: |
+          UPDATE person_names
+          SET name_type = 0
+          WHERE name_type IS NULL;
+- changeSet:
+    id: 1773776003216-35
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_city_id
+            type: INTEGER
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773776003216-36
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: favorite
+            type: BOOLEAN
+        tableName: employments
+    - sql:
+        sql: |
+          UPDATE employments
+          SET favorite = false
+          WHERE favorite IS NULL;
+- changeSet:
+    id: 1773776003216-37
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: mother_tongue
+            type: BOOLEAN
+        tableName: language_knowledges
+- changeSet:
+    id: 1773776003216-38
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_state_id
+            type: INTEGER
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773776003216-39
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: assessment_buffer
+- changeSet:
+    id: 1773776003216-40
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: authorities
+- changeSet:
+    id: 1773776003216-41
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: branding_information
+- changeSet:
+    id: 1773776003216-42
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: languages
+- changeSet:
+    id: 1773776003216-43
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: privileges
+- changeSet:
+    id: 1773776003216-44
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: overall
+            type: SMALLINT
+        tableName: language_knowledges
+- changeSet:
+    id: 1773776003216-45
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_street_id
+            type: INTEGER
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773776003216-46
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: type
+            type: SMALLINT
+        tableName: prizes
+    - sql:
+        sql: |
+          UPDATE prizes
+          SET type = 0
+          WHERE type IS NULL;
+- changeSet:
+    id: 1773776003216-47
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: application_configuration
+- changeSet:
+    id: 1773776003216-48
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: book_series
+- changeSet:
+    id: 1773776003216-49
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: commission_report
+- changeSet:
+    id: 1773776003216-50
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: currencies
+- changeSet:
+    id: 1773776003216-51
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: expertise_or_skills
+- changeSet:
+    id: 1773776003216-52
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: institution_default_submission_content
+- changeSet:
+    id: 1773776003216-53
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: journals
+- changeSet:
+    id: 1773776003216-54
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: language_tag
+- changeSet:
+    id: 1773776003216-55
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_charts_display_configuration
+- changeSet:
+    id: 1773776003216-56
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: publishers
+- changeSet:
+    id: 1773776003216-57
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: refresh_tokens
+- changeSet:
+    id: 1773776003216-58
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: registry_book_entry_drafts
+- changeSet:
+    id: 1773776003216-59
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: registry_book_report
+- changeSet:
+    id: 1773776003216-60
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: user_password_reset_requests
+- changeSet:
+    id: 1773776003216-61
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: is_archived
+            type: BOOLEAN
+        tableName: document_files
+    - sql:
+        sql: |
+          UPDATE document_files
+          SET is_archived = false
+          WHERE is_archived IS NULL;
+- changeSet:
+    id: 1773776003216-62
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_city_id
+            type: INTEGER
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773776003216-63
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: reading
+            type: SMALLINT
+        tableName: language_knowledges
+- changeSet:
+    id: 1773776003216-64
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: assessment_classifications
+- changeSet:
+    id: 1773776003216-65
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: assessment_measures
+- changeSet:
+    id: 1773776003216-66
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: commission_relations
+- changeSet:
+    id: 1773776003216-67
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: countries
+- changeSet:
+    id: 1773776003216-68
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: declined_claims
+- changeSet:
+    id: 1773776003216-69
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: document_file_backup
+- changeSet:
+    id: 1773776003216-70
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_assessment_research_area
+- changeSet:
+    id: 1773776003216-71
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: research_area
+- changeSet:
+    id: 1773776003216-72
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: thesis_research_outputs
+- changeSet:
+    id: 1773776003216-73
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: user_account_activations
+- changeSet:
+    id: 1773776003216-74
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: user_email_update_requests
+- changeSet:
+    id: 1773776003216-75
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_country_id
+            type: INTEGER
+        tableName: persons
+- changeSet:
+    id: 1773776003216-76
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_state_id
+            type: INTEGER
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773776003216-77
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: speaking
+            type: SMALLINT
+        tableName: language_knowledges
+- changeSet:
+    id: 1773776003216-78
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: fax_number
+            type: VARCHAR(255)
+        tableName: affiliation_statements
+- changeSet:
+    id: 1773776003216-79
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: documents_relations
+- changeSet:
+    id: 1773776003216-80
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: events_relation
+- changeSet:
+    id: 1773776003216-81
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: indicators
+- changeSet:
+    id: 1773776003216-82
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: oauth_codes
+- changeSet:
+    id: 1773776003216-83
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: organisation_unit_trusts
+- changeSet:
+    id: 1773776003216-84
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: project_documents
+- changeSet:
+    id: 1773776003216-85
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: project_events
+- changeSet:
+    id: 1773776003216-86
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: public_review_page_configuration
+- changeSet:
+    id: 1773776003216-87
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: scheduled_tasks
+- changeSet:
+    id: 1773776003216-88
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_country_id
+            type: INTEGER
+        tableName: persons
+- changeSet:
+    id: 1773776003216-89
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_street_id
+            type: INTEGER
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773776003216-90
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: scheme_name
+            type: VARCHAR(255)
+        tableName: research_area
+- changeSet:
+    id: 1773776003216-91
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: writing
+            type: SMALLINT
+        tableName: language_knowledges
+- changeSet:
+    id: 1773776003216-92
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: affiliation_statements
+- changeSet:
+    id: 1773776003216-93
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: assessment_rulebooks
+- changeSet:
+    id: 1773776003216-94
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: jwt_token_store
+- changeSet:
+    id: 1773776003216-95
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: loading_configurations
+- changeSet:
+    id: 1773776003216-96
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: notification
+- changeSet:
+    id: 1773776003216-97
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: organisation_unit_import_source
+- changeSet:
+    id: 1773776003216-98
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_contributions
+- changeSet:
+    id: 1773776003216-99
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_names
+- changeSet:
+    id: 1773776003216-100
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: promotions
+- changeSet:
+    id: 1773776003216-101
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: api_keys
+- changeSet:
+    id: 1773776003216-102
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: commissions
+- changeSet:
+    id: 1773776003216-103
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: exhibitions
+- changeSet:
+    id: 1773776003216-104
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: organisation_unit_outputs
+- changeSet:
+    id: 1773776003216-105
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: prizes
+- changeSet:
+    id: 1773776003216-106
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: project_relations
+- changeSet:
+    id: 1773776003216-107
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: mobile_phone_number
+            type: VARCHAR(255)
+        tableName: affiliation_statements
+    - sql:
+        sql: |
+          UPDATE affiliation_statements
+          SET mobile_phone_number = phone_number
+          WHERE phone_number ~ '^(\+381\s?6|06)' AND mobile_phone_number IS NULL;
+          UPDATE affiliation_statements
+          SET phone_number = NULL
+          WHERE phone_number !~ '^(\+381\s?6|06)' AND mobile_phone_number IS NULL;
+- changeSet:
+    id: 1773776003216-108
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: sector
+            type: SMALLINT
+        tableName: organisation_units
+    - sql:
+        sql: |
+          UPDATE organisation_units
+          SET sector = 0
+          WHERE sector IS NULL;
+- changeSet:
+    id: 1773776003216-109
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: conferences
+- changeSet:
+    id: 1773776003216-110
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: external_indicator_configuration
+- changeSet:
+    id: 1773776003216-111
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: funding_calls
+- changeSet:
+    id: 1773776003216-112
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: funding_programs
+- changeSet:
+    id: 1773776003216-113
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: organisation_units_relations
+- changeSet:
+    id: 1773776003216-114
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_event_contributions
+- changeSet:
+    id: 1773776003216-115
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_public_field_visibility
+- changeSet:
+    id: 1773776003216-116
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: startup
+            type: BOOLEAN
+        tableName: organisation_units
+    - sql:
+        sql: |
+          UPDATE organisation_units
+          SET startup = false
+          WHERE startup IS NULL;
+- changeSet:
+    id: 1773776003216-117
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: educations
+- changeSet:
+    id: 1773776003216-118
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: funding_parts
+- changeSet:
+    id: 1773776003216-119
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: involvements
+- changeSet:
+    id: 1773776003216-120
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: memberships
+- changeSet:
+    id: 1773776003216-121
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1773776003216-122
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: postal_number
+            type: VARCHAR(255)
+        tableName: affiliation_statements
+- changeSet:
+    id: 1773776003216-123
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: employments
+- changeSet:
+    id: 1773776003216-124
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1773776003216-125
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: informative_attachments
+- changeSet:
+    id: 1773776003216-126
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_journal_contributions
+- changeSet:
+    id: 1773776003216-127
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1773776003216-128
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_project_contribution
+- changeSet:
+    id: 1773776003216-129
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: projects
+- changeSet:
+    id: 1773776003216-130
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: datasets
+- changeSet:
+    id: 1773776003216-131
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: patents
+- changeSet:
+    id: 1773776003216-132
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: authenticus_id
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-133
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: funding_proposals
+- changeSet:
+    id: 1773776003216-134
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: genetic_materials
+- changeSet:
+    id: 1773776003216-135
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: intangible_products
+- changeSet:
+    id: 1773776003216-136
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: person_document_contribution
+- changeSet:
+    id: 1773776003216-137
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: material_products
+- changeSet:
+    id: 1773776003216-138
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: users
+- changeSet:
+    id: 1773776003216-139
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: internal_identifiers
+            type: JSONB
+        tableName: projects
+- changeSet:
+    id: 1773776003216-140
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: athens_id
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-141
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: document_files
+- changeSet:
+    id: 1773776003216-142
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: fundings
+- changeSet:
+    id: 1773776003216-143
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: journal_publications
+- changeSet:
+    id: 1773776003216-144
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: monograph_publications
+- changeSet:
+    id: 1773776003216-145
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: proceedings
+- changeSet:
+    id: 1773776003216-146
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: proceedings_publications
+- changeSet:
+    id: 1773776003216-147
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: merged_ids
+            type: JSONB
+        tableName: projects
+- changeSet:
+    id: 1773776003216-148
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: entity_assessment_classifications
+- changeSet:
+    id: 1773776003216-149
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: old_ids
+            type: JSONB
+        tableName: projects
+- changeSet:
+    id: 1773776003216-150
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: monographs
+- changeSet:
+    id: 1773776003216-151
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: entity_indicators
+- changeSet:
+    id: 1773776003216-152
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-153
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: dgeec_id
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-154
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: lattes_id
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-155
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: fax_number
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-156
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: national_science_id
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-157
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: fct_id
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-158
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: fundref
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-159
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-160
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: isni
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-161
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_contact_email
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-162
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: mobile_phone_number
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-163
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_fax_number
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-164
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: nces_id
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-165
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_mobile_phone_number
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-166
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: nif_id
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-167
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_phone_number
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-168
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: private_postal_number
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-169
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_contact_email
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-170
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: fax_number
+            type: VARCHAR(255)
+        tableName: registry_book_entries
+- changeSet:
+    id: 1773776003216-171
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_fax_number
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-172
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_mobile_phone_number
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-173
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ringgold
+            type: VARCHAR(255)
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-174
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1773776003216-175
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_phone_number
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-176
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: import_source
+            type: VARCHAR(255)
+        tableName: registry_book_entries
+- changeSet:
+    id: 1773776003216-177
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: professional_postal_number
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-178
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: mobile_phone_number
+            type: VARCHAR(255)
+        tableName: registry_book_entries
+- changeSet:
+    id: 1773776003216-179
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: scholar_id
+            type: VARCHAR(255)
+        tableName: persons
+- changeSet:
+    id: 1773776003216-180
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: internal_identifiers
+            type: JSONB
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-181
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: public_review_end_dates
+            type: JSONB
+        tableName: theses
+    - sql:
+        sql: |
+          UPDATE theses t
+          SET public_review_end_dates = data.dates
+          FROM (
+              SELECT 
+                  tsd.thesis_id,
+                  jsonb_agg(
+                      jsonb_build_array(
+                          EXTRACT(YEAR FROM tsd.public_review_start_dates + INTERVAL '1 month')::int,
+                          EXTRACT(MONTH FROM tsd.public_review_start_dates + INTERVAL '1 month')::int,
+                          EXTRACT(DAY FROM tsd.public_review_start_dates + INTERVAL '1 month')::int
+                      )
+                  ) AS dates
+              FROM thesis_public_review_start_dates tsd
+              GROUP BY tsd.thesis_id
+          ) data
+          WHERE t.id = data.thesis_id and is_on_public_review is FALSE;
+- changeSet:
+    id: 1773776003216-182
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: private_city_id
+        baseTableName: multi_lingual_content
+        constraintName: fk1ficaimvtsh8yneun79aiyjyf
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773776003216-183
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: organisation_unit_id
+        baseTableName: organisation_units_description
+        constraintName: fk1q4h1osrss0814opegy6ofr6x
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_units
+        validate: true
+- changeSet:
+    id: 1773776003216-184
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: funding_application_id
+        baseTableName: funding_applications_description
+        constraintName: fk2pg1o9ixrlt25wmbvx4211a0x
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: funding_applications
+        validate: true
+- changeSet:
+    id: 1773776003216-185
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: keywords_id
+        baseTableName: prizes_keywords
+        constraintName: fk3jc2iex14eegcy2vrqjgr8km3
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773776003216-186
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: pother_funding_currency_id
+        baseTableName: funding_applications
+        constraintName: fk4c2531wrxup526wyx55kenq4p
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: currencies
+        validate: true
+- changeSet:
+    id: 1773776003216-187
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: prize_id
+        baseTableName: prizes_research_areas
+        constraintName: fk4dncy0ubrkh6ykn0bybi84uov
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: prizes
+        validate: true
+- changeSet:
+    id: 1773776003216-188
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: response_summary_id
+        baseTableName: funding_applications_response_summary
+        constraintName: fk5dpgd7j2h4w587mkceg56xq7y
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773776003216-189
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: professional_state_id
+        baseTableName: multi_lingual_content
+        constraintName: fk5v0vkdtv4jt4txdcmpyen4j40
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773776003216-190
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: funding_id
+        baseTableName: funding_applications
+        constraintName: fk5y0y2r74871he69vky2y88rwm
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: fundings
+        validate: true
+- changeSet:
+    id: 1773776003216-191
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: funding_parts_id
+        baseTableName: person_project_contribution_funding_parts
+        constraintName: fk8uxdlcx1m352sniapfq99xbar
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: funding_parts
+        validate: true
+- changeSet:
+    id: 1773776003216-192
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: professional_city_id
+        baseTableName: multi_lingual_content
+        constraintName: fk9qx52vrlfr8ukpynbuyw9t8t5
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773776003216-193
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: description_id
+        baseTableName: funding_applications_description
+        constraintName: fkb1ojehohv49y9v1xhn96pknb4
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773776003216-194
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: prize_id
+        baseTableName: prizes_keywords
+        constraintName: fkbuvyyxiyhqblvu45er9u19tdq
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: prizes
+        validate: true
+- changeSet:
+    id: 1773776003216-195
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: private_street_id
+        baseTableName: multi_lingual_content
+        constraintName: fkd3pao6yara2unybabn6x1vx15
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773776003216-196
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: professional_country_id
+        baseTableName: persons
+        constraintName: fkd7ni3hftnt37kvxs0gcm2nlqg
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1773776003216-197
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: professional_street_id
+        baseTableName: multi_lingual_content
+        constraintName: fkdgjmcfy38ac9iiw3j8rxgsj62
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773776003216-198
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: project_id
+        baseTableName: funding_applications
+        constraintName: fkeahgi1qqvmiud1tfbyr9rq3q6
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: projects
+        validate: true
+- changeSet:
+    id: 1773776003216-199
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: name_abbreviation_id
+        baseTableName: organisation_units_name_abbreviation
+        constraintName: fkfgg85jnqh3cs3cbqjtvtjf2fl
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773776003216-200
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: requested_currency_id
+        baseTableName: funding_applications
+        constraintName: fkg2jbk3i7e8k17jfbycn62gm9u
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: currencies
+        validate: true
+- changeSet:
+    id: 1773776003216-201
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: other_source_currency_id
+        baseTableName: funding_applications
+        constraintName: fkhh2gnj4mulry4xcxpftyj7yhb
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: currencies
+        validate: true
+- changeSet:
+    id: 1773776003216-202
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: affiliation_statement_id
+        baseTableName: affiliation_statements_state
+        constraintName: fkib4dnyvigyc2txqmicw2l8j1o
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: affiliation_statements
+        validate: true
+- changeSet:
+    id: 1773776003216-203
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: private_state_id
+        baseTableName: multi_lingual_content
+        constraintName: fkjga7g7dwfedlu5sjtmsb42v53
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: persons
+        validate: true
+- changeSet:
+    id: 1773776003216-204
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: documents_id
+        baseTableName: funding_applications_documents
+        constraintName: fkkpcxu3ir1owougo9f7nl85qmx
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: document_files
+        validate: true
+- changeSet:
+    id: 1773776003216-205
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: private_country_id
+        baseTableName: persons
+        constraintName: fkkpv3ev2igctw0vv3mm5ffmxfp
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1773776003216-206
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: state_id
+        baseTableName: affiliation_statements_state
+        constraintName: fkks8y0xidxnnyxs88ndi2sen2n
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773776003216-207
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: person_project_contribution_id
+        baseTableName: person_project_contribution_funding_parts
+        constraintName: fkl1tovmb500s281h4lyep4ful
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: person_project_contribution
+        validate: true
+- changeSet:
+    id: 1773776003216-208
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: funding_application_id
+        baseTableName: funding_applications
+        constraintName: fkqoqxqkyxpe8ginuq6e1aibkcy
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: funding_applications
+        validate: true
+- changeSet:
+    id: 1773776003216-209
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: research_areas_id
+        baseTableName: prizes_research_areas
+        constraintName: fkqyw3bj6pux4dk93tsnv0oxvbn
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: research_area
+        validate: true
+- changeSet:
+    id: 1773776003216-210
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: funding_application_id
+        baseTableName: funding_applications_documents
+        constraintName: fkrm9rgnf06nmxaf242k7358x1s
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: funding_applications
+        validate: true
+- changeSet:
+    id: 1773776003216-211
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: organisation_unit_id
+        baseTableName: organisation_units_name_abbreviation
+        constraintName: fksug777h5l9t9uyd72vhm4n5x1
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: organisation_units
+        validate: true
+- changeSet:
+    id: 1773776003216-212
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: funding_call_id
+        baseTableName: funding_applications
+        constraintName: fksy9bck8tbrk54h0ebyqstm8o6
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: funding_calls
+        validate: true
+- changeSet:
+    id: 1773776003216-213
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: description_id
+        baseTableName: organisation_units_description
+        constraintName: fkt8c3egy94bn8bkf45j15ch8pg
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1773776003216-214
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: funding_application_id
+        baseTableName: funding_applications_response_summary
+        constraintName: fkta0lb3fca816v4rs9a6y8af0y
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: funding_applications
+        validate: true
+- changeSet:
+    id: 1773776003216-222
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: person_project_contribution_funding_funding_id_key
+        tableName: person_project_contribution_funding
+- changeSet:
+    id: 1773776003216-223
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: persons_city_city_id_key
+        tableName: persons_city
+- changeSet:
+    id: 1773776003216-224
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: persons_research_areas_research_areas_id_key
+        tableName: persons_research_areas
+- changeSet:
+    id: 1773776003216-225
+    author: milospopovic (generated)
+    changes:
+    - dropUniqueConstraint:
+        constraintName: persons_street_and_number_street_and_number_id_key
+        tableName: persons_street_and_number
+- changeSet:
+    id: 1773776003216-226
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: person_project_contribution_funding
+- changeSet:
+    id: 1773776003216-227
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: persons_city
+- changeSet:
+    id: 1773776003216-228
+    author: milospopovic (generated)
+    changes:
+    - dropTable:
+        tableName: persons_street_and_number
+- changeSet:
+    id: 1773776003216-229
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: call_closes
+        tableName: funding_calls
+- changeSet:
+    id: 1773776003216-230
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: call_opens
+        tableName: funding_calls
+- changeSet:
+    id: 1773776003216-231
+    author: milospopovic (generated)
+    changes:
+    - sql:
+        sql: |
+          UPDATE persons
+          SET
+            professional_contact_email = contact_email
+          WHERE contact_email IS NOT NULL AND professional_contact_email IS NULL;
+    - dropColumn:
+        columnName: contact_email
+        tableName: persons
+- changeSet:
+    id: 1773776003216-232
+    author: milospopovic (generated)
+    changes:
+    - sql:
+        sql: |
+          UPDATE persons
+          SET
+            professional_country_id = country_id
+          WHERE country_id IS NOT NULL AND professional_country_id IS NULL;
+    - dropColumn:
+        columnName: country_id
+        tableName: persons
+- changeSet:
+    id: 1773776003216-233
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: internal_identifier
+        tableName: projects
+- changeSet:
+    id: 1773776003216-234
+    author: milospopovic (generated)
+    changes:
+    - sql:
+        sql: |
+            WITH inserted_ml AS (
+            INSERT INTO multi_lingual_content (
+                id,
+                deleted,
+                language_tag_id,
+                priority,
+                private_city_id,
+                private_state_id,
+                private_street_id,
+                professional_city_id,
+                professional_state_id,
+                professional_street_id,
+                created_at,
+                last_modification,
+                admin_note,
+                content,
+                created_by,
+                import_source,
+                updated_by
+            )
+            SELECT
+                nextval('multi_lingual_content_seq'),
+                false,
+                2,
+                1,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NOW(),
+                NOW(),
+                NULL,
+                ou.name_abbreviation,
+                'SCRIPT_CREATED',
+                NULL,
+                'SCRIPT_CREATED'
+            FROM organisation_units ou
+            WHERE ou.name_abbreviation IS NOT NULL AND ou.name_abbreviation <> ''
+            RETURNING id, content
+            )
+            INSERT INTO organisation_units_name_abbreviation (
+                name_abbreviation_id,
+                organisation_unit_id
+            )
+            SELECT
+                ml.id,
+                ou.id
+            FROM organisation_units ou
+            JOIN inserted_ml ml
+            ON ml.content = ou.name_abbreviation;
+    - dropColumn:
+        columnName: name_abbreviation
+        tableName: organisation_units
+- changeSet:
+    id: 1773776003216-235
+    author: milospopovic (generated)
+    changes:
+    - sql:
+        sql: |
+          UPDATE persons
+          SET
+            professional_mobile_phone_number = CASE
+              WHEN phone_number ~ '^(\+381\s?6|06)' AND professional_mobile_phone_number IS NULL
+                THEN phone_number
+              ELSE professional_mobile_phone_number
+            END,
+            professional_phone_number = CASE
+              WHEN phone_number !~ '^(\+381\s?6|06)' AND professional_phone_number IS NULL
+                THEN phone_number
+              ELSE professional_phone_number
+            END
+          WHERE phone_number IS NOT NULL;
+    - dropColumn:
+        columnName: phone_number
+        tableName: persons
+- changeSet:
+    id: 1773776003216-236
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: program_closes
+        tableName: funding_programs
+- changeSet:
+    id: 1773776003216-237
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: program_opens
+        tableName: funding_programs
+- changeSet:
+    id: 1773776003216-238
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: project_completed
+        tableName: projects
+- changeSet:
+    id: 1773776003216-239
+    author: milospopovic (generated)
+    changes:
+    - dropColumn:
+        columnName: project_started
+        tableName: projects

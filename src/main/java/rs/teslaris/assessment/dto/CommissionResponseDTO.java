@@ -20,6 +20,8 @@ public record CommissionResponseDTO(
 
     List<String> recognisedResearchAreas,
 
-    Boolean isDefault
+    Boolean isDefault,
+
+    Boolean isReportingCommission
 ) {
 }
