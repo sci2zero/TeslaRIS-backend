@@ -12,6 +12,9 @@ public class PostalAddressConverter {
             MultilingualContentConverter.getMultilingualContentDTO(
                 address.getStreetAndNumber()),
             MultilingualContentConverter.getMultilingualContentDTO(
-                address.getCity()));
+                address.getCity()),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                address.getState()),
+            address.getPostalNumber());
     }
 }

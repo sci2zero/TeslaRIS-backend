@@ -39,6 +39,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantConstructRestTempla
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.CaptchaException;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
+import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.DocumentHarvestException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdempotencyException;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
@@ -561,6 +562,14 @@ public class ErrorHandlerConfiguration {
 
         log.error("Async request error", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(DateRangeException.class)
+    @ResponseBody
+    ErrorObject handleDateRangeException(HttpServletRequest request,
+                                         DateRangeException ex) {
+        return buildErrorObject(request, ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     private boolean isBrokenPipeException(Exception ex) {

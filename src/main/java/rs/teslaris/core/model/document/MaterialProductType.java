@@ -5,5 +5,6 @@ public enum MaterialProductType {
     INDUSTRIAL_PRODUCT,
     INFRASTRUCTURE_OBJECT,
     DERIVATIVE_WORKS,
-    OTHER
+    OTHER,
+    VISUAL_ARTWORK
 }

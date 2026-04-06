@@ -1,5 +1,7 @@
 package rs.teslaris.thesislibrary.dto;
 
+import java.util.List;
+
 public record ThesisPublicReviewResponseDTO(
     String nameAndSurname,
     String titleSr,
@@ -8,8 +10,9 @@ public record ThesisPublicReviewResponseDTO(
     String organisationUnitNameOther,
     String scientificAreaSr,
     String scientificAreaOther,
-    String publicReviewStartDate,
-    String publicReviewEndDate,
+    List<String> publicReviewStartDates,
+    List<String> publicReviewEndDates,
+    Boolean isOnShortenedReview,
     Integer databaseId
 ) {
 }

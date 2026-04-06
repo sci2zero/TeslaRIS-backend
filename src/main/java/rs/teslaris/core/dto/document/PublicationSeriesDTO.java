@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.document;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ public class PublicationSeriesDTO {
 
     private Integer oldId;
 
+    @Valid
     @NotNull(message = "You have to provide a title.")
     private List<MultilingualContentDTO> title;
 

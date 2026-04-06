@@ -80,4 +80,7 @@ public class DocumentFile extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Person person; // in case of personal document e.g. prize, involvement
+
+    @Column(name = "is_archived")
+    private Boolean isArchived = false;
 }

@@ -6,8 +6,11 @@ import java.util.Objects;
 public class SerbianTransliteration {
     private static final String SERBIAN_RULES = """
             Dž > Џ;
+            DŽ > Џ;
             Lj > Љ;
+            LJ > Љ;
             Nj > Њ;
+            NJ > Њ;
             dž > џ;
             lj > љ;
             nj > њ;
@@ -26,7 +29,7 @@ public class SerbianTransliteration {
             d > д;
             l > л;
             n > н;
-            Ђ > Ђ;
+            Đ > Ђ;
             đ > ђ;
         
             A > А; B > Б; C > Ц; Č > Ч; Ć > Ћ; E > Е; F > Ф; G > Г; H > Х;

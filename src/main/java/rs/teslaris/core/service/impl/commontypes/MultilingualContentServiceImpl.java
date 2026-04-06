@@ -3,6 +3,7 @@ package rs.teslaris.core.service.impl.commontypes;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,6 +30,10 @@ public class MultilingualContentServiceImpl implements MultilingualContentServic
     @Override
     public Set<MultiLingualContent> getMultilingualContent(
         List<MultilingualContentDTO> multilingualContentDTO) {
+        if (Objects.isNull(multilingualContentDTO)) {
+            return new HashSet<>();
+        }
+
         return multilingualContentDTO.stream().map(multilingualContent -> {
             var languageTag = languageTagService.findOne(
                 multilingualContent.getLanguageTagId());

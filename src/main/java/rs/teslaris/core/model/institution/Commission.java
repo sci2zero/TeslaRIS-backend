@@ -73,6 +73,9 @@ public class Commission extends BaseEntity {
     @Column(name = "is_default")
     private Boolean isDefault;
 
+    @Column(name = "is_reporting_commission")
+    private Boolean isReportingCommission;
+
 
     @Override
     public boolean equals(Object o) {

@@ -35,6 +35,10 @@ public class BasicPersonDTO implements PersonIdentifierable {
 
     private String phoneNumber;
 
+    private String faxNumber;
+
+    private String mobilePhoneNumber;
+
     private String apvnt;
 
     @JsonProperty("eCrisId")
@@ -57,4 +61,12 @@ public class BasicPersonDTO implements PersonIdentifierable {
     private String openAlexId;
 
     private String webOfScienceResearcherId;
+
+    private String nationalScienceId;
+
+    private String scholarId;
+
+    private String authenticusId;
+
+    private String lattesId;
 }

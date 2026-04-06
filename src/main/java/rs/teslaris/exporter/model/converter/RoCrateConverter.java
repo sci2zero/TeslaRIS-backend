@@ -453,8 +453,9 @@ public class RoCrateConverter {
             DEFAULT_RO_CRATE_LANGUAGE));
 
         if (Objects.nonNull(person.getPersonalInfo()) &&
-            Objects.nonNull(person.getPersonalInfo().getContact())) {
-            personMetadata.setEmail(person.getPersonalInfo().getContact().getContactEmail());
+            Objects.nonNull(person.getPersonalInfo().getProfessionalContact())) {
+            personMetadata.setEmail(
+                person.getPersonalInfo().getProfessionalContact().getContactEmail());
         }
 
         setAffiliationInfo(person, personMetadata, metadataInfo);
@@ -468,7 +469,8 @@ public class RoCrateConverter {
         organization.setId(identifier);
         organization.setName(StringUtil.getStringContent(institution.getName(),
             DEFAULT_RO_CRATE_LANGUAGE));
-        organization.setAlternateName(institution.getNameAbbreviation());
+        organization.setAlternateName(StringUtil.getStringContent(institution.getNameAbbreviation(),
+            DEFAULT_RO_CRATE_LANGUAGE));
 
         organization.setUrl(institution.getUris().stream().findFirst().orElse(null));
         organization.setFoundingLocation(

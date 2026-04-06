@@ -2,6 +2,7 @@ package rs.teslaris.assessment.service.impl.classification;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import java.time.LocalDate;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +57,7 @@ import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.repository.commontypes.ResearchAreaRepository;
+import rs.teslaris.core.repository.institution.CommissionRelationProjection;
 import rs.teslaris.core.repository.institution.OrganisationUnitsRelationRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.repository.user.UserRepository;
@@ -63,6 +66,7 @@ import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
+import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.Pair;
@@ -106,6 +110,8 @@ public class PersonAssessmentClassificationServiceImpl
 
     private final EventIndexRepository eventIndexRepository;
 
+    private final OrganisationUnitService organisationUnitService;
+
     private final int CHUNK_SIZE = 1000;
 
 
@@ -127,7 +133,8 @@ public class PersonAssessmentClassificationServiceImpl
         CitationService citationService, InvolvementRepository involvementRepository,
         OrganisationUnitsRelationRepository organisationUnitsRelationRepository,
         ResearchAreaRepository researchAreaRepository, PrizeIndexRepository prizeIndexRepository,
-        EventIndexRepository eventIndexRepository) {
+        EventIndexRepository eventIndexRepository,
+        OrganisationUnitService organisationUnitService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
             conferenceService, exhibitionService, applicationEventPublisher,
             entityAssessmentClassificationRepository);
@@ -145,6 +152,7 @@ public class PersonAssessmentClassificationServiceImpl
         this.researchAreaRepository = researchAreaRepository;
         this.prizeIndexRepository = prizeIndexRepository;
         this.eventIndexRepository = eventIndexRepository;
+        this.organisationUnitService = organisationUnitService;
     }
 
     @Override
@@ -165,8 +173,20 @@ public class PersonAssessmentClassificationServiceImpl
                                                                            Integer endYear,
                                                                            Integer topLevelInstitutionId) {
         var commission = commissionService.findOneWithFetchedRelations(commissionId);
-        var organisationUnit = userRepository.findOUForCommission(commissionId)
-            .orElseThrow(() -> new NotFoundException("commissionNotBoundToOUMessage"));
+        var commissionOuOpt = userRepository.findOUForCommission(commissionId);
+        if (commissionOuOpt.isEmpty()) {
+            if (Objects.nonNull(topLevelInstitutionId)) {
+                log.warn("Commission {} not bound to OU. Falling back to top level OU {}",
+                    commissionId, topLevelInstitutionId);
+                commissionOuOpt =
+                    Optional.of(organisationUnitService.findOne(topLevelInstitutionId));
+            } else {
+                throw new NotFoundException("commissionNotBoundToOUMessage");
+            }
+        }
+
+        var organisationUnit = commissionOuOpt.get();
+
         var subOUs =
             organisationUnitsRelationRepository.getSubOUsRecursive(organisationUnit.getId());
         subOUs.add(organisationUnit.getId());
@@ -238,7 +258,8 @@ public class PersonAssessmentClassificationServiceImpl
         assessmentResult.setPersonPosition(employments.getFirst().getEmploymentPosition());
 
         processResearcher(personIndex, commission, assessmentMeasures, pointsRuleEngine,
-            scalingRuleEngine, assessmentResult, startYear, endYear, subOUsForTopLevelInstitution);
+            scalingRuleEngine, assessmentResult, startYear, endYear, subOUsForTopLevelInstitution,
+            commissionService.findRelationsWithTargetIds(commission.getId()));
 
         responses.add(assessmentResult);
     }
@@ -275,7 +296,7 @@ public class PersonAssessmentClassificationServiceImpl
 
             processResearcher(index.get(), commission, assessmentMeasures,
                 pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
-                endDate.getYear(), Collections.emptyList());
+                endDate.getYear(), Collections.emptyList(), Collections.emptyList());
             assessmentResponse.add(assessmentResult);
         });
 
@@ -292,24 +313,55 @@ public class PersonAssessmentClassificationServiceImpl
         boolean hasNextPage = true;
 
         while (hasNextPage) {
-            var persons =
-                searchService.runQuery(buildPersonReindexQuery(personIds, institutionIds),
-                        PageRequest.of(pageNumber, CHUNK_SIZE), PersonIndex.class, "person")
+            try {
+                var pageable = PageRequest.of(
+                    pageNumber,
+                    CHUNK_SIZE,
+                    Sort.by(Sort.Direction.ASC, "databaseId")
+                );
+
+                var query = buildPersonReindexQuery(personIds, institutionIds);
+
+                log.info("Executing ES query for page {}: {}", pageNumber, query.toString());
+                log.info("Pageable: {}", pageable);
+
+                var persons = searchService.runQuery(
+                        query,
+                        pageable,
+                        PersonIndex.class,
+                        "person"
+                    )
                     .getContent();
 
-            persons.forEach(personIndex -> {
-                    log.info("reindexPublicationPointsForAllResearchers REINDEXING points for {} ({})",
-                        personIndex.getName(), personIndex.getDatabaseId());
-                    reindexPublicationPointsForResearcher(personIndex, assessmentMeasures);
-                    log.info(
-                        "reindexPublicationPointsForAllResearchers REINDEXING FINISHED for {} ({})",
-                        personIndex.getName(), personIndex.getDatabaseId());
-                }
-            );
+                log.info("Fetched {} persons for page {}", persons.size(), pageNumber);
 
-            pageNumber++;
-            hasNextPage = persons.size() == CHUNK_SIZE;
+                persons.forEach(personIndex -> {
+                    log.info("REINDEXING points for {} ({})",
+                        personIndex.getName(), personIndex.getDatabaseId());
+
+                    reindexPublicationPointsForResearcher(personIndex, assessmentMeasures);
+
+                    log.info("REINDEXING FINISHED for {} ({})",
+                        personIndex.getName(), personIndex.getDatabaseId());
+                });
+
+                pageNumber++;
+                hasNextPage = persons.size() == CHUNK_SIZE;
+            } catch (Exception ex) {
+                log.error("ERROR during reindex on page {}", pageNumber);
+                if (ex instanceof org.springframework.data.elasticsearch.UncategorizedElasticsearchException esEx) {
+                    log.error("Spring ES exception message: {}", esEx.getResponseBody());
+                }
+
+                log.error("FAILED INPUT personIds: {}", personIds);
+                log.error("FAILED INPUT institutionIds: {}", institutionIds);
+                log.error("FAILED pageNumber: {}, chunkSize: {}", pageNumber, CHUNK_SIZE);
+
+                throw ex; // rethrow so transaction caller sees failure
+            }
         }
+
+        log.info("END reindexPublicationPointsForAllResearchers");
     }
 
     @Override
@@ -455,7 +507,8 @@ public class PersonAssessmentClassificationServiceImpl
                                    AssessmentPointsScalingRuleEngine scalingRuleEngine,
                                    EnrichedResearcherAssessmentResponseDTO assessmentResult,
                                    int startYear, int endYear,
-                                   List<Integer> subOUsForTopLevelInstitution) {
+                                   List<Integer> subOUsForTopLevelInstitution,
+                                   List<CommissionRelationProjection> commissionRelationProjections) {
         var researchArea = getResearchArea(personIndex.getDatabaseId(), commission);
 
         researchArea.ifPresent(
@@ -468,7 +521,8 @@ public class PersonAssessmentClassificationServiceImpl
                 assessResearcherPublications(personIndex, commission, assessmentMeasures,
                     pointsRuleEngine, scalingRuleEngine,
                     assessmentResearchArea, startYear, endYear,
-                    assessmentResult, subOUsForTopLevelInstitution);
+                    assessmentResult, subOUsForTopLevelInstitution,
+                    commissionRelationProjections);
 
                 if (!CollectionOperations.containsValues(subOUsForTopLevelInstitution)) {
                     assessResearcherPrizes(personIndex, commission, assessmentMeasures,
@@ -498,7 +552,8 @@ public class PersonAssessmentClassificationServiceImpl
         AssessmentResearchArea assessmentResearchArea,
         int startYear, int endYear,
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
-        List<Integer> subOUsForTopLevelInstitution) {
+        List<Integer> subOUsForTopLevelInstitution,
+        List<CommissionRelationProjection> commissionRelationProjections) {
 
         var isUserLoggedIn = SessionUtil.isUserLoggedIn();
         List<Integer> publicationIdsBatch = new ArrayList<>();
@@ -526,7 +581,8 @@ public class PersonAssessmentClassificationServiceImpl
                     scalingRuleEngine, assessmentResearchArea, personIndex, assessmentResult,
                     subOUsForTopLevelInstitution,
                     indicatorsByDocumentId.getOrDefault(publication.getDatabaseId(),
-                        Collections.emptyList()), isUserLoggedIn));
+                        Collections.emptyList()), isUserLoggedIn,
+                    commissionRelationProjections));
 
             pageNumber++;
             hasNextPage = publications.size() == CHUNK_SIZE;
@@ -600,26 +656,30 @@ public class PersonAssessmentClassificationServiceImpl
                                                              int pageNumber, int chunkSize,
                                                              int startYear, int endYear) {
         return documentPublicationIndexRepository.findByAuthorIdsAndYearBetween(
-            personIndex.getDatabaseId(),
-            startYear, endYear, PageRequest.of(pageNumber, chunkSize)).getContent();
+                personIndex.getDatabaseId(),
+                startYear, endYear,
+                PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+            .getContent();
     }
 
     private List<PrizeIndex> fetchPrizes(PersonIndex personIndex,
                                          int pageNumber, int chunkSize,
                                          int startYear, int endYear) {
         return prizeIndexRepository.findByPersonIdAndDateBetween(
-            personIndex.getDatabaseId(),
-            LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
-            PageRequest.of(pageNumber, chunkSize)).getContent();
+                personIndex.getDatabaseId(),
+                LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
+                PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+            .getContent();
     }
 
     private List<EventIndex> fetchEvents(PersonIndex personIndex,
                                          int pageNumber, int chunkSize,
                                          int startYear, int endYear) {
         return eventIndexRepository.findByPersonIdAndDateBetween(
-            personIndex.getDatabaseId(),
-            LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
-            PageRequest.of(pageNumber, chunkSize)).getContent();
+                personIndex.getDatabaseId(),
+                LocalDate.of(startYear, 1, 1), LocalDate.of(endYear, 12, 31),
+                PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+            .getContent();
     }
 
     private void processPublication(
@@ -632,19 +692,37 @@ public class PersonAssessmentClassificationServiceImpl
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
         List<Integer> subOUsForTopLevelInstitution,
         List<DocumentIndicator> indicators,
-        boolean isUserLoggedIn) {
+        boolean isUserLoggedIn,
+        List<CommissionRelationProjection> commissionRelationProjections) {
 
         var assessments = publication.getCommissionAssessments().stream()
             .filter(ca -> ca.a.equals(commission.getId()))
             .collect(Collectors.toSet());
 
-        var hasManualClassifications = publication.getCommissionAssessments().stream()
-            .anyMatch(ca -> ca.c.equals(true));
+        Optional<Triple<Integer, String, Boolean>> assessment = Optional.empty();
 
-        var assessment =
-            assessments.stream()
-                .filter(ca -> ca.c.equals(hasManualClassifications))
-                .findFirst();
+        if (assessments.isEmpty()) {
+            for (var relationProjection : commissionRelationProjections) {
+                var relationGroupAssessments = publication.getCommissionAssessments().stream()
+                    .filter(ca -> relationProjection.targetCommissionIds().contains(ca.a))
+                    .collect(Collectors.toSet());
+                assessment = ClassificationPriorityMapping.getClassificationBasedOnCriteria(
+                    relationGroupAssessments,
+                    relationProjection.resultCalculationMethod());
+
+                if (assessment.isPresent()) {
+                    break;
+                }
+            }
+        } else {
+            var hasManualClassifications = publication.getCommissionAssessments().stream()
+                .anyMatch(ca -> ca.c.equals(true));
+
+            assessment =
+                assessments.stream()
+                    .filter(ca -> ca.c.equals(hasManualClassifications))
+                    .findFirst();
+        }
 
         if (assessment.isEmpty()) {
             return;
@@ -674,6 +752,8 @@ public class PersonAssessmentClassificationServiceImpl
         if (!subOUsForTopLevelInstitution.isEmpty()) {
             populateTopLevelBelongingInformation(publication, assessmentResult,
                 subOUsForTopLevelInstitution);
+            assessmentResult.getPublicationToCommission()
+                .put(publication.getDatabaseId(), assessment.get().a);
         }
     }
 
@@ -929,6 +1009,12 @@ public class PersonAssessmentClassificationServiceImpl
         List<Integer> personIds,
         List<Integer> institutionIds
     ) {
+        if (!CollectionOperations.containsValues(personIds) &&
+            !CollectionOperations.containsValues(institutionIds)) {
+
+            return MatchAllQuery.of(m -> m)._toQuery();
+        }
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             if (CollectionOperations.containsValues(personIds)) {
                 b.must(m -> m.terms(t ->

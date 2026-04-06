@@ -21,6 +21,7 @@ import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @SpringBootTest
@@ -47,7 +48,8 @@ public class BookSeriesControllerTest extends BaseTest {
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
-            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null,
+                PersonNameType.DISPLAY_NAME));
         bookSeriesDTO.setContributions(List.of(contribution));
         bookSeriesDTO.setLanguageIds(new HashSet<>());
 

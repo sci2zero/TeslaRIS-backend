@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,7 +147,8 @@ public class DocumentClaimingServiceImpl implements DocumentClaimingService {
         while (hasNextPage) {
             List<DocumentPublicationIndex> chunk =
                 documentPublicationIndexRepository.findByAuthorIds(-1,
-                    PageRequest.of(pageNumber, chunkSize)).getContent();
+                    PageRequest.of(pageNumber, chunkSize,
+                        Sort.by(Sort.Direction.ASC, "databaseId"))).getContent();
 
             chunk.forEach((document) -> {
                 document.getClaimerIds().clear();

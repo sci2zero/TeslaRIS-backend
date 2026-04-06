@@ -69,6 +69,9 @@ public non-sealed class Monograph extends Document
     @Column(name = "author_reprint")
     private Boolean authorReprint = false;
 
+    @Column(name = "udc")
+    private String udc;
+
     public Monograph() {
         super(DocumentPublicationType.MONOGRAPH);
     }

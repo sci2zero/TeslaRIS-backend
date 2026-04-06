@@ -16,6 +16,7 @@ import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.model.institution.OrganisationUnitRelationType;
 import rs.teslaris.core.model.oaipmh.organisationunit.OrgUnit;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
 import rs.teslaris.importer.utility.RecordConverter;
 import rs.teslaris.importer.utility.oaipmh.OAIPMHParseUtility;
@@ -36,14 +37,14 @@ public class OrganisationUnitConverter
 
         dto.setName(multilingualContentConverter.toDTO(organisationUnit.getName()));
 
-        dto.setNameAbbreviation("");
-        if (Objects.nonNull(organisationUnit.getAcronym()) &&
-            !organisationUnit.getAcronym().isEmpty()) {
-            dto.setNameAbbreviation(organisationUnit.getAcronym().getFirst().getValue());
+        if (CollectionOperations.containsValues(organisationUnit.getAcronym())) {
+            dto.setNameAbbreviation(
+                multilingualContentConverter.toDTO(organisationUnit.getAcronym()));
+        } else {
+            dto.setNameAbbreviation(new ArrayList<>());
         }
 
-        if (Objects.nonNull(organisationUnit.getKeywords()) &&
-            !organisationUnit.getKeywords().isEmpty()) {
+        if (CollectionOperations.containsValues(organisationUnit.getKeywords())) {
             dto.setKeyword(multilingualContentConverter.toDTO(organisationUnit.getKeywords()));
         } else {
             dto.setKeyword(new ArrayList<>());

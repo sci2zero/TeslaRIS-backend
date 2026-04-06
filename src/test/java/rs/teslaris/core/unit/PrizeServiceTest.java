@@ -35,11 +35,13 @@ import rs.teslaris.core.indexrepository.PrizeIndexRepository;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.Prize;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.person.PrizeServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -75,6 +77,9 @@ public class PrizeServiceTest {
     @Mock
     private OrganisationUnitService organisationUnitService;
 
+    @Mock
+    private ResearchAreaService researchAreaService;
+
     @InjectMocks
     private PrizeServiceImpl prizeService;
 
@@ -85,7 +90,8 @@ public class PrizeServiceTest {
         var dto = new PrizeDTO();
 
         var person = new Person();
-        person.setName(new PersonName("John", null, "Doe", null, null));
+        person.setName(
+            new PersonName("John", null, "Doe", null, null, PersonNameType.DISPLAY_NAME));
 
         var newPrize = new Prize();
 
@@ -118,7 +124,7 @@ public class PrizeServiceTest {
         prize.setId(1);
         prize.setPerson(new Person() {{
             setId(1);
-            setName(new PersonName("John", null, "Doe", null, null));
+            setName(new PersonName("John", null, "Doe", null, null, PersonNameType.DISPLAY_NAME));
         }});
 
         when(prizeRepository.findById(1)).thenReturn(

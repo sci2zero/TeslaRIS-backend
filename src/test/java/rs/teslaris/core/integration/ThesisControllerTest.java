@@ -24,6 +24,7 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.person.PersonNameType;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -53,7 +54,8 @@ public class ThesisControllerTest extends BaseTest {
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
-            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null,
+                PersonNameType.DISPLAY_NAME));
         thesisDTO.setContributions(List.of(contribution));
         thesisDTO.setUris(new HashSet<>());
 
@@ -209,7 +211,7 @@ public class ThesisControllerTest extends BaseTest {
 
         mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                        "http://localhost:8081/api/thesis/schedule-public-review-end-check?types=PHD&types=PHD_ART_PROJECT&publicReviewLengthDays=20&timestamp=" +
+                        "http://localhost:8081/api/thesis/schedule-public-review-end-check?shortened=false&types=PHD&types=PHD_ART_PROJECT&publicReviewLengthDays=20&timestamp=" +
                             LocalDateTime.now().plusMinutes(10) + "&recurrence=DAILY")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)

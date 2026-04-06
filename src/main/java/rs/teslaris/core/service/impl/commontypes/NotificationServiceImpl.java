@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -239,7 +240,8 @@ public class NotificationServiceImpl extends JPAServiceImpl<Notification>
 
         while (hasNextPage) {
             List<UserAccountIndex> chunk = userAccountIndexRepository
-                .findAll(PageRequest.of(pageNumber, chunkSize))
+                .findAll(PageRequest.of(pageNumber, chunkSize,
+                    Sort.by(Sort.Direction.ASC, "databaseId")))
                 .getContent();
 
             chunk.forEach(accountIndex -> {

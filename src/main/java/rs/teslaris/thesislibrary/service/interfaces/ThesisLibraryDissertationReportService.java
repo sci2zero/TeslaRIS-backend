@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
+import rs.teslaris.thesislibrary.model.PublicReviewType;
 
 @Service
 public interface ThesisLibraryDissertationReportService {
@@ -12,5 +13,6 @@ public interface ThesisLibraryDissertationReportService {
                                                                        Integer year,
                                                                        Boolean notDefendedOnly,
                                                                        Integer userInstitutionId,
+                                                                       PublicReviewType publicReviewType,
                                                                        Pageable pageable);
 }

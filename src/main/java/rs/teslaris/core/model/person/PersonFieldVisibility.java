@@ -42,6 +42,9 @@ public class PersonFieldVisibility extends BaseEntity {
     @Column(name = "birthplace_visible")
     private Boolean birthplaceVisible = false;
 
+    @Column(name = "biography_visible")
+    private Boolean biographyVisible = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id", referencedColumnName = "id", nullable = false)
     private Person person;

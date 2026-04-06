@@ -43,6 +43,7 @@ import rs.teslaris.core.model.commontypes.LanguageTag;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.EmploymentTitle;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Education;
 import rs.teslaris.core.model.person.Employment;
@@ -51,6 +52,7 @@ import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Membership;
 import rs.teslaris.core.model.person.Person;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.person.EmploymentRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.person.InvolvementServiceImpl;
@@ -93,6 +95,9 @@ public class InvolvementServiceTest {
     @Mock
     private EmploymentMigrationWorker employmentMigrationWorker;
 
+    @Mock
+    private ThesisRepository thesisRepository;
+
     @InjectMocks
     private InvolvementServiceImpl involvementService;
 
@@ -129,7 +134,6 @@ public class InvolvementServiceTest {
         var education = new Education();
         education.setOrganisationUnit(new OrganisationUnit());
         education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
-        education.setThesisTitle(new HashSet<>(Set.of(mc1)));
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
 
@@ -164,6 +168,10 @@ public class InvolvementServiceTest {
         educationDTO.setThesisTitle(List.of(mc));
         educationDTO.setTitle(List.of(mc));
         educationDTO.setAbbreviationTitle(List.of(mc));
+        educationDTO.setDegreeCode(List.of());
+        educationDTO.setDegreeClassification(List.of());
+        educationDTO.setDescription(List.of(mc));
+        educationDTO.setKeywords(List.of());
 
         when(personService.findOne(1)).thenReturn(person);
         when(involvementRepository.save(any())).thenReturn(new Education());
@@ -223,7 +231,6 @@ public class InvolvementServiceTest {
         var mc1 = new MultiLingualContent(null, "aaa", 1);
         var education = new Education();
         education.setAffiliationStatement(new HashSet<>(Set.of(mc1)));
-        education.setThesisTitle(new HashSet<>(Set.of(mc1)));
         education.setTitle(new HashSet<>(Set.of(mc1)));
         education.setAbbreviationTitle(new HashSet<>(Set.of(mc1)));
         education.setPersonInvolved(new Person());
@@ -232,17 +239,25 @@ public class InvolvementServiceTest {
         educationDTO.setAffiliationStatement(List.of(mc2));
         educationDTO.setThesisTitle(List.of(mc2));
         educationDTO.setTitle(List.of(mc2));
+        educationDTO.setThesisId(1);
         educationDTO.setAbbreviationTitle(List.of(mc2));
+        educationDTO.setDegreeCode(List.of(mc2));
+        educationDTO.setDegreeClassification(List.of(mc2));
+        educationDTO.setDescription(List.of());
+        educationDTO.setKeywords(List.of());
 
         when(involvementRepository.findById(1)).thenReturn(Optional.of(education));
         when(multilingualContentService.getMultilingualContent(any())).thenReturn(Set.of(mc1));
         when(involvementRepository.save(any())).thenReturn(new Employment());
+        when(thesisRepository.getReferenceById(1)).thenReturn(new Thesis() {{
+            setTitle(new HashSet<>(Set.of(mc1)));
+        }});
 
         // when
         involvementService.updateEducation(1, educationDTO);
 
         // then
-        assertEquals(education.getThesisTitle().size(), 1);
+        assertEquals(1, education.getThesis().getTitle().size());
         verify(involvementRepository, times(1)).save(education);
     }
 
@@ -733,7 +748,7 @@ public class InvolvementServiceTest {
         // Given
         var migrationDTO = List.of(new ExtraEmploymentMigrationDTO(
             12345, EmploymentPosition.FULL_PROFESSOR, LocalDate.of(2020, 1, 1),
-            "Non Existent University", new PersonNameDTO(null, "John", "", "Doe", null, null)
+            "Non Existent University", new PersonNameDTO(null, "John", "", "Doe", null, null, null)
         ));
 
         when(organisationUnitService.searchOrganisationUnits(any(), any(), any(), any(), any(),
@@ -755,7 +770,7 @@ public class InvolvementServiceTest {
         // Given
         var migrationDTO = List.of(new ExtraEmploymentMigrationDTO(
             12345, EmploymentPosition.FULL_PROFESSOR, LocalDate.of(2020, 1, 1),
-            "University of Belgrade", new PersonNameDTO(null, "John", "", "Doe", null, null)
+            "University of Belgrade", new PersonNameDTO(null, "John", "", "Doe", null, null, null)
         ));
 
         var result = new OrganisationUnitIndex();

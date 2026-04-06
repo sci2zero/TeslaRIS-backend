@@ -40,4 +40,7 @@ public class ResearchArea extends BaseEntity {
 
     @Column(name = "processed_name", length = 2048)
     private String processedName;
+
+    @Column(name = "scheme_name")
+    private String schemeName;
 }

@@ -134,7 +134,7 @@ public class ResearchAreaServiceTest {
         when(multilingualContentService.getMultilingualContent(
             researchAreaDTO.getDescription())).thenReturn(descriptionMultilingualContent);
         when(researchAreaRepository.getReferenceById(1)).thenReturn(
-            new ResearchArea(new HashSet<>(), new HashSet<>(), null, ""));
+            new ResearchArea(new HashSet<>(), new HashSet<>(), null, "", "TEST"));
 
         // when
         researchAreaService.editResearchArea(researchAreaDTO, 1);
@@ -225,7 +225,7 @@ public class ResearchAreaServiceTest {
     }
 
     @Test
-    public void shouldSearchCountries() {
+    public void shouldSearchResearchAreas() {
         // given
         var searchTerm = "Search Term";
         var researchAreaPage = new PageImpl<>(List.of(new ResearchArea()));

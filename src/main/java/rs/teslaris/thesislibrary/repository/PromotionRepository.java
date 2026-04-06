@@ -14,11 +14,13 @@ public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
     @Query("SELECT p FROM Promotion p WHERE p.finished = :finished")
     List<Promotion> getPromotionsBasedOnStatus(boolean finished);
 
-    @Query("SELECT p FROM Promotion p WHERE p.finished = :finished AND p.institution.id = :institutionId")
-    List<Promotion> getPromotionsBasedOnStatus(Integer institutionId, boolean finished);
+    @Query("SELECT p FROM Promotion p WHERE p.finished = :finished AND p.institution.id IN :institutionIds")
+    List<Promotion> getPromotionsBasedOnStatus(List<Integer> institutionIds, boolean finished);
 
-    @Query("SELECT p FROM Promotion p WHERE p.institution.id = :institutionId")
-    Page<Promotion> findAll(Integer institutionId, Pageable pageable);
+    @Query("SELECT p FROM Promotion p WHERE " +
+        "(:institutionId IS NULL OR p.institution.id = :institutionId) " +
+        "AND (:nonFinishedOnly = FALSE OR p.finished = FALSE)")
+    Page<Promotion> findAll(Integer institutionId, boolean nonFinishedOnly, Pageable pageable);
 
     @Query("SELECT COUNT(rbe) > 0 FROM RegistryBookEntry rbe WHERE rbe.promotion.id = :promotionId")
     boolean hasPromotableEntries(Integer promotionId);

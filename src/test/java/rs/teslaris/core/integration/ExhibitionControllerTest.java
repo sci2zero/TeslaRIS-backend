@@ -18,6 +18,7 @@ import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.PersonEventContributionDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.EventContributionType;
+import rs.teslaris.core.model.person.PersonNameType;
 
 @SpringBootTest
 public class ExhibitionControllerTest extends BaseTest {
@@ -49,7 +50,8 @@ public class ExhibitionControllerTest extends BaseTest {
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
-            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null,
+                PersonNameType.DISPLAY_NAME));
         exhibitionDTO.setContributions(List.of(contribution));
 
         return exhibitionDTO;

@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.util.signposting.LinksetFormat;
 
 @SpringBootTest
@@ -100,7 +101,8 @@ public class PersonControllerTest extends BaseTest {
     public void testUpdatePersonMainName() throws Exception {
         String jwtToken = authenticateResearcherAndGetToken();
 
-        var personNameDTO = new PersonNameDTO(null, "Ivan", "R", "M", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "Ivan", "R", "M", null, null, PersonNameType.DISPLAY_NAME);
         String requestBody = objectMapper.writeValueAsString(personNameDTO);
 
         mockMvc.perform(

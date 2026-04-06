@@ -38,6 +38,9 @@ public class PersonName extends BaseEntity {
     @Column(name = "date_to")
     private LocalDate dateTo;
 
+    @Column(name = "name_type")
+    private PersonNameType nameType;
+
     @Override
     public String toString() {
         if (Objects.isNull(otherName) || otherName.isEmpty()) {

@@ -28,6 +28,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,7 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.document.ResourceType;
+import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.DocumentFileRepository;
@@ -326,6 +328,18 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         setCommonFields(documentFileToEdit, documentFile);
 
+        if ((documentFile.getResourceType().equals(ResourceType.STATEMENT) ||
+            documentFile.getResourceType().equals(ResourceType.PREPRINT)) &&
+            (SessionUtil.isUserLoggedInAndLibrarian() || SessionUtil.isUserLoggedInAndAdmin())) {
+            var thesis =
+                documentLookupService.fastDocumentLookup(documentFileToEdit.getDocument().getId());
+            if (thesis instanceof Thesis &&
+                !((Thesis) thesis).getPublicReviewEndDates().isEmpty()) {
+                documentFileToEdit.setIsArchived(
+                    Objects.requireNonNullElse(documentFile.getIsArchived(), false));
+            }
+        }
+
         if (!index) {
             documentFile.setResourceType(
                 ResourceType.PROOF); // Save every non-indexed (proof) as supplement
@@ -566,7 +580,8 @@ public class DocumentFileServiceImpl extends JPAServiceImpl<DocumentFile>
 
         while (hasNextPage) {
             List<DocumentFile> chunk =
-                documentFileRepository.findAllIndexable(PageRequest.of(pageNumber, chunkSize))
+                documentFileRepository.findAllIndexable(
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
                     .getContent();
 
             chunk.forEach(this::reindexDocumentFile);

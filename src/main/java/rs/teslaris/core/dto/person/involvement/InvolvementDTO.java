@@ -3,7 +3,9 @@ package rs.teslaris.core.dto.person.involvement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,7 +34,17 @@ public class InvolvementDTO {
     @Valid
     private List<MultilingualContentDTO> affiliationStatement;
 
+    @Valid
+    private List<MultilingualContentDTO> description;
+
+    @Valid
+    private List<MultilingualContentDTO> keywords;
+
     private Integer organisationUnitId;
+
+    private Boolean favorite;
+
+    private Set<String> uris = new HashSet<>();
 
     // Only for responses
     private List<MultilingualContentDTO> organisationUnitName;

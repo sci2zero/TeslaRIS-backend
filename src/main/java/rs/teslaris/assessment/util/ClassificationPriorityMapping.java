@@ -31,6 +31,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.util.exceptionhandling.exception.StorageException;
 import rs.teslaris.core.util.files.ConfigurationLoaderUtil;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 
 @Component
 public class ClassificationPriorityMapping {
@@ -81,6 +82,21 @@ public class ClassificationPriorityMapping {
                 .max(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
                         assessmentClassification.a.getCode(), Integer.MIN_VALUE)));
+        };
+    }
+
+    public static Optional<Triple<Integer, String, Boolean>> getClassificationBasedOnCriteria(
+        Set<Triple<Integer, String, Boolean>> classifications,
+        ResultCalculationMethod resultCalculationMethod) {
+        return switch (resultCalculationMethod) {
+            case BEST_VALUE -> classifications.stream()
+                .min(Comparator.comparingInt(
+                    assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
+                        assessmentClassification.b, Integer.MAX_VALUE)));
+            case WORST_VALUE -> classifications.stream()
+                .max(Comparator.comparingInt(
+                    assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
+                        assessmentClassification.b, Integer.MIN_VALUE)));
         };
     }
 

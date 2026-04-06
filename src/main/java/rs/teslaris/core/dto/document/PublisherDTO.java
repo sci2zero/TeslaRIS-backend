@@ -25,6 +25,9 @@ public class PublisherDTO {
     @NotNull(message = "You have to provide publisher place.")
     private List<MultilingualContentDTO> place;
 
+    @NotNull(message = "You have to provide publisher state.")
+    private List<MultilingualContentDTO> state;
+
     @Positive(message = "Country ID must be a positive number")
     private Integer countryId;
 }

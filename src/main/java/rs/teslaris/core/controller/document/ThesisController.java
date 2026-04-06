@@ -203,10 +203,11 @@ public class ThesisController {
                                              RecurrenceType recurrence,
                                              @RequestParam("publicReviewLengthDays")
                                              Integer publicReviewLengthDays,
+                                             @RequestParam("shortened") Boolean shortened,
                                              @RequestHeader("Authorization")
                                              String bearerToken) {
         thesisService.schedulePublicReviewEndCheck(timestamp, types, publicReviewLengthDays,
-            tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
+            tokenUtil.extractUserIdFromToken(bearerToken), recurrence, shortened);
     }
 
     private void performReferenceAdditionChecks(ThesisDTO thesis, String bearerToken) {

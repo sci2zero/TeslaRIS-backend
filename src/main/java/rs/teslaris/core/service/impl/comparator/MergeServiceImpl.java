@@ -434,7 +434,8 @@ public class MergeServiceImpl implements MergeService {
             rightData,
             dto -> new String[] {dto.getApvnt(), dto.getECrisId(), dto.getENaukaId(),
                 dto.getScopusAuthorId(), dto.getOrcid(), dto.getOpenAlexId(),
-                dto.getWebOfScienceResearcherId()},
+                dto.getWebOfScienceResearcherId(), dto.getNationalScienceId(), dto.getScholarId(),
+                dto.getAuthenticusId(), dto.getLattesId()},
             (dto, values) -> {
                 dto.setApvnt(values[0]);
                 dto.setECrisId(values[1]);
@@ -443,6 +444,10 @@ public class MergeServiceImpl implements MergeService {
                 dto.setOrcid(values[4]);
                 dto.setOpenAlexId(values[5]);
                 dto.setWebOfScienceResearcherId(values[6]);
+                dto.setNationalScienceId(values[7]);
+                dto.setScholarId(values[8]);
+                dto.setAuthenticusId(values[9]);
+                dto.setLattesId(values[10]);
             });
     }
 
@@ -455,11 +460,22 @@ public class MergeServiceImpl implements MergeService {
             leftId, rightId,
             leftData,
             rightData,
-            dto -> new String[] {dto.getScopusAfid(), dto.getOpenAlexId(), dto.getRor()},
+            dto -> new String[] {
+                dto.getScopusAfid(), dto.getOpenAlexId(), dto.getRor(),
+                dto.getRinggold(), dto.getFundref(), dto.getIsni(), dto.getAthensId(),
+                dto.getNcesId(), dto.getNifId(), dto.getDgeecId(), dto.getFctId()},
             (dto, values) -> {
                 dto.setScopusAfid(values[0]);
                 dto.setOpenAlexId(values[1]);
                 dto.setRor(values[2]);
+                dto.setRinggold(values[3]);
+                dto.setFundref(values[4]);
+                dto.setIsni(values[5]);
+                dto.setAthensId(values[6]);
+                dto.setNcesId(values[7]);
+                dto.setNifId(values[8]);
+                dto.setDgeecId(values[9]);
+                dto.setFctId(values[10]);
             });
     }
 

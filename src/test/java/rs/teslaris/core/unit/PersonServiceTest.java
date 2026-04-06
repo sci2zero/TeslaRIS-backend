@@ -73,6 +73,7 @@ import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonFieldVisibility;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.person.PersonalInfo;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.model.person.Sex;
@@ -185,7 +186,7 @@ public class PersonServiceTest {
         expectedPerson.setId(10);
         expectedPerson.setName(new PersonName());
         var personalInfo = new PersonalInfo();
-        personalInfo.setPostalAddress(new PostalAddress());
+        personalInfo.setProfessionalPostalAddress(new PostalAddress());
         expectedPerson.setPersonalInfo(personalInfo);
 
         when(personRepository.findPersonByOldIdsContains(1)).thenReturn(
@@ -281,10 +282,11 @@ public class PersonServiceTest {
         assertEquals("John", result.getName().getFirstname());
         assertEquals("Doe", result.getName().getLastname());
         assertEquals("john.doe@example.com",
-            result.getPersonalInfo().getContact().getContactEmail());
+            result.getPersonalInfo().getProfessionalContact().getContactEmail());
         assertEquals(Sex.MALE, result.getPersonalInfo().getSex());
         assertEquals(LocalDate.of(1985, 5, 15), result.getPersonalInfo().getLocalBirthDate());
-        assertEquals("+1-555-555-5555", result.getPersonalInfo().getContact().getPhoneNumber());
+        assertEquals("+1-555-555-5555",
+            result.getPersonalInfo().getProfessionalContact().getPhoneNumber());
         assertEquals("12345", result.getApvnt());
         assertEquals("67890", result.getECrisId());
         assertEquals("rp67890", result.getENaukaId());
@@ -346,10 +348,11 @@ public class PersonServiceTest {
         assertEquals("Jane", result.getName().getFirstname());
         assertEquals("Smith", result.getName().getLastname());
         assertEquals("jane.smith@example.com",
-            result.getPersonalInfo().getContact().getContactEmail());
+            result.getPersonalInfo().getProfessionalContact().getContactEmail());
         assertEquals(Sex.FEMALE, result.getPersonalInfo().getSex());
         assertEquals(LocalDate.of(1990, 3, 10), result.getPersonalInfo().getLocalBirthDate());
-        assertEquals("+1-444-444-4444", result.getPersonalInfo().getContact().getPhoneNumber());
+        assertEquals("+1-444-444-4444",
+            result.getPersonalInfo().getProfessionalContact().getPhoneNumber());
         assertEquals("23456", result.getApvnt());
         assertEquals("78901", result.getECrisId());
         assertEquals("rp78901", result.getENaukaId());
@@ -406,8 +409,10 @@ public class PersonServiceTest {
     @Test
     public void shouldSetPersonMainName() {
         // given
-        var personName1 = new PersonName("Stan", "John", "Doe", null, null);
-        var personName2 = new PersonName("Stan", "Jonny", "Doe", null, null);
+        var personName1 =
+            new PersonName("Stan", "John", "Doe", null, null, PersonNameType.PRESENTED_NAME);
+        var personName2 =
+            new PersonName("Stan", "Jonny", "Doe", null, null, PersonNameType.PRESENTED_NAME);
 
         var personalInfo = new PersonalInfo();
         personalInfo.setLocalBirthDate(LocalDate.now());
@@ -439,8 +444,10 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
-        personNameDTOList.add(new PersonNameDTO(null, "Jane", "Marie", "Doe", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null,
+            PersonNameType.PRESENTED_NAME));
+        personNameDTOList.add(new PersonNameDTO(null, "Jane", "Marie", "Doe", null, null,
+            PersonNameType.PRESENTED_NAME));
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
@@ -465,7 +472,8 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null,
+            PersonNameType.PRESENTED_NAME));
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
@@ -476,7 +484,8 @@ public class PersonServiceTest {
             Optional.of(new PersonFieldVisibility()));
 
         var personNames = new HashSet<PersonName>();
-        personNames.add(new PersonName("Jane", "Marie", "Doe", null, null));
+        personNames.add(
+            new PersonName("Jane", "Marie", "Doe", null, null, PersonNameType.DISPLAY_NAME));
         personToUpdate.setOtherNames(personNames);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(personToUpdate));
@@ -496,7 +505,8 @@ public class PersonServiceTest {
         // given
         var personId = 1;
         var personNameDTOList = new ArrayList<PersonNameDTO>();
-        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null));
+        personNameDTOList.add(new PersonNameDTO(null, "John", "Doe", "Smith", null, null,
+            PersonNameType.PRESENTED_NAME));
 
         when(personRepository.findById(personId)).thenReturn(Optional.empty());
 
@@ -520,8 +530,8 @@ public class PersonServiceTest {
         personalInfoDTO.setOrcid("0000-0000-0000-0000");
         personalInfoDTO.setScopusAuthorId("1234567");
         personalInfoDTO.setPostalAddress(
-            new PostalAddressDTO(1, new ArrayList<>(), new ArrayList<>()));
-        personalInfoDTO.setContact(new ContactDTO("email", "phone"));
+            new PostalAddressDTO(1, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), null));
+        personalInfoDTO.setContact(new ContactDTO("email", "phone", "", ""));
         personalInfoDTO.setLocalBirthDate(LocalDate.of(1990, 1, 1));
         personalInfoDTO.setSex(Sex.MALE);
 
@@ -529,10 +539,10 @@ public class PersonServiceTest {
 
         var postalAddress = new PostalAddress();
         postalAddress.setCountry(new Country());
-        personalInfo.setPostalAddress(postalAddress);
+        personalInfo.setProfessionalPostalAddress(postalAddress);
 
         var contact = new Contact();
-        personalInfo.setContact(contact);
+        personalInfo.setProfessionalContact(contact);
 
         var personToUpdate = new Person();
         personToUpdate.setId(personId);
@@ -562,11 +572,11 @@ public class PersonServiceTest {
         assertEquals("City", personalInfo.getPlaceOfBrith());
         assertEquals(LocalDate.of(1990, 1, 1), personalInfo.getLocalBirthDate());
         assertEquals(Sex.MALE, personalInfo.getSex());
-        assertNotNull(personalInfo.getPostalAddress().getCountry());
-        assertEquals(0, personalInfo.getPostalAddress().getStreetAndNumber().size());
-        assertEquals(0, personalInfo.getPostalAddress().getCity().size());
-        assertEquals("email", personalInfo.getContact().getContactEmail());
-        assertEquals("phone", personalInfo.getContact().getPhoneNumber());
+        assertNotNull(personalInfo.getProfessionalPostalAddress().getCountry());
+        assertEquals(0, personalInfo.getProfessionalPostalAddress().getStreetAndNumber().size());
+        assertEquals(0, personalInfo.getProfessionalPostalAddress().getCity().size());
+        assertEquals("email", personalInfo.getProfessionalContact().getContactEmail());
+        assertEquals("phone", personalInfo.getProfessionalContact().getPhoneNumber());
     }
 
     @Test
@@ -909,11 +919,13 @@ public class PersonServiceTest {
     void shouldUpdateAndIndexPersonPrimaryNameWhenStatusIsApproved() {
         // Given
         var personId = 1;
-        var personNameDTO = new PersonNameDTO(null, "John", "Michael", "Doe", null, null);
+        var personNameDTO = new PersonNameDTO(null, "John", "Michael", "Doe", null, null,
+            PersonNameType.PRESENTED_NAME);
         var person = new Person();
         person.setId(personId);
         person.setPersonalInfo(new PersonalInfo());
-        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null));
+        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null,
+            PersonNameType.FULL_NAME));
         person.setApproveStatus(ApproveStatus.APPROVED);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(person));
@@ -935,10 +947,12 @@ public class PersonServiceTest {
     void shouldUpdateButNotIndexPersonPrimaryNameWhenStatusIsNotApproved() {
         // Given
         var personId = 2;
-        var personNameDTO = new PersonNameDTO(null, "Jane", "Alice", "Smith", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "Jane", "Alice", "Smith", null, null, PersonNameType.FULL_NAME);
         var person = new Person();
         person.setId(personId);
-        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null));
+        person.setName(new PersonName("OldFirst", "OldOther", "OldLast", null, null,
+            PersonNameType.FULL_NAME));
         person.setApproveStatus(ApproveStatus.REQUESTED);
 
         when(personRepository.findById(personId)).thenReturn(Optional.of(person));
@@ -958,7 +972,8 @@ public class PersonServiceTest {
     void shouldThrowNotFoundExceptionWhenPersonNotFound() {
         // Given
         var personId = 3;
-        var personNameDTO = new PersonNameDTO(null, "Test", "User", "Test", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "Test", "User", "Test", null, null, PersonNameType.FULL_NAME);
         when(personRepository.findById(personId)).thenThrow(
             new NotFoundException("Person not found"));
 
@@ -1358,7 +1373,7 @@ public class PersonServiceTest {
         // Given
         var personId = 123;
         var personNameDTO = new PersonNameDTO(null, "John", "Middle", "Doe",
-            LocalDate.of(2020, 1, 1), LocalDate.of(2023, 12, 31));
+            LocalDate.of(2020, 1, 1), LocalDate.of(2023, 12, 31), PersonNameType.PRESENTED_NAME);
 
         var existingPerson = new Person();
         existingPerson.setId(personId);
@@ -1392,7 +1407,8 @@ public class PersonServiceTest {
     void shouldAddPersonOtherNameWhenPersonNotApproved() {
         // Given
         var personId = 123;
-        var personNameDTO = new PersonNameDTO(null, "Jane", null, "Smith", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "Jane", null, "Smith", null, null, PersonNameType.FULL_NAME);
 
         var existingPerson = new Person();
         existingPerson.setId(personId);
@@ -1424,7 +1440,8 @@ public class PersonServiceTest {
     void shouldAddMultipleOtherNamesToExistingSet() {
         // Given
         var personId = 123;
-        var personNameDTO = new PersonNameDTO(null, "New", "Name", "User", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "New", "Name", "User", null, null, PersonNameType.DISPLAY_NAME);
 
         // Existing person with some other names already
         var existingPerson = new Person();
@@ -1432,7 +1449,8 @@ public class PersonServiceTest {
         existingPerson.setName(new PersonName());
         existingPerson.setPersonalInfo(new PersonalInfo());
         var existingOtherNames = new HashSet<PersonName>();
-        existingOtherNames.add(new PersonName("Existing", "Old", "Name", null, null));
+        existingOtherNames.add(
+            new PersonName("Existing", "Old", "Name", null, null, PersonNameType.DISPLAY_NAME));
         existingPerson.setOtherNames(existingOtherNames);
         existingPerson.setApproveStatus(ApproveStatus.APPROVED);
 
@@ -1461,7 +1479,8 @@ public class PersonServiceTest {
     void shouldHandleNullOtherNamesSet() {
         // Given
         var personId = 123;
-        var personNameDTO = new PersonNameDTO(null, "Test", null, "User", null, null);
+        var personNameDTO = new PersonNameDTO(null, "Test", null, "User", null, null,
+            PersonNameType.PRESENTED_NAME);
 
         var existingPerson = new Person();
         existingPerson.setId(personId);
@@ -1492,7 +1511,8 @@ public class PersonServiceTest {
     void shouldNotUpdateNamesWhenPersonNotFound() {
         // Given
         var personId = 999;
-        var personNameDTO = new PersonNameDTO(null, "John", null, "Doe", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "John", null, "Doe", null, null, PersonNameType.FULL_NAME);
 
         when(personRepository.findApprovedByIdWithOtherNames(personId)).thenReturn(
             Optional.empty());
@@ -1508,7 +1528,8 @@ public class PersonServiceTest {
     void shouldHandleNullDatesInPersonNameDTO() {
         // Given
         var personId = 123;
-        var personNameDTO = new PersonNameDTO(null, "First", null, "Last", null, null);
+        var personNameDTO =
+            new PersonNameDTO(null, "First", null, "Last", null, null, PersonNameType.FULL_NAME);
 
         var existingPerson = new Person();
         existingPerson.setId(personId);
@@ -1637,7 +1658,13 @@ public class PersonServiceTest {
             }},
             "University of Belgrade", 2));
         orgUnit.setName(orgName);
-        orgUnit.setNameAbbreviation("UB");
+        orgUnit.setNameAbbreviation(Set.of(
+            new MultiLingualContent(
+                new LanguageTag() {{
+                    setLanguageTag(LanguageAbbreviations.SERBIAN);
+                }},
+                "UB", 2)
+        ));
         employment.setOrganisationUnit(orgUnit);
 
         savedPerson.setInvolvements(Set.of(employment));

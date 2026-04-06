@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,6 +31,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.model.person.Contact;
+import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.util.deduplication.Accounted;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
@@ -56,8 +58,11 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
 
-    @Column(name = "name_abbreviation", nullable = false)
-    private String nameAbbreviation;
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> nameAbbreviation = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> description = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> keyword = new HashSet<>();
@@ -73,6 +78,30 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     @Column(name = "ror")
     private String ror;
+
+    @Column(name = "ringgold")
+    private String ringgold;
+
+    @Column(name = "fundref")
+    private String fundref; // https://bioregistry.io/registry/funderregistry
+
+    @Column(name = "isni")
+    private String isni; // https://bioregistry.io/registry/isni
+
+    @Column(name = "athens_id")
+    private String athensId;
+
+    @Column(name = "nces_id")
+    private String ncesId;
+
+    @Column(name = "fct_id")
+    private String fctId;
+
+    @Column(name = "dgeec_id")
+    private String dgeecId;
+
+    @Column(name = "nif_id")
+    private String nifId;
 
     @Embedded
     private GeoLocation location;
@@ -118,6 +147,22 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
 
     @Column(name = "legal_entity", nullable = false)
     private Boolean legalEntity = false;
+
+    @Column(name = "sector")
+    private OrganisationUnitSector sector;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "internal_identifiers")
+    private Set<String> internalIdentifiers = new HashSet<>();
+
+    @Column(name = "startup")
+    private Boolean startup;
+
+    @Column(name = "date_established")
+    private LocalDate dateEstablished;
+
+    @Embedded
+    private PostalAddress postalAddress;
 
 
     public EmailConfiguration getCrisConfig() {

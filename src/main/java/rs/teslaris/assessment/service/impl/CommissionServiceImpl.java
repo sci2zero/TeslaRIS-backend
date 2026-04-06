@@ -262,7 +262,11 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
             commissionRepository.setOthersAsNonDefault(
                 Objects.nonNull(commission.getId()) ? commission.getId() : 0);
             commission.setIsDefault(true);
+        } else {
+            commission.setIsDefault(false);
         }
+
+        commission.setIsReportingCommission(commissionDTO.isReportingCommission());
     }
 
     private void clearCommonFields(Commission commission) {

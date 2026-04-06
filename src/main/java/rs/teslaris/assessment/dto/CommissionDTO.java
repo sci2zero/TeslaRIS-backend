@@ -42,6 +42,9 @@ public record CommissionDTO(
     List<String> recognisedResearchAreas,
 
     @NotNull(message = "Please provide whether this is the default MService commission.")
-    Boolean isDefault
+    Boolean isDefault,
+
+    @NotNull(message = "Please provide whether this commission is only used for reporting.")
+    Boolean isReportingCommission
 ) {
 }

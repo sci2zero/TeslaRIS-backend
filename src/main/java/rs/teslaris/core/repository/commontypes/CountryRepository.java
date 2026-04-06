@@ -14,7 +14,8 @@ import rs.teslaris.core.model.commontypes.Country;
 public interface CountryRepository extends JpaRepository<Country, Integer> {
 
     @Modifying
-    @Query("UPDATE Person p SET p.personalInfo.postalAddress.country = null WHERE p.personalInfo.postalAddress.country.id = :countryId")
+    @Query("UPDATE Person p SET p.personalInfo.professionalPostalAddress.country = NULL " +
+        "WHERE p.personalInfo.professionalPostalAddress.country.id = :countryId")
     void unsetCountryForPersons(Integer countryId);
 
     @Query("SELECT c FROM Country c JOIN c.name n WHERE LOWER(n.content) = LOWER(:name)")

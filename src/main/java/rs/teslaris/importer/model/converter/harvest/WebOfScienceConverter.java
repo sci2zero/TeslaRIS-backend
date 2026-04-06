@@ -138,7 +138,10 @@ public class WebOfScienceConverter {
             person.setWebOfScienceResearcherId(person.getImportId());
 
             var nameParts = authorship.displayName().split(", ");
-            person.setName(new PersonName(nameParts[1], "", nameParts[0]));
+            var first = nameParts[0].contains(".") ? nameParts[0] : nameParts[1];
+            var last = nameParts[0].contains(".") ? nameParts[1] : nameParts[0];
+
+            person.setName(new PersonName(first, "", last));
 
             contribution.setPerson(person);
             document.getContributions().add(contribution);

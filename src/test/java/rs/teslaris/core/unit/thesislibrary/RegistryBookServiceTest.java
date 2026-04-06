@@ -152,7 +152,7 @@ class RegistryBookServiceTest {
         dto.setDissertationInformation(dissertationInfo);
 
         var personalInfo = new RegistryBookPersonalInformationDTO();
-        var name = new PersonNameDTO(null, "John", "H", "Doe", null, null);
+        var name = new PersonNameDTO(null, "John", "H", "Doe", null, null, null);
         personalInfo.setAuthorName(name);
         personalInfo.setLocalBirthDate(LocalDate.of(1990, 1, 1));
         personalInfo.setPlaceOfBrith("City");
@@ -171,7 +171,7 @@ class RegistryBookServiceTest {
         contactInfo.setPlace("Place");
         contactInfo.setMunicipality("Municipality");
         contactInfo.setPostalCode("10000");
-        contactInfo.setContact(new ContactDTO("john@example.com", "+123456"));
+        contactInfo.setContact(new ContactDTO("john@example.com", "+123456", "", ""));
         dto.setContactInformation(contactInfo);
 
         var prevTitle = new PreviousTitleInformationDTO();
@@ -210,7 +210,7 @@ class RegistryBookServiceTest {
         // Given
         var personalInfo = new RegistryBookPersonalInformationDTO();
         personalInfo.setAuthorName(
-            new PersonNameDTO(null, "Ivan", "Radomir", "Mrsulja", null, null));
+            new PersonNameDTO(null, "Ivan", "Radomir", "Mrsulja", null, null, null));
         personalInfo.setMotherName("Maja");
         personalInfo.setFatherName("Nikola");
         personalInfo.setGuardianNameAndSurname("");
@@ -279,17 +279,18 @@ class RegistryBookServiceTest {
         entry2.setPreviousTitleInformation(new PreviousTitleInformation());
 
         var page = new PageImpl<>(List.of(entry1, entry2), pageable, 2);
-        when(registryBookEntryRepository.getBookEntriesForPromotion(promotionId,
+        when(registryBookEntryRepository.getBookEntriesForPromotion(promotionId, null,
             pageable)).thenReturn(page);
 
         // When
-        var result = registryBookService.getRegistryBookEntriesForPromotion(promotionId, pageable);
+        var result =
+            registryBookService.getRegistryBookEntriesForPromotion(promotionId, null, pageable);
 
         // Then
         assertNotNull(result);
         assertEquals(2, result.getTotalElements());
         assertTrue(result.getContent().stream().allMatch(Objects::nonNull));
-        verify(registryBookEntryRepository).getBookEntriesForPromotion(promotionId, pageable);
+        verify(registryBookEntryRepository).getBookEntriesForPromotion(promotionId, null, pageable);
     }
 
     @Test
@@ -305,13 +306,13 @@ class RegistryBookServiceTest {
         var personalInfo = new PersonalInfo();
         personalInfo.setLocalBirthDate(LocalDate.of(1990, 1, 1));
         personalInfo.setPlaceOfBrith("Novi Sad");
-        personalInfo.setPostalAddress(new PostalAddress());
-        personalInfo.setContact(new Contact("email@example.com", "+381111111"));
+        personalInfo.setProfessionalPostalAddress(new PostalAddress());
+        personalInfo.setProfessionalContact(new Contact("email@example.com", "+381111111", "", ""));
         authorPerson.setPersonalInfo(personalInfo);
         author.setPerson(authorPerson);
         var affiliationStatement = new AffiliationStatement();
         affiliationStatement.setDisplayPersonName(
-            new PersonName("Ime", null, "Prezime", null, null));
+            new PersonName("Ime", null, "Prezime", null, null, null));
         author.setAffiliationStatement(affiliationStatement);
 
         var advisor = new PersonDocumentContribution();
@@ -320,7 +321,7 @@ class RegistryBookServiceTest {
         advisor.setEmploymentTitle(EmploymentTitle.ASSOCIATE_PROFESSOR);
         var affiliationStatement2 = new AffiliationStatement();
         affiliationStatement2.setDisplayPersonName(
-            new PersonName("Mentor", null, "Prezime", null, null));
+            new PersonName("Mentor", null, "Prezime", null, null, null));
         advisor.setAffiliationStatement(affiliationStatement2);
         var advisorInstitution = new OrganisationUnit();
         advisorInstitution.setName(Set.of());
@@ -380,10 +381,10 @@ class RegistryBookServiceTest {
         var promotionId = 2;
         var entry = new RegistryBookEntry();
         var personalInfo = new RegistryBookPersonalInformation();
-        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null));
+        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null, null));
         entry.setPersonalInformation(personalInfo);
         var contactInfo = new RegistryBookContactInformation();
-        contactInfo.setContact(new Contact("email", "phone"));
+        contactInfo.setContact(new Contact("email", "phone", "", ""));
         entry.setContactInformation(contactInfo);
         var promotion = new Promotion();
         promotion.setPromotionDate(LocalDate.of(2025, 12, 15));
@@ -420,10 +421,10 @@ class RegistryBookServiceTest {
         promotion.setPromotionDate(LocalDate.of(2025, 12, 15));
         var entry = new RegistryBookEntry();
         var personalInfo = new RegistryBookPersonalInformation();
-        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null));
+        personalInfo.setAuthorName(new PersonName("John", "Jane", "Doe", null, null, null));
         entry.setPersonalInformation(personalInfo);
         var contactInfo = new RegistryBookContactInformation();
-        contactInfo.setContact(new Contact("email", "phone"));
+        contactInfo.setContact(new Contact("email", "phone", "", ""));
         entry.setContactInformation(contactInfo);
         entry.setPromotion(promotion);
 
@@ -497,7 +498,7 @@ class RegistryBookServiceTest {
 
         when(promotionService.findOne(promotionId)).thenReturn(promotion);
         when(registryBookEntryRepository.getLastRegistryBookNumber(1)).thenReturn(5);
-        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any()))
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any(), any()))
             .thenReturn(new PageImpl<>(List.of(entry1, entry2)));
 
         // When
@@ -539,7 +540,7 @@ class RegistryBookServiceTest {
 
         when(promotionService.findOne(promotionId)).thenReturn(promotion);
         when(registryBookEntryRepository.getLastRegistryBookNumber(1)).thenReturn(5);
-        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any()))
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any(), any()))
             .thenReturn(new PageImpl<>(entries));
 
         var groupedRows = new TreeMap<String, List<List<String>>>();
@@ -694,7 +695,7 @@ class RegistryBookServiceTest {
         when(entry.getDissertationInformation()).thenReturn(dissertationInfo);
         when(entry.getContactInformation()).thenReturn(contactInfo);
 
-        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId),
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any(),
             eq(Pageable.unpaged())))
             .thenReturn(new PageImpl<>(List.of(entry)));
 
@@ -733,7 +734,7 @@ class RegistryBookServiceTest {
         when(entry.getPersonalInformation()).thenReturn(personalInfo);
         when(entry.getContactInformation()).thenReturn(contactInfo);
 
-        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId),
+        when(registryBookEntryRepository.getBookEntriesForPromotion(eq(promotionId), any(),
             eq(Pageable.unpaged())))
             .thenReturn(new PageImpl<>(List.of(entry)));
 
@@ -1070,5 +1071,93 @@ class RegistryBookServiceTest {
         assertFalse(promotion.getFinished());
         verify(promotionService, times(1)).save(promotion);
         verify(registryBookEntryRepository, times(1)).save(entry);
+    }
+
+    @Test
+    void shouldGeneratePromoteesXlsxFile() {
+        // Given
+        Integer promotionId = 5;
+
+        var entry = mock(RegistryBookEntry.class);
+        var personalInfo = mock(RegistryBookPersonalInformation.class);
+        var authorName = mock(PersonName.class);
+        var contactInfo = mock(RegistryBookContactInformation.class);
+        var contact = mock(Contact.class);
+        var dissertationInfo = mock(DissertationInformation.class);
+
+        when(authorName.getFirstname()).thenReturn("John");
+        when(authorName.getLastname()).thenReturn("Doe");
+
+        when(personalInfo.getAuthorName()).thenReturn(authorName);
+        when(entry.getPersonalInformation()).thenReturn(personalInfo);
+
+        when(contact.getContactEmail()).thenReturn("john.doe@test.com");
+        when(contactInfo.getContact()).thenReturn(contact);
+        when(entry.getContactInformation()).thenReturn(contactInfo);
+
+        when(dissertationInfo.getAcquiredTitle()).thenReturn("PhD");
+        when(entry.getDissertationInformation()).thenReturn(dissertationInfo);
+
+        var page = new PageImpl<>(List.of(entry));
+
+        when(registryBookEntryRepository.getBookEntriesForPromotion(
+            eq(promotionId), any(), any())).thenReturn(page);
+
+        // When
+        var result = registryBookService.downloadPromoteesList(promotionId);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.contentLength() > 0);
+
+        verify(registryBookEntryRepository)
+            .getBookEntriesForPromotion(eq(promotionId), any(), any());
+    }
+
+    @Test
+    void shouldReturnRegistryBookEntriesForInstitutionAndPeriod() {
+        // Given
+        Integer userId = 1;
+        Integer institutionId = 10;
+
+        LocalDate from = LocalDate.of(2023, 1, 1);
+        LocalDate to = LocalDate.of(2023, 12, 31);
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        var entry = new RegistryBookEntry();
+        entry.setThesis(new Thesis());
+        entry.setDissertationInformation(new DissertationInformation());
+        entry.setPersonalInformation(new RegistryBookPersonalInformation());
+        entry.setContactInformation(new RegistryBookContactInformation());
+        entry.setPreviousTitleInformation(new PreviousTitleInformation());
+        var page = new PageImpl<>(List.of(entry));
+
+        when(userRepository.findOrganisationUnitIdForUser(userId))
+            .thenReturn(institutionId);
+
+        when(organisationUnitService.getOrganisationUnitIdsFromSubHierarchy(institutionId))
+            .thenReturn(List.of(institutionId));
+
+        when(registryBookEntryRepository.getRegistryBookEntriesForInstitutionAndPeriod(
+            any(), eq(from), eq(to), any(), any(), any(), any(), any(), eq(pageable)))
+            .thenReturn(page);
+
+        // When
+        var result = registryBookService.getRegistryBookForInstitutionAndPeriod(
+            userId, institutionId, from, to,
+            null, null, null,
+            pageable
+        );
+
+        // Then
+        assertEquals(1, result.getContent().size());
+
+        verify(userRepository).findOrganisationUnitIdForUser(userId);
+        verify(organisationUnitService, atLeastOnce())
+            .getOrganisationUnitIdsFromSubHierarchy(institutionId);
+        verify(registryBookEntryRepository)
+            .getRegistryBookEntriesForInstitutionAndPeriod(
+                any(), eq(from), eq(to), any(), any(), any(), any(), any(), eq(pageable));
     }
 }

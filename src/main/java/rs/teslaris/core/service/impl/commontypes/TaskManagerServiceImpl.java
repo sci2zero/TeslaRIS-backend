@@ -242,13 +242,19 @@ public class TaskManagerServiceImpl implements TaskManagerService {
 
         var scheduledTimes = tasks.values().stream()
             .map(ScheduledTask::executionTime)
-            .collect(Collectors.toSet()); // Using Set for O(1) lookup
+            .collect(Collectors.toSet());
 
-        while (scheduledTimes.contains(candidate)) {
+        var earliestValidTime = now.plusMinutes(1);
+
+        if (scheduledTimes.isEmpty()) {
+            return earliestValidTime;
+        }
+
+        while (candidate.isBefore(earliestValidTime) || scheduledTimes.contains(candidate)) {
             candidate = candidate.plus(STEP);
         }
 
-        return scheduledTimes.isEmpty() ? candidate : Collections.max(scheduledTimes).plusHours(1);
+        return candidate;
     }
 
     @Override

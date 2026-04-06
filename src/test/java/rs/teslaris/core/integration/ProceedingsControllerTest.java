@@ -19,6 +19,7 @@ import rs.teslaris.core.dto.document.PersonDocumentContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
 import rs.teslaris.core.model.document.DocumentContributionType;
+import rs.teslaris.core.model.person.PersonNameType;
 
 @SpringBootTest
 public class ProceedingsControllerTest extends BaseTest {
@@ -46,7 +47,8 @@ public class ProceedingsControllerTest extends BaseTest {
         contribution.setContributionDescription(dummyMC);
         contribution.setDisplayAffiliationStatement(dummyMC);
         contribution.setPersonName(
-            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null));
+            new PersonNameDTO(null, "Ime", "Srednje ime", "Prezime", null, null,
+                PersonNameType.DISPLAY_NAME));
         proceedingsDTO.setContributions(List.of(contribution));
         proceedingsDTO.setUris(new HashSet<>());
         proceedingsDTO.setLanguageIds(new ArrayList<>());

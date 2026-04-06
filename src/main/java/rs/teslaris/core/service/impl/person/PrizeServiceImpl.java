@@ -4,7 +4,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import jakarta.annotation.Nullable;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -21,8 +21,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
+import rs.teslaris.core.converter.person.PrizeConverter;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.person.PrizeDTO;
@@ -36,6 +36,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -68,6 +69,8 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
 
     private final SearchService<PrizeIndex> searchService;
 
+    private final ResearchAreaService researchAreaService;
+
 
     @Override
     protected JpaRepository<Prize, Integer> getEntityRepository() {
@@ -90,10 +93,7 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
 
         indexPrize(savedPrize, new PrizeIndex());
 
-        return new PrizeResponseDTO(
-            MultilingualContentConverter.getMultilingualContentDTO(savedPrize.getTitle()),
-            MultilingualContentConverter.getMultilingualContentDTO(savedPrize.getDescription()),
-            savedPrize.getDate(), savedPrize.getId(), new ArrayList<>());
+        return PrizeConverter.toDTO(savedPrize);
     }
 
     @Override
@@ -101,17 +101,15 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
     public PrizeResponseDTO updatePrize(Integer prizeId, PrizeDTO dto) {
         var prizeToUpdate = findOne(prizeId);
 
+        prizeToUpdate.getResearchAreas().clear();
         setCommonFields(prizeToUpdate, dto);
+
         var savedPrize = prizeRepository.save(prizeToUpdate);
 
         indexPrize(savedPrize,
             prizeIndexRepository.findPrizeIndexByDatabaseId(prizeId).orElse(new PrizeIndex()));
 
-        return new PrizeResponseDTO(
-            MultilingualContentConverter.getMultilingualContentDTO(prizeToUpdate.getTitle()),
-            MultilingualContentConverter.getMultilingualContentDTO(prizeToUpdate.getDescription()),
-            prizeToUpdate.getDate(), prizeToUpdate.getId(), prizeToUpdate.getProofs().stream().map(
-            DocumentFileConverter::toDTO).collect(Collectors.toList()));
+        return PrizeConverter.toDTO(prizeToUpdate);
     }
 
     @Override
@@ -237,7 +235,18 @@ public class PrizeServiceImpl extends JPAServiceImpl<Prize> implements PrizeServ
         prize.setTitle(multilingualContentService.getMultilingualContent(dto.getTitle()));
         prize.setDescription(
             multilingualContentService.getMultilingualContent(dto.getDescription()));
+        prize.setKeywords(
+            multilingualContentService.getMultilingualContent(dto.getKeywords()));
+
         prize.setDate(dto.getDate());
+        prize.setEndDate(dto.getEndDate());
+
+        prize.setType(dto.getPrizeType());
+        prize.setFavorite(Objects.requireNonNullElse(dto.getFavorite(), false));
+
+        var researchAreas =
+            researchAreaService.getResearchAreasByIds(dto.getResearchAreasId().stream().toList());
+        prize.setResearchAreas(new HashSet<>(researchAreas));
     }
 
     private void indexPrize(Prize prize, PrizeIndex index) {

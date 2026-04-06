@@ -25,8 +25,10 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.configuration.PublicReviewConfigurationLoader;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.session.SessionUtil;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
+import rs.teslaris.thesislibrary.model.PublicReviewType;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryDissertationReportService;
 
 @Service
@@ -40,14 +42,13 @@ public class ThesisLibraryDissertationReportServiceImpl implements
 
 
     @Override
-    public Page<ThesisPublicReviewResponseDTO> fetchPublicReviewDissertations(
-        Integer institutionId,
-        Integer year,
-        Boolean notDefendedOnly,
-        Integer userInstitutionId,
-        Pageable pageable) {
-
-        Set<Integer> institutionIds = getInstitutionIds(institutionId);
+    public Page<ThesisPublicReviewResponseDTO> fetchPublicReviewDissertations(Integer institutionId,
+                                                                              Integer year,
+                                                                              Boolean notDefendedOnly,
+                                                                              Integer userInstitutionId,
+                                                                              PublicReviewType publicReviewType,
+                                                                              Pageable pageable) {
+        var institutionIds = getInstitutionIds(institutionId);
 
         List<Query> mustQueries = new ArrayList<>();
 
@@ -63,7 +64,8 @@ public class ThesisLibraryDissertationReportServiceImpl implements
         mustQueries.add(buildTypeQuery());
         mustQueries.add(buildPublicationTypeClause());
 
-        mustQueries.addAll(buildDateAndReviewStatusQueries(year, notDefendedOnly));
+        mustQueries.addAll(
+            buildDateAndReviewStatusQueries(year, notDefendedOnly, publicReviewType));
 
         if (!institutionIds.isEmpty()) {
             mustQueries.add(buildInstitutionQuery(institutionIds));
@@ -105,9 +107,15 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 index.getThesisInstitutionNameOther(),
                 index.getScientificFieldSr(),
                 index.getScientificFieldOther(),
-                index.getLatestPublicReviewStartDate().toString(),
-                index.getLatestPublicReviewStartDate()
-                    .plusDays(PublicReviewConfigurationLoader.getLengthInDays(false)).toString(),
+                index.getPublicReviewStartDates().stream().map(LocalDate::toString).toList(),
+                CollectionOperations.containsValues(index.getPublicReviewEndDates()) ?
+                    index.getPublicReviewEndDates().stream().map(LocalDate::toString).toList() :
+                    (Objects.requireNonNullElse(index.getIsOnPublicReview(), false) ? List.of() :
+                        index.getPublicReviewStartDates().stream()
+                            .map(startDate -> startDate.plusDays(
+                                PublicReviewConfigurationLoader.getLengthInDays(false)).toString())
+                            .toList()),
+                Objects.requireNonNullElse(index.getIsOnPublicReviewShortened(), false),
                 index.getDatabaseId()
             ));
     }
@@ -135,7 +143,8 @@ public class ThesisLibraryDissertationReportServiceImpl implements
         )._toQuery();
     }
 
-    private List<Query> buildDateAndReviewStatusQueries(Integer year, Boolean notDefendedOnly) {
+    private List<Query> buildDateAndReviewStatusQueries(Integer year, Boolean notDefendedOnly,
+                                                        PublicReviewType publicReviewType) {
         List<Query> queries = new ArrayList<>();
 
         if (Objects.nonNull(notDefendedOnly) && notDefendedOnly) {
@@ -184,6 +193,19 @@ public class ThesisLibraryDissertationReportServiceImpl implements
                 .field("is_on_public_review")
                 .value("true")
             )._toQuery());
+
+            if (Objects.nonNull(publicReviewType)) {
+                switch (publicReviewType) {
+                    case REGULAR -> queries.add(TermQuery.of(t -> t
+                        .field("is_on_public_review_shortened")
+                        .value("false")
+                    )._toQuery());
+                    case SHORTENED -> queries.add(TermQuery.of(t -> t
+                        .field("is_on_public_review_shortened")
+                        .value("true")
+                    )._toQuery());
+                }
+            }
 
             queries.add(TermQuery.of(t -> t
                 .field("is_public_review_completed")

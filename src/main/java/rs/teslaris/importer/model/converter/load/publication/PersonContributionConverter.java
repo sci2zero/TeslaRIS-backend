@@ -17,6 +17,7 @@ import rs.teslaris.core.model.document.PersonalTitle;
 import rs.teslaris.core.model.oaipmh.common.PersonAttributes;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.importer.model.converter.load.commontypes.MultilingualContentConverter;
@@ -160,13 +161,15 @@ public class PersonContributionConverter {
                 var nameParts = contributor.getDisplayName().split(", ");
                 if (nameParts.length == 2) {
                     contribution.setPersonName(
-                        new PersonNameDTO(null, nameParts[1], "", nameParts[0], null, null));
+                        new PersonNameDTO(null, nameParts[1], "", nameParts[0], null, null,
+                            PersonNameType.CITATION_NAME));
                     return;
                 }
             }
 
             contribution.setPersonName(
-                new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null));
+                new PersonNameDTO(null, contributor.getDisplayName(), "", "", null, null,
+                    PersonNameType.CITATION_NAME));
         }
     }
 

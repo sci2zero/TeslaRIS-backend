@@ -211,7 +211,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var simpleSearchQuery =
             buildSimpleSearchQuery(tokens, null, null, null,
                 null, allowedTypes, null,
-                null, null);
+                null, null, null);
 
         var contributionFilter = TermQuery.of(t -> t
             .field(getContributionField(contributionType))
@@ -290,7 +290,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var simpleSearchQuery =
             buildSimpleSearchQuery(tokens, null, null, null,
                 null, allowedTypes, notArchivedOnly,
-                null, null);
+                null, null, null);
 
         var outputConfiguration =
             organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
@@ -625,8 +625,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var activeEmploymentInstitutions = new HashSet<Integer>();
         var yearOfPublicationEmploymentInstitutions = new HashSet<Integer>();
 
-        contributions.forEach(contribution -> {
-            if (Objects.nonNull(contribution.getPerson())) {
+        contributions.stream()
+            .filter(contribution -> contribution.getContributionType()
+                .equals(DocumentContributionType.AUTHOR) &&
+                Objects.nonNull(contribution.getPerson()))
+            .forEach(contribution ->
                 involvementRepository.findEmploymentsForPerson(contribution.getPerson().getId())
                     .forEach(employment -> {
                         var orgId = employment.getOrganisationUnit().getId();
@@ -650,14 +653,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                 index.getYear() >= employment.getDateFrom().getYear()
                                 && index.getYear() <= employment.getDateTo().getYear()) {
                                 var superIds =
-                                    organisationUnitService.getSuperOUsHierarchyRecursive(orgId);
+                                    organisationUnitService.getSuperOUsHierarchyRecursive(
+                                        orgId);
                                 yearOfPublicationEmploymentInstitutions.add(orgId);
                                 yearOfPublicationEmploymentInstitutions.addAll(superIds);
                             }
                         }
-                    });
-            }
-        });
+                    }));
 
         index.setOrganisationUnitIdsSpecified(new ArrayList<>(specifiedContributionInstitutions));
         index.setOrganisationUnitIdsActive(new ArrayList<>(activeEmploymentInstitutions));
@@ -679,7 +681,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var contributorName =
             contribution.getAffiliationStatement().getDisplayPersonName().toString();
 
-        if (!isThesis) {
+        if (!isThesis &&
+            contribution.getContributionType().equals(DocumentContributionType.AUTHOR)) {
             organisationUnitIds.addAll(contribution.getInstitutions().stream()
                 .map(BaseEntity::getId)
                 .toList());
@@ -736,22 +739,34 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
     }
 
     private void setAdditionalMetadata(Integer documentId, DocumentPublicationIndex index) {
-        index.setAssessedBy(
-            commissionRepository.findCommissionsThatAssessedDocument(documentId));
+        var assessments =
+            commissionRepository.findAssessmentClassificationBasicInfoForDocument(documentId);
 
         index.getCommissionAssessmentGroups().clear();
         index.getCommissionAssessments().clear();
-        commissionRepository.findAssessmentClassificationBasicInfoForDocumentAndCommissions(
-            documentId, index.getAssessedBy()).forEach(assessment -> {
+
+        var assessedBy = new HashSet<Integer>();
+        for (var assessment : assessments) {
+            assessedBy.add(assessment.commissionId());
+
             index.getCommissionAssessmentGroups().add(
-                new Triple<>(assessment.commissionId(),
+                new Triple<>(
+                    assessment.commissionId(),
                     ClassificationPriorityMapping.getGroupCode(assessment.assessmentCode()),
-                    assessment.manual()));
+                    assessment.manual()
+                )
+            );
+
             index.getCommissionAssessments().add(
-                new Triple<>(assessment.commissionId(),
+                new Triple<>(
+                    assessment.commissionId(),
                     assessment.assessmentCode(),
-                    assessment.manual()));
-        });
+                    assessment.manual()
+                )
+            );
+        }
+
+        index.setAssessedBy(new ArrayList<>(assessedBy));
     }
 
     @Override
@@ -864,7 +879,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 null,
                 true,
                 List.of(), false,
-                null, null
+                null, null, null
             );
 
             pageResult.getContent().forEach(documentIndex ->
@@ -1229,20 +1244,22 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      List<DocumentPublicationType> allowedTypes,
                                                                      Boolean notArchivedOnly,
                                                                      Boolean showProceedings,
-                                                                     Boolean emptyProceedingsOnly) {
+                                                                     Boolean emptyProceedingsOnly,
+                                                                     Integer authorId) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, institutionId, commissionId, authorReprint,
-                    unmanaged, allowedTypes, notArchivedOnly,
-                    showProceedings, emptyProceedingsOnly),
+                    unmanaged, allowedTypes, notArchivedOnly, showProceedings, emptyProceedingsOnly,
+                    authorId),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
 
         return searchService.runQuery(
             buildAdvancedSearchQuery(tokens, institutionId, commissionId, authorReprint,
-                unmanaged, allowedTypes, notArchivedOnly,
-                showProceedings, emptyProceedingsOnly), pageable,
+                unmanaged, allowedTypes, notArchivedOnly, showProceedings, emptyProceedingsOnly,
+                authorId),
+            pageable,
             DocumentPublicationIndex.class, "document_publication");
     }
 
@@ -1593,7 +1610,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                            Boolean authorReprint,
                                            Boolean unmanaged,
                                            List<DocumentPublicationType> allowedTypes,
-                                           Boolean notArchivedOnly) {
+                                           Boolean notArchivedOnly,
+                                           Integer authorId) {
         return BoolQuery.of(b -> {
             if (Objects.nonNull(institutionId) && institutionId > 0) {
                 var allSubInstitutions =
@@ -1607,6 +1625,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
             if (Objects.nonNull(commissionId) && commissionId > 0) {
                 b.mustNot(q -> q.term(t -> t.field("assessed_by").value(commissionId)));
+            }
+
+            if (Objects.nonNull(authorId) && authorId > 0) {
+                b.must(q -> q.term(t -> t.field("author_ids").value(authorId)));
             }
 
             if (Objects.nonNull(authorReprint) && authorReprint) {
@@ -1740,7 +1762,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                          List<DocumentPublicationType> allowedTypes,
                                          Boolean notArchivedOnly,
                                          Boolean showProceedings,
-                                         Boolean emptyProceedingsOnly) {
+                                         Boolean emptyProceedingsOnly,
+                                         Integer authorId) {
         String minShouldMatch;
         if (tokens.size() <= 2) {
             minShouldMatch = "1"; // Allow partial match for very short queries
@@ -1750,7 +1773,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
-                allowedTypes, notArchivedOnly));
+                allowedTypes, notArchivedOnly, authorId));
             b.must(buildSimpleTokenQuery(tokens, minShouldMatch));
 
             if (Objects.isNull(showProceedings) || !showProceedings) {
@@ -1778,10 +1801,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                           List<DocumentPublicationType> allowedTypes,
                                           Boolean notArchivedOnly,
                                           Boolean showProceedings,
-                                          Boolean emptyProceedingsOnly) {
+                                          Boolean emptyProceedingsOnly,
+                                          Integer authorId) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             b.must(buildSimpleMetadataQuery(institutionId, commissionId, authorReprint, unmanaged,
-                allowedTypes, notArchivedOnly));
+                allowedTypes, notArchivedOnly, authorId));
             b.must(expressionTransformer.parseAdvancedQuery(tokens));
 
             if (Objects.isNull(showProceedings) || !showProceedings) {

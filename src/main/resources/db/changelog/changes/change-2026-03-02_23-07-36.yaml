@@ -1,0 +1,119 @@
+databaseChangeLog:
+    - changeSet:
+          id: 1772492887442-1
+          author: milospopovic (generated)
+          changes:
+              - createTable:
+                    columns:
+                        - column:
+                              constraints:
+                                  nullable: false
+                                  primaryKey: true
+                                  primaryKeyName: organisation_unit_project_contributions_description_pkey
+                              name: description_id
+                              type: INTEGER
+                        - column:
+                              constraints:
+                                  nullable: false
+                                  primaryKey: true
+                                  primaryKeyName: organisation_unit_project_contributions_description_pkey
+                              name: organisation_unit_project_contribution_id
+                              type: INTEGER
+                    tableName: organisation_unit_project_contributions_description
+    - changeSet:
+          id: 1772492887442-2
+          author: milospopovic (generated)
+          changes:
+              - createTable:
+                    columns:
+                        - column:
+                              constraints:
+                                  nullable: false
+                                  primaryKey: true
+                                  primaryKeyName: organisation_unit_project_contributions_displayou_pkey
+                              name: displayou_id
+                              type: INTEGER
+                        - column:
+                              constraints:
+                                  nullable: false
+                                  primaryKey: true
+                                  primaryKeyName: organisation_unit_project_contributions_displayou_pkey
+                              name: organisation_unit_project_contribution_id
+                              type: INTEGER
+                    tableName: organisation_unit_project_contributions_displayou
+    - changeSet:
+          id: 1772492887442-3
+          author: milospopovic (generated)
+          changes:
+              - addUniqueConstraint:
+                    columnNames: description_id
+                    constraintName: organisation_unit_project_contributions_desc_description_id_key
+                    tableName: organisation_unit_project_contributions_description
+    - changeSet:
+          id: 1772492887442-4
+          author: milospopovic (generated)
+          changes:
+              - addUniqueConstraint:
+                    columnNames: displayou_id
+                    constraintName: organisation_unit_project_contributions_displa_displayou_id_key
+                    tableName: organisation_unit_project_contributions_displayou
+    - changeSet:
+          id: 1772492887442-5
+          author: milospopovic (generated)
+          changes:
+              - addForeignKeyConstraint:
+                    baseColumnNames: organisation_unit_project_contribution_id
+                    baseTableName: organisation_unit_project_contributions_description
+                    constraintName: fk3hlelb3u9h5ae2ijyfeoegjai
+                    deferrable: false
+                    initiallyDeferred: false
+                    onDelete: NO ACTION
+                    onUpdate: NO ACTION
+                    referencedColumnNames: id
+                    referencedTableName: organisation_unit_project_contributions
+                    validate: true
+    - changeSet:
+          id: 1772492887442-6
+          author: milospopovic (generated)
+          changes:
+              - addForeignKeyConstraint:
+                    baseColumnNames: organisation_unit_project_contribution_id
+                    baseTableName: organisation_unit_project_contributions_displayou
+                    constraintName: fkey2vcr58f3rhvbqqx8ng2fqu1
+                    deferrable: false
+                    initiallyDeferred: false
+                    onDelete: NO ACTION
+                    onUpdate: NO ACTION
+                    referencedColumnNames: id
+                    referencedTableName: organisation_unit_project_contributions
+                    validate: true
+    - changeSet:
+          id: 1772492887442-7
+          author: milospopovic (generated)
+          changes:
+              - addForeignKeyConstraint:
+                    baseColumnNames: displayou_id
+                    baseTableName: organisation_unit_project_contributions_displayou
+                    constraintName: fkffdtt7f1fxf23e85sxtyud5j2
+                    deferrable: false
+                    initiallyDeferred: false
+                    onDelete: NO ACTION
+                    onUpdate: NO ACTION
+                    referencedColumnNames: id
+                    referencedTableName: multi_lingual_content
+                    validate: true
+    - changeSet:
+          id: 1772492887442-8
+          author: milospopovic (generated)
+          changes:
+              - addForeignKeyConstraint:
+                    baseColumnNames: description_id
+                    baseTableName: organisation_unit_project_contributions_description
+                    constraintName: fkotb7gn6myxb3iwlpnmje9fxkt
+                    deferrable: false
+                    initiallyDeferred: false
+                    onDelete: NO ACTION
+                    onUpdate: NO ACTION
+                    referencedColumnNames: id
+                    referencedTableName: multi_lingual_content
+                    validate: true

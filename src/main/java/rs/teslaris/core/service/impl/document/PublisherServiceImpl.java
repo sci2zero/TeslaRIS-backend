@@ -63,6 +63,7 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         return this.findAll(pageable).map(p -> new PublisherDTO(p.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(p.getName()),
             MultilingualContentConverter.getMultilingualContentDTO(p.getPlace()),
+            MultilingualContentConverter.getMultilingualContentDTO(p.getState()),
             p.getCountry() != null ? p.getCountry().getId() : null));
     }
 
@@ -207,6 +208,8 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             multilingualContentService.getMultilingualContent(publisherDTO.getName()));
         publisher.setPlace(
             multilingualContentService.getMultilingualContent(publisherDTO.getPlace()));
+        publisher.setState(
+            multilingualContentService.getMultilingualContent(publisherDTO.getState()));
 
         if (Objects.nonNull(publisherDTO.getCountryId())) {
             publisher.setCountry(countryService.findOne(publisherDTO.getCountryId()));
@@ -226,16 +229,18 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
             PublisherIndex::setNameSr, PublisherIndex::setNameOther);
         indexMultilingualContent(publisherIndex, publisher, Publisher::getPlace,
             PublisherIndex::setPlaceSr, PublisherIndex::setPlaceOther);
+        indexMultilingualContent(publisherIndex, publisher, Publisher::getState,
+            PublisherIndex::setStateSr, PublisherIndex::setStateOther);
 
-        publisherIndex.setStateSr("");
-        publisherIndex.setStateOther("");
+        publisherIndex.setCountrySr("");
+        publisherIndex.setCountryOther("");
         if (Objects.nonNull(publisher.getCountry())) {
             indexMultilingualContent(publisherIndex, publisher,
                 t -> publisher.getCountry().getName(),
-                PublisherIndex::setStateSr, PublisherIndex::setStateOther);
+                PublisherIndex::setCountrySr, PublisherIndex::setCountryOther);
         } else {
-            publisherIndex.setStateSr(null);
-            publisherIndex.setStateOther(null);
+            publisherIndex.setCountrySr(null);
+            publisherIndex.setCountryOther(null);
         }
 
         publisherIndex.setNameSrSortable(publisherIndex.getNameSr());
@@ -244,6 +249,8 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
         publisherIndex.setStateOtherSortable(publisherIndex.getStateOther());
         publisherIndex.setPlaceSrSortable(publisherIndex.getPlaceSr());
         publisherIndex.setPlaceOtherSortable(publisherIndex.getPlaceOther());
+        publisherIndex.setCountrySrSortable(publisherIndex.getCountrySr());
+        publisherIndex.setCountryOtherSortable(publisherIndex.getCountryOther());
     }
 
     private void indexMultilingualContent(PublisherIndex index, Publisher publisher,
@@ -313,9 +320,13 @@ public class PublisherServiceImpl extends JPAServiceImpl<Publisher> implements P
                 b.should(sb -> sb.match(
                     m -> m.field("place_other").query(token).boost(0.7f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("state_sr").query(token).boost(0.5f)));
+                    m -> m.field("state_sr").query(token).boost(0.4f)));
                 b.should(sb -> sb.match(
-                    m -> m.field("state_other").query(token).boost(0.5f)));
+                    m -> m.field("state_other").query(token).boost(0.4f)));
+                b.should(sb -> sb.match(
+                    m -> m.field("country_sr").query(token).boost(0.5f)));
+                b.should(sb -> sb.match(
+                    m -> m.field("country_other").query(token).boost(0.5f)));
             });
             return b;
         })))._toQuery();

@@ -45,6 +45,7 @@ import rs.teslaris.core.model.document.PublicationSeries;
 import rs.teslaris.core.model.person.Employment;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.PersonName;
+import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.model.user.User;
 import rs.teslaris.core.model.user.UserRole;
 import rs.teslaris.core.repository.document.JournalPublicationRepository;
@@ -353,7 +354,8 @@ public class CommonLoaderImpl implements CommonLoader {
                         setPersonName(new PersonNameDTO(null,
                             contribution.getPerson().getName().getFirstName(),
                             contribution.getPerson().getName().getMiddleName(),
-                            contribution.getPerson().getName().getLastName(), null, null));
+                            contribution.getPerson().getName().getLastName(), null, null,
+                            PersonNameType.DISPLAY_NAME));
                     }};
                 }
 
@@ -376,7 +378,8 @@ public class CommonLoaderImpl implements CommonLoader {
                         var currentEmployment =
                             new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
                                 InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                                employmentInstitution, null, new HashSet<>());
+                                employmentInstitution, false, new HashSet<>(), new HashSet<>(),
+                                new HashSet<>(), null, new HashSet<>());
                         savedPerson.addInvolvement(currentEmployment);
 
                         pastContributionInstitutionIdentifiers.add(institution.getImportId());
@@ -425,7 +428,8 @@ public class CommonLoaderImpl implements CommonLoader {
                 var currentEmployment =
                     new Employment(null, null, ApproveStatus.APPROVED, new HashSet<>(),
                         InvolvementType.EMPLOYED_AT, new HashSet<>(), null,
-                        employmentInstitution, null, new HashSet<>());
+                        employmentInstitution, false, new HashSet<>(), new HashSet<>(),
+                        new HashSet<>(), null, new HashSet<>());
                 savedPerson.addInvolvement(currentEmployment);
             });
 
@@ -925,6 +929,10 @@ public class CommonLoaderImpl implements CommonLoader {
 
     private void setMultilingualContent(List<MultilingualContentDTO> targetList,
                                         List<MultilingualContent> sourceList) {
+        if (Objects.isNull(sourceList)) {
+            return;
+        }
+
         sourceList.forEach(sourceItem -> {
             if (Objects.isNull(sourceItem.getContent())) {
                 return;
@@ -950,9 +958,10 @@ public class CommonLoaderImpl implements CommonLoader {
         organisationUnitDTO.setName(new ArrayList<>());
         setMultilingualContent(organisationUnitDTO.getName(), institution.getName());
 
-        organisationUnitDTO.setNameAbbreviation(
-            Objects.nonNull(institution.getNameAbbreviation()) ?
-                institution.getNameAbbreviation() : "");
+        organisationUnitDTO.setNameAbbreviation(new ArrayList<>());
+        setMultilingualContent(organisationUnitDTO.getNameAbbreviation(),
+            institution.getNameAbbreviation());
+
         organisationUnitDTO.setScopusAfid(institution.getScopusAfid());
         organisationUnitDTO.setOpenAlexId(institution.getOpenAlexId());
         organisationUnitDTO.setKeyword(new ArrayList<>());
@@ -1011,7 +1020,8 @@ public class CommonLoaderImpl implements CommonLoader {
         if (Objects.nonNull(potentialMatch)) {
             var existingRecordResponse = new rs.teslaris.core.model.person.Person();
             existingRecordResponse.setName(
-                new PersonName(potentialMatch.getName().trim(), "", "", null, null));
+                new PersonName(potentialMatch.getName().trim(), "", "", null, null,
+                    PersonNameType.DISPLAY_NAME));
             existingRecordResponse.setId(potentialMatch.getDatabaseId());
             return existingRecordResponse;
         }

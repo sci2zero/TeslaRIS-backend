@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -43,8 +44,10 @@ public class PromotionController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('MANAGE_PROMOTIONS', 'READ_PROMOTIONS')")
     public Page<PromotionDTO> getAllPromotions(@RequestHeader("Authorization") String bearerToken,
+                                               @RequestParam Boolean nonFinishedOnly,
                                                Pageable pageable) {
-        return promotionService.getAllPromotions(getBelongingInstitution(bearerToken), pageable);
+        return promotionService
+            .getAllPromotions(getBelongingInstitution(bearerToken), nonFinishedOnly, pageable);
     }
 
     @GetMapping("/non-finished")

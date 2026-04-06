@@ -4,6 +4,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
@@ -33,21 +35,22 @@ public class Employment extends Involvement {
     @Column(name = "employment_position")
     private EmploymentPosition employmentPosition;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> role = new HashSet<>();
 
-    public Employment(LocalDate dateFrom,
-                      LocalDate dateTo,
-                      ApproveStatus approveStatus,
-                      Set<DocumentFile> proofs,
-                      InvolvementType involvementType,
-                      Set<MultiLingualContent> affiliationStatement,
-                      Person personInvolved,
-                      OrganisationUnit organisationUnit,
-                      EmploymentPosition employmentPosition,
-                      Set<MultiLingualContent> role) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employment_position_id", referencedColumnName = "id")
+    private EmploymentPositionHierarchy employmentPositionHierarchy;
+
+
+    public Employment(LocalDate dateFrom, LocalDate dateTo, ApproveStatus approveStatus,
+                      Set<DocumentFile> proofs, InvolvementType involvementType,
+                      Set<MultiLingualContent> affiliationStatement, Person personInvolved,
+                      OrganisationUnit organisationUnit, Boolean favorite, Set<String> uris,
+                      Set<MultiLingualContent> description, Set<MultiLingualContent> keywords,
+                      EmploymentPosition employmentPosition, Set<MultiLingualContent> role) {
         super(dateFrom, dateTo, approveStatus, proofs, involvementType, affiliationStatement,
-            personInvolved, organisationUnit);
+            personInvolved, organisationUnit, favorite, uris, description, keywords);
         this.employmentPosition = employmentPosition;
         this.role = role;
     }

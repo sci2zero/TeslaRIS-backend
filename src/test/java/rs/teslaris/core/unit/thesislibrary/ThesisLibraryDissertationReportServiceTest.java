@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.thesislibrary.model.PublicReviewType;
 import rs.teslaris.thesislibrary.service.impl.ThesisLibraryDissertationReportServiceImpl;
 
 @SpringBootTest
@@ -53,6 +54,7 @@ class ThesisLibraryDissertationReportServiceTest {
         mockIndex.setThesisInstitutionNameOther("Faculty");
         mockIndex.setScientificFieldSr("CS");
         mockIndex.setLatestPublicReviewStartDate(LocalDate.of(2023, 6, 1));
+        mockIndex.setPublicReviewStartDates(List.of(mockIndex.getLatestPublicReviewStartDate()));
         mockIndex.setDatabaseId(123);
 
         var mockPage = new PageImpl<>(List.of(mockIndex));
@@ -62,7 +64,7 @@ class ThesisLibraryDissertationReportServiceTest {
 
         // When
         var result = service.fetchPublicReviewDissertations(
-            institutionId, year, notDefendedOnly, null, pageable
+            institutionId, year, notDefendedOnly, null, PublicReviewType.SHORTENED, pageable
         );
 
         // Then
@@ -72,7 +74,7 @@ class ThesisLibraryDissertationReportServiceTest {
         assertThat(dto.nameAndSurname()).isEqualTo("Author A");
         assertThat(dto.titleSr()).isEqualTo("Naslov");
         assertThat(dto.titleOther()).isEqualTo("Title");
-        assertThat(dto.publicReviewEndDate()).isEqualTo("2023-07-01"); // 30 days added
+        assertThat(dto.publicReviewEndDates()).contains("2023-07-01"); // 30 days added
     }
 
     @Test
@@ -100,7 +102,7 @@ class ThesisLibraryDissertationReportServiceTest {
 
         // When
         var result = service.fetchPublicReviewDissertations(
-            institutionId, year, notDefendedOnly, null, pageable
+            institutionId, year, notDefendedOnly, null, PublicReviewType.REGULAR, pageable
         );
 
         // Then
@@ -115,7 +117,8 @@ class ThesisLibraryDissertationReportServiceTest {
             .thenReturn(Page.empty());
 
         var result =
-            service.fetchPublicReviewDissertations(null, null, null, -1, PageRequest.of(0, 10));
+            service.fetchPublicReviewDissertations(null, null, null, -1, null,
+                PageRequest.of(0, 10));
 
         // Then
         assertThat(result).isNotNull();

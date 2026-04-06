@@ -38,13 +38,16 @@ import rs.teslaris.core.model.person.EmploymentPosition;
 import rs.teslaris.core.model.person.Involvement;
 import rs.teslaris.core.model.person.InvolvementType;
 import rs.teslaris.core.model.person.Membership;
+import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.repository.person.EmploymentRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.impl.person.worker.EmploymentMigrationWorker;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
+import rs.teslaris.core.service.interfaces.person.EmploymentPositionService;
 import rs.teslaris.core.service.interfaces.person.InvolvementService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.service.interfaces.user.UserService;
@@ -76,6 +79,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
     private final EmploymentMigrationWorker employmentMigrationWorker;
 
+    private final ResearchAreaService researchAreaService;
+
+    private final ThesisRepository thesisRepository;
+
+    private final EmploymentPositionService employmentPositionService;
+
 
     @Override
     protected JpaRepository<Involvement, Integer> getEntityRepository() {
@@ -102,17 +111,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public Education addEducation(Integer personId, EducationDTO education) {
         var personInvolved = personService.findOne(personId);
 
-        var thesisTitle =
-            multilingualContentService.getMultilingualContent(education.getThesisTitle());
-        var title = multilingualContentService.getMultilingualContent(education.getTitle());
-        var abbreviationTitle =
-            multilingualContentService.getMultilingualContent(education.getAbbreviationTitle());
-
         var newEducation = new Education();
         setCommonFields(newEducation, education);
-        newEducation.setThesisTitle(thesisTitle);
-        newEducation.setTitle(title);
-        newEducation.setAbbreviationTitle(abbreviationTitle);
+        setEducationCommonFields(newEducation, education);
 
         personInvolved.addInvolvement(newEducation);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
@@ -125,14 +126,9 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public Membership addMembership(Integer personId, MembershipDTO membership) {
         var personInvolved = personService.findOne(personId);
 
-        var contributorDescription = multilingualContentService.getMultilingualContent(
-            membership.getContributionDescription());
-        var role = multilingualContentService.getMultilingualContent(membership.getRole());
-
         var newMembership = new Membership();
         setCommonFields(newMembership, membership);
-        newMembership.setContributionDescription(contributorDescription);
-        newMembership.setRole(role);
+        setMembershipCommonFields(newMembership, membership);
 
         personInvolved.addInvolvement(newMembership);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
@@ -202,12 +198,7 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
 
         var newEmployment = new Employment();
         setCommonFields(newEmployment, employment);
-        newEmployment.setEmploymentPosition(employment.getEmploymentPosition());
-
-        if (Objects.nonNull(employment.getRole())) {
-            newEmployment.setRole(
-                multilingualContentService.getMultilingualContent(employment.getRole()));
-        }
+        setEmploymentCommonFields(newEmployment, employment);
 
         personInvolved.addInvolvement(newEmployment);
         userService.updateResearcherCurrentOrganisationUnitIfBound(personId);
@@ -338,21 +329,20 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public void updateEducation(Integer involvementId, EducationDTO education) {
         var educationToUpdate = (Education) findOne(involvementId);
 
-        var thesisTitle =
-            multilingualContentService.getMultilingualContent(education.getThesisTitle());
-        var title = multilingualContentService.getMultilingualContent(education.getTitle());
-        var abbreviationTitle =
-            multilingualContentService.getMultilingualContent(education.getAbbreviationTitle());
-
         clearCommonCollections(educationToUpdate);
-        educationToUpdate.getThesisTitle().clear();
         educationToUpdate.getTitle().clear();
         educationToUpdate.getAbbreviationTitle().clear();
+        educationToUpdate.getSupervisors().clear();
+
+        if (Objects.nonNull(educationToUpdate.getDegreeCode())) {
+            educationToUpdate.getDegreeCode().clear();
+        }
+        if (Objects.nonNull(educationToUpdate.getDegreeClassification())) {
+            educationToUpdate.getDegreeClassification().clear();
+        }
 
         setCommonFields(educationToUpdate, education);
-        educationToUpdate.setThesisTitle(thesisTitle);
-        educationToUpdate.setTitle(title);
-        educationToUpdate.setAbbreviationTitle(abbreviationTitle);
+        setEducationCommonFields(educationToUpdate, education);
 
         involvementRepository.save(educationToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
@@ -364,17 +354,12 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public void updateMembership(Integer involvementId, MembershipDTO membership) {
         var membershipToUpdate = (Membership) findOne(involvementId);
 
-        var contributorDescription = multilingualContentService.getMultilingualContent(
-            membership.getContributionDescription());
-        var role = multilingualContentService.getMultilingualContent(membership.getRole());
-
         clearCommonCollections(membershipToUpdate);
         membershipToUpdate.getContributionDescription().clear();
         membershipToUpdate.getRole().clear();
 
         setCommonFields(membershipToUpdate, membership);
-        membershipToUpdate.setContributionDescription(contributorDescription);
-        membershipToUpdate.setRole(role);
+        setMembershipCommonFields(membershipToUpdate, membership);
 
         involvementRepository.save(membershipToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
@@ -386,14 +371,11 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
     public void updateEmployment(Integer involvementId, EmploymentDTO employment) {
         var employmentToUpdate = (Employment) findOne(involvementId);
 
-        var role = multilingualContentService.getMultilingualContent(employment.getRole());
-
         clearCommonCollections(employmentToUpdate);
         employmentToUpdate.getRole().clear();
 
         setCommonFields(employmentToUpdate, employment);
-        employmentToUpdate.setEmploymentPosition(employment.getEmploymentPosition());
-        employmentToUpdate.setRole(role);
+        setEmploymentCommonFields(employmentToUpdate, employment);
 
         involvementRepository.save(employmentToUpdate);
         userService.updateResearcherCurrentOrganisationUnitIfBound(
@@ -503,11 +485,36 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         involvement.setDateTo(commonFields.getDateTo());
         involvement.setApproveStatus(ApproveStatus.APPROVED);
         involvement.setInvolvementType(commonFields.getInvolvementType());
+        involvement.setFavorite(
+            Objects.requireNonNullElse(commonFields.getFavorite(), false));
+
+        if (Objects.nonNull(commonFields.getUris())) {
+            if (Objects.isNull(involvement.getUris())) {
+                involvement.setUris(new HashSet<>());
+            }
+
+            involvement.getUris().addAll(commonFields.getUris());
+        }
+
+        var description =
+            multilingualContentService.getMultilingualContent(commonFields.getDescription());
+        var keywords =
+            multilingualContentService.getMultilingualContent(commonFields.getKeywords());
+        involvement.setDescription(description);
+        involvement.setKeywords(keywords);
     }
 
     private void clearCommonCollections(Involvement involvement) {
         involvement.getAffiliationStatement().clear();
         involvement.getProofs().clear();
+
+        if (Objects.nonNull(involvement.getDescription())) {
+            involvement.getDescription().clear();
+        }
+
+        if (Objects.nonNull(involvement.getKeywords())) {
+            involvement.getKeywords().clear();
+        }
     }
 
     @Override
@@ -559,6 +566,73 @@ public class InvolvementServiceImpl extends JPAServiceImpl<Involvement>
         return employmentRepository.findExternalByPersonInvolvedId(personId).stream().map(
             employment -> MultilingualContentConverter.getMultilingualContentDTO(
                 employment.getAffiliationStatement())).toList();
+    }
+
+    private void setEducationCommonFields(Education target, EducationDTO dto) {
+        var title = multilingualContentService.getMultilingualContent(dto.getTitle());
+        var abbreviationTitle =
+            multilingualContentService.getMultilingualContent(dto.getAbbreviationTitle());
+        var degreeCode =
+            multilingualContentService.getMultilingualContent(dto.getDegreeCode());
+        var degreeClassification =
+            multilingualContentService.getMultilingualContent(dto.getDegreeClassification());
+
+        target.setTitle(title);
+        target.setAbbreviationTitle(abbreviationTitle);
+        target.setDegreeType(dto.getDegreeType());
+        target.setEducationStatus(dto.getEducationStatus());
+        target.setDegreeCode(degreeCode);
+        target.setDegreeClassification(degreeClassification);
+
+        if (CollectionOperations.containsValues(dto.getResearchAreasId())) {
+            var researchAreas = researchAreaService.getResearchAreasByIds(
+                dto.getResearchAreasId().stream().toList());
+            target.setResearchAreas(new HashSet<>(researchAreas));
+        }
+
+        if (Objects.nonNull(dto.getThesisId())) {
+            target.setThesis(thesisRepository.getReferenceById(dto.getThesisId()));
+        } else {
+            target.setThesis(null);
+        }
+
+        if (CollectionOperations.containsValues(dto.getSupervisorIds())) {
+            dto.getSupervisorIds().forEach(id ->
+                target.getSupervisors().add(personService.findOne(id)));
+        } else {
+            var displaySupervisors = multilingualContentService.getMultilingualContent(
+                dto.getDisplaySupervisors());
+            target.setDisplayThesisSupervisors(displaySupervisors);
+        }
+    }
+
+    private void setMembershipCommonFields(Membership target, MembershipDTO dto) {
+        var contributorDescription = multilingualContentService.getMultilingualContent(
+            dto.getContributionDescription());
+        var role = multilingualContentService.getMultilingualContent(dto.getRole());
+
+        target.setContributionDescription(contributorDescription);
+        target.setRole(role);
+        target.setMembershipType(dto.getMembershipType());
+    }
+
+    private void setEmploymentCommonFields(Employment target, EmploymentDTO dto) {
+        target.setEmploymentPosition(dto.getEmploymentPosition());
+
+        if (Objects.nonNull(dto.getEmploymentPositionId())) {
+            target.setEmploymentPositionHierarchy(
+                employmentPositionService.findOne(dto.getEmploymentPositionId())
+            );
+        } else {
+            target.setEmploymentPositionHierarchy(null);
+        }
+
+        if (Objects.nonNull(dto.getRole())) {
+            target.setRole(
+                multilingualContentService.getMultilingualContent(dto.getRole()));
+        } else {
+            target.setRole(null);
+        }
     }
 
     @Scheduled(cron = "0 0 3 * * ?") // Every day at 03:00 AM

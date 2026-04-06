@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.model.person.PersonNameType;
 
 @Getter
 @Setter
@@ -28,6 +29,8 @@ public class PersonNameDTO {
     private LocalDate dateFrom;
 
     private LocalDate dateTo;
+
+    private PersonNameType personNameType;
 
 
     @Override

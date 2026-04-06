@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
@@ -148,7 +149,8 @@ public class ThesisLibraryBackupServiceImpl implements ThesisLibraryBackupServic
             while (hasNextPage) {
                 List<Thesis> chunk = thesisRepository
                     .findThesesForBackup(from, to, types, institutionIds, defended, putOnReview,
-                        PageRequest.of(pageNumber, chunkSize)).getContent();
+                        PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "id")))
+                    .getContent();
 
                 for (var thesis : chunk) {
                     processThesis(thesis, thesisFileSections, zipBuilder, language);

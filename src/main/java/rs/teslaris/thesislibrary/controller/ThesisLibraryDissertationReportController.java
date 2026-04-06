@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
 import rs.teslaris.thesislibrary.dto.ThesisPublicReviewResponseDTO;
+import rs.teslaris.thesislibrary.model.PublicReviewType;
 import rs.teslaris.thesislibrary.service.interfaces.ThesisLibraryDissertationReportService;
 
 @RestController
@@ -32,6 +33,8 @@ public class ThesisLibraryDissertationReportController {
         @RequestParam(value = "year", required = false) Integer year,
         @RequestParam(value = "notDefendedOnly", required = false) Boolean notDefendedOnly,
         @RequestParam(value = "forMyInstitution", required = false) Boolean forMyInstitution,
+        @RequestParam(value = "publicReviewType", required = false)
+        PublicReviewType publicReviewType,
         @RequestHeader(value = "Authorization", required = false) String bearerToken,
         Pageable pageable) {
         Integer userInstitutionId = null;
@@ -41,6 +44,6 @@ public class ThesisLibraryDissertationReportController {
         }
 
         return thesisLibraryDissertationReportService.fetchPublicReviewDissertations(institutionId,
-            year, notDefendedOnly, userInstitutionId, pageable);
+            year, notDefendedOnly, userInstitutionId, publicReviewType, pageable);
     }
 }

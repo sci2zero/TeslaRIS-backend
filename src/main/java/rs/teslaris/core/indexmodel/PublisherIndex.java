@@ -57,6 +57,18 @@ public class PublisherIndex {
     @Field(type = FieldType.Keyword, name = "state_other_sortable", normalizer = "english_normalizer")
     private String stateOtherSortable;
 
+    @Field(type = FieldType.Text, store = true, name = "country_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String countrySr;
+
+    @Field(type = FieldType.Keyword, name = "country_sr_sortable", normalizer = "serbian_normalizer")
+    private String countrySrSortable;
+
+    @Field(type = FieldType.Text, store = true, name = "country_other", analyzer = "english", searchAnalyzer = "english")
+    private String countryOther;
+
+    @Field(type = FieldType.Keyword, name = "country_other_sortable", normalizer = "english_normalizer")
+    private String countryOtherSortable;
+
     @Field(type = FieldType.Integer, store = true, name = "databaseId")
     private Integer databaseId;
 }

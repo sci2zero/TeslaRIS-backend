@@ -20,7 +20,7 @@ public class OrganisationUnit {
     private List<MultilingualContent> name = new ArrayList<>();
 
     @Field("name_abbreviation")
-    private String nameAbbreviation;
+    private List<MultilingualContent> nameAbbreviation = new ArrayList<>();
 
     @Field("scopus_afid")
     private String scopusAfid;

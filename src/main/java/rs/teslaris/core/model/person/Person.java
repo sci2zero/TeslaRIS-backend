@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -91,6 +92,18 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
     @Column(name = "e_nauka_id")
     private String eNaukaId;
 
+    @Column(name = "national_science_id")
+    private String nationalScienceId;
+
+    @Column(name = "scholar_id")
+    private String scholarId;
+
+    @Column(name = "authenticus_id")
+    private String authenticusId;
+
+    @Column(name = "lattes_id")
+    private String lattesId;
+
     @Column(name = "orcid")
     private String orcid;
 
@@ -111,7 +124,7 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
     @Column(columnDefinition = "jsonb", name = "merged_ids")
     private Set<Integer> mergedIds = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     private Set<ResearchArea> researchAreas;
 
     @Column(name = "approve_status", nullable = false)
@@ -134,6 +147,7 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
     @Column(columnDefinition = "jsonb", name = "internal_identifiers")
     private Set<String> internalIdentifiers = new HashSet<>();
 
+
     public void addInvolvement(Involvement involvement) {
         if (involvements == null) {
             involvements = new HashSet<>();
@@ -144,7 +158,6 @@ public class Person extends BaseEntity implements Mergeable, Accounted {
 
     public void removeInvolvement(Involvement involvement) {
         involvements.remove(involvement);
-        involvement.setPersonInvolved(null);
     }
 
     public void addPrize(Prize prize) {

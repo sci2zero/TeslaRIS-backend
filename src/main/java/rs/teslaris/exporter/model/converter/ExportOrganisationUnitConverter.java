@@ -53,7 +53,9 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
 
         commonExportOU.setName(
             ExportMultilingualContentConverter.toCommonExportModel(organisationUnit.getName()));
-        commonExportOU.setNameAbbreviation(organisationUnit.getNameAbbreviation());
+        commonExportOU.setNameAbbreviation(
+            ExportMultilingualContentConverter.toCommonExportModel(
+                organisationUnit.getNameAbbreviation()));
         commonExportOU.setScopusAfid(organisationUnit.getScopusAfid());
         commonExportOU.setRor(organisationUnit.getRor());
         commonExportOU.setOpenAlex(organisationUnit.getOpenAlexId());
@@ -174,11 +176,13 @@ public class ExportOrganisationUnitConverter extends ExportConverterBase {
                 .add(new DCMultilingualContent(content, languageTag))
         );
 
-        if (Objects.nonNull(exportOrganisationUnit.getNameAbbreviation()) &&
-            !exportOrganisationUnit.getNameAbbreviation().isBlank()) {
-            dcOrgUnit.getTitle()
-                .add(new DCMultilingualContent(exportOrganisationUnit.getNameAbbreviation(), null));
-        }
+        addContentToList(
+            exportOrganisationUnit.getNameAbbreviation(),
+            ExportMultilingualContent::getContent,
+            ExportMultilingualContent::getLanguageTag,
+            (content, languageTag) -> dcOrgUnit.getTitle()
+                .add(new DCMultilingualContent(content, languageTag))
+        );
 
         return dcOrgUnit;
     }

@@ -33,4 +33,6 @@ public class DocumentFileResponseDTO {
     private Long sizeInMb;
 
     private String mimeType;
+
+    private Boolean isArchived;
 }
