@@ -30,7 +30,8 @@ public class EmploymentPositionControllerTest extends BaseTest {
             ),
             "TEST",
             "test",
-            2
+            2,
+            null
         );
     }
 
@@ -89,6 +90,20 @@ public class EmploymentPositionControllerTest extends BaseTest {
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/employment-position/children/{employmentPositionId}",
+                        1).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(Integer.MAX_VALUE)
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testReadEmploymentPosition() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/employment-position/{employmentPositionId}",
                         1).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

@@ -10,6 +10,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,9 +49,10 @@ class EmploymentPositionServiceTest {
     void setUp() {
         employmentPositionDTO = new EmploymentPositionDTO(
             null,
-            null,
+            new ArrayList<>(),
             "Processed Name",
             "Scheme Name",
+            null,
             null
         );
 
@@ -69,8 +72,9 @@ class EmploymentPositionServiceTest {
 
         // then
         assertNotNull(result);
-        assertEquals(1, result.getId());
-        verify(multilingualContentService).getMultilingualContent(employmentPositionDTO.name());
+        assertEquals(1, result.id());
+        verify(multilingualContentService).getMultilingualContentAndSetDefaultsIfNonExistent(
+            employmentPositionDTO.name());
         verify(employmentPositionRepository).save(any(EmploymentPositionHierarchy.class));
     }
 
@@ -83,7 +87,8 @@ class EmploymentPositionServiceTest {
             null,
             "Processed Name",
             "Scheme Name",
-            superPositionId
+            superPositionId,
+            new ArrayList<>()
         );
 
         var superEmploymentPosition = new EmploymentPositionHierarchy();
@@ -121,7 +126,8 @@ class EmploymentPositionServiceTest {
 
         // then
         verify(employmentPositionRepository).findById(employmentPositionId);
-        verify(multilingualContentService).getMultilingualContent(employmentPositionDTO.name());
+        verify(multilingualContentService).getMultilingualContentAndSetDefaultsIfNonExistent(
+            employmentPositionDTO.name());
         verify(employmentPositionRepository).save(employmentPositionHierarchy);
     }
 
@@ -134,6 +140,7 @@ class EmploymentPositionServiceTest {
             null,
             "Processed Name",
             "Scheme Name",
+            null,
             null
         );
 
@@ -302,5 +309,25 @@ class EmploymentPositionServiceTest {
         assertNotNull(result);
         verify(employmentPositionRepository).searchEmploymentPositions(searchTerm.toLowerCase(),
             LanguageAbbreviations.SERBIAN, pageable);
+    }
+
+    @Test
+    void shouldReadEmploymentPositionSuccessfully() {
+        // given
+        Integer employmentPositionId = 1;
+        var employmentPosition = new EmploymentPositionHierarchy();
+        employmentPosition.setId(employmentPositionId);
+        employmentPosition.setName(new HashSet<>());
+
+        when(employmentPositionRepository.findById(employmentPositionId)).thenReturn(
+            Optional.of(employmentPosition));
+
+        // when
+        var result = employmentPositionService.readEmploymentPosition(employmentPositionId);
+
+        // then
+        assertNotNull(result);
+        assertEquals(employmentPositionId, result.id());
+        verify(employmentPositionRepository).findById(employmentPositionId);
     }
 }

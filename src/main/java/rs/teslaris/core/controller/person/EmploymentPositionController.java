@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
-import rs.teslaris.core.converter.person.EmploymentPositionConverter;
 import rs.teslaris.core.dto.person.involvement.EmploymentPositionDTO;
 import rs.teslaris.core.service.interfaces.person.EmploymentPositionService;
 
@@ -31,6 +30,12 @@ public class EmploymentPositionController {
 
     private final EmploymentPositionService employmentPositionService;
 
+
+    @GetMapping("/{employmentPositionId}")
+    public EmploymentPositionDTO readEmploymentPosition(
+        @PathVariable Integer employmentPositionId) {
+        return employmentPositionService.readEmploymentPosition(employmentPositionId);
+    }
 
     @GetMapping("/search")
     public Page<EmploymentPositionDTO> searchEmploymentPositions(Pageable pageable,
@@ -54,8 +59,7 @@ public class EmploymentPositionController {
     @Idempotent
     public EmploymentPositionDTO createEmploymentPosition(
         @RequestBody EmploymentPositionDTO employmentPosition) {
-        return EmploymentPositionConverter.toDTO(
-            employmentPositionService.createEmploymentPosition(employmentPosition));
+        return employmentPositionService.createEmploymentPosition(employmentPosition);
     }
 
     @PutMapping("/{employmentPositionId}")

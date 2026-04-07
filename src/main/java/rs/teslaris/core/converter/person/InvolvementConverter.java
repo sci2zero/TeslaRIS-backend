@@ -87,6 +87,12 @@ public class InvolvementConverter {
         dto.setEmploymentPosition(employment.getEmploymentPosition());
         dto.setRole(role);
 
+        if (Objects.nonNull(employment.getEmploymentPositionHierarchy())) {
+            dto.setEmploymentPositionId(employment.getEmploymentPositionHierarchy().getId());
+            dto.setEmploymentPositionName(MultilingualContentConverter.getMultilingualContentDTO(
+                employment.getEmploymentPositionHierarchy().getName()));
+        }
+
         return dto;
     }
 

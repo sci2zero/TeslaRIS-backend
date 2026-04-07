@@ -15,7 +15,9 @@ public interface EmploymentPositionService extends JPAService<EmploymentPosition
                                                           String searchExpression,
                                                           String languageTag);
 
-    EmploymentPositionHierarchy createEmploymentPosition(
+    EmploymentPositionDTO readEmploymentPosition(Integer employmentPositionId);
+
+    EmploymentPositionDTO createEmploymentPosition(
         EmploymentPositionDTO employmentPositionDTO);
 
     void editEmploymentPosition(EmploymentPositionDTO employmentPositionDTO,
