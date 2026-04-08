@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -170,7 +171,8 @@ class EmploymentPositionServiceTest {
     void shouldDeleteEmploymentPositionSuccessfully() {
         // given
         var employmentPositionId = 1;
-        when(employmentPositionRepository.getChildEmploymentPositions(employmentPositionId))
+        when(employmentPositionRepository.getChildEmploymentPositions(eq(employmentPositionId),
+            any()))
             .thenReturn(List.of());
         when(employmentPositionRepository.findById(employmentPositionId))
             .thenReturn(Optional.of(new EmploymentPositionHierarchy()));
@@ -179,7 +181,8 @@ class EmploymentPositionServiceTest {
         employmentPositionService.deleteEmploymentPosition(employmentPositionId);
 
         // then
-        verify(employmentPositionRepository).getChildEmploymentPositions(employmentPositionId);
+        verify(employmentPositionRepository).getChildEmploymentPositions(eq(employmentPositionId),
+            any());
         verify(employmentPositionRepository).save(any());
     }
 
@@ -190,7 +193,8 @@ class EmploymentPositionServiceTest {
         var childPosition = new EmploymentPositionHierarchy();
         childPosition.setId(2);
 
-        when(employmentPositionRepository.getChildEmploymentPositions(employmentPositionId))
+        when(employmentPositionRepository.getChildEmploymentPositions(eq(employmentPositionId),
+            any()))
             .thenReturn(List.of(childPosition));
 
         // when & then
@@ -198,7 +202,8 @@ class EmploymentPositionServiceTest {
             employmentPositionService.deleteEmploymentPosition(employmentPositionId)
         );
 
-        verify(employmentPositionRepository).getChildEmploymentPositions(employmentPositionId);
+        verify(employmentPositionRepository).getChildEmploymentPositions(eq(employmentPositionId),
+            any());
         verify(employmentPositionRepository, never()).deleteById(employmentPositionId);
     }
 
@@ -208,7 +213,7 @@ class EmploymentPositionServiceTest {
         Integer parentId = null;
         var topLevelPositions =
             List.of(new EmploymentPositionHierarchy(), new EmploymentPositionHierarchy());
-        when(employmentPositionRepository.getTopLevelEmploymentPositions())
+        when(employmentPositionRepository.getTopLevelEmploymentPositions(any()))
             .thenReturn(topLevelPositions);
 
         // when
@@ -217,8 +222,8 @@ class EmploymentPositionServiceTest {
         // then
         assertNotNull(result);
         assertEquals(2, result.size());
-        verify(employmentPositionRepository).getTopLevelEmploymentPositions();
-        verify(employmentPositionRepository, never()).getChildEmploymentPositions(any());
+        verify(employmentPositionRepository).getTopLevelEmploymentPositions(any());
+        verify(employmentPositionRepository, never()).getChildEmploymentPositions(any(), any());
     }
 
     @Test
@@ -226,7 +231,7 @@ class EmploymentPositionServiceTest {
         // given
         Integer parentId = 0;
         var topLevelPositions = List.of(new EmploymentPositionHierarchy());
-        when(employmentPositionRepository.getTopLevelEmploymentPositions())
+        when(employmentPositionRepository.getTopLevelEmploymentPositions(any()))
             .thenReturn(topLevelPositions);
 
         // when
@@ -235,8 +240,8 @@ class EmploymentPositionServiceTest {
         // then
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(employmentPositionRepository).getTopLevelEmploymentPositions();
-        verify(employmentPositionRepository, never()).getChildEmploymentPositions(any());
+        verify(employmentPositionRepository).getTopLevelEmploymentPositions(any());
+        verify(employmentPositionRepository, never()).getChildEmploymentPositions(any(), any());
     }
 
     @Test
@@ -248,7 +253,7 @@ class EmploymentPositionServiceTest {
             new EmploymentPositionHierarchy(),
             new EmploymentPositionHierarchy()
         );
-        when(employmentPositionRepository.getChildEmploymentPositions(parentId))
+        when(employmentPositionRepository.getChildEmploymentPositions(eq(parentId), any()))
             .thenReturn(childPositions);
 
         // when
@@ -257,15 +262,15 @@ class EmploymentPositionServiceTest {
         // then
         assertNotNull(result);
         assertEquals(3, result.size());
-        verify(employmentPositionRepository).getChildEmploymentPositions(parentId);
-        verify(employmentPositionRepository, never()).getTopLevelEmploymentPositions();
+        verify(employmentPositionRepository).getChildEmploymentPositions(eq(parentId), any());
+        verify(employmentPositionRepository, never()).getTopLevelEmploymentPositions(any());
     }
 
     @Test
     void shouldReturnEmptyListWhenNoChildEmploymentPositionsFound() {
         // given
         Integer parentId = 5;
-        when(employmentPositionRepository.getChildEmploymentPositions(parentId))
+        when(employmentPositionRepository.getChildEmploymentPositions(eq(parentId), any()))
             .thenReturn(List.of());
 
         // when
@@ -274,15 +279,15 @@ class EmploymentPositionServiceTest {
         // then
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(employmentPositionRepository).getChildEmploymentPositions(parentId);
-        verify(employmentPositionRepository, never()).getTopLevelEmploymentPositions();
+        verify(employmentPositionRepository).getChildEmploymentPositions(eq(parentId), any());
+        verify(employmentPositionRepository, never()).getTopLevelEmploymentPositions(any());
     }
 
     @Test
     void shouldReturnEmptyListWhenNoTopLevelEmploymentPositionsFound() {
         // given
         Integer parentId = null;
-        when(employmentPositionRepository.getTopLevelEmploymentPositions())
+        when(employmentPositionRepository.getTopLevelEmploymentPositions(any()))
             .thenReturn(List.of());
 
         // when
@@ -291,8 +296,8 @@ class EmploymentPositionServiceTest {
         // then
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(employmentPositionRepository).getTopLevelEmploymentPositions();
-        verify(employmentPositionRepository, never()).getChildEmploymentPositions(any());
+        verify(employmentPositionRepository).getTopLevelEmploymentPositions(any());
+        verify(employmentPositionRepository, never()).getChildEmploymentPositions(any(), any());
     }
 
     @Test

@@ -538,6 +538,7 @@ public class ThesisServiceTest {
         var document = new DocumentFileDTO();
         var documentFile = mock(DocumentFile.class);
 
+        when(thesis.getId()).thenReturn(thesisId);
         when(thesisJPAService.findOne(thesisId)).thenReturn(thesis);
         when(documentFileService.saveNewPreliminaryDocument(document)).thenReturn(documentFile);
 
@@ -553,7 +554,7 @@ public class ThesisServiceTest {
         var response = thesisService.addThesisAttachment(thesisId, document, attachmentType);
 
         // then
-        verify(thesisJPAService).findOne(thesisId);
+        verify(thesisJPAService, atLeastOnce()).findOne(thesisId);
         verify(documentFileService).saveNewPreliminaryDocument(document);
 
         verify(thesisJPAService).save(thesis);
