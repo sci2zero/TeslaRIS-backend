@@ -11,6 +11,9 @@ public record EmploymentPositionDTO(
     @NotNull(message = "You have to provide name.")
     List<MultilingualContentDTO> name,
 
+    @NotNull(message = "You have to provide description.")
+    List<MultilingualContentDTO> description,
+
     String processedName,
 
     String schemeName,

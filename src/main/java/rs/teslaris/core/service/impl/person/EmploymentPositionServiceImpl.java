@@ -83,6 +83,10 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
         employmentPosition.setName(
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
                 employmentPositionDTO.name()));
+        employmentPosition.setDescription(
+            multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
+                employmentPositionDTO.description()));
+
         employmentPosition.setProcessedName(employmentPositionDTO.processedName());
         employmentPosition.setSchemeName(employmentPositionDTO.schemeName());
 
