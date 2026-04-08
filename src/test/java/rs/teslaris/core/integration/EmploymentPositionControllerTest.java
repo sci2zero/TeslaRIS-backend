@@ -26,7 +26,10 @@ public class EmploymentPositionControllerTest extends BaseTest {
         return new EmploymentPositionDTO(
             null,
             List.of(
-                new MultilingualContentDTO(1, "EN", "Test", 1)
+                new MultilingualContentDTO(1, "EN", "Name", 1)
+            ),
+            List.of(
+                new MultilingualContentDTO(1, "EN", "Desc", 1)
             ),
             "TEST",
             "test",

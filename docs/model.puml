@@ -55,7 +55,7 @@ package commonTypes {
   class Country {
     String code /' ISO_3166_Alpha2_Code - iso-3166-country-enum at https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd '/
     Set<MultiLingualContent> name
-    String processedName
+    String processedName /' !!! to be removed '/
   }
 
   class MultiLingualContent {
@@ -73,7 +73,7 @@ package commonTypes {
   class ResearchArea {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
-    String processedName
+    String processedName /' !!! to be removed '/
     String schemeName
   }
   ResearchArea "*" --> "0..1" ResearchArea : superResearchArea
@@ -465,7 +465,7 @@ package person {
   class EmploymentPositionHierarchy {
 	Set<MultiLingualContent> name
     Set<MultiLingualContent> description /' !!! '/
-    String processedName 
+    String processedName /' !!! to be removed '/ 
 	String schemeName
     ' !!! TODO:  for Portugal portal ingest three levels of position, the first one is employment-category-enum, the second one is employment-position-type-enum, and the third one is employment-position-title-enum - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd    
 	' !!! plus add to some level 
@@ -989,7 +989,9 @@ package document {
   }
   
   ' !!!  
-  class OtherEvent extends Event{  
+  class Exhibition extends Event{  
+    String number
+    String fee
   }
 
   ProceedingsPublication "1..*" --> "1" Proceedings : proceedings 
@@ -1466,13 +1468,14 @@ package project {
     OTHER
   }
     
-  ProjectsRelation "*" --> "1" Project : sourceProject
-  ProjectsRelation "*" --> "1" Project : targetProject
+  ProjectsRelation "*" --> "0..1" Project : sourceProject
+  ProjectsRelation "*" --> "0..1" Project : targetProject
     
   class ProjectsRelation {
     ProjectsRelationType relationType
-    FlexibleDate dateFrom 
-    FlexibleDate dateTo
+    Set<MultiLingualContent> sourceProjectDescription /' !!! '/
+    Set<MultiLingualContent> targetProjectDescription /' !!! '/
+    ApproveStatus approveStatus /' !!! '/
   }
     
   enum ProjectsRelationType {
@@ -1511,7 +1514,7 @@ package project {
     PUBLIC_EVENT_ORGANIZED_BY_PROJECT
   }
   
-  class ProjectStatus {
+  enum ProjectStatus {
     SUBMITTED
     UNDER_EVALUATION
     ONGOING
@@ -1539,7 +1542,7 @@ package project {
   FundingApplication "1" --> "0..1" Funding : funding
   FundingApplication "0..1" --> "*" FundingPart : otherFundingSources
   
-  class FundingApplicationResult {
+  enum FundingApplicationResult {
     AWARDED
     REJECTED
     CHANGES_REQUESTED
@@ -1625,10 +1628,9 @@ package project {
   }
 
   class PersonFundingCallContribution extends PersonContribution {
-    FundingCallContributionType contributionType
-    
+    FundingCallContributionType contributionType 
     ' !!! only available if contributionType is ASSESSMENT_EVALUATOR
-    Integer numberOfReviewsOrAssessment
+    Integer numberOfReviewsOrAssessments
   }
   
   class FundingProgram {
@@ -1711,6 +1713,7 @@ package Assessment {
     PRIZE 
     CONFERENCE  
     EXHIBITION 
+    COURSE
     OTHER_EVENTS /' !!! do we need this '/
   }
 

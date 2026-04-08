@@ -55,7 +55,7 @@ public class PrizeAssessmentClassificationControllerTest extends BaseTest {
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                    .header("Idempotency-Key", "MOCK_KEY_PUB_SERIES_ASS_CLASS"))
+                    .header("Idempotency-Key", "MOCK_KEY_PRIZE_ASS_CLASS"))
             .andExpect(status().isCreated());
     }
 

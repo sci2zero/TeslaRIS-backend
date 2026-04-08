@@ -23,4 +23,8 @@ public class EmploymentDTO extends InvolvementDTO {
 
     @Valid
     private List<MultilingualContentDTO> role;
+
+    // used only for responses
+
+    private List<MultilingualContentDTO> employmentPositionName;
 }
