@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -155,13 +156,15 @@ public class FundingProgramServiceImpl extends JPAServiceImpl<FundingProgram>
 
     @Override
     @Transactional(readOnly = true)
-    public void reindexFundingPrograms() {
+    public CompletableFuture<Void> reindexFundingPrograms() {
         FunctionalUtil.processAllPages(
             100,
             Sort.by(Sort.Direction.ASC, "id"),
             this::findAll,
             fundingProgram -> indexFundingProgram(fundingProgram, new FundingProgramIndex())
         );
+
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override

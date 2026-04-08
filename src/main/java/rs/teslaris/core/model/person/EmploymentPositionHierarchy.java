@@ -30,6 +30,9 @@ public class EmploymentPositionHierarchy extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> name = new HashSet<>();
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> description = new HashSet<>();
+
     @Column(name = "processed_name")
     private String processedName;
 

@@ -2,6 +2,7 @@ package rs.teslaris.project.service.interfaces.funding;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public interface FundingCallService extends JPAService<FundingCall> {
 
     void deleteFundingCallDocument(Integer programFileId, Integer fundingCallId);
 
-    void reindexFundingCalls();
+    CompletableFuture<Void> reindexFundingCalls();
 
     void indexFundingCall(FundingCall fundingCall, FundingCallIndex index);
 }

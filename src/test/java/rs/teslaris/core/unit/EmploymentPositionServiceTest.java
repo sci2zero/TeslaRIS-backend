@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +51,7 @@ class EmploymentPositionServiceTest {
         employmentPositionDTO = new EmploymentPositionDTO(
             null,
             new ArrayList<>(),
+            new ArrayList<>(),
             "Processed Name",
             "Scheme Name",
             null,
@@ -73,7 +75,8 @@ class EmploymentPositionServiceTest {
         // then
         assertNotNull(result);
         assertEquals(1, result.id());
-        verify(multilingualContentService).getMultilingualContentAndSetDefaultsIfNonExistent(
+        verify(multilingualContentService,
+            times(2)).getMultilingualContentAndSetDefaultsIfNonExistent(
             employmentPositionDTO.name());
         verify(employmentPositionRepository).save(any(EmploymentPositionHierarchy.class));
     }
@@ -85,6 +88,7 @@ class EmploymentPositionServiceTest {
         var employmentPositionDTOWithSuper = new EmploymentPositionDTO(
             null,
             null,
+            new ArrayList<>(),
             "Processed Name",
             "Scheme Name",
             superPositionId,
@@ -126,7 +130,8 @@ class EmploymentPositionServiceTest {
 
         // then
         verify(employmentPositionRepository).findById(employmentPositionId);
-        verify(multilingualContentService).getMultilingualContentAndSetDefaultsIfNonExistent(
+        verify(multilingualContentService,
+            times(2)).getMultilingualContentAndSetDefaultsIfNonExistent(
             employmentPositionDTO.name());
         verify(employmentPositionRepository).save(employmentPositionHierarchy);
     }
@@ -138,6 +143,7 @@ class EmploymentPositionServiceTest {
         var employmentPositionDTOWithNullSuper = new EmploymentPositionDTO(
             null,
             null,
+            new ArrayList<>(),
             "Processed Name",
             "Scheme Name",
             null,
