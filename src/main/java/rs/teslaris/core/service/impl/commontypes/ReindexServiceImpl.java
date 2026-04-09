@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.AllResearcherPointsReindexingEvent;
 import rs.teslaris.core.applicationevent.HarvestExternalIndicatorsEvent;
+import rs.teslaris.core.applicationevent.ProjectEventReindexingEvent;
 import rs.teslaris.core.applicationevent.RegistryBookInfoReindexEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
@@ -165,8 +166,11 @@ public class ReindexServiceImpl implements ReindexService {
             if (reharvestCitationIndicators) {
                 applicationEventPublisher.publishEvent(new HarvestExternalIndicatorsEvent());
             }
+
+            applicationEventPublisher.publishEvent(
+                new ProjectEventReindexingEvent(indexesToRepopulate));
         } catch (CompletionException e) {
-            log.error("Error during parallel reindexing. Reason: ", e);
+            log.error("Error during parallel reindexing of core entities. Reason: ", e);
         }
     }
 

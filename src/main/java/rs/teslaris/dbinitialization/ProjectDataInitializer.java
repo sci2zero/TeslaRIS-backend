@@ -89,6 +89,7 @@ public class ProjectDataInitializer {
         fundingCall1.setDateFrom(LocalDate.of(2020, 2, 1));
         fundingCall1.setDateTo(LocalDate.of(2021, 2, 1));
         fundingCall1.setFundingProgram(fundingProgram1);
+        fundingCall1.setFunder(fundingProgram1.getFunder());
 
         var fundingCall2 = new FundingCall();
         fundingCall2.setName(
@@ -96,6 +97,7 @@ public class ProjectDataInitializer {
         fundingCall2.setDateFrom(LocalDate.of(2022, 7, 6));
         fundingCall2.setDateTo(LocalDate.of(2023, 3, 17));
         fundingCall2.setFundingProgram(fundingProgram1);
+        fundingCall2.setFunder(fundingProgram1.getFunder());
 
         fundingCallRepository.saveAll(List.of(fundingCall1, fundingCall2));
 

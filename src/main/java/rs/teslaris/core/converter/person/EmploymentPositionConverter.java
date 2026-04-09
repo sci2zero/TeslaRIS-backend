@@ -12,6 +12,8 @@ public class EmploymentPositionConverter {
         return new EmploymentPositionDTO(employmentPosition.getId(),
             MultilingualContentConverter.getMultilingualContentDTO(
                 employmentPosition.getName()),
+            MultilingualContentConverter.getMultilingualContentDTO(
+                employmentPosition.getDescription()),
             employmentPosition.getProcessedName(),
             employmentPosition.getSchemeName(),
             Objects.requireNonNullElse(
