@@ -10,4 +10,6 @@ public interface FundingService extends JPAService<Funding> {
 
     FundingDTO readFunding(Integer fundingId);
 
+    Funding createFunding(FundingDTO fundingDTO);
+
 }
