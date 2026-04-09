@@ -1,5 +1,6 @@
 package rs.teslaris.core.dto.document;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -33,6 +34,7 @@ public class DocumentFileDTO {
     @NotNull(message = "You must provide valid access rights.")
     private AccessRights accessRights;
 
+    @Nullable
     private License license;
 
     private Boolean isArchived;

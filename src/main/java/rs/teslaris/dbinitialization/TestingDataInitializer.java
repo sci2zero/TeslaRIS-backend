@@ -1255,18 +1255,21 @@ public class TestingDataInitializer {
         position1.setName(Set.of(new MultiLingualContent(serbianTag, "Position Root", 1)));
         position1.setProcessedName("ROOT");
         position1.setSchemeName("test");
+        position1.setSchemeName("uns");
 
         var position2 = new EmploymentPositionHierarchy();
         position2.setName(Set.of(new MultiLingualContent(serbianTag, "Position Level 1", 1)));
         position2.setProcessedName("LEVEL_1");
         position2.setSchemeName("test");
         position2.setSuperEmploymentPosition(position1);
+        position2.setSchemeName("uns");
 
         var position3 = new EmploymentPositionHierarchy();
         position3.setName(Set.of(new MultiLingualContent(serbianTag, "Position Leaf", 1)));
         position3.setProcessedName("LEAF");
         position3.setSchemeName("test");
         position3.setSuperEmploymentPosition(position2);
+        position3.setSchemeName("uns");
 
         employmentPositionRepository.saveAll(List.of(position1, position2, position3));
 
