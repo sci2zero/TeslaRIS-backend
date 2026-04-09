@@ -383,6 +383,11 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             case FILE -> {
                 thesis.getPreliminaryFiles().forEach(file -> file.setLatest(false));
                 thesis.getPreliminaryFiles().add(documentFile);
+
+                if (thesis.getFileItems().stream().noneMatch(
+                    file -> file.getResourceType().equals(ResourceType.OFFICIAL_PUBLICATION))) {
+                    transferPreliminaryFileToOfficial(thesis.getId(), documentFile.getId());
+                }
             }
             case SUPPLEMENT -> {
                 thesis.getPreliminarySupplements().forEach(file -> file.setLatest(false));

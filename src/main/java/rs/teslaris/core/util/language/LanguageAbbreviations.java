@@ -31,4 +31,6 @@ public class LanguageAbbreviations {
     public static String OLD_GERMAN = "GE";
 
     public static String OLD_SPANISH = "SP";
+
+    public static String PORTUGUESE = "PT";
 }
