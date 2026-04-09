@@ -3,7 +3,11 @@ package rs.teslaris.project.service.impl.funding;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.project.converter.funding.FundingApplicationConverter;
+import rs.teslaris.project.converter.funding.FundingCallConverter;
+import rs.teslaris.project.dto.funding.FundingApplicationDTO;
 import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
@@ -18,5 +22,11 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     @Override
     protected JpaRepository<FundingApplication, Integer> getEntityRepository() {
         return fundingApplicationRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FundingApplicationDTO readFundingApplication(Integer fundingApplicationId) {
+        return FundingApplicationConverter.toDTO(findOne(fundingApplicationId));
     }
 }
