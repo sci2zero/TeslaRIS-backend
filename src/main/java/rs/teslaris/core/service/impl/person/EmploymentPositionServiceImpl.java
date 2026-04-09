@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,6 +30,9 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     private final EmploymentPositionRepository employmentPositionRepository;
 
     private final MultilingualContentService multilingualContentService;
+
+    @Value("${employment.position.scheme}")
+    private String schemeName;
 
 
     @Override
@@ -101,7 +105,7 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
     @Override
     @Transactional
     public void deleteEmploymentPosition(Integer employmentPositionId) {
-        if (!employmentPositionRepository.getChildEmploymentPositions(employmentPositionId)
+        if (!employmentPositionRepository.getChildEmploymentPositions(employmentPositionId, null)
             .isEmpty()) {
             throw new ReferenceConstraintException("employmentPositionInUseMessage");
         }
@@ -115,10 +119,10 @@ public class EmploymentPositionServiceImpl extends JPAServiceImpl<EmploymentPosi
         List<EmploymentPositionHierarchy> fetchedEmploymentPositions;
         if (Objects.isNull(parentId) || parentId == 0) {
             fetchedEmploymentPositions =
-                employmentPositionRepository.getTopLevelEmploymentPositions();
+                employmentPositionRepository.getTopLevelEmploymentPositions(schemeName);
         } else {
             fetchedEmploymentPositions =
-                employmentPositionRepository.getChildEmploymentPositions(parentId);
+                employmentPositionRepository.getChildEmploymentPositions(parentId, schemeName);
         }
 
         return fetchedEmploymentPositions.stream()

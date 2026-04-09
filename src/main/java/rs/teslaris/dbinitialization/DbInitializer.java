@@ -400,9 +400,11 @@ public class DbInitializer implements ApplicationRunner {
         var croatianTag = new LanguageTag(LanguageAbbreviations.CROATIAN, "Croatian");
         var italianTag = new LanguageTag(LanguageAbbreviations.ITALIAN, "Italian");
         var slovenianTag = new LanguageTag(LanguageAbbreviations.SLOVENIAN, "Slovenian");
+        var portugueseTag = new LanguageTag(LanguageAbbreviations.PORTUGUESE, "Português");
         languageTagRepository.saveAll(
             List.of(englishTag, serbianTag, hungarianTag, germanTag, frenchTag, spanishTag,
-                russianTag, croatianTag, italianTag, slovenianTag, serbianCyrillicTag));
+                russianTag, croatianTag, italianTag, slovenianTag, serbianCyrillicTag,
+                portugueseTag));
 
         // LANGUAGES
         var serbianLanguage = new Language();
