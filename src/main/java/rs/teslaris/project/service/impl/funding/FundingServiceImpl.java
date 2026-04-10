@@ -11,10 +11,15 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
 import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
+import rs.teslaris.project.indexmodel.funding.FundingIndex;
+import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
+import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
@@ -41,6 +46,8 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
     private final CurrencyService currencyService;
 
+    private final FundingIndexRepository fundingIndexRepository;
+
     @Override
     protected JpaRepository<Funding, Integer> getEntityRepository() {
         return fundingRepository;
@@ -61,14 +68,16 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
 
         var savedFundingCall = save(newFunding);
 
-//        fundingCallIndexRepository.save(
-//                indexCommonFields(savedFundingCall, new FundingCallIndex()));
+        fundingIndexRepository.save(
+                indexCommonFields(savedFundingCall, new FundingIndex()));
 
         return savedFundingCall;
     }
 
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
-        if (Objects.nonNull(fundingDTO.getDateFrom()) && Objects.nonNull(fundingDTO.getDateTo()) && fundingDTO.getDateTo().isBefore(fundingDTO.getDateFrom())) {
+        if (Objects.nonNull(fundingDTO.getDateFrom()) &&
+                Objects.nonNull(fundingDTO.getDateTo()) &&
+                fundingDTO.getDateTo().isBefore(fundingDTO.getDateFrom())) {
             throw new DateRangeException("Funding must start before it ends.");
         }
 
@@ -129,6 +138,49 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandated(fundingDTO.getOaMandated());
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
+    }
+
+    private FundingIndex indexCommonFields(Funding funding,
+                                           FundingIndex index) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                funding.getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                funding.getNameAbbreviation(), false);
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setNameSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setNameSrSortable(index.getNameSr());
+        index.setNameOther(
+                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setNameOtherSortable(index.getNameOther());
+
+        if (Objects.nonNull(funding.getProject())) {
+            index.setProjectId(funding.getProject().getId());
+        }
+
+        if (Objects.nonNull(funding.getFundingCall())) {
+            index.setFundingCallId(funding.getFundingCall().getId());
+        }
+
+        if (Objects.nonNull(funding.getFunder())) {
+            index.setFunderId(funding.getFunder().getId());
+        }
+
+        index.setDatabaseId(funding.getId());
+        index.setDateFrom(funding.getDateFrom());
+        index.setDateTo(funding.getDateTo());
+
+        return index;
     }
 
 }
