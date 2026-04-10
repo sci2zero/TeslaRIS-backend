@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.CourseDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -13,6 +14,7 @@ import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -93,6 +95,12 @@ public interface MergeService {
 
     void saveMergedExhibitionsMetadata(Integer leftId, Integer rightId, ExhibitionDTO leftData,
                                        ExhibitionDTO rightData);
+
+    void saveMergedCoursesMetadata(Integer leftId, Integer rightId, CourseDTO leftData,
+                                   CourseDTO rightData);
+
+    void saveMergedOtherEventsMetadata(Integer leftId, Integer rightId, OtherEventDTO leftData,
+                                       OtherEventDTO rightData);
 
     void saveMergedIntangibleProductMetadata(Integer leftId, Integer rightId,
                                              IntangibleProductDTO leftData,

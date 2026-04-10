@@ -10,6 +10,8 @@ import rs.teslaris.core.model.document.Course;
 
 public interface CourseService {
 
+    Course findCourseById(Integer courseId);
+
     Page<CourseDTO> readAllCourses(Pageable pageable);
 
     Page<EventIndex> searchCoursesForImport(List<String> names, String dateFrom, String dateTo);
@@ -25,6 +27,8 @@ public interface CourseService {
     void forceDeleteCourse(Integer courseId);
 
     CompletableFuture<Void> reindexCourses();
+
+    void indexCourse(Course course);
 
     void reindexCourse(Integer courseId);
 

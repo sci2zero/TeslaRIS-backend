@@ -27,6 +27,10 @@ public class EventConverter {
             MultilingualContentConverter.getMultilingualContentDTO(
                 event.getDescription()));
 
+        dto.setDisplayOrganizer(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                event.getDisplayOrganizer()));
+
         dto.setKeywords(
             MultilingualContentConverter.getMultilingualContentDTO(
                 event.getKeywords()));

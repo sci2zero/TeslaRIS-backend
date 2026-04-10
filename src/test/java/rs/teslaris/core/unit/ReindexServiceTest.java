@@ -21,6 +21,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.impl.commontypes.ReindexServiceImpl;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -33,6 +34,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -113,6 +115,12 @@ public class ReindexServiceTest {
     private ExhibitionService exhibitionService;
 
     @Mock
+    private CourseService courseService;
+
+    @Mock
+    private OtherEventService otherEventService;
+
+    @Mock
     private EventService eventService;
 
     @InjectMocks
@@ -162,6 +170,10 @@ public class ReindexServiceTest {
             CompletableFuture.completedFuture(null));
         when(exhibitionService.reindexExhibitions()).thenReturn(
             CompletableFuture.completedFuture(null));
+        when(courseService.reindexCourses()).thenReturn(
+            CompletableFuture.completedFuture(null));
+        when(otherEventService.reindexOtherEvents()).thenReturn(
+            CompletableFuture.completedFuture(null));
         when(documentFileService.reindexDocumentFiles()).thenReturn(
             CompletableFuture.completedFuture(null));
 
@@ -186,6 +198,10 @@ public class ReindexServiceTest {
             indexType.a.equals(EntityType.EVENT) ? times(1) : never()).reindexConferences();
         verify(exhibitionService,
             indexType.a.equals(EntityType.EVENT) ? times(1) : never()).reindexExhibitions();
+        verify(courseService,
+            indexType.a.equals(EntityType.EVENT) ? times(1) : never()).reindexCourses();
+        verify(otherEventService,
+            indexType.a.equals(EntityType.EVENT) ? times(1) : never()).reindexOtherEvents();
         verify(eventService,
             indexType.a.equals(EntityType.EVENT) ? times(1) : never()).deleteIndexes();
         verify(documentFileService,
