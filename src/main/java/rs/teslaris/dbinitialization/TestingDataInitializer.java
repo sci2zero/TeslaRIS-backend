@@ -49,6 +49,7 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Course;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.DocumentFile;
@@ -68,6 +69,8 @@ import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.MonographPublicationType;
 import rs.teslaris.core.model.document.MonographType;
+import rs.teslaris.core.model.document.OtherEvent;
+import rs.teslaris.core.model.document.OtherEventType;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
@@ -106,6 +109,7 @@ import rs.teslaris.core.repository.commontypes.CountryRepository;
 import rs.teslaris.core.repository.commontypes.ScheduledTaskMetadataRepository;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
+import rs.teslaris.core.repository.document.CourseRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
@@ -115,6 +119,7 @@ import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
+import rs.teslaris.core.repository.document.OtherEventRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -212,6 +217,10 @@ public class TestingDataInitializer {
     private final ProjectDataInitializer projectDataInitializer;
 
     private final EmploymentPositionRepository employmentPositionRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final OtherEventRepository otherEventRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1274,5 +1283,35 @@ public class TestingDataInitializer {
         employmentPositionRepository.saveAll(List.of(position1, position2, position3));
 
         projectDataInitializer.initializeProjectTestingData(englishTag, dummyOU);
+
+        var course1 = new Course();
+        course1.setName(Set.of(new MultiLingualContent(serbianTag, "Kurs 1", 1)));
+        course1.setDateFrom(LocalDate.of(2025, 2, 1));
+        course1.setDateTo(LocalDate.of(2025, 6, 17));
+        course1.setSerialEvent(false);
+        courseRepository.save(course1);
+
+        var course2 = new Course();
+        course2.setName(Set.of(new MultiLingualContent(serbianTag, "Kurs 2", 1)));
+        course2.setDateFrom(LocalDate.of(2024, 3, 15));
+        course2.setDateTo(LocalDate.of(2024, 3, 25));
+        course2.setSerialEvent(false);
+        courseRepository.save(course2);
+
+        var otherEvent1 = new OtherEvent();
+        otherEvent1.setName(Set.of(new MultiLingualContent(serbianTag, "Predavanje 1", 1)));
+        otherEvent1.setDateFrom(LocalDate.of(2021, 2, 17));
+        otherEvent1.setDateTo(LocalDate.of(2021, 2, 17));
+        otherEvent1.setSerialEvent(false);
+        otherEvent1.setType(OtherEventType.LECTURE);
+        otherEventRepository.save(otherEvent1);
+
+        var otherEvent2 = new OtherEvent();
+        otherEvent2.setName(Set.of(new MultiLingualContent(serbianTag, "Ceremonija 1", 1)));
+        otherEvent2.setDateFrom(LocalDate.of(2023, 3, 25));
+        otherEvent2.setDateTo(LocalDate.of(2023, 4, 25));
+        otherEvent2.setSerialEvent(false);
+        otherEvent2.setType(OtherEventType.CEREMONY);
+        otherEventRepository.save(otherEvent2);
     }
 }

@@ -43,6 +43,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -75,6 +76,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected final CommissionRepository commissionRepository;
 
+    protected final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     private final EventsRelationRepository eventsRelationRepository;
 
     private final SearchService<EventIndex> searchService;
@@ -83,7 +86,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     private final OrganisationUnitService organisationUnitService;
 
-    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+    private final ResearchAreaService researchAreaService;
 
 
     @Override
@@ -103,6 +106,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.setKeywords(
             multilingualContentService.getMultilingualContent(eventDTO.getKeywords()));
         event.setPlace(multilingualContentService.getMultilingualContent(eventDTO.getPlace()));
+        event.setDisplayOrganizer(
+            multilingualContentService.getMultilingualContent(eventDTO.getDisplayOrganizer()));
 
         if (Objects.nonNull(eventDTO.getCountryId())) {
             event.setCountry(countryService.findOne(eventDTO.getCountryId()));
@@ -133,6 +138,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         if (Objects.nonNull(eventDTO.getContributions())) {
             personContributionService.setPersonEventContributionForEvent(event, eventDTO);
         }
+
+        if (CollectionOperations.containsValues(eventDTO.getResearchAreasId())) {
+            var researchAreas = researchAreaService.getResearchAreasByIds(
+                eventDTO.getResearchAreasId().stream().toList());
+            event.setResearchAreas(new HashSet<>(researchAreas));
+        }
     }
 
     @Override
@@ -142,6 +153,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.getPlace().clear();
         event.getDescription().clear();
         event.getKeywords().clear();
+        event.getResearchAreas().clear();
         event.setCountry(null);
 
         event.getContributions().forEach(

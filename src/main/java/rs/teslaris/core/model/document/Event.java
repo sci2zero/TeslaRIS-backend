@@ -7,6 +7,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -22,6 +23,7 @@ import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.model.commontypes.BaseEntity;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.commontypes.ResearchArea;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
 @Getter
@@ -58,8 +60,11 @@ public abstract class Event extends BaseEntity implements Mergeable {
     @JoinColumn(name = "country_id")
     private Country country;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> place = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> displayOrganizer = new HashSet<>();
 
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<PersonEventContribution> contributions = new HashSet<>();
@@ -75,6 +80,9 @@ public abstract class Event extends BaseEntity implements Mergeable {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "uris")
     private Set<String> uris = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    private Set<ResearchArea> researchAreas = new HashSet<>();
 
 
     public void addContribution(PersonEventContribution contribution) {
