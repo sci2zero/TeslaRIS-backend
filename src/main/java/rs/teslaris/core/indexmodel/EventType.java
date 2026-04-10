@@ -2,5 +2,7 @@ package rs.teslaris.core.indexmodel;
 
 public enum EventType {
     CONFERENCE,
-    EXHIBITION
+    EXHIBITION,
+    COURSE,
+    OTHER_EVENT
 }

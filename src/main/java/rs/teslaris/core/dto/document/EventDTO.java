@@ -3,6 +3,8 @@ package rs.teslaris.core.dto.document;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -10,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.dto.commontypes.ResearchAreaHierarchyDTO;
 
 @Getter
 @Setter
@@ -46,8 +49,18 @@ public class EventDTO {
     @NotNull(message = "You have to provide place.")
     private List<MultilingualContentDTO> place;
 
+    @NotNull(message = "You have to provide display organizer.")
+    private List<MultilingualContentDTO> displayOrganizer = new ArrayList<>();
+
     @NotNull(message = "You have to provide contribution list.")
     private List<PersonEventContributionDTO> contributions;
 
     private Set<String> uris;
+
+    @NotNull(message = "You have to provide research area IDs.")
+    private Set<Integer> researchAreasId = new HashSet<>();
+
+    // used only for responses
+
+    private List<ResearchAreaHierarchyDTO> researchAreas = new ArrayList<>();
 }
