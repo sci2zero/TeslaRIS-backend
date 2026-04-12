@@ -18,6 +18,7 @@ import rs.teslaris.core.annotation.PublicationMergeCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.deduplication.MergedBookSeriesDTO;
 import rs.teslaris.core.dto.deduplication.MergedConferenceDTO;
+import rs.teslaris.core.dto.deduplication.MergedCourseDTO;
 import rs.teslaris.core.dto.deduplication.MergedDatasetsDTO;
 import rs.teslaris.core.dto.deduplication.MergedDocumentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedExhibitionDTO;
@@ -29,6 +30,7 @@ import rs.teslaris.core.dto.deduplication.MergedMaterialProductDTO;
 import rs.teslaris.core.dto.deduplication.MergedMonographPublicationsDTO;
 import rs.teslaris.core.dto.deduplication.MergedMonographsDTO;
 import rs.teslaris.core.dto.deduplication.MergedOrganisationUnitsDTO;
+import rs.teslaris.core.dto.deduplication.MergedOtherEventDTO;
 import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
 import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
@@ -295,6 +297,28 @@ public class MergeController {
         @NotNull @RequestBody MergedExhibitionDTO mergedExhibition) {
         mergeService.saveMergedExhibitionsMetadata(leftExhibitionId, rightExhibitionId,
             mergedExhibition.getLeftExhibition(), mergedExhibition.getRightExhibition());
+    }
+
+    @PatchMapping("/course/metadata/{leftCourseId}/{rightCourseId}")
+    @PreAuthorize("hasAuthority('MERGE_EVENT_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedCoursesMetadata(
+        @PathVariable Integer leftCourseId,
+        @PathVariable Integer rightCourseId,
+        @NotNull @RequestBody MergedCourseDTO mergedCourse) {
+        mergeService.saveMergedCoursesMetadata(leftCourseId, rightCourseId,
+            mergedCourse.getLeftCourse(), mergedCourse.getRightCourse());
+    }
+
+    @PatchMapping("/other-event/metadata/{leftOtherEventId}/{rightOtherEventId}")
+    @PreAuthorize("hasAuthority('MERGE_EVENT_METADATA')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedOtherEventsMetadata(
+        @PathVariable Integer leftOtherEventId,
+        @PathVariable Integer rightOtherEventId,
+        @NotNull @RequestBody MergedOtherEventDTO mergedOtherEvent) {
+        mergeService.saveMergedOtherEventsMetadata(leftOtherEventId, rightOtherEventId,
+            mergedOtherEvent.getLeftOtherEvent(), mergedOtherEvent.getRightOtherEvent());
     }
 
     @PatchMapping("/journal/metadata/{leftJournalId}/{rightJournalId}")

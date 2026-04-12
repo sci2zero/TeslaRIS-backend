@@ -83,7 +83,7 @@ public class OtherEventServiceTest {
         var event = new OtherEvent();
         when(otherEventJPAService.findOne(1)).thenReturn(event);
 
-        var result = otherEventService.findById(1);
+        var result = otherEventService.findOtherEventById(1);
 
         assertEquals(event, result);
     }
@@ -92,7 +92,7 @@ public class OtherEventServiceTest {
     void shouldThrowWhenOtherEventDoesNotExist() {
         when(otherEventJPAService.findOne(1)).thenThrow(NotFoundException.class);
 
-        assertThrows(NotFoundException.class, () -> otherEventService.findById(1));
+        assertThrows(NotFoundException.class, () -> otherEventService.findOtherEventById(1));
     }
 
     @Test

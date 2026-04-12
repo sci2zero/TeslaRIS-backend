@@ -23,12 +23,14 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
-import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 
 @Service
 @Primary
@@ -48,6 +50,10 @@ public class EntityAssessmentClassificationServiceImpl
     protected final ConferenceService conferenceService;
 
     protected final ExhibitionService exhibitionService;
+
+    protected final CourseService courseService;
+
+    protected final OtherEventService otherEventService;
 
     protected final ApplicationEventPublisher applicationEventPublisher;
 
@@ -89,12 +95,16 @@ public class EntityAssessmentClassificationServiceImpl
                 ((EventAssessmentClassification) entityAssessmentClassificationToDelete).getEvent()
                     .getId();
 
-            if (Hibernate.getClass(
-                ((EventAssessmentClassification) entityAssessmentClassificationToDelete)
-                    .getEvent()) == Conference.class) {
+            var eventType =
+                ((EventAssessmentClassification) entityAssessmentClassificationToDelete).getEventType();
+            if (eventType.equals(EventType.CONFERENCE)) {
                 conferenceService.reindexVolatileConferenceInformation(entityId);
-            } else {
+            } else if (eventType.equals(EventType.EXHIBITION)) {
                 exhibitionService.reindexVolatileExhibitionInformation(entityId);
+            } else if (eventType.equals(EventType.COURSE)) {
+                courseService.reindexVolatileCourseInformation(entityId);
+            } else if (eventType.equals(EventType.OTHER_EVENT)) {
+                otherEventService.reindexVolatileOtherEventInformation(entityId);
             }
         } else if (entityAssessmentClassificationToDelete instanceof PublicationSeriesAssessmentClassification) {
             if (Hibernate.getClass(

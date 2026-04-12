@@ -92,7 +92,7 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     public OtherEventDTO readOtherEvent(Integer id) {
         OtherEvent event;
         try {
-            event = findById(id);
+            event = findOtherEventById(id);
         } catch (NotFoundException e) {
             eventIndexRepository.findByEventTypeAndDatabaseId(EventType.OTHER_EVENT, id)
                 .ifPresent(eventIndexRepository::delete);
@@ -103,8 +103,8 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     }
 
     @Transactional
-    public OtherEvent findById(Integer id) {
-        return otherEventJPAService.findOne(id);
+    public OtherEvent findOtherEventById(Integer otherEventId) {
+        return otherEventJPAService.findOne(otherEventId);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     @Override
     @Transactional
     public void updateOtherEvent(Integer id, OtherEventDTO dto) {
-        var event = findById(id);
+        var event = findOtherEventById(id);
 
         clearEventCommonFields(event);
         setEventCommonFields(event, dto);
@@ -196,6 +196,17 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
             eventIndexRepository.findByDatabaseId(otherEventId).orElse(new EventIndex());
         indexOtherEvent(otherEventToIndex, indexToUpdate);
         reindexVolatileOtherEventInformation(otherEventId);
+    }
+
+    @Override
+    public void indexOtherEvent(OtherEvent otherEvent) {
+        eventIndexRepository.findByDatabaseId(otherEvent.getId())
+            .ifPresent(index -> {
+                indexOtherEvent(otherEvent, index);
+                reindexVolatileOtherEventInformation(index.getDatabaseId());
+
+                eventIndexRepository.save(index);
+            });
     }
 
     @Override
