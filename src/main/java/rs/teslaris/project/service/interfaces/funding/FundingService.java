@@ -12,4 +12,6 @@ public interface FundingService extends JPAService<Funding> {
 
     Funding createFunding(FundingDTO fundingDTO);
 
+    void updateFunding(Integer fundingId, FundingDTO fundingDTO);
+
 }

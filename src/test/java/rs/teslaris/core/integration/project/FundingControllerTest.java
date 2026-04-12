@@ -167,4 +167,19 @@ public class FundingControllerTest extends BaseTest {
                         .header("Idempotency-Key", "MOCK_KEY_FUNDING"))
                 .andExpect(status().isCreated());
     }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testUpdateFunding() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var geneticMaterialDTO = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(geneticMaterialDTO);
+        mockMvc.perform(MockMvcRequestBuilders.put(
+                                "http://localhost:8081/api/funding/{fundingCallId}", 1)
+                        .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isNoContent());
+    }
 }

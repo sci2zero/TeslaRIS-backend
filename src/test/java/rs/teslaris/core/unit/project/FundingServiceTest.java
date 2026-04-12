@@ -15,6 +15,8 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.indexmodel.funding.FundingIndex;
+import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingType;
@@ -25,6 +27,7 @@ import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -56,6 +59,9 @@ public class FundingServiceTest extends BaseTest {
 
     @Mock
     private OrganisationUnitService organisationUnitService;
+
+    @Mock
+    private FundingIndexRepository fundingIndexRepository;
 
     @InjectMocks
     private FundingServiceImpl fundingService;
@@ -269,5 +275,76 @@ public class FundingServiceTest extends BaseTest {
         assertEquals(1, result.getId());
         verify(currencyService, never()).findOne(anyInt());
         verify(fundingRepository).save(any(Funding.class));
+    }
+
+    @Test
+    public void shouldUpdateFundingSuccessfully() {
+        // given
+        var fundingId = 1;
+        var existingFunding = new Funding();
+        existingFunding.setId(fundingId);
+        existingFunding.setName(new HashSet<>());
+        existingFunding.setDescription(new HashSet<>());
+        existingFunding.setNameAbbreviation(new HashSet<>());
+        existingFunding.setKeywords(new HashSet<>());
+        existingFunding.setDisplayCall(new HashSet<>());
+        existingFunding.setDisplayProgram(new HashSet<>());
+        existingFunding.setDisplayFunder(new HashSet<>());
+        existingFunding.setResearchAreas(new HashSet<>());
+
+        var fundingDTO = new FundingDTO();
+        fundingDTO.setName(List.of());
+        fundingDTO.setDescription(List.of());
+        fundingDTO.setNameAbbreviation(List.of());
+        fundingDTO.setKeywords(List.of());
+        fundingDTO.setDisplayCall(List.of());
+        fundingDTO.setDisplayProgram(List.of());
+        fundingDTO.setDisplayFunder(List.of());
+        fundingDTO.setResearchAreasId(Set.of(1, 2));
+        fundingDTO.setProjectId(1);
+        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
+        fundingDTO.setDateFrom(LocalDate.now());
+        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        var fundingIndex = new FundingIndex();
+        fundingIndex.setDatabaseId(fundingId);
+
+        when(fundingRepository.findById(fundingId))
+                .thenReturn(Optional.of(existingFunding));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList()))
+                .thenReturn(List.of());
+        when(projectService.findOne(1))
+                .thenReturn(new Project());
+        when(fundingIndexRepository.findFundingIndexByDatabaseId(fundingId))
+                .thenReturn(Optional.of(fundingIndex));
+
+        // when
+        fundingService.updateFunding(fundingId, fundingDTO);
+
+        // then
+        verify(fundingRepository).findById(fundingId);
+        verify(multilingualContentService, times(7)).getMultilingualContent(anyList());
+        verify(researchAreaService).getResearchAreasByIds(anyList());
+        verify(projectService).findOne(1);
+        verify(fundingIndexRepository).findFundingIndexByDatabaseId(fundingId);
+        verify(fundingIndexRepository).save(any(FundingIndex.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenUpdatingNonExistentFunding() {
+        // given
+        var fundingId = 999;
+        var fundingDTO = new FundingDTO();
+
+        when(fundingRepository.findById(fundingId))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(Exception.class, () ->
+                fundingService.updateFunding(fundingId, fundingDTO));
+        verify(fundingRepository).findById(fundingId);
+        verify(fundingIndexRepository, never()).findFundingIndexByDatabaseId(anyInt());
     }
 }

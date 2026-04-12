@@ -32,4 +32,12 @@ public class FundingController {
         return fundingDTO;
     }
 
+    @PutMapping("/{fundingId}")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateFunding(@PathVariable Integer fundingId,
+                                  @RequestBody @Valid FundingDTO fundingDTO) {
+        fundingService.updateFunding(fundingId, fundingDTO);
+    }
+
 }

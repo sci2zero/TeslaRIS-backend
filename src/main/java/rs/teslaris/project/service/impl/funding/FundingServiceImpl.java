@@ -14,12 +14,10 @@ import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintExce
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
 import rs.teslaris.project.dto.funding.FundingDTO;
-import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
-import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
@@ -72,6 +70,22 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                 indexCommonFields(savedFundingCall, new FundingIndex()));
 
         return savedFundingCall;
+    }
+
+    @Override
+    @Transactional
+    public void updateFunding(Integer fundingId,
+                                  FundingDTO fundingDTO) {
+        var fundingToUpdate = findOne(fundingId);
+
+        clearCommonFields(fundingToUpdate);
+        setCommonFields(fundingToUpdate, fundingDTO);
+
+        fundingIndexRepository.findFundingIndexByDatabaseId(fundingId)
+                .ifPresent(index -> {
+                    indexCommonFields(fundingToUpdate, index);
+                    fundingIndexRepository.save(index);
+                });
     }
 
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
@@ -138,6 +152,17 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandated(fundingDTO.getOaMandated());
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
+    }
+
+    private void clearCommonFields(Funding funding) {
+        funding.getName().clear();
+        funding.getDescription().clear();
+        funding.getNameAbbreviation().clear();
+        funding.getKeywords().clear();
+        funding.getDisplayCall().clear();
+        funding.getDisplayProgram().clear();
+        funding.getDisplayFunder().clear();
+        funding.getResearchAreas().clear();
     }
 
     private FundingIndex indexCommonFields(Funding funding,
