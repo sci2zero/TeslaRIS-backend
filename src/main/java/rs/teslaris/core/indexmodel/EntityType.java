@@ -20,5 +20,6 @@ public enum EntityType {
     FUNDING_CALL,
     PROJECT,
     COURSE,
-    OTHER_EVENT
+    OTHER_EVENT,
+    FUNDING
 }

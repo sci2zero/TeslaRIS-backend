@@ -14,6 +14,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.project.service.interfaces.commontypes.ProjectReindexService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
+import rs.teslaris.project.service.interfaces.funding.FundingService;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,8 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
     private final FundingProgramService fundingProgramService;
 
     private final FundingCallService fundingCallService;
+
+    private final FundingService fundingService;
 
 
     @Override
@@ -35,6 +38,10 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
 
         if (indexesToRepopulate.contains(EntityType.FUNDING_CALL)) {
             futures.add(fundingCallService.reindexFundingCalls());
+        }
+
+        if (indexesToRepopulate.contains(EntityType.FUNDING)) {
+            futures.add(fundingService.reindexFunding());
         }
 
         try {

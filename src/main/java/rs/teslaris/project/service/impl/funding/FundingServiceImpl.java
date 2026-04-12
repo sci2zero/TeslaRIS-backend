@@ -1,6 +1,7 @@
 package rs.teslaris.project.service.impl.funding;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,13 +12,16 @@ import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
 import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
+import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
@@ -25,6 +29,7 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -158,6 +163,26 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandated(fundingDTO.getOaMandated());
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CompletableFuture<Void> reindexFunding() {
+        FunctionalUtil.processAllPages(
+                100,
+                Sort.by(Sort.Direction.ASC, "id"),
+                this::findAll,
+                funding -> indexFunding(funding, new FundingIndex())
+        );
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void indexFunding(Funding funding, FundingIndex index) {
+        indexCommonFields(funding, index);
+        fundingIndexRepository.save(index);
     }
 
     private void clearCommonFields(Funding funding) {
