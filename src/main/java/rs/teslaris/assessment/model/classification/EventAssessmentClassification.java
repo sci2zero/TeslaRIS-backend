@@ -1,5 +1,6 @@
 package rs.teslaris.assessment.model.classification;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.document.Event;
 
 @Getter
@@ -22,4 +24,7 @@ public class EventAssessmentClassification extends EntityAssessmentClassificatio
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
+
+    @Column(name = "event_type")
+    private EventType eventType;
 }

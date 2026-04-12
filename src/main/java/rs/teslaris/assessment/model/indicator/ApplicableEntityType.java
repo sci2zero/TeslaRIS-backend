@@ -18,5 +18,7 @@ public enum ApplicableEntityType {
     THESIS,
     PRIZE,
     CONFERENCE,
-    EXHIBITION
+    EXHIBITION,
+    COURSE,
+    OTHER_EVENT
 }

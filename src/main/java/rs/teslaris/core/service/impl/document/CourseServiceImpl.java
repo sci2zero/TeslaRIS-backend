@@ -182,6 +182,17 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
     }
 
     @Override
+    public void indexCourse(Course course) {
+        eventIndexRepository.findByDatabaseId(course.getId())
+            .ifPresent(index -> {
+                indexCourse(course, index);
+                reindexVolatileCourseInformation(index.getDatabaseId());
+
+                eventIndexRepository.save(index);
+            });
+    }
+
+    @Override
     @Transactional
     public void reindexCourse(Integer courseId) {
         var courseToIndex = courseJPAService.findOne(courseId);
@@ -189,6 +200,8 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
             eventIndexRepository.findByDatabaseId(courseId).orElse(new EventIndex());
         indexCourse(courseToIndex, indexToUpdate);
         reindexVolatileCourseInformation(courseId);
+
+        eventIndexRepository.save(indexToUpdate);
     }
 
     @Override

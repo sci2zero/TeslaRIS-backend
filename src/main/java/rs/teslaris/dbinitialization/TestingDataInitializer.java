@@ -34,6 +34,7 @@ import rs.teslaris.assessment.repository.indicator.DocumentIndicatorRepository;
 import rs.teslaris.assessment.repository.indicator.EventIndicatorRepository;
 import rs.teslaris.assessment.repository.indicator.IndicatorRepository;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
@@ -862,12 +863,14 @@ public class TestingDataInitializer {
 
         var eventAssessmentClassification1 = new EventAssessmentClassification();
         eventAssessmentClassification1.setEvent(conferenceEvent1);
+        eventAssessmentClassification1.setEventType(EventType.CONFERENCE);
         eventAssessmentClassification1.setAssessmentClassification(assessmentClassification1);
         eventAssessmentClassification1.setClassificationYear(2023);
         eventAssessmentClassification1.setCommission(commission5);
 
         var eventAssessmentClassification2 = new EventAssessmentClassification();
         eventAssessmentClassification2.setEvent(conferenceEvent1);
+        eventAssessmentClassification2.setEventType(EventType.CONFERENCE);
         eventAssessmentClassification2.setAssessmentClassification(assessmentClassification1);
         eventAssessmentClassification2.setCommission(commission5);
         eventAssessmentClassification2.setClassificationYear(2020);

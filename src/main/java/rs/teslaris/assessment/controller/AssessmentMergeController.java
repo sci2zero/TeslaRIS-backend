@@ -64,6 +64,24 @@ public class AssessmentMergeController {
             targetExhibitionId);
     }
 
+    @PatchMapping("/course-indicator/source/{sourceCourseId}/target/{targetCourseId}")
+    @PreAuthorize("hasAuthority('MERGE_COURSES')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllIndicatorsToOtherCourse(@PathVariable Integer sourceCourseId,
+                                                 @PathVariable Integer targetCourseId) {
+        assessmentMergeService.switchAllIndicatorsToOtherEvent(sourceCourseId,
+            targetCourseId);
+    }
+
+    @PatchMapping("/other-event-indicator/source/{sourceOtherEventId}/target/{targetOtherEventId}")
+    @PreAuthorize("hasAuthority('MERGE_OTHER_EVENTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllIndicatorsToOtherOtherEVent(@PathVariable Integer sourceOtherEventId,
+                                                     @PathVariable Integer targetOtherEVentId) {
+        assessmentMergeService.switchAllIndicatorsToOtherEvent(sourceOtherEventId,
+            targetOtherEVentId);
+    }
+
     @PatchMapping("/conference-classification/source/{sourceConferenceId}/target/{targetConferenceId}")
     @PreAuthorize("hasAuthority('MERGE_CONFERENCE_PROCEEDINGS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -82,6 +100,25 @@ public class AssessmentMergeController {
                                                           Integer targetExhibitionId) {
         assessmentMergeService.switchAllClassificationsToOtherEvent(sourceExhibitionId,
             targetExhibitionId);
+    }
+
+    @PatchMapping("/course-classification/source/{sourceCourseId}/target/{targetCourseId}")
+    @PreAuthorize("hasAuthority('MERGE_COURSES')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllClassificationsToOtherCourse(@PathVariable Integer sourceCourseId,
+                                                      @PathVariable
+                                                      Integer targetCourseId) {
+        assessmentMergeService.switchAllClassificationsToOtherEvent(sourceCourseId, targetCourseId);
+    }
+
+    @PatchMapping("/other-event-classification/source/{sourceOtherEventId}/target/{targetOtherEventId}")
+    @PreAuthorize("hasAuthority('MERGE_OTHER_EVENTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchAllClassificationsToOtherOtherEvent(@PathVariable Integer sourceOtherEventId,
+                                                          @PathVariable
+                                                          Integer targetOtherEventId) {
+        assessmentMergeService.switchAllClassificationsToOtherEvent(sourceOtherEventId,
+            targetOtherEventId);
     }
 
     @PatchMapping("/person-indicator/source/{sourcePersonId}/target/{targetPersonId}")

@@ -18,8 +18,10 @@ import rs.teslaris.assessment.service.interfaces.classification.PrizeAssessmentC
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.repository.person.PrizeRepository;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.person.PrizeService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -40,15 +42,16 @@ public class PrizeAssessmentClassificationServiceImpl
     public PrizeAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
-        ConferenceService conferenceService,
-        ExhibitionService exhibitionService,
+        ConferenceService conferenceService, ExhibitionService exhibitionService,
+        CourseService courseService,
+        OtherEventService otherEventService,
         ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         PrizeAssessmentClassificationRepository prizeAssessmentClassificationRepository,
         PrizeRepository prizeRepository, PrizeService prizeService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, exhibitionService, applicationEventPublisher,
-            entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, courseService, otherEventService,
+            applicationEventPublisher, entityAssessmentClassificationRepository);
         this.prizeAssessmentClassificationRepository = prizeAssessmentClassificationRepository;
         this.prizeRepository = prizeRepository;
         this.prizeService = prizeService;

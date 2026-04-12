@@ -12,6 +12,8 @@ import rs.teslaris.core.model.document.OtherEvent;
 @Service
 public interface OtherEventService {
 
+    OtherEvent findOtherEventById(Integer otherEventId);
+
     Page<OtherEventDTO> readAllOtherEvents(Pageable pageable);
 
     Page<EventIndex> searchOtherEventsForImport(List<String> names, String dateFrom, String dateTo);
@@ -27,6 +29,8 @@ public interface OtherEventService {
     void forceDeleteOtherEvent(Integer otherEventId);
 
     CompletableFuture<Void> reindexOtherEvents();
+
+    void indexOtherEvent(OtherEvent otherEvent);
 
     void reindexOtherEvent(Integer otherEventId);
 
