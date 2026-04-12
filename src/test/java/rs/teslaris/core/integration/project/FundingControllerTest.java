@@ -182,4 +182,17 @@ public class FundingControllerTest extends BaseTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testDeleteFunding() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders.delete(
+                                        "http://localhost:8081/api/funding/{fundingId}", 2)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isNoContent());
+    }
 }

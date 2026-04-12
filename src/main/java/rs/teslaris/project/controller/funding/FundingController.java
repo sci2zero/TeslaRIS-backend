@@ -40,4 +40,11 @@ public class FundingController {
         fundingService.updateFunding(fundingId, fundingDTO);
     }
 
+    @DeleteMapping("/{fundingId}")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFunding(@PathVariable Integer fundingId) {
+        fundingService.deleteFunding(fundingId);
+    }
+
 }

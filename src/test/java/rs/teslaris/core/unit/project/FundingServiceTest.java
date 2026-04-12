@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;

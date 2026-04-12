@@ -88,6 +88,12 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                 });
     }
 
+    @Override
+    @Transactional
+    public void deleteFunding(Integer fundingId) {
+        delete(fundingId);
+    }
+
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
         if (Objects.nonNull(fundingDTO.getDateFrom()) &&
                 Objects.nonNull(fundingDTO.getDateTo()) &&
