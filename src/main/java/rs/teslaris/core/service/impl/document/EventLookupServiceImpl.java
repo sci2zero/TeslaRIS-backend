@@ -9,7 +9,9 @@ import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.repository.document.ConferenceRepository;
+import rs.teslaris.core.repository.document.CourseRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
+import rs.teslaris.core.repository.document.OtherEventRepository;
 import rs.teslaris.core.service.interfaces.document.EventLookupService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -22,6 +24,10 @@ public class EventLookupServiceImpl implements EventLookupService {
     private final ConferenceRepository conferenceRepository;
 
     private final ExhibitionRepository exhibitionRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final OtherEventRepository otherEventRepository;
 
 
     @Override
@@ -65,6 +71,12 @@ public class EventLookupServiceImpl implements EventLookupService {
                 .orElseThrow(this::throwNotFoundException);
         } else if (index.getEventType().equals(EventType.EXHIBITION)) {
             return exhibitionRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getEventType().equals(EventType.COURSE)) {
+            return courseRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getEventType().equals(EventType.OTHER_EVENT)) {
+            return otherEventRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
         }
 
