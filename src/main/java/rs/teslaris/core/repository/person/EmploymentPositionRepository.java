@@ -13,12 +13,15 @@ public interface EmploymentPositionRepository
     extends JpaRepository<EmploymentPositionHierarchy, Integer> {
 
     @Query("SELECT ep FROM EmploymentPositionHierarchy ep " +
-        "WHERE ep.superEmploymentPosition.id = :parentId")
-    List<EmploymentPositionHierarchy> getChildEmploymentPositions(Integer parentId);
+        "WHERE ep.superEmploymentPosition.id = :parentId AND " +
+        "(:schemeName IS NULL OR ep.schemeName = :schemeName)")
+    List<EmploymentPositionHierarchy> getChildEmploymentPositions(Integer parentId,
+                                                                  String schemeName);
 
     @Query("SELECT ep FROM EmploymentPositionHierarchy ep " +
-        "WHERE ep.superEmploymentPosition IS NULL")
-    List<EmploymentPositionHierarchy> getTopLevelEmploymentPositions();
+        "WHERE ep.superEmploymentPosition IS NULL AND " +
+        "ep.schemeName = :schemeName")
+    List<EmploymentPositionHierarchy> getTopLevelEmploymentPositions(String schemeName);
 
     @Query(value =
         "SELECT ep FROM EmploymentPositionHierarchy ep LEFT JOIN ep.name name WHERE " +

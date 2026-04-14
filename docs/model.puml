@@ -804,7 +804,7 @@ package document {
     Set<MultiLingualContent> city /' !!! '/
     Country country /' !!! '/
     Set<MultilingualContent> edition /' !!! version '/
-    Set<SDGoal> sdgs /' !!! '/
+    Set<SDGoal> sdgs /' !!! skip for now '/
     Boolean isMetadataValid
     Boolean areFilesValid
     Boolean isArchived
@@ -891,9 +891,9 @@ package document {
     Set<MultiLingualContent> place
     Set<MultilingualContent> displayOrganizer /' !!! '/
     Set<String> oldIds /' !!! changed type '/
-    Set<Integer> mergedIds /' !!! changed type '/
+    Set<Integer> mergedIds
     Set<String> uris
-    Set<SDGoal> sdgs /' !!! '/
+    Set<SDGoal> sdgs /' !!! skip for now '/
   }
     
   ' !!!  

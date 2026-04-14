@@ -31,6 +31,7 @@ import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceI
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -65,13 +66,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  CountryService countryService,
                                  OrganisationUnitService organisationUnitService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 ResearchAreaService researchAreaService,
                                  ConferenceJPAServiceImpl conferenceJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1,
                                  ConferenceRepository conferenceRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
-            eventRepository, indexBulkUpdateService, commissionRepository, eventsRelationRepository,
-            searchService, countryService, organisationUnitService,
-            documentPublicationIndexRepository);
+            eventRepository, indexBulkUpdateService, commissionRepository,
+            documentPublicationIndexRepository,
+            eventsRelationRepository, searchService, countryService,
+            organisationUnitService,
+            researchAreaService);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
         this.conferenceRepository = conferenceRepository;

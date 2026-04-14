@@ -40,6 +40,7 @@ import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
 import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.CourseDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
 import rs.teslaris.core.dto.document.GeneticMaterialDTO;
@@ -49,6 +50,7 @@ import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
@@ -108,6 +110,7 @@ import rs.teslaris.core.service.impl.comparator.MergeServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
@@ -118,6 +121,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -166,6 +170,12 @@ public class MergeServiceTest {
 
     @Mock
     private ExhibitionService exhibitionService;
+
+    @Mock
+    private CourseService courseService;
+
+    @Mock
+    private OtherEventService otherEventService;
 
     @Mock
     private ProceedingsService proceedingsService;
@@ -999,6 +1009,40 @@ public class MergeServiceTest {
         verify(exhibitionService, atLeastOnce()).updateExhibition(leftId, leftData);
         verify(exhibitionService).updateExhibition(rightId, rightData);
         verify(exhibitionService, times(2)).updateExhibition(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedCoursesMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new CourseDTO();
+        var rightData = new CourseDTO();
+
+        // when
+        mergeService.saveMergedCoursesMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(courseService, atLeastOnce()).updateCourse(leftId, leftData);
+        verify(courseService).updateCourse(rightId, rightData);
+        verify(courseService, times(2)).updateCourse(leftId, leftData);
+    }
+
+    @Test
+    public void shouldSaveMergedOtherEventsMetadata() {
+        // given
+        var leftId = 1;
+        var rightId = 2;
+        var leftData = new OtherEventDTO();
+        var rightData = new OtherEventDTO();
+
+        // when
+        mergeService.saveMergedOtherEventsMetadata(leftId, rightId, leftData, rightData);
+
+        // then
+        verify(otherEventService, atLeastOnce()).updateOtherEvent(leftId, leftData);
+        verify(otherEventService).updateOtherEvent(rightId, rightData);
+        verify(otherEventService, times(2)).updateOtherEvent(leftId, leftData);
     }
 
     @Test

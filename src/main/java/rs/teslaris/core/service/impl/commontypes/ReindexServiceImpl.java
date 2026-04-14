@@ -20,6 +20,7 @@ import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.service.interfaces.commontypes.ReindexService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
@@ -32,6 +33,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -63,6 +65,10 @@ public class ReindexServiceImpl implements ReindexService {
     private final ConferenceService conferenceService;
 
     private final ExhibitionService exhibitionService;
+
+    private final CourseService courseService;
+
+    private final OtherEventService otherEventService;
 
     private final EventService eventService;
 
@@ -131,6 +137,8 @@ public class ReindexServiceImpl implements ReindexService {
             eventService.deleteIndexes();
             futures.add(conferenceService.reindexConferences());
             futures.add(exhibitionService.reindexExhibitions());
+            futures.add(courseService.reindexCourses());
+            futures.add(otherEventService.reindexOtherEvents());
         }
 
         if (indexesToRepopulate.contains(EntityType.DOCUMENT_FILE)) {

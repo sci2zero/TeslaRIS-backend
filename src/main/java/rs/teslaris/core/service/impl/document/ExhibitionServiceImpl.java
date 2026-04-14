@@ -29,6 +29,7 @@ import rs.teslaris.core.service.impl.document.cruddelegate.ExhibitionJPAServiceI
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -61,13 +62,16 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
                                  CountryService countryService,
                                  OrganisationUnitService organisationUnitService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 ResearchAreaService researchAreaService,
                                  ExhibitionJPAServiceImpl exhibitionJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1,
                                  ExhibitionRepository exhibitionRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
-            eventRepository, indexBulkUpdateService, commissionRepository, eventsRelationRepository,
-            searchService, countryService, organisationUnitService,
-            documentPublicationIndexRepository);
+            eventRepository, indexBulkUpdateService, commissionRepository,
+            documentPublicationIndexRepository,
+            eventsRelationRepository, searchService, countryService,
+            organisationUnitService,
+            researchAreaService);
         this.exhibitionJPAService = exhibitionJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
         this.exhibitionRepository = exhibitionRepository;
