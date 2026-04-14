@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,13 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.OtherEventConverter;
 import rs.teslaris.core.dto.document.OtherEventDTO;
-import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.OtherEvent;
-import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
@@ -36,7 +33,6 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
-import rs.teslaris.core.util.functional.Triple;
 
 @Service
 @Traceable
@@ -158,13 +154,7 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     public void forceDeleteOtherEvent(Integer otherEventId) {
         otherEventJPAService.delete(otherEventId);
 
-        var index = eventIndexRepository.findByDatabaseId(otherEventId);
-        index.ifPresent(eventIndexRepository::delete);
-
-        documentPublicationIndexRepository.deleteByEventIdAndType(otherEventId,
-            DocumentPublicationType.PROCEEDINGS.name());
-
-        indexBulkUpdateService.removeIdFromRecord("document_publication", "event_id", otherEventId);
+        completeForceDeletion(otherEventId);
     }
 
     @Override
@@ -212,25 +202,8 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     @Override
     @Transactional
     public void reindexVolatileOtherEventInformation(Integer otherEventId) {
-        eventIndexRepository.findByDatabaseId(otherEventId).ifPresent(eventIndex -> {
-            eventIndex.getRelatedInstitutionIds().addAll(
-                eventRepository.findInstitutionIdsByEventIdAndEventContribution(otherEventId)
-                    .stream().toList()
-            );
-
-            eventIndex.setClassifiedBy(
-                commissionRepository.findCommissionsThatClassifiedEvent(otherEventId));
-
-            eventIndex.getCommissionAssessments().clear();
-            commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
-                otherEventId, eventIndex.getClassifiedBy()).forEach(assessment ->
-                eventIndex.getCommissionAssessments().add(
-                    new Triple<>(assessment.commissionId(),
-                        assessment.assessmentCode(),
-                        assessment.manual())));
-
-            eventIndexRepository.save(eventIndex);
-        });
+        eventIndexRepository.findByDatabaseId(otherEventId)
+            .ifPresent(this::setEventCommonVolatileFields);
     }
 
     @Override
@@ -238,18 +211,12 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     public void reorderOtherEventContributions(Integer otherEventId, Integer contributionId,
                                                Integer oldContributionOrderNumber,
                                                Integer newContributionOrderNumber) {
-        var event = otherEventRepository.findById(otherEventId);
-
-        if (event.isEmpty()) {
-            return;
-        }
-
-        var contributions = event.get().getContributions().stream()
-            .map(contribution -> (PersonContribution) contribution).collect(
-                Collectors.toSet());
-
-        personContributionService.reorderContributions(contributions, contributionId,
-            oldContributionOrderNumber, newContributionOrderNumber);
+        reorderEventContributions(
+            otherEventId,
+            contributionId,
+            oldContributionOrderNumber,
+            newContributionOrderNumber
+        );
     }
 
     @Override

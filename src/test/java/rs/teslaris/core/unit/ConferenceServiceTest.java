@@ -449,6 +449,7 @@ public class ConferenceServiceTest {
         var conferenceId = 123;
         var eventIndex = new EventIndex();
         eventIndex.setEventType(EventType.CONFERENCE);
+        eventIndex.setDatabaseId(conferenceId);
 
         var institutionIds = Set.of(1, 2, 3);
 
@@ -506,6 +507,7 @@ public class ConferenceServiceTest {
         // Given
         var conferenceId = 3;
         var eventIndex = mock(EventIndex.class);
+        when(eventIndex.getDatabaseId()).thenReturn(conferenceId);
         when(eventIndex.getEventType()).thenReturn(EventType.CONFERENCE);
         when(eventIndexRepository.findByDatabaseId(conferenceId))
             .thenReturn(Optional.of(eventIndex));

@@ -433,6 +433,7 @@ public class ExhibitionServiceTest {
         // Given
         var exhibitionId = 3;
         var eventIndex = mock(EventIndex.class);
+        when(eventIndex.getDatabaseId()).thenReturn(exhibitionId);
         when(eventIndex.getEventType()).thenReturn(EventType.EXHIBITION);
         when(eventIndexRepository.findByDatabaseId(exhibitionId))
             .thenReturn(Optional.of(eventIndex));

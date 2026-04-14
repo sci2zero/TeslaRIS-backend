@@ -23,6 +23,7 @@ import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
 import rs.teslaris.assessment.model.indicator.EventIndicator;
 import rs.teslaris.assessment.model.indicator.Indicator;
+import rs.teslaris.assessment.model.indicator.IndicatorContentType;
 import rs.teslaris.assessment.repository.AssessmentMeasureRepository;
 import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.repository.AssessmentRulebookRepository;
@@ -740,6 +741,7 @@ public class TestingDataInitializer {
             Set.of(new MultiLingualContent(englishTag, "Indicator 1 description", 1)));
         indicator1.setAccessLevel(AccessLevel.OPEN);
         indicator1.setApplicableTypes(Set.of(ApplicableEntityType.ALL));
+        indicator1.setContentType(IndicatorContentType.BOOL);
 
         var indicator2 = new Indicator();
         indicator2.setCode("Code 2");
