@@ -313,7 +313,7 @@ public class RegistryBookControllerTest extends BaseTest {
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                    .header("Idempotency-Key", "MOCK_KEY_REINDEX3"))
+                    .header("Idempotency-Key", "MOCK_KEY_REINDEX5"))
             .andExpect(status().isOk());
 
         mockMvc.perform(

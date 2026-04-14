@@ -1,5 +1,6 @@
 package rs.teslaris.core.integration.thesislibrary;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -193,13 +194,17 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
         var request = getTestPayload();
 
         String requestBody = objectMapper.writeValueAsString(request);
-        mockMvc.perform(
+        var result = mockMvc.perform(
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis-library/report/download/{lang}", language)
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + authResponse.a)
                     .cookie(authResponse.b))
+            .andExpect(request().asyncStarted())
+            .andReturn();
+
+        mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(result))
             .andExpect(status().isOk());
     }
 

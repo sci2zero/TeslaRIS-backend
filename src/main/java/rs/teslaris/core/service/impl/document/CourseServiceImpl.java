@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,13 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.CourseConverter;
 import rs.teslaris.core.dto.document.CourseDTO;
-import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Course;
-import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.CourseRepository;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
@@ -36,7 +33,6 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
-import rs.teslaris.core.util.functional.Triple;
 
 @Service
 @Traceable
@@ -159,13 +155,7 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
     public void forceDeleteCourse(Integer courseId) {
         courseJPAService.delete(courseId);
 
-        var index = eventIndexRepository.findByDatabaseId(courseId);
-        index.ifPresent(eventIndexRepository::delete);
-
-        documentPublicationIndexRepository.deleteByEventIdAndType(courseId,
-            DocumentPublicationType.PROCEEDINGS.name());
-
-        indexBulkUpdateService.removeIdFromRecord("document_publication", "event_id", courseId);
+        completeForceDeletion(courseId);
     }
 
     @Override
@@ -207,25 +197,8 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
     @Override
     @Transactional
     public void reindexVolatileCourseInformation(Integer courseId) {
-        eventIndexRepository.findByDatabaseId(courseId).ifPresent(eventIndex -> {
-            eventIndex.getRelatedInstitutionIds().addAll(
-                eventRepository.findInstitutionIdsByEventIdAndEventContribution(courseId)
-                    .stream().toList()
-            );
-
-            eventIndex.setClassifiedBy(
-                commissionRepository.findCommissionsThatClassifiedEvent(courseId));
-
-            eventIndex.getCommissionAssessments().clear();
-            commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
-                courseId, eventIndex.getClassifiedBy()).forEach(assessment ->
-                eventIndex.getCommissionAssessments().add(
-                    new Triple<>(assessment.commissionId(),
-                        assessment.assessmentCode(),
-                        assessment.manual())));
-
-            eventIndexRepository.save(eventIndex);
-        });
+        eventIndexRepository.findByDatabaseId(courseId)
+            .ifPresent(this::setEventCommonVolatileFields);
     }
 
     @Override
@@ -233,18 +206,12 @@ public class CourseServiceImpl extends EventServiceImpl implements CourseService
     public void reorderCourseContributions(Integer courseId, Integer contributionId,
                                            Integer oldContributionOrderNumber,
                                            Integer newContributionOrderNumber) {
-        var event = courseRepository.findById(courseId);
-
-        if (event.isEmpty()) {
-            return;
-        }
-
-        var contributions = event.get().getContributions().stream()
-            .map(contribution -> (PersonContribution) contribution).collect(
-                Collectors.toSet());
-
-        personContributionService.reorderContributions(contributions, contributionId,
-            oldContributionOrderNumber, newContributionOrderNumber);
+        reorderEventContributions(
+            courseId,
+            contributionId,
+            oldContributionOrderNumber,
+            newContributionOrderNumber
+        );
     }
 
     @Override

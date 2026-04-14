@@ -28,6 +28,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -36,6 +37,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -53,6 +55,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.CollectionOperations;
@@ -618,5 +621,60 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         index.setDateSortable(event.getDateFrom());
+    }
+
+    protected void reorderEventContributions(Integer eventId, Integer contributionId,
+                                             Integer oldContributionOrderNumber,
+                                             Integer newContributionOrderNumber) {
+        var event = eventRepository.findById(eventId);
+
+        if (event.isEmpty()) {
+            return;
+        }
+
+        var contributions = event.get().getContributions().stream()
+            .map(contribution -> (PersonContribution) contribution).collect(
+                Collectors.toSet());
+
+        personContributionService.reorderContributions(contributions, contributionId,
+            oldContributionOrderNumber, newContributionOrderNumber);
+    }
+
+    protected void setEventCommonVolatileFields(EventIndex eventIndex) {
+        eventIndex.getRelatedInstitutionIds().addAll(
+            eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
+                    eventIndex.getDatabaseId())
+                .stream().toList()
+        );
+
+        eventIndex.setClassifiedBy(
+            commissionRepository.findCommissionsThatClassifiedEvent(eventIndex.getDatabaseId()));
+
+        eventIndex.getCommissionAssessments().clear();
+        commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
+            eventIndex.getDatabaseId(), eventIndex.getClassifiedBy()
+        ).forEach(assessment ->
+            eventIndex.getCommissionAssessments().add(
+                new Triple<>(assessment.commissionId(),
+                    assessment.assessmentCode(),
+                    assessment.manual())));
+
+        indexActiveEmploymentRelations(eventIndex, eventIndex.getDatabaseId());
+
+        eventIndexRepository.save(eventIndex);
+    }
+
+    protected void completeForceDeletion(Integer eventId) {
+        var index = eventIndexRepository.findByDatabaseId(eventId);
+        index.ifPresent(eventIndexRepository::delete);
+
+        documentPublicationIndexRepository.deleteByEventIdAndType(eventId,
+            DocumentPublicationType.PROCEEDINGS.name());
+
+        indexBulkUpdateService.removeIdFromRecord(
+            "document_publication",
+            "event_id",
+            eventId
+        );
     }
 }
