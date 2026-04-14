@@ -2,11 +2,17 @@ package rs.teslaris.project.controller.funding;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/funding")
@@ -14,6 +20,24 @@ import rs.teslaris.project.service.interfaces.funding.FundingService;
 public class FundingController {
 
     private final FundingService fundingService;
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('READ_FUNDING')")
+    public Page<FundingIndex> searchFunding(@RequestParam List<String> tokens,
+                                            @RequestParam(required = false)
+                                            LocalDate dateFrom,
+                                            @RequestParam(required = false)
+                                            LocalDate dateTo,
+                                            @RequestParam(required = false)
+                                            Integer projectId,
+                                            @RequestParam(required = false)
+                                            Integer fundingCallId,
+                                            @RequestParam(required = false)
+                                            Integer funderId,
+                                            Pageable pageable) {
+        return fundingService.searchFunding(tokens, dateFrom, dateTo, projectId,
+                fundingCallId, funderId, pageable);
+    }
 
     @GetMapping("/{fundingId}")
     @PreAuthorize("hasAuthority('READ_FUNDING')")

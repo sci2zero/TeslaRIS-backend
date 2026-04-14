@@ -1,21 +1,26 @@
 package rs.teslaris.core.unit.project;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
-import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
@@ -47,6 +52,9 @@ public class FundingServiceTest extends BaseTest {
     private MultilingualContentService multilingualContentService;
 
     @Mock
+    private SearchService<FundingIndex> searchService;
+
+    @Mock
     private ResearchAreaService researchAreaService;
 
     @Mock
@@ -67,6 +75,74 @@ public class FundingServiceTest extends BaseTest {
     @InjectMocks
     private FundingServiceImpl fundingService;
 
+
+    @Test
+    public void shouldReturnEmptyPageWhenNoFundingFound() {
+        // given
+        var tokens = List.of("test");
+        var dateFrom = LocalDate.now().minusMonths(6);
+        var dateTo = LocalDate.now();
+        var projectId = 1;
+        var fundingCallId = 1;
+        var funderId = 1;
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(Query.class), eq(pageable),
+                eq(FundingIndex.class), eq("funding")))
+                .thenReturn(Page.empty());
+
+        // when
+        var result = fundingService.searchFunding(
+                tokens, dateFrom, dateTo, projectId, fundingCallId, funderId, pageable);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(searchService).runQuery(any(Query.class), eq(pageable),
+                eq(FundingIndex.class), eq("funding"));
+    }
+
+    @Test
+    public void shouldReturnFundingCallsPageWhenResultsExist() {
+        // given
+        var tokens = List.of("test");
+        var dateFrom = LocalDate.of(2022, 7, 5);
+        var dateTo = LocalDate.of(2023, 3, 18);
+        var projectId = 1;
+        var fundingCallId = 1;
+        var funderId = 1;
+        var pageable = PageRequest.of(0, 10);
+
+        var fundingIndex = new FundingIndex();
+        fundingIndex.setDatabaseId(1);
+        fundingIndex.setNameSr("Test Funding");
+        fundingIndex.setProjectId(1);
+        fundingIndex.setFundingCallId(1);
+        fundingIndex.setFunderId(1);
+
+        var expectedPage = new PageImpl<>(
+                List.of(fundingIndex), pageable, 1);
+
+        when(searchService.runQuery(any(Query.class), eq(pageable),
+                eq(FundingIndex.class), eq("funding")))
+                .thenReturn(expectedPage);
+
+        // when
+        var result = fundingService.searchFunding(
+                tokens, dateFrom, dateTo, projectId, fundingCallId, funderId, pageable);
+
+        // then
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getContent().getFirst().getDatabaseId());
+        assertEquals("Test Funding", result.getContent().getFirst().getNameSr());
+        assertEquals(1, result.getContent().getFirst().getProjectId());
+        assertEquals(1, result.getContent().getFirst().getFundingCallId());
+        assertEquals(1, result.getContent().getFirst().getFunderId());
+        verify(searchService).runQuery(any(Query.class), eq(pageable),
+                eq(FundingIndex.class), eq("funding"));
+    }
 
     @Test
     public void shouldReturnFundingDTOWhenFundingExists() {
