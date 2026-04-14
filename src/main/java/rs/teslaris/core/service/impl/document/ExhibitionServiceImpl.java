@@ -2,7 +2,6 @@ package rs.teslaris.core.service.impl.document;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,13 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ExhibitionConverter;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
-import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Exhibition;
-import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
@@ -36,7 +33,6 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
-import rs.teslaris.core.util.functional.Triple;
 
 @Service
 @Traceable
@@ -192,13 +188,7 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     public void forceDeleteExhibition(Integer exhibitionId) {
         exhibitionJPAService.delete(exhibitionId);
 
-        var index = eventIndexRepository.findByDatabaseId(exhibitionId);
-        index.ifPresent(eventIndexRepository::delete);
-
-        documentPublicationIndexRepository.deleteByEventIdAndType(exhibitionId,
-            DocumentPublicationType.PROCEEDINGS.name());
-
-        indexBulkUpdateService.removeIdFromRecord("document_publication", "event_id", exhibitionId);
+        completeForceDeletion(exhibitionId);
     }
 
     @Override
@@ -265,25 +255,8 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     @Override
     @Transactional
     public void reindexVolatileExhibitionInformation(Integer exhibitionId) {
-        eventIndexRepository.findByDatabaseId(exhibitionId).ifPresent(eventIndex -> {
-            eventIndex.getRelatedInstitutionIds().addAll(
-                eventRepository.findInstitutionIdsByEventIdAndEventContribution(exhibitionId)
-                    .stream().toList()
-            );
-
-            eventIndex.setClassifiedBy(
-                commissionRepository.findCommissionsThatClassifiedEvent(exhibitionId));
-
-            eventIndex.getCommissionAssessments().clear();
-            commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
-                exhibitionId, eventIndex.getClassifiedBy()).forEach(assessment ->
-                eventIndex.getCommissionAssessments().add(
-                    new Triple<>(assessment.commissionId(),
-                        assessment.assessmentCode(),
-                        assessment.manual())));
-
-            eventIndexRepository.save(eventIndex);
-        });
+        eventIndexRepository.findByDatabaseId(exhibitionId)
+            .ifPresent(this::setEventCommonVolatileFields);
     }
 
     @Override
@@ -291,17 +264,11 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     public void reorderExhibitionContributions(Integer exhibitionId, Integer contributionId,
                                                Integer oldContributionOrderNumber,
                                                Integer newContributionOrderNumber) {
-        var event = exhibitionRepository.findById(exhibitionId);
-
-        if (event.isEmpty()) {
-            return;
-        }
-
-        var contributions = event.get().getContributions().stream()
-            .map(contribution -> (PersonContribution) contribution).collect(
-                Collectors.toSet());
-
-        personContributionService.reorderContributions(contributions, contributionId,
-            oldContributionOrderNumber, newContributionOrderNumber);
+        reorderEventContributions(
+            exhibitionId,
+            contributionId,
+            oldContributionOrderNumber,
+            newContributionOrderNumber
+        );
     }
 }
