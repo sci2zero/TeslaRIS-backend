@@ -571,11 +571,11 @@ package institution {
     String ringgold
     String fundref /' https://bioregistry.io/registry/funderregistry '/
     String isni /' https://bioregistry.io/registry/isni '/
-    String athensId
-    String ncesId
+    /' can remove this to otherIdentifiers based on package Identifier - String athensId '/
+    /' can remove this to otherIdentifiers based on package Identifier - String ncesId '/
     String fctId
-    String dgeecId
-    String nifId
+    /' can remove this to otherIdentifiers based on package Identifier - String dgeecId '/
+    String taxNumber /' !!! renamed from nifId, in Serbia it is PIB '/
     Contact contact
     Set<String> uris
     Boolean startup
