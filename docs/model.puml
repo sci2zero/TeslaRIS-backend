@@ -410,7 +410,7 @@ package person {
     FlexibleDate dateTo 
     Set<SDGoal> sdgs /' !!!  skip for now, there is a sense in this only if involvementDescription is there '/
     Set<DocumentFile> proofs /' ??? '/
-    Set<String> uris /' !!! involvement might be proved by url or attached file (uris or proofs) '/
+    Set<String> uris
   }
 
   enum InvolvementType {
@@ -436,7 +436,7 @@ package person {
     Set<MultiLingualContent> degreeClassification 
     EducationStatus educationStatus 
     Set<MultiLingualContent> thesisTitle
-    Set<MultiLingualContent> displayThesisSupervisors /' !!! '/
+    Set<MultiLingualContent> displayThesisSupervisors
   }
   
   Education "0..1" --> "1" Thesis : thesis 
@@ -464,7 +464,7 @@ package person {
   
   class EmploymentPositionHierarchy {
 	Set<MultiLingualContent> name
-    Set<MultiLingualContent> description /' !!! '/
+    Set<MultiLingualContent> description
     String processedName /' !!! to be removed '/ 
 	String schemeName
     ' !!! TODO:  for Portugal portal ingest three levels of position, the first one is employment-category-enum, the second one is employment-position-type-enum, and the third one is employment-position-title-enum - https://api.cienciavitae.pt/schemas/curriculum/common/common-enum.xsd    
@@ -502,7 +502,7 @@ package person {
     Set<MultiLingualContent> name
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
-    Boolean favorite /' we might implemente later highlight section with most important involvement, output, project, skills and activity '/
+    Boolean favorite /' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity '/
     Set<MultiLingualContent> keywords /' !!! '/
     Set<ResearchArea> researchAreas /' !!! '/
   }
@@ -515,8 +515,8 @@ package person {
     Set<MultiLingualContent> title
     Set<MultiLingualContent> description
     Set<DocumentFile> proofs
-    FlexibleDate effectiveDate /' !!! former date, skip for now '/
-    FlexibleDate endDate
+    FlexibleDate dateFrom /' !!! former date, skip for now '/
+    FlexibleDate dateTo /' !!! former endDate, skip for now '/
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
     Boolean favorite
@@ -667,7 +667,6 @@ package document {
     AffiliationStatement affiliationStatement
     Integer orderNumber
     ApproveStatus approveStatus
-    ' TODO: maybe we need here a new enumeration, whether contribution is claimed or not by author
     ' !!! the fields below are available in additional dialog in UI, it represents details contribution
     ' !!! if some of those fields are filled it is indexed as activity linked with person
     Set<MultiLingualContent> keywords /' !!! '/
@@ -789,13 +788,8 @@ package document {
     String openAlexId
     String wosId
     String arXivId /' !!! '/
-    String lccnId /' !!! '/
-    String lensId /' !!! '/
     String pubmedId /' !!! '/
     String ssrnId /' !!! '/
-    String authenticusId /' !!! '/
-    String arkId /' !!! '/
-    String halId /' !!! '/
     Set<String> internalIds /' !!! changed title, skip for now '/
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds /' !!! changed type, skip for now '/
@@ -883,22 +877,20 @@ package document {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> description
     Set<MultiLingualContent> keywords
-    Set<ResearchArea> researchAreas /' !!! '/
+    Set<ResearchArea> researchAreas
     Boolean serialEvent
     FlexibleDate dateFrom
     FlexibleDate dateTo
     Country country
     Set<MultiLingualContent> place
-    Set<MultilingualContent> displayOrganizer /' !!! '/
+    Set<MultilingualContent> displayOrganizer 
     Set<String> oldIds /' !!! changed type '/
     Set<Integer> mergedIds
     Set<String> uris
     Set<SDGoal> sdgs /' !!! skip for now '/
   }
-    
-  ' !!!  
+     
   enum OtherEventType {
-    COURSE
     WEBINAR
     LECTURE 
     PERFORMANCE
@@ -908,7 +900,6 @@ package document {
     THESIS_DEFENCE
   }
   
-  ' !!!      
   class OtherEvent extends Event{
     OtherEventType type     
   }
@@ -961,7 +952,6 @@ package document {
     EventsRelationType relationType
   }
 
-
   enum EventsRelationType {
     PART_OF
     ' the relation type above is used to link one event which is part of the another event (for instance, workshop at a conference)
@@ -977,8 +967,7 @@ package document {
     String confId
     String openAlexId
   }
-  
-  ' !!!  
+   
   class Course extends Event{
     String courseLevel
     String courseCode
@@ -987,8 +976,7 @@ package document {
     Set<MultilingualContent> groupName
     Integer numberOfStudents
   }
-  
-  ' !!!  
+   
   class Exhibition extends Event{  
     String number
     String fee
@@ -1024,9 +1012,9 @@ package document {
       POLEMICS
       SCIENTIFIC_CRITIC
       EDITORIAL
-      BOOK_REVIEW /' !!! '/
-      CREATIVE_WORK /' !!! '/
-      ANNOTATED_NOTE /' !!! '/
+      BOOK_REVIEW 
+      CREATIVE_WORK /' !!! instead of SHORT_FICTION '/
+      ANNOTATED_NOTE /' !!! instead of ANNOTATION '/
       OTHER /' !!! '/
     }
 
@@ -1046,8 +1034,8 @@ package document {
   /' !!! '/
   class PublicationSeriesPublisher {
     Set<MultilingualContent> displayPublisher
-    TeslaRISDate fromDate
-    TeslaRISDate toDate
+    TeslaRISDate dateFrom
+    TeslaRISDate dateTo
   }
     
   PublicationSerierPublisher "*" -- "1" PublicationSeries : publishers / publicationSeries /' !!! '/
@@ -1124,28 +1112,28 @@ package document {
 
   enum MonographType {
     RESEARCH_MONOGRAPH
-    BOOK
+    BOOK /' !!! '/
     EDITED_BOOK /' !!! existing Book type should be EDITED_BOOK, it includes MonographPublications (chapters) '/
     BIBLIOGRAPHY
     TRANSLATION
     STUDY
-    JOURNAL_ISSUE /' !!! '/
-    SCRIPT /' !!! '/
-    ENCYCLOPEDIA /' !!! '/
-    DICTIONARY /' !!! '/
-    REPORT /' !!! '/
-    WORKING_PAPER /' !!! '/
-    PREPRINT /' !!! '/
-    MANUAL /' !!! '/
-    DATA_MANAGEMENT_PLAN /' !!! '/
-    PROCEEDINGS /' !!! '/
+    JOURNAL_ISSUE 
+    SCRIPT 
+    ENCYCLOPEDIA 
+    DICTIONARY 
+    REPORT 
+    WORKING_PAPER 
+    PREPRINT 
+    MANUAL 
+    DATA_MANAGEMENT_PLAN 
+    PROCEEDINGS 
     OTHER /' !!! '/
   }
 
   Monograph "1..*" --> "0..1" PublicationSeries : publicationSeries
 
   MonographPublication "1..*" --> "1" Monograph 
-  ' can we use DocumentsRelation (PART_OF) instead of this? 
+  /' can we use DocumentsRelation (PART_OF) instead of this? '/
   
   ' !!!
   class PerformanceRelatedOutput extends Document {
@@ -1180,7 +1168,7 @@ package document {
     IntellectualPropertyApplicationStatus publicationStatus ' !!! this should use different enumeration comparing to Document publicationStatus field
     FlexibleDate dateRequested /' !!! documentDate from Document should be used for date-issued '/
     FlexibleDate dateFilingPriority /' !!! '/
-    FlexibleDate dateEndTerm /' !!! '/
+    FlexibleDate dateTo /' !!! '/
   }
   
   ' !!!
@@ -1194,20 +1182,20 @@ package document {
 
   ' !!!
   enum IntellectualPropertyApplicationStatus {
-    DISCLOSED /' DISCLOSURE '/
-    PENDING /' PATENT, TRADEMARK '/
-    IN_NEGOTIATION /' LICENSE '/
-    ALLOWED /' PATENT '/ 
-    GRANTED_OR_REGISTERED /' PATENT, REGISTERED_COPYRIGHT, TRADEMARK '/
-    PROTECTED /' DISCLOSURE '/
-    ASSIGNED /' LICENSE '/
-    FIRST_FIXATION /' REGISTERED_COPYRIGHT '/
-    EXPIRED /' PATENT '/
-    WITHDRAWN /' PATENT '/
-    ELIMINATED /' REGISTERED_COPYRIGHT '/
+    DISCLOSED
+    PENDING
+    IN_NEGOTIATION
+    ALLOWED 
+    GRANTED_OR_REGISTERED
+    PROTECTED
+    ASSIGNED
+    FIRST_FIXATION
+    EXPIRED
+    WITHDRAWN
+    ELIMINATED
   } 
 
-  ' !!! changed superclass, therefore, eISBN, printISBN, publisher, authorReprint are not needed anymore
+  /' !!! changed superclass, therefore, eISBN, printISBN, publisher, authorReprint are not needed anymore '/
   class Thesis extends Monograph {
     Set<MultiLingualContent> externalOrganisationUnitName
     Set<MultilingualContent> alternateTitle
@@ -1217,12 +1205,13 @@ package document {
     FlexibleDate thesisDefenceDate
     ThesisPhysicalDescription physicalDescription
     Language language
-    Set<MultilingualContent> scientificAreaFreeForm ' !!! renamed from scientificArea
-    Set<MultilingualContent> scientificSubAreaFreeForm ' !!! renamed from scientificSubArea
+    Set<MultilingualContent> scientificAreaFreeForm /' !!! skip for now, renamed from scientificArea '/
+    Set<MultilingualContent> scientificSubAreaFreeForm /' !!! skip for now, renamed from scientificSubArea '/
     LanguageTag writingLanguage
     boolean isOnPublicReview
     boolean isOnPublicReviewPause
     Set<FlexibleDate> publicReviewStartDates
+    Set<FlexibleDate> publicReviewEndDates
     Set<DocumentFile> preliminaryFiles
     Set<DocumentFile> prpreliminarySupplementsoofs
     Set<DocumentFile> commissionReports
@@ -1233,7 +1222,7 @@ package document {
   }
   
   Thesis "0..1" -- "0..1" Thesis : substitutedBy / substituteFor
-  ' !!! can we use DocumentsRelation REPLACED_BY instead???
+  /' !!! can we use DocumentsRelation REPLACED_BY instead??? '/
   
   Thesis "*" --> "0..1" institution.OrganisationUnit : organisationUnit 
   
@@ -1248,7 +1237,7 @@ package document {
     OTHER
   }
   
-  ' !!! do we need this?
+  /' !!! do we need this? '/
   enum ThesisAttachmentType {
     FILE 
     SUPPLEMENT 
@@ -1266,7 +1255,7 @@ package document {
   }
   
   Thesis "*" --> "*" Document : thesisResearchOutput 
-  ' !!! can we use DocumentsRelation RESULT_OF instead ?
+  /' !!! can we use DocumentsRelation RESULT_OF instead ? '/
   
   class IntangibleProduct extends Document {
     IntangibleProductType type
@@ -1318,7 +1307,7 @@ package document {
     INFRASTRUCTURE_OBJECT
     DERIVATIVE_WORK
     VISUAL_ARTWORK
-    OTHER /' any physical object '/
+    OTHER
   }
   
   class GeneticMaterial extends Document {
@@ -1338,7 +1327,7 @@ package document {
   PublicationSeries "1" -- "*" PersonPublicationSeriesContribution : publicationSeries / contributors
   Event "1" --> "*" PersonEventContribution : contributors
   Event "*" --> "0..1" OrganisationUnit : organizer /' !!! '/
-  Document "*" --> "0..1" Publisher : publisher
+  Document "*" --> "0..1" Publisher : publisher /' !!! '/
   
   DocumentsRelation "*" --> "1" Document : source
   DocumentsRelation "*" --> "1" Document : target
@@ -1354,7 +1343,7 @@ package document {
     REPLACED_BY
     RESULT_OF /' also can link PREPRINT '/
     TOPIC_OF /' if a document is BOOK_REVIEW, SCIENTIFIC_CRITIC, TRANSLATION, then we can point to original document '/
-    /' Moreover, it might be that a *Product (software, dataset, online resource) is the main topic of some journal article, etc. '/
+    /' Moreover, it might be that a IntangibleProduct (software, dataset, online resource) is the main topic of some journal article, etc. '/
   }
 
 }
@@ -1412,7 +1401,7 @@ package project {
     FlexibleDate dateFrom
     FlexibleDate dateTo
     ' !!! let's keep as is for now. Later, we might consider decoupling orgunit contributions/involvements also into two levels
-    ' !!! similar as for PersonActivity. If that is the case, we will move timeframe from here to OrgUnitActivity. Org Unit involvements are 
+    ' !!! similar as for PersonActivity. If that is the case, we will move timeframe from here to OrgUnitContribution. Org Unit involvements are 
     ' !!! defined by OrganisationUnitsRelations (Member), moreover, we don't have option that org unit is creator (author) of a document
     Set<MultiLingualContent> displayOU
     Set<MultiLingualContent> description
@@ -1541,7 +1530,7 @@ package project {
   FundingApplication "1" --> "0..1" FundingApplication : revisedFundingApplication 
   FundingApplication "1" --> "0..1" Funding : funding
   FundingApplication "0..1" --> "*" FundingPart : otherFundingSources
-  FundingApplication "*" --> "0..1" Person : submitter
+  FundingApplication "*" --> "0..1" Person : submitter /' !!! '/
   
   enum FundingApplicationResult {
     AWARDED
@@ -1835,10 +1824,10 @@ package Assessment {
     String textualValue
     LocalDateTime timestamp
     EntityIndicatorSource source
-    FlexibleDate fromDate
-    FlexibleDate toDate
+    FlexibleDate dateFrom /' !!! '/
+    FlexibleDate dateTo /' !!! '/
     Set<DocumentFile> proofs
-    Set<String> urls ' !!! 
+    Set<String> urls /' !!! '/
   }
 
   EntityIndicator "0..*" --> "1" Indicator
@@ -1888,5 +1877,7 @@ package Assessment {
   ' !!! also, we might need Indicators for Prizes
 
 }
+
+
 
 @enduml
