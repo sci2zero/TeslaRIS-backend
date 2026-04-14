@@ -370,6 +370,17 @@ package person {
      Set<MultiLingualContent> state
      String postalNumber
   }
+  
+  class PersonFieldVisibility {
+    Boolean phoneNumberVisible
+    Boolean contactEmailVisible
+    Boolean dateOfBirthVisible
+    Boolean sexVisible
+    Boolean birthplaceVisible
+    Boolean biographyVisible
+  } 
+    
+  PersonFieldVisibility "1" --> "1" Person : person
  
   class LanguageKnowledge extends ExpertiseOrSkill {
     Language language
@@ -1878,6 +1889,56 @@ package Assessment {
 
 }
 
+/' !!! '/
+package identifier {
+  
+  class Identifier {
+    String code
+    Set<MultiLingualContent> title
+    Set<MultiLingualContent> description
+    AccessLevel accessLevel
+    Set<ApplicableEntityType> applicableTypes /' !!! maybe we don't need this '/
+    String regularExpression /' for validation of the input '/
+    String uriPrefix /' can be used for creation of link to landing page such as https://doi.org/XXX '/ 
+  }
+  
+  class EntityIdentifier {
+    String value
+  }
 
+  EntityIdentifier "0..*" --> "1" Identifier
+  
+  class DocumentIdentifier extends EntityIdentifier {
+  }
+
+  DocumentIdentifier "0..*" --> "1" Document : document
+
+
+  class EventIdentifier extends EntityIdentifier {
+  }
+
+  EventIdentifier "0..*" --> "1" Event : event
+
+  class PublicationSeriesIdentifier extends EntityIdentifier {
+  }
+
+  PublicationSeriesIdentifier "0..*" --> "1" PublicationSeries : publicationSeries
+
+  class PersonIdentifier extends EntityIdentifier {
+  }
+
+  PersonIdentifier "0..*" --> "1" Person : person
+
+  class OrganisationUnitIdentifier extends EntityIdentifier {
+  }
+
+  OrganisationUnitIdentifier "0..*" --> "1" OrganisationUnit : organisationUnit
+
+  class ProjectIdentifier extends EntityIdentifier {
+  }
+  
+  ProjectIdentifier "0..*" --> "1" Project : project
+
+}
 
 @enduml
