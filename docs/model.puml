@@ -1536,11 +1536,12 @@ package project {
     Set<DocumentFile> documents /' proposal, review result, supplement '/
   }
 
-  FundingApplication "*" -- "0..1" Project : fundingApplications / project 
+  FundingApplication "*" -- "1" Project : fundingApplications / project 
   FundingApplication "*" --> "1" FundingCall : fundingCall
   FundingApplication "1" --> "0..1" FundingApplication : revisedFundingApplication 
   FundingApplication "1" --> "0..1" Funding : funding
   FundingApplication "0..1" --> "*" FundingPart : otherFundingSources
+  FundingApplication "*" --> "0..1" Person : submitter
   
   enum FundingApplicationResult {
     AWARDED
@@ -1640,7 +1641,6 @@ package project {
     Set<MultiLingualContent> nameAbbreviation
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    Set<FundingType> types
     MonetaryAmount totalAmount
     FlexibleDate dateFrom
     FlexibleDate dateTo
