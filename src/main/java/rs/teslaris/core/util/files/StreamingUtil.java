@@ -18,6 +18,8 @@ public class StreamingUtil {
     public static StreamingResponseBody createStreamingBody(InputStream inputStream,
                                                             int bufferSize, Runnable onComplete) {
         return outputStream -> {
+            outputStream.flush();
+
             try (inputStream) {
                 byte[] buffer = new byte[bufferSize];
                 int bytesRead;
@@ -25,7 +27,6 @@ public class StreamingUtil {
                     outputStream.write(buffer, 0, bytesRead);
                     outputStream.flush();
                 }
-
                 if (Objects.nonNull(onComplete)) {
                     onComplete.run();
                 }

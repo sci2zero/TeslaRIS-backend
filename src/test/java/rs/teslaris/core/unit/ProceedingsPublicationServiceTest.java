@@ -317,7 +317,8 @@ public class ProceedingsPublicationServiceTest {
                 List.of(new DocumentPublicationIndex(), new DocumentPublicationIndex())));
 
         // When
-        var result = proceedingsPublicationService.findProceedingsForEvent(eventId, pageable);
+        var result =
+            proceedingsPublicationService.findProceedingsPublicationsForEvent(eventId, pageable);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

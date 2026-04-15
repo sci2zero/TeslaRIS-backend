@@ -1,5 +1,6 @@
 package rs.teslaris.core.integration.thesislibrary;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -187,14 +188,15 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"sr", "en"})
-    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    @WithMockUser(username = "test.admin@test.com", password = "admin")
     public void testDownloadReportDocument(String language) throws Exception {
         var authResponse = authenticateAdminAndGetTokenWithFingerprintCookie();
 
         var request = getTestPayload();
 
         String requestBody = objectMapper.writeValueAsString(request);
-        var result = mockMvc.perform(
+
+        var mvcResult = mockMvc.perform(
                 MockMvcRequestBuilders.post(
                         "http://localhost:8081/api/thesis-library/report/download/{lang}", language)
                     .content(requestBody)
@@ -204,8 +206,11 @@ public class ThesisLibraryReportingControllerTest extends BaseTest {
             .andExpect(request().asyncStarted())
             .andReturn();
 
-        mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(result))
-            .andExpect(status().isOk());
+        mvcResult.getAsyncResult();
+
+        mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(mvcResult))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM));
     }
 
     @Test

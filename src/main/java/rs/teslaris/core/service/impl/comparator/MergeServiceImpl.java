@@ -965,8 +965,14 @@ public class MergeServiceImpl implements MergeService {
 
         proceedingsPublicationRepository.save(publication.get());
 
-        indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
-            publicationId, "proceedings_id", targetProceedingsId);
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            targetProceedingsId).ifPresent(index -> {
+                indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
+                    publicationId, "proceedings_id", targetProceedingsId);
+                indexBulkUpdateService.setYearForAggregatedRecord("proceedings_id", targetProceedingsId,
+                    index.getYear());
+            }
+        );
     }
 
     private void performProceedingsSwitch(Integer targetConferenceId,

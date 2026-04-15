@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -139,22 +140,35 @@ public abstract class Document extends BaseEntity implements Mergeable {
         this.areFilesValid = other.areFilesValid;
         this.isArchived = other.isArchived;
 
-        this.title = new HashSet<>(other.title);
-        other.title.clear();
-        this.subTitle = new HashSet<>(other.subTitle);
-        other.subTitle.clear();
-        this.description = new HashSet<>(other.description);
-        other.description.clear();
-        this.remark = new HashSet<>(other.remark);
-        other.remark.clear();
-        this.keywords = new HashSet<>(other.keywords);
-        other.keywords.clear();
+        this.title = other.title.stream()
+            .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
+            .collect(Collectors.toCollection(HashSet::new));
+        this.subTitle = other.subTitle.stream()
+            .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
+            .collect(Collectors.toCollection(HashSet::new));
+        this.description = other.description.stream()
+            .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
+            .collect(Collectors.toCollection(HashSet::new));
+        this.remark = other.remark.stream()
+            .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
+            .collect(Collectors.toCollection(HashSet::new));
+        this.keywords = other.keywords.stream()
+            .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(), mt.getPriority()))
+            .collect(Collectors.toCollection(HashSet::new));
 
-        this.contributors = new HashSet<>(other.contributors);
+        this.contributors = other.contributors.stream()
+            .map(c -> new PersonDocumentContribution(c, this))
+            .collect(Collectors.toCollection(HashSet::new));
         other.contributors.clear();
-        this.fileItems = new HashSet<>(other.fileItems);
+
+        this.fileItems = other.fileItems.stream()
+            .peek(f -> f.setDocument(this))
+            .collect(Collectors.toCollection(HashSet::new));
         other.fileItems.clear();
-        this.proofs = new HashSet<>(other.proofs);
+
+        this.proofs = other.proofs.stream()
+            .peek(f -> f.setDocument(this))
+            .collect(Collectors.toCollection(HashSet::new));
         other.proofs.clear();
 
         this.uris = new HashSet<>(other.uris);

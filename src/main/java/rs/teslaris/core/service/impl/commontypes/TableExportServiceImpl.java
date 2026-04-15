@@ -35,6 +35,7 @@ import rs.teslaris.core.service.interfaces.document.CitationService;
 import rs.teslaris.core.service.interfaces.document.DocumentAnalyticsService;
 import rs.teslaris.core.service.interfaces.document.DocumentCollaborationService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.functional.Triple;
@@ -64,6 +65,8 @@ public class TableExportServiceImpl implements TableExportService {
 
     private final DocumentAnalyticsService documentAnalyticsService;
 
+    private final ProceedingsPublicationService proceedingsPublicationService;
+
     @Value("${table-export.maximum-export-amount}")
     private Integer maximumExportAmount;
 
@@ -77,7 +80,8 @@ public class TableExportServiceImpl implements TableExportService {
         PersonService personService,
         DocumentPublicationService documentPublicationService,
         CitationService citationService, DocumentCollaborationService documentCollaborationService,
-        DocumentAnalyticsService documentAnalyticsService
+        DocumentAnalyticsService documentAnalyticsService,
+        ProceedingsPublicationService proceedingsPublicationService
     ) {
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;
         this.personIndexRepository = personIndexRepository;
@@ -88,6 +92,7 @@ public class TableExportServiceImpl implements TableExportService {
         this.citationService = citationService;
         this.documentCollaborationService = documentCollaborationService;
         this.documentAnalyticsService = documentAnalyticsService;
+        this.proceedingsPublicationService = proceedingsPublicationService;
     }
 
     @Override
@@ -324,6 +329,12 @@ public class TableExportServiceImpl implements TableExportService {
                     Integer.parseInt(endpointTokenParameters.getLast()),
                     pageable
                 );
+            case PROCEEDINGS_PUBLICATIONS ->
+                (Page<T>) proceedingsPublicationService.findPublicationsInProceedings(
+                    Integer.parseInt(endpointTokenParameters.getFirst()), pageable);
+            case EVENT_PUBLICATIONS ->
+                (Page<T>) proceedingsPublicationService.findProceedingsPublicationsForEvent(
+                    Integer.parseInt(endpointTokenParameters.getFirst()), pageable);
         };
     }
 }

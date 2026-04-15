@@ -7,14 +7,19 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Table(
     name = "person_document_contribution",
@@ -46,4 +51,25 @@ public class PersonDocumentContribution extends PersonContribution {
 
     @Column(name = "personal_title")
     private PersonalTitle personalTitle;
+
+    public PersonDocumentContribution(PersonDocumentContribution other, Document newDocument) {
+        super(
+            other.getPerson(),
+            other.getContributionDescription().stream()
+                .map(mt -> new MultiLingualContent(mt.getLanguage(), mt.getContent(),
+                    mt.getPriority()))
+                .collect(Collectors.toCollection(HashSet::new)),
+            other.getAffiliationStatement(),
+            new HashSet<>(other.getInstitutions()),
+            other.getOrderNumber(),
+            other.getApproveStatus()
+        );
+        this.document = newDocument;
+        this.contributionType = other.getContributionType();
+        this.isMainContributor = other.getIsMainContributor();
+        this.isCorrespondingContributor = other.getIsCorrespondingContributor();
+        this.isBoardPresident = other.getIsBoardPresident();
+        this.employmentTitle = other.getEmploymentTitle();
+        this.personalTitle = other.getPersonalTitle();
+    }
 }
