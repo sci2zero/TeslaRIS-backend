@@ -1,5 +1,6 @@
 package rs.teslaris.core.service.impl.document;
 
+import jakarta.persistence.EntityManager;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -274,11 +275,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         var journalPublication = new JournalPublication(proceedingsPublication.get());
         journalPublication.setJournal(journalService.findJournalById(journalId));
 
+        var saved = journalPublicationJPAService.save(journalPublication);
+
         proceedingsPublicationRepository.delete(proceedingsPublication.get());
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             proceedingsPublicationId).ifPresent(documentPublicationIndexRepository::delete);
 
-        var saved = journalPublicationJPAService.save(journalPublication);
         indexJournalPublication(saved, new DocumentPublicationIndex());
 
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
