@@ -536,6 +536,15 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
     }
 
     @Override
+    public void reindexProceedingsStatus(Integer eventId) {
+        eventIndexRepository.findByDatabaseId(eventId).ifPresent(index -> {
+            index.setHasProceedings(Objects.nonNull(eventId) &&
+                (documentPublicationIndexRepository.countByEventId(eventId) > 0));
+            eventIndexRepository.save(index);
+        });
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public void indexActiveEmploymentRelations(EventIndex index, Integer eventId) {
         var shouldSave = false;

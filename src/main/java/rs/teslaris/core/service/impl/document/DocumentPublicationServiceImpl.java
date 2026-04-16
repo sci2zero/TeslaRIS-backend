@@ -460,7 +460,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             documentFileService.save(file);
         });
 
-        if (document instanceof Thesis) {
+        if (document.getDocumentType().equals(DocumentPublicationType.THESIS)) {
             ((Thesis) document).getPreliminaryFiles().forEach(file -> {
                 file.setDeleted(true);
                 documentFileService.save(file);
@@ -482,12 +482,15 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setDeleted(true);
         documentRepository.save(document);
+        documentRepository.flush();
 
         var index =
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId);
         index.ifPresent(documentPublicationIndexRepository::delete);
 
-        // TODO: should we delete all document file indexes as well
+        if (document.getDocumentType().equals(DocumentPublicationType.PROCEEDINGS)) {
+            eventService.reindexProceedingsStatus(document.getEvent().getId());
+        }
     }
 
     @Override

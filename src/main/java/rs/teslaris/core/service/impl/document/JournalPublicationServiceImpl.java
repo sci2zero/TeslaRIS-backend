@@ -1,6 +1,5 @@
 package rs.teslaris.core.service.impl.document;
 
-import jakarta.persistence.EntityManager;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;

@@ -50,4 +50,6 @@ public interface EventService extends JPAService<Event> {
     void indexActiveEmploymentRelations(EventIndex index, Integer eventId);
 
     void deleteIndexes();
+
+    void reindexProceedingsStatus(Integer eventId);
 }
