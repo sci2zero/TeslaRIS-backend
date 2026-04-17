@@ -20,7 +20,6 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingDTO;
-import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.funding.Funding;

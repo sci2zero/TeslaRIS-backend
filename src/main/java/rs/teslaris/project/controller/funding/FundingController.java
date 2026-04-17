@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
@@ -48,6 +49,7 @@ public class FundingController {
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_FUNDING')")
     @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
     public FundingDTO createFunding(
             @RequestBody @Valid FundingDTO fundingDTO) {
         var savedFunding = fundingService.createFunding(fundingDTO);
