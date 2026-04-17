@@ -94,6 +94,7 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.language.SerbianTransliteration;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
+import rs.teslaris.core.util.search.CollectionOperations;
 import rs.teslaris.core.util.search.ExpressionTransformer;
 import rs.teslaris.core.util.search.SearchFieldsLoader;
 import rs.teslaris.core.util.search.SearchRequestType;
@@ -211,7 +212,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var simpleSearchQuery =
             buildSimpleSearchQuery(tokens, null, null, null,
                 null, allowedTypes, null,
-                null, null, null);
+                null, null,
+                null, null);
 
         var contributionFilter = TermQuery.of(t -> t
             .field(getContributionField(contributionType))
@@ -290,7 +292,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         var simpleSearchQuery =
             buildSimpleSearchQuery(tokens, null, null, null,
                 null, allowedTypes, notArchivedOnly,
-                null, null, null);
+                null, null,
+                null, null);
 
         var outputConfiguration =
             organisationUnitOutputConfigurationService.readOutputConfigurationForOrganisationUnit(
@@ -619,6 +622,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         index.setAuthorNamesSortable(index.getAuthorNames());
 
         setEmploymentIndexInformation(index, contributions, organisationUnitIds, isThesis);
+
+        index.setHasContributions(CollectionOperations.containsValues(document.getContributors()));
     }
 
     private void setEmploymentIndexInformation(DocumentPublicationIndex index,
@@ -882,7 +887,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 null,
                 true,
                 List.of(), false,
-                null, null, null
+                null, null,
+                null, null
             );
 
             pageResult.getContent().forEach(documentIndex ->
@@ -1248,12 +1254,13 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                                                      Boolean notArchivedOnly,
                                                                      Boolean showProceedings,
                                                                      Boolean emptyProceedingsOnly,
+                                                                     Boolean noContributionsProceedingsOnly,
                                                                      Integer authorId) {
         if (type.equals(SearchRequestType.SIMPLE)) {
             return searchService.runQuery(
                 buildSimpleSearchQuery(tokens, institutionId, commissionId, authorReprint,
                     unmanaged, allowedTypes, notArchivedOnly, showProceedings, emptyProceedingsOnly,
-                    authorId),
+                    noContributionsProceedingsOnly, authorId),
                 pageable,
                 DocumentPublicationIndex.class, "document_publication");
         }
@@ -1766,6 +1773,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                                          Boolean notArchivedOnly,
                                          Boolean showProceedings,
                                          Boolean emptyProceedingsOnly,
+                                         Boolean noContributionsProceedingsOnly,
                                          Integer authorId) {
         String minShouldMatch;
         if (tokens.size() <= 2) {
@@ -1789,6 +1797,12 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 if (Objects.nonNull(emptyProceedingsOnly) && emptyProceedingsOnly) {
                     b.must(sb -> sb.match(
                         m -> m.field("has_publications").query(false)));
+                }
+
+                if (Objects.nonNull(noContributionsProceedingsOnly) &&
+                    noContributionsProceedingsOnly) {
+                    b.must(sb -> sb.match(
+                        m -> m.field("has_contributions").query(false)));
                 }
             }
 

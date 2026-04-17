@@ -137,14 +137,15 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     @Override
     @Transactional
     public Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
+                                                                    DocumentPublicationType publicationType,
                                                                     Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.findByTypeAndJournalIdAndIsApprovedTrue(
-                DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
+                publicationType.name(), journalId, pageable);
         }
 
-        return documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
+        return documentPublicationIndexRepository.findByTypeAndJournalId(publicationType.name(),
+            journalId, pageable);
     }
 
     @Override

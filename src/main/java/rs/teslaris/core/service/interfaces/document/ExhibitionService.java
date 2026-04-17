@@ -18,7 +18,8 @@ public interface ExhibitionService {
                                        Boolean returnOnlyNonSerialEvents,
                                        Boolean returnOnlySerialEvents,
                                        Integer commissionInstitutionId,
-                                       Integer commissionId, Boolean emptyEventsOnly);
+                                       Integer commissionId, Boolean emptyEventsOnly,
+                                       Boolean noContributionEventsOnly);
 
     Page<EventIndex> searchExhibitionsForImport(List<String> names, String dateFrom, String dateTo);
 

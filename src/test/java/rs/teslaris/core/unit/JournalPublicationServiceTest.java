@@ -287,31 +287,34 @@ public class JournalPublicationServiceTest {
         assertEquals(expectedPublications, actualPublications);
     }
 
-    @Test
-    public void shouldFindAllPublicationsInJournal() {
+    @ParameterizedTest
+    @EnumSource(value = DocumentPublicationType.class, names = {"JOURNAL_PUBLICATION",
+        "PROCEEDINGS", "MONOGRAPH"})
+    public void shouldFindAllPublicationsInJournal(DocumentPublicationType publicationType) {
         // Given
         var journalId = 123;
 
         var publication1 = new DocumentPublicationIndex();
         publication1.setId("1");
-        publication1.setType("JOURNAL_PUBLICATION");
+        publication1.setType(publicationType.name());
         publication1.setJournalId(journalId);
 
         var publication2 = new DocumentPublicationIndex();
         publication2.setId("2");
-        publication2.setType("JOURNAL_PUBLICATION");
+        publication2.setType(publicationType.name());
         publication2.setJournalId(journalId);
 
         var expectedPublications = new PageImpl<>(Arrays.asList(publication1, publication2));
         var pageable = PageRequest.of(0, 10);
 
         when(documentPublicationIndexRepository.findByTypeAndJournalIdAndIsApprovedTrue(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable))
+            publicationType.name(), journalId, pageable))
             .thenReturn(expectedPublications);
 
         // When
         var actualPublications =
-            journalPublicationService.findPublicationsInJournal(journalId, pageable);
+            journalPublicationService.findPublicationsInJournal(journalId, publicationType,
+                pageable);
 
         // Then
         assertEquals(expectedPublications, actualPublications);

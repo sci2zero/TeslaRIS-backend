@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
@@ -25,6 +26,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.service.interfaces.document.JournalPublicationService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.jwt.JwtUtil;
@@ -64,8 +66,12 @@ public class JournalPublicationController {
 
     @GetMapping("/journal/{journalId}")
     public Page<DocumentPublicationIndex> findPublicationsInJournal(
-        @PathVariable Integer journalId, Pageable pageable) {
-        return journalPublicationService.findPublicationsInJournal(journalId, pageable);
+        @PathVariable Integer journalId,
+        @RequestParam(name = "publicationType", defaultValue = "JOURNAL_PUBLICATION")
+        DocumentPublicationType publicationType,
+        Pageable pageable) {
+        return journalPublicationService.findPublicationsInJournal(journalId, publicationType,
+            pageable);
     }
 
     @PostMapping
