@@ -1,6 +1,11 @@
 package rs.teslaris.project.service.impl.funding;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -12,12 +17,12 @@ import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.project.converter.funding.FundingApplicationConverter;
-import rs.teslaris.project.converter.funding.FundingCallConverter;
 import rs.teslaris.project.dto.funding.FundingApplicationDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingApplicationIndex;
@@ -31,6 +36,7 @@ import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -53,6 +59,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     private final FundingService fundingService;
 
     private final DocumentFileService documentFileService;
+
+    private final SearchService<FundingApplicationIndex> searchService;
 
     @Override
     protected JpaRepository<FundingApplication, Integer> getEntityRepository() {
@@ -169,6 +177,21 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
         documentFileService.delete(documentFileId);
         save(fundingApplication);
+    }
+
+    @Override
+    public Page<FundingApplicationIndex> searchFundingApplications(Integer fundingCallId,
+                                                                   Integer funderId,
+                                                                   String result,
+                                                                   LocalDate submissionDateFrom,
+                                                                   LocalDate submissionDateTo,
+                                                                   LocalDate decisionDateFrom,
+                                                                   LocalDate decisionDateTo,
+                                                                   Pageable pageable) {
+        return searchService.runQuery(
+                buildFilterQuery(fundingCallId, funderId, result,
+                        submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo),
+                pageable, FundingApplicationIndex.class, "funding_application");
     }
 
     private void setCommonFields(FundingApplication application,
@@ -326,5 +349,59 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         }
 
         return index;
+    }
+
+    private Query buildFilterQuery(Integer fundingCallId,
+                                   Integer funderId,
+                                   String result,
+                                   LocalDate submissionDateFrom,
+                                   LocalDate submissionDateTo,
+                                   LocalDate decisionDateFrom,
+                                   LocalDate decisionDateTo) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+
+            if (Objects.nonNull(fundingCallId)) {
+                b.must(m -> m.term(
+                        t -> t.field("funding_call_id").value(fundingCallId)));
+            }
+
+            if (Objects.nonNull(funderId)) {
+                b.must(m -> m.term(
+                        t -> t.field("funder_id").value(funderId)));
+            }
+
+            if (Objects.nonNull(result)) {
+                b.must(m -> m.term(
+                        t -> t.field("result").value(result)));
+            }
+
+            if (Objects.nonNull(submissionDateFrom) || Objects.nonNull(submissionDateTo)) {
+                b.must(m -> m.range(r -> {
+                    r.field("submission_date");
+                    if (Objects.nonNull(submissionDateFrom)) {
+                        r.gte(JsonData.of(submissionDateFrom.toString()));
+                    }
+                    if (Objects.nonNull(submissionDateTo)) {
+                        r.lte(JsonData.of(submissionDateTo.toString()));
+                    }
+                    return r;
+                }));
+            }
+
+            if (Objects.nonNull(decisionDateFrom) || Objects.nonNull(decisionDateTo)) {
+                b.must(m -> m.range(r -> {
+                    r.field("decision_date");
+                    if (Objects.nonNull(decisionDateFrom)) {
+                        r.gte(JsonData.of(decisionDateFrom.toString()));
+                    }
+                    if (Objects.nonNull(decisionDateTo)) {
+                        r.lte(JsonData.of(decisionDateTo.toString()));
+                    }
+                    return r;
+                }));
+            }
+
+            return b;
+        })))._toQuery();
     }
 }

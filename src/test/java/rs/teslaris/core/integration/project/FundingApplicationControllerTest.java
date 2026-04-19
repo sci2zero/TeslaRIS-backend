@@ -142,4 +142,17 @@ public class FundingApplicationControllerTest extends BaseTest {
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testSearchFundingApplications() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders.get(
+                                        "http://localhost:8081/api/funding-application/search?fundingCallId=1&result=AWARDED")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isOk());
+    }
 }

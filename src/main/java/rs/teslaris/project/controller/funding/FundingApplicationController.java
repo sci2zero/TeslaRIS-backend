@@ -2,6 +2,8 @@ package rs.teslaris.project.controller.funding;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -9,8 +11,10 @@ import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.project.dto.funding.FundingApplicationDTO;
-import rs.teslaris.project.dto.funding.FundingCallDTO;
+import rs.teslaris.project.indexmodel.funding.FundingApplicationIndex;
 import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/funding-application")
@@ -77,5 +81,22 @@ public class FundingApplicationController {
             @PathVariable Integer documentFileId) {
         fundingApplicationService.deleteFundingApplicationDocument(
                 documentFileId, fundingApplicationId);
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('READ_FUNDING_APPLICATIONS')")
+    public Page<FundingApplicationIndex> searchFundingApplications(
+            @RequestParam(required = false) Integer fundingCallId,
+            @RequestParam(required = false) Integer funderId,
+            @RequestParam(required = false) String result,
+            @RequestParam(required = false) LocalDate submissionDateFrom,
+            @RequestParam(required = false) LocalDate submissionDateTo,
+            @RequestParam(required = false) LocalDate decisionDateFrom,
+            @RequestParam(required = false) LocalDate decisionDateTo,
+            Pageable pageable) {
+        return fundingApplicationService.searchFundingApplications(
+                fundingCallId, funderId, result,
+                submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo,
+                pageable);
     }
 }

@@ -1,9 +1,13 @@
 package rs.teslaris.core.unit.project;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
@@ -14,6 +18,7 @@ import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
@@ -61,6 +66,9 @@ public class FundingApplicationServiceTest {
 
     @Mock
     private DocumentFileService documentFileService;
+
+    @Mock
+    private SearchService<FundingApplicationIndex> searchService;
 
     @InjectMocks
     private FundingApplicationServiceImpl fundingApplicationService;
@@ -623,5 +631,58 @@ public class FundingApplicationServiceTest {
         verify(documentFileService).findOne(documentFileId);
         verify(fundingApplicationRepository).findById(fundingApplicationId);
         verify(documentFileService, never()).delete(anyInt());
+    }
+
+    @Test
+    public void shouldReturnEmptyPageWhenNoFundingApplicationsFound() {
+        // given
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(Query.class), eq(pageable),
+                eq(FundingApplicationIndex.class), eq("funding_application")))
+                .thenReturn(Page.empty());
+
+        // when
+        var result = fundingApplicationService.searchFundingApplications(
+                1, null, "AWARDED", null, null, null, null, pageable);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(searchService).runQuery(any(Query.class), eq(pageable),
+                eq(FundingApplicationIndex.class), eq("funding_application"));
+    }
+
+    @Test
+    public void shouldReturnFundingApplicationsPageWhenResultsExist() {
+        // given
+        var pageable = PageRequest.of(0, 10);
+
+        var fundingApplicationIndex = new FundingApplicationIndex();
+        fundingApplicationIndex.setDatabaseId(1);
+        fundingApplicationIndex.setFundingCallId(1);
+        fundingApplicationIndex.setFunderId(1);
+        fundingApplicationIndex.setResult("AWARDED");
+
+        var expectedPage = new PageImpl<>(
+                List.of(fundingApplicationIndex), pageable, 1);
+
+        when(searchService.runQuery(any(Query.class), eq(pageable),
+                eq(FundingApplicationIndex.class), eq("funding_application")))
+                .thenReturn(expectedPage);
+
+        // when
+        var result = fundingApplicationService.searchFundingApplications(
+                1, null, "AWARDED", null, null, null, null, pageable);
+
+        // then
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getContent().getFirst().getDatabaseId());
+        assertEquals(1, result.getContent().getFirst().getFundingCallId());
+        assertEquals("AWARDED", result.getContent().getFirst().getResult());
+        verify(searchService).runQuery(any(Query.class), eq(pageable),
+                eq(FundingApplicationIndex.class), eq("funding_application"));
     }
 }
