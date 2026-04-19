@@ -28,6 +28,7 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.EventsRelationConverter;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
@@ -36,6 +37,7 @@ import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.EventsRelation;
 import rs.teslaris.core.model.document.EventsRelationType;
+import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
@@ -43,6 +45,7 @@ import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -52,6 +55,7 @@ import rs.teslaris.core.util.exceptionhandling.exception.MissingDataException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.SelfRelationException;
 import rs.teslaris.core.util.functional.Pair;
+import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 import rs.teslaris.core.util.search.CollectionOperations;
@@ -75,6 +79,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     protected final CommissionRepository commissionRepository;
 
+    protected final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     private final EventsRelationRepository eventsRelationRepository;
 
     private final SearchService<EventIndex> searchService;
@@ -83,7 +89,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     private final OrganisationUnitService organisationUnitService;
 
-    private final DocumentPublicationIndexRepository documentPublicationIndexRepository;
+    private final ResearchAreaService researchAreaService;
 
 
     @Override
@@ -103,6 +109,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.setKeywords(
             multilingualContentService.getMultilingualContent(eventDTO.getKeywords()));
         event.setPlace(multilingualContentService.getMultilingualContent(eventDTO.getPlace()));
+        event.setDisplayOrganizer(
+            multilingualContentService.getMultilingualContent(eventDTO.getDisplayOrganizer()));
 
         if (Objects.nonNull(eventDTO.getCountryId())) {
             event.setCountry(countryService.findOne(eventDTO.getCountryId()));
@@ -133,6 +141,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         if (Objects.nonNull(eventDTO.getContributions())) {
             personContributionService.setPersonEventContributionForEvent(event, eventDTO);
         }
+
+        if (CollectionOperations.containsValues(eventDTO.getResearchAreasId())) {
+            var researchAreas = researchAreaService.getResearchAreasByIds(
+                eventDTO.getResearchAreasId().stream().toList());
+            event.setResearchAreas(new HashSet<>(researchAreas));
+        }
     }
 
     @Override
@@ -142,6 +156,7 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         event.getPlace().clear();
         event.getDescription().clear();
         event.getKeywords().clear();
+        event.getResearchAreas().clear();
         event.setCountry(null);
 
         event.getContributions().forEach(
@@ -174,10 +189,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                          Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId,
-                                         Integer commissionId, Boolean emptyEventsOnly) {
+                                         Integer commissionId, Boolean emptyEventsOnly,
+                                         Boolean noContributionEventsOnly) {
         return searchService.runQuery(
             buildSimpleSearchQuery(tokens, eventTypes, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly),
+                returnOnlySerialEvents, commissionInstitutionId, commissionId,
+                emptyEventsOnly, noContributionEventsOnly),
             pageable, EventIndex.class, "events");
     }
 
@@ -331,7 +348,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                          Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId,
-                                         Integer commissionId, Boolean emptyEventsOnly) {
+                                         Integer commissionId, Boolean emptyEventsOnly,
+                                         Boolean noContributionEventsOnly) {
         boolean onlyYearTokens =
             tokens.stream().allMatch(token -> token.matches("\\d{4}"));
 
@@ -435,6 +453,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                 b.must(sb -> sb.match(m -> m.field("has_proceedings").query(false)));
             }
 
+            if (Objects.nonNull(noContributionEventsOnly) && noContributionEventsOnly) {
+                b.mustNot(mn -> mn.exists(e -> e.field("related_person_ids")));
+            }
+
             if (Objects.nonNull(commissionId)) {
                 b.mustNot(mnb -> {
                     mnb.term(m -> m.field("classified_by").value(commissionId));
@@ -518,6 +540,15 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
             commissionRepository.findCommissionsThatClassifiedEvent(event.getId()));
         index.setHasProceedings(Objects.nonNull(event.getId()) &&
             (documentPublicationIndexRepository.countByEventId(event.getId()) > 0));
+    }
+
+    @Override
+    public void reindexProceedingsStatus(Integer eventId) {
+        eventIndexRepository.findByDatabaseId(eventId).ifPresent(index -> {
+            index.setHasProceedings(Objects.nonNull(eventId) &&
+                (documentPublicationIndexRepository.countByEventId(eventId) > 0));
+            eventIndexRepository.save(index);
+        });
     }
 
     @Override
@@ -606,5 +637,60 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         }
 
         index.setDateSortable(event.getDateFrom());
+    }
+
+    protected void reorderEventContributions(Integer eventId, Integer contributionId,
+                                             Integer oldContributionOrderNumber,
+                                             Integer newContributionOrderNumber) {
+        var event = eventRepository.findById(eventId);
+
+        if (event.isEmpty()) {
+            return;
+        }
+
+        var contributions = event.get().getContributions().stream()
+            .map(contribution -> (PersonContribution) contribution).collect(
+                Collectors.toSet());
+
+        personContributionService.reorderContributions(contributions, contributionId,
+            oldContributionOrderNumber, newContributionOrderNumber);
+    }
+
+    protected void setEventCommonVolatileFields(EventIndex eventIndex) {
+        eventIndex.getRelatedInstitutionIds().addAll(
+            eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(
+                    eventIndex.getDatabaseId())
+                .stream().toList()
+        );
+
+        eventIndex.setClassifiedBy(
+            commissionRepository.findCommissionsThatClassifiedEvent(eventIndex.getDatabaseId()));
+
+        eventIndex.getCommissionAssessments().clear();
+        commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
+            eventIndex.getDatabaseId(), eventIndex.getClassifiedBy()
+        ).forEach(assessment ->
+            eventIndex.getCommissionAssessments().add(
+                new Triple<>(assessment.commissionId(),
+                    assessment.assessmentCode(),
+                    assessment.manual())));
+
+        indexActiveEmploymentRelations(eventIndex, eventIndex.getDatabaseId());
+
+        eventIndexRepository.save(eventIndex);
+    }
+
+    protected void completeForceDeletion(Integer eventId) {
+        var index = eventIndexRepository.findByDatabaseId(eventId);
+        index.ifPresent(eventIndexRepository::delete);
+
+        documentPublicationIndexRepository.deleteByEventIdAndType(eventId,
+            DocumentPublicationType.PROCEEDINGS.name());
+
+        indexBulkUpdateService.removeIdFromRecord(
+            "document_publication",
+            "event_id",
+            eventId
+        );
     }
 }

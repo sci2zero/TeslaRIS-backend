@@ -269,6 +269,9 @@ public class DocumentPublicationIndex implements ExternallyEnrichable {
     @Field(type = FieldType.Boolean, name = "has_publications", store = true)
     private Boolean hasPublications;
 
+    @Field(type = FieldType.Boolean, name = "has_contributions", store = true)
+    private Boolean hasContributions;
+
     @Field(type = FieldType.Boolean, name = "is_substituted", store = true)
     private Boolean isSubstituted;
 }

@@ -230,6 +230,12 @@ public class DbInitializer implements ApplicationRunner {
         var editFundingCalls = new Privilege("EDIT_FUNDING_CALLS");
         var editFundingParts = new Privilege("EDIT_FUNDING_PARTS");
         var editEmploymentPositions = new Privilege("EDIT_EMPLOYMENT_POSITIONS");
+        var editCourses = new Privilege("EDIT_COURSES");
+        var createCourses = new Privilege("CREATE_COURSES");
+        var createOtherEvents = new Privilege("CREATE_OTHER_EVENTS");
+        var editOtherEvents = new Privilege("EDIT_OTHER_EVENTS");
+        var mergeCourses = new Privilege("MERGE_COURSES");
+        var mergeOtherEvents = new Privilege("MERGE_OTHER_EVENTS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -272,7 +278,8 @@ public class DbInitializer implements ApplicationRunner {
                 createExhibitions, mergeExhibitions, substituteThesis, setPersonFieldVisibility,
                 enrichDocumentMetadata, enrichInstitutionMetadata, scheduleMetadataEnrichment,
                 editFundingPrograms, readFundingPrograms, readFundingCalls, editFundingCalls,
-                editFundingParts, editEmploymentPositions));
+                editFundingParts, editEmploymentPositions, createCourses, editCourses,
+                createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -313,7 +320,9 @@ public class DbInitializer implements ApplicationRunner {
                 editExhibitions, createExhibitions, mergeExhibitions, substituteThesis,
                 setPersonFieldVisibility, enrichDocumentMetadata, enrichInstitutionMetadata,
                 scheduleMetadataEnrichment, editFundingPrograms, readFundingPrograms,
-                readFundingCalls, editFundingCalls, editFundingParts, editEmploymentPositions
+                readFundingCalls, editFundingCalls, editFundingParts, editEmploymentPositions,
+                createCourses, editCourses, createOtherEvents, editOtherEvents, mergeCourses,
+                mergeOtherEvents
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

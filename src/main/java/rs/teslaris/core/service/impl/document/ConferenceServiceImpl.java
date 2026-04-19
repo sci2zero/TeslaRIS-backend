@@ -3,7 +3,6 @@ package rs.teslaris.core.service.impl.document;
 import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,13 +15,11 @@ import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.document.ConferenceConverter;
 import rs.teslaris.core.dto.document.ConferenceBasicAdditionDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
-import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.document.Conference;
-import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.repository.document.ConferenceRepository;
 import rs.teslaris.core.repository.document.EventRepository;
 import rs.teslaris.core.repository.document.EventsRelationRepository;
@@ -31,6 +28,7 @@ import rs.teslaris.core.service.impl.document.cruddelegate.ConferenceJPAServiceI
 import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -38,7 +36,6 @@ import rs.teslaris.core.service.interfaces.person.PersonContributionService;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
-import rs.teslaris.core.util.functional.Triple;
 import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 @Service
@@ -65,13 +62,16 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                  CountryService countryService,
                                  OrganisationUnitService organisationUnitService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository,
+                                 ResearchAreaService researchAreaService,
                                  ConferenceJPAServiceImpl conferenceJPAService,
                                  DocumentPublicationIndexRepository documentPublicationIndexRepository1,
                                  ConferenceRepository conferenceRepository) {
         super(eventIndexRepository, multilingualContentService, personContributionService,
-            eventRepository, indexBulkUpdateService, commissionRepository, eventsRelationRepository,
-            searchService, countryService, organisationUnitService,
-            documentPublicationIndexRepository);
+            eventRepository, indexBulkUpdateService, commissionRepository,
+            documentPublicationIndexRepository,
+            eventsRelationRepository, searchService, countryService,
+            organisationUnitService,
+            researchAreaService);
         this.conferenceJPAService = conferenceJPAService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;
         this.conferenceRepository = conferenceRepository;
@@ -97,10 +97,11 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                               Boolean returnOnlySerialEvents,
                                               Integer commissionInstitutionId,
                                               Integer commissionId,
-                                              Boolean emptyEventsOnly) {
+                                              Boolean emptyEventsOnly,
+                                              Boolean noContributionEventsOnly) {
         return searchEvents(tokens, pageable, List.of(EventType.CONFERENCE),
             returnOnlyNonSerialEvents, returnOnlySerialEvents,
-            commissionInstitutionId, commissionId, emptyEventsOnly);
+            commissionInstitutionId, commissionId, emptyEventsOnly, noContributionEventsOnly);
     }
 
     @Override
@@ -225,13 +226,7 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
 
         conferenceJPAService.delete(conferenceId);
 
-        var index = eventIndexRepository.findByDatabaseId(conferenceId);
-        index.ifPresent(eventIndexRepository::delete);
-
-        documentPublicationIndexRepository.deleteByEventIdAndType(conferenceId,
-            DocumentPublicationType.PROCEEDINGS.name());
-
-        indexBulkUpdateService.removeIdFromRecord("document_publication", "event_id", conferenceId);
+        completeForceDeletion(conferenceId);
     }
 
     @Override
@@ -322,28 +317,11 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public void reindexVolatileConferenceInformation(Integer conferenceId) {
         eventIndexRepository.findByDatabaseId(conferenceId).ifPresent(eventIndex -> {
             eventIndex.getRelatedInstitutionIds().addAll(
-                eventRepository.findInstitutionIdsByEventIdAndEventContribution(conferenceId)
+                eventRepository.findInstitutionIdsByEventIdAndEventContribution(
+                    eventIndex.getDatabaseId())
             );
 
-            eventIndex.getRelatedInstitutionIds().addAll(
-                eventRepository.findInstitutionIdsByEventIdAndAuthorContribution(conferenceId)
-                    .stream().toList()
-            );
-
-            eventIndex.setClassifiedBy(
-                commissionRepository.findCommissionsThatClassifiedEvent(conferenceId));
-
-            eventIndex.getCommissionAssessments().clear();
-            commissionRepository.findAssessmentClassificationBasicInfoForEventAndCommissions(
-                conferenceId, eventIndex.getClassifiedBy()).forEach(assessment ->
-                eventIndex.getCommissionAssessments().add(
-                    new Triple<>(assessment.commissionId(),
-                        assessment.assessmentCode(),
-                        assessment.manual())));
-
-            indexActiveEmploymentRelations(eventIndex, conferenceId);
-
-            eventIndexRepository.save(eventIndex);
+            setEventCommonVolatileFields(eventIndex);
         });
     }
 
@@ -352,12 +330,11 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
     public void reorderConferenceContributions(Integer conferenceId, Integer contributionId,
                                                Integer oldContributionOrderNumber,
                                                Integer newContributionOrderNumber) {
-        var event = findOne(conferenceId);
-        var contributions = event.getContributions().stream()
-            .map(contribution -> (PersonContribution) contribution).collect(
-                Collectors.toSet());
-
-        personContributionService.reorderContributions(contributions, contributionId,
-            oldContributionOrderNumber, newContributionOrderNumber);
+        reorderEventContributions(
+            conferenceId,
+            contributionId,
+            oldContributionOrderNumber,
+            newContributionOrderNumber
+        );
     }
 }

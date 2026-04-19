@@ -21,6 +21,7 @@ import rs.teslaris.core.applicationevent.OrganisationUnitSignificantChangeEvent;
 import rs.teslaris.core.applicationevent.PersonEmploymentOUHierarchyStructureChangedEvent;
 import rs.teslaris.core.dto.document.BookSeriesDTO;
 import rs.teslaris.core.dto.document.ConferenceDTO;
+import rs.teslaris.core.dto.document.CourseDTO;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.ExhibitionDTO;
@@ -31,6 +32,7 @@ import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
+import rs.teslaris.core.dto.document.OtherEventDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.ProceedingsDTO;
@@ -65,6 +67,7 @@ import rs.teslaris.core.repository.document.ThesisRepository;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DatasetService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
@@ -75,6 +78,7 @@ import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MaterialProductService;
 import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
@@ -124,6 +128,10 @@ public class MergeServiceImpl implements MergeService {
     private final ConferenceService conferenceService;
 
     private final ExhibitionService exhibitionService;
+
+    private final CourseService courseService;
+
+    private final OtherEventService otherEventService;
 
     private final ProceedingsService proceedingsService;
 
@@ -535,6 +543,28 @@ public class MergeServiceImpl implements MergeService {
     }
 
     @Override
+    public void saveMergedCoursesMetadata(Integer leftId, Integer rightId,
+                                          CourseDTO leftData, CourseDTO rightData) {
+        updateAndRestoreMetadata(courseService::updateCourse,
+            courseService::indexCourse, courseService::findCourseById,
+            leftId, rightId, leftData, rightData,
+            dto -> new String[] {},
+            (dto, values) -> {
+            });
+    }
+
+    @Override
+    public void saveMergedOtherEventsMetadata(Integer leftId, Integer rightId,
+                                              OtherEventDTO leftData, OtherEventDTO rightData) {
+        updateAndRestoreMetadata(otherEventService::updateOtherEvent,
+            otherEventService::indexOtherEvent, otherEventService::findOtherEventById,
+            leftId, rightId, leftData, rightData,
+            dto -> new String[] {},
+            (dto, values) -> {
+            });
+    }
+
+    @Override
     public void saveMergedIntangibleProductMetadata(Integer leftId, Integer rightId,
                                                     IntangibleProductDTO leftData,
                                                     IntangibleProductDTO rightData) {
@@ -935,8 +965,14 @@ public class MergeServiceImpl implements MergeService {
 
         proceedingsPublicationRepository.save(publication.get());
 
-        indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
-            publicationId, "proceedings_id", targetProceedingsId);
+        documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            targetProceedingsId).ifPresent(index -> {
+                indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
+                    publicationId, "proceedings_id", targetProceedingsId);
+                indexBulkUpdateService.setYearForAggregatedRecord("proceedings_id", targetProceedingsId,
+                    index.getYear());
+            }
+        );
     }
 
     private void performProceedingsSwitch(Integer targetConferenceId,

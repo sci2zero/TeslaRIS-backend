@@ -137,14 +137,15 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
     @Override
     @Transactional
     public Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
+                                                                    DocumentPublicationType publicationType,
                                                                     Pageable pageable) {
         if (!SessionUtil.isUserLoggedIn()) {
             return documentPublicationIndexRepository.findByTypeAndJournalIdAndIsApprovedTrue(
-                DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
+                publicationType.name(), journalId, pageable);
         }
 
-        return documentPublicationIndexRepository.findByTypeAndJournalId(
-            DocumentPublicationType.JOURNAL_PUBLICATION.name(), journalId, pageable);
+        return documentPublicationIndexRepository.findByTypeAndJournalId(publicationType.name(),
+            journalId, pageable);
     }
 
     @Override
@@ -274,11 +275,12 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
         var journalPublication = new JournalPublication(proceedingsPublication.get());
         journalPublication.setJournal(journalService.findJournalById(journalId));
 
+        var saved = journalPublicationJPAService.save(journalPublication);
+
         proceedingsPublicationRepository.delete(proceedingsPublication.get());
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
             proceedingsPublicationId).ifPresent(documentPublicationIndexRepository::delete);
 
-        var saved = journalPublicationJPAService.save(journalPublication);
         indexJournalPublication(saved, new DocumentPublicationIndex());
 
         documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(

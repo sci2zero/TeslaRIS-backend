@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -44,6 +45,7 @@ import rs.teslaris.core.model.document.License;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.model.person.PersonName;
 import rs.teslaris.core.service.interfaces.commontypes.ProgressService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
@@ -58,7 +60,7 @@ class RoCrateExportServiceTest {
     private final String exportId = "EXPORT_ID_MOCK";
 
     @Mock
-    private DocumentPublicationService documentPublicationService;
+    private DocumentLookupService documentLookupService;
 
     @Mock
     private FileService fileService;
@@ -109,7 +111,8 @@ class RoCrateExportServiceTest {
     void shouldReturnSilentlyWhenDocumentDoesNotExist() throws Exception {
         var documentId = 1;
 
-        when(documentPublicationService.findOne(documentId)).thenReturn(null);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            documentId)).thenReturn(Optional.empty());
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         var path = service.createRoCrateZip(documentId, exportId);
@@ -124,7 +127,10 @@ class RoCrateExportServiceTest {
         var document = mock(Dataset.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
-        when(documentPublicationService.findOne(documentId)).thenReturn(document);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            documentId)).thenReturn(Optional.of(new DocumentPublicationIndex()));
+        when(documentLookupService.fastDocumentLookup(
+            any(DocumentPublicationIndex.class))).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         var writer = mock(ObjectWriter.class);
@@ -156,7 +162,10 @@ class RoCrateExportServiceTest {
         when(rejectedFile.getLicense()).thenReturn(License.BY);
 
         when(document.getFileItems()).thenReturn(Set.of(approvedFile, rejectedFile));
-        when(documentPublicationService.findOne(documentId)).thenReturn(document);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            documentId)).thenReturn(Optional.of(new DocumentPublicationIndex()));
+        when(documentLookupService.fastDocumentLookup(
+            any(DocumentPublicationIndex.class))).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         var writer = mock(ObjectWriter.class);
@@ -198,7 +207,10 @@ class RoCrateExportServiceTest {
         var document = mock(Dataset.class);
 
         when(document.getFileItems()).thenReturn(Set.of());
-        when(documentPublicationService.findOne(documentId)).thenReturn(document);
+        when(documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+            documentId)).thenReturn(Optional.of(new DocumentPublicationIndex()));
+        when(documentLookupService.fastDocumentLookup(
+            any(DocumentPublicationIndex.class))).thenReturn(document);
         when(messageSource.getMessage(any(), any(), any())).thenReturn("Message");
 
         var writer = mock(ObjectWriter.class);

@@ -64,7 +64,7 @@ public class ProceedingsPublicationController {
     @GetMapping("/event/{eventId}")
     public Page<DocumentPublicationIndex> readAllProceedingsPublicationsForEvent(
         @PathVariable Integer eventId, Pageable pageable) {
-        return proceedingsPublicationService.findProceedingsForEvent(eventId, pageable);
+        return proceedingsPublicationService.findProceedingsPublicationsForEvent(eventId, pageable);
     }
 
     @GetMapping("/proceedings/{proceedingsId}")

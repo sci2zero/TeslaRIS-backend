@@ -38,7 +38,7 @@ import rs.teslaris.core.model.rocrate.ContextualEntity;
 import rs.teslaris.core.model.rocrate.RoCrate;
 import rs.teslaris.core.model.rocrate.RoCratePublicationBase;
 import rs.teslaris.core.service.interfaces.commontypes.ProgressService;
-import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
+import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.FileService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
 import rs.teslaris.core.util.exceptionhandling.exception.LoadingException;
@@ -54,7 +54,7 @@ import rs.teslaris.exporter.util.rocrate.Json2HtmlTable;
 @Slf4j
 public class RoCrateExportServiceImpl implements RoCrateExportService {
 
-    private final DocumentPublicationService documentPublicationService;
+    private final DocumentLookupService documentLookupService;
 
     private final FileService fileService;
 
@@ -95,14 +95,18 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
             progressService.send(exportId, 5,
                 getStatusMessage("statusMessage.fetchingDocument"));
 
-            var document = documentPublicationService.findOne(documentId);
+            var documentIndex =
+                documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(
+                    documentId);
 
-            if (document == null) {
+            if (documentIndex.isEmpty()) {
                 progressService.send(exportId, 100,
                     getStatusMessage("statusMessage.notFound"));
                 progressService.complete(exportId);
                 return tempFile;
             }
+
+            var document = documentLookupService.fastDocumentLookup(documentIndex.get());
 
             progressService.send(exportId, 15,
                 getStatusMessage("statusMessage.creatingMetadata"));
@@ -202,7 +206,6 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                         Sort.by(Sort.Direction.ASC, "databaseId")));
 
                 chunk.forEach(documentIndex -> {
-
                     progressService.send(
                         exportId,
                         5,
@@ -211,9 +214,9 @@ public class RoCrateExportServiceImpl implements RoCrateExportService {
                     );
 
                     var document =
-                        documentPublicationService.findOne(documentIndex.getDatabaseId());
+                        documentLookupService.fastDocumentLookup(documentIndex);
 
-                    if (document != null) {
+                    if (Objects.nonNull(document)) {
                         populateMetadataInfo(document, roCrate);
                     }
                 });

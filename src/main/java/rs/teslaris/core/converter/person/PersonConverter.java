@@ -113,6 +113,11 @@ public class PersonConverter {
 
     private static PostalAddressDTO getPostalAddressDTO(PostalAddress postalAddress) {
         var postalAddressDto = new PostalAddressDTO();
+
+        if (Objects.isNull(postalAddress)) {
+            return postalAddressDto;
+        }
+
         if (Objects.nonNull(postalAddress.getCountry())) {
             postalAddressDto.setCountryId(postalAddress.getCountry().getId());
         }
