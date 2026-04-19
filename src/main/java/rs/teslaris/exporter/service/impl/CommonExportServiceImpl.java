@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.document.BookSeries;
 import rs.teslaris.core.model.document.Conference;
+import rs.teslaris.core.model.document.Course;
 import rs.teslaris.core.model.document.Dataset;
 import rs.teslaris.core.model.document.Exhibition;
 import rs.teslaris.core.model.document.GeneticMaterial;
@@ -28,6 +29,7 @@ import rs.teslaris.core.model.document.JournalPublication;
 import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
+import rs.teslaris.core.model.document.OtherEvent;
 import rs.teslaris.core.model.document.Patent;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
@@ -36,6 +38,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Person;
 import rs.teslaris.core.repository.document.BookSeriesRepository;
 import rs.teslaris.core.repository.document.ConferenceRepository;
+import rs.teslaris.core.repository.document.CourseRepository;
 import rs.teslaris.core.repository.document.DatasetRepository;
 import rs.teslaris.core.repository.document.ExhibitionRepository;
 import rs.teslaris.core.repository.document.GeneticMaterialRepository;
@@ -45,6 +48,7 @@ import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
+import rs.teslaris.core.repository.document.OtherEventRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
@@ -78,6 +82,10 @@ public class CommonExportServiceImpl implements CommonExportService {
     private final ConferenceRepository conferenceRepository;
 
     private final ExhibitionRepository exhibitionRepository;
+
+    private final CourseRepository courseRepository;
+
+    private final OtherEventRepository otherEventRepository;
 
     private final DatasetRepository datasetRepository;
 
@@ -188,6 +196,24 @@ public class CommonExportServiceImpl implements CommonExportService {
                 ExportEventConverter::toCommonExportModel,
                 ExportEvent.class,
                 Exhibition::getId,
+                allTime,
+                null
+            );
+
+            commonExportWorker.exportEntities(
+                courseRepository::findAllModified,
+                ExportEventConverter::toCommonExportModel,
+                ExportEvent.class,
+                Course::getId,
+                allTime,
+                null
+            );
+
+            commonExportWorker.exportEntities(
+                otherEventRepository::findAllModified,
+                ExportEventConverter::toCommonExportModel,
+                ExportEvent.class,
+                OtherEvent::getId,
                 allTime,
                 null
             );

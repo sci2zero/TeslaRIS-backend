@@ -19,5 +19,7 @@ public enum EntityType {
     FUNDING_PROGRAM,
     FUNDING_CALL,
     PROJECT,
+    COURSE,
+    OTHER_EVENT,
     FUNDING_APPLICATION
 }

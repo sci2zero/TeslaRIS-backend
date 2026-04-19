@@ -1,10 +1,13 @@
 package rs.teslaris.core.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -31,6 +34,7 @@ import rs.teslaris.core.dto.document.ConferenceDTO;
 import rs.teslaris.core.dto.document.EventsRelationDTO;
 import rs.teslaris.core.indexmodel.EventIndex;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.LanguageTag;
@@ -74,16 +78,19 @@ public class EventServiceTest {
     @Mock
     private EventIndexRepository eventIndexRepository;
 
+    @Mock
+    private DocumentPublicationIndexRepository documentPublicationIndexRepository;
+
     @InjectMocks
     private EventServiceImpl eventService;
 
 
     static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery_arguments() {
         return Stream.of(
-            Arguments.of(EventType.CONFERENCE, true, true, null, null, null),
-            Arguments.of(EventType.CONFERENCE, true, false, 1, null, null),
-            Arguments.of(EventType.CONFERENCE, false, true, null, 1, true),
-            Arguments.of(EventType.CONFERENCE, false, false, 1, 1, false)
+            Arguments.of(EventType.CONFERENCE, true, true, null, null, null, null),
+            Arguments.of(EventType.CONFERENCE, true, false, 1, null, null, null),
+            Arguments.of(EventType.CONFERENCE, false, true, null, 1, true, false),
+            Arguments.of(EventType.CONFERENCE, false, false, 1, 1, false, true)
         );
     }
 
@@ -173,7 +180,8 @@ public class EventServiceTest {
                                                                  boolean returnOnlySerialEvents,
                                                                  Integer commissionInstitutionId,
                                                                  Integer commissionId,
-                                                                 Boolean emptyEventsOnly) {
+                                                                 Boolean emptyEventsOnly,
+                                                                 Boolean noContributionEventsOnly) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -184,8 +192,8 @@ public class EventServiceTest {
         // When
         var result =
             eventService.searchEvents(tokens, pageable, List.of(eventType),
-                returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
+                returnOnlyNonSerialEvents, returnOnlySerialEvents, commissionInstitutionId,
+                commissionId, emptyEventsOnly, noContributionEventsOnly);
 
         // Then
         assertEquals(2L, result.getTotalElements());
@@ -561,5 +569,51 @@ public class EventServiceTest {
         // Then
         verify(eventRepository).findEventByOldIdsContains(oldId);
         verifyNoMoreInteractions(eventRepository);
+    }
+
+    @Test
+    void shouldReindexProceedingsStatusWhenEventIndexExists() {
+        // Given
+        var eventId = 1;
+        var index = new EventIndex();
+        when(eventIndexRepository.findByDatabaseId(eventId)).thenReturn(Optional.of(index));
+        when(documentPublicationIndexRepository.countByEventId(eventId)).thenReturn(2L);
+
+        // When
+        eventService.reindexProceedingsStatus(eventId);
+
+        // Then
+        assertTrue(index.getHasProceedings());
+        verify(eventIndexRepository, times(1)).save(index);
+    }
+
+    @Test
+    void shouldSetHasProceedingsFalseWhenNoneExist() {
+        // Given
+        var eventId = 1;
+        var index = new EventIndex();
+        when(eventIndexRepository.findByDatabaseId(eventId)).thenReturn(Optional.of(index));
+        when(documentPublicationIndexRepository.countByEventId(eventId)).thenReturn(0L);
+
+        // When
+        eventService.reindexProceedingsStatus(eventId);
+
+        // Then
+        assertFalse(index.getHasProceedings());
+        verify(eventIndexRepository, times(1)).save(index);
+    }
+
+    @Test
+    void shouldNotSaveWhenEventIndexDoesNotExist() {
+        // Given
+        var eventId = 1;
+        when(eventIndexRepository.findByDatabaseId(eventId)).thenReturn(Optional.empty());
+
+        // When
+        eventService.reindexProceedingsStatus(eventId);
+
+        // Then
+        verify(eventIndexRepository, never()).save(any());
+        verify(documentPublicationIndexRepository, never()).countByEventId(any());
     }
 }

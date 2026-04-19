@@ -86,9 +86,11 @@ import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DocumentLookupService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
@@ -152,8 +154,9 @@ public class DocumentAssessmentClassificationServiceImpl
     public DocumentAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
-        ConferenceService conferenceService,
-        ExhibitionService exhibitionService,
+        ConferenceService conferenceService, ExhibitionService exhibitionService,
+        CourseService courseService,
+        OtherEventService otherEventService,
         ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         DocumentAssessmentClassificationRepository documentAssessmentClassificationRepository,
@@ -174,8 +177,8 @@ public class DocumentAssessmentClassificationServiceImpl
         PublicationClassificationService publicationClassificationService,
         ThesisRepository thesisRepository) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, exhibitionService, applicationEventPublisher,
-            entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, courseService, otherEventService,
+            applicationEventPublisher, entityAssessmentClassificationRepository);
         this.documentAssessmentClassificationRepository =
             documentAssessmentClassificationRepository;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository;

@@ -52,9 +52,11 @@ import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.service.interfaces.commontypes.TaskManagerService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
 import rs.teslaris.core.util.functional.Pair;
 import rs.teslaris.core.util.seeding.CsvDataLoader;
@@ -100,8 +102,9 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
     public PublicationSeriesAssessmentClassificationServiceImpl(
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
-        ConferenceService conferenceService,
-        ExhibitionService exhibitionService,
+        ConferenceService conferenceService, ExhibitionService exhibitionService,
+        CourseService courseService,
+        OtherEventService otherEventService,
         ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         PublicationSeriesAssessmentClassificationJPAServiceImpl publicationSeriesAssessmentClassificationJPAService,
@@ -112,8 +115,8 @@ public class PublicationSeriesAssessmentClassificationServiceImpl
         TaskManagerService taskManagerService, CsvDataLoader csvDataLoader,
         ClassificationBatchWriter classificationBatchWriter) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, exhibitionService, applicationEventPublisher,
-            entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, courseService, otherEventService,
+            applicationEventPublisher, entityAssessmentClassificationRepository);
         this.publicationSeriesAssessmentClassificationJPAService =
             publicationSeriesAssessmentClassificationJPAService;
         this.publicationSeriesAssessmentClassificationRepository =

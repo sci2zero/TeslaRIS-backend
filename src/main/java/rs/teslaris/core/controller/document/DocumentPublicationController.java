@@ -136,6 +136,8 @@ public class DocumentPublicationController {
         @RequestParam(value = "showProceedings", required = false) Boolean showProceedings,
         @RequestParam(value = "emptyProceedingsOnly", required = false)
         Boolean emptyProceedingsOnly,
+        @RequestParam(value = "noContributionsProceedingsOnly", required = false)
+        Boolean noContributionsProceedingsOnly,
         @RequestParam(value = "authorId", required = false) Integer authorId,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
@@ -154,7 +156,7 @@ public class DocumentPublicationController {
             SearchRequestType.SIMPLE, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
                 null, authorReprint, unmanaged, allowedTypes, notArchivedOnly, showProceedings,
-            emptyProceedingsOnly, authorId);
+            emptyProceedingsOnly, noContributionsProceedingsOnly, authorId);
     }
 
     @GetMapping("/advanced-search")
@@ -169,6 +171,8 @@ public class DocumentPublicationController {
         @RequestParam(value = "showProceedings", required = false) Boolean showProceedings,
         @RequestParam(value = "emptyProceedingsOnly", required = false)
         Boolean emptyProceedingsOnly,
+        @RequestParam(value = "noContributionsProceedingsOnly", required = false)
+        Boolean noContributionsProceedingsOnly,
         @RequestParam(value = "authorId", required = false) Integer authorId,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
@@ -185,7 +189,7 @@ public class DocumentPublicationController {
             SearchRequestType.ADVANCED, institutionId, (isCommission && unclassified) ?
                 userService.getUserCommissionId(tokenUtil.extractUserIdFromToken(bearerToken)) :
                 null, null, null, allowedTypes, notArchivedOnly, showProceedings,
-            emptyProceedingsOnly, authorId);
+            emptyProceedingsOnly, noContributionsProceedingsOnly, authorId);
     }
 
     @GetMapping("/deduplication-search")

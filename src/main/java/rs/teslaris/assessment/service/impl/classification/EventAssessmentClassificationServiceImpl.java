@@ -29,10 +29,12 @@ import rs.teslaris.core.model.document.Event;
 import rs.teslaris.core.model.document.EventsRelationType;
 import rs.teslaris.core.service.interfaces.commontypes.NotificationService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
+import rs.teslaris.core.service.interfaces.document.CourseService;
 import rs.teslaris.core.service.interfaces.document.DocumentPublicationService;
 import rs.teslaris.core.service.interfaces.document.EventLookupService;
 import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.document.ExhibitionService;
+import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.notificationhandling.NotificationFactory;
 
@@ -62,6 +64,8 @@ public class EventAssessmentClassificationServiceImpl
         AssessmentClassificationService assessmentClassificationService,
         CommissionService commissionService, DocumentPublicationService documentPublicationService,
         ConferenceService conferenceService, ExhibitionService exhibitionService,
+        CourseService courseService,
+        OtherEventService otherEventService,
         ApplicationEventPublisher applicationEventPublisher,
         EntityAssessmentClassificationRepository entityAssessmentClassificationRepository,
         EventAssessmentClassificationJPAServiceImpl eventAssessmentClassificationJPAService,
@@ -69,8 +73,8 @@ public class EventAssessmentClassificationServiceImpl
         EventService eventService, EventLookupService eventLookupService, UserService userService,
         NotificationService notificationService) {
         super(assessmentClassificationService, commissionService, documentPublicationService,
-            conferenceService, exhibitionService, applicationEventPublisher,
-            entityAssessmentClassificationRepository);
+            conferenceService, exhibitionService, courseService, otherEventService,
+            applicationEventPublisher, entityAssessmentClassificationRepository);
         this.eventAssessmentClassificationJPAService = eventAssessmentClassificationJPAService;
         this.eventAssessmentClassificationRepository = eventAssessmentClassificationRepository;
         this.eventService = eventService;

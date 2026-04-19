@@ -346,8 +346,8 @@ public class ProceedingsPublicationServiceImpl extends DocumentPublicationServic
 
     @Override
     @Transactional
-    public Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId,
-                                                                  Pageable pageable) {
+    public Page<DocumentPublicationIndex> findProceedingsPublicationsForEvent(Integer eventId,
+                                                                              Pageable pageable) {
         return documentPublicationIndexRepository.findByTypeAndEventId(
             DocumentPublicationType.PROCEEDINGS_PUBLICATION.name(), eventId, pageable);
     }

@@ -133,7 +133,7 @@ public class ThesisLibraryReportingController {
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header(HttpHeaders.CONTENT_DISPOSITION,
                 StringUtil.contentDisposition("attachment; filename=report.docx"))
-            .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(document.b))
+            .contentLength(document.b)
             .body(StreamingUtil.createStreamingBody(document.a.getInputStream()));
     }
 

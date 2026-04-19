@@ -30,7 +30,8 @@ public interface ProceedingsPublicationService {
 
     void deleteProceedingsPublication(Integer proceedingsPublicationId);
 
-    Page<DocumentPublicationIndex> findProceedingsForEvent(Integer eventId, Pageable pageable);
+    Page<DocumentPublicationIndex> findProceedingsPublicationsForEvent(Integer eventId,
+                                                                       Pageable pageable);
 
     void reindexProceedingsPublications();
 
