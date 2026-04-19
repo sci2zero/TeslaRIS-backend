@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.project.dto.funding.FundingApplicationDTO;
 import rs.teslaris.project.dto.funding.FundingCallDTO;
 import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
@@ -46,5 +49,33 @@ public class FundingApplicationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFundingApplication(@PathVariable Integer fundingApplicationId) {
         fundingApplicationService.deleteFundingApplication(fundingApplicationId);
+    }
+
+    @PatchMapping("/{fundingApplicationId}")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_APPLICATIONS')")
+    @Idempotent
+    public DocumentFileResponseDTO addFundingApplicationDocument(
+            @PathVariable Integer fundingApplicationId,
+            @ModelAttribute @Valid DocumentFileDTO documentFile) {
+        return fundingApplicationService.addFundingApplicationDocument(
+                fundingApplicationId, documentFile);
+    }
+
+    @PatchMapping("/update-document")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_APPLICATIONS')")
+    @Idempotent
+    public DocumentFileResponseDTO updateFundingApplicationDocument(
+            @ModelAttribute @Valid DocumentFileDTO documentFile) {
+        return fundingApplicationService.updateFundingApplicationDocument(documentFile);
+    }
+
+    @DeleteMapping("/{fundingApplicationId}/{documentFileId}")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING_APPLICATIONS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFundingApplicationDocument(
+            @PathVariable Integer fundingApplicationId,
+            @PathVariable Integer documentFileId) {
+        fundingApplicationService.deleteFundingApplicationDocument(
+                documentFileId, fundingApplicationId);
     }
 }

@@ -5,9 +5,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
@@ -46,6 +51,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     private final FundingCallService fundingCallService;
 
     private final FundingService fundingService;
+
+    private final DocumentFileService documentFileService;
 
     @Override
     protected JpaRepository<FundingApplication, Integer> getEntityRepository() {
@@ -129,6 +136,39 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     public void indexFundingApplication(FundingApplication fundingApplication, FundingApplicationIndex index) {
         indexCommonFields(fundingApplication, index);
         fundingApplicationIndexRepository.save(index);
+    }
+
+    @Override
+    @Transactional
+    public DocumentFileResponseDTO addFundingApplicationDocument(Integer fundingApplicationId,
+                                                                 DocumentFileDTO documentFile) {
+        var fundingApplication = findOne(fundingApplicationId);
+        documentFile.setAccessRights(AccessRights.ALL_RIGHTS_RESERVED);
+        var savedDocument = documentFileService.saveNewDocument(documentFile, false);
+        fundingApplication.getDocuments().add(savedDocument);
+
+        save(fundingApplication);
+
+        return DocumentFileConverter.toDTO(savedDocument);
+    }
+
+    @Override
+    @Transactional
+    public DocumentFileResponseDTO updateFundingApplicationDocument(DocumentFileDTO documentFile) {
+        documentFile.setAccessRights(AccessRights.ALL_RIGHTS_RESERVED);
+        return documentFileService.editDocumentFile(documentFile, false);
+    }
+
+    @Override
+    @Transactional
+    public void deleteFundingApplicationDocument(Integer documentFileId,
+                                                 Integer fundingApplicationId) {
+        var documentFile = documentFileService.findOne(documentFileId);
+        var fundingApplication = findOne(fundingApplicationId);
+        fundingApplication.getDocuments().remove(documentFile);
+
+        documentFileService.delete(documentFileId);
+        save(fundingApplication);
     }
 
     private void setCommonFields(FundingApplication application,

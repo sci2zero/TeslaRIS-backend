@@ -4,11 +4,17 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AccessRights;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
+import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingApplicationDTO;
@@ -52,6 +58,9 @@ public class FundingApplicationServiceTest {
 
     @Mock
     private FundingService fundingService;
+
+    @Mock
+    private DocumentFileService documentFileService;
 
     @InjectMocks
     private FundingApplicationServiceImpl fundingApplicationService;
@@ -463,5 +472,156 @@ public class FundingApplicationServiceTest {
 
         // then
         verify(fundingApplicationIndexRepository).save(any(FundingApplicationIndex.class));
+    }
+
+    @Test
+    public void shouldAddDocumentToFundingApplication() {
+        // given
+        var fundingApplicationId = 1;
+        var documentFileDTO = new DocumentFileDTO();
+        documentFileDTO.setAccessRights(AccessRights.RESTRICTED_ACCESS);
+
+        var fundingApplication = createTestFundingApplication(fundingApplicationId);
+        fundingApplication.setDocuments(new HashSet<>());
+
+        var savedDocumentFile = new DocumentFile();
+        savedDocumentFile.setId(100);
+
+        var expectedResponse = new DocumentFileResponseDTO();
+        expectedResponse.setId(100);
+
+        when(fundingApplicationRepository.findById(fundingApplicationId))
+                .thenReturn(Optional.of(fundingApplication));
+        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false)))
+                .thenReturn(savedDocumentFile);
+        when(fundingApplicationRepository.save(any(FundingApplication.class)))
+                .thenReturn(fundingApplication);
+
+        try (var documentFileConverterMock = mockStatic(DocumentFileConverter.class)) {
+            documentFileConverterMock.when(() ->
+                            DocumentFileConverter.toDTO(savedDocumentFile))
+                    .thenReturn(expectedResponse);
+
+            // when
+            var result = fundingApplicationService.addFundingApplicationDocument(
+                    fundingApplicationId, documentFileDTO);
+
+            // then
+            assertNotNull(result);
+            assertEquals(100, result.getId());
+            verify(fundingApplicationRepository).findById(fundingApplicationId);
+            verify(documentFileService).saveNewDocument(any(DocumentFileDTO.class), eq(false));
+            verify(fundingApplicationRepository).save(any(FundingApplication.class));
+            documentFileConverterMock.verify(() ->
+                    DocumentFileConverter.toDTO(savedDocumentFile), times(1));
+        }
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenAddingDocumentToNonExistentFundingApplication() {
+        // given
+        var fundingApplicationId = 999;
+        var documentFileDTO = new DocumentFileDTO();
+
+        when(fundingApplicationRepository.findById(fundingApplicationId))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(Exception.class, () ->
+                fundingApplicationService.addFundingApplicationDocument(
+                        fundingApplicationId, documentFileDTO));
+        verify(fundingApplicationRepository).findById(fundingApplicationId);
+        verify(documentFileService, never()).saveNewDocument(any(), anyBoolean());
+    }
+
+    @Test
+    public void shouldUpdateFundingApplicationDocument() {
+        // given
+        var documentFileDTO = new DocumentFileDTO();
+        documentFileDTO.setAccessRights(AccessRights.RESTRICTED_ACCESS);
+        documentFileDTO.setId(100);
+
+        var expectedResponse = new DocumentFileResponseDTO();
+        expectedResponse.setId(100);
+
+        when(documentFileService.editDocumentFile(any(DocumentFileDTO.class), eq(false)))
+                .thenReturn(expectedResponse);
+
+        // when
+        var result = fundingApplicationService.updateFundingApplicationDocument(documentFileDTO);
+
+        // then
+        assertNotNull(result);
+        assertEquals(100, result.getId());
+        verify(documentFileService).editDocumentFile(any(DocumentFileDTO.class), eq(false));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenUpdatingNonExistentDocument() {
+        // given
+        var documentFileDTO = new DocumentFileDTO();
+        documentFileDTO.setId(999);
+
+        when(documentFileService.editDocumentFile(any(DocumentFileDTO.class), eq(false)))
+                .thenThrow(new RuntimeException("Document not found"));
+
+        // when & then
+        assertThrows(RuntimeException.class, () ->
+                fundingApplicationService.updateFundingApplicationDocument(documentFileDTO));
+        verify(documentFileService).editDocumentFile(any(DocumentFileDTO.class), eq(false));
+    }
+
+    @Test
+    public void shouldDeleteFundingApplicationDocument() {
+        // given
+        var documentFileId = 100;
+        var fundingApplicationId = 1;
+
+        var documentFile = new DocumentFile();
+        documentFile.setId(documentFileId);
+
+        var fundingApplication = createTestFundingApplication(fundingApplicationId);
+        fundingApplication.setDocuments(new HashSet<>(Set.of(documentFile)));
+
+        when(documentFileService.findOne(documentFileId))
+                .thenReturn(documentFile);
+        when(fundingApplicationRepository.findById(fundingApplicationId))
+                .thenReturn(Optional.of(fundingApplication));
+        doNothing().when(documentFileService).delete(documentFileId);
+        when(fundingApplicationRepository.save(any(FundingApplication.class)))
+                .thenReturn(fundingApplication);
+
+        // when
+        fundingApplicationService.deleteFundingApplicationDocument(
+                documentFileId, fundingApplicationId);
+
+        // then
+        verify(documentFileService).findOne(documentFileId);
+        verify(fundingApplicationRepository).findById(fundingApplicationId);
+        verify(documentFileService).delete(documentFileId);
+        verify(fundingApplicationRepository).save(any(FundingApplication.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenDeletingDocumentFromNonExistentFundingApplication() {
+        // given
+        var documentFileId = 100;
+        var fundingApplicationId = 999;
+
+        var documentFile = new DocumentFile();
+        documentFile.setId(documentFileId);
+
+        when(documentFileService.findOne(documentFileId))
+                .thenReturn(documentFile);
+        when(fundingApplicationRepository.findById(fundingApplicationId))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(Exception.class, () ->
+                fundingApplicationService.deleteFundingApplicationDocument(
+                        documentFileId, fundingApplicationId));
+        verify(documentFileService).findOne(documentFileId);
+        verify(fundingApplicationRepository).findById(fundingApplicationId);
+        verify(documentFileService, never()).delete(anyInt());
     }
 }
