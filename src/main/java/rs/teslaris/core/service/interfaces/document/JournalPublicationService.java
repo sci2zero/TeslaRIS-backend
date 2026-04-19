@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.dto.document.JournalPublicationDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
+import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.document.JournalPublication;
 
 @Service
@@ -18,7 +19,9 @@ public interface JournalPublicationService {
 
     List<DocumentPublicationIndex> findMyPublicationsInJournal(Integer journalId, Integer authorId);
 
-    Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId, Pageable pageable);
+    Page<DocumentPublicationIndex> findPublicationsInJournal(Integer journalId,
+                                                             DocumentPublicationType publicationType,
+                                                             Pageable pageable);
 
     JournalPublication createJournalPublication(JournalPublicationDTO journalPublicationDTO,
                                                 Boolean index);

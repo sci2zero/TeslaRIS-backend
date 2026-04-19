@@ -189,10 +189,12 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                          Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId,
-                                         Integer commissionId, Boolean emptyEventsOnly) {
+                                         Integer commissionId, Boolean emptyEventsOnly,
+                                         Boolean noContributionEventsOnly) {
         return searchService.runQuery(
             buildSimpleSearchQuery(tokens, eventTypes, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly),
+                returnOnlySerialEvents, commissionInstitutionId, commissionId,
+                emptyEventsOnly, noContributionEventsOnly),
             pageable, EventIndex.class, "events");
     }
 
@@ -346,7 +348,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                                          Boolean returnOnlyNonSerialEvents,
                                          Boolean returnOnlySerialEvents,
                                          Integer commissionInstitutionId,
-                                         Integer commissionId, Boolean emptyEventsOnly) {
+                                         Integer commissionId, Boolean emptyEventsOnly,
+                                         Boolean noContributionEventsOnly) {
         boolean onlyYearTokens =
             tokens.stream().allMatch(token -> token.matches("\\d{4}"));
 
@@ -448,6 +451,10 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
             if (Objects.nonNull(emptyEventsOnly) && emptyEventsOnly) {
                 b.must(sb -> sb.match(m -> m.field("has_proceedings").query(false)));
+            }
+
+            if (Objects.nonNull(noContributionEventsOnly) && noContributionEventsOnly) {
+                b.mustNot(mn -> mn.exists(e -> e.field("related_person_ids")));
             }
 
             if (Objects.nonNull(commissionId)) {

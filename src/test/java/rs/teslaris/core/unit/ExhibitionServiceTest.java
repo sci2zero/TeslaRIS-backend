@@ -98,10 +98,10 @@ public class ExhibitionServiceTest {
 
     static Stream<Arguments> shouldFindExhibitionWhenSearchingWithSimpleQuery() {
         return Stream.of(
-            Arguments.of(true, true, null, null, null),
-            Arguments.of(true, false, 1, null, null),
-            Arguments.of(false, true, null, 1, true),
-            Arguments.of(false, false, 1, 1, false)
+            Arguments.of(true, true, null, null, null, null),
+            Arguments.of(true, false, 1, null, null, null),
+            Arguments.of(false, true, null, 1, true, false),
+            Arguments.of(false, false, 1, 1, false, true)
         );
     }
 
@@ -266,7 +266,8 @@ public class ExhibitionServiceTest {
                                                                  boolean returnOnlySerialEvents,
                                                                  Integer commissionInstitutionId,
                                                                  Integer commissionId,
-                                                                 Boolean emptyEventsOnly) {
+                                                                 Boolean emptyEventsOnly,
+                                                                 Boolean noContributionEventsOnly) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -277,7 +278,8 @@ public class ExhibitionServiceTest {
         // When
         var result =
             exhibitionService.searchExhibitions(tokens, pageable, returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
+                returnOnlySerialEvents, commissionInstitutionId, commissionId,
+                emptyEventsOnly, noContributionEventsOnly);
 
         // Then
         assertEquals(result.getTotalElements(), 2L);

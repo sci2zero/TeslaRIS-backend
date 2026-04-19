@@ -45,6 +45,8 @@ public class EventController {
         @RequestParam(value = "unclassified", defaultValue = "false") Boolean unclassified,
         @RequestParam(value = "emptyEventsOnly", defaultValue = "false") Boolean emptyEventsOnly,
         @RequestParam(value = "eventTypes", required = false) List<EventType> eventTypes,
+        @RequestParam(value = "noContributionEventsOnly", defaultValue = "false")
+        Boolean noContributionEventsOnly,
         @RequestHeader(value = "Authorization", defaultValue = "") String bearerToken,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
@@ -55,7 +57,7 @@ public class EventController {
                     tokens, pageable, eventTypes,
                     returnOnlyNonSerialEvents, returnOnlySerialEvents,
                     null, unclassified ? commissionId : null,
-                    emptyEventsOnly);
+                    emptyEventsOnly, noContributionEventsOnly);
             } else if (tokenUtil.extractUserRoleFromToken(bearerToken)
                 .equals(UserRole.COMMISSION.name())) {
                 var userId = tokenUtil.extractUserIdFromToken(bearerToken);
@@ -65,14 +67,15 @@ public class EventController {
                     returnOnlyNonSerialEvents, returnOnlySerialEvents,
                     forMyInstitution ? userService.getUserOrganisationUnitId(userId) : null,
                     unclassified ? userService.getUserCommissionId(userId) : null,
-                    false);
+                    false, false);
             }
         }
 
         return eventService.searchEvents(
             tokens, pageable, eventTypes,
             returnOnlyNonSerialEvents, returnOnlySerialEvents,
-            null, null, false
+            null, null,
+            false, false
         );
     }
 }

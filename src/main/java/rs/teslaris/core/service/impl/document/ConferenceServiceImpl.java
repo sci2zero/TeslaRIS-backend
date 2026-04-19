@@ -97,10 +97,11 @@ public class ConferenceServiceImpl extends EventServiceImpl implements Conferenc
                                               Boolean returnOnlySerialEvents,
                                               Integer commissionInstitutionId,
                                               Integer commissionId,
-                                              Boolean emptyEventsOnly) {
+                                              Boolean emptyEventsOnly,
+                                              Boolean noContributionEventsOnly) {
         return searchEvents(tokens, pageable, List.of(EventType.CONFERENCE),
             returnOnlyNonSerialEvents, returnOnlySerialEvents,
-            commissionInstitutionId, commissionId, emptyEventsOnly);
+            commissionInstitutionId, commissionId, emptyEventsOnly, noContributionEventsOnly);
     }
 
     @Override
