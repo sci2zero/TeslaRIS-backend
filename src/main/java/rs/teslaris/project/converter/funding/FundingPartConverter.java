@@ -13,13 +13,26 @@ public class FundingPartConverter {
         var dto = new FundingPartDTO();
 
         dto.setId(fundingPart.getId());
-        dto.setFundingId(fundingPart.getFunding().getId());
-        dto.setProjectEventId(fundingPart.getProjectEvent().getId());
-        dto.setFundingApplicationId(fundingPart.getFundingApplication().getId());
-        dto.setProjectDocumentId(fundingPart.getProjectDocument().getId());
-        dto.setPersonProjectContributionId(fundingPart.getPersonProjectContribution().getId());
-        dto.setOrganisationUnitProjectContributionId(
-                fundingPart.getOrganisationUnitProjectContribution().getId());
+
+        if (Objects.nonNull(fundingPart.getFunding())) {
+            dto.setFundingId(fundingPart.getFunding().getId());
+        }
+        if (Objects.nonNull(fundingPart.getProjectEvent())) {
+            dto.setProjectEventId(fundingPart.getProjectEvent().getId());
+        }
+        if (Objects.nonNull(fundingPart.getFundingApplication())) {
+            dto.setFundingApplicationId(fundingPart.getFundingApplication().getId());
+        }
+        if (Objects.nonNull(fundingPart.getProjectDocument())) {
+            dto.setProjectDocumentId(fundingPart.getProjectDocument().getId());
+        }
+        if (Objects.nonNull(fundingPart.getPersonProjectContribution())) {
+            dto.setPersonProjectContributionId(fundingPart.getPersonProjectContribution().getId());
+        }
+        if (Objects.nonNull(fundingPart.getOrganisationUnitProjectContribution())) {
+            dto.setOrganisationUnitProjectContributionId(
+                    fundingPart.getOrganisationUnitProjectContribution().getId());
+        }
 
         dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
                 fundingPart.getDescription()));

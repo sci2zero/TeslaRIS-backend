@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import rs.teslaris.core.applicationevent.ProjectEventReindexingEvent;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.project.service.interfaces.commontypes.ProjectReindexService;
+import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
 
@@ -24,6 +25,8 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
 
     private final FundingCallService fundingCallService;
 
+    private final FundingApplicationService fundingApplicationService;
+
 
     @Override
     public void reindexDatabase(List<EntityType> indexesToRepopulate) {
@@ -35,6 +38,10 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
 
         if (indexesToRepopulate.contains(EntityType.FUNDING_CALL)) {
             futures.add(fundingCallService.reindexFundingCalls());
+        }
+
+        if (indexesToRepopulate.contains(EntityType.FUNDING_APPLICATION)) {
+            futures.add(fundingApplicationService.reindexFundingApplications());
         }
 
         try {

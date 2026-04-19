@@ -18,5 +18,6 @@ public enum EntityType {
     ASSESSMENT_POINTS,
     FUNDING_PROGRAM,
     FUNDING_CALL,
-    PROJECT
+    PROJECT,
+    FUNDING_APPLICATION
 }
