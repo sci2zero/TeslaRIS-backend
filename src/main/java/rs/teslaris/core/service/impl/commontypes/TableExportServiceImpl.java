@@ -260,7 +260,7 @@ public class TableExportServiceImpl implements TableExportService {
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
                     false, onlyUnmanaged, documentSpecificFilters.a,
                     Boolean.parseBoolean(endpointTokenParameters.getFirst()),
-                    null, null, null);
+                    null, null, null, null);
             case AUTHOR_REPRINT_DOCUMENTS_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
@@ -268,7 +268,7 @@ public class TableExportServiceImpl implements TableExportService {
                     SearchRequestType.SIMPLE, documentSpecificFilters.b, documentSpecificFilters.c,
                     true, null, documentSpecificFilters.a,
                     Boolean.parseBoolean(endpointTokenParameters.getFirst()),
-                    null, null, null);
+                    null, null, null, null);
             case DOCUMENT_ADVANCED_SEARCH, THESIS_ADVANCED_SEARCH ->
                 (Page<T>) documentPublicationService.searchDocumentPublications(
                     Arrays.stream(endpointTokenParameters.getLast().split("tokens="))
@@ -277,7 +277,7 @@ public class TableExportServiceImpl implements TableExportService {
                     documentSpecificFilters.c, null, onlyUnmanaged,
                     documentSpecificFilters.a,
                     Boolean.parseBoolean(endpointTokenParameters.getFirst()),
-                    null, null, null);
+                    null, null, null, null);
             case ORGANISATION_UNIT_SEARCH ->
                 (Page<T>) organisationUnitService.searchOrganisationUnits(
                     Arrays.stream(endpointTokenParameters.getFirst().split("tokens="))

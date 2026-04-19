@@ -87,10 +87,10 @@ public class EventServiceTest {
 
     static Stream<Arguments> shouldFindConferenceWhenSearchingWithSimpleQuery_arguments() {
         return Stream.of(
-            Arguments.of(EventType.CONFERENCE, true, true, null, null, null),
-            Arguments.of(EventType.CONFERENCE, true, false, 1, null, null),
-            Arguments.of(EventType.CONFERENCE, false, true, null, 1, true),
-            Arguments.of(EventType.CONFERENCE, false, false, 1, 1, false)
+            Arguments.of(EventType.CONFERENCE, true, true, null, null, null, null),
+            Arguments.of(EventType.CONFERENCE, true, false, 1, null, null, null),
+            Arguments.of(EventType.CONFERENCE, false, true, null, 1, true, false),
+            Arguments.of(EventType.CONFERENCE, false, false, 1, 1, false, true)
         );
     }
 
@@ -180,7 +180,8 @@ public class EventServiceTest {
                                                                  boolean returnOnlySerialEvents,
                                                                  Integer commissionInstitutionId,
                                                                  Integer commissionId,
-                                                                 Boolean emptyEventsOnly) {
+                                                                 Boolean emptyEventsOnly,
+                                                                 Boolean noContributionEventsOnly) {
         // Given
         var tokens = Arrays.asList("ključna", "ријеч", "keyword");
         var pageable = PageRequest.of(0, 10);
@@ -191,8 +192,8 @@ public class EventServiceTest {
         // When
         var result =
             eventService.searchEvents(tokens, pageable, List.of(eventType),
-                returnOnlyNonSerialEvents,
-                returnOnlySerialEvents, commissionInstitutionId, commissionId, emptyEventsOnly);
+                returnOnlyNonSerialEvents, returnOnlySerialEvents, commissionInstitutionId,
+                commissionId, emptyEventsOnly, noContributionEventsOnly);
 
         // Then
         assertEquals(2L, result.getTotalElements());

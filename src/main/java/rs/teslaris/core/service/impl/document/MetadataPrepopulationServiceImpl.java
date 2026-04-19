@@ -222,7 +222,8 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
                 List.of(metadata.getPublishedInName().split(" ")),
                 PageRequest.of(0, 3),
                 false, false,
-                null, null, null).getContent()
+                null, null,
+                null, null).getContent()
             .stream()
             .filter(conference ->
                 conference.getNameSr().trim()
