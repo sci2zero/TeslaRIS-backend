@@ -121,17 +121,8 @@ public class ProjectDataInitializer {
 
         fundingPartRepository.saveAll(List.of(fundingPart1, fundingPart2));
 
-        var fundingCallForApplications = new FundingCall();
-        fundingCallForApplications.setName(
-                Set.of(new MultiLingualContent(englishTag, "Funding Call For Applications", 1)));
-        fundingCallForApplications.setDateFrom(LocalDate.of(2020, 1, 1));
-        fundingCallForApplications.setDateTo(LocalDate.of(2030, 12, 31));
-        fundingCallForApplications.setFundingProgram(fundingProgram1);
-        fundingCallForApplications.setFunder(fundingProgram1.getFunder());
-        fundingCallRepository.save(fundingCallForApplications);
-
         var fundingApplication1 = new FundingApplication();
-        fundingApplication1.setFundingCall(fundingCallForApplications);
+        fundingApplication1.setFundingCall(fundingCall1);
         fundingApplicationRepository.save(fundingApplication1);
 
         fundingPart1.setFundingApplication(fundingApplication1);

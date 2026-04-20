@@ -31,7 +31,7 @@ public class FundingApplicationControllerTest extends BaseTest {
     public static FundingApplicationDTO getTestPayload() {
         var dto = new FundingApplicationDTO();
 
-        dto.setFundingCallId(3);
+        dto.setFundingCallId(1);
 
         var descriptionList = new ArrayList<MultilingualContentDTO>();
         var englishDesc = new MultilingualContentDTO();
@@ -77,10 +77,10 @@ public class FundingApplicationControllerTest extends BaseTest {
         fundingPartList.add(fundingPart);
         dto.setOtherFundingSources(fundingPartList);
 
-        dto.setSubmissionDate(LocalDate.of(2025, 6, 15));
-        dto.setReviewDateFrom(LocalDate.of(2025, 7, 1));
-        dto.setReviewDateTo(LocalDate.of(2025, 7, 31));
-        dto.setDecisionDate(LocalDate.of(2025, 8, 15));
+        dto.setSubmissionDate(null);
+        dto.setReviewDateFrom(null);
+        dto.setReviewDateTo(null);
+        dto.setDecisionDate(null);
         dto.setResult(FundingApplicationResult.AWARDED);
 
         return dto;
@@ -112,6 +112,7 @@ public class FundingApplicationControllerTest extends BaseTest {
                                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                                 .header("Idempotency-Key", "MOCK_KEY_FUNDING_APPLICATION"))
+                .andDo(print())
                 .andExpect(status().isCreated());
     }
 
@@ -128,6 +129,7 @@ public class FundingApplicationControllerTest extends BaseTest {
                                         "http://localhost:8081/api/funding-application/{fundingApplicationId}", 1)
                                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andDo(print())
                 .andExpect(status().isNoContent());
     }
 
