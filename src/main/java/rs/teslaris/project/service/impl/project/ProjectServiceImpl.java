@@ -9,7 +9,6 @@ import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
-import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.project.ProjectConverter;
 import rs.teslaris.project.dto.project.ProjectDTO;
@@ -64,6 +63,22 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
 
     @Override
     @Transactional
+    public void updateProject(Integer projectId,
+                                  ProjectDTO projectDTO) {
+        var projectToUpdate = findOne(projectId);
+
+        clearCommonFields(projectToUpdate);
+        setCommonFields(projectToUpdate, projectDTO);
+
+        projectIndexRepository.findProjectIndexByDatabaseId(projectId)
+                .ifPresent(index -> {
+                    indexCommonFields(projectToUpdate, index);
+                    projectIndexRepository.save(index);
+                });
+    }
+
+    @Override
+    @Transactional
     public void deleteProject(Integer projectId) {
         delete(projectId);
     }
@@ -110,6 +125,14 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         } else {
             project.setCosts(null);
         }
+    }
+
+    private void clearCommonFields(Project project) {
+        project.getName().clear();
+        project.getDescription().clear();
+        project.getNameAbbreviation().clear();
+        project.getKeywords().clear();
+        project.getResearchAreas().clear();
     }
 
     private ProjectIndex indexCommonFields(Project project, ProjectIndex index) {

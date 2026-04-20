@@ -113,7 +113,7 @@ public class ProjectControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testCreateFundingCall() throws Exception {
+    public void testCreateProject() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
         var geneticMaterialDTO = getTestPayload();
@@ -124,6 +124,21 @@ public class ProjectControllerTest extends BaseTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                         .header("Idempotency-Key", "MOCK_KEY_PROJECT"))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testUpdateProject() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var geneticMaterialDTO = getTestPayload();
+
+        String requestBody = objectMapper.writeValueAsString(geneticMaterialDTO);
+        mockMvc.perform(MockMvcRequestBuilders.put(
+                                "http://localhost:8081/api/project/{project}", 1)
+                        .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isNoContent());
     }
 
     @Test

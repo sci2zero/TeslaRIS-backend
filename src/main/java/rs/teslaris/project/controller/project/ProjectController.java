@@ -34,6 +34,14 @@ public class ProjectController {
         return projectDTO;
     }
 
+    @PutMapping("/{projectId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateProject(@PathVariable Integer projectId,
+                                  @RequestBody @Valid ProjectDTO projectDTO) {
+        projectService.updateProject(projectId, projectDTO);
+    }
+
     @DeleteMapping("/{projectId}")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

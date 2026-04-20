@@ -12,5 +12,7 @@ public interface ProjectService extends JPAService<Project> {
 
     Project createProject(ProjectDTO projectDTO);
 
+    void updateProject(Integer projectId, ProjectDTO projectDTO);
+
     void deleteProject(Integer projectId);
 }
