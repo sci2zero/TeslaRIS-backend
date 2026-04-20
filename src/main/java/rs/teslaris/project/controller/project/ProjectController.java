@@ -33,4 +33,11 @@ public class ProjectController {
 
         return projectDTO;
     }
+
+    @DeleteMapping("/{projectId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProjects(@PathVariable Integer projectId) {
+        projectService.deleteProject(projectId);
+    }
 }

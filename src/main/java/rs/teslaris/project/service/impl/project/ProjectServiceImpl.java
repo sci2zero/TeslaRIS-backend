@@ -9,6 +9,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.project.ProjectConverter;
 import rs.teslaris.project.dto.project.ProjectDTO;
@@ -59,6 +60,12 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 indexCommonFields(savedProject, new ProjectIndex()));
 
         return savedProject;
+    }
+
+    @Override
+    @Transactional
+    public void deleteProject(Integer projectId) {
+        delete(projectId);
     }
 
     private void setCommonFields(Project project, ProjectDTO projectDTO) {

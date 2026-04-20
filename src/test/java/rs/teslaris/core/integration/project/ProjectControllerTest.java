@@ -12,9 +12,7 @@ import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
-import rs.teslaris.project.dto.funding.FundingCallDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.model.funding.FundingType;
 import rs.teslaris.project.model.project.ProjectCollaborationType;
 import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
@@ -126,6 +124,18 @@ public class ProjectControllerTest extends BaseTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                         .header("Idempotency-Key", "MOCK_KEY_PROJECT"))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testDeleteProject() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(MockMvcRequestBuilders.delete(
+                                    "http://localhost:8081/api/project/{projectId}", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isNoContent());
     }
 
 }
