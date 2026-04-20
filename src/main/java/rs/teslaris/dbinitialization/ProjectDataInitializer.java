@@ -138,6 +138,7 @@ public class ProjectDataInitializer {
         project1.setResearchType(ProjectResearchType.OTHER);
         project1.setDateFrom(LocalDate.of(2023, 1, 1));
         project1.setDateTo(LocalDate.of(2026, 12, 31));
+        project1.setCosts(new MonetaryAmount(100000, currencyEuro));
 
         projectRepository.save(project1);
     }

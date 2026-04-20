@@ -10,4 +10,6 @@ public interface ProjectService extends JPAService<Project> {
 
     ProjectDTO readProject(Integer projectId);
 
+    Project createProject(ProjectDTO projectDTO);
+
 }
