@@ -134,7 +134,7 @@ public class ProjectDataInitializer {
         funding2.setDateTo(LocalDate.of(2024, 3, 17));
         funding2.setAmount(new MonetaryAmount(1000000, currencyEuro));
         funding1.setFunder(funder1);
-        funding1.setFundingCall(fundingCall2);
+        funding1.setFundingCall(fundingCall1);
         funding1.setProject(project2);
 
         var funding3 = new Funding();
@@ -143,7 +143,7 @@ public class ProjectDataInitializer {
         funding1.setDateTo(LocalDate.of(2025, 3, 17));
         funding3.setAmount(new MonetaryAmount(1000000000, currencyEuro));
         funding1.setFunder(funder1);
-        funding1.setFundingCall(fundingCall2);
+        funding1.setFundingCall(fundingCall1);
         funding1.setProject(project1);
 
         fundingRepository.saveAll(List.of(funding1, funding2, funding3));
