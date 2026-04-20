@@ -31,7 +31,7 @@ public class FundingApplicationControllerTest extends BaseTest {
     public static FundingApplicationDTO getTestPayload() {
         var dto = new FundingApplicationDTO();
 
-        dto.setFundingCallId(1);
+        dto.setFundingCallId(3);
 
         var descriptionList = new ArrayList<MultilingualContentDTO>();
         var englishDesc = new MultilingualContentDTO();
