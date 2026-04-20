@@ -1,6 +1,7 @@
 package rs.teslaris.project.service.impl.project;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.project.ProjectConverter;
 import rs.teslaris.project.dto.project.ProjectDTO;
@@ -21,6 +23,7 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -81,6 +84,26 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     @Transactional
     public void deleteProject(Integer projectId) {
         delete(projectId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CompletableFuture<Void> reindexProject() {
+        FunctionalUtil.processAllPages(
+                100,
+                Sort.by(Sort.Direction.ASC, "id"),
+                this::findAll,
+                project -> indexProject(project, new ProjectIndex())
+        );
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void indexProject(Project project, ProjectIndex index) {
+        indexCommonFields(project, index);
+        projectIndexRepository.save(index);
     }
 
     private void setCommonFields(Project project, ProjectDTO projectDTO) {
