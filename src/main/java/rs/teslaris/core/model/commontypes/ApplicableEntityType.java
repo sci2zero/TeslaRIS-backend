@@ -1,4 +1,4 @@
-package rs.teslaris.assessment.model.indicator;
+package rs.teslaris.core.model.commontypes;
 
 public enum ApplicableEntityType {
     MONOGRAPH,

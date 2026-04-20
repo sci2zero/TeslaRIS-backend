@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.classification.AssessmentClassificationDTO;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
