@@ -1,6 +1,7 @@
 package rs.teslaris.dbinitialization;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -108,6 +109,18 @@ public class ProjectDataInitializer {
 
         fundingRepository.saveAll(List.of(funding1, funding2, funding3));
 
+        var fundingPart1 = new FundingPart();
+        fundingPart1.setDescription(new HashSet<>(Set.of(new MultiLingualContent(englishTag, "Small Part", 1))));
+        fundingPart1.setAmount(new MonetaryAmount(3000, currencyEuro));
+        fundingPart1.setFunding(funding3);
+
+        var fundingPart2 = new FundingPart();
+        fundingPart2.setDescription(new HashSet<>(Set.of(new MultiLingualContent(englishTag, "Big Part", 1))));
+        fundingPart2.setAmount(new MonetaryAmount(10000, currencyEuro));
+        fundingPart2.setFunding(funding3);
+
+        fundingPartRepository.saveAll(List.of(fundingPart1, fundingPart2));
+
         var fundingCallForApplications = new FundingCall();
         fundingCallForApplications.setName(
                 Set.of(new MultiLingualContent(englishTag, "Funding Call For Applications", 1)));
@@ -121,18 +134,9 @@ public class ProjectDataInitializer {
         fundingApplication1.setFundingCall(fundingCallForApplications);
         fundingApplicationRepository.save(fundingApplication1);
 
-        var fundingPart1 = new FundingPart();
-        fundingPart1.setDescription(Set.of(new MultiLingualContent(englishTag, "Small Part", 1)));
-        fundingPart1.setAmount(new MonetaryAmount(3000, currencyEuro));
-        fundingPart1.setFunding(funding3);
         fundingPart1.setFundingApplication(fundingApplication1);
-
-        var fundingPart2 = new FundingPart();
-        fundingPart2.setDescription(Set.of(new MultiLingualContent(englishTag, "Big Part", 1)));
-        fundingPart2.setAmount(new MonetaryAmount(10000, currencyEuro));
-        fundingPart2.setFunding(funding3);
         fundingPart2.setFundingApplication(fundingApplication1);
-
         fundingPartRepository.saveAll(List.of(fundingPart1, fundingPart2));
+
     }
 }
