@@ -32,6 +32,7 @@ public class FundingApplicationController {
     @PostMapping
     @PreAuthorize("hasAuthority('EDIT_FUNDING_APPLICATIONS')")
     @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
     public FundingApplicationDTO createFundingApplication(
             @RequestBody @Valid FundingApplicationDTO fundingApplicationDTO) {
         var savedFundingApplication = fundingApplicationService.createFundingApplication(fundingApplicationDTO);

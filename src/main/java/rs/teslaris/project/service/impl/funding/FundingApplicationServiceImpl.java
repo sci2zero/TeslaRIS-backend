@@ -100,10 +100,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
         fundingApplicationIndexRepository
                 .findFundingApplicationIndexByDatabaseId(fundingApplicationId)
-                .ifPresent(index -> {
-                    indexCommonFields(applicationToUpdate, index);
-                    fundingApplicationIndexRepository.save(index);
-                });
+                .ifPresent(index -> indexFundingApplication(applicationToUpdate, index));
     }
 
     @Override
