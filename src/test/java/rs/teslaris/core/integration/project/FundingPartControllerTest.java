@@ -16,7 +16,6 @@ import rs.teslaris.project.dto.funding.FundingPartDTO;
 
 import java.util.ArrayList;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -69,8 +68,7 @@ public class FundingPartControllerTest extends BaseTest {
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_FUNDING_PART"))
-                .andDo(print())
-                .andExpect(status().isCreated());
+            .andExpect(status().isCreated());
     }
 
     @Test
@@ -85,7 +83,6 @@ public class FundingPartControllerTest extends BaseTest {
                     "http://localhost:8081/api/funding-part/{fundingPartId}", 1)
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andDo(print())
             .andExpect(status().isNoContent());
     }
 

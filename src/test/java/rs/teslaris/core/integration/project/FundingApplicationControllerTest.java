@@ -77,10 +77,10 @@ public class FundingApplicationControllerTest extends BaseTest {
         fundingPartList.add(fundingPart);
         dto.setOtherFundingSources(fundingPartList);
 
-        dto.setSubmissionDate(null);
-        dto.setReviewDateFrom(null);
-        dto.setReviewDateTo(null);
-        dto.setDecisionDate(null);
+        dto.setSubmissionDate(LocalDate.of(2020, 6, 15));
+        dto.setReviewDateFrom(LocalDate.of(2020, 7, 1));
+        dto.setReviewDateTo(LocalDate.of(2020, 7, 31));
+        dto.setDecisionDate(LocalDate.of(2020, 8, 15));
         dto.setResult(FundingApplicationResult.AWARDED);
 
         return dto;
