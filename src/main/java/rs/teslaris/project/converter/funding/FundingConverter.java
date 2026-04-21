@@ -34,6 +34,14 @@ public class FundingConverter {
             dto.setProjectId(funding.getProject().getId());
         }
 
+        if (Objects.nonNull(funding.getFunder())) {
+            dto.setFunderId(funding.getFunder().getId());
+        }
+
+        if (Objects.nonNull(funding.getFundingCall())) {
+            dto.setFunderId(funding.getFundingCall().getId());
+        }
+
         mapTranslations(funding, dto);
         mapCollectionsAndAmount(funding, dto);
 
