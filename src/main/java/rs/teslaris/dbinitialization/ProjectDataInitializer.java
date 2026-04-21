@@ -129,6 +129,9 @@ public class ProjectDataInitializer {
         var fundingApplication1 = new FundingApplication();
         fundingApplication1.setFundingCall(fundingCall1);
 
-        fundingApplicationRepository.save(fundingApplication1);
+        var fundingApplication2 = new FundingApplication();
+        fundingApplication2.setFundingCall(fundingCall1);
+
+        fundingApplicationRepository.saveAll(List.of(fundingApplication1, fundingApplication2));
     }
 }

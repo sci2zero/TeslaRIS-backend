@@ -140,7 +140,7 @@ public class FundingApplicationControllerTest extends BaseTest {
 
         mockMvc.perform(
                         MockMvcRequestBuilders.delete(
-                                        "http://localhost:8081/api/funding-application/{fundingApplicationId}", 1)
+                                        "http://localhost:8081/api/funding-application/{fundingApplicationId}", 2)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
                 .andExpect(status().isNoContent());
