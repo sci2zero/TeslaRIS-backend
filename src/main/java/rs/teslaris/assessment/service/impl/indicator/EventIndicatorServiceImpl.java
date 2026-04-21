@@ -21,7 +21,6 @@ import rs.teslaris.core.service.interfaces.document.EventService;
 import rs.teslaris.core.service.interfaces.user.UserService;
 
 @Service
-@Transactional
 @Traceable
 public class EventIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements EventIndicatorService {
@@ -50,6 +49,7 @@ public class EventIndicatorServiceImpl extends EntityIndicatorServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EntityIndicatorResponseDTO> getIndicatorsForEvent(Integer eventId,
                                                                   AccessLevel accessLevel) {
         return eventIndicatorRepository.findIndicatorsForEventAndIndicatorAccessLevel(eventId,
@@ -58,6 +58,7 @@ public class EventIndicatorServiceImpl extends EntityIndicatorServiceImpl
     }
 
     @Override
+    @Transactional
     public EventIndicator createEventIndicator(EventIndicatorDTO eventIndicatorDTO,
                                                Integer userId) {
         var newEventIndicator = new EventIndicator();
@@ -72,6 +73,7 @@ public class EventIndicatorServiceImpl extends EntityIndicatorServiceImpl
     }
 
     @Override
+    @Transactional
     public void updateEventIndicator(Integer eventIndicatorId,
                                      EventIndicatorDTO eventIndicatorDTO) {
         var eventIndicatorToUpdate = eventIndicatorJPAService.findOne(eventIndicatorId);

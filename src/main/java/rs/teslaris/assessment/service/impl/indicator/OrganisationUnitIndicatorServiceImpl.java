@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.EntityIndicatorConverter;
 import rs.teslaris.assessment.dto.indicator.EntityIndicatorResponseDTO;
 import rs.teslaris.assessment.repository.indicator.EntityIndicatorRepository;
@@ -32,6 +33,7 @@ public class OrganisationUnitIndicatorServiceImpl extends EntityIndicatorService
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EntityIndicatorResponseDTO> getIndicatorsForOrganisationUnit(
         Integer organisationUnitId,
         AccessLevel accessLevel) {

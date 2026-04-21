@@ -14,7 +14,6 @@ import rs.teslaris.assessment.model.classification.DocumentAssessmentClassificat
 import rs.teslaris.assessment.model.classification.EntityAssessmentClassification;
 import rs.teslaris.assessment.model.classification.EventAssessmentClassification;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.repository.classification.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.service.interfaces.CommissionService;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
@@ -24,6 +23,7 @@ import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.applicationevent.ResearcherPointsReindexingEvent;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EventType;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;

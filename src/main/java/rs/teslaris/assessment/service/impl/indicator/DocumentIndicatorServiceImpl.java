@@ -24,7 +24,6 @@ import rs.teslaris.core.service.interfaces.user.UserService;
 import rs.teslaris.core.util.exceptionhandling.exception.ThesisException;
 
 @Service
-@Transactional
 @Traceable
 public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements DocumentIndicatorService {
@@ -54,6 +53,7 @@ public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EntityIndicatorResponseDTO> getIndicatorsForDocument(Integer documentId,
                                                                      AccessLevel accessLevel) {
         return documentIndicatorRepository.findIndicatorsForDocumentAndIndicatorAccessLevel(
@@ -62,6 +62,7 @@ public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
     }
 
     @Override
+    @Transactional
     public DocumentIndicator createDocumentIndicator(DocumentIndicatorDTO documentIndicatorDTO,
                                                      Integer userId) {
         var newDocumentIndicator = new DocumentIndicator();
@@ -84,6 +85,7 @@ public class DocumentIndicatorServiceImpl extends EntityIndicatorServiceImpl
     }
 
     @Override
+    @Transactional
     public void updateDocumentIndicator(Integer documentIndicatorId,
                                         DocumentIndicatorDTO documentIndicatorDTO) {
         var documentIndicatorToUpdate = documentIndicatorJPAService.findOne(documentIndicatorId);

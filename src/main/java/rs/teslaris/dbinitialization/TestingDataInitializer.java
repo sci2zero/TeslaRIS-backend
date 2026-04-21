@@ -19,7 +19,6 @@ import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.EventAssessmentClassification;
 import rs.teslaris.assessment.model.classification.PrizeAssessmentClassification;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
 import rs.teslaris.assessment.model.indicator.EventIndicator;
 import rs.teslaris.assessment.model.indicator.Indicator;
@@ -37,6 +36,7 @@ import rs.teslaris.assessment.repository.indicator.IndicatorRepository;
 import rs.teslaris.core.dto.commontypes.ExportFileType;
 import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.GeoLocation;
@@ -82,6 +82,8 @@ import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.identifier.EventIdentifier;
+import rs.teslaris.core.model.identifier.Identifier;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
@@ -127,6 +129,8 @@ import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.repository.identifier.EventIdentifierRepository;
+import rs.teslaris.core.repository.identifier.IdentifierRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.EmploymentPositionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -223,6 +227,10 @@ public class TestingDataInitializer {
     private final CourseRepository courseRepository;
 
     private final OtherEventRepository otherEventRepository;
+
+    private final IdentifierRepository identifierRepository;
+
+    private final EventIdentifierRepository eventIdentifierRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1318,5 +1326,29 @@ public class TestingDataInitializer {
         otherEvent2.setSerialEvent(false);
         otherEvent2.setType(OtherEventType.CEREMONY);
         otherEventRepository.save(otherEvent2);
+
+        var identifier1 = new Identifier();
+        identifier1.setCode("Code 1");
+        identifier1.setTitle(Set.of(new MultiLingualContent(englishTag, "Identifier 1", 1)));
+        identifier1.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Identifier 1 description", 1)));
+        identifier1.setAccessLevel(AccessLevel.OPEN);
+        identifier1.setApplicableTypes(Set.of(ApplicableEntityType.ALL));
+        identifier1.setRegularExpression("[0-9]{5}$");
+
+        var identifier2 = new Identifier();
+        identifier2.setCode("Code 2");
+        identifier2.setTitle(Set.of(new MultiLingualContent(englishTag, "Identifier 2", 1)));
+        identifier2.setDescription(
+            Set.of(new MultiLingualContent(englishTag, "Identifier 2 description", 1)));
+        identifier2.setAccessLevel(AccessLevel.CLOSED);
+
+        identifierRepository.saveAll(List.of(identifier1, identifier2));
+
+        var eventIdentifier1 = new EventIdentifier();
+        eventIdentifier1.setValue("Identifier 1 value");
+        eventIdentifier1.setIdentifier(identifier1);
+        eventIdentifier1.setEvent(conferenceEvent2);
+        eventIdentifierRepository.save(eventIdentifier1);
     }
 }

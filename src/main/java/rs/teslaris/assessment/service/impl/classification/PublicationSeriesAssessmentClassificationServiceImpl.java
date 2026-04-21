@@ -29,7 +29,6 @@ import rs.teslaris.assessment.dto.classification.PublicationSeriesAssessmentClas
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.EntityClassificationSource;
 import rs.teslaris.assessment.model.classification.PublicationSeriesAssessmentClassification;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.repository.classification.EntityAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.classification.PublicationSeriesAssessmentClassificationRepository;
 import rs.teslaris.assessment.repository.indicator.PublicationSeriesIndicatorRepository;
@@ -44,6 +43,7 @@ import rs.teslaris.assessment.util.ClassificationMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.applicationevent.EntityAssessmentChanged;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
 import rs.teslaris.core.model.commontypes.ScheduledTaskMetadata;
 import rs.teslaris.core.model.commontypes.ScheduledTaskType;
