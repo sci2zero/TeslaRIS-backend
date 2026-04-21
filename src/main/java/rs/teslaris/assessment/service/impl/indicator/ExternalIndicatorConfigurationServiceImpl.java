@@ -18,7 +18,6 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ExternalIndicatorConfigurationServiceImpl
     extends JPAServiceImpl<ExternalIndicatorConfiguration> implements
     ExternalIndicatorConfigurationService {
@@ -31,6 +30,7 @@ public class ExternalIndicatorConfigurationServiceImpl
 
 
     @Override
+    @Transactional(readOnly = true)
     public ExternalIndicatorConfigurationDTO readConfigurationForInstitution(
         Integer institutionId) {
         var institutionIds = new HashSet<>(List.of(institutionId));
@@ -55,6 +55,7 @@ public class ExternalIndicatorConfigurationServiceImpl
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ExternalIndicatorConfigurationDTO readConfigurationForDocument(Integer documentId) {
         var institutionIds = new HashSet<Integer>();
         documentPublicationService.findOne(documentId).getContributors().stream()
@@ -83,6 +84,7 @@ public class ExternalIndicatorConfigurationServiceImpl
     }
 
     @Override
+    @Transactional
     public void updateConfiguration(ExternalIndicatorConfigurationDTO configuration,
                                     Integer institutionId) {
         var savedConfiguration =

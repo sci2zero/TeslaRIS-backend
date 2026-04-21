@@ -12,17 +12,18 @@ import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.assessment.converter.IndicatorConverter;
 import rs.teslaris.assessment.dto.indicator.IndicatorDTO;
 import rs.teslaris.assessment.dto.indicator.IndicatorResponseDTO;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.model.indicator.Indicator;
 import rs.teslaris.assessment.repository.indicator.IndicatorRepository;
 import rs.teslaris.assessment.service.interfaces.indicator.IndicatorService;
 import rs.teslaris.assessment.util.IndicatorMappingConfigurationLoader;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorCodeInUseException;
 import rs.teslaris.core.util.exceptionhandling.exception.IndicatorReferenceConstraintViolationException;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 @Service
 @RequiredArgsConstructor
@@ -107,7 +108,13 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
         }
 
         indicator.setCode(indicatorDTO.code());
-        indicator.setApplicableTypes(new HashSet<>(indicatorDTO.applicableTypes()));
+
+        if (CollectionOperations.containsValues(indicatorDTO.applicableTypes())) {
+            indicator.setApplicableTypes(new HashSet<>(indicatorDTO.applicableTypes()));
+        } else {
+            indicator.setApplicableTypes(new HashSet<>(List.of(ApplicableEntityType.ALL)));
+        }
+
         indicator.setTitle(
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
                 indicatorDTO.title()));
@@ -122,7 +129,7 @@ public class IndicatorServiceImpl extends JPAServiceImpl<Indicator>
     @Transactional
     public void deleteIndicator(Integer indicatorId) {
         if (indicatorRepository.isInUse(indicatorId)) {
-            throw new IndicatorReferenceConstraintViolationException("indicatorInUse.");
+            throw new IndicatorReferenceConstraintViolationException("indicatorInUseMessage");
         }
 
         delete(indicatorId);

@@ -62,7 +62,6 @@ import rs.teslaris.core.util.session.SessionUtil;
 
 @Service
 @Slf4j
-@Transactional
 @Traceable
 public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServiceImpl
     implements PublicationSeriesIndicatorService {
@@ -116,6 +115,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PublicationSeriesIndicatorResponseDTO> getIndicatorsForPublicationSeries(
         Integer publicationSeriesId,
         AccessLevel accessLevel) {
@@ -126,6 +126,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional
     public void computeFiveYearIFAndJciRank(List<Integer> classificationYears,
                                             boolean calculateIF5,
                                             boolean calculateJci) {
@@ -299,6 +300,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional
     public void scheduleIF5AndJCIRankComputation(LocalDateTime timeToRun,
                                                  List<Integer> classificationYears,
                                                  boolean calculateIF5,
@@ -327,6 +329,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional(readOnly = true)
     public IFTableResponseDTO getIFTableContent(Integer publicationSeriesId,
                                                 Integer fromYear, Integer toYear) {
         var ifResponse = new IFTableResponseDTO();
@@ -402,6 +405,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional
     public void scheduleIndicatorLoading(LocalDateTime timeToRun, EntityIndicatorSource source,
                                          Integer userId) {
         Runnable handlerFunction = switch (source) {
@@ -425,6 +429,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional
     public void loadPublicationSeriesIndicatorsFromWOSCSVFiles() {
         loadPublicationSeriesIndicators(
             WOS_DIRECTORY,
@@ -435,6 +440,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional
     public void loadPublicationSeriesIndicatorsFromSCImagoCSVFiles() {
         loadPublicationSeriesIndicators(
             SCIMAGO_DIRECTORY,
@@ -446,6 +452,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional
     public void loadPublicationSeriesIndicatorsFromErihPlusCSVFiles() {
         loadPublicationSeriesIndicators(
             ERIH_PLUS_DIRECTORY,
@@ -456,6 +463,7 @@ public class PublicationSeriesIndicatorServiceImpl extends EntityIndicatorServic
     }
 
     @Override
+    @Transactional
     public void loadPublicationSeriesIndicatorsFromSlavistCSVFiles() {
         loadPublicationSeriesIndicators(
             SLAVISTS_DIRECTORY,

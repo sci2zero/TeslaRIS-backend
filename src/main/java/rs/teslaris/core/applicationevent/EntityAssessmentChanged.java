@@ -1,6 +1,6 @@
 package rs.teslaris.core.applicationevent;
 
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 
 public record EntityAssessmentChanged(
     ApplicableEntityType entityType,

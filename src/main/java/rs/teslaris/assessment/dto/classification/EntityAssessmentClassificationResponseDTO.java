@@ -2,8 +2,8 @@ package rs.teslaris.assessment.dto.classification;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 
 public record EntityAssessmentClassificationResponseDTO(
     Integer id,

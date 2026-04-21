@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.assessment.converter.AssessmentClassificationConverter;
 import rs.teslaris.assessment.dto.classification.AssessmentClassificationDTO;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.service.interfaces.classification.AssessmentClassificationService;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.annotation.Traceable;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 
 @RestController
 @RequestMapping("/api/assessment/assessment-classification")
