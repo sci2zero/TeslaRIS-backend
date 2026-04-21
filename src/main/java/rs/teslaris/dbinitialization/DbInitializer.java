@@ -236,6 +236,8 @@ public class DbInitializer implements ApplicationRunner {
         var editOtherEvents = new Privilege("EDIT_OTHER_EVENTS");
         var mergeCourses = new Privilege("MERGE_COURSES");
         var mergeOtherEvents = new Privilege("MERGE_OTHER_EVENTS");
+        var editIdentifiers = new Privilege("EDIT_IDENTIFIERS");
+        var editEntityIdentifier = new Privilege("EDIT_ENTITY_IDENTIFIER");
         var readProjects = new Privilege("READ_PROJECTS");
         var editProjects = new Privilege("EDIT_PROJECTS");
 
@@ -281,8 +283,8 @@ public class DbInitializer implements ApplicationRunner {
                 enrichDocumentMetadata, enrichInstitutionMetadata, scheduleMetadataEnrichment,
                 editFundingPrograms, readFundingPrograms, readFundingCalls, editFundingCalls,
                 editFundingParts, editEmploymentPositions, createCourses, editCourses,
-                createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents, readProjects,
-                editProjects
+                createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents,
+                editIdentifiers, editEntityIdentifier, readProjects, editProjects
             ));
 
         // AUTHORITIES
@@ -326,7 +328,7 @@ public class DbInitializer implements ApplicationRunner {
                 scheduleMetadataEnrichment, editFundingPrograms, readFundingPrograms,
                 readFundingCalls, editFundingCalls, editFundingParts, editEmploymentPositions,
                 createCourses, editCourses, createOtherEvents, editOtherEvents, mergeCourses,
-                mergeOtherEvents, readProjects, editProjects
+                mergeOtherEvents, editIdentifiers, editEntityIdentifier, readProjects, editProjects
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

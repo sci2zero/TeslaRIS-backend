@@ -7,6 +7,7 @@ import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 
 public record EntityIndicatorResponseDTO(
     Integer id,
+
     Double numericValue,
 
     Boolean booleanValue,

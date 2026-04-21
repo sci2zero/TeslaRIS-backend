@@ -35,7 +35,6 @@ import rs.teslaris.assessment.dto.classification.EntityAssessmentClassificationR
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
 import rs.teslaris.assessment.model.classification.DocumentAssessmentClassification;
 import rs.teslaris.assessment.model.classification.EntityAssessmentClassification;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.model.indicator.DocumentIndicator;
 import rs.teslaris.assessment.repository.AssessmentResearchAreaRepository;
 import rs.teslaris.assessment.repository.classification.DocumentAssessmentClassificationRepository;
@@ -63,6 +62,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.EventIndexRepository;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.NotificationType;
 import rs.teslaris.core.model.commontypes.RecurrenceType;

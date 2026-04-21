@@ -13,9 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.assessment.dto.classification.AssessmentClassificationDTO;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.integration.BaseTest;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 
 @SpringBootTest
 public class AssessmentClassificationControllerTest extends BaseTest {

@@ -6,9 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rs.teslaris.assessment.dto.indicator.IndicatorDTO;
 import rs.teslaris.assessment.dto.indicator.IndicatorResponseDTO;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
 import rs.teslaris.assessment.model.indicator.Indicator;
 import rs.teslaris.core.model.commontypes.AccessLevel;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 import rs.teslaris.core.service.interfaces.JPAService;
 
 @Service
