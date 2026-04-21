@@ -1346,9 +1346,15 @@ public class TestingDataInitializer {
         identifierRepository.saveAll(List.of(identifier1, identifier2));
 
         var eventIdentifier1 = new EventIdentifier();
-        eventIdentifier1.setValue("Identifier 1 value");
+        eventIdentifier1.setValue("Identifier 1 value 1");
         eventIdentifier1.setIdentifier(identifier1);
         eventIdentifier1.setEvent(conferenceEvent2);
         eventIdentifierRepository.save(eventIdentifier1);
+
+        var eventIdentifier2 = new EventIdentifier();
+        eventIdentifier2.setValue("Identifier 1 value 2");
+        eventIdentifier2.setIdentifier(identifier1);
+        eventIdentifier2.setEvent(conferenceEvent2);
+        eventIdentifierRepository.save(eventIdentifier2);
     }
 }
