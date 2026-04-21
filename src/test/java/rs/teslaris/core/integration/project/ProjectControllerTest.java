@@ -100,6 +100,19 @@ public class ProjectControllerTest extends BaseTest {
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testSearchProjects() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders.get(
+                                "http://localhost:8081/api/project/search?tokens=Test*&dateFrom=2026-03-01&dateTo=2027-04-30")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
     public void testReadProject() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 

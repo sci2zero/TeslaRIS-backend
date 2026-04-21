@@ -1,14 +1,19 @@
 package rs.teslaris.core.unit.project;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
+import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
@@ -49,8 +54,66 @@ public class ProjectServiceTest {
     @Mock
     private ProjectIndexRepository projectIndexRepository;
 
+    @Mock
+    private SearchService<ProjectIndex> searchService;
+
     @InjectMocks
     private ProjectServiceImpl projectService;
+
+    @Test
+    public void shouldReturnEmptyPageWhenNoProjectsFound() {
+        // given
+        var tokens = List.of("test");
+        var dateFrom = LocalDate.now().minusMonths(6);
+        var dateTo = LocalDate.now();
+        var pageable = PageRequest.of(0, 10);
+
+        when(searchService.runQuery(any(Query.class), eq(pageable),
+                eq(ProjectIndex.class), eq("project")))
+                .thenReturn(Page.empty());
+
+        // when
+        var result = projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
+
+        // then
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(searchService).runQuery(any(Query.class), eq(pageable),
+                eq(ProjectIndex.class), eq("project"));
+    }
+
+    @Test
+    public void shouldReturnProjectsPageWhenResultsExist() {
+        // given
+        var tokens = List.of("test");
+        var dateFrom = LocalDate.now().minusMonths(6);
+        var dateTo = LocalDate.now();
+        var pageable = PageRequest.of(0, 10);
+
+        var projectIndex = new ProjectIndex();
+        projectIndex.setDatabaseId(1);
+        projectIndex.setNameSr("Test Project");
+        projectIndex.setNameOther("Test Project");
+
+        var expectedPage = new PageImpl<>(
+                List.of(projectIndex), pageable, 1);
+
+        when(searchService.runQuery(any(Query.class), eq(pageable),
+                eq(ProjectIndex.class), eq("project")))
+                .thenReturn(expectedPage);
+
+        // when
+        var result = projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
+
+        // then
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getContent().getFirst().getDatabaseId());
+        assertEquals("Test Project", result.getContent().getFirst().getNameSr());
+        verify(searchService).runQuery(any(Query.class), eq(pageable),
+                eq(ProjectIndex.class), eq("project"));
+    }
 
     @Test
     public void shouldReturnProjectDTOWhenProjectExists() {

@@ -2,12 +2,19 @@ package rs.teslaris.project.controller.project;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.project.dto.project.ProjectDTO;
+import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
+import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/project")
@@ -15,6 +22,17 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 public class ProjectController {
 
     private final ProjectService projectService;
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAuthority('READ_PROJECTS')")
+    public Page<ProjectIndex> searchProjects(@RequestParam List<String> tokens,
+                                                 @RequestParam(required = false)
+                                                     LocalDate dateFrom,
+                                                 @RequestParam(required = false)
+                                                     LocalDate dateTo,
+                                                 Pageable pageable) {
+        return projectService.searchProjects(tokens, dateFrom, dateTo, pageable);
+    }
 
     @GetMapping("/{projectId}")
     @PreAuthorize("hasAuthority('READ_PROJECTS')")
