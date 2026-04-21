@@ -46,7 +46,6 @@ public class ProjectDataInitializer {
 
     private final FundingApplicationRepository fundingApplicationRepository;
 
-    private final ProjectRepository projectRepository;
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1) {
         var currencyEuro = new Currency();
@@ -61,7 +60,7 @@ public class ProjectDataInitializer {
 
         var currencySerbianDinar = new Currency();
         currencySerbianDinar.setName(
-            Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
         currencySerbianDinar.setCode("RSD");
         currencySerbianDinar.setSymbol("RSD");
 
@@ -69,14 +68,14 @@ public class ProjectDataInitializer {
 
         var fundingProgram1 = new FundingProgram();
         fundingProgram1.setName(
-            Set.of(new MultiLingualContent(englishTag, "Horizon Europe", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Horizon Europe", 1)));
         fundingProgram1.setDateFrom(LocalDate.of(2020, 1, 1));
         fundingProgram1.setDateTo(LocalDate.of(2035, 5, 14));
         fundingProgram1.setFunder(funder1);
 
         var fundingProgram2 = new FundingProgram();
         fundingProgram2.setName(
-            Set.of(new MultiLingualContent(englishTag, "Ministry of Science", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Ministry of Science", 1)));
         fundingProgram2.setDateFrom(LocalDate.of(2022, 12, 1));
         fundingProgram2.setDateTo(LocalDate.of(2025, 2, 1));
         fundingProgram2.setFunder(funder1);
@@ -85,7 +84,7 @@ public class ProjectDataInitializer {
 
         var fundingCall1 = new FundingCall();
         fundingCall1.setName(
-            Set.of(new MultiLingualContent(englishTag, "Funding Call 1", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Funding Call 1", 1)));
         fundingCall1.setDateFrom(LocalDate.of(2020, 2, 1));
         fundingCall1.setDateTo(LocalDate.of(2021, 2, 1));
         fundingCall1.setFundingProgram(fundingProgram1);
@@ -93,31 +92,13 @@ public class ProjectDataInitializer {
 
         var fundingCall2 = new FundingCall();
         fundingCall2.setName(
-            Set.of(new MultiLingualContent(englishTag, "Funding Call 2", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Funding Call 2", 1)));
         fundingCall2.setDateFrom(LocalDate.of(2022, 7, 6));
         fundingCall2.setDateTo(LocalDate.of(2023, 3, 17));
         fundingCall2.setFundingProgram(fundingProgram1);
         fundingCall2.setFunder(fundingProgram1.getFunder());
 
         fundingCallRepository.saveAll(List.of(fundingCall1, fundingCall2));
-
-        var project1 = new Project();
-        project1.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 1", 1)));
-        project1.setStatus(ProjectStatus.SUBMITTED);
-        project1.setCollaborationType(ProjectCollaborationType.INTERNAL);
-        project1.setResearchType(ProjectResearchType.OTHER);
-        project1.setDateFrom(LocalDate.of(2023, 1, 1));
-        project1.setDateTo(LocalDate.of(2026, 12, 31));
-
-        var project2 = new Project();
-        project2.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 2", 1)));
-        project2.setStatus(ProjectStatus.SUBMITTED);
-        project2.setCollaborationType(ProjectCollaborationType.NATIONAL);
-        project2.setResearchType(ProjectResearchType.OTHER);
-        project2.setDateFrom(LocalDate.of(2020, 6, 1));
-        project2.setDateTo(LocalDate.of(2023, 5, 31));
-
-        projectRepository.saveAll(List.of(project1, project2));
 
         var funding1 = new Funding();
         funding1.setName(Set.of(new MultiLingualContent(englishTag, "Funding 1", 1)));
@@ -134,12 +115,12 @@ public class ProjectDataInitializer {
         fundingRepository.saveAll(List.of(funding1, funding2, funding3));
 
         var fundingPart1 = new FundingPart();
-        fundingPart1.setDescription(new HashSet<>(Set.of(new MultiLingualContent(englishTag, "Small Part", 1))));
+        fundingPart1.setDescription(Set.of(new MultiLingualContent(englishTag, "Small Part", 1)));
         fundingPart1.setAmount(new MonetaryAmount(3000, currencyEuro));
         fundingPart1.setFunding(funding3);
 
         var fundingPart2 = new FundingPart();
-        fundingPart2.setDescription(new HashSet<>(Set.of(new MultiLingualContent(englishTag, "Big Part", 1))));
+        fundingPart2.setDescription(Set.of(new MultiLingualContent(englishTag, "Big Part", 1)));
         fundingPart2.setAmount(new MonetaryAmount(10000, currencyEuro));
         fundingPart2.setFunding(funding3);
 
@@ -147,6 +128,7 @@ public class ProjectDataInitializer {
 
         var fundingApplication1 = new FundingApplication();
         fundingApplication1.setFundingCall(fundingCall1);
+
         fundingApplicationRepository.save(fundingApplication1);
     }
 }

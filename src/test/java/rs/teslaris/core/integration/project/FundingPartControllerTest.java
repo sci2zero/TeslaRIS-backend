@@ -1,5 +1,6 @@
 package rs.teslaris.core.integration.project;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -67,7 +68,8 @@ public class FundingPartControllerTest extends BaseTest {
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
                 .header("Idempotency-Key", "MOCK_KEY_FUNDING_PART"))
-            .andExpect(status().isCreated());
+                .andDo(print())
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -82,6 +84,7 @@ public class FundingPartControllerTest extends BaseTest {
                     "http://localhost:8081/api/funding-part/{fundingPartId}", 1)
                 .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andDo(print())
             .andExpect(status().isNoContent());
     }
 
