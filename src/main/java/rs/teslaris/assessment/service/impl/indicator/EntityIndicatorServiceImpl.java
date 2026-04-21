@@ -24,7 +24,6 @@ import rs.teslaris.core.util.exceptionhandling.exception.CantEditException;
 @Service
 @Primary
 @RequiredArgsConstructor
-@Transactional
 public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> implements
     EntityIndicatorService {
 
@@ -36,16 +35,19 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
 
 
     @Override
+    @Transactional(readOnly = true)
     public EntityIndicator findByUserId(Integer userId) {
         return entityIndicatorRepository.findByUserId(userId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isUserTheOwnerOfEntityIndicator(Integer userId, Integer entityIndicatorId) {
         return entityIndicatorRepository.isUserTheOwnerOfEntityIndicator(userId, entityIndicatorId);
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO addEntityIndicatorProof(DocumentFileDTO proof,
                                                            Integer entityIndicatorId) {
         var entityIndicator = findOne(entityIndicatorId);
@@ -59,12 +61,14 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
     }
 
     @Override
+    @Transactional
     public DocumentFileResponseDTO updateEntityIndicatorProof(DocumentFileDTO updatedProof) {
         updatedProof.setAccessRights(AccessRights.COMMISSION_ONLY);
         return documentFileService.editDocumentFile(updatedProof, false);
     }
 
     @Override
+    @Transactional
     public void deleteEntityIndicatorProof(Integer entityIndicatorId, Integer proofId) {
         var documentFile = documentFileService.findOne(proofId);
         var entityIndicator = findOne(entityIndicatorId);
@@ -75,6 +79,7 @@ public class EntityIndicatorServiceImpl extends JPAServiceImpl<EntityIndicator> 
     }
 
     @Override
+    @Transactional
     public void deleteEntityIndicator(Integer entityIndicatorId) {
         // TODO: Do we need any reference constraint checks here
         entityIndicatorRepository.delete(findOne(entityIndicatorId));

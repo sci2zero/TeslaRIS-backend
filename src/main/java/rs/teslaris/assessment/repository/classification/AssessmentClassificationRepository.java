@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import rs.teslaris.assessment.model.classification.AssessmentClassification;
-import rs.teslaris.assessment.model.indicator.ApplicableEntityType;
+import rs.teslaris.core.model.commontypes.ApplicableEntityType;
 
 @Repository
 public interface AssessmentClassificationRepository
