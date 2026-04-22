@@ -14,7 +14,7 @@ import rs.teslaris.core.model.identifier.PublicationSeriesIdentifier;
 import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
 import rs.teslaris.core.repository.identifier.PublicationSeriesIdentifierRepository;
 import rs.teslaris.core.service.impl.identifier.cruddelegate.PublicationSeriesIdentifierJPAServiceImpl;
-import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
 import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.service.interfaces.identifier.PublicationSeriesIdentifierService;
 
@@ -27,7 +27,7 @@ public class PublicationSeriesIdentifierServiceImpl extends EntityIdentifierServ
 
     private final PublicationSeriesIdentifierJPAServiceImpl publicationSeriesIdentifierJPAService;
 
-    private final PublicationSeriesService publicationSeriesService;
+    private final PublicationSeriesLookupService publicationSeriesLookupService;
 
 
     @Autowired
@@ -36,11 +36,11 @@ public class PublicationSeriesIdentifierServiceImpl extends EntityIdentifierServ
         IdentifierService identifierService,
         PublicationSeriesIdentifierRepository publicationSeriesIdentifierRepository,
         PublicationSeriesIdentifierJPAServiceImpl publicationSeriesIdentifierJPAService,
-        PublicationSeriesService publicationSeriesService) {
+        PublicationSeriesLookupService publicationSeriesLookupService) {
         super(entityIdentifierRepository, identifierService);
         this.publicationSeriesIdentifierRepository = publicationSeriesIdentifierRepository;
         this.publicationSeriesIdentifierJPAService = publicationSeriesIdentifierJPAService;
-        this.publicationSeriesService = publicationSeriesService;
+        this.publicationSeriesLookupService = publicationSeriesLookupService;
     }
 
     @Override
@@ -63,8 +63,9 @@ public class PublicationSeriesIdentifierServiceImpl extends EntityIdentifierServ
 
         setCommonFields(newPublicationSeriesIdentifier, publicationSeriesIdentifierDTO);
 
-        newPublicationSeriesIdentifier.setPublicationSeries(publicationSeriesService.findOne(
-            publicationSeriesIdentifierDTO.getPublicationSeriesId()));
+        newPublicationSeriesIdentifier.setPublicationSeries(
+            publicationSeriesLookupService.fastPublicationSeriesLookup(
+                publicationSeriesIdentifierDTO.getPublicationSeriesId()));
 
         return publicationSeriesIdentifierJPAService.save(newPublicationSeriesIdentifier);
     }
@@ -79,7 +80,7 @@ public class PublicationSeriesIdentifierServiceImpl extends EntityIdentifierServ
         setCommonFields(publicationSeriesIdentifierToUpdate, publicationSeriesIdentifierDTO);
 
         publicationSeriesIdentifierToUpdate.setPublicationSeries(
-            publicationSeriesService.findOne(
+            publicationSeriesLookupService.fastPublicationSeriesLookup(
                 publicationSeriesIdentifierDTO.getPublicationSeriesId()));
 
         publicationSeriesIdentifierJPAService.save(publicationSeriesIdentifierToUpdate);

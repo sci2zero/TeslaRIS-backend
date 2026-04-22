@@ -28,7 +28,7 @@ import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
 import rs.teslaris.core.repository.identifier.PublicationSeriesIdentifierRepository;
 import rs.teslaris.core.service.impl.identifier.PublicationSeriesIdentifierServiceImpl;
 import rs.teslaris.core.service.impl.identifier.cruddelegate.PublicationSeriesIdentifierJPAServiceImpl;
-import rs.teslaris.core.service.interfaces.document.PublicationSeriesService;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
 import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -42,7 +42,7 @@ public class PublicationSeriesIdentifierServiceTest {
     private PublicationSeriesIdentifierJPAServiceImpl publicationSeriesIdentifierJPAService;
 
     @Mock
-    private PublicationSeriesService publicationSeriesService;
+    private PublicationSeriesLookupService publicationSeriesLookupService;
 
     @Mock
     private EntityIdentifierRepository entityIdentifierRepository;
@@ -118,7 +118,8 @@ public class PublicationSeriesIdentifierServiceTest {
         var newPublicationSeriesIdentifier = new PublicationSeriesIdentifier();
         newPublicationSeriesIdentifier.setIdentifier(new Identifier());
 
-        when(publicationSeriesService.findOne(1)).thenReturn(new Journal());
+        when(publicationSeriesLookupService.fastPublicationSeriesLookup(1)).thenReturn(
+            new Journal());
         when(identifierService.findOne(1)).thenReturn(new Identifier());
         when(publicationSeriesIdentifierJPAService.save(any(PublicationSeriesIdentifier.class)))
             .thenReturn(newPublicationSeriesIdentifier);
@@ -129,7 +130,7 @@ public class PublicationSeriesIdentifierServiceTest {
 
         // Then
         assertNotNull(result);
-        verify(publicationSeriesService).findOne(1);
+        verify(publicationSeriesLookupService).fastPublicationSeriesLookup(1);
         verify(publicationSeriesIdentifierJPAService).save(any(PublicationSeriesIdentifier.class));
     }
 
@@ -141,7 +142,7 @@ public class PublicationSeriesIdentifierServiceTest {
         publicationSeriesIdentifierDTO.setIdentifierId(1);
 
         when(identifierService.findOne(1)).thenReturn(new Identifier());
-        when(publicationSeriesService.findOne(99)).thenThrow(
+        when(publicationSeriesLookupService.fastPublicationSeriesLookup(99)).thenThrow(
             new NotFoundException("PublicationSeries not found."));
 
         // When & Then
@@ -166,7 +167,8 @@ public class PublicationSeriesIdentifierServiceTest {
 
         when(publicationSeriesIdentifierJPAService.findOne(publicationSeriesIdentifierId))
             .thenReturn(existingPublicationSeriesIdentifier);
-        when(publicationSeriesService.findOne(1)).thenReturn(new BookSeries());
+        when(publicationSeriesLookupService.fastPublicationSeriesLookup(1)).thenReturn(
+            new BookSeries());
         when(identifierService.findOne(1)).thenReturn(new Identifier());
 
         // When
@@ -175,7 +177,7 @@ public class PublicationSeriesIdentifierServiceTest {
 
         // Then
         verify(publicationSeriesIdentifierJPAService).findOne(publicationSeriesIdentifierId);
-        verify(publicationSeriesService).findOne(1);
+        verify(publicationSeriesLookupService).fastPublicationSeriesLookup(1);
         verify(publicationSeriesIdentifierJPAService).save(existingPublicationSeriesIdentifier);
     }
 
