@@ -27,7 +27,7 @@ import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
 import rs.teslaris.core.repository.identifier.EventIdentifierRepository;
 import rs.teslaris.core.service.impl.identifier.EventIdentifierServiceImpl;
 import rs.teslaris.core.service.impl.identifier.cruddelegate.EventIdentifierJPAServiceImpl;
-import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.EventLookupService;
 import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 
@@ -41,7 +41,7 @@ public class EventIdentifierServiceTest {
     private EventIdentifierJPAServiceImpl eventIdentifierJPAService;
 
     @Mock
-    private EventService eventService;
+    private EventLookupService eventLookupService;
 
     @Mock
     private EntityIdentifierRepository entityIdentifierRepository;
@@ -109,7 +109,7 @@ public class EventIdentifierServiceTest {
         var newEventIdentifier = new EventIdentifier();
         newEventIdentifier.setIdentifier(new Identifier());
 
-        when(eventService.findOne(1)).thenReturn(new Conference());
+        when(eventLookupService.fastEventLookup(1)).thenReturn(new Conference());
         when(identifierService.findOne(1)).thenReturn(new Identifier());
         when(eventIdentifierJPAService.save(any(EventIdentifier.class)))
             .thenReturn(newEventIdentifier);
@@ -119,7 +119,7 @@ public class EventIdentifierServiceTest {
 
         // Then
         assertNotNull(result);
-        verify(eventService).findOne(1);
+        verify(eventLookupService).fastEventLookup(1);
         verify(eventIdentifierJPAService).save(any(EventIdentifier.class));
     }
 
@@ -131,7 +131,8 @@ public class EventIdentifierServiceTest {
         eventIdentifierDTO.setIdentifierId(1);
 
         when(identifierService.findOne(1)).thenReturn(new Identifier());
-        when(eventService.findOne(99)).thenThrow(new NotFoundException("Event not found."));
+        when(eventLookupService.fastEventLookup(99)).thenThrow(
+            new NotFoundException("Event not found."));
 
         // When & Then
         assertThrows(NotFoundException.class, () ->
@@ -154,7 +155,7 @@ public class EventIdentifierServiceTest {
 
         when(eventIdentifierJPAService.findOne(eventIdentifierId))
             .thenReturn(existingEventIdentifier);
-        when(eventService.findOne(1)).thenReturn(new Conference());
+        when(eventLookupService.fastEventLookup(1)).thenReturn(new Conference());
         when(identifierService.findOne(1)).thenReturn(new Identifier());
 
         // When
@@ -162,7 +163,7 @@ public class EventIdentifierServiceTest {
 
         // Then
         verify(eventIdentifierJPAService).findOne(eventIdentifierId);
-        verify(eventService).findOne(1);
+        verify(eventLookupService).fastEventLookup(1);
         verify(eventIdentifierJPAService).save(existingEventIdentifier);
     }
 

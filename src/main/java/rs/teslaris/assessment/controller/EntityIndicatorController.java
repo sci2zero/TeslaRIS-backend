@@ -50,9 +50,9 @@ public class EntityIndicatorController {
     public static Object fetchIndicators(HttpServletRequest request,
                                          String bearerToken,
                                          String fingerprintCookie,
-                                         Function<AccessLevel, Object> documentServiceFunction) {
+                                         Function<AccessLevel, Object> entityServiceFunction) {
         if (Objects.isNull(bearerToken)) {
-            return documentServiceFunction.apply(AccessLevel.OPEN);
+            return entityServiceFunction.apply(AccessLevel.OPEN);
         }
 
         var token = bearerToken.split(" ")[1];
@@ -66,12 +66,12 @@ public class EntityIndicatorController {
 
         var role = tokenUtil.extractUserRoleFromToken(token);
         return switch (UserRole.valueOf(role)) {
-            case ADMIN -> documentServiceFunction.apply(AccessLevel.ADMIN_ONLY);
+            case ADMIN -> entityServiceFunction.apply(AccessLevel.ADMIN_ONLY);
             case RESEARCHER, INSTITUTIONAL_EDITOR,
                  COMMISSION, VICE_DEAN_FOR_SCIENCE,
                  INSTITUTIONAL_LIBRARIAN, HEAD_OF_LIBRARY,
                  PROMOTION_REGISTRY_ADMINISTRATOR ->
-                documentServiceFunction.apply(AccessLevel.CLOSED);
+                entityServiceFunction.apply(AccessLevel.CLOSED);
         };
     }
 
