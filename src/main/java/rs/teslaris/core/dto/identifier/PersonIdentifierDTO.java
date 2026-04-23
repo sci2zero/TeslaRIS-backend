@@ -16,4 +16,10 @@ public class PersonIdentifierDTO extends EntityIdentifierDTO {
     @NotNull(message = "You have to provide person ID.")
     @Positive(message = "Person ID must be a positive number.")
     private Integer personId;
+
+
+    public PersonIdentifierDTO(String value, Integer identifierId, Integer personId) {
+        super(value, identifierId);
+        this.personId = personId;
+    }
 }

@@ -19,7 +19,7 @@ import rs.teslaris.core.model.institution.OrganisationUnit;
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @DiscriminatorValue("ORG_UNIT_IDENTIFIER")
-public class OrganisationUnitIdentifier extends EventIdentifier {
+public class OrganisationUnitIdentifier extends EntityIdentifier {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organisation_unit_id")

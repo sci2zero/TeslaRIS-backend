@@ -50,7 +50,7 @@ public class PersonIdentifierController {
         );
     }
 
-    @PostMapping("/{personId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PERSON_IDENTIFIERS')")
     @Idempotent
@@ -63,7 +63,7 @@ public class PersonIdentifierController {
                 tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
-    @PutMapping("/{personId}/{entityIdentifierId}")
+    @PutMapping("/{entityIdentifierId}")
     @PreAuthorize("hasAuthority('EDIT_PERSON_IDENTIFIERS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updatePersonIdentifier(

@@ -50,7 +50,7 @@ public class DocumentIdentifierController {
         );
     }
 
-    @PostMapping("/{documentId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_DOCUMENT_IDENTIFIERS')")
     @Idempotent
@@ -63,7 +63,7 @@ public class DocumentIdentifierController {
                 tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
-    @PutMapping("/{documentId}/{entityIdentifierId}")
+    @PutMapping("/{entityIdentifierId}")
     @PreAuthorize("hasAuthority('EDIT_DOCUMENT_IDENTIFIERS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateDocumentIdentifier(

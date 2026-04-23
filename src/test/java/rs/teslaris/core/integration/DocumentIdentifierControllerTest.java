@@ -10,73 +10,73 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import rs.teslaris.core.dto.identifier.EventIdentifierDTO;
+import rs.teslaris.core.dto.identifier.DocumentIdentifierDTO;
 
 @SpringBootTest
-public class EventIdentifierControllerTest extends BaseTest {
+public class DocumentIdentifierControllerTest extends BaseTest {
 
     @Autowired
     private ObjectMapper objectMapper;
 
 
-    private EventIdentifierDTO getTestPayload(String value) {
-        return new EventIdentifierDTO(value, 1, 1);
+    private DocumentIdentifierDTO getTestPayload(String value) {
+        return new DocumentIdentifierDTO(value, 1, 10);
     }
 
     @Test
-    public void testReadEventIdentifiersForEvent() throws Exception {
+    public void testReadDocumentIdentifiersForDocument() throws Exception {
         mockMvc.perform(
             MockMvcRequestBuilders.get(
-                    "http://localhost:8081/api/event-identifier/{eventId}", 2)
+                    "http://localhost:8081/api/document-identifier/{documentId}", 2)
                 .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testCreateEventIdentifierSuccess() throws Exception {
+    public void testCreateDocumentIdentifierSuccess() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var eventIdentifierDTO = getTestPayload("12345");
+        var documentIdentifierDTO = getTestPayload("12345");
 
-        String requestBody = objectMapper.writeValueAsString(eventIdentifierDTO);
+        String requestBody = objectMapper.writeValueAsString(documentIdentifierDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/event-identifier")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/document-identifier")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                    .header("Idempotency-Key", "MOCK_KEY_EVENT_IDENTIFIER_1"))
+                    .header("Idempotency-Key", "MOCK_KEY_DOCUMENT_IDENTIFIER_1"))
             .andExpect(status().isCreated());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testCreateEventIdentifierWrongFormat() throws Exception {
+    public void testCreateDocumentIdentifierWrongFormat() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var eventIdentifierDTO = getTestPayload("WRONG_FORMAT");
+        var documentIdentifierDTO = getTestPayload("WRONG_FORMAT");
 
-        String requestBody = objectMapper.writeValueAsString(eventIdentifierDTO);
+        String requestBody = objectMapper.writeValueAsString(documentIdentifierDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/event-identifier")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/document-identifier")
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                    .header("Idempotency-Key", "MOCK_KEY_EVENT_IDENTIFIER_2"))
+                    .header("Idempotency-Key", "MOCK_KEY_DOCUMENT_IDENTIFIER_2"))
             .andExpect(status().isConflict());
     }
 
     @Test
     @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
-    public void testUpdateEventIdentifier() throws Exception {
+    public void testUpdateDocumentIdentifier() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var eventIdentifierDTO = getTestPayload("54321");
+        var documentIdentifierDTO = getTestPayload("54321");
 
-        String requestBody = objectMapper.writeValueAsString(eventIdentifierDTO);
+        String requestBody = objectMapper.writeValueAsString(documentIdentifierDTO);
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
-                        "http://localhost:8081/api/event-identifier/{identifierId}",
-                        2)
+                        "http://localhost:8081/api/document-identifier/{identifierId}",
+                        4)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

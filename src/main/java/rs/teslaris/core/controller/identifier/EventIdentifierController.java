@@ -50,7 +50,7 @@ public class EventIdentifierController {
         );
     }
 
-    @PostMapping("/{eventId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_EVENT_IDENTIFIERS')")
     @Idempotent
@@ -63,7 +63,7 @@ public class EventIdentifierController {
                 tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
-    @PutMapping("/{eventId}/{entityIdentifierId}")
+    @PutMapping("/{entityIdentifierId}")
     @PreAuthorize("hasAuthority('EDIT_EVENT_IDENTIFIERS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateEventIdentifier(

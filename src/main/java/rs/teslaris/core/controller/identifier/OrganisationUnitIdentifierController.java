@@ -24,7 +24,7 @@ import rs.teslaris.core.service.interfaces.identifier.OrganisationUnitIdentifier
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
-@RequestMapping("/api/organisationUnit-identifier")
+@RequestMapping("/api/organisation-unit-identifier")
 @RequiredArgsConstructor
 @Traceable
 public class OrganisationUnitIdentifierController {
@@ -51,7 +51,7 @@ public class OrganisationUnitIdentifierController {
         );
     }
 
-    @PostMapping("/{organisationUnitId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNIT_IDENTIFIERS')")
     @Idempotent
@@ -65,7 +65,7 @@ public class OrganisationUnitIdentifierController {
                 tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
-    @PutMapping("/{organisationUnitId}/{entityIdentifierId}")
+    @PutMapping("/{entityIdentifierId}")
     @PreAuthorize("hasAuthority('EDIT_ORGANISATION_UNIT_IDENTIFIERS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateOrganisationUnitIdentifier(

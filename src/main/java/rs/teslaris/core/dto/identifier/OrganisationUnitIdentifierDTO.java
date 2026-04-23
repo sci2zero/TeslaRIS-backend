@@ -16,4 +16,11 @@ public class OrganisationUnitIdentifierDTO extends EntityIdentifierDTO {
     @NotNull(message = "You have to provide organisation unit ID.")
     @Positive(message = "Organisation unit ID must be a positive number.")
     private Integer organisationUnitId;
+
+
+    public OrganisationUnitIdentifierDTO(String value, Integer identifierId,
+                                         Integer organisationUnitId) {
+        super(value, identifierId);
+        this.organisationUnitId = organisationUnitId;
+    }
 }

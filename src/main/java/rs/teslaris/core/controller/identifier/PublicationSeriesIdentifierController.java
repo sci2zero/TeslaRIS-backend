@@ -24,7 +24,7 @@ import rs.teslaris.core.service.interfaces.identifier.PublicationSeriesIdentifie
 import rs.teslaris.core.util.jwt.JwtUtil;
 
 @RestController
-@RequestMapping("/api/publicationSeries-identifier")
+@RequestMapping("/api/publication-series-identifier")
 @RequiredArgsConstructor
 @Traceable
 public class PublicationSeriesIdentifierController {
@@ -51,7 +51,7 @@ public class PublicationSeriesIdentifierController {
         );
     }
 
-    @PostMapping("/{publicationSeriesId}")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES_IDENTIFIERS')")
     @Idempotent
@@ -65,7 +65,7 @@ public class PublicationSeriesIdentifierController {
                 tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
-    @PutMapping("/{publicationSeriesId}/{entityIdentifierId}")
+    @PutMapping("/{entityIdentifierId}")
     @PreAuthorize("hasAuthority('EDIT_PUBLICATION_SERIES_IDENTIFIERS')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updatePublicationSeriesIdentifier(

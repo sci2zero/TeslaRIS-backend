@@ -16,4 +16,11 @@ public class PublicationSeriesIdentifierDTO extends EntityIdentifierDTO {
     @NotNull(message = "You have to provide publication series ID.")
     @Positive(message = "Publication series ID must be a positive number.")
     private Integer publicationSeriesId;
+
+
+    public PublicationSeriesIdentifierDTO(String value, Integer identifierId,
+                                          Integer publicationSeriesId) {
+        super(value, identifierId);
+        this.publicationSeriesId = publicationSeriesId;
+    }
 }
