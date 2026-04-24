@@ -22,10 +22,10 @@ public record IdentifierDTO(
     @Valid
     List<MultilingualContentDTO> description,
 
-    @NotNull(message = "You have to provide an access level for indicator")
-    AccessLevel indicatorAccessLevel,
+    @NotNull(message = "You have to provide an access level for identifier")
+    AccessLevel identifierAccessLevel,
 
-    @NotNull(message = "You have to provide applicable entity types for indicator")
+    @NotNull(message = "You have to provide applicable entity types for identifier")
     List<ApplicableEntityType> applicableTypes,
 
     String regularExpression,

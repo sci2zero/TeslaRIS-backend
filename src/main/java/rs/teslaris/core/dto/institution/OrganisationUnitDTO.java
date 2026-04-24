@@ -46,15 +46,9 @@ public class OrganisationUnitDTO {
 
     private String isni;
 
-    private String athensId;
-
-    private String ncesId;
-
     private String fctId;
 
-    private String dgeecId;
-
-    private String nifId;
+    private String taxNumber;
 
     private GeoLocationDTO location;
 
