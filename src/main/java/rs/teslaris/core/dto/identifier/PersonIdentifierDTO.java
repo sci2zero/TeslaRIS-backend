@@ -11,15 +11,15 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventIdentifierDTO extends EntityIdentifierDTO {
+public class PersonIdentifierDTO extends EntityIdentifierDTO {
 
-    @NotNull(message = "You have to provide event ID.")
-    @Positive(message = "Event ID must be a positive number.")
-    private Integer eventId;
+    @NotNull(message = "You have to provide person ID.")
+    @Positive(message = "Person ID must be a positive number.")
+    private Integer personId;
 
 
-    public EventIdentifierDTO(String value, Integer identifierId, Integer eventId) {
+    public PersonIdentifierDTO(String value, Integer identifierId, Integer personId) {
         super(value, identifierId);
-        this.eventId = eventId;
+        this.personId = personId;
     }
 }

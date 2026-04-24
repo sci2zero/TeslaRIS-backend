@@ -14,7 +14,7 @@ import rs.teslaris.core.model.identifier.EventIdentifier;
 import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
 import rs.teslaris.core.repository.identifier.EventIdentifierRepository;
 import rs.teslaris.core.service.impl.identifier.cruddelegate.EventIdentifierJPAServiceImpl;
-import rs.teslaris.core.service.interfaces.document.EventService;
+import rs.teslaris.core.service.interfaces.document.EventLookupService;
 import rs.teslaris.core.service.interfaces.identifier.EventIdentifierService;
 import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
 
@@ -27,7 +27,7 @@ public class EventIdentifierServiceImpl extends EntityIdentifierServiceImpl
 
     private final EventIdentifierJPAServiceImpl eventIdentifierJPAService;
 
-    private final EventService eventService;
+    private final EventLookupService eventLookupService;
 
 
     @Autowired
@@ -35,11 +35,11 @@ public class EventIdentifierServiceImpl extends EntityIdentifierServiceImpl
                                       IdentifierService identifierService,
                                       EventIdentifierRepository eventIdentifierRepository,
                                       EventIdentifierJPAServiceImpl eventIdentifierJPAService,
-                                      EventService eventService) {
+                                      EventLookupService eventLookupService) {
         super(entityIdentifierRepository, identifierService);
         this.eventIdentifierRepository = eventIdentifierRepository;
         this.eventIdentifierJPAService = eventIdentifierJPAService;
-        this.eventService = eventService;
+        this.eventLookupService = eventLookupService;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class EventIdentifierServiceImpl extends EntityIdentifierServiceImpl
         setCommonFields(newEventIdentifier, eventIdentifierDTO);
 
         newEventIdentifier.setEvent(
-            eventService.findOne(eventIdentifierDTO.getEventId()));
+            eventLookupService.fastEventLookup(eventIdentifierDTO.getEventId()));
 
         return eventIdentifierJPAService.save(newEventIdentifier);
     }
@@ -73,7 +73,8 @@ public class EventIdentifierServiceImpl extends EntityIdentifierServiceImpl
 
         setCommonFields(eventIdentifierToUpdate, eventIdentifierDTO);
 
-        eventIdentifierToUpdate.setEvent(eventService.findOne(eventIdentifierDTO.getEventId()));
+        eventIdentifierToUpdate.setEvent(
+            eventLookupService.fastEventLookup(eventIdentifierDTO.getEventId()));
 
         eventIdentifierJPAService.save(eventIdentifierToUpdate);
     }

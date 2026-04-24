@@ -11,15 +11,15 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventIdentifierDTO extends EntityIdentifierDTO {
+public class DocumentIdentifierDTO extends EntityIdentifierDTO {
 
-    @NotNull(message = "You have to provide event ID.")
-    @Positive(message = "Event ID must be a positive number.")
-    private Integer eventId;
+    @NotNull(message = "You have to provide document ID.")
+    @Positive(message = "Document ID must be a positive number.")
+    private Integer documentId;
 
 
-    public EventIdentifierDTO(String value, Integer identifierId, Integer eventId) {
+    public DocumentIdentifierDTO(String value, Integer identifierId, Integer documentId) {
         super(value, identifierId);
-        this.eventId = eventId;
+        this.documentId = documentId;
     }
 }
