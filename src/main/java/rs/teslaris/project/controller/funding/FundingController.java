@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
@@ -71,6 +73,15 @@ public class FundingController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFunding(@PathVariable Integer fundingId) {
         fundingService.deleteFunding(fundingId);
+    }
+
+    @PatchMapping("/{fundingId}")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING')")
+    @Idempotent
+    public DocumentFileResponseDTO addAgreementDocument(@PathVariable Integer fundingId,
+                                                        @ModelAttribute @Valid
+                                                        DocumentFileDTO documentFile) {
+        return fundingService.addAgreementDocument(fundingId, documentFile);
     }
 
 }

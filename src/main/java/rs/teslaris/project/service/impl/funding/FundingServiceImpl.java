@@ -10,11 +10,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.model.document.AccessRights;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
@@ -58,6 +63,7 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     private final CurrencyService currencyService;
 
     private final FundingIndexRepository fundingIndexRepository;
+    private final DocumentFileService documentFileService;
 
     @Override
     protected JpaRepository<Funding, Integer> getEntityRepository() {
@@ -115,6 +121,18 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     @Transactional
     public void deleteFunding(Integer fundingId) {
         delete(fundingId);
+    }
+
+    @Override
+    public DocumentFileResponseDTO addAgreementDocument(Integer fundingId, DocumentFileDTO agreement) {
+        var funding = findOne(fundingId);
+        agreement.setAccessRights(AccessRights.ALL_RIGHTS_RESERVED);
+        var documentFile = documentFileService.saveNewDocument(agreement, false);
+        funding.getAgreements().add(documentFile);
+
+        save(funding);
+
+        return DocumentFileConverter.toDTO(documentFile);
     }
 
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {

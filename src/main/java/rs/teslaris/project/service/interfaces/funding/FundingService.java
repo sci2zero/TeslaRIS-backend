@@ -3,6 +3,8 @@ package rs.teslaris.project.service.interfaces.funding;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
@@ -27,6 +29,8 @@ public interface FundingService extends JPAService<Funding> {
     void updateFunding(Integer fundingId, FundingDTO fundingDTO);
 
     void deleteFunding(Integer fundingId);
+
+    DocumentFileResponseDTO addAgreementDocument(Integer fundingId, DocumentFileDTO agreement);
 
     CompletableFuture<Void> reindexFunding();
 

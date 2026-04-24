@@ -8,14 +8,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
+import rs.teslaris.core.dto.document.DocumentFileDTO;
+import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
+import rs.teslaris.core.model.document.AccessRights;
+import rs.teslaris.core.model.document.DocumentFile;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.document.DocumentFileService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
@@ -70,6 +76,9 @@ public class FundingServiceTest extends BaseTest {
 
     @Mock
     private FundingIndexRepository fundingIndexRepository;
+
+    @Mock
+    private DocumentFileService documentFileService;
 
     @InjectMocks
     private FundingServiceImpl fundingService;
@@ -422,5 +431,65 @@ public class FundingServiceTest extends BaseTest {
                 fundingService.updateFunding(fundingId, fundingDTO));
         verify(fundingRepository).findById(fundingId);
         verify(fundingIndexRepository, never()).findFundingIndexByDatabaseId(anyInt());
+    }
+
+    @Test
+    public void shouldAddDocumentToFunding() {
+        // given
+        var fundingId = 1;
+        var documentFileDTO = new DocumentFileDTO();
+        documentFileDTO.setAccessRights(AccessRights.RESTRICTED_ACCESS);
+
+        var funding = new Funding();
+        funding.setId(fundingId);
+        funding.setAgreements(new HashSet<>());
+
+        var savedDocumentFile = new DocumentFile();
+        savedDocumentFile.setId(100);
+
+        var expectedResponse = new DocumentFileResponseDTO();
+        expectedResponse.setId(100);
+
+        when(fundingRepository.findById(fundingId))
+                .thenReturn(Optional.of(funding));
+        when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false)))
+                .thenReturn(savedDocumentFile);
+        when(fundingRepository.save(any(Funding.class)))
+                .thenReturn(funding);
+
+        try (var documentFileConverterMock = mockStatic(DocumentFileConverter.class)) {
+            documentFileConverterMock.when(() ->
+                            DocumentFileConverter.toDTO(savedDocumentFile))
+                    .thenReturn(expectedResponse);
+
+            // when
+            var result = fundingService.addAgreementDocument(
+                    fundingId, documentFileDTO);
+
+            // then
+            assertNotNull(result);
+            assertEquals(100, result.getId());
+            verify(fundingRepository).findById(fundingId);
+            verify(documentFileService).saveNewDocument(any(DocumentFileDTO.class), eq(false));
+            verify(fundingRepository).save(any(Funding.class));
+            documentFileConverterMock.verify(() ->
+                    DocumentFileConverter.toDTO(savedDocumentFile), times(1));
+        }
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenAddingDocumentToNonExistentFunding() {
+        // given
+        var fundingId = 999;
+        var documentFileDTO = new DocumentFileDTO();
+
+        when(fundingRepository.findById(fundingId))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(Exception.class, () ->
+                fundingService.addAgreementDocument(fundingId, documentFileDTO));
+        verify(fundingRepository).findById(fundingId);
+        verify(documentFileService, never()).saveNewDocument(any(), anyBoolean());
     }
 }
