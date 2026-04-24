@@ -32,6 +32,8 @@ public interface FundingService extends JPAService<Funding> {
 
     DocumentFileResponseDTO addAgreementDocument(Integer fundingId, DocumentFileDTO agreement);
 
+    void deleteAgreementDocument(Integer agreementFileId, Integer fundingId);
+
     CompletableFuture<Void> reindexFunding();
 
     void indexFunding(Funding funding, FundingIndex index);

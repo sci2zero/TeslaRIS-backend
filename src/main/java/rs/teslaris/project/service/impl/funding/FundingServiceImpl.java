@@ -135,6 +135,16 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         return DocumentFileConverter.toDTO(documentFile);
     }
 
+    @Override
+    public void deleteAgreementDocument(Integer agreementFileId, Integer fundingId) {
+        var documentFile = documentFileService.findOne(agreementFileId);
+        var fundingCall = findOne(fundingId);
+        fundingCall.getAgreements().remove(documentFile);
+
+        documentFileService.delete(agreementFileId);
+        save(fundingCall);
+    }
+
     private void setCommonFields(Funding funding, FundingDTO fundingDTO) {
         if (Objects.nonNull(fundingDTO.getDateFrom()) &&
                 Objects.nonNull(fundingDTO.getDateTo()) &&

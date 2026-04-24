@@ -84,4 +84,11 @@ public class FundingController {
         return fundingService.addAgreementDocument(fundingId, documentFile);
     }
 
+    @DeleteMapping("/{fundingId}/{documentFileId}")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAgreementDocument(@PathVariable Integer fundingId,
+                                          @PathVariable Integer documentFileId) {
+        fundingService.deleteAgreementDocument(documentFileId, fundingId);
+    }
 }

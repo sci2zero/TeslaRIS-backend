@@ -492,4 +492,57 @@ public class FundingServiceTest extends BaseTest {
         verify(fundingRepository).findById(fundingId);
         verify(documentFileService, never()).saveNewDocument(any(), anyBoolean());
     }
+
+    @Test
+    public void shouldDeleteFundingDocument() {
+        // given
+        var agreementFileId = 100;
+        var fundingId = 1;
+
+        var documentFile = new DocumentFile();
+        documentFile.setId(agreementFileId);
+
+        var funding = new Funding();
+        funding.setId(fundingId);
+        funding.setAgreements(new HashSet<>(Set.of(documentFile)));
+
+        when(documentFileService.findOne(agreementFileId))
+                .thenReturn(documentFile);
+        when(fundingRepository.findById(fundingId))
+                .thenReturn(Optional.of(funding));
+        doNothing().when(documentFileService).delete(agreementFileId);
+        when(fundingRepository.save(any(Funding.class)))
+                .thenReturn(funding);
+
+        // when
+        fundingService.deleteAgreementDocument(agreementFileId, fundingId);
+
+        // then
+        verify(documentFileService).findOne(agreementFileId);
+        verify(fundingRepository).findById(fundingId);
+        verify(documentFileService).delete(agreementFileId);
+        verify(fundingRepository).save(any(Funding.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenDeletingDocumentFromNonExistentFunding() {
+        // given
+        var agreementFileId = 100;
+        var fundingId = 999;
+
+        var documentFile = new DocumentFile();
+        documentFile.setId(agreementFileId);
+
+        when(documentFileService.findOne(agreementFileId))
+                .thenReturn(documentFile);
+        when(fundingRepository.findById(fundingId))
+                .thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(Exception.class, () ->
+                fundingService.deleteAgreementDocument(agreementFileId, fundingId));
+        verify(documentFileService).findOne(agreementFileId);
+        verify(fundingRepository).findById(fundingId);
+        verify(documentFileService, never()).delete(anyInt());
+    }
 }
