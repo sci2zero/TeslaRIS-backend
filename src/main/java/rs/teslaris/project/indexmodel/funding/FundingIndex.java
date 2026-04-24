@@ -35,14 +35,27 @@ public class FundingIndex {
     @Field(type = FieldType.Keyword, name = "name_other_sortable", normalizer = "english_normalizer")
     private String nameOtherSortable;
 
+    @Field(type = FieldType.Text, name = "funder_name_sr", analyzer = "serbian", searchAnalyzer = "serbian")
+    private String funderNameSr;
+
+    @Field(type = FieldType.Keyword, name = "funder_name_sr_sortable", normalizer = "serbian_normalizer")
+    private String funderNameSrSortable;
+
+    @Field(type = FieldType.Text, name = "funder_name_other", analyzer = "english", searchAnalyzer = "english")
+    private String funderNameOther;
+
+    @Field(type = FieldType.Keyword, name = "funder_name_other_sortable", normalizer = "english_normalizer")
+    private String funderNameOtherSortable;
+
+    @Field(type = FieldType.Integer, name = "funder_id", store = true)
+    private Integer funderId;
+
     @Field(type = FieldType.Integer, name = "project_id", store = true)
     private Integer projectId;
 
     @Field(type = FieldType.Integer, name = "funding_call_id", store = true)
     private Integer fundingCallId;
 
-    @Field(type = FieldType.Integer, name = "funder_id", store = true)
-    private Integer funderId;
 
     @Field(type = FieldType.Integer, name = "databaseId", store = true)
     private Integer databaseId;

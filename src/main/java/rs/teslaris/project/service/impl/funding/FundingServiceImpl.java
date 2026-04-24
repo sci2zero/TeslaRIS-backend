@@ -274,6 +274,10 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                 !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
         index.setNameOtherSortable(index.getNameOther());
 
+        if (Objects.nonNull(funding.getFunder())) {
+            indexFunderFields(funding, index);
+        }
+
         if (Objects.nonNull(funding.getProject())) {
             index.setProjectId(funding.getProject().getId());
         }
@@ -282,15 +286,38 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
             index.setFundingCallId(funding.getFundingCall().getId());
         }
 
-        if (Objects.nonNull(funding.getFunder())) {
-            index.setFunderId(funding.getFunder().getId());
-        }
-
         index.setDatabaseId(funding.getId());
         index.setDateFrom(funding.getDateFrom());
         index.setDateTo(funding.getDateTo());
 
         return index;
+    }
+
+    private void indexFunderFields(Funding funding,
+                                   FundingIndex index) {
+        var srContent = new StringBuilder();
+        var otherContent = new StringBuilder();
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                funding.getFunder().getName(), true);
+
+        if (srContent.isEmpty() && !otherContent.isEmpty()) {
+            srContent.append(otherContent);
+        } else if (!srContent.isEmpty() && otherContent.isEmpty()) {
+            otherContent.append(srContent);
+        }
+
+        multilingualContentService.buildLanguageStrings(srContent, otherContent,
+                funding.getFunder().getNameAbbreviation(), false);
+
+        StringUtil.removeTrailingDelimiters(srContent, otherContent);
+        index.setFunderNameSr(!srContent.isEmpty() ? srContent.toString() : otherContent.toString());
+        index.setFunderNameSrSortable(index.getFunderNameSr());
+        index.setFunderNameOther(
+                !otherContent.isEmpty() ? otherContent.toString() : srContent.toString());
+        index.setFunderNameOtherSortable(index.getFunderNameOther());
+
+        index.setFunderId(funding.getFunder().getId());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens, LocalDate dateFrom,
@@ -314,6 +341,12 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                                                 .should(sb -> sb.matchPhrase(
                                                         mq -> mq.field("name_other")
                                                                 .query(token.replace("\"", ""))))
+                                                .should(sb -> sb.matchPhrase(
+                                                        mq -> mq.field("funder_name_sr")
+                                                                .query(token.replace("\"", ""))))
+                                                .should(sb -> sb.matchPhrase(
+                                                        mq -> mq.field("funder_name_other")
+                                                                .query(token.replace("\"", ""))))
                                         )
                                 );
                             } else if (token.endsWith("*")) {
@@ -327,6 +360,15 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                                                         .caseInsensitive(true)))
                                         .should(sb -> sb.wildcard(
                                                 mq -> mq.field("name_other")
+                                                        .value(wildcard + "*")
+                                                        .caseInsensitive(true)))
+                                        .should(sb -> sb.wildcard(
+                                                mq -> mq.field("funder_name_sr")
+                                                        .value(StringUtil.performSimpleLatinPreprocessing(
+                                                                wildcard) + "*")
+                                                        .caseInsensitive(true)))
+                                        .should(sb -> sb.wildcard(
+                                                mq -> mq.field("funder_name_other")
                                                         .value(wildcard + "*")
                                                         .caseInsensitive(true)))
                                 ));
@@ -349,6 +391,22 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
                                                         .query(token)))
                                         .should(sb -> sb.match(
                                                 mq -> mq.field("name_other")
+                                                        .query(token)))
+                                        .should(sb -> sb.wildcard(
+                                                mq -> mq.field("funder_name_sr")
+                                                        .value(
+                                                                StringUtil.performSimpleLatinPreprocessing(token) +
+                                                                        "*")
+                                                        .caseInsensitive(true)))
+                                        .should(sb -> sb.wildcard(
+                                                mq -> mq.field("funder_name_other")
+                                                        .value(wildcard)
+                                                        .caseInsensitive(true)))
+                                        .should(sb -> sb.match(
+                                                mq -> mq.field("funder_name_sr")
+                                                        .query(token)))
+                                        .should(sb -> sb.match(
+                                                mq -> mq.field("funder_name_other")
                                                         .query(token)))
                                 ));
                             }

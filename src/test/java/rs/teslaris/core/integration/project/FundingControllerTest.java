@@ -106,6 +106,7 @@ public class FundingControllerTest extends BaseTest {
         researchAreas.add(2);
         dto.setResearchAreasId(researchAreas);
 
+        dto.setFunderId(1);
         dto.setProjectId(1);
         dto.setFundingCallId(1);
 

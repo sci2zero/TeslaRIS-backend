@@ -582,4 +582,35 @@ public class FundingServiceTest extends BaseTest {
         verify(fundingRepository).findById(fundingId);
         verify(documentFileService, never()).delete(anyInt());
     }
+
+    @Test
+    public void shouldIndexSingleFunding() {
+        // given
+        var funding = new Funding();
+        funding.setId(1);
+
+        var funder = new OrganisationUnit();
+        funder.setId(10);
+        funding.setFunder(funder);
+
+        var project = new Project();
+        project.setId(10);
+        funding.setProject(project);
+
+        var fundingCall = new FundingCall();
+        fundingCall.setId(10);
+        funding.setFundingCall(fundingCall);
+
+
+        var fundingIndex = new FundingIndex();
+
+        when(fundingIndexRepository.save(any(FundingIndex.class)))
+                .thenReturn(fundingIndex);
+
+        // when
+        fundingService.indexFunding(funding, fundingIndex);
+
+        // then
+        verify(fundingIndexRepository).save(any(FundingIndex.class));
+    }
 }
