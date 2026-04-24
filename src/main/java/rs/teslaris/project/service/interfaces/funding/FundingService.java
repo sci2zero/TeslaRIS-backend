@@ -3,6 +3,7 @@ package rs.teslaris.project.service.interfaces.funding;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.service.interfaces.JPAService;
@@ -31,6 +32,9 @@ public interface FundingService extends JPAService<Funding> {
     void deleteFunding(Integer fundingId);
 
     DocumentFileResponseDTO addAgreementDocument(Integer fundingId, DocumentFileDTO agreement);
+
+    @Transactional
+    DocumentFileResponseDTO updateAgreementDocument(DocumentFileDTO updatedAgreement);
 
     void deleteAgreementDocument(Integer agreementFileId, Integer fundingId);
 

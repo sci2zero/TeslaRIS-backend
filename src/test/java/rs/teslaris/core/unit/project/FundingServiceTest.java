@@ -494,6 +494,43 @@ public class FundingServiceTest extends BaseTest {
     }
 
     @Test
+    public void shouldUpdateFundingDocument() {
+        // given
+        var documentFileDTO = new DocumentFileDTO();
+        documentFileDTO.setAccessRights(AccessRights.RESTRICTED_ACCESS);
+        documentFileDTO.setId(100);
+
+        var expectedResponse = new DocumentFileResponseDTO();
+        expectedResponse.setId(100);
+
+        when(documentFileService.editDocumentFile(any(DocumentFileDTO.class), eq(false)))
+                .thenReturn(expectedResponse);
+
+        // when
+        var result = fundingService.updateAgreementDocument(documentFileDTO);
+
+        // then
+        assertNotNull(result);
+        assertEquals(100, result.getId());
+        verify(documentFileService).editDocumentFile(any(DocumentFileDTO.class), eq(false));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenUpdatingNonExistentDocument() {
+        // given
+        var documentFileDTO = new DocumentFileDTO();
+        documentFileDTO.setId(999);
+
+        when(documentFileService.editDocumentFile(any(DocumentFileDTO.class), eq(false)))
+                .thenThrow(new RuntimeException("Document not found"));
+
+        // when & then
+        assertThrows(RuntimeException.class, () ->
+                fundingService.updateAgreementDocument(documentFileDTO));
+        verify(documentFileService).editDocumentFile(any(DocumentFileDTO.class), eq(false));
+    }
+
+    @Test
     public void shouldDeleteFundingDocument() {
         // given
         var agreementFileId = 100;

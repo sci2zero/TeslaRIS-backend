@@ -84,6 +84,14 @@ public class FundingController {
         return fundingService.addAgreementDocument(fundingId, documentFile);
     }
 
+    @PatchMapping("/update-agreement")
+    @PreAuthorize("hasAuthority('EDIT_FUNDING')")
+    @Idempotent
+    public DocumentFileResponseDTO updateAgreementDocument(
+            @ModelAttribute @Valid DocumentFileDTO documentFile) {
+        return fundingService.updateAgreementDocument(documentFile);
+    }
+
     @DeleteMapping("/{fundingId}/{documentFileId}")
     @PreAuthorize("hasAuthority('EDIT_FUNDING')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

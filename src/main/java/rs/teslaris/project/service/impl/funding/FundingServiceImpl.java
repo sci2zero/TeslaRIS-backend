@@ -136,6 +136,14 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
     }
 
     @Override
+    @Transactional
+    public DocumentFileResponseDTO updateAgreementDocument(DocumentFileDTO updatedAgreement) {
+        updatedAgreement.setAccessRights(
+                AccessRights.ALL_RIGHTS_RESERVED);
+        return documentFileService.editDocumentFile(updatedAgreement, false);
+    }
+
+    @Override
     public void deleteAgreementDocument(Integer agreementFileId, Integer fundingId) {
         var documentFile = documentFileService.findOne(agreementFileId);
         var fundingCall = findOne(fundingId);
