@@ -494,7 +494,7 @@ public class FundingServiceTest extends BaseTest {
     }
 
     @Test
-    public void shouldUpdateFundingDocument() {
+    public void shouldUpdateAgreementDocument() {
         // given
         var documentFileDTO = new DocumentFileDTO();
         documentFileDTO.setAccessRights(AccessRights.RESTRICTED_ACCESS);
@@ -531,7 +531,7 @@ public class FundingServiceTest extends BaseTest {
     }
 
     @Test
-    public void shouldDeleteFundingDocument() {
+    public void shouldDeleteDocumentFromFunding() {
         // given
         var agreementFileId = 100;
         var fundingId = 1;
