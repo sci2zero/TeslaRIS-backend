@@ -30,6 +30,7 @@ import rs.teslaris.core.model.commontypes.GeoLocation;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.ProfilePhotoOrLogo;
 import rs.teslaris.core.model.commontypes.ResearchArea;
+import rs.teslaris.core.model.identifier.OrganisationUnitIdentifier;
 import rs.teslaris.core.model.person.Contact;
 import rs.teslaris.core.model.person.PostalAddress;
 import rs.teslaris.core.util.deduplication.Accounted;
@@ -88,20 +89,14 @@ public class OrganisationUnit extends BaseEntity implements Mergeable, Accounted
     @Column(name = "isni")
     private String isni; // https://bioregistry.io/registry/isni
 
-    @Column(name = "athens_id")
-    private String athensId;
-
-    @Column(name = "nces_id")
-    private String ncesId;
-
     @Column(name = "fct_id")
     private String fctId;
 
-    @Column(name = "dgeec_id")
-    private String dgeecId;
+    @Column(name = "tax_number")
+    private String taxNumber;
 
-    @Column(name = "nif_id")
-    private String nifId;
+    @OneToMany(fetch = FetchType.LAZY)
+    private Set<OrganisationUnitIdentifier> otherIdentifiers = new HashSet<>();
 
     @Embedded
     private GeoLocation location;
