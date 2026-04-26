@@ -25,6 +25,7 @@ import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.Project;
 import rs.teslaris.project.repository.project.ProjectRepository;
+import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 import java.time.LocalDate;
@@ -48,6 +49,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final ProjectIndexRepository projectIndexRepository;
 
     private final SearchService<ProjectIndex> searchService;
+
+    private final OrganisationUnitProjectContributionService organisationUnitProjectContributionService;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -143,6 +146,10 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         var researchAreas = researchAreaService.getResearchAreasByIds(
                 projectDTO.getResearchAreasId().stream().toList());
         project.setResearchAreas(new HashSet<>(researchAreas));
+
+        var consortium = organisationUnitProjectContributionService.getOrganisationUnitsByIds(
+                projectDTO.getConsortiumIds().stream().toList());
+        project.setConsortium(new HashSet<>(consortium));
 
         project.setUris(projectDTO.getUris());
         project.setDoi(projectDTO.getDoi());

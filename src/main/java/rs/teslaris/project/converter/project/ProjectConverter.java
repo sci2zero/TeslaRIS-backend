@@ -31,6 +31,9 @@ public class ProjectConverter {
         project.getResearchAreas().forEach(researchArea ->
                 dto.getResearchAreasId().add(researchArea.getId()));
 
+        project.getConsortium().forEach(organisation ->
+                dto.getConsortiumIds().add(organisation.getId()));
+
         dto.setUris(project.getUris());
         dto.setDateFrom(project.getDateFrom());
         dto.setDateTo(project.getDateTo());

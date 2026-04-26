@@ -24,6 +24,7 @@ import rs.teslaris.project.model.project.ProjectResearchType;
 import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.service.impl.project.ProjectServiceImpl;
+import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -47,6 +48,9 @@ public class ProjectServiceTest {
 
     @Mock
     private ResearchAreaService researchAreaService;
+
+    @Mock
+    private OrganisationUnitProjectContributionService organisationUnitProjectContributionService;
 
     @Mock
     private CurrencyService currencyService;
@@ -182,6 +186,8 @@ public class ProjectServiceTest {
                 .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
                 .thenReturn(List.of());
+        when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
+                .thenReturn(List.of());
         when(currencyService.findOne(1))
                 .thenReturn(null);
         when(projectRepository.save(any(Project.class)))
@@ -197,6 +203,7 @@ public class ProjectServiceTest {
         assertEquals(1, result.getId());
         verify(multilingualContentService, times(4)).getMultilingualContent(anyList());
         verify(researchAreaService).getResearchAreasByIds(anyList());
+        verify(organisationUnitProjectContributionService).getOrganisationUnitsByIds(anyList());
         verify(currencyService).findOne(1);
         verify(projectRepository).save(any(Project.class));
         verify(projectIndexRepository).save(any(ProjectIndex.class));
@@ -300,6 +307,8 @@ public class ProjectServiceTest {
                 .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
                 .thenReturn(List.of());
+        when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
+                .thenReturn(List.of());
         when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
                 .thenReturn(Optional.of(projectIndex));
 
@@ -310,6 +319,7 @@ public class ProjectServiceTest {
         verify(projectRepository).findById(projectId);
         verify(multilingualContentService, times(4)).getMultilingualContent(anyList());
         verify(researchAreaService).getResearchAreasByIds(anyList());
+        verify(organisationUnitProjectContributionService).getOrganisationUnitsByIds(anyList());
         verify(projectIndexRepository).findProjectIndexByDatabaseId(projectId);
         verify(projectIndexRepository).save(any(ProjectIndex.class));
     }
@@ -355,6 +365,8 @@ public class ProjectServiceTest {
                 .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
                 .thenReturn(List.of());
+        when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
+                .thenReturn(List.of());
         when(currencyService.findOne(1))
                 .thenReturn(null);
         when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
@@ -367,6 +379,7 @@ public class ProjectServiceTest {
         verify(projectRepository).findById(projectId);
         verify(multilingualContentService, times(4)).getMultilingualContent(anyList());
         verify(researchAreaService).getResearchAreasByIds(anyList());
+        verify(organisationUnitProjectContributionService).getOrganisationUnitsByIds(anyList());
         verify(currencyService).findOne(1);
         verify(projectIndexRepository).findProjectIndexByDatabaseId(projectId);
         verify(projectIndexRepository).save(any(ProjectIndex.class));

@@ -50,6 +50,8 @@ public class ProjectDTO {
 
     private Set<Integer> researchAreasId = new HashSet<>();
 
+    private Set<Integer> consortiumIds = new HashSet<>();
+
     private Set<String> uris = new HashSet<>();
 
     private LocalDate dateFrom;

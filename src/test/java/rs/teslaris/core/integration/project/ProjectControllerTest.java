@@ -81,6 +81,11 @@ public class ProjectControllerTest extends BaseTest {
         researchAreas.add(2);
         dto.setResearchAreasId(researchAreas);
 
+        var consortium = new HashSet<Integer>();
+        consortium.add(1);
+        consortium.add(2);
+        dto.setConsortiumIds(consortium);
+
         dto.setDateFrom(LocalDate.of(2025, 1, 1));
         dto.setDateTo(LocalDate.of(2026, 3, 1));
 
