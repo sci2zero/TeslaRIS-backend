@@ -40,7 +40,9 @@ public class DocumentIdentifierControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(documentIdentifierDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/document-identifier")
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/document-identifier/{documentId}",
+                        documentIdentifierDTO.getDocumentId())
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -57,7 +59,9 @@ public class DocumentIdentifierControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(documentIdentifierDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/document-identifier")
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/document-identifier/{documentId}",
+                        documentIdentifierDTO.getDocumentId())
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -75,8 +79,8 @@ public class DocumentIdentifierControllerTest extends BaseTest {
         String requestBody = objectMapper.writeValueAsString(documentIdentifierDTO);
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
-                        "http://localhost:8081/api/document-identifier/{identifierId}",
-                        4)
+                        "http://localhost:8081/api/document-identifier/{documentId}/{identifierId}",
+                        documentIdentifierDTO.getDocumentId(), 4)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

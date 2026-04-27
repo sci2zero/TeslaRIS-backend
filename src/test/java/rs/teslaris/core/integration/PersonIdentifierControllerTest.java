@@ -40,7 +40,8 @@ public class PersonIdentifierControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(personIdentifierDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/person-identifier")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/person-identifier/{personId}",
+                        personIdentifierDTO.getPersonId())
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -57,7 +58,8 @@ public class PersonIdentifierControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(personIdentifierDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/person-identifier")
+                MockMvcRequestBuilders.post("http://localhost:8081/api/person-identifier/{personId}",
+                        personIdentifierDTO.getPersonId())
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -75,8 +77,8 @@ public class PersonIdentifierControllerTest extends BaseTest {
         String requestBody = objectMapper.writeValueAsString(personIdentifierDTO);
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
-                        "http://localhost:8081/api/person-identifier/{identifierId}",
-                        3)
+                        "http://localhost:8081/api/person-identifier/{personId}/{identifierId}",
+                        personIdentifierDTO.getPersonId(), 3)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());
