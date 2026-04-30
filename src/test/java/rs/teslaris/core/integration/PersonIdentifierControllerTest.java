@@ -36,7 +36,7 @@ public class PersonIdentifierControllerTest extends BaseTest {
     public void testCreatePersonIdentifierSuccess() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var personIdentifierDTO = getTestPayload("12345");
+        var personIdentifierDTO = getTestPayload("33333");
 
         String requestBody = objectMapper.writeValueAsString(personIdentifierDTO);
         mockMvc.perform(
@@ -72,7 +72,7 @@ public class PersonIdentifierControllerTest extends BaseTest {
     public void testUpdatePersonIdentifier() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var personIdentifierDTO = getTestPayload("54321");
+        var personIdentifierDTO = getTestPayload("33233");
 
         String requestBody = objectMapper.writeValueAsString(personIdentifierDTO);
         mockMvc.perform(

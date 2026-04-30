@@ -9,5 +9,6 @@ public enum MembershipType {
     REGULAR_MEMBER,
     ASSOCIATE_MEMBER,
     OBSERVER,
+    COMMISSION_MEMBER,
     OTHER
 }

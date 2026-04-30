@@ -1,1434 +1,1434 @@
 databaseChangeLog:
-- changeSet:
-    id: 1777038459528-82
-    author: milospopovic (generated)
-    changes:
-    - dropForeignKeyConstraint:
-        baseTableName: educations_thesis_title
-        constraintName: fk87onrlf8rlukplkhql5oy9rug
-- changeSet:
-    id: 1777038459528-83
-    author: milospopovic (generated)
-    changes:
-    - dropForeignKeyConstraint:
-        baseTableName: educations_thesis_title
-        constraintName: fkbe1cowg0biihkn9r55o1w99ux
-- changeSet:
-    id: 1777038459528-1
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            name: country_id
-            type: INTEGER
-        - column:
-            name: date_from
-            type: date
-        - column:
-            name: date_to
-            type: date
-        - column:
-            constraints:
-              nullable: false
-            defaultValueBoolean: false
-            name: deleted
-            type: BOOLEAN
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: courses_pkey
-            name: id
-            type: INTEGER
-        - column:
-            name: number_of_students
-            type: INTEGER
-        - column:
-            name: serial_event
-            type: BOOLEAN
-        - column:
-            name: created_at
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: last_modification
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: admin_note
-            type: VARCHAR(2000)
-        - column:
-            name: academic_year
-            type: VARCHAR(255)
-        - column:
-            name: course_code
-            type: VARCHAR(255)
-        - column:
-            name: course_level
-            type: VARCHAR(255)
-        - column:
-            name: created_by
-            type: VARCHAR(255)
-        - column:
-            name: import_source
-            type: VARCHAR(255)
-        - column:
-            name: number_of_credits
-            type: VARCHAR(255)
-        - column:
-            name: updated_by
-            type: VARCHAR(255)
-        - column:
-            name: merged_ids
-            type: JSONB
-        - column:
-            name: old_ids
-            type: JSONB
-        - column:
-            name: uris
-            type: JSONB
-        tableName: courses
-- changeSet:
-    id: 1777038459528-2
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            defaultValueBoolean: false
-            name: deleted
-            type: BOOLEAN
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: employment_positions_pkey
-            name: id
-            type: INTEGER
-        - column:
-            name: super_employment_position_id
-            type: INTEGER
-        - column:
-            name: created_at
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: last_modification
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: admin_note
-            type: VARCHAR(2000)
-        - column:
-            name: created_by
-            type: VARCHAR(255)
-        - column:
-            name: import_source
-            type: VARCHAR(255)
-        - column:
-            name: processed_name
-            type: VARCHAR(255)
-        - column:
-            name: scheme_name
-            type: VARCHAR(255)
-        - column:
-            name: updated_by
-            type: VARCHAR(255)
-        tableName: employment_positions
-- changeSet:
-    id: 1777038459528-3
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            defaultValueBoolean: false
-            name: deleted
-            type: BOOLEAN
-        - column:
-            name: document_id
-            type: INTEGER
-        - column:
-            name: event_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: entity_identifiers_pkey
-            name: id
-            type: INTEGER
-        - column:
-            name: identifier_id
-            type: INTEGER
-        - column:
-            name: organisation_unit_id
-            type: INTEGER
-        - column:
-            name: person_id
-            type: INTEGER
-        - column:
-            name: publication_series_id
-            type: INTEGER
-        - column:
-            name: created_at
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: last_modification
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            constraints:
-              nullable: false
-            name: entity_type
-            type: VARCHAR(31)
-        - column:
-            name: admin_note
-            type: VARCHAR(2000)
-        - column:
-            name: created_by
-            type: VARCHAR(255)
-        - column:
-            name: import_source
-            type: VARCHAR(255)
-        - column:
-            name: updated_by
-            type: VARCHAR(255)
-        - column:
-            name: value
-            type: VARCHAR(255)
-        tableName: entity_identifiers
-- changeSet:
-    id: 1777038459528-4
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            name: access_level
-            type: SMALLINT
-        - column:
-            constraints:
-              nullable: false
-            defaultValueBoolean: false
-            name: deleted
-            type: BOOLEAN
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: identifiers_pkey
-            name: id
-            type: INTEGER
-        - column:
-            name: created_at
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: last_modification
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: admin_note
-            type: VARCHAR(2000)
-        - column:
-            name: code
-            type: VARCHAR(255)
-        - column:
-            name: created_by
-            type: VARCHAR(255)
-        - column:
-            name: import_source
-            type: VARCHAR(255)
-        - column:
-            name: regular_expression
-            type: VARCHAR(255)
-        - column:
-            name: updated_by
-            type: VARCHAR(255)
-        - column:
-            name: uri_prefix
-            type: VARCHAR(255)
-        - column:
-            name: applicable_types
-            type: INT2[]
-        tableName: identifiers
-- changeSet:
-    id: 1777038459528-5
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            name: country_id
-            type: INTEGER
-        - column:
-            name: date_from
-            type: date
-        - column:
-            name: date_to
-            type: date
-        - column:
-            constraints:
-              nullable: false
-            defaultValueBoolean: false
-            name: deleted
-            type: BOOLEAN
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: other_events_pkey
-            name: id
-            type: INTEGER
-        - column:
-            name: serial_event
-            type: BOOLEAN
-        - column:
-            name: type
-            type: SMALLINT
-        - column:
-            name: created_at
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: last_modification
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: admin_note
-            type: VARCHAR(2000)
-        - column:
-            name: created_by
-            type: VARCHAR(255)
-        - column:
-            name: import_source
-            type: VARCHAR(255)
-        - column:
-            name: updated_by
-            type: VARCHAR(255)
-        - column:
-            name: merged_ids
-            type: JSONB
-        - column:
-            name: old_ids
-            type: JSONB
-        - column:
-            name: uris
-            type: JSONB
-        tableName: other_events
-- changeSet:
-    id: 1777038459528-6
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: courses_group_name_pkey
-            name: course_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: courses_group_name_pkey
-            name: group_name_id
-            type: INTEGER
-        tableName: courses_group_name
-- changeSet:
-    id: 1777038459528-7
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_degree_classification_pkey
-            name: degree_classification_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_degree_classification_pkey
-            name: education_id
-            type: INTEGER
-        tableName: educations_degree_classification
-- changeSet:
-    id: 1777038459528-8
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_degree_code_pkey
-            name: degree_code_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_degree_code_pkey
-            name: education_id
-            type: INTEGER
-        tableName: educations_degree_code
-- changeSet:
-    id: 1777038459528-9
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_display_thesis_supervisors_pkey
-            name: display_thesis_supervisors_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_display_thesis_supervisors_pkey
-            name: education_id
-            type: INTEGER
-        tableName: educations_display_thesis_supervisors
-- changeSet:
-    id: 1777038459528-10
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: employment_positions_description_pkey
-            name: description_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: employment_positions_description_pkey
-            name: employment_position_hierarchy_id
-            type: INTEGER
-        tableName: employment_positions_description
-- changeSet:
-    id: 1777038459528-11
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: employment_positions_name_pkey
-            name: employment_position_hierarchy_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: employment_positions_name_pkey
-            name: name_id
-            type: INTEGER
-        tableName: employment_positions_name
-- changeSet:
-    id: 1777038459528-12
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: events_display_organizer_pkey
-            name: display_organizer_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: events_display_organizer_pkey
-            name: event_id
-            type: INTEGER
-        tableName: events_display_organizer
-- changeSet:
-    id: 1777038459528-13
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: identifiers_description_pkey
-            name: description_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: identifiers_description_pkey
-            name: identifier_id
-            type: INTEGER
-        tableName: identifiers_description
-- changeSet:
-    id: 1777038459528-14
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: identifiers_title_pkey
-            name: identifier_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: identifiers_title_pkey
-            name: title_id
-            type: INTEGER
-        tableName: identifiers_title
-- changeSet:
-    id: 1777038459528-15
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: involvements_description_pkey
-            name: description_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: involvements_description_pkey
-            name: involvement_id
-            type: INTEGER
-        tableName: involvements_description
-- changeSet:
-    id: 1777038459528-16
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: involvements_keywords_pkey
-            name: involvement_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: involvements_keywords_pkey
-            name: keywords_id
-            type: INTEGER
-        tableName: involvements_keywords
-- changeSet:
-    id: 1777038459528-17
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: group_name_id
-        constraintName: courses_group_name_group_name_id_key
-        tableName: courses_group_name
-- changeSet:
-    id: 1777038459528-18
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: degree_classification_id
-        constraintName: educations_degree_classification_degree_classification_id_key
-        tableName: educations_degree_classification
-- changeSet:
-    id: 1777038459528-19
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: degree_code_id
-        constraintName: educations_degree_code_degree_code_id_key
-        tableName: educations_degree_code
-- changeSet:
-    id: 1777038459528-20
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: display_thesis_supervisors_id
-        constraintName: educations_display_thesis_sup_display_thesis_supervisors_id_key
-        tableName: educations_display_thesis_supervisors
-- changeSet:
-    id: 1777038459528-21
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: description_id
-        constraintName: employment_positions_description_description_id_key
-        tableName: employment_positions_description
-- changeSet:
-    id: 1777038459528-22
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: name_id
-        constraintName: employment_positions_name_name_id_key
-        tableName: employment_positions_name
-- changeSet:
-    id: 1777038459528-23
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: display_organizer_id
-        constraintName: events_display_organizer_display_organizer_id_key
-        tableName: events_display_organizer
-- changeSet:
-    id: 1777038459528-24
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: description_id
-        constraintName: identifiers_description_description_id_key
-        tableName: identifiers_description
-- changeSet:
-    id: 1777038459528-25
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: title_id
-        constraintName: identifiers_title_title_id_key
-        tableName: identifiers_title
-- changeSet:
-    id: 1777038459528-26
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: description_id
-        constraintName: involvements_description_description_id_key
-        tableName: involvements_description
-- changeSet:
-    id: 1777038459528-27
-    author: milospopovic (generated)
-    changes:
-    - addUniqueConstraint:
-        columnNames: keywords_id
-        constraintName: involvements_keywords_keywords_id_key
-        tableName: involvements_keywords
-- changeSet:
-    id: 1777038459528-28
-    author: milospopovic (generated)
-    changes:
-    - createSequence:
-        cacheSize: 1
-        cycle: false
-        dataType: bigint
-        incrementBy: 50
-        maxValue: 9223372036854775807
-        minValue: 1
-        sequenceName: employment_positions_seq
-        startValue: 1
-- changeSet:
-    id: 1777038459528-29
-    author: milospopovic (generated)
-    changes:
-    - createSequence:
-        cacheSize: 1
-        cycle: false
-        dataType: bigint
-        incrementBy: 50
-        maxValue: 9223372036854775807
-        minValue: 1
-        sequenceName: entity_identifiers_seq
-        startValue: 1
-- changeSet:
-    id: 1777038459528-30
-    author: milospopovic (generated)
-    changes:
-    - createSequence:
-        cacheSize: 1
-        cycle: false
-        dataType: bigint
-        incrementBy: 50
-        maxValue: 9223372036854775807
-        minValue: 1
-        sequenceName: identifiers_seq
-        startValue: 1
-- changeSet:
-    id: 1777038459528-31
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_research_areas_pkey
-            name: education_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_research_areas_pkey
-            name: research_areas_id
-            type: INTEGER
-        tableName: educations_research_areas
-- changeSet:
-    id: 1777038459528-32
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_supervisors_pkey
-            name: education_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: educations_supervisors_pkey
-            name: supervisors_id
-            type: INTEGER
-        tableName: educations_supervisors
-- changeSet:
-    id: 1777038459528-33
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: events_research_areas_pkey
-            name: event_id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: events_research_areas_pkey
-            name: research_areas_id
-            type: INTEGER
-        tableName: events_research_areas
-- changeSet:
-    id: 1777038459528-34
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: biography_visible
-            type: BOOLEAN
-        tableName: person_public_field_visibility
-    - update:
-        tableName: person_public_field_visibility
-        columns:
-        - column:
-            name: biography_visible
-            valueBoolean: true
-- changeSet:
-    id: 1777038459528-35
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: degree_type
-            type: SMALLINT
-        tableName: educations
-- changeSet:
-    id: 1777038459528-36
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: educational_status
-            type: SMALLINT
-        tableName: educations
-    - update:
-        tableName: educations
-        columns:
-        - column:
-            name: educational_status
-            valueNumeric: 2
-        
-- changeSet:
-    id: 1777038459528-37
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: employment_position_id
-            type: INTEGER
-        tableName: employments
-- changeSet:
-    id: 1777038459528-38
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: funder_id
-            type: INTEGER
-        tableName: funding_calls
-- changeSet:
-    id: 1777038459528-39
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: event_type
-            type: SMALLINT
-        tableName: entity_assessment_classifications
-    - update:
-        tableName: entity_assessment_classifications
-        columns:
-        - column:
-            name: event_type
-            valueNumeric: 0
-- changeSet:
-    id: 1777038459528-40
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: membership_type
-            type: SMALLINT
-        tableName: memberships
-- changeSet:
-    id: 1777038459528-41
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: funder_id
-            type: INTEGER
-        tableName: fundings
-- changeSet:
-    id: 1777038459528-42
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: thesis_id
-            type: INTEGER
-        tableName: educations
-- changeSet:
-    id: 1777038459528-43
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: uris
-            type: JSONB
-        tableName: involvements
-    - update:
-        tableName: involvements
-        columns:
-        - column:
-            name: uris
-            value: '[]'
+  - changeSet:
+      id: 1777038459528-82
+      author: milospopovic (generated)
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: educations_thesis_title
+            constraintName: fk87onrlf8rlukplkhql5oy9rug
+  - changeSet:
+      id: 1777038459528-83
+      author: milospopovic (generated)
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: educations_thesis_title
+            constraintName: fkbe1cowg0biihkn9r55o1w99ux
+  - changeSet:
+      id: 1777038459528-1
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  name: country_id
+                  type: INTEGER
+              - column:
+                  name: date_from
+                  type: date
+              - column:
+                  name: date_to
+                  type: date
+              - column:
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+                  name: deleted
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: courses_pkey
+                  name: id
+                  type: INTEGER
+              - column:
+                  name: number_of_students
+                  type: INTEGER
+              - column:
+                  name: serial_event
+                  type: BOOLEAN
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: last_modification
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: admin_note
+                  type: VARCHAR(2000)
+              - column:
+                  name: academic_year
+                  type: VARCHAR(255)
+              - column:
+                  name: course_code
+                  type: VARCHAR(255)
+              - column:
+                  name: course_level
+                  type: VARCHAR(255)
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: import_source
+                  type: VARCHAR(255)
+              - column:
+                  name: number_of_credits
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              - column:
+                  name: merged_ids
+                  type: JSONB
+              - column:
+                  name: old_ids
+                  type: JSONB
+              - column:
+                  name: uris
+                  type: JSONB
+            tableName: courses
+  - changeSet:
+      id: 1777038459528-2
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+                  name: deleted
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: employment_positions_pkey
+                  name: id
+                  type: INTEGER
+              - column:
+                  name: super_employment_position_id
+                  type: INTEGER
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: last_modification
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: admin_note
+                  type: VARCHAR(2000)
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: import_source
+                  type: VARCHAR(255)
+              - column:
+                  name: processed_name
+                  type: VARCHAR(255)
+              - column:
+                  name: scheme_name
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: employment_positions
+  - changeSet:
+      id: 1777038459528-3
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+                  name: deleted
+                  type: BOOLEAN
+              - column:
+                  name: document_id
+                  type: INTEGER
+              - column:
+                  name: event_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: entity_identifiers_pkey
+                  name: id
+                  type: INTEGER
+              - column:
+                  name: identifier_id
+                  type: INTEGER
+              - column:
+                  name: organisation_unit_id
+                  type: INTEGER
+              - column:
+                  name: person_id
+                  type: INTEGER
+              - column:
+                  name: publication_series_id
+                  type: INTEGER
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: last_modification
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: entity_type
+                  type: VARCHAR(31)
+              - column:
+                  name: admin_note
+                  type: VARCHAR(2000)
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: import_source
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              - column:
+                  name: value
+                  type: VARCHAR(255)
+            tableName: entity_identifiers
+  - changeSet:
+      id: 1777038459528-4
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  name: access_level
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+                  name: deleted
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: identifiers_pkey
+                  name: id
+                  type: INTEGER
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: last_modification
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: admin_note
+                  type: VARCHAR(2000)
+              - column:
+                  name: code
+                  type: VARCHAR(255)
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: import_source
+                  type: VARCHAR(255)
+              - column:
+                  name: regular_expression
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              - column:
+                  name: uri_prefix
+                  type: VARCHAR(255)
+              - column:
+                  name: applicable_types
+                  type: INT2[]
+            tableName: identifiers
+  - changeSet:
+      id: 1777038459528-5
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  name: country_id
+                  type: INTEGER
+              - column:
+                  name: date_from
+                  type: date
+              - column:
+                  name: date_to
+                  type: date
+              - column:
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+                  name: deleted
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: other_events_pkey
+                  name: id
+                  type: INTEGER
+              - column:
+                  name: serial_event
+                  type: BOOLEAN
+              - column:
+                  name: type
+                  type: SMALLINT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: last_modification
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: admin_note
+                  type: VARCHAR(2000)
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: import_source
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              - column:
+                  name: merged_ids
+                  type: JSONB
+              - column:
+                  name: old_ids
+                  type: JSONB
+              - column:
+                  name: uris
+                  type: JSONB
+            tableName: other_events
+  - changeSet:
+      id: 1777038459528-6
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: courses_group_name_pkey
+                  name: course_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: courses_group_name_pkey
+                  name: group_name_id
+                  type: INTEGER
+            tableName: courses_group_name
+  - changeSet:
+      id: 1777038459528-7
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_degree_classification_pkey
+                  name: degree_classification_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_degree_classification_pkey
+                  name: education_id
+                  type: INTEGER
+            tableName: educations_degree_classification
+  - changeSet:
+      id: 1777038459528-8
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_degree_code_pkey
+                  name: degree_code_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_degree_code_pkey
+                  name: education_id
+                  type: INTEGER
+            tableName: educations_degree_code
+  - changeSet:
+      id: 1777038459528-9
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_display_thesis_supervisors_pkey
+                  name: display_thesis_supervisors_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_display_thesis_supervisors_pkey
+                  name: education_id
+                  type: INTEGER
+            tableName: educations_display_thesis_supervisors
+  - changeSet:
+      id: 1777038459528-10
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: employment_positions_description_pkey
+                  name: description_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: employment_positions_description_pkey
+                  name: employment_position_hierarchy_id
+                  type: INTEGER
+            tableName: employment_positions_description
+  - changeSet:
+      id: 1777038459528-11
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: employment_positions_name_pkey
+                  name: employment_position_hierarchy_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: employment_positions_name_pkey
+                  name: name_id
+                  type: INTEGER
+            tableName: employment_positions_name
+  - changeSet:
+      id: 1777038459528-12
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: events_display_organizer_pkey
+                  name: display_organizer_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: events_display_organizer_pkey
+                  name: event_id
+                  type: INTEGER
+            tableName: events_display_organizer
+  - changeSet:
+      id: 1777038459528-13
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: identifiers_description_pkey
+                  name: description_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: identifiers_description_pkey
+                  name: identifier_id
+                  type: INTEGER
+            tableName: identifiers_description
+  - changeSet:
+      id: 1777038459528-14
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: identifiers_title_pkey
+                  name: identifier_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: identifiers_title_pkey
+                  name: title_id
+                  type: INTEGER
+            tableName: identifiers_title
+  - changeSet:
+      id: 1777038459528-15
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: involvements_description_pkey
+                  name: description_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: involvements_description_pkey
+                  name: involvement_id
+                  type: INTEGER
+            tableName: involvements_description
+  - changeSet:
+      id: 1777038459528-16
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: involvements_keywords_pkey
+                  name: involvement_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: involvements_keywords_pkey
+                  name: keywords_id
+                  type: INTEGER
+            tableName: involvements_keywords
+  - changeSet:
+      id: 1777038459528-17
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: group_name_id
+            constraintName: courses_group_name_group_name_id_key
+            tableName: courses_group_name
+  - changeSet:
+      id: 1777038459528-18
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: degree_classification_id
+            constraintName: educations_degree_classification_degree_classification_id_key
+            tableName: educations_degree_classification
+  - changeSet:
+      id: 1777038459528-19
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: degree_code_id
+            constraintName: educations_degree_code_degree_code_id_key
+            tableName: educations_degree_code
+  - changeSet:
+      id: 1777038459528-20
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: display_thesis_supervisors_id
+            constraintName: educations_display_thesis_sup_display_thesis_supervisors_id_key
+            tableName: educations_display_thesis_supervisors
+  - changeSet:
+      id: 1777038459528-21
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: description_id
+            constraintName: employment_positions_description_description_id_key
+            tableName: employment_positions_description
+  - changeSet:
+      id: 1777038459528-22
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: name_id
+            constraintName: employment_positions_name_name_id_key
+            tableName: employment_positions_name
+  - changeSet:
+      id: 1777038459528-23
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: display_organizer_id
+            constraintName: events_display_organizer_display_organizer_id_key
+            tableName: events_display_organizer
+  - changeSet:
+      id: 1777038459528-24
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: description_id
+            constraintName: identifiers_description_description_id_key
+            tableName: identifiers_description
+  - changeSet:
+      id: 1777038459528-25
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: title_id
+            constraintName: identifiers_title_title_id_key
+            tableName: identifiers_title
+  - changeSet:
+      id: 1777038459528-26
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: description_id
+            constraintName: involvements_description_description_id_key
+            tableName: involvements_description
+  - changeSet:
+      id: 1777038459528-27
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: keywords_id
+            constraintName: involvements_keywords_keywords_id_key
+            tableName: involvements_keywords
+  - changeSet:
+      id: 1777038459528-28
+      author: milospopovic (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 50
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: employment_positions_seq
+            startValue: 1
+  - changeSet:
+      id: 1777038459528-29
+      author: milospopovic (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 50
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: entity_identifiers_seq
+            startValue: 1
+  - changeSet:
+      id: 1777038459528-30
+      author: milospopovic (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 50
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: identifiers_seq
+            startValue: 1
+  - changeSet:
+      id: 1777038459528-31
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_research_areas_pkey
+                  name: education_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_research_areas_pkey
+                  name: research_areas_id
+                  type: INTEGER
+            tableName: educations_research_areas
+  - changeSet:
+      id: 1777038459528-32
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_supervisors_pkey
+                  name: education_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: educations_supervisors_pkey
+                  name: supervisors_id
+                  type: INTEGER
+            tableName: educations_supervisors
+  - changeSet:
+      id: 1777038459528-33
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: events_research_areas_pkey
+                  name: event_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: events_research_areas_pkey
+                  name: research_areas_id
+                  type: INTEGER
+            tableName: events_research_areas
+  - changeSet:
+      id: 1777038459528-34
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: biography_visible
+                  type: BOOLEAN
+            tableName: person_public_field_visibility
+        - update:
+            tableName: person_public_field_visibility
+            columns:
+              - column:
+                  name: biography_visible
+                  valueBoolean: true
+  - changeSet:
+      id: 1777038459528-35
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: degree_type
+                  type: SMALLINT
+            tableName: educations
+  - changeSet:
+      id: 1777038459528-36
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: educational_status
+                  type: SMALLINT
+            tableName: educations
+        - update:
+            tableName: educations
+            columns:
+              - column:
+                  name: educational_status
+                  valueNumeric: 2
 
-- changeSet:
-    id: 1777038459528-44
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: uris
-            type: JSONB
-        tableName: memberships
-    - update:
-        tableName: memberships
-        columns:
-        - column:
-            name: uris
-            value: '[]'
+  - changeSet:
+      id: 1777038459528-37
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: employment_position_id
+                  type: INTEGER
+            tableName: employments
+  - changeSet:
+      id: 1777038459528-38
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: funder_id
+                  type: INTEGER
+            tableName: funding_calls
+  - changeSet:
+      id: 1777038459528-39
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: event_type
+                  type: SMALLINT
+            tableName: entity_assessment_classifications
+        - update:
+            tableName: entity_assessment_classifications
+            columns:
+              - column:
+                  name: event_type
+                  valueNumeric: 0
+  - changeSet:
+      id: 1777038459528-40
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: membership_type
+                  type: SMALLINT
+            tableName: memberships
+  - changeSet:
+      id: 1777038459528-41
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: funder_id
+                  type: INTEGER
+            tableName: fundings
+  - changeSet:
+      id: 1777038459528-42
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: thesis_id
+                  type: INTEGER
+            tableName: educations
+  - changeSet:
+      id: 1777038459528-43
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: uris
+                  type: JSONB
+            tableName: involvements
+        - update:
+            tableName: involvements
+            columns:
+              - column:
+                  name: uris
+                  value: '[]'
 
-- changeSet:
-    id: 1777038459528-45
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: uris
-            type: JSONB
-        tableName: employments
-    - update:
-        tableName: employments
-        columns:
-        - column:
-            name: uris
-            value: '[]'
+  - changeSet:
+      id: 1777038459528-44
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: uris
+                  type: JSONB
+            tableName: memberships
+        - update:
+            tableName: memberships
+            columns:
+              - column:
+                  name: uris
+                  value: '[]'
 
-- changeSet:
-    id: 1777038459528-46
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: uris
-            type: JSONB
-        tableName: educations
-    - update:
-        tableName: educations
-        columns:
-        - column:
-            name: uris
-            value: '[]'
+  - changeSet:
+      id: 1777038459528-45
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: uris
+                  type: JSONB
+            tableName: employments
+        - update:
+            tableName: employments
+            columns:
+              - column:
+                  name: uris
+                  value: '[]'
 
-- changeSet:
-    id: 1777038459528-47
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: udc
-            type: VARCHAR(255)
-        tableName: monographs
-- changeSet:
-    id: 1777038459528-48
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: degree_code_id
-        baseTableName: educations_degree_code
-        constraintName: fk1te3gvp1fhf3gj7quqo1gtlrr
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-49
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: keywords_id
-        baseTableName: involvements_keywords
-        constraintName: fk4nlau173wao0alv8t3ukcuc26
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-50
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: employment_position_id
-        baseTableName: employments
-        constraintName: fk517c0din4uo4ykjtrss3v70qp
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: employment_positions
-        validate: true
-- changeSet:
-    id: 1777038459528-51
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: research_areas_id
-        baseTableName: events_research_areas
-        constraintName: fk55ic8rjbyubpjuqjtw8a2rxkp
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: research_area
-        validate: true
-- changeSet:
-    id: 1777038459528-52
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: education_id
-        baseTableName: educations_supervisors
-        constraintName: fk5qdx2p5e5pa6w6paiea2g8n14
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: educations
-        validate: true
-- changeSet:
-    id: 1777038459528-53
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: identifier_id
-        baseTableName: identifiers_title
-        constraintName: fk6nkunbyw4ku8vbvduwcg3gm3p
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: identifiers
-        validate: true
-- changeSet:
-    id: 1777038459528-54
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: title_id
-        baseTableName: identifiers_title
-        constraintName: fk6ri97fkfjog37cxqglrp9i48w
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-55
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: organisation_unit_id
-        baseTableName: entity_identifiers
-        constraintName: fk88uw5ptk9s46w3rahbsx3gxm9
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: organisation_units
-        validate: true
-- changeSet:
-    id: 1777038459528-56
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: group_name_id
-        baseTableName: courses_group_name
-        constraintName: fk8icbrkxc8ak03qpdy91jnt0d1
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-57
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: funder_id
-        baseTableName: funding_calls
-        constraintName: fk8n4x88nak90xy3el66858n12n
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: organisation_units
-        validate: true
-- changeSet:
-    id: 1777038459528-58
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: country_id
-        baseTableName: courses
-        constraintName: fk_3ykuxbduk6kl4vnua0un0x15i
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: countries
-        validate: true
-- changeSet:
-    id: 1777038459528-59
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: country_id
-        baseTableName: other_events
-        constraintName: fk_koccr4frcgrxmkn0ek8rcsl9h
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: countries
-        validate: true
-- changeSet:
-    id: 1777038459528-60
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: identifier_id
-        baseTableName: identifiers_description
-        constraintName: fkaystqq85grnfvuwbmctviyre1
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: identifiers
-        validate: true
-- changeSet:
-    id: 1777038459528-61
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: education_id
-        baseTableName: educations_research_areas
-        constraintName: fkbk7c06ort4gowfov07njc51jd
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: educations
-        validate: true
-- changeSet:
-    id: 1777038459528-62
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: funder_id
-        baseTableName: fundings
-        constraintName: fkbrjtuvl3aeo0aq2o45xy3fiwh
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: organisation_units
-        validate: true
-- changeSet:
-    id: 1777038459528-63
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: employment_position_hierarchy_id
-        baseTableName: employment_positions_name
-        constraintName: fkc9vi44q40n22lxsn5aivseuce
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: employment_positions
-        validate: true
-- changeSet:
-    id: 1777038459528-64
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: supervisors_id
-        baseTableName: educations_supervisors
-        constraintName: fke6olqeokqg7nrxwae98s043fr
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: persons
-        validate: true
-- changeSet:
-    id: 1777038459528-65
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: display_organizer_id
-        baseTableName: events_display_organizer
-        constraintName: fke6pg5w51gbfquspcv4fk3v4lu
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-66
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: description_id
-        baseTableName: employment_positions_description
-        constraintName: fkf2fy86tpxayrpl0jtx9xri2a0
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-67
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: course_id
-        baseTableName: courses_group_name
-        constraintName: fkfo8rbb4ysqeui3ers42bhfp2d
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: courses
-        validate: true
-- changeSet:
-    id: 1777038459528-68
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: employment_position_hierarchy_id
-        baseTableName: employment_positions_description
-        constraintName: fkgmu3tn5l7imfxo76e8vba0opj
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: employment_positions
-        validate: true
-- changeSet:
-    id: 1777038459528-69
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: degree_classification_id
-        baseTableName: educations_degree_classification
-        constraintName: fkh8qvrwf9eu3kro81l9pxpvbma
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-70
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: identifier_id
-        baseTableName: entity_identifiers
-        constraintName: fkhj6a1vhvp6tbwbvlv54l18hs0
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: identifiers
-        validate: true
-- changeSet:
-    id: 1777038459528-71
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: person_id
-        baseTableName: entity_identifiers
-        constraintName: fki94bqvgl9s05oumpomat57vxy
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: persons
-        validate: true
-- changeSet:
-    id: 1777038459528-72
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: education_id
-        baseTableName: educations_degree_code
-        constraintName: fkia8vu8dy3ltg6kk4l73jneot6
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: educations
-        validate: true
-- changeSet:
-    id: 1777038459528-73
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: research_areas_id
-        baseTableName: educations_research_areas
-        constraintName: fkj8e0qmtosov9wqufjy9m4fsk3
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: research_area
-        validate: true
-- changeSet:
-    id: 1777038459528-74
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: thesis_id
-        baseTableName: educations
-        constraintName: fkjj36tstpbcujw28pb1pj7vpl5
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: theses
-        validate: true
-- changeSet:
-    id: 1777038459528-75
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: super_employment_position_id
-        baseTableName: employment_positions
-        constraintName: fkkh3vymhf5r3nphs02sf5sqhgr
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: employment_positions
-        validate: true
-- changeSet:
-    id: 1777038459528-76
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: education_id
-        baseTableName: educations_degree_classification
-        constraintName: fkl84kd9ah48lnk43usk9509ex0
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: educations
-        validate: true
-- changeSet:
-    id: 1777038459528-77
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: name_id
-        baseTableName: employment_positions_name
-        constraintName: fklmoad3rmt9392j8byfhbq78fc
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-78
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: education_id
-        baseTableName: educations_display_thesis_supervisors
-        constraintName: fknks23y0oulc5mqfpxluxom1kf
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: educations
-        validate: true
-- changeSet:
-    id: 1777038459528-79
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: description_id
-        baseTableName: involvements_description
-        constraintName: fknul9ak7c8cn93pndrx1qgu599
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-80
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: display_thesis_supervisors_id
-        baseTableName: educations_display_thesis_supervisors
-        constraintName: fkpj6sebqfe20vk3bl0ofoq1ltl
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
-- changeSet:
-    id: 1777038459528-81
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: description_id
-        baseTableName: identifiers_description
-        constraintName: fktddl4psnvbti31hgmodc796ty
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: multi_lingual_content
-        validate: true
+  - changeSet:
+      id: 1777038459528-46
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: uris
+                  type: JSONB
+            tableName: educations
+        - update:
+            tableName: educations
+            columns:
+              - column:
+                  name: uris
+                  value: '[]'
+
+  - changeSet:
+      id: 1777038459528-47
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: udc
+                  type: VARCHAR(255)
+            tableName: monographs
+  - changeSet:
+      id: 1777038459528-48
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: degree_code_id
+            baseTableName: educations_degree_code
+            constraintName: fk1te3gvp1fhf3gj7quqo1gtlrr
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-49
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: keywords_id
+            baseTableName: involvements_keywords
+            constraintName: fk4nlau173wao0alv8t3ukcuc26
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-50
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: employment_position_id
+            baseTableName: employments
+            constraintName: fk517c0din4uo4ykjtrss3v70qp
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: employment_positions
+            validate: true
+  - changeSet:
+      id: 1777038459528-51
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: research_areas_id
+            baseTableName: events_research_areas
+            constraintName: fk55ic8rjbyubpjuqjtw8a2rxkp
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: research_area
+            validate: true
+  - changeSet:
+      id: 1777038459528-52
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: education_id
+            baseTableName: educations_supervisors
+            constraintName: fk5qdx2p5e5pa6w6paiea2g8n14
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: educations
+            validate: true
+  - changeSet:
+      id: 1777038459528-53
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: identifier_id
+            baseTableName: identifiers_title
+            constraintName: fk6nkunbyw4ku8vbvduwcg3gm3p
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: identifiers
+            validate: true
+  - changeSet:
+      id: 1777038459528-54
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: title_id
+            baseTableName: identifiers_title
+            constraintName: fk6ri97fkfjog37cxqglrp9i48w
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-55
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: organisation_unit_id
+            baseTableName: entity_identifiers
+            constraintName: fk88uw5ptk9s46w3rahbsx3gxm9
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: organisation_units
+            validate: true
+  - changeSet:
+      id: 1777038459528-56
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: group_name_id
+            baseTableName: courses_group_name
+            constraintName: fk8icbrkxc8ak03qpdy91jnt0d1
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-57
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: funder_id
+            baseTableName: funding_calls
+            constraintName: fk8n4x88nak90xy3el66858n12n
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: organisation_units
+            validate: true
+  - changeSet:
+      id: 1777038459528-58
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: country_id
+            baseTableName: courses
+            constraintName: fk_3ykuxbduk6kl4vnua0un0x15i
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: countries
+            validate: true
+  - changeSet:
+      id: 1777038459528-59
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: country_id
+            baseTableName: other_events
+            constraintName: fk_koccr4frcgrxmkn0ek8rcsl9h
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: countries
+            validate: true
+  - changeSet:
+      id: 1777038459528-60
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: identifier_id
+            baseTableName: identifiers_description
+            constraintName: fkaystqq85grnfvuwbmctviyre1
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: identifiers
+            validate: true
+  - changeSet:
+      id: 1777038459528-61
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: education_id
+            baseTableName: educations_research_areas
+            constraintName: fkbk7c06ort4gowfov07njc51jd
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: educations
+            validate: true
+  - changeSet:
+      id: 1777038459528-62
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: funder_id
+            baseTableName: fundings
+            constraintName: fkbrjtuvl3aeo0aq2o45xy3fiwh
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: organisation_units
+            validate: true
+  - changeSet:
+      id: 1777038459528-63
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: employment_position_hierarchy_id
+            baseTableName: employment_positions_name
+            constraintName: fkc9vi44q40n22lxsn5aivseuce
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: employment_positions
+            validate: true
+  - changeSet:
+      id: 1777038459528-64
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: supervisors_id
+            baseTableName: educations_supervisors
+            constraintName: fke6olqeokqg7nrxwae98s043fr
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: persons
+            validate: true
+  - changeSet:
+      id: 1777038459528-65
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: display_organizer_id
+            baseTableName: events_display_organizer
+            constraintName: fke6pg5w51gbfquspcv4fk3v4lu
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-66
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: description_id
+            baseTableName: employment_positions_description
+            constraintName: fkf2fy86tpxayrpl0jtx9xri2a0
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-67
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: course_id
+            baseTableName: courses_group_name
+            constraintName: fkfo8rbb4ysqeui3ers42bhfp2d
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: courses
+            validate: true
+  - changeSet:
+      id: 1777038459528-68
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: employment_position_hierarchy_id
+            baseTableName: employment_positions_description
+            constraintName: fkgmu3tn5l7imfxo76e8vba0opj
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: employment_positions
+            validate: true
+  - changeSet:
+      id: 1777038459528-69
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: degree_classification_id
+            baseTableName: educations_degree_classification
+            constraintName: fkh8qvrwf9eu3kro81l9pxpvbma
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-70
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: identifier_id
+            baseTableName: entity_identifiers
+            constraintName: fkhj6a1vhvp6tbwbvlv54l18hs0
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: identifiers
+            validate: true
+  - changeSet:
+      id: 1777038459528-71
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: person_id
+            baseTableName: entity_identifiers
+            constraintName: fki94bqvgl9s05oumpomat57vxy
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: persons
+            validate: true
+  - changeSet:
+      id: 1777038459528-72
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: education_id
+            baseTableName: educations_degree_code
+            constraintName: fkia8vu8dy3ltg6kk4l73jneot6
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: educations
+            validate: true
+  - changeSet:
+      id: 1777038459528-73
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: research_areas_id
+            baseTableName: educations_research_areas
+            constraintName: fkj8e0qmtosov9wqufjy9m4fsk3
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: research_area
+            validate: true
+  - changeSet:
+      id: 1777038459528-74
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: thesis_id
+            baseTableName: educations
+            constraintName: fkjj36tstpbcujw28pb1pj7vpl5
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: theses
+            validate: true
+  - changeSet:
+      id: 1777038459528-75
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: super_employment_position_id
+            baseTableName: employment_positions
+            constraintName: fkkh3vymhf5r3nphs02sf5sqhgr
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: employment_positions
+            validate: true
+  - changeSet:
+      id: 1777038459528-76
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: education_id
+            baseTableName: educations_degree_classification
+            constraintName: fkl84kd9ah48lnk43usk9509ex0
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: educations
+            validate: true
+  - changeSet:
+      id: 1777038459528-77
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: name_id
+            baseTableName: employment_positions_name
+            constraintName: fklmoad3rmt9392j8byfhbq78fc
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-78
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: education_id
+            baseTableName: educations_display_thesis_supervisors
+            constraintName: fknks23y0oulc5mqfpxluxom1kf
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: educations
+            validate: true
+  - changeSet:
+      id: 1777038459528-79
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: description_id
+            baseTableName: involvements_description
+            constraintName: fknul9ak7c8cn93pndrx1qgu599
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-80
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: display_thesis_supervisors_id
+            baseTableName: educations_display_thesis_supervisors
+            constraintName: fkpj6sebqfe20vk3bl0ofoq1ltl
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
+  - changeSet:
+      id: 1777038459528-81
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: description_id
+            baseTableName: identifiers_description
+            constraintName: fktddl4psnvbti31hgmodc796ty
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: multi_lingual_content
+            validate: true
 

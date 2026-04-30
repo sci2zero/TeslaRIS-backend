@@ -29,6 +29,7 @@ import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.JournalPublicationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -81,6 +82,7 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
                                          InvolvementRepository involvementRepository,
                                          OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                          DocumentLookupService documentLookupService,
+                                         CountryService countryService,
                                          JournalPublicationJPAServiceImpl journalPublicationJPAService,
                                          JournalService journalService,
                                          DocumentPublicationIndexRepository documentPublicationIndexRepository1,
@@ -91,7 +93,8 @@ public class JournalPublicationServiceImpl extends DocumentPublicationServiceImp
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService);
+            documentLookupService,
+            countryService);
         this.journalPublicationJPAService = journalPublicationJPAService;
         this.journalService = journalService;
         this.documentPublicationIndexRepository = documentPublicationIndexRepository1;

@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
+import rs.teslaris.core.model.document.PublicationStatus;
 
 @Getter
 @Setter
@@ -55,6 +56,14 @@ public class DocumentDTO {
 
     private String webOfScienceId;
 
+    private String handleId;
+
+    private String arxivId;
+
+    private String pubmedId;
+
+    private String ssrnId;
+
     @Positive(message = "Event Id must be a positive number.")
     private Integer eventId;
 
@@ -69,7 +78,26 @@ public class DocumentDTO {
 
     private Boolean isArchived;
 
+    private Boolean peerReviewed = false;
+
+    private Boolean openAccess = false;
+
+    private PublicationStatus publicationStatus;
+
     private List<MultilingualContentDTO> remark = new ArrayList<>();
 
+    private List<MultilingualContentDTO> geoSpaceDescription = new ArrayList<>();
+
+    private List<MultilingualContentDTO> chronologicalSpaceDescription = new ArrayList<>();
+
+    private List<MultilingualContentDTO> city = new ArrayList<>();
+
+    @Positive(message = "Country ID must be a positive number.")
+    private Integer countryId;
+
     private String note;
+
+    // used only for responses
+
+    private List<MultilingualContentDTO> countryName = new ArrayList<>();
 }

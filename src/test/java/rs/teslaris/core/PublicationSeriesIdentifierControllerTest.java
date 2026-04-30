@@ -37,7 +37,7 @@ public class PublicationSeriesIdentifierControllerTest extends BaseTest {
     public void testCreatePublicationSeriesIdentifierSuccess() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var publicationSeriesIdentifierDTO = getTestPayload("12345");
+        var publicationSeriesIdentifierDTO = getTestPayload("11111");
 
         String requestBody = objectMapper.writeValueAsString(publicationSeriesIdentifierDTO);
         mockMvc.perform(
@@ -71,7 +71,7 @@ public class PublicationSeriesIdentifierControllerTest extends BaseTest {
     public void testUpdatePublicationSeriesIdentifier() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var publicationSeriesIdentifierDTO = getTestPayload("54321");
+        var publicationSeriesIdentifierDTO = getTestPayload("11011");
 
         String requestBody = objectMapper.writeValueAsString(publicationSeriesIdentifierDTO);
         mockMvc.perform(

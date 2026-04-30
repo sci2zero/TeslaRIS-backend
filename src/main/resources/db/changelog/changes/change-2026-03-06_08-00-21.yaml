@@ -1,12 +1,12 @@
 databaseChangeLog:
-- changeSet:
-    id: 1772784059610-1
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: is_reporting_commission
-            type: BOOLEAN
-        tableName: commissions
+  - changeSet:
+      id: 1772784059610-1
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: is_reporting_commission
+                  type: BOOLEAN
+            tableName: commissions
 

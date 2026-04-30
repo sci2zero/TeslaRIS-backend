@@ -65,6 +65,21 @@ public class DocumentPublicationConverter {
         publicationDTO.setRemark(
             MultilingualContentConverter.getMultilingualContentDTO(publication.getRemark()));
 
+        publicationDTO.setGeoSpaceDescription(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                publication.getGeoSpaceDescription()));
+        publicationDTO.setChronologicalSpaceDescription(
+            MultilingualContentConverter.getMultilingualContentDTO(
+                publication.getChronologicalSpaceDescription()));
+        publicationDTO.setCity(
+            MultilingualContentConverter.getMultilingualContentDTO(publication.getCity()));
+
+        if (Objects.nonNull(publication.getCountry())) {
+            publicationDTO.setCountryId(publication.getCountry().getId());
+            publicationDTO.setCountryName(MultilingualContentConverter.getMultilingualContentDTO(
+                publication.getCountry().getName()));
+        }
+
         publicationDTO.setContributions(
             PersonContributionConverter.documentContributionToDTO(publication.getContributors()));
 
@@ -74,10 +89,17 @@ public class DocumentPublicationConverter {
         publicationDTO.setScopusId(publication.getScopusId());
         publicationDTO.setOpenAlexId(publication.getOpenAlexId());
         publicationDTO.setWebOfScienceId(publication.getWebOfScienceId());
+        publicationDTO.setHandleId(publication.getHandleId());
+        publicationDTO.setArxivId(publication.getArxivId());
+        publicationDTO.setPubmedId(publication.getPubmedId());
+        publicationDTO.setSsrnId(publication.getSsrnId());
 
         publicationDTO.setIsMetadataValid(publication.getIsMetadataValid());
         publicationDTO.setAreFilesValid(publication.getAreFilesValid());
         publicationDTO.setIsArchived(publication.getIsArchived());
+        publicationDTO.setPeerReviewed(publication.getPeerReviewed());
+        publicationDTO.setOpenAccess(publication.getOpenAccess());
+        publicationDTO.setPublicationStatus(publication.getPublicationStatus());
 
         if (Objects.nonNull(publication.getEvent())) {
             publicationDTO.setEventId(publication.getEvent().getId());

@@ -36,7 +36,7 @@ public class DocumentIdentifierControllerTest extends BaseTest {
     public void testCreateDocumentIdentifierSuccess() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var documentIdentifierDTO = getTestPayload("12345");
+        var documentIdentifierDTO = getTestPayload("22222");
 
         String requestBody = objectMapper.writeValueAsString(documentIdentifierDTO);
         mockMvc.perform(
@@ -74,7 +74,7 @@ public class DocumentIdentifierControllerTest extends BaseTest {
     public void testUpdateDocumentIdentifier() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var documentIdentifierDTO = getTestPayload("54321");
+        var documentIdentifierDTO = getTestPayload("22122");
 
         String requestBody = objectMapper.writeValueAsString(documentIdentifierDTO);
         mockMvc.perform(

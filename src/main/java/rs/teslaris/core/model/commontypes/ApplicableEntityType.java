@@ -22,5 +22,7 @@ public enum ApplicableEntityType {
     COURSE,
     OTHER_EVENT,
     JOURNAL,
-    BOOK_SERIES
+    BOOK_SERIES,
+    PROCEEDINGS,
+    INTANGIBLE_PRODUCT
 }

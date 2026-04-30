@@ -36,7 +36,7 @@ public class OrganisationUnitIdentifierControllerTest extends BaseTest {
     public void testCreateOrganisationUnitIdentifierSuccess() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var organisationUnitIdentifierDTO = getTestPayload("12345");
+        var organisationUnitIdentifierDTO = getTestPayload("44444");
 
         String requestBody = objectMapper.writeValueAsString(organisationUnitIdentifierDTO);
         mockMvc.perform(
@@ -74,7 +74,7 @@ public class OrganisationUnitIdentifierControllerTest extends BaseTest {
     public void testUpdateOrganisationUnitIdentifier() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var organisationUnitIdentifierDTO = getTestPayload("54321");
+        var organisationUnitIdentifierDTO = getTestPayload("44344");
 
         String requestBody = objectMapper.writeValueAsString(organisationUnitIdentifierDTO);
         mockMvc.perform(

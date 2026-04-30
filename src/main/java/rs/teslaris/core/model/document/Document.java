@@ -26,6 +26,7 @@ import org.hibernate.type.SqlTypes;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.BaseEntity;
+import rs.teslaris.core.model.commontypes.Country;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.util.deduplication.Mergeable;
 
@@ -92,6 +93,18 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(name = "web_of_science_id")
     private String webOfScienceId;
 
+    @Column(name = "handle_id")
+    private String handleId;
+
+    @Column(name = "arxiv_id")
+    private String arxivId;
+
+    @Column(name = "pubmed_id")
+    private String pubmedId;
+
+    @Column(name = "ssrn_id")
+    private String ssrnId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", referencedColumnName = "id")
     private Event event;
@@ -113,12 +126,34 @@ public abstract class Document extends BaseEntity implements Mergeable {
     @Column(name = "is_archived")
     private Boolean isArchived = false;
 
+    @Column(name = "peer_reviewed")
+    private Boolean peerReviewed;
+
+    @Column(name = "open_access")
+    private Boolean openAccess;
+
+    @Column(name = "publication_status")
+    private PublicationStatus publicationStatus;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", name = "internal_identifiers")
     private Set<String> internalIdentifiers = new HashSet<>();
 
     @Column(name = "document_type", nullable = false)
     private DocumentPublicationType documentType;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> geoSpaceDescription = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> chronologicalSpaceDescription = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> city = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "country_id")
+    private Country country;
 
 
     protected Document(DocumentPublicationType documentType) {

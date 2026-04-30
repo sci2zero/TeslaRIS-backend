@@ -23,6 +23,7 @@ import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.PatentJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -71,6 +72,7 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
                              InvolvementRepository involvementRepository,
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                              DocumentLookupService documentLookupService,
+                             CountryService countryService,
                              PatentJPAServiceImpl patentJPAService,
                              PublisherService publisherService,
                              PatentRepository patentRepository) {
@@ -80,7 +82,8 @@ public class PatentServiceImpl extends DocumentPublicationServiceImpl implements
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService);
+            documentLookupService,
+            countryService);
         this.patentJPAService = patentJPAService;
         this.publisherService = publisherService;
         this.patentRepository = patentRepository;
