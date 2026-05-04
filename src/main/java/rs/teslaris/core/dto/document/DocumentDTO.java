@@ -67,6 +67,21 @@ public class DocumentDTO {
     @Positive(message = "Event Id must be a positive number.")
     private Integer eventId;
 
+    @Positive(message = "Country ID must be a positive number.")
+    private Integer countryId;
+
+    private List<MultilingualContentDTO> geoSpaceDescription = new ArrayList<>();
+
+    private List<MultilingualContentDTO> chronologicalSpaceDescription = new ArrayList<>();
+
+    private List<MultilingualContentDTO> city = new ArrayList<>();
+
+    private Boolean peerReviewed = false;
+
+    private Boolean openAccess = false;
+
+    private PublicationStatus publicationStatus;
+
     // Used only for responses
     private List<DocumentFileResponseDTO> fileItems = new ArrayList<>();
 
@@ -78,26 +93,9 @@ public class DocumentDTO {
 
     private Boolean isArchived;
 
-    private Boolean peerReviewed = false;
-
-    private Boolean openAccess = false;
-
-    private PublicationStatus publicationStatus;
-
     private List<MultilingualContentDTO> remark = new ArrayList<>();
 
-    private List<MultilingualContentDTO> geoSpaceDescription = new ArrayList<>();
-
-    private List<MultilingualContentDTO> chronologicalSpaceDescription = new ArrayList<>();
-
-    private List<MultilingualContentDTO> city = new ArrayList<>();
-
-    @Positive(message = "Country ID must be a positive number.")
-    private Integer countryId;
-
     private String note;
-
-    // used only for responses
 
     private List<MultilingualContentDTO> countryName = new ArrayList<>();
 }
