@@ -1196,7 +1196,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
             documentRepository.existsByScopusId(identifier, documentPublicationId) ||
             documentRepository.existsByOpenAlexId(identifier, documentPublicationId) ||
-            documentRepository.existsByWebOfScienceId(identifier, documentPublicationId);
+            documentRepository.existsByWebOfScienceId(identifier, documentPublicationId) ||
+            documentRepository.existsByHandleId(identifier, documentPublicationId) ||
+            documentRepository.existsByArXivId(identifier, documentPublicationId) ||
+            documentRepository.existsByPubmedId(identifier, documentPublicationId) ||
+            documentRepository.existsBySsrnId(identifier, documentPublicationId);
     }
 
     @Override
