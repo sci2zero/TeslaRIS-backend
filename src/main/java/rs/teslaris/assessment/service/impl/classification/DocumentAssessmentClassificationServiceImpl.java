@@ -619,7 +619,7 @@ public class DocumentAssessmentClassificationServiceImpl
         }
 
         commissions.forEach(commission -> {
-            if (commission.getIsReportingCommission()) {
+            if (Objects.requireNonNullElse(commission.getIsReportingCommission(), false)) {
                 return;
             }
 

@@ -22,6 +22,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.DatasetJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -69,6 +70,7 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
                               InvolvementRepository involvementRepository,
                               OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                               DocumentLookupService documentLookupService,
+                              CountryService countryService,
                               DatasetJPAServiceImpl datasetJPAService,
                               PublisherService publisherService) {
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
@@ -77,7 +79,8 @@ public class DatasetServiceImpl extends DocumentPublicationServiceImpl implement
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService);
+            documentLookupService,
+            countryService);
         this.datasetJPAService = datasetJPAService;
         this.publisherService = publisherService;
     }

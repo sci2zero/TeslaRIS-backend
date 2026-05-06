@@ -1,15 +1,15 @@
 databaseChangeLog:
-- changeSet:
-    id: 2026-03-02-rename-ou-proj-contr-display
-    author: milospopovic
-    changes:
-    - renameTable:
-        oldTableName: organisation_unit_project_contributions_display_organization_un
-        newTableName: organisation_unit_project_contributions_displayou
-- changeSet:
-    id: 2026-03-02-rename-ou-proj-contr-description
-    author: milospopovic
-    changes:
-    - renameTable:
-        oldTableName: organisation_unit_project_contributions_contribution_descriptio
-        newTableName: organisation_unit_project_contributions_description
+  - changeSet:
+      id: 2026-03-02-rename-ou-proj-contr-display
+      author: milospopovic
+      changes:
+        - renameTable:
+            oldTableName: organisation_unit_project_contributions_display_organization_un
+            newTableName: organisation_unit_project_contributions_displayou
+  - changeSet:
+      id: 2026-03-02-rename-ou-proj-contr-description
+      author: milospopovic
+      changes:
+        - renameTable:
+            oldTableName: organisation_unit_project_contributions_contribution_descriptio
+            newTableName: organisation_unit_project_contributions_description

@@ -30,6 +30,7 @@ import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ProceedingsJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -103,6 +104,7 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
                                   InvolvementRepository involvementRepository,
                                   OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                   DocumentLookupService documentLookupService,
+                                  CountryService countryService,
                                   ProceedingsJPAServiceImpl proceedingsJPAService,
                                   ProceedingsRepository proceedingsRepository,
                                   LanguageService languageService, JournalService journalService,
@@ -118,7 +120,8 @@ public class ProceedingsServiceImpl extends DocumentPublicationServiceImpl
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService);
+            documentLookupService,
+            countryService);
         this.proceedingsJPAService = proceedingsJPAService;
         this.proceedingsRepository = proceedingsRepository;
         this.languageService = languageService;

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.PersonEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.identifier.EntityIdentifierConverter;
 import rs.teslaris.core.dto.identifier.EntityIdentifierResponseDTO;
@@ -50,9 +51,10 @@ public class PersonIdentifierController {
         );
     }
 
-    @PostMapping
+    @PostMapping("/{personId}")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_PERSON_IDENTIFIERS')")
+    @PersonEditCheck
     @Idempotent
     @Transactional
     public EntityIdentifierResponseDTO createPersonIdentifier(
@@ -63,8 +65,9 @@ public class PersonIdentifierController {
                 tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
-    @PutMapping("/{entityIdentifierId}")
+    @PutMapping("/{personId}/{entityIdentifierId}")
     @PreAuthorize("hasAuthority('EDIT_PERSON_IDENTIFIERS')")
+    @PersonEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updatePersonIdentifier(
         @RequestBody PersonIdentifierDTO personIdentifierDTO,

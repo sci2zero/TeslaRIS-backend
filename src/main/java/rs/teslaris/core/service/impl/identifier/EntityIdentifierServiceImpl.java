@@ -46,10 +46,24 @@ public class EntityIdentifierServiceImpl extends JPAServiceImpl<EntityIdentifier
 
         if (StringUtil.valueExists(identifier.getRegularExpression()) &&
             !entityIdentifierDTO.getValue().matches(identifier.getRegularExpression())) {
+
             throw new IdentifierException(
                 "Value '" + entityIdentifierDTO.getValue() +
-                    "' does not match required format for identifier '" + identifier.getCode() +
-                    "'.");
+                    "' does not match required format for identifier '" +
+                    identifier.getCode() + "'.");
+        }
+
+        var exists = entityIdentifierRepository.existsByValueForType(
+            entityIdentifierDTO.getValue(),
+            entityIdentifier.getClass(),
+            entityIdentifier.getId()
+        );
+
+        if (exists) {
+            throw new IdentifierException(
+                "Identifier value '" + entityIdentifierDTO.getValue() +
+                    "' already exists for type '" +
+                    entityIdentifier.getClass().getSimpleName() + "'.");
         }
 
         entityIdentifier.setIdentifier(identifier);

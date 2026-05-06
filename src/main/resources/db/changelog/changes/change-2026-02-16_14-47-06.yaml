@@ -1,175 +1,175 @@
 databaseChangeLog:
-- changeSet:
-    id: 1771253251524-1
-    author: milospopovic (generated)
-    changes:
-    - createTable:
-        columns:
-        - column:
-            name: birthplace_visible
-            type: BOOLEAN
-        - column:
-            name: contact_email_visible
-            type: BOOLEAN
-        - column:
-            name: date_of_birth_visible
-            type: BOOLEAN
-        - column:
-            constraints:
-              nullable: false
-            defaultValueBoolean: false
-            name: deleted
-            type: BOOLEAN
-        - column:
-            constraints:
-              nullable: false
-              primaryKey: true
-              primaryKeyName: person_public_field_visibility_pkey
-            name: id
-            type: INTEGER
-        - column:
-            constraints:
-              nullable: false
-            name: person_id
-            type: INTEGER
-        - column:
-            name: phone_number_visible
-            type: BOOLEAN
-        - column:
-            name: sex_visible
-            type: BOOLEAN
-        - column:
-            name: created_at
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: last_modification
-            type: TIMESTAMP WITHOUT TIME ZONE
-        - column:
-            name: admin_note
-            type: VARCHAR(2000)
-        - column:
-            name: created_by
-            type: VARCHAR(255)
-        - column:
-            name: updated_by
-            type: VARCHAR(255)
-        tableName: person_public_field_visibility
-- changeSet:
-    id: 1771253251524-2
-    author: milospopovic (generated)
-    changes:
-    - createIndex:
-        columns:
-        - column:
-            name: entity_type
-        - column:
-            name: publication_series_id
-        - column:
-            name: indicator_id
-        indexName: idx_psi_pubseries_indicator
-        tableName: entity_indicators
-- changeSet:
-    id: 1771253251524-3
-    author: milospopovic (generated)
-    changes:
-    - createIndex:
-        columns:
-        - column:
-            name: entity_type
-        - column:
-            name: person_id
-        - column:
-            name: source
-        indexName: idx_ei_person_source
-        tableName: entity_indicators
-- changeSet:
-    id: 1771253251524-4
-    author: milospopovic (generated)
-    changes:
-    - createIndex:
-        columns:
-        - column:
-            name: entity_type
-        - column:
-            name: document_id
-        - column:
-            name: source
-        indexName: idx_ei_document_source
-        tableName: entity_indicators
-- changeSet:
-    id: 1771253251524-5
-    author: milospopovic (generated)
-    changes:
-    - createIndex:
-        columns:
-        - column:
-            name: person_id
-        indexName: idx_person_field_visibility_person_id
-        tableName: person_public_field_visibility
-- changeSet:
-    id: 1771253251524-6
-    author: milospopovic (generated)
-    changes:
-    - createSequence:
-        cacheSize: 1
-        cycle: false
-        dataType: bigint
-        incrementBy: 50
-        maxValue: 9223372036854775807
-        minValue: 1
-        sequenceName: person_public_field_visibility_seq
-        startValue: 1
-- changeSet:
-    id: 1771253251524-7
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            defaultValueBoolean: true
-            name: sent_by_email
-            type: BOOLEAN
-        tableName: notification
-- changeSet:
-    id: 1771253251524-8
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            defaultValueBoolean: true
-            name: receive_only_new_notifications
-            type: BOOLEAN
-        tableName: users
-- changeSet:
-    id: 1771253251524-9
-    author: milospopovic (generated)
-    changes:
-    - addForeignKeyConstraint:
-        baseColumnNames: person_id
-        baseTableName: person_public_field_visibility
-        constraintName: fko955itpkh5qfx0vlmfv833e9p
-        deferrable: false
-        initiallyDeferred: false
-        onDelete: NO ACTION
-        onUpdate: NO ACTION
-        referencedColumnNames: id
-        referencedTableName: persons
-        validate: true
-        
-- changeSet:
-    id: 1771253251524-10
-    author: milospopovic
-    changes:
-    - dropDefaultValue:
-        columnDataType: BOOLEAN
-        columnName: sent_by_email
-        tableName: notification
-    - dropDefaultValue:
-        columnDataType: BOOLEAN
-        columnName: receive_only_new_notifications
-        tableName: users
+  - changeSet:
+      id: 1771253251524-1
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  name: birthplace_visible
+                  type: BOOLEAN
+              - column:
+                  name: contact_email_visible
+                  type: BOOLEAN
+              - column:
+                  name: date_of_birth_visible
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+                  name: deleted
+                  type: BOOLEAN
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: person_public_field_visibility_pkey
+                  name: id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: person_id
+                  type: INTEGER
+              - column:
+                  name: phone_number_visible
+                  type: BOOLEAN
+              - column:
+                  name: sex_visible
+                  type: BOOLEAN
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: last_modification
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  name: admin_note
+                  type: VARCHAR(2000)
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: person_public_field_visibility
+  - changeSet:
+      id: 1771253251524-2
+      author: milospopovic (generated)
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: entity_type
+              - column:
+                  name: publication_series_id
+              - column:
+                  name: indicator_id
+            indexName: idx_psi_pubseries_indicator
+            tableName: entity_indicators
+  - changeSet:
+      id: 1771253251524-3
+      author: milospopovic (generated)
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: entity_type
+              - column:
+                  name: person_id
+              - column:
+                  name: source
+            indexName: idx_ei_person_source
+            tableName: entity_indicators
+  - changeSet:
+      id: 1771253251524-4
+      author: milospopovic (generated)
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: entity_type
+              - column:
+                  name: document_id
+              - column:
+                  name: source
+            indexName: idx_ei_document_source
+            tableName: entity_indicators
+  - changeSet:
+      id: 1771253251524-5
+      author: milospopovic (generated)
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: person_id
+            indexName: idx_person_field_visibility_person_id
+            tableName: person_public_field_visibility
+  - changeSet:
+      id: 1771253251524-6
+      author: milospopovic (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 50
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: person_public_field_visibility_seq
+            startValue: 1
+  - changeSet:
+      id: 1771253251524-7
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: true
+                  name: sent_by_email
+                  type: BOOLEAN
+            tableName: notification
+  - changeSet:
+      id: 1771253251524-8
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: true
+                  name: receive_only_new_notifications
+                  type: BOOLEAN
+            tableName: users
+  - changeSet:
+      id: 1771253251524-9
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: person_id
+            baseTableName: person_public_field_visibility
+            constraintName: fko955itpkh5qfx0vlmfv833e9p
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: persons
+            validate: true
+
+  - changeSet:
+      id: 1771253251524-10
+      author: milospopovic
+      changes:
+        - dropDefaultValue:
+            columnDataType: BOOLEAN
+            columnName: sent_by_email
+            tableName: notification
+        - dropDefaultValue:
+            columnDataType: BOOLEAN
+            columnName: receive_only_new_notifications
+            tableName: users

@@ -597,6 +597,11 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
             case REVIEWER -> "reviewer_ids";
             case ADVISOR -> "advisor_ids";
             case BOARD_MEMBER -> "board_member_ids";
+            case PRESENTER -> "presenter_ids";
+            case TRANSLATOR -> "translator_ids";
+            case ASSISTANT_STAFF -> "assistant_staff_ids";
+            case ARGUER -> "arguer_ids";
+            case OWNER -> "owner_ids";
         };
     }
 }
