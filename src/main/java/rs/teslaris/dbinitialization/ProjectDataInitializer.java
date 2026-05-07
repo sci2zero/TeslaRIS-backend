@@ -46,6 +46,7 @@ public class ProjectDataInitializer {
 
     private final FundingApplicationRepository fundingApplicationRepository;
 
+    private final ProjectRepository projectRepository;
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1) {
         var currencyEuro = new Currency();
@@ -133,5 +134,16 @@ public class ProjectDataInitializer {
         fundingApplication2.setFundingCall(fundingCall1);
 
         fundingApplicationRepository.saveAll(List.of(fundingApplication1, fundingApplication2));
+
+        var project1 = new Project();
+        project1.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 1", 1)));
+        project1.setStatus(ProjectStatus.SUBMITTED);
+        project1.setCollaborationType(ProjectCollaborationType.INTERNAL);
+        project1.setResearchType(ProjectResearchType.OTHER);
+        project1.setDateFrom(LocalDate.of(2023, 1, 1));
+        project1.setDateTo(LocalDate.of(2026, 12, 31));
+        project1.setCosts(new MonetaryAmount(100000, currencyEuro));
+
+        projectRepository.save(project1);
     }
 }

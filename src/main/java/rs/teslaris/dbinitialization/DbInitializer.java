@@ -245,6 +245,8 @@ public class DbInitializer implements ApplicationRunner {
         var editPublicationSeriesIdentifiers = new Privilege("EDIT_PUBLICATION_SERIES_IDENTIFIERS");
         var readFundingApplications = new Privilege("READ_FUNDING_APPLICATIONS");
         var editFundingApplications = new Privilege("EDIT_FUNDING_APPLICATIONS");
+        var readProjects = new Privilege("READ_PROJECTS");
+        var editProjects = new Privilege("EDIT_PROJECTS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -291,7 +293,9 @@ public class DbInitializer implements ApplicationRunner {
                 createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents,
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications));
+                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications,
+                readProjects, editProjects
+            ));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -336,7 +340,9 @@ public class DbInitializer implements ApplicationRunner {
                 createCourses, editCourses, createOtherEvents, editOtherEvents, mergeCourses,
                 mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications)));
+                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications,
+                readProjects, editProjects
+            )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
