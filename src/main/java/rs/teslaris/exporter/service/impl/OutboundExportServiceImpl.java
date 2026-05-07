@@ -313,9 +313,12 @@ public class OutboundExportServiceImpl implements OutboundExportService {
                 return null;
             }
 
-            includeActiveEmployments = matchedSet.get().includeActiveEmployments();
+            includeActiveEmployments =
+                Objects.requireNonNullElse(
+                    matchedSet.get().includeActiveEmployments(), false);
             includeYearOfPublicationEmployments =
-                matchedSet.get().includeYearOfPublicationEmployments();
+                Objects.requireNonNullElse(
+                    matchedSet.get().includeYearOfPublicationEmployments(), false);
 
             try {
                 recordClass = Class.forName(
