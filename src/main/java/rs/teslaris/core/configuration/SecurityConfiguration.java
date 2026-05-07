@@ -365,6 +365,20 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/app-configuration/maintenance/next").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/app-configuration/maintenance/check").permitAll()
 
+                // IDENTIFIER
+                .requestMatchers(HttpMethod.GET, "/api/document-identifier/{documentId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/person-identifier/{personId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/event-identifier/{eventId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/organisation-unit-identifier/{organisationUnitId}")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/publication-series-identifier/{publicationSeriesId}")
+                .permitAll()
+
                 // SSE
                 .requestMatchers(HttpMethod.GET, "/api/sse/progress/{exportId}").permitAll()
 

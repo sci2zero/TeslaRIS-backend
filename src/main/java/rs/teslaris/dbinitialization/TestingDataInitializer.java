@@ -82,8 +82,12 @@ import rs.teslaris.core.model.document.Publisher;
 import rs.teslaris.core.model.document.ResourceType;
 import rs.teslaris.core.model.document.Thesis;
 import rs.teslaris.core.model.document.ThesisType;
+import rs.teslaris.core.model.identifier.DocumentIdentifier;
 import rs.teslaris.core.model.identifier.EventIdentifier;
 import rs.teslaris.core.model.identifier.Identifier;
+import rs.teslaris.core.model.identifier.OrganisationUnitIdentifier;
+import rs.teslaris.core.model.identifier.PersonIdentifier;
+import rs.teslaris.core.model.identifier.PublicationSeriesIdentifier;
 import rs.teslaris.core.model.institution.Commission;
 import rs.teslaris.core.model.institution.OrganisationUnit;
 import rs.teslaris.core.model.person.Contact;
@@ -129,8 +133,12 @@ import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.repository.identifier.DocumentIdentifierRepository;
 import rs.teslaris.core.repository.identifier.EventIdentifierRepository;
 import rs.teslaris.core.repository.identifier.IdentifierRepository;
+import rs.teslaris.core.repository.identifier.OrganisationUnitIdentifierRepository;
+import rs.teslaris.core.repository.identifier.PersonIdentifierRepository;
+import rs.teslaris.core.repository.identifier.PublicationSeriesIdentifierRepository;
 import rs.teslaris.core.repository.institution.OrganisationUnitRepository;
 import rs.teslaris.core.repository.person.EmploymentPositionRepository;
 import rs.teslaris.core.repository.person.PersonRepository;
@@ -231,6 +239,14 @@ public class TestingDataInitializer {
     private final IdentifierRepository identifierRepository;
 
     private final EventIdentifierRepository eventIdentifierRepository;
+
+    private final PersonIdentifierRepository personIdentifierRepository;
+
+    private final DocumentIdentifierRepository documentIdentifierRepository;
+
+    private final OrganisationUnitIdentifierRepository organisationUnitIdentifierRepository;
+
+    private final PublicationSeriesIdentifierRepository publicationSeriesIdentifierRepository;
 
 
     public void initializeIntegrationTestingData(LanguageTag serbianTag, Language serbianLanguage,
@@ -1341,14 +1357,46 @@ public class TestingDataInitializer {
         identifier2.setTitle(Set.of(new MultiLingualContent(englishTag, "Identifier 2", 1)));
         identifier2.setDescription(
             Set.of(new MultiLingualContent(englishTag, "Identifier 2 description", 1)));
+        identifier2.setApplicableTypes(Set.of(ApplicableEntityType.CONFERENCE));
+        identifier2.setUriPrefix("https://test.com/");
         identifier2.setAccessLevel(AccessLevel.CLOSED);
 
         identifierRepository.saveAll(List.of(identifier1, identifier2));
 
         var eventIdentifier1 = new EventIdentifier();
-        eventIdentifier1.setValue("Identifier 1 value");
+        eventIdentifier1.setValue("Identifier 1 value 1");
         eventIdentifier1.setIdentifier(identifier1);
         eventIdentifier1.setEvent(conferenceEvent2);
         eventIdentifierRepository.save(eventIdentifier1);
+
+        var eventIdentifier2 = new EventIdentifier();
+        eventIdentifier2.setValue("Identifier 1 value 2");
+        eventIdentifier2.setIdentifier(identifier1);
+        eventIdentifier2.setEvent(conferenceEvent2);
+        eventIdentifierRepository.save(eventIdentifier2);
+
+        var personIdentifier1 = new PersonIdentifier();
+        personIdentifier1.setValue("Identifier 1 value 3");
+        personIdentifier1.setIdentifier(identifier1);
+        personIdentifier1.setPerson(person1);
+        personIdentifierRepository.save(personIdentifier1);
+
+        var documentIdentifier1 = new DocumentIdentifier();
+        documentIdentifier1.setValue("Identifier 1 value 4");
+        documentIdentifier1.setIdentifier(identifier1);
+        documentIdentifier1.setDocument(thesis1);
+        documentIdentifierRepository.save(documentIdentifier1);
+
+        var organisationUnitIdentifier1 = new OrganisationUnitIdentifier();
+        organisationUnitIdentifier1.setValue("Identifier 1 value 5");
+        organisationUnitIdentifier1.setIdentifier(identifier1);
+        organisationUnitIdentifier1.setOrganisationUnit(dummyOU);
+        organisationUnitIdentifierRepository.save(organisationUnitIdentifier1);
+
+        var publicationSeriesIdentifier1 = new PublicationSeriesIdentifier();
+        publicationSeriesIdentifier1.setValue("Identifier 1 value 6");
+        publicationSeriesIdentifier1.setIdentifier(identifier1);
+        publicationSeriesIdentifier1.setPublicationSeries(dummyJournal);
+        publicationSeriesIdentifierRepository.save(publicationSeriesIdentifier1);
     }
 }

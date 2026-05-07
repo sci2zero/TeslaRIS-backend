@@ -71,6 +71,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -143,6 +144,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         organisationUnitOutputConfigurationService;
 
     private final DocumentLookupService documentLookupService;
+
+    private final CountryService countryService;
 
     private final Pattern doiPattern =
         Pattern.compile("^10\\.\\d{4,9}/[-,._;():a-zA-Z0-9]+$", Pattern.CASE_INSENSITIVE);
@@ -256,6 +259,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             case REVIEWER -> "reviewer_ids";
             case ADVISOR -> "advisor_ids";
             case BOARD_MEMBER -> "board_member_ids";
+            case PRESENTER -> "presenter_ids";
+            case TRANSLATOR -> "translator_ids";
+            case ASSISTANT_STAFF -> "assistant_staff_ids";
+            case ARGUER -> "arguer_ids";
+            case OWNER -> "owner_ids";
         };
     }
 
@@ -705,6 +713,22 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 index::setAdvisorNames, contributorName, personExists);
             case REVIEWER -> handleGenericContribution(contribution, index::getReviewerIds,
                 index::setReviewerNames, contributorName, personExists);
+            case PRESENTER -> handleGenericContribution(contribution, index::getPresenterIds,
+                (ignored) -> {
+                }, contributorName, personExists);
+            case TRANSLATOR -> handleGenericContribution(contribution, index::getTranslatorIds,
+                (ignored) -> {
+                }, contributorName, personExists);
+            case ASSISTANT_STAFF ->
+                handleGenericContribution(contribution, index::getAssistantStaffIds,
+                    (ignored) -> {
+                    }, contributorName, personExists);
+            case ARGUER -> handleGenericContribution(contribution, index::getArguerIds,
+                (ignored) -> {
+                }, contributorName, personExists);
+            case OWNER -> handleGenericContribution(contribution, index::getOwnerIds,
+                (ignored) -> {
+                }, contributorName, personExists);
             case BOARD_MEMBER ->
                 handleBoardMember(contribution, index, contributorName, personExists);
         }
@@ -1028,6 +1052,24 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         document.setRemark(
             multilingualContentService.getMultilingualContent(documentDTO.getRemark()));
 
+        document.setGeoSpaceDescription(
+            multilingualContentService.getMultilingualContent(
+                documentDTO.getGeoSpaceDescription()));
+        document.setChronologicalSpaceDescription(
+            multilingualContentService.getMultilingualContent(
+                documentDTO.getChronologicalSpaceDescription()));
+        document.setCity(multilingualContentService.getMultilingualContent(documentDTO.getCity()));
+
+        if (Objects.nonNull(documentDTO.getCountryId())) {
+            document.setCountry(countryService.findOne(documentDTO.getCountryId()));
+        } else {
+            document.setCountry(null);
+        }
+
+        document.setPeerReviewed(documentDTO.getPeerReviewed());
+        document.setOpenAccess(documentDTO.getOpenAccess());
+        document.setPublicationStatus(documentDTO.getPublicationStatus());
+
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 
         if (Objects.nonNull(documentDTO.getOldId())) {
@@ -1106,6 +1148,46 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             "webOfScienceIdFormatError",
             "webOfScienceIdExistsError"
         );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getHandleId(),
+            document.getId(),
+            "^(?:\\d{2}\\.\\d{3,}\\.\\d+/\\S+)$",
+            documentRepository::existsByHandleId,
+            document::setHandleId,
+            "handleIdFormatError",
+            "handleIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getArxivId(),
+            document.getId(),
+            "^(?:\\d{4}\\.\\d{4,5}|[a-z\\-]+/\\d{7})$",
+            documentRepository::existsByArXivId,
+            document::setArxivId,
+            "arxivIdFormatError",
+            "arxivIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getPubmedId(),
+            document.getId(),
+            "^(?:\\d{1,8})$",
+            documentRepository::existsByPubmedId,
+            document::setPubmedId,
+            "pubmedIdFormatError",
+            "pubmedIdExistsError"
+        );
+
+        IdentifierUtil.validateAndSetIdentifier(
+            documentDTO.getSsrnId(),
+            document.getId(),
+            "^(?:\\d+)$",
+            documentRepository::existsBySsrnId,
+            document::setSsrnId,
+            "ssrnIdFormatError",
+            "ssrnIdExistsError"
+        );
     }
 
     @Override
@@ -1114,7 +1196,11 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
         return documentRepository.existsByDoi(identifier, documentPublicationId) ||
             documentRepository.existsByScopusId(identifier, documentPublicationId) ||
             documentRepository.existsByOpenAlexId(identifier, documentPublicationId) ||
-            documentRepository.existsByWebOfScienceId(identifier, documentPublicationId);
+            documentRepository.existsByWebOfScienceId(identifier, documentPublicationId) ||
+            documentRepository.existsByHandleId(identifier, documentPublicationId) ||
+            documentRepository.existsByArXivId(identifier, documentPublicationId) ||
+            documentRepository.existsByPubmedId(identifier, documentPublicationId) ||
+            documentRepository.existsBySsrnId(identifier, documentPublicationId);
     }
 
     @Override

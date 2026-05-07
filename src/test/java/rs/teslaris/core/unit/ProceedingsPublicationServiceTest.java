@@ -179,7 +179,7 @@ public class ProceedingsPublicationServiceTest {
 
         // Then
         assertNotNull(result);
-        verify(multilingualContentService, times(5)).getMultilingualContent(any());
+        verify(multilingualContentService, times(8)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(publicationDTO));
         verify(proceedingPublicationJPAService).save(eq(document));

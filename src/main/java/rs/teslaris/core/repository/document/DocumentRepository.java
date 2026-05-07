@@ -137,6 +137,22 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     boolean existsByOpenAlexId(String openAlexId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Document d WHERE d.handleId = :handleId AND (:id IS NULL OR d.id <> :id)")
+    boolean existsByHandleId(String handleId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Document d WHERE d.arxivId = :arxivId AND (:id IS NULL OR d.id <> :id)")
+    boolean existsByArXivId(String arxivId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Document d WHERE d.pubmedId = :pubmedId AND (:id IS NULL OR d.id <> :id)")
+    boolean existsByPubmedId(String pubmedId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM Document d WHERE d.ssrnId = :ssrnId AND (:id IS NULL OR d.id <> :id)")
+    boolean existsBySsrnId(String ssrnId, Integer id);
+
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN TRUE ELSE FALSE END " +
         "FROM Document d WHERE d.webOfScienceId = :webOfScienceId AND (:id IS NULL OR d.id <> :id)")
     boolean existsByWebOfScienceId(String webOfScienceId, Integer id);
 

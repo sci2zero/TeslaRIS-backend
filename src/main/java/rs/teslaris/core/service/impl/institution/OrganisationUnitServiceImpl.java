@@ -654,26 +654,6 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         );
 
         IdentifierUtil.validateAndSetIdentifier(
-            organisationUnitDTO.getAthensId(),
-            organisationUnit.getId(),
-            ".*", // no strict format
-            organisationUnitRepository::existsByAthensId,
-            organisationUnit::setAthensId,
-            "athensIdFormatError",
-            "athensIdExistsError"
-        );
-
-        IdentifierUtil.validateAndSetIdentifier(
-            organisationUnitDTO.getNcesId(),
-            organisationUnit.getId(),
-            "^[0-9]+$",
-            organisationUnitRepository::existsByNcesId,
-            organisationUnit::setNcesId,
-            "ncesIdFormatError",
-            "ncesIdExistsError"
-        );
-
-        IdentifierUtil.validateAndSetIdentifier(
             organisationUnitDTO.getFctId(),
             organisationUnit.getId(),
             "^[0-9A-Za-z\\-]+$",
@@ -684,23 +664,13 @@ public class OrganisationUnitServiceImpl extends JPAServiceImpl<OrganisationUnit
         );
 
         IdentifierUtil.validateAndSetIdentifier(
-            organisationUnitDTO.getDgeecId(),
-            organisationUnit.getId(),
-            "^[0-9A-Za-z\\-]+$",
-            organisationUnitRepository::existsByDgeecId,
-            organisationUnit::setDgeecId,
-            "dgeecIdFormatError",
-            "dgeecIdExistsError"
-        );
-
-        IdentifierUtil.validateAndSetIdentifier(
-            organisationUnitDTO.getNifId(),
+            organisationUnitDTO.getTaxNumber(),
             organisationUnit.getId(),
             "^[0-9]+$",
-            organisationUnitRepository::existsByNifId,
-            organisationUnit::setNifId,
-            "nifIdFormatError",
-            "nifIdExistsError"
+            organisationUnitRepository::existsByTaxNumber,
+            organisationUnit::setTaxNumber,
+            "taxNumberFormatError",
+            "taxNumberExistsError"
         );
 
         if (Objects.nonNull(organisationUnitDTO.getOldId())) {

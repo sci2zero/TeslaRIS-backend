@@ -107,7 +107,7 @@ public class FileController {
         if (isThesisDocument) {
             if ((((Thesis) documentFile.getDocument()).getIsOnPublicReview() &&
                 Objects.requireNonNullElse(documentFile.getIsArchived(), false).equals(false) &&
-                List.of(ResourceType.PREPRINT, ResourceType.STATEMENT, ResourceType.SUPPLEMENT)
+                List.of(ResourceType.PREPRINT, ResourceType.SUPPLEMENT)
                     .contains(documentFile.getResourceType())) || isOpenAccess) {
                 return serveFile(filename, documentFile, file, inline);
             }

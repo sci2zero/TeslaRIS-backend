@@ -16,4 +16,10 @@ public class EventIdentifierDTO extends EntityIdentifierDTO {
     @NotNull(message = "You have to provide event ID.")
     @Positive(message = "Event ID must be a positive number.")
     private Integer eventId;
+
+
+    public EventIdentifierDTO(String value, Integer identifierId, Integer eventId) {
+        super(value, identifierId);
+        this.eventId = eventId;
+    }
 }

@@ -238,6 +238,11 @@ public class DbInitializer implements ApplicationRunner {
         var mergeOtherEvents = new Privilege("MERGE_OTHER_EVENTS");
         var editIdentifiers = new Privilege("EDIT_IDENTIFIERS");
         var editEntityIdentifier = new Privilege("EDIT_ENTITY_IDENTIFIER");
+        var editEventIdentifiers = new Privilege("EDIT_EVENT_IDENTIFIERS");
+        var editPersonIdentifiers = new Privilege("EDIT_PERSON_IDENTIFIERS");
+        var editDocumentIdentifiers = new Privilege("EDIT_DOCUMENT_IDENTIFIERS");
+        var editOrganisationUnitIdentifiers = new Privilege("EDIT_ORGANISATION_UNIT_IDENTIFIERS");
+        var editPublicationSeriesIdentifiers = new Privilege("EDIT_PUBLICATION_SERIES_IDENTIFIERS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -282,7 +287,9 @@ public class DbInitializer implements ApplicationRunner {
                 editFundingPrograms, readFundingPrograms, readFundingCalls, editFundingCalls,
                 editFundingParts, editEmploymentPositions, createCourses, editCourses,
                 createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents,
-                editIdentifiers, editEntityIdentifier));
+                editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
+                editDocumentIdentifiers, editOrganisationUnitIdentifiers,
+                editPublicationSeriesIdentifiers));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -325,7 +332,9 @@ public class DbInitializer implements ApplicationRunner {
                 scheduleMetadataEnrichment, editFundingPrograms, readFundingPrograms,
                 readFundingCalls, editFundingCalls, editFundingParts, editEmploymentPositions,
                 createCourses, editCourses, createOtherEvents, editOtherEvents, mergeCourses,
-                mergeOtherEvents, editIdentifiers, editEntityIdentifier
+                mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
+                editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
+                editPublicationSeriesIdentifiers
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

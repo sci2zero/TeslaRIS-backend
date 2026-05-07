@@ -34,6 +34,7 @@ import rs.teslaris.core.service.interfaces.document.ConferenceService;
 import rs.teslaris.core.service.interfaces.document.JournalService;
 import rs.teslaris.core.service.interfaces.document.MetadataPrepopulationService;
 import rs.teslaris.core.service.interfaces.person.PersonService;
+import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.core.util.session.RestTemplateProvider;
 
 @Service
@@ -124,7 +125,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
     private void setTitle(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
         var titleValue = bibEntry.getField(BibTeXEntry.KEY_TITLE);
         if (Objects.nonNull(titleValue)) {
-            var title = titleValue.toUserString();
+            var title = StringUtil.normalizeUnicode(titleValue.toUserString());
             var english = languageTagService.findLanguageTagByValue("EN");
             metadata.getTitle().add(new MultilingualContentDTO(
                 english.getId(), english.getLanguageTag(), title, 1));
@@ -134,7 +135,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
     private void setKeywords(PrepopulatedMetadataDTO metadata, BibTeXEntry bibEntry) {
         var keywordsValue = bibEntry.getField(new Key("keywords"));
         if (Objects.nonNull(keywordsValue)) {
-            var keywords = keywordsValue.toUserString();
+            var keywords = StringUtil.normalizeUnicode(keywordsValue.toUserString());
             var english = languageTagService.findLanguageTagByValue("EN");
             metadata.getKeywords().add(
                 new MultilingualContentDTO(
@@ -152,7 +153,8 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         var authorValue = bibEntry.getField(BibTeXEntry.KEY_AUTHOR);
         if (Objects.nonNull(authorValue) && Objects.nonNull(latexParser)) {
             try {
-                var parsedAuthors = printer.print(latexParser.parse(authorValue.toUserString()));
+                var parsedAuthors = printer.print(
+                    latexParser.parse(StringUtil.normalizeUnicode(authorValue.toUserString())));
                 var authors = parsedAuthors.split(" and ");
                 metadata.setContributions(
                     resolveContributionsFromAuthorNames(authors, importPersonId));
@@ -250,7 +252,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
 
     private String getStringField(BibTeXEntry entry, Key key) {
         var value = entry.getField(key);
-        return Objects.nonNull(value) ? value.toUserString() : "";
+        return Objects.nonNull(value) ? StringUtil.normalizeUnicode(value.toUserString()) : "";
     }
 
     private int getIntField(BibTeXEntry entry, Key key, int defaultValue) {
@@ -267,7 +269,7 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
             return;
         }
 
-        var pages = pageField.toUserString().replace("–", "-");
+        var pages = StringUtil.normalizeUnicode(pageField.toUserString());
         var tokens = pages.split("-");
         metadata.setStartPage(tokens[0]);
 

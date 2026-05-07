@@ -55,4 +55,11 @@ public class CollectionOperations {
                 .anyMatch(str1 -> lowerSet2.stream()
                     .anyMatch(str2 -> str1.startsWith(str2) || str2.startsWith(str1))));
     }
+
+    public static String[] concat(String[] a, String[] b) {
+        String[] result = new String[a.length + b.length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
+    }
 }

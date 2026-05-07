@@ -18,7 +18,9 @@ public interface IdentifierRepository extends JpaRepository<Identifier, Integer>
     @Query("SELECT count(i) > 0 FROM Identifier i WHERE i.code = :code AND i.id != :identifierId")
     boolean identifierCodeInUse(String code, Integer identifierId);
 
-    @Query("SELECT i FROM Identifier i JOIN i.applicableTypes at WHERE at IN :applicableEntityTypes")
+    @Query("SELECT i " +
+        "FROM Identifier i " +
+        "WHERE i.applicableTypes IN :applicableEntityTypes")
     List<Identifier> getIdentifiersApplicableToEntity(
         List<ApplicableEntityType> applicableEntityTypes);
 
