@@ -19,7 +19,7 @@ import rs.teslaris.core.model.person.Person;
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @DiscriminatorValue("PERSON_IDENTIFIER")
-public class PersonIdentifier extends EventIdentifier {
+public class PersonIdentifier extends EntityIdentifier {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id")

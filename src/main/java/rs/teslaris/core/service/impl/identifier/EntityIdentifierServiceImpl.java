@@ -12,6 +12,8 @@ import rs.teslaris.core.repository.identifier.EntityIdentifierRepository;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
 import rs.teslaris.core.service.interfaces.identifier.EntityIdentifierService;
 import rs.teslaris.core.service.interfaces.identifier.IdentifierService;
+import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
+import rs.teslaris.core.util.search.StringUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +42,30 @@ public class EntityIdentifierServiceImpl extends JPAServiceImpl<EntityIdentifier
                                    EntityIdentifierDTO entityIdentifierDTO) {
         entityIdentifier.setValue(entityIdentifierDTO.getValue());
 
-        entityIdentifier.setIdentifier(
-            identifierService.findOne(entityIdentifierDTO.getIdentifierId()));
+        var identifier = identifierService.findOne(entityIdentifierDTO.getIdentifierId());
+
+        if (StringUtil.valueExists(identifier.getRegularExpression()) &&
+            !entityIdentifierDTO.getValue().matches(identifier.getRegularExpression())) {
+
+            throw new IdentifierException(
+                "Value '" + entityIdentifierDTO.getValue() +
+                    "' does not match required format for identifier '" +
+                    identifier.getCode() + "'.");
+        }
+
+        var exists = entityIdentifierRepository.existsByValueForType(
+            entityIdentifierDTO.getValue(),
+            entityIdentifier.getClass(),
+            entityIdentifier.getId()
+        );
+
+        if (exists) {
+            throw new IdentifierException(
+                "Identifier value '" + entityIdentifierDTO.getValue() +
+                    "' already exists for type '" +
+                    entityIdentifier.getClass().getSimpleName() + "'.");
+        }
+
+        entityIdentifier.setIdentifier(identifier);
     }
 }

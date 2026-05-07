@@ -33,6 +33,7 @@ import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -106,6 +107,7 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 InvolvementRepository involvementRepository,
                                 OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                 DocumentLookupService documentLookupService,
+                                CountryService countryService,
                                 MonographJPAServiceImpl monographJPAService,
                                 LanguageService languageService, JournalService journalService,
                                 BookSeriesService bookSeriesService,
@@ -114,13 +116,15 @@ public class MonographServiceImpl extends DocumentPublicationServiceImpl impleme
                                 PublisherService publisherService,
                                 IndexBulkUpdateService indexBulkUpdateService,
                                 MonographPublicationRepository monographPublicationRepository) {
+
         super(multilingualContentService, documentPublicationIndexRepository, searchService,
             organisationUnitService, documentRepository, documentFileService, citationService,
             applicationEventPublisher, personContributionService, expressionTransformer,
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService);
+            documentLookupService,
+            countryService);
         this.monographJPAService = monographJPAService;
         this.languageService = languageService;
         this.journalService = journalService;

@@ -138,7 +138,7 @@ public class IntangibleProductServiceTest {
         var result = intangibleProductService.createIntangibleProduct(dto, true);
 
         // Then
-        verify(multilingualContentService, times(6)).getMultilingualContent(any());
+        verify(multilingualContentService, times(9)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(intangibleProductJPAService).save(eq(document));

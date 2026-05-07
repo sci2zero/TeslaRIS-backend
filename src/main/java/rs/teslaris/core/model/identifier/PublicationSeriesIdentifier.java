@@ -10,7 +10,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import rs.teslaris.assessment.model.indicator.EntityIndicator;
 import rs.teslaris.core.model.document.PublicationSeries;
 
 @Getter
@@ -20,7 +19,7 @@ import rs.teslaris.core.model.document.PublicationSeries;
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @DiscriminatorValue("PUB_SERIES_IDENTIFIER")
-public class PublicationSeriesIdentifier extends EntityIndicator {
+public class PublicationSeriesIdentifier extends EntityIdentifier {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publication_series_id")

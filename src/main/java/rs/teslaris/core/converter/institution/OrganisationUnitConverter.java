@@ -41,10 +41,7 @@ public class OrganisationUnitConverter {
         dto.setRinggold(organisationUnit.getRinggold());
         dto.setFundref(organisationUnit.getFundref());
         dto.setIsni(organisationUnit.getIsni());
-        dto.setAthensId(organisationUnit.getAthensId());
-        dto.setNcesId(organisationUnit.getNcesId());
-        dto.setNifId(organisationUnit.getNifId());
-        dto.setDgeecId(organisationUnit.getDgeecId());
+        dto.setTaxNumber(organisationUnit.getTaxNumber());
         dto.setFctId(organisationUnit.getFctId());
         dto.setUris(organisationUnit.getUris());
         dto.setAllowedThesisTypes(

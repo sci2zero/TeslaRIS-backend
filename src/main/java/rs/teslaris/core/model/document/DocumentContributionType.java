@@ -5,5 +5,10 @@ public enum DocumentContributionType {
     EDITOR,
     REVIEWER,
     ADVISOR,
-    BOARD_MEMBER
+    BOARD_MEMBER,
+    PRESENTER,
+    TRANSLATOR,
+    ASSISTANT_STAFF,
+    ARGUER,
+    OWNER
 }

@@ -1,13 +1,13 @@
 databaseChangeLog:
-    - changeSet:
-          id: 1772492233229-1
-          author: milospopovic (generated)
-          changes:
-              - dropTable:
-                    tableName: organisation_unit_project_contributions_description
-    - changeSet:
-          id: 1772492233229-2
-          author: milospopovic (generated)
-          changes:
-              - dropTable:
-                    tableName: organisation_unit_project_contributions_displayou
+  - changeSet:
+      id: 1772492233229-1
+      author: milospopovic (generated)
+      changes:
+        - dropTable:
+            tableName: organisation_unit_project_contributions_description
+  - changeSet:
+      id: 1772492233229-2
+      author: milospopovic (generated)
+      changes:
+        - dropTable:
+            tableName: organisation_unit_project_contributions_displayou

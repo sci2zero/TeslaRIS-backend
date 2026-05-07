@@ -18,7 +18,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 @AllArgsConstructor
 @Document(indexName = "journal")
 @Setting(settingPath = "/configuration/index-config.json")
-public class JournalIndex {
+public class JournalIndex implements PublicationSeriesIndex {
 
     @Id
     private String id;
