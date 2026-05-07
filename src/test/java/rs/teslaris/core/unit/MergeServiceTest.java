@@ -106,6 +106,10 @@ import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.repository.identifier.DocumentIdentifierRepository;
+import rs.teslaris.core.repository.identifier.OrganisationUnitIdentifierRepository;
+import rs.teslaris.core.repository.identifier.PersonIdentifierRepository;
+import rs.teslaris.core.repository.identifier.PublicationSeriesIdentifierRepository;
 import rs.teslaris.core.service.impl.comparator.MergeServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
@@ -125,6 +129,7 @@ import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -252,8 +257,24 @@ public class MergeServiceTest {
     @Mock
     private PersonIndexRepository personIndexRepository;
 
+    @Mock
+    private DocumentIdentifierRepository documentIdentifierRepository;
+
+    @Mock
+    private PersonIdentifierRepository personIdentifierRepository;
+
+    @Mock
+    private OrganisationUnitIdentifierRepository organisationUnitIdentifierRepository;
+
+    @Mock
+    private PublicationSeriesIdentifierRepository publicationSeriesIdentifierRepository;
+
+    @Mock
+    private PublicationSeriesLookupService publicationSeriesLookupService;
+
     @InjectMocks
     private MergeServiceImpl mergeService;
+
 
     private static Stream<Arguments> provideDocumentPublicationsForMigration() {
         return Stream.of(

@@ -180,12 +180,26 @@ public class ThesisControllerTest extends BaseTest {
     @Test
     @Order(Integer.MAX_VALUE)
     @WithMockUser(username = "test.head_of_library@test.com", password = "head_of_library")
-    public void testGetThesisLibraryFormat() throws Exception {
+    public void testGetThesisLibraryFormats() throws Exception {
         String jwtToken = authenticateLibrarianAndGetToken();
 
         mockMvc.perform(
                 MockMvcRequestBuilders.get(
                         "http://localhost:8081/api/thesis/library-formats/{thesisId}", 10)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(Integer.MAX_VALUE)
+    @WithMockUser(username = "test.head_of_library@test.com", password = "head_of_library")
+    public void testGetSingleThesisLibraryFormat() throws Exception {
+        String jwtToken = authenticateLibrarianAndGetToken();
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/thesis/library-format/{thesisId}/MARC21", 10)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isOk());

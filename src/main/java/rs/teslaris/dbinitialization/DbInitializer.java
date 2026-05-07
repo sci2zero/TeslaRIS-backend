@@ -243,6 +243,8 @@ public class DbInitializer implements ApplicationRunner {
         var editDocumentIdentifiers = new Privilege("EDIT_DOCUMENT_IDENTIFIERS");
         var editOrganisationUnitIdentifiers = new Privilege("EDIT_ORGANISATION_UNIT_IDENTIFIERS");
         var editPublicationSeriesIdentifiers = new Privilege("EDIT_PUBLICATION_SERIES_IDENTIFIERS");
+        var readFundingApplications = new Privilege("READ_FUNDING_APPLICATIONS");
+        var editFundingApplications = new Privilege("EDIT_FUNDING_APPLICATIONS");
 
         privilegeRepository.saveAll(
             Arrays.asList(allowAccountTakeover, takeRoleOfUser, deactivateUser, updateProfile,
@@ -289,7 +291,7 @@ public class DbInitializer implements ApplicationRunner {
                 createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents,
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers));
+                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -334,8 +336,7 @@ public class DbInitializer implements ApplicationRunner {
                 createCourses, editCourses, createOtherEvents, editOtherEvents, mergeCourses,
                 mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers
-            )));
+                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,
