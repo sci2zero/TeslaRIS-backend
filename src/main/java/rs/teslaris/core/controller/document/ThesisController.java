@@ -30,6 +30,7 @@ import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.dto.document.ThesisLibraryFormatsResponseDTO;
 import rs.teslaris.core.dto.document.ThesisResponseDTO;
 import rs.teslaris.core.model.commontypes.RecurrenceType;
+import rs.teslaris.core.model.document.LibraryFormat;
 import rs.teslaris.core.model.document.ThesisAttachmentType;
 import rs.teslaris.core.model.document.ThesisType;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
@@ -172,6 +173,12 @@ public class ThesisController {
     public ThesisLibraryFormatsResponseDTO getAllLibraryReferenceFormats(
         @PathVariable Integer documentId) {
         return thesisService.getLibraryReferenceFormat(documentId);
+    }
+
+    @GetMapping("/library-format/{documentId}/{libraryFormat}")
+    public String getSingleLibraryReferenceFormat(
+        @PathVariable Integer documentId, @PathVariable LibraryFormat libraryFormat) {
+        return thesisService.getSingleLibraryReferenceFormat(documentId, libraryFormat);
     }
 
     @PatchMapping("/add-substitute/{staleThesisId}/{substituteThesisId}")

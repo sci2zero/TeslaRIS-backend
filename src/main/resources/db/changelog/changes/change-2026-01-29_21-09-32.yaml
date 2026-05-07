@@ -1,249 +1,249 @@
 databaseChangeLog:
-- changeSet:
-    id: 1769720996117-1
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-        tableName: encyclopedic_contributions
-- changeSet:
-    id: 1769720996117-2
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-        tableName: informative_attachments
-- changeSet:
-    id: 1769720996117-3
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 0
-        tableName: journal_publications
-- changeSet:
-    id: 1769720996117-4
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 7
-        tableName: monograph_publications
-- changeSet:
-    id: 1769720996117-5
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 2
-        tableName: proceedings_publications
-- changeSet:
-    id: 1769720996117-6
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 6
-        tableName: datasets
-- changeSet:
-    id: 1769720996117-7
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 10
-        tableName: genetic_materials
-- changeSet:
-    id: 1769720996117-8
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 5
-        tableName: intangible_products
-- changeSet:
-    id: 1769720996117-9
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 9
-        tableName: material_products
-- changeSet:
-    id: 1769720996117-10
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 3
-        tableName: monographs
-- changeSet:
-    id: 1769720996117-11
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 4
-        tableName: patents
-- changeSet:
-    id: 1769720996117-12
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 1
-        tableName: proceedings
-- changeSet:
-    id: 1769720996117-13
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            constraints:
-              nullable: false
-            name: document_type
-            type: SMALLINT
-            defaultValueNumeric: 8
-        tableName: theses
-- changeSet:
-    id: 1769720996117-14
-    author: milospopovic (generated)
-    changes:
-    - addColumn:
-        columns:
-        - column:
-            name: document_type
-            type: SMALLINT
-        tableName: entity_assessment_classifications
+  - changeSet:
+      id: 1769720996117-1
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+            tableName: encyclopedic_contributions
+  - changeSet:
+      id: 1769720996117-2
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+            tableName: informative_attachments
+  - changeSet:
+      id: 1769720996117-3
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 0
+            tableName: journal_publications
+  - changeSet:
+      id: 1769720996117-4
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 7
+            tableName: monograph_publications
+  - changeSet:
+      id: 1769720996117-5
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 2
+            tableName: proceedings_publications
+  - changeSet:
+      id: 1769720996117-6
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 6
+            tableName: datasets
+  - changeSet:
+      id: 1769720996117-7
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 10
+            tableName: genetic_materials
+  - changeSet:
+      id: 1769720996117-8
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 5
+            tableName: intangible_products
+  - changeSet:
+      id: 1769720996117-9
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 9
+            tableName: material_products
+  - changeSet:
+      id: 1769720996117-10
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 3
+            tableName: monographs
+  - changeSet:
+      id: 1769720996117-11
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 4
+            tableName: patents
+  - changeSet:
+      id: 1769720996117-12
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 1
+            tableName: proceedings
+  - changeSet:
+      id: 1769720996117-13
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: document_type
+                  type: SMALLINT
+                  defaultValueNumeric: 8
+            tableName: theses
+  - changeSet:
+      id: 1769720996117-14
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: document_type
+                  type: SMALLINT
+            tableName: entity_assessment_classifications
 
-- changeSet:
-    id: drop-type-default
-    author: milospopovic
-    changes:
-    - dropDefaultValue:
-        tableName: journal_publications
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: monograph_publications
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: proceedings_publications
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: datasets
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: genetic_materials
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: intangible_products
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: material_products
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: monographs
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: patents
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: proceedings
-        columnName: document_type
-    - dropDefaultValue:
-        tableName: theses
-        columnName: document_type
+  - changeSet:
+      id: drop-type-default
+      author: milospopovic
+      changes:
+        - dropDefaultValue:
+            tableName: journal_publications
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: monograph_publications
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: proceedings_publications
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: datasets
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: genetic_materials
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: intangible_products
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: material_products
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: monographs
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: patents
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: proceedings
+            columnName: document_type
+        - dropDefaultValue:
+            tableName: theses
+            columnName: document_type
 
-- changeSet:
-    id: set-document-type-entity-assessment-classifications
-    author: milospopovic
-    changes:
-    - sql:
-        sql: |
-          UPDATE entity_assessment_classifications eac
-          SET document_type = d.document_type
-          FROM (                                          
-              SELECT id, 0 AS document_type FROM journal_publications
-              UNION ALL
-              SELECT id, 1 FROM proceedings
-              UNION ALL
-              SELECT id, 2 FROM proceedings_publications
-              UNION ALL
-              SELECT id, 3 FROM monographs
-              UNION ALL
-              SELECT id, 4 FROM patents
-              UNION ALL
-              SELECT id, 5 FROM intangible_products
-              UNION ALL
-              SELECT id, 6 FROM datasets
-              UNION ALL
-              SELECT id, 7 FROM monograph_publications
-              UNION ALL
-              SELECT id, 8 FROM theses
-              UNION ALL
-              SELECT id, 9 FROM material_products
-              UNION ALL
-              SELECT id, 10 FROM genetic_materials
-          ) d
-          WHERE d.id = eac.document_id
+  - changeSet:
+      id: set-document-type-entity-assessment-classifications
+      author: milospopovic
+      changes:
+        - sql:
+            sql: |
+              UPDATE entity_assessment_classifications eac
+              SET document_type = d.document_type
+              FROM (                                          
+                  SELECT id, 0 AS document_type FROM journal_publications
+                  UNION ALL
+                  SELECT id, 1 FROM proceedings
+                  UNION ALL
+                  SELECT id, 2 FROM proceedings_publications
+                  UNION ALL
+                  SELECT id, 3 FROM monographs
+                  UNION ALL
+                  SELECT id, 4 FROM patents
+                  UNION ALL
+                  SELECT id, 5 FROM intangible_products
+                  UNION ALL
+                  SELECT id, 6 FROM datasets
+                  UNION ALL
+                  SELECT id, 7 FROM monograph_publications
+                  UNION ALL
+                  SELECT id, 8 FROM theses
+                  UNION ALL
+                  SELECT id, 9 FROM material_products
+                  UNION ALL
+                  SELECT id, 10 FROM genetic_materials
+              ) d
+              WHERE d.id = eac.document_id

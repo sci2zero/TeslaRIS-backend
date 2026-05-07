@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
+import rs.teslaris.core.annotation.PublicationEditCheck;
 import rs.teslaris.core.annotation.Traceable;
 import rs.teslaris.core.converter.identifier.EntityIdentifierConverter;
 import rs.teslaris.core.dto.identifier.DocumentIdentifierDTO;
@@ -50,9 +51,10 @@ public class DocumentIdentifierController {
         );
     }
 
-    @PostMapping
+    @PostMapping("/{documentId}")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('EDIT_DOCUMENT_IDENTIFIERS')")
+    @PublicationEditCheck
     @Idempotent
     @Transactional
     public EntityIdentifierResponseDTO createDocumentIdentifier(
@@ -63,8 +65,9 @@ public class DocumentIdentifierController {
                 tokenUtil.extractUserIdFromToken(bearerToken)));
     }
 
-    @PutMapping("/{entityIdentifierId}")
+    @PutMapping("/{documentId}/{entityIdentifierId}")
     @PreAuthorize("hasAuthority('EDIT_DOCUMENT_IDENTIFIERS')")
+    @PublicationEditCheck
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateDocumentIdentifier(
         @RequestBody DocumentIdentifierDTO documentIdentifierDTO,

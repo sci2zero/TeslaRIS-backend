@@ -243,6 +243,8 @@ public class DbInitializer implements ApplicationRunner {
         var editDocumentIdentifiers = new Privilege("EDIT_DOCUMENT_IDENTIFIERS");
         var editOrganisationUnitIdentifiers = new Privilege("EDIT_ORGANISATION_UNIT_IDENTIFIERS");
         var editPublicationSeriesIdentifiers = new Privilege("EDIT_PUBLICATION_SERIES_IDENTIFIERS");
+        var readFundingApplications = new Privilege("READ_FUNDING_APPLICATIONS");
+        var editFundingApplications = new Privilege("EDIT_FUNDING_APPLICATIONS");
         var readFunding = new Privilege("READ_FUNDING");
         var editFunding = new Privilege("EDIT_FUNDING");
 
@@ -291,7 +293,8 @@ public class DbInitializer implements ApplicationRunner {
                 createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents,
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFunding, editFunding
+                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications,
+                readFunding, editFunding
             ));
 
         // AUTHORITIES
@@ -337,7 +340,8 @@ public class DbInitializer implements ApplicationRunner {
                 createCourses, editCourses, createOtherEvents, editOtherEvents, mergeCourses,
                 mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFunding, editFunding
+                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications,
+                readFunding, editFunding
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

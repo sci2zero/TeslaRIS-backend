@@ -76,25 +76,12 @@ public interface OrganisationUnitRepository extends JpaRepository<OrganisationUn
     boolean existsByIsni(String isni, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM OrganisationUnit ou WHERE ou.athensId = :athensId AND (:id IS NULL OR ou.id <> :id)")
-    boolean existsByAthensId(String athensId, Integer id);
-
-    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM OrganisationUnit ou WHERE ou.ncesId = :ncesId AND (:id IS NULL OR ou.id <> :id)")
-    boolean existsByNcesId(String ncesId, Integer id);
-
-    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
         "FROM OrganisationUnit ou WHERE ou.fctId = :fctId AND (:id IS NULL OR ou.id <> :id)")
     boolean existsByFctId(String fctId, Integer id);
 
     @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM OrganisationUnit ou WHERE ou.dgeecId = :dgeecId AND (:id IS NULL OR ou.id <> :id)")
-    boolean existsByDgeecId(String dgeecId, Integer id);
-
-    @Query("SELECT CASE WHEN COUNT(ou) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM OrganisationUnit ou WHERE ou.nifId = :nifId AND (:id IS NULL OR ou.id <> :id)")
-    boolean existsByNifId(String nifId, Integer id);
-
+        "FROM OrganisationUnit ou WHERE ou.taxNumber = :taxNumber AND (:id IS NULL OR ou.id <> :id)")
+    boolean existsByTaxNumber(String taxNumber, Integer id);
 
     @Query(value = "SELECT * FROM organisation_units ou WHERE " +
         "(:allTime = TRUE OR ou.last_modification >= CURRENT_TIMESTAMP - INTERVAL '1 DAY') AND " +

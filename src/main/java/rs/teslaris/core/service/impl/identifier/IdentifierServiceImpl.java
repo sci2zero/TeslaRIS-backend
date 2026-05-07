@@ -116,7 +116,7 @@ public class IdentifierServiceImpl extends JPAServiceImpl<Identifier> implements
         identifier.setDescription(
             multilingualContentService.getMultilingualContentAndSetDefaultsIfNonExistent(
                 identifierDTO.description()));
-        identifier.setAccessLevel(identifierDTO.indicatorAccessLevel());
+        identifier.setAccessLevel(identifierDTO.identifierAccessLevel());
 
         identifier.setRegularExpression(
             Objects.requireNonNullElse(identifierDTO.regularExpression(), ""));

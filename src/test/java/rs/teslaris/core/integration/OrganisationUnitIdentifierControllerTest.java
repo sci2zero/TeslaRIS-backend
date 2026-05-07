@@ -36,11 +36,13 @@ public class OrganisationUnitIdentifierControllerTest extends BaseTest {
     public void testCreateOrganisationUnitIdentifierSuccess() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var organisationUnitIdentifierDTO = getTestPayload("12345");
+        var organisationUnitIdentifierDTO = getTestPayload("44444");
 
         String requestBody = objectMapper.writeValueAsString(organisationUnitIdentifierDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/organisation-unit-identifier")
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/organisation-unit-identifier/{organisationUnitId}",
+                        organisationUnitIdentifierDTO.getOrganisationUnitId())
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -57,7 +59,9 @@ public class OrganisationUnitIdentifierControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(organisationUnitIdentifierDTO);
         mockMvc.perform(
-                MockMvcRequestBuilders.post("http://localhost:8081/api/organisation-unit-identifier")
+                MockMvcRequestBuilders.post(
+                        "http://localhost:8081/api/organisation-unit-identifier/{organisationUnitId}",
+                        organisationUnitIdentifierDTO.getOrganisationUnitId())
                     .content(requestBody)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
@@ -70,13 +74,13 @@ public class OrganisationUnitIdentifierControllerTest extends BaseTest {
     public void testUpdateOrganisationUnitIdentifier() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var organisationUnitIdentifierDTO = getTestPayload("54321");
+        var organisationUnitIdentifierDTO = getTestPayload("44344");
 
         String requestBody = objectMapper.writeValueAsString(organisationUnitIdentifierDTO);
         mockMvc.perform(
                 MockMvcRequestBuilders.put(
-                        "http://localhost:8081/api/organisation-unit-identifier/{identifierId}",
-                        5)
+                        "http://localhost:8081/api/organisation-unit-identifier/{organisationUnitId}/{identifierId}",
+                        organisationUnitIdentifierDTO.getOrganisationUnitId(), 5)
                     .content(requestBody).contentType(MediaType.APPLICATION_JSON)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
             .andExpect(status().isNoContent());

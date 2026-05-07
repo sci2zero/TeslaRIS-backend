@@ -141,7 +141,7 @@ public class PatentServiceTest {
 
         // Then
         assertNotNull(result);
-        verify(multilingualContentService, times(5)).getMultilingualContent(any());
+        verify(multilingualContentService, times(8)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(patentJPAService).save(eq(document));

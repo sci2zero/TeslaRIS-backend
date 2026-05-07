@@ -23,6 +23,7 @@ import rs.teslaris.core.repository.document.DocumentRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MaterialProductJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
@@ -74,6 +75,7 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
                                       InvolvementRepository involvementRepository,
                                       OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                       DocumentLookupService documentLookupService,
+                                      CountryService countryService,
                                       MaterialProductJPAServiceImpl materialProductJPAService,
                                       PublisherService publisherService,
                                       ResearchAreaService researchAreaService) {
@@ -83,7 +85,8 @@ public class MaterialProductServiceImpl extends DocumentPublicationServiceImpl i
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService);
+            documentLookupService,
+            countryService);
         this.materialProductJPAService = materialProductJPAService;
         this.publisherService = publisherService;
         this.researchAreaService = researchAreaService;

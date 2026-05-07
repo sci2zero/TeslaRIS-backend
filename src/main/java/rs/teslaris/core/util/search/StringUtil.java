@@ -442,4 +442,25 @@ public class StringUtil {
 
         return "attachment; filename=\"file\"; filename*=UTF-8''" + encoded;
     }
+
+    public static String normalizeUnicode(String input) {
+        if (Objects.isNull(input)) {
+            return "";
+        }
+
+        // Unicode normalization
+        var normalized = Normalizer.normalize(input, Normalizer.Form.NFKC);
+
+        // All dash-like characters to ASCII hyphen
+        normalized = normalized.replaceAll("\\p{Pd}", "-");
+
+        // Normalize non-breaking spaces and weird whitespace
+        normalized = normalized
+            .replace('\u00A0', ' ')   // non-breaking space
+            .replace('\u2007', ' ')   // figure space
+            .replace('\u202F', ' ')   // narrow no-break space
+            .trim();
+
+        return normalized;
+    }
 }

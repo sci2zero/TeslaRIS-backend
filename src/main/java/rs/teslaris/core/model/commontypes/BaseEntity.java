@@ -62,4 +62,7 @@ public abstract class BaseEntity {
 
     @Column(name = "import_source")
     private String importSource;
+
+    @Column(name = "private_info", nullable = false, columnDefinition = "boolean default false")
+    private Boolean privateInfo = false;
 }

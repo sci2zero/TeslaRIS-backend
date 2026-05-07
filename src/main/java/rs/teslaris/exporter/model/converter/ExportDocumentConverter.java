@@ -868,7 +868,7 @@ public class ExportDocumentConverter extends ExportConverterBase {
             case EDITOR -> exportDocument.getEditors();
             case ADVISOR -> exportDocument.getAdvisors();
             case BOARD_MEMBER -> exportDocument.getBoardMembers();
-            case REVIEWER -> null;
+            case REVIEWER, PRESENTER, TRANSLATOR, ASSISTANT_STAFF, ARGUER, OWNER -> null;
         };
 
         if (Objects.isNull(contributions)) {

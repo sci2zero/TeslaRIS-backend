@@ -36,7 +36,7 @@ public class EventIdentifierControllerTest extends BaseTest {
     public void testCreateEventIdentifierSuccess() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var eventIdentifierDTO = getTestPayload("12345");
+        var eventIdentifierDTO = getTestPayload("55555");
 
         String requestBody = objectMapper.writeValueAsString(eventIdentifierDTO);
         mockMvc.perform(
@@ -70,7 +70,7 @@ public class EventIdentifierControllerTest extends BaseTest {
     public void testUpdateEventIdentifier() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
-        var eventIdentifierDTO = getTestPayload("54321");
+        var eventIdentifierDTO = getTestPayload("55455");
 
         String requestBody = objectMapper.writeValueAsString(eventIdentifierDTO);
         mockMvc.perform(

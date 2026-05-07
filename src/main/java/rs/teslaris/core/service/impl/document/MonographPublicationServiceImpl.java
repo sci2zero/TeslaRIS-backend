@@ -28,6 +28,7 @@ import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.MonographPublicationJPAServiceImpl;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.service.interfaces.document.CitationService;
@@ -78,6 +79,7 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
                                            InvolvementRepository involvementRepository,
                                            OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                                            DocumentLookupService documentLookupService,
+                                           CountryService countryService,
                                            MonographPublicationJPAServiceImpl monographPublicationJPAService,
                                            MonographService monographService,
                                            MonographPublicationRepository monographPublicationRepository) {
@@ -87,7 +89,8 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService);
+            documentLookupService,
+            countryService);
         this.monographPublicationJPAService = monographPublicationJPAService;
         this.monographService = monographService;
         this.monographPublicationRepository = monographPublicationRepository;

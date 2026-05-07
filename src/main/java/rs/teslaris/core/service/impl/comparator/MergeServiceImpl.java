@@ -46,6 +46,7 @@ import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.EntityType;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.PersonIndexRepository;
+import rs.teslaris.core.model.commontypes.AccessLevel;
 import rs.teslaris.core.model.document.BookSeriesPublishable;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
@@ -64,6 +65,10 @@ import rs.teslaris.core.repository.document.PatentRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
+import rs.teslaris.core.repository.identifier.DocumentIdentifierRepository;
+import rs.teslaris.core.repository.identifier.OrganisationUnitIdentifierRepository;
+import rs.teslaris.core.repository.identifier.PersonIdentifierRepository;
+import rs.teslaris.core.repository.identifier.PublicationSeriesIdentifierRepository;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.document.BookSeriesService;
 import rs.teslaris.core.service.interfaces.document.ConferenceService;
@@ -82,6 +87,7 @@ import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
+import rs.teslaris.core.service.interfaces.document.PublicationSeriesLookupService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
 import rs.teslaris.core.service.interfaces.document.ThesisService;
 import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
@@ -96,6 +102,7 @@ import rs.teslaris.core.util.deduplication.Mergeable;
 import rs.teslaris.core.util.exceptionhandling.exception.ConferenceReferenceConstraintViolationException;
 import rs.teslaris.core.util.exceptionhandling.exception.NotFoundException;
 import rs.teslaris.core.util.exceptionhandling.exception.PersonReferenceConstraintViolationException;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 @Service
 @RequiredArgsConstructor
@@ -178,6 +185,16 @@ public class MergeServiceImpl implements MergeService {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     private final PersonIndexRepository personIndexRepository;
+
+    private final DocumentIdentifierRepository documentIdentifierRepository;
+
+    private final PersonIdentifierRepository personIdentifierRepository;
+
+    private final OrganisationUnitIdentifierRepository organisationUnitIdentifierRepository;
+
+    private final PublicationSeriesIdentifierRepository publicationSeriesIdentifierRepository;
+
+    private final PublicationSeriesLookupService publicationSeriesLookupService;
 
 
     @Override
@@ -422,15 +439,13 @@ public class MergeServiceImpl implements MergeService {
             proceedingsService::indexProceedings, proceedingsService::findProceedingsById, leftId,
             rightId, leftData,
             rightData,
-            dto -> new String[] {dto.getEISBN(), dto.getPrintISBN(), dto.getDoi(),
-                dto.getScopusId(), dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            dto ->
+                CollectionOperations.concat(new String[] {dto.getEISBN(), dto.getPrintISBN()},
+                    extractCommonDocumentIdentifiers(dto)),
             (dto, values) -> {
                 dto.setEISBN(values[0]);
                 dto.setPrintISBN(values[1]);
-                dto.setDoi(values[2]);
-                dto.setScopusId(values[3]);
-                dto.setOpenAlexId(values[4]);
-                dto.setWebOfScienceId(values[5]);
+                restoreCommonDocumentIdentifiers(dto, values);
             });
     }
 
@@ -470,8 +485,8 @@ public class MergeServiceImpl implements MergeService {
             rightData,
             dto -> new String[] {
                 dto.getScopusAfid(), dto.getOpenAlexId(), dto.getRor(),
-                dto.getRinggold(), dto.getFundref(), dto.getIsni(), dto.getAthensId(),
-                dto.getNcesId(), dto.getNifId(), dto.getDgeecId(), dto.getFctId()},
+                dto.getRinggold(), dto.getFundref(), dto.getIsni(), dto.getTaxNumber(),
+                dto.getFctId()},
             (dto, values) -> {
                 dto.setScopusAfid(values[0]);
                 dto.setOpenAlexId(values[1]);
@@ -479,11 +494,8 @@ public class MergeServiceImpl implements MergeService {
                 dto.setRinggold(values[3]);
                 dto.setFundref(values[4]);
                 dto.setIsni(values[5]);
-                dto.setAthensId(values[6]);
-                dto.setNcesId(values[7]);
-                dto.setNifId(values[8]);
-                dto.setDgeecId(values[9]);
-                dto.setFctId(values[10]);
+                dto.setTaxNumber(values[6]);
+                dto.setFctId(values[7]);
             });
     }
 
@@ -573,14 +585,12 @@ public class MergeServiceImpl implements MergeService {
             intangibleProductService::indexIntangibleProduct,
             intangibleProductService::findIntangibleProductById, leftId, rightId, leftData,
             rightData,
-            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
-                dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            dto ->
+                CollectionOperations.concat(new String[] {dto.getInternalNumber()},
+                    extractCommonDocumentIdentifiers(dto)),
             (dto, values) -> {
                 dto.setInternalNumber(values[0]);
-                dto.setDoi(values[1]);
-                dto.setScopusId(values[2]);
-                dto.setOpenAlexId(values[3]);
-                dto.setWebOfScienceId(values[4]);
+                restoreCommonDocumentIdentifiers(dto, values);
             });
     }
 
@@ -593,14 +603,12 @@ public class MergeServiceImpl implements MergeService {
             materialProductService::indexMaterialProduct,
             materialProductService::findMaterialProductById, leftId, rightId, leftData,
             rightData,
-            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
-                dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            dto ->
+                CollectionOperations.concat(new String[] {dto.getInternalNumber()},
+                    extractCommonDocumentIdentifiers(dto)),
             (dto, values) -> {
                 dto.setInternalNumber(values[0]);
-                dto.setDoi(values[1]);
-                dto.setScopusId(values[2]);
-                dto.setOpenAlexId(values[3]);
-                dto.setWebOfScienceId(values[4]);
+                restoreCommonDocumentIdentifiers(dto, values);
             });
     }
 
@@ -613,14 +621,12 @@ public class MergeServiceImpl implements MergeService {
             geneticMaterialService::indexGeneticMaterial,
             geneticMaterialService::findGeneticMaterialById, leftId, rightId, leftData,
             rightData,
-            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
-                dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            dto ->
+                CollectionOperations.concat(new String[] {dto.getInternalNumber()},
+                    extractCommonDocumentIdentifiers(dto)),
             (dto, values) -> {
                 dto.setInternalNumber(values[0]);
-                dto.setDoi(values[1]);
-                dto.setScopusId(values[2]);
-                dto.setOpenAlexId(values[3]);
-                dto.setWebOfScienceId(values[4]);
+                restoreCommonDocumentIdentifiers(dto, values);
             });
     }
 
@@ -630,14 +636,11 @@ public class MergeServiceImpl implements MergeService {
         handleNoAuthorsRemaining(leftData, rightData);
         updateAndRestoreMetadata(datasetService::editDataset, datasetService::indexDataset,
             datasetService::findDatasetById, leftId, rightId, leftData, rightData,
-            dto -> new String[] {dto.getInternalNumber(), dto.getDoi(), dto.getScopusId(),
-                dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            dto -> CollectionOperations.concat(new String[] {dto.getInternalNumber()},
+                extractCommonDocumentIdentifiers(dto)),
             (dto, values) -> {
                 dto.setInternalNumber(values[0]);
-                dto.setDoi(values[1]);
-                dto.setScopusId(values[2]);
-                dto.setOpenAlexId(values[3]);
-                dto.setWebOfScienceId(values[4]);
+                restoreCommonDocumentIdentifiers(dto, values);
             });
     }
 
@@ -647,14 +650,11 @@ public class MergeServiceImpl implements MergeService {
         handleNoAuthorsRemaining(leftData, rightData);
         updateAndRestoreMetadata(patentService::editPatent, patentService::indexPatent,
             patentService::findPatentById, leftId, rightId, leftData, rightData,
-            dto -> new String[] {dto.getNumber(), dto.getDoi(), dto.getScopusId(),
-                dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            dto -> CollectionOperations.concat(new String[] {dto.getNumber()},
+                extractCommonDocumentIdentifiers(dto)),
             (dto, values) -> {
                 dto.setNumber(values[0]);
-                dto.setDoi(values[1]);
-                dto.setScopusId(values[2]);
-                dto.setOpenAlexId(values[3]);
-                dto.setWebOfScienceId(values[4]);
+                restoreCommonDocumentIdentifiers(dto, values);
             });
     }
 
@@ -667,14 +667,9 @@ public class MergeServiceImpl implements MergeService {
             proceedingsPublicationService::indexProceedingsPublication,
             proceedingsPublicationService::findProceedingsPublicationById, leftId,
             rightId, leftData, rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId(),
-                dto.getWebOfScienceId()},
-            (dto, values) -> {
-                dto.setDoi(values[0]);
-                dto.setScopusId(values[1]);
-                dto.setOpenAlexId(values[2]);
-                dto.setWebOfScienceId(values[3]);
-            });
+            this::extractCommonDocumentIdentifiers,
+            this::restoreCommonDocumentIdentifiers
+        );
     }
 
     @Override
@@ -686,14 +681,8 @@ public class MergeServiceImpl implements MergeService {
             journalPublicationService::indexJournalPublication,
             journalPublicationService::findJournalPublicationById, leftId, rightId,
             leftData, rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId(),
-                dto.getWebOfScienceId()},
-            (dto, values) -> {
-                dto.setDoi(values[0]);
-                dto.setScopusId(values[1]);
-                dto.setOpenAlexId(values[2]);
-                dto.setWebOfScienceId(values[3]);
-            });
+            this::extractCommonDocumentIdentifiers,
+            this::restoreCommonDocumentIdentifiers);
     }
 
     @Override
@@ -701,14 +690,9 @@ public class MergeServiceImpl implements MergeService {
                                          ThesisDTO rightData) {
         updateAndRestoreMetadata(thesisService::editThesis, thesisService::indexThesis,
             thesisService::getThesisById, leftId, rightId, leftData, rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId(),
-                dto.getWebOfScienceId()},
-            (dto, values) -> {
-                dto.setDoi(values[0]);
-                dto.setScopusId(values[1]);
-                dto.setOpenAlexId(values[2]);
-                dto.setWebOfScienceId(values[3]);
-            });
+            this::extractCommonDocumentIdentifiers,
+            this::restoreCommonDocumentIdentifiers
+        );
     }
 
     @Override
@@ -746,15 +730,13 @@ public class MergeServiceImpl implements MergeService {
         updateAndRestoreMetadata(monographService::editMonograph, monographService::indexMonograph,
             monographService::findMonographById, leftId, rightId, leftData,
             rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getPrintISBN(),
-                dto.getEisbn(), dto.getOpenAlexId(), dto.getWebOfScienceId()},
+            dto ->
+                CollectionOperations.concat(new String[] {dto.getPrintISBN(), dto.getEisbn()},
+                    extractCommonDocumentIdentifiers(dto)),
             (dto, values) -> {
-                dto.setDoi(values[0]);
-                dto.setScopusId(values[1]);
-                dto.setPrintISBN(values[2]);
-                dto.setEisbn(values[3]);
-                dto.setOpenAlexId(values[4]);
-                dto.setWebOfScienceId(values[5]);
+                dto.setPrintISBN(values[0]);
+                dto.setEisbn(values[1]);
+                restoreCommonDocumentIdentifiers(dto, values);
             });
     }
 
@@ -768,14 +750,9 @@ public class MergeServiceImpl implements MergeService {
             monographPublicationService::findMonographPublicationById, leftId,
             rightId,
             leftData, rightData,
-            dto -> new String[] {dto.getDoi(), dto.getScopusId(), dto.getOpenAlexId(),
-                dto.getWebOfScienceId()},
-            (dto, values) -> {
-                dto.setDoi(values[0]);
-                dto.setScopusId(values[1]);
-                dto.setOpenAlexId(values[2]);
-                dto.setWebOfScienceId(values[3]);
-            });
+            this::extractCommonDocumentIdentifiers,
+            this::restoreCommonDocumentIdentifiers
+        );
     }
 
     @Override
@@ -812,6 +789,8 @@ public class MergeServiceImpl implements MergeService {
                 migrateIdentifierHistory(publisherService::findRaw, publisherService::save,
                     deletionEntityId, mergedEntityId);
         }
+
+        migrateCustomIdentifiers(deletionEntityId, mergedEntityId, entityType);
     }
 
     private void performMonographPublicationSwitch(Integer targetMonographId,
@@ -1097,6 +1076,32 @@ public class MergeServiceImpl implements MergeService {
         reindexMethod.accept(rightEntity);
     }
 
+    private String[] extractCommonDocumentIdentifiers(DocumentDTO dto) {
+        return new String[] {
+            dto.getDoi(), dto.getScopusId(),
+            dto.getOpenAlexId(), dto.getWebOfScienceId(),
+            dto.getHandleId(), dto.getArxivId(),
+            dto.getPubmedId(), dto.getSsrnId()
+        };
+    }
+
+    private void restoreCommonDocumentIdentifiers(DocumentDTO dto, String[] values) {
+        var totalIds = values.length;
+
+        if (totalIds == 0) {
+            return;
+        }
+
+        dto.setDoi(values[totalIds - 8]);
+        dto.setScopusId(values[totalIds - 7]);
+        dto.setOpenAlexId(values[totalIds - 6]);
+        dto.setWebOfScienceId(values[totalIds - 5]);
+        dto.setHandleId(values[totalIds - 4]);
+        dto.setArxivId(values[totalIds - 3]);
+        dto.setPubmedId(values[totalIds - 2]);
+        dto.setSsrnId(values[totalIds - 1]);
+    }
+
     private <T extends Mergeable> void migrateIdentifierHistory(Function<Integer, T> fetchFunction,
                                                                 Consumer<T> saveMethod,
                                                                 Integer deletionEntityId,
@@ -1109,6 +1114,42 @@ public class MergeServiceImpl implements MergeService {
         mergedEntity.getOldIds().addAll(deletionEntity.getOldIds());
 
         saveMethod.accept(mergedEntity);
+    }
+
+    private void migrateCustomIdentifiers(Integer deletionEntityId,
+                                          Integer mergedEntityId,
+                                          EntityType entityType) {
+        switch (entityType) {
+            case BOOK_SERIES, JOURNAL ->
+                publicationSeriesIdentifierRepository.findIdentifiersForPublicationSeriesAndIdentifierAccessLevel(
+                    deletionEntityId, AccessLevel.ADMIN_ONLY).forEach(identifier -> {
+                        identifier.setPublicationSeries(
+                            publicationSeriesLookupService.fastPublicationSeriesLookup(mergedEntityId));
+                        publicationSeriesIdentifierRepository.save(identifier);
+                    }
+                );
+            case PUBLICATION, PROCEEDINGS, MONOGRAPH ->
+                documentIdentifierRepository.findIdentifiersForDocumentAndIdentifierAccessLevel(
+                    deletionEntityId, AccessLevel.ADMIN_ONLY).forEach(identifier -> {
+                        identifier.setDocument(documentPublicationService.findOne(mergedEntityId));
+                        documentIdentifierRepository.save(identifier);
+                    }
+                );
+            case ORGANISATION_UNIT, EXHIBITION, CONFERENCE ->
+                organisationUnitIdentifierRepository.findIdentifiersForOrganisationUnitAndIdentifierAccessLevel(
+                    deletionEntityId, AccessLevel.ADMIN_ONLY).forEach(identifier -> {
+                        identifier.setOrganisationUnit(organisationUnitService.findOne(mergedEntityId));
+                        organisationUnitIdentifierRepository.save(identifier);
+                    }
+                );
+            case PERSON ->
+                personIdentifierRepository.findIdentifiersForPersonAndIdentifierAccessLevel(
+                    deletionEntityId, AccessLevel.ADMIN_ONLY).forEach(identifier -> {
+                        identifier.setPerson(personService.findOne(mergedEntityId));
+                        personIdentifierRepository.save(identifier);
+                    }
+                );
+        }
     }
 
     private <T extends Accounted> void migrateAccountingIds(Function<Integer, T> fetchFunction,
