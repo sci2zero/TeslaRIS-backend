@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import rs.teslaris.core.util.exceptionhandling.exception.IdentifierException;
 import rs.teslaris.core.util.functional.BiPredicate;
+import rs.teslaris.core.util.search.CollectionOperations;
 
 @Component
 @Slf4j
@@ -50,7 +51,9 @@ public class IdentifierUtil {
     }
 
     public static void setUris(Set<String> uriSet, Set<String> dtoUriSet) {
-        if (Objects.isNull(dtoUriSet)) {
+        uriSet.clear();
+
+        if (!CollectionOperations.containsValues(dtoUriSet)) {
             return;
         }
 
