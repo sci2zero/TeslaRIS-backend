@@ -41,6 +41,8 @@ public class FundingDTO {
 
     private List<DocumentFileResponseDTO> agreements = new ArrayList<>();
 
+    private List<FundingPartDTO> fundingParts = new ArrayList<>();
+
     @Valid
     @NotNull(message = "You have to provide a funding name.")
     @NotEmpty(message = "You have to provide a funding name.")

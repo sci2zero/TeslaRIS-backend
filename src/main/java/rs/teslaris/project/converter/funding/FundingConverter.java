@@ -60,6 +60,7 @@ public class FundingConverter {
 
     private static void mapCollectionsAndAmount(Funding funding, FundingDTO dto) {
         funding.getAgreements().forEach(f -> dto.getAgreements().add(DocumentFileConverter.toDTO(f)));
+        funding.getFundingParts().forEach(fp -> dto.getFundingParts().add(FundingPartConverter.toDTO(fp)));
         funding.getResearchAreas().forEach(ra -> dto.getResearchAreasId().add(ra.getId()));
 
         dto.setAmount(new MonetaryAmountDTO());

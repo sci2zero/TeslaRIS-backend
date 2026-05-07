@@ -13,11 +13,13 @@ import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.funding.FundingType;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -118,6 +120,10 @@ public class FundingControllerTest extends BaseTest {
         monetaryAmount.setAmount(250000.0);
         monetaryAmount.setCurrencyId(1);
         dto.setAmount(monetaryAmount);
+
+        var fundingPart = new FundingPartDTO();
+        fundingPart.setAmount(monetaryAmount);
+        dto.setFundingParts(List.of(fundingPart));
 
         dto.setCompetitive(true);
         dto.setRenewable(false);

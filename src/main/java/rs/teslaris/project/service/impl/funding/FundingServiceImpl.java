@@ -27,10 +27,12 @@ import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
 import rs.teslaris.project.converter.funding.FundingConverter;
 import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.funding.Funding;
+import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
@@ -217,6 +219,38 @@ public class FundingServiceImpl extends JPAServiceImpl<Funding> implements Fundi
         funding.setOaMandated(fundingDTO.getOaMandated());
         funding.setOaMandateUrl(fundingDTO.getOaMandateUrl());
         funding.setInternalIdentifiers(fundingDTO.getInternalIdentifiers());
+
+        buildFundingParts(funding, fundingDTO);
+    }
+
+    private void buildFundingParts(Funding funding,
+                                            FundingDTO fundingDTO) {
+        if (Objects.isNull(funding.getFundingParts())) {
+            funding.setFundingParts(new HashSet<>());
+        }
+
+        fundingDTO.getFundingParts().forEach(partDTO -> {
+            var part = buildFundingPart(partDTO, funding);
+            funding.getFundingParts().add(part);
+        });
+    }
+
+    private FundingPart buildFundingPart(FundingPartDTO partDTO, Funding parent) {
+        var part = new FundingPart();
+
+        part.setDescription(
+                multilingualContentService.getMultilingualContent(partDTO.getDescription()));
+
+        part.setAmount(new MonetaryAmount());
+        part.getAmount().setCurrency(
+                currencyService.findOne(partDTO.getAmount().getCurrencyId()));
+        part.getAmount().setAmount(partDTO.getAmount().getAmount());
+
+        if (Objects.nonNull(partDTO.getFundingId())) {
+            part.setFunding(parent);
+        }
+
+        return part;
     }
 
     @Override

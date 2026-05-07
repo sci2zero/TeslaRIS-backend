@@ -26,6 +26,7 @@ import rs.teslaris.core.service.interfaces.institution.OrganisationUnitService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.exceptionhandling.exception.ReferenceConstraintException;
 import rs.teslaris.project.dto.funding.FundingDTO;
+import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.indexrepository.funding.FundingIndexRepository;
 import rs.teslaris.project.model.funding.Funding;
@@ -211,6 +212,11 @@ public class FundingServiceTest extends BaseTest {
         monetaryAmountDTO.setAmount(250000.0);
         fundingDTO.setAmount(monetaryAmountDTO);
 
+        var fundingPartDTO = new FundingPartDTO();
+        fundingPartDTO.setDescription(List.of());
+        fundingPartDTO.setAmount(monetaryAmountDTO);
+        fundingDTO.setFundingParts(List.of(fundingPartDTO));
+
         var savedFunding = new Funding();
         savedFunding.setId(1);
         savedFunding.setProject(new Project());
@@ -228,11 +234,11 @@ public class FundingServiceTest extends BaseTest {
         // then
         assertNotNull(result);
         assertEquals(1, result.getId());
-        verify(multilingualContentService, times(7)).getMultilingualContent(anyList());
+        verify(multilingualContentService, times(8)).getMultilingualContent(anyList());
+        verify(currencyService, times(2)).findOne(1);
         verify(researchAreaService).getResearchAreasByIds(anyList());
         verify(projectService).findOne(1);
         verify(fundingCallService).findOne(1);
-        verify(currencyService).findOne(1);
         verify(fundingRepository).save(any(Funding.class));
     }
 
@@ -278,6 +284,59 @@ public class FundingServiceTest extends BaseTest {
         assertEquals(2, result.getId());
         verify(organisationUnitService).findOne(5);
         verify(fundingCallService, never()).findOne(any());
+    }
+
+    @Test
+    public void shouldCreateFundingWithoutFundingParts() {
+        // given
+        var fundingDTO = new FundingDTO();
+        fundingDTO.setName(List.of());
+        fundingDTO.setDescription(List.of());
+        fundingDTO.setNameAbbreviation(List.of());
+        fundingDTO.setKeywords(List.of());
+        fundingDTO.setDisplayCall(List.of());
+        fundingDTO.setDisplayProgram(List.of());
+        fundingDTO.setDisplayFunder(List.of());
+        fundingDTO.setResearchAreasId(Set.of());
+        fundingDTO.setProjectId(1);
+        fundingDTO.setFundingCallId(1);
+        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
+        fundingDTO.setDateFrom(LocalDate.now());
+        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
+        fundingDTO.setUris(Set.of("https://example.com"));
+        fundingDTO.setOaMandated(true);
+        fundingDTO.setOaMandateUrl("https://example.com/mandate");
+        fundingDTO.setCompetitive(true);
+        fundingDTO.setRenewable(false);
+
+        var monetaryAmountDTO = new MonetaryAmountDTO();
+        monetaryAmountDTO.setCurrencyId(1);
+        monetaryAmountDTO.setAmount(250000.0);
+        fundingDTO.setAmount(monetaryAmountDTO);
+
+        var savedFunding = new Funding();
+        savedFunding.setId(1);
+        savedFunding.setProject(new Project());
+
+        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
+        when(projectService.findOne(1)).thenReturn(new Project());
+        when(fundingCallService.findOne(1)).thenReturn(new FundingCall());
+        when(currencyService.findOne(1)).thenReturn(null);
+        when(fundingRepository.save(any(Funding.class))).thenReturn(savedFunding);
+
+        // when
+        var result = fundingService.createFunding(fundingDTO);
+
+        // then
+        assertNotNull(result);
+        assertEquals(1, result.getId());
+        verify(multilingualContentService, times(7)).getMultilingualContent(anyList());
+        verify(researchAreaService).getResearchAreasByIds(anyList());
+        verify(projectService).findOne(1);
+        verify(fundingCallService).findOne(1);
+        verify(currencyService).findOne(1);
+        verify(fundingRepository).save(any(Funding.class));
     }
 
     @Test
