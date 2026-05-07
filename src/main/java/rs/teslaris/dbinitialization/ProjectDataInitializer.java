@@ -1,6 +1,7 @@
 package rs.teslaris.dbinitialization;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +61,7 @@ public class ProjectDataInitializer {
 
         var currencySerbianDinar = new Currency();
         currencySerbianDinar.setName(
-            Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Serbian Dinar", 1)));
         currencySerbianDinar.setCode("RSD");
         currencySerbianDinar.setSymbol("RSD");
 
@@ -68,14 +69,14 @@ public class ProjectDataInitializer {
 
         var fundingProgram1 = new FundingProgram();
         fundingProgram1.setName(
-            Set.of(new MultiLingualContent(englishTag, "Horizon Europe", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Horizon Europe", 1)));
         fundingProgram1.setDateFrom(LocalDate.of(2020, 1, 1));
         fundingProgram1.setDateTo(LocalDate.of(2035, 5, 14));
         fundingProgram1.setFunder(funder1);
 
         var fundingProgram2 = new FundingProgram();
         fundingProgram2.setName(
-            Set.of(new MultiLingualContent(englishTag, "Ministry of Science", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Ministry of Science", 1)));
         fundingProgram2.setDateFrom(LocalDate.of(2022, 12, 1));
         fundingProgram2.setDateTo(LocalDate.of(2025, 2, 1));
         fundingProgram2.setFunder(funder1);
@@ -84,7 +85,7 @@ public class ProjectDataInitializer {
 
         var fundingCall1 = new FundingCall();
         fundingCall1.setName(
-            Set.of(new MultiLingualContent(englishTag, "Funding Call 1", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Funding Call 1", 1)));
         fundingCall1.setDateFrom(LocalDate.of(2020, 2, 1));
         fundingCall1.setDateTo(LocalDate.of(2021, 2, 1));
         fundingCall1.setFundingProgram(fundingProgram1);
@@ -92,7 +93,7 @@ public class ProjectDataInitializer {
 
         var fundingCall2 = new FundingCall();
         fundingCall2.setName(
-            Set.of(new MultiLingualContent(englishTag, "Funding Call 2", 1)));
+                Set.of(new MultiLingualContent(englishTag, "Funding Call 2", 1)));
         fundingCall2.setDateFrom(LocalDate.of(2022, 7, 6));
         fundingCall2.setDateTo(LocalDate.of(2023, 3, 17));
         fundingCall2.setFundingProgram(fundingProgram1);
@@ -129,7 +130,10 @@ public class ProjectDataInitializer {
         var fundingApplication1 = new FundingApplication();
         fundingApplication1.setFundingCall(fundingCall1);
 
-        fundingApplicationRepository.save(fundingApplication1);
+        var fundingApplication2 = new FundingApplication();
+        fundingApplication2.setFundingCall(fundingCall1);
+
+        fundingApplicationRepository.saveAll(List.of(fundingApplication1, fundingApplication2));
 
         var project1 = new Project();
         project1.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 1", 1)));

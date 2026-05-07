@@ -20,5 +20,9 @@ public enum ApplicableEntityType {
     CONFERENCE,
     EXHIBITION,
     COURSE,
-    OTHER_EVENT
+    OTHER_EVENT,
+    JOURNAL,
+    BOOK_SERIES,
+    PROCEEDINGS,
+    INTANGIBLE_PRODUCT
 }

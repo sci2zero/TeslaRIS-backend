@@ -71,6 +71,7 @@ import rs.teslaris.core.repository.institution.CommissionRepository;
 import rs.teslaris.core.repository.person.InvolvementRepository;
 import rs.teslaris.core.service.impl.document.cruddelegate.ThesisJPAServiceImpl;
 import rs.teslaris.core.service.interfaces.commontypes.BrandingInformationService;
+import rs.teslaris.core.service.interfaces.commontypes.CountryService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageService;
 import rs.teslaris.core.service.interfaces.commontypes.LanguageTagService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
@@ -170,6 +171,7 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
                              InvolvementRepository involvementRepository,
                              OrganisationUnitOutputConfigurationService organisationUnitOutputConfigurationService,
                              DocumentLookupService documentLookupService,
+                             CountryService countryService,
                              ThesisJPAServiceImpl thesisJPAService,
                              PublisherService publisherService,
                              LanguageService languageService, LanguageTagService languageTagService,
@@ -187,7 +189,8 @@ public class ThesisServiceImpl extends DocumentPublicationServiceImpl implements
             eventService,
             commissionRepository, searchFieldsLoader, organisationUnitTrustConfigurationService,
             involvementRepository, organisationUnitOutputConfigurationService,
-            documentLookupService);
+            documentLookupService,
+            countryService);
         this.thesisJPAService = thesisJPAService;
         this.publisherService = publisherService;
         this.languageService = languageService;

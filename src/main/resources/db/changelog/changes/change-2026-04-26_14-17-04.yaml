@@ -1,0 +1,99 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1777213063884-1
+      author: milospopovic (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: organisation_units_other_identifiers_pkey
+                  name: organisation_unit_id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: organisation_units_other_identifiers_pkey
+                  name: other_identifiers_id
+                  type: INTEGER
+            tableName: organisation_units_other_identifiers
+  - changeSet:
+      id: 1777213063884-2
+      author: milospopovic (generated)
+      changes:
+        - addUniqueConstraint:
+            columnNames: other_identifiers_id
+            constraintName: organisation_units_other_identifiers_other_identifiers_id_key
+            tableName: organisation_units_other_identifiers
+  - changeSet:
+      id: 1777213063884-3
+      author: milospopovic (generated)
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: tax_number
+                  type: VARCHAR(255)
+            tableName: organisation_units
+  - changeSet:
+      id: 1777213063884-4
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: other_identifiers_id
+            baseTableName: organisation_units_other_identifiers
+            constraintName: fk1s0olx13g76hd0db7gbv8ni11
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: entity_identifiers
+            validate: true
+  - changeSet:
+      id: 1777213063884-5
+      author: milospopovic (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: organisation_unit_id
+            baseTableName: organisation_units_other_identifiers
+            constraintName: fk9onb40g9gphop0t3pi1urwect
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: organisation_units
+            validate: true
+  - changeSet:
+      id: 1777213063884-6
+      author: milospopovic (generated)
+      changes:
+        - dropColumn:
+            columnName: athens_id
+            tableName: organisation_units
+  - changeSet:
+      id: 1777213063884-7
+      author: milospopovic (generated)
+      changes:
+        - dropColumn:
+            columnName: dgeec_id
+            tableName: organisation_units
+  - changeSet:
+      id: 1777213063884-8
+      author: milospopovic (generated)
+      changes:
+        - dropColumn:
+            columnName: nces_id
+            tableName: organisation_units
+  - changeSet:
+      id: 1777213063884-9
+      author: milospopovic (generated)
+      changes:
+        - dropColumn:
+            columnName: nif_id
+            tableName: organisation_units
+

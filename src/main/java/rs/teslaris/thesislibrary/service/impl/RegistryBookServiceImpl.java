@@ -608,7 +608,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
         for (var registryBookEntry : entriesToPromote) {
             var dissertation = registryBookEntry.getDissertationInformation();
             if (Objects.requireNonNullElse(dissertation.getDiplomaNumber(), "").isBlank()
-                || dissertation.getDiplomaIssueDate() == null) {
+                || Objects.isNull(dissertation.getDiplomaIssueDate())) {
                 throw new RegistryBookException("missingDiplomaMetadataMessage");
             }
 
@@ -618,6 +618,7 @@ public class RegistryBookServiceImpl extends JPAServiceImpl<RegistryBookEntry>
             registryBookEntry.setAttendanceIdentifier(null);
             registryBookEntry.setRegistryBookInstitution(promotion.getInstitution());
         }
+
         return entriesToPromote;
     }
 

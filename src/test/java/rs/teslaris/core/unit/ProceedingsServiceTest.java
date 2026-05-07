@@ -194,7 +194,7 @@ public class ProceedingsServiceTest {
         var result = proceedingsService.createProceedings(proceedingsDTO, true);
 
         // Then
-        verify(multilingualContentService, times(6)).getMultilingualContent(any());
+        verify(multilingualContentService, times(9)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(proceedingsDTO));
         verify(proceedingsJPAService).save(eq(document));
