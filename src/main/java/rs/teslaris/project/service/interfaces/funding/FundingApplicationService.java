@@ -1,5 +1,7 @@
 package rs.teslaris.project.service.interfaces.funding;
 
+import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -10,9 +12,6 @@ import rs.teslaris.project.dto.funding.FundingApplicationDTO;
 import rs.teslaris.project.indexmodel.funding.FundingApplicationIndex;
 import rs.teslaris.project.model.funding.FundingApplication;
 
-import java.time.LocalDate;
-import java.util.concurrent.CompletableFuture;
-
 @Service
 public interface FundingApplicationService extends JPAService<FundingApplication> {
 
@@ -20,13 +19,15 @@ public interface FundingApplicationService extends JPAService<FundingApplication
 
     FundingApplication createFundingApplication(FundingApplicationDTO fundingApplicationDTO);
 
-    void updateFundingApplication(Integer fundingApplicationId, FundingApplicationDTO fundingApplicationDTO);
+    void updateFundingApplication(Integer fundingApplicationId,
+                                  FundingApplicationDTO fundingApplicationDTO);
 
     void deleteFundingApplication(Integer fundingApplicationId);
 
     CompletableFuture<Void> reindexFundingApplications();
 
-    void indexFundingApplication(FundingApplication fundingApplication, FundingApplicationIndex index);
+    void indexFundingApplication(FundingApplication fundingApplication,
+                                 FundingApplicationIndex index);
 
     DocumentFileResponseDTO addFundingApplicationDocument(Integer fundingApplicationId,
                                                           DocumentFileDTO documentFile);

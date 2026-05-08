@@ -1,6 +1,11 @@
 package rs.teslaris.core.integration.project;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,12 +20,6 @@ import rs.teslaris.core.util.language.LanguageAbbreviations;
 import rs.teslaris.project.dto.funding.FundingApplicationDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.funding.FundingApplicationResult;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 public class FundingApplicationControllerTest extends BaseTest {
@@ -92,11 +91,11 @@ public class FundingApplicationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                        MockMvcRequestBuilders.get(
-                                        "http://localhost:8081/api/funding-application/{fundingApplicationId}", 1)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isOk());
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/funding-application/{fundingApplicationId}", 1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 
     @Test
@@ -108,12 +107,12 @@ public class FundingApplicationControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(fundingApplicationDTO);
         mockMvc.perform(
-                        MockMvcRequestBuilders.post("http://localhost:8081/api/funding-application")
-                                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-                                .header("Idempotency-Key", "MOCK_KEY_FUNDING_APPLICATION"))
-                .andDo(print())
-                .andExpect(status().isCreated());
+                MockMvcRequestBuilders.post("http://localhost:8081/api/funding-application")
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .header("Idempotency-Key", "MOCK_KEY_FUNDING_APPLICATION"))
+            .andDo(print())
+            .andExpect(status().isCreated());
     }
 
     @Test
@@ -125,12 +124,12 @@ public class FundingApplicationControllerTest extends BaseTest {
 
         String requestBody = objectMapper.writeValueAsString(fundingApplicationDTO);
         mockMvc.perform(
-                        MockMvcRequestBuilders.put(
-                                        "http://localhost:8081/api/funding-application/{fundingApplicationId}", 1)
-                                .content(requestBody).contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andDo(print())
-                .andExpect(status().isNoContent());
+                MockMvcRequestBuilders.put(
+                        "http://localhost:8081/api/funding-application/{fundingApplicationId}", 1)
+                    .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andDo(print())
+            .andExpect(status().isNoContent());
     }
 
     @Test
@@ -139,11 +138,11 @@ public class FundingApplicationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                        MockMvcRequestBuilders.delete(
-                                        "http://localhost:8081/api/funding-application/{fundingApplicationId}", 2)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isNoContent());
+                MockMvcRequestBuilders.delete(
+                        "http://localhost:8081/api/funding-application/{fundingApplicationId}", 2)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isNoContent());
     }
 
     @Test
@@ -152,10 +151,10 @@ public class FundingApplicationControllerTest extends BaseTest {
         String jwtToken = authenticateAdminAndGetToken();
 
         mockMvc.perform(
-                        MockMvcRequestBuilders.get(
-                                        "http://localhost:8081/api/funding-application/search?fundingCallId=1&result=AWARDED")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
-                .andExpect(status().isOk());
+                MockMvcRequestBuilders.get(
+                        "http://localhost:8081/api/funding-application/search?fundingCallId=1&result=AWARDED")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+            .andExpect(status().isOk());
     }
 }

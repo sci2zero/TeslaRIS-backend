@@ -1,11 +1,10 @@
 package rs.teslaris.project.converter.funding;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.model.funding.FundingPart;
-
-import java.util.Objects;
 
 public class FundingPartConverter {
 
@@ -31,11 +30,11 @@ public class FundingPartConverter {
         }
         if (Objects.nonNull(fundingPart.getOrganisationUnitProjectContribution())) {
             dto.setOrganisationUnitProjectContributionId(
-                    fundingPart.getOrganisationUnitProjectContribution().getId());
+                fundingPart.getOrganisationUnitProjectContribution().getId());
         }
 
         dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
-                fundingPart.getDescription()));
+            fundingPart.getDescription()));
 
         dto.setAmount(new MonetaryAmountDTO());
         if (Objects.nonNull(fundingPart.getAmount())) {

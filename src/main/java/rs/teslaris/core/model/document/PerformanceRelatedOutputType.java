@@ -1,0 +1,16 @@
+package rs.teslaris.core.model.document;
+
+public enum PerformanceRelatedOutputType {
+    SLIDES,
+    POSTER,
+    CATALOGUE,
+    ARTISTIC_EXHIBITION,
+    MUSICAL_PERFORMANCE,
+    ART_PERFORMANCE,
+    THEATRIC_PLAY,
+    CURATORIAL_MUSEUM_EXHIBITION,
+    LITIGATION,
+    BROADCAST_INTERVIEW,
+    TEXT_INTERVIEW,
+    NON_RESEARCH_PRESENTATION
+}

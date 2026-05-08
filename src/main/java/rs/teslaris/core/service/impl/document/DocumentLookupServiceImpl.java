@@ -16,6 +16,7 @@ import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
@@ -49,6 +50,8 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
     private final DatasetRepository datasetRepository;
 
     private final GeneticMaterialRepository geneticMaterialRepository;
+
+    private final PerformanceRelatedOutputRepository performanceRelatedOutputRepository;
 
 
     @Override
@@ -123,6 +126,10 @@ public class DocumentLookupServiceImpl implements DocumentLookupService {
                 .orElseThrow(this::throwNotFoundException);
         } else if (index.getType().equals(DocumentPublicationType.GENETIC_MATERIAL.name())) {
             return geneticMaterialRepository.findById(index.getDatabaseId())
+                .orElseThrow(this::throwNotFoundException);
+        } else if (index.getType()
+            .equals(DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name())) {
+            return performanceRelatedOutputRepository.findById(index.getDatabaseId())
                 .orElseThrow(this::throwNotFoundException);
         }
 
