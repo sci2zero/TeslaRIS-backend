@@ -39,7 +39,7 @@ public class FundingConverter {
         }
 
         if (Objects.nonNull(funding.getFundingCall())) {
-            dto.setFunderId(funding.getFundingCall().getId());
+            dto.setFundingCallId(funding.getFundingCall().getId());
         }
 
         mapTranslations(funding, dto);
