@@ -231,7 +231,8 @@ public class DeduplicationServiceImpl implements DeduplicationService {
                     DocumentPublicationType.DATASET.name(),
                     DocumentPublicationType.THESIS.name(),
                     DocumentPublicationType.MATERIAL_PRODUCT.name(),
-                    DocumentPublicationType.GENETIC_MATERIAL.name()
+                    DocumentPublicationType.GENETIC_MATERIAL.name(),
+                    DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name()
                 ),
                 PageRequest.of(pageNumber, CHUNK_SIZE)).getContent(),
             documentSearchService,

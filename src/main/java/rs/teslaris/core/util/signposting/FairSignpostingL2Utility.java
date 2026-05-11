@@ -10,12 +10,15 @@ import org.springframework.stereotype.Component;
 import rs.teslaris.core.dto.document.DatasetDTO;
 import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
+import rs.teslaris.core.dto.document.GeneticMaterialDTO;
 import rs.teslaris.core.dto.document.IntangibleProductDTO;
 import rs.teslaris.core.dto.document.JournalPublicationResponseDTO;
 import rs.teslaris.core.dto.document.JournalResponseDTO;
+import rs.teslaris.core.dto.document.MaterialProductDTO;
 import rs.teslaris.core.dto.document.MonographDTO;
 import rs.teslaris.core.dto.document.MonographPublicationDTO;
 import rs.teslaris.core.dto.document.PatentDTO;
+import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.document.ProceedingsPublicationDTO;
 import rs.teslaris.core.dto.document.ProceedingsResponseDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
@@ -445,6 +448,12 @@ public class FairSignpostingL2Utility {
             case MonographPublicationDTO ignored ->
                 new Pair<>("https://schema.org/Chapter", "/monograph-publication");
             case ThesisResponseDTO ignored -> new Pair<>("https://schema.org/Thesis", "/thesis");
+            case MaterialProductDTO ignored ->
+                new Pair<>("https://schema.org/Product", "/material-product");
+            case GeneticMaterialDTO ignored ->
+                new Pair<>("https://schema.org/BioChemEntity", "/genetic-material");
+            case PerformanceRelatedOutputDTO ignored ->
+                new Pair<>("https://schema.org/PerformingArtsEvent", "/performance-related-output");
             default -> new Pair<>("https://schema.org/Item", "/");
         };
     }

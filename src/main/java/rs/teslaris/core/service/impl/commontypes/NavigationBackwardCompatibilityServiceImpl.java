@@ -15,6 +15,7 @@ import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Thesis;
@@ -131,6 +132,12 @@ public class NavigationBackwardCompatibilityServiceImpl implements
                     log.info("NAVIGATION SUCCESS - GENETIC_MATERIAL {} from {} in LANGUAGE {}",
                         document.getId(), source, language);
                     return new Pair<>("GENETIC_MATERIAL", document.getId());
+                }
+                case PerformanceRelatedOutput ignored -> {
+                    log.info(
+                        "NAVIGATION SUCCESS - PERFORMANCE_RELATED_OUTPUT {} from {} in LANGUAGE {}",
+                        document.getId(), source, language);
+                    return new Pair<>("PERFORMANCE_RELATED_OUTPUT", document.getId());
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + document);
             }

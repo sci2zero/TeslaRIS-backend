@@ -1,10 +1,14 @@
 package rs.teslaris.core.converter.document;
 
 import java.util.Objects;
+import org.jbibtex.BibTeXEntry;
+import org.jbibtex.Key;
+import org.jbibtex.StringValue;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.dto.commontypes.LanguageTagResponseDTO;
 import rs.teslaris.core.dto.document.PerformanceRelatedOutputDTO;
 import rs.teslaris.core.model.document.PerformanceRelatedOutput;
+import rs.teslaris.core.util.persistence.IdentifierUtil;
 
 public class PerformanceRelatedOutputConverter extends DocumentPublicationConverter {
 
@@ -39,5 +43,44 @@ public class PerformanceRelatedOutputConverter extends DocumentPublicationConver
         }
 
         return performanceRelatedOutputDTO;
+    }
+
+    public static BibTeXEntry toBibTexEntry(PerformanceRelatedOutput performanceRelatedOutput,
+                                            String defaultLanguageTag) {
+        var entry = new BibTeXEntry(BibTeXEntry.TYPE_MISC,
+            new Key(IdentifierUtil.identifierPrefix + performanceRelatedOutput.getId().toString()));
+
+        setCommonFields(performanceRelatedOutput, entry, defaultLanguageTag);
+
+        if (Objects.nonNull(performanceRelatedOutput.getType())) {
+            entry.addField(BibTeXEntry.KEY_TYPE,
+                new StringValue(performanceRelatedOutput.getType().name(),
+                    StringValue.Style.BRACED));
+        }
+
+        return entry;
+    }
+
+    public static String toTaggedFormat(PerformanceRelatedOutput performanceRelatedOutput,
+                                        String defaultLanguageTag,
+                                        boolean refMan) {
+        var sb = new StringBuilder();
+        sb.append(refMan ? "TY  - " : "%0 ").append(refMan ? "GEN" : "Generic")
+            .append("\n");
+
+        setCommonTaggedFields(performanceRelatedOutput, sb, defaultLanguageTag, refMan);
+
+        if (Objects.nonNull(performanceRelatedOutput.getType())) {
+            sb.append(refMan ? "KW  - " : "%K ")
+                .append("Type: ")
+                .append(performanceRelatedOutput.getType().name())
+                .append("\n");
+        }
+
+        if (refMan) {
+            sb.append("ER  -\n");
+        }
+
+        return sb.toString();
     }
 }

@@ -31,6 +31,7 @@ import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.Proceedings;
@@ -166,6 +167,24 @@ public class ExportDocumentConverter extends ExportConverterBase {
         commonExportDocument.setGeneticMaterialType(geneticMaterial.getGeneticMaterialType());
 
         addPublisherInfo(commonExportDocument, geneticMaterial.getPublisher());
+
+        return commonExportDocument;
+    }
+
+    public static ExportDocument toCommonExportModel(
+        PerformanceRelatedOutput performanceRelatedOutput,
+        boolean computeRelations) {
+        var commonExportDocument = new ExportDocument();
+        commonExportDocument.setType(ExportPublicationType.PERFORMANCE_RELATED_OUTPUT);
+
+        setBaseFields(commonExportDocument, performanceRelatedOutput);
+        if (commonExportDocument.getDeleted()) {
+            return commonExportDocument;
+        }
+
+        setCommonFields(commonExportDocument, performanceRelatedOutput, computeRelations);
+
+        commonExportDocument.setPerformanceRelatedOutputType(performanceRelatedOutput.getType());
 
         return commonExportDocument;
     }
@@ -1436,6 +1455,10 @@ public class ExportDocumentConverter extends ExportConverterBase {
             case MONOGRAPH -> exportDocument.getMonographType().name();
             case MONOGRAPH_PUBLICATION -> exportDocument.getMonographPublicationType().name();
             case THESIS -> exportDocument.getThesisType().name();
+            case GENETIC_MATERIAL -> exportDocument.getGeneticMaterialType().name();
+            case PERFORMANCE_RELATED_OUTPUT ->
+                exportDocument.getPerformanceRelatedOutputType().name();
+            case MATERIAL_PRODUCT -> exportDocument.getMaterialProductType().name();
             default -> null;
         };
     }
