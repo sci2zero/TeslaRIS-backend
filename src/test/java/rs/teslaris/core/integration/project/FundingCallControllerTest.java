@@ -99,7 +99,7 @@ public class FundingCallControllerTest extends BaseTest {
         monetaryAmount.setCurrencyId(1);
         dto.setMonetaryAmount(monetaryAmount);
 
-        dto.setDateFrom(LocalDate.of(2025, 1, 1));
+        dto.setDateFrom(LocalDate.of(2020, 1, 1));
         dto.setDateTo(LocalDate.of(2026, 3, 1));
 
         var uris = new HashSet<String>();

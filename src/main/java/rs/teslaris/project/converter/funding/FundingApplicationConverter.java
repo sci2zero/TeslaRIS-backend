@@ -1,14 +1,11 @@
 package rs.teslaris.project.converter.funding;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
-import rs.teslaris.core.converter.commontypes.ResearchAreaConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.project.dto.funding.FundingApplicationDTO;
 import rs.teslaris.project.model.funding.FundingApplication;
-
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class FundingApplicationConverter {
 
@@ -27,7 +24,7 @@ public class FundingApplicationConverter {
 
         if (Objects.nonNull(fundingApplication.getRevisedFundingApplication())) {
             dto.setRevisedFundingApplicationId(
-                    fundingApplication.getRevisedFundingApplication().getId());
+                fundingApplication.getRevisedFundingApplication().getId());
         }
 
         if (Objects.nonNull(fundingApplication.getFunding())) {
@@ -35,32 +32,33 @@ public class FundingApplicationConverter {
         }
 
         fundingApplication.getOtherFundingSources().forEach(
-                fundingPart -> dto.getOtherFundingSources().add(FundingPartConverter.toDTO(fundingPart)));
+            fundingPart -> dto.getOtherFundingSources()
+                .add(FundingPartConverter.toDTO(fundingPart)));
 
         dto.setRequestedAmount(new MonetaryAmountDTO());
         if (Objects.nonNull(fundingApplication.getRequestedAmount())) {
             dto.getRequestedAmount().setAmount(
-                    fundingApplication.getRequestedAmount().getAmount());
+                fundingApplication.getRequestedAmount().getAmount());
             dto.getRequestedAmount().setCurrencyId(
-                    fundingApplication.getRequestedAmount().getCurrency().getId());
+                fundingApplication.getRequestedAmount().getCurrency().getId());
         }
 
         dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(
-                fundingApplication.getDescription()));
+            fundingApplication.getDescription()));
 
         dto.setResponseSummary(MultilingualContentConverter.getMultilingualContentDTO(
-                fundingApplication.getResponseSummary()));
+            fundingApplication.getResponseSummary()));
 
         dto.setSubmissionDate(fundingApplication.getSubmissionDate());
         dto.setReviewDateFrom(fundingApplication.getReviewDateFrom());
         dto.setReviewDateTo(fundingApplication.getReviewDateTo());
         dto.setDecisionDate(fundingApplication.getDecisionDate());
         dto.setRevisedProposalOrNextRoundDeadlineDate(
-                fundingApplication.getRevisedProposalOrNextRoundDeadlineDate());
+            fundingApplication.getRevisedProposalOrNextRoundDeadlineDate());
         dto.setResult(fundingApplication.getResult());
 
         fundingApplication.getDocuments().forEach(
-                document -> dto.getDocuments().add(DocumentFileConverter.toDTO(document)));
+            document -> dto.getDocuments().add(DocumentFileConverter.toDTO(document)));
 
         return dto;
     }

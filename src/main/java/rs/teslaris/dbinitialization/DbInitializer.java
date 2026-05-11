@@ -291,7 +291,8 @@ public class DbInitializer implements ApplicationRunner {
                 createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents,
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications));
+                editPublicationSeriesIdentifiers, readFundingApplications,
+                editFundingApplications));
 
         // AUTHORITIES
         var adminAuthority = new Authority(UserRole.ADMIN.toString(), new HashSet<>(
@@ -336,7 +337,8 @@ public class DbInitializer implements ApplicationRunner {
                 createCourses, editCourses, createOtherEvents, editOtherEvents, mergeCourses,
                 mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications)));
+                editPublicationSeriesIdentifiers, readFundingApplications,
+                editFundingApplications)));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(
             List.of(allowAccountTakeover, updateProfile, editPersonalInfo, assessDocument,

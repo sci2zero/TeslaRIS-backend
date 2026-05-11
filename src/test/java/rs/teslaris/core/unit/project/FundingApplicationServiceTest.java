@@ -1,6 +1,28 @@
 package rs.teslaris.core.unit.project;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -33,16 +55,6 @@ import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.service.impl.funding.FundingApplicationServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
-
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class FundingApplicationServiceTest {
@@ -115,7 +127,7 @@ public class FundingApplicationServiceTest {
         fundingApplication.setOtherFundingSources(new HashSet<>());
 
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.of(fundingApplication));
+            .thenReturn(Optional.of(fundingApplication));
 
         // when
         var result = fundingApplicationService.readFundingApplication(fundingApplicationId);
@@ -132,11 +144,11 @@ public class FundingApplicationServiceTest {
         var fundingApplicationId = 999;
 
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                fundingApplicationService.readFundingApplication(fundingApplicationId));
+            fundingApplicationService.readFundingApplication(fundingApplicationId));
         verify(fundingApplicationRepository).findById(fundingApplicationId);
     }
 
@@ -154,12 +166,12 @@ public class FundingApplicationServiceTest {
 
         when(fundingCallService.findOne(1)).thenReturn(createTestFundingCall());
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(currencyService.findOne(1)).thenReturn(null);
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
-                .thenReturn(savedApplication);
+            .thenReturn(savedApplication);
         when(fundingApplicationIndexRepository.save(any(FundingApplicationIndex.class)))
-                .thenReturn(new FundingApplicationIndex());
+            .thenReturn(new FundingApplicationIndex());
 
         // when
         var result = fundingApplicationService.createFundingApplication(dto);
@@ -184,11 +196,11 @@ public class FundingApplicationServiceTest {
 
         when(fundingCallService.findOne(1)).thenReturn(createTestFundingCall());
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
-                .thenReturn(savedApplication);
+            .thenReturn(savedApplication);
         when(fundingApplicationIndexRepository.save(any(FundingApplicationIndex.class)))
-                .thenReturn(new FundingApplicationIndex());
+            .thenReturn(new FundingApplicationIndex());
 
         // when
         var result = fundingApplicationService.createFundingApplication(dto);
@@ -216,13 +228,13 @@ public class FundingApplicationServiceTest {
 
         when(fundingCallService.findOne(1)).thenReturn(createTestFundingCall());
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(currencyService.findOne(1)).thenReturn(null);
         when(fundingService.findOne(1)).thenReturn(null);
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
-                .thenReturn(savedApplication);
+            .thenReturn(savedApplication);
         when(fundingApplicationIndexRepository.save(any(FundingApplicationIndex.class)))
-                .thenReturn(new FundingApplicationIndex());
+            .thenReturn(new FundingApplicationIndex());
 
         // when
         var result = fundingApplicationService.createFundingApplication(dto);
@@ -241,7 +253,7 @@ public class FundingApplicationServiceTest {
 
         // when & then
         assertThrows(ReferenceConstraintException.class,
-                () -> fundingApplicationService.createFundingApplication(dto));
+            () -> fundingApplicationService.createFundingApplication(dto));
 
         verify(fundingCallService, never()).findOne(any());
         verify(fundingApplicationRepository, never()).save(any());
@@ -258,7 +270,7 @@ public class FundingApplicationServiceTest {
 
         // when & then
         assertThrows(DateRangeException.class,
-                () -> fundingApplicationService.createFundingApplication(dto));
+            () -> fundingApplicationService.createFundingApplication(dto));
     }
 
     @Test
@@ -272,7 +284,7 @@ public class FundingApplicationServiceTest {
 
         // when & then
         assertThrows(DateRangeException.class,
-                () -> fundingApplicationService.createFundingApplication(dto));
+            () -> fundingApplicationService.createFundingApplication(dto));
     }
 
     @Test
@@ -286,7 +298,7 @@ public class FundingApplicationServiceTest {
 
         // when & then
         assertThrows(DateRangeException.class,
-                () -> fundingApplicationService.createFundingApplication(dto));
+            () -> fundingApplicationService.createFundingApplication(dto));
     }
 
     @Test
@@ -302,7 +314,7 @@ public class FundingApplicationServiceTest {
 
         // when & then
         assertThrows(DateRangeException.class,
-                () -> fundingApplicationService.createFundingApplication(dto));
+            () -> fundingApplicationService.createFundingApplication(dto));
     }
 
     @Test
@@ -315,7 +327,7 @@ public class FundingApplicationServiceTest {
 
         // when & then
         assertThrows(DateRangeException.class,
-                () -> fundingApplicationService.createFundingApplication(dto));
+            () -> fundingApplicationService.createFundingApplication(dto));
     }
 
     @Test
@@ -331,7 +343,7 @@ public class FundingApplicationServiceTest {
 
         // when & then
         assertThrows(DateRangeException.class,
-                () -> fundingApplicationService.createFundingApplication(dto));
+            () -> fundingApplicationService.createFundingApplication(dto));
     }
 
     @Test
@@ -347,11 +359,11 @@ public class FundingApplicationServiceTest {
 
         when(fundingCallService.findOne(1)).thenReturn(createTestFundingCall());
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
-                .thenReturn(savedApplication);
+            .thenReturn(savedApplication);
         when(fundingApplicationIndexRepository.save(any(FundingApplicationIndex.class)))
-                .thenReturn(new FundingApplicationIndex());
+            .thenReturn(new FundingApplicationIndex());
 
         // when
         var result = fundingApplicationService.createFundingApplication(dto);
@@ -372,14 +384,15 @@ public class FundingApplicationServiceTest {
         fundingApplicationIndex.setDatabaseId(fundingApplicationId);
 
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.of(existingApplication));
+            .thenReturn(Optional.of(existingApplication));
         when(fundingCallService.findOne(1)).thenReturn(createTestFundingCall());
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
-                .thenReturn(existingApplication);
-        when(fundingApplicationIndexRepository.findFundingApplicationIndexByDatabaseId(fundingApplicationId))
-                .thenReturn(Optional.of(fundingApplicationIndex));
+            .thenReturn(existingApplication);
+        when(fundingApplicationIndexRepository.findFundingApplicationIndexByDatabaseId(
+            fundingApplicationId))
+            .thenReturn(Optional.of(fundingApplicationIndex));
 
         // when
         fundingApplicationService.updateFundingApplication(fundingApplicationId, dto);
@@ -389,7 +402,8 @@ public class FundingApplicationServiceTest {
         verify(fundingCallService).findOne(1);
         verify(multilingualContentService, times(2)).getMultilingualContent(anyList());
         verify(fundingApplicationRepository).save(any(FundingApplication.class));
-        verify(fundingApplicationIndexRepository).findFundingApplicationIndexByDatabaseId(fundingApplicationId);
+        verify(fundingApplicationIndexRepository).findFundingApplicationIndexByDatabaseId(
+            fundingApplicationId);
         verify(fundingApplicationIndexRepository).save(any(FundingApplicationIndex.class));
     }
 
@@ -400,14 +414,14 @@ public class FundingApplicationServiceTest {
         var dto = new FundingApplicationDTO();
 
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                fundingApplicationService.updateFundingApplication(fundingApplicationId, dto));
+            fundingApplicationService.updateFundingApplication(fundingApplicationId, dto));
         verify(fundingApplicationRepository).findById(fundingApplicationId);
         verify(fundingApplicationIndexRepository, never())
-                .findFundingApplicationIndexByDatabaseId(anyInt());
+            .findFundingApplicationIndexByDatabaseId(anyInt());
     }
 
     @Test
@@ -416,13 +430,14 @@ public class FundingApplicationServiceTest {
         var fundingApplicationId = 1;
 
         when(fundingApplicationRepository.isRevisedByOther(fundingApplicationId))
-                .thenReturn(false);
+            .thenReturn(false);
         when(fundingApplicationRepository.hasFunding(fundingApplicationId))
-                .thenReturn(false);
+            .thenReturn(false);
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.of(new FundingApplication()));
-        when(fundingApplicationIndexRepository.findFundingApplicationIndexByDatabaseId(fundingApplicationId))
-                .thenReturn(Optional.of(new FundingApplicationIndex()));
+            .thenReturn(Optional.of(new FundingApplication()));
+        when(fundingApplicationIndexRepository.findFundingApplicationIndexByDatabaseId(
+            fundingApplicationId))
+            .thenReturn(Optional.of(new FundingApplicationIndex()));
 
         // when
         fundingApplicationService.deleteFundingApplication(fundingApplicationId);
@@ -440,11 +455,11 @@ public class FundingApplicationServiceTest {
         var fundingApplicationId = 1;
 
         when(fundingApplicationRepository.isRevisedByOther(fundingApplicationId))
-                .thenReturn(true);
+            .thenReturn(true);
 
         // when & then
         assertThrows(ReferenceConstraintException.class, () ->
-                fundingApplicationService.deleteFundingApplication(fundingApplicationId));
+            fundingApplicationService.deleteFundingApplication(fundingApplicationId));
         verify(fundingApplicationRepository).isRevisedByOther(fundingApplicationId);
         verify(fundingApplicationRepository, never()).save(any());
     }
@@ -455,13 +470,13 @@ public class FundingApplicationServiceTest {
         var fundingApplicationId = 1;
 
         when(fundingApplicationRepository.isRevisedByOther(fundingApplicationId))
-                .thenReturn(false);
+            .thenReturn(false);
         when(fundingApplicationRepository.hasFunding(fundingApplicationId))
-                .thenReturn(true);
+            .thenReturn(true);
 
         // when & then
         assertThrows(ReferenceConstraintException.class, () ->
-                fundingApplicationService.deleteFundingApplication(fundingApplicationId));
+            fundingApplicationService.deleteFundingApplication(fundingApplicationId));
         verify(fundingApplicationRepository).hasFunding(fundingApplicationId);
         verify(fundingApplicationRepository, never()).save(any());
     }
@@ -473,10 +488,11 @@ public class FundingApplicationServiceTest {
         var fundingApplicationIndex = new FundingApplicationIndex();
 
         when(fundingApplicationIndexRepository.save(any(FundingApplicationIndex.class)))
-                .thenReturn(fundingApplicationIndex);
+            .thenReturn(fundingApplicationIndex);
 
         // when
-        fundingApplicationService.indexFundingApplication(fundingApplication, fundingApplicationIndex);
+        fundingApplicationService.indexFundingApplication(fundingApplication,
+            fundingApplicationIndex);
 
         // then
         verify(fundingApplicationIndexRepository).save(any(FundingApplicationIndex.class));
@@ -499,20 +515,20 @@ public class FundingApplicationServiceTest {
         expectedResponse.setId(100);
 
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.of(fundingApplication));
+            .thenReturn(Optional.of(fundingApplication));
         when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false)))
-                .thenReturn(savedDocumentFile);
+            .thenReturn(savedDocumentFile);
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
-                .thenReturn(fundingApplication);
+            .thenReturn(fundingApplication);
 
         try (var documentFileConverterMock = mockStatic(DocumentFileConverter.class)) {
             documentFileConverterMock.when(() ->
-                            DocumentFileConverter.toDTO(savedDocumentFile))
-                    .thenReturn(expectedResponse);
+                    DocumentFileConverter.toDTO(savedDocumentFile))
+                .thenReturn(expectedResponse);
 
             // when
             var result = fundingApplicationService.addFundingApplicationDocument(
-                    fundingApplicationId, documentFileDTO);
+                fundingApplicationId, documentFileDTO);
 
             // then
             assertNotNull(result);
@@ -521,7 +537,7 @@ public class FundingApplicationServiceTest {
             verify(documentFileService).saveNewDocument(any(DocumentFileDTO.class), eq(false));
             verify(fundingApplicationRepository).save(any(FundingApplication.class));
             documentFileConverterMock.verify(() ->
-                    DocumentFileConverter.toDTO(savedDocumentFile), times(1));
+                DocumentFileConverter.toDTO(savedDocumentFile), times(1));
         }
     }
 
@@ -532,12 +548,12 @@ public class FundingApplicationServiceTest {
         var documentFileDTO = new DocumentFileDTO();
 
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                fundingApplicationService.addFundingApplicationDocument(
-                        fundingApplicationId, documentFileDTO));
+            fundingApplicationService.addFundingApplicationDocument(
+                fundingApplicationId, documentFileDTO));
         verify(fundingApplicationRepository).findById(fundingApplicationId);
         verify(documentFileService, never()).saveNewDocument(any(), anyBoolean());
     }
@@ -553,7 +569,7 @@ public class FundingApplicationServiceTest {
         expectedResponse.setId(100);
 
         when(documentFileService.editDocumentFile(any(DocumentFileDTO.class), eq(false)))
-                .thenReturn(expectedResponse);
+            .thenReturn(expectedResponse);
 
         // when
         var result = fundingApplicationService.updateFundingApplicationDocument(documentFileDTO);
@@ -571,11 +587,11 @@ public class FundingApplicationServiceTest {
         documentFileDTO.setId(999);
 
         when(documentFileService.editDocumentFile(any(DocumentFileDTO.class), eq(false)))
-                .thenThrow(new RuntimeException("Document not found"));
+            .thenThrow(new RuntimeException("Document not found"));
 
         // when & then
         assertThrows(RuntimeException.class, () ->
-                fundingApplicationService.updateFundingApplicationDocument(documentFileDTO));
+            fundingApplicationService.updateFundingApplicationDocument(documentFileDTO));
         verify(documentFileService).editDocumentFile(any(DocumentFileDTO.class), eq(false));
     }
 
@@ -592,16 +608,16 @@ public class FundingApplicationServiceTest {
         fundingApplication.setDocuments(new HashSet<>(Set.of(documentFile)));
 
         when(documentFileService.findOne(documentFileId))
-                .thenReturn(documentFile);
+            .thenReturn(documentFile);
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.of(fundingApplication));
+            .thenReturn(Optional.of(fundingApplication));
         doNothing().when(documentFileService).delete(documentFileId);
         when(fundingApplicationRepository.save(any(FundingApplication.class)))
-                .thenReturn(fundingApplication);
+            .thenReturn(fundingApplication);
 
         // when
         fundingApplicationService.deleteFundingApplicationDocument(
-                documentFileId, fundingApplicationId);
+            documentFileId, fundingApplicationId);
 
         // then
         verify(documentFileService).findOne(documentFileId);
@@ -620,14 +636,14 @@ public class FundingApplicationServiceTest {
         documentFile.setId(documentFileId);
 
         when(documentFileService.findOne(documentFileId))
-                .thenReturn(documentFile);
+            .thenReturn(documentFile);
         when(fundingApplicationRepository.findById(fundingApplicationId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                fundingApplicationService.deleteFundingApplicationDocument(
-                        documentFileId, fundingApplicationId));
+            fundingApplicationService.deleteFundingApplicationDocument(
+                documentFileId, fundingApplicationId));
         verify(documentFileService).findOne(documentFileId);
         verify(fundingApplicationRepository).findById(fundingApplicationId);
         verify(documentFileService, never()).delete(anyInt());
@@ -639,18 +655,18 @@ public class FundingApplicationServiceTest {
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
-                eq(FundingApplicationIndex.class), eq("funding_application")))
-                .thenReturn(Page.empty());
+            eq(FundingApplicationIndex.class), eq("funding_application")))
+            .thenReturn(Page.empty());
 
         // when
         var result = fundingApplicationService.searchFundingApplications(
-                1, null, "AWARDED", null, null, null, null, pageable);
+            1, null, "AWARDED", null, null, null, null, pageable);
 
         // then
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
-                eq(FundingApplicationIndex.class), eq("funding_application"));
+            eq(FundingApplicationIndex.class), eq("funding_application"));
     }
 
     @Test
@@ -665,15 +681,15 @@ public class FundingApplicationServiceTest {
         fundingApplicationIndex.setResult("AWARDED");
 
         var expectedPage = new PageImpl<>(
-                List.of(fundingApplicationIndex), pageable, 1);
+            List.of(fundingApplicationIndex), pageable, 1);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
-                eq(FundingApplicationIndex.class), eq("funding_application")))
-                .thenReturn(expectedPage);
+            eq(FundingApplicationIndex.class), eq("funding_application")))
+            .thenReturn(expectedPage);
 
         // when
         var result = fundingApplicationService.searchFundingApplications(
-                1, null, "AWARDED", null, null, null, null, pageable);
+            1, null, "AWARDED", null, null, null, null, pageable);
 
         // then
         assertNotNull(result);
@@ -683,6 +699,6 @@ public class FundingApplicationServiceTest {
         assertEquals(1, result.getContent().getFirst().getFundingCallId());
         assertEquals("AWARDED", result.getContent().getFirst().getResult());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
-                eq(FundingApplicationIndex.class), eq("funding_application"));
+            eq(FundingApplicationIndex.class), eq("funding_application"));
     }
 }

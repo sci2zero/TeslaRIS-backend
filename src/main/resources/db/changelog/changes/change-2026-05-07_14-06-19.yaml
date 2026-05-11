@@ -1,0 +1,2903 @@
+databaseChangeLog:
+- changeSet:
+    id: 1778162824365-1
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_chronological_space_description_pkey
+            name: chronological_space_description_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_chronological_space_description_pkey
+            name: document_id
+            type: INTEGER
+        tableName: documents_chronological_space_description
+- changeSet:
+    id: 1778162824365-2
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_city_pkey
+            name: city_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_city_pkey
+            name: document_id
+            type: INTEGER
+        tableName: documents_city
+- changeSet:
+    id: 1778162824365-3
+    author: milospopovic (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_geo_space_description_pkey
+            name: document_id
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: documents_geo_space_description_pkey
+            name: geo_space_description_id
+            type: INTEGER
+        tableName: documents_geo_space_description
+- changeSet:
+    id: 1778162824365-4
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: chronological_space_description_id
+        constraintName: documents_chronological_space_chronological_space_descripti_key
+        tableName: documents_chronological_space_description
+- changeSet:
+    id: 1778162824365-5
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: city_id
+        constraintName: documents_city_city_id_key
+        tableName: documents_city
+- changeSet:
+    id: 1778162824365-6
+    author: milospopovic (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: geo_space_description_id
+        constraintName: documents_geo_space_description_geo_space_description_id_key
+        tableName: documents_geo_space_description
+- changeSet:
+    id: 1778162824365-7
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1778162824365-8
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: informative_attachments
+- changeSet:
+    id: 1778162824365-9
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: journal_publications
+- changeSet:
+    id: 1778162824365-10
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: monograph_publications
+- changeSet:
+    id: 1778162824365-11
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: proceedings_publications
+- changeSet:
+    id: 1778162824365-12
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: assessment_buffer
+- changeSet:
+    id: 1778162824365-13
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: assessment_classifications
+- changeSet:
+    id: 1778162824365-14
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: assessment_measures
+- changeSet:
+    id: 1778162824365-15
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: authorities
+- changeSet:
+    id: 1778162824365-16
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: book_series
+- changeSet:
+    id: 1778162824365-17
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: branding_information
+- changeSet:
+    id: 1778162824365-18
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: countries
+- changeSet:
+    id: 1778162824365-19
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: currencies
+- changeSet:
+    id: 1778162824365-20
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: documents_relations
+- changeSet:
+    id: 1778162824365-21
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: employment_positions
+- changeSet:
+    id: 1778162824365-22
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: journals
+- changeSet:
+    id: 1778162824365-23
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: jwt_token_store
+- changeSet:
+    id: 1778162824365-24
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: language_tag
+- changeSet:
+    id: 1778162824365-25
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: languages
+- changeSet:
+    id: 1778162824365-26
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: oauth_codes
+- changeSet:
+    id: 1778162824365-27
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: privileges
+- changeSet:
+    id: 1778162824365-28
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: refresh_tokens
+- changeSet:
+    id: 1778162824365-29
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: registry_book_entry_drafts
+- changeSet:
+    id: 1778162824365-30
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: research_area
+- changeSet:
+    id: 1778162824365-31
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: scheduled_tasks
+- changeSet:
+    id: 1778162824365-32
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: thesis_research_outputs
+- changeSet:
+    id: 1778162824365-33
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: user_account_activations
+- changeSet:
+    id: 1778162824365-34
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: user_email_update_requests
+- changeSet:
+    id: 1778162824365-35
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: user_password_reset_requests
+- changeSet:
+    id: 1778162824365-36
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: datasets
+- changeSet:
+    id: 1778162824365-37
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: genetic_materials
+- changeSet:
+    id: 1778162824365-38
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: intangible_products
+- changeSet:
+    id: 1778162824365-39
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: material_products
+- changeSet:
+    id: 1778162824365-40
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: monographs
+- changeSet:
+    id: 1778162824365-41
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: patents
+- changeSet:
+    id: 1778162824365-42
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: proceedings
+- changeSet:
+    id: 1778162824365-43
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: country_id
+            type: INTEGER
+        tableName: theses
+- changeSet:
+    id: 1778162824365-44
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: api_keys
+- changeSet:
+    id: 1778162824365-45
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: application_configuration
+- changeSet:
+    id: 1778162824365-46
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: commission_relations
+- changeSet:
+    id: 1778162824365-47
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: commission_report
+- changeSet:
+    id: 1778162824365-48
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: document_file_backup
+- changeSet:
+    id: 1778162824365-49
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: events_relation
+- changeSet:
+    id: 1778162824365-50
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: expertise_or_skills
+- changeSet:
+    id: 1778162824365-51
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: external_indicator_configuration
+- changeSet:
+    id: 1778162824365-52
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: identifiers
+- changeSet:
+    id: 1778162824365-53
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: institution_default_submission_content
+- changeSet:
+    id: 1778162824365-54
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: notification
+- changeSet:
+    id: 1778162824365-55
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: organisation_unit_outputs
+- changeSet:
+    id: 1778162824365-56
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: organisation_unit_trusts
+- changeSet:
+    id: 1778162824365-57
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_charts_display_configuration
+- changeSet:
+    id: 1778162824365-58
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: project_documents
+- changeSet:
+    id: 1778162824365-59
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: project_events
+- changeSet:
+    id: 1778162824365-60
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: publishers
+- changeSet:
+    id: 1778162824365-61
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: registry_book_report
+- changeSet:
+    id: 1778162824365-62
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: affiliation_statements
+- changeSet:
+    id: 1778162824365-63
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: declined_claims
+- changeSet:
+    id: 1778162824365-64
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: indicators
+- changeSet:
+    id: 1778162824365-65
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: multi_lingual_content
+- changeSet:
+    id: 1778162824365-66
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_assessment_research_area
+- changeSet:
+    id: 1778162824365-67
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: project_relations
+- changeSet:
+    id: 1778162824365-68
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: promotions
+- changeSet:
+    id: 1778162824365-69
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: assessment_rulebooks
+- changeSet:
+    id: 1778162824365-70
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: conferences
+- changeSet:
+    id: 1778162824365-71
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: exhibitions
+- changeSet:
+    id: 1778162824365-72
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: loading_configurations
+- changeSet:
+    id: 1778162824365-73
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: organisation_units_relations
+- changeSet:
+    id: 1778162824365-74
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: other_events
+- changeSet:
+    id: 1778162824365-75
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_names
+- changeSet:
+    id: 1778162824365-76
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: public_review_page_configuration
+- changeSet:
+    id: 1778162824365-77
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: commissions
+- changeSet:
+    id: 1778162824365-78
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: courses
+- changeSet:
+    id: 1778162824365-79
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: funding_applications
+- changeSet:
+    id: 1778162824365-80
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: organisation_unit_import_source
+- changeSet:
+    id: 1778162824365-81
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_contributions
+- changeSet:
+    id: 1778162824365-82
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: prizes
+- changeSet:
+    id: 1778162824365-83
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: entity_identifiers
+- changeSet:
+    id: 1778162824365-84
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: funding_parts
+- changeSet:
+    id: 1778162824365-85
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: funding_programs
+- changeSet:
+    id: 1778162824365-86
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: organisation_unit_project_contributions
+- changeSet:
+    id: 1778162824365-87
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_event_contributions
+- changeSet:
+    id: 1778162824365-88
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_funding_call_contributions
+- changeSet:
+    id: 1778162824365-89
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_project_contribution
+- changeSet:
+    id: 1778162824365-90
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_public_field_visibility
+- changeSet:
+    id: 1778162824365-91
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: projects
+- changeSet:
+    id: 1778162824365-92
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: users
+- changeSet:
+    id: 1778162824365-93
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: encyclopedic_contributions
+    - update:
+        tableName: encyclopedic_contributions
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-94
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: informative_attachments
+    - update:
+        tableName: informative_attachments
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-95
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: funding_calls
+- changeSet:
+    id: 1778162824365-96
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: involvements
+- changeSet:
+    id: 1778162824365-97
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_journal_contributions
+- changeSet:
+    id: 1778162824365-98
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: persons
+- changeSet:
+    id: 1778162824365-99
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: datasets
+    - update:
+        tableName: datasets
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: true
+- changeSet:
+    id: 1778162824365-100
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: genetic_materials
+    - update:
+        tableName: genetic_materials
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: true
+- changeSet:
+    id: 1778162824365-101
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: intangible_products
+    - update:
+        tableName: intangible_products
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: true
+- changeSet:
+    id: 1778162824365-102
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: material_products
+    - update:
+        tableName: material_products
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: true
+- changeSet:
+    id: 1778162824365-103
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: patents
+    - update:
+        tableName: patents
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-104
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: proceedings_publications
+    - update:
+        tableName: proceedings_publications
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-105
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: encyclopedic_contributions
+    - update:
+        tableName: encyclopedic_contributions
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-106
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: informative_attachments
+    - update:
+        tableName: informative_attachments
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-107
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: document_files
+- changeSet:
+    id: 1778162824365-108
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: entity_indicators
+- changeSet:
+    id: 1778162824365-109
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: memberships
+- changeSet:
+    id: 1778162824365-110
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: proceedings
+    - update:
+        tableName: proceedings
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-111
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: datasets
+    - update:
+        tableName: datasets
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-112
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: genetic_materials
+    - update:
+        tableName: genetic_materials
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-113
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: intangible_products
+    - update:
+        tableName: intangible_products
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-114
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: material_products
+    - update:
+        tableName: material_products
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-115
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: patents
+    - update:
+        tableName: patents
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-116
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: proceedings_publications
+    - update:
+        tableName: proceedings_publications
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-117
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: educations
+- changeSet:
+    id: 1778162824365-118
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: employments
+- changeSet:
+    id: 1778162824365-119
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1778162824365-120
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: informative_attachments
+- changeSet:
+    id: 1778162824365-121
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: journal_publications
+    - update:
+        tableName: journal_publications
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-122
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: monograph_publications
+    - update:
+        tableName: monograph_publications
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-123
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: monographs
+    - update:
+        tableName: monographs
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-124
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: proceedings
+    - update:
+        tableName: proceedings
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-125
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: datasets
+- changeSet:
+    id: 1778162824365-126
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: entity_assessment_classifications
+- changeSet:
+    id: 1778162824365-127
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: fundings
+- changeSet:
+    id: 1778162824365-128
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: genetic_materials
+- changeSet:
+    id: 1778162824365-129
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: intangible_products
+- changeSet:
+    id: 1778162824365-130
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: material_products
+- changeSet:
+    id: 1778162824365-131
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: organisation_units
+- changeSet:
+    id: 1778162824365-132
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: patents
+- changeSet:
+    id: 1778162824365-133
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: proceedings_publications
+- changeSet:
+    id: 1778162824365-134
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: registry_book_entries
+- changeSet:
+    id: 1778162824365-135
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: encyclopedic_contributions
+    - update:
+        tableName: encyclopedic_contributions
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-136
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: informative_attachments
+    - update:
+        tableName: informative_attachments
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-137
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: journal_publications
+    - update:
+        tableName: journal_publications
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-138
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: monograph_publications
+    - update:
+        tableName: monograph_publications
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-139
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: monographs
+    - update:
+        tableName: monographs
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-140
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: person_document_contribution
+- changeSet:
+    id: 1778162824365-141
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: proceedings
+- changeSet:
+    id: 1778162824365-142
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: datasets
+    - update:
+        tableName: datasets
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-143
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: genetic_materials
+    - update:
+        tableName: genetic_materials
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-144
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: intangible_products
+    - update:
+        tableName: intangible_products
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-145
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: material_products
+    - update:
+        tableName: material_products
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-146
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: patents
+    - update:
+        tableName: patents
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-147
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: journal_publications
+- changeSet:
+    id: 1778162824365-148
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: monograph_publications
+- changeSet:
+    id: 1778162824365-149
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: monographs
+- changeSet:
+    id: 1778162824365-150
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: journal_publications
+    - update:
+        tableName: journal_publications
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-151
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: monograph_publications
+    - update:
+        tableName: monograph_publications
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-152
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: proceedings
+    - update:
+        tableName: proceedings
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-153
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: proceedings_publications
+    - update:
+        tableName: proceedings_publications
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-154
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1778162824365-155
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: informative_attachments
+- changeSet:
+    id: 1778162824365-156
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: monographs
+    - update:
+        tableName: monographs
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-157
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: datasets
+- changeSet:
+    id: 1778162824365-158
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: patents
+- changeSet:
+    id: 1778162824365-159
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: genetic_materials
+- changeSet:
+    id: 1778162824365-160
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: intangible_products
+- changeSet:
+    id: 1778162824365-161
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: journal_publications
+- changeSet:
+    id: 1778162824365-162
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: material_products
+- changeSet:
+    id: 1778162824365-163
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: monograph_publications
+- changeSet:
+    id: 1778162824365-164
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: proceedings
+- changeSet:
+    id: 1778162824365-165
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: proceedings_publications
+- changeSet:
+    id: 1778162824365-166
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1778162824365-167
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: informative_attachments
+- changeSet:
+    id: 1778162824365-168
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: open_access
+            type: BOOLEAN
+        tableName: theses
+    - update:
+        tableName: theses
+        columns:
+            - column:
+                name: open_access
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-169
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: monographs
+- changeSet:
+    id: 1778162824365-170
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: datasets
+- changeSet:
+    id: 1778162824365-171
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: patents
+- changeSet:
+    id: 1778162824365-172
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: peer_reviewed
+            type: BOOLEAN
+        tableName: theses
+    - update:
+        tableName: theses
+        columns:
+            - column:
+                name: peer_reviewed
+                valueBoolean: false
+- changeSet:
+    id: 1778162824365-173
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: genetic_materials
+- changeSet:
+    id: 1778162824365-174
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: intangible_products
+- changeSet:
+    id: 1778162824365-175
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: false
+            name: private_info
+            type: BOOLEAN
+        tableName: theses
+- changeSet:
+    id: 1778162824365-176
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1778162824365-177
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: informative_attachments
+- changeSet:
+    id: 1778162824365-178
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: material_products
+- changeSet:
+    id: 1778162824365-179
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: journal_publications
+- changeSet:
+    id: 1778162824365-180
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: monograph_publications
+- changeSet:
+    id: 1778162824365-181
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: proceedings
+- changeSet:
+    id: 1778162824365-182
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: proceedings_publications
+- changeSet:
+    id: 1778162824365-183
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: publication_status
+            type: SMALLINT
+        tableName: theses
+    - update:
+        tableName: theses
+        columns:
+            - column:
+                name: publication_status
+                valueNumeric: 4
+- changeSet:
+    id: 1778162824365-184
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: encyclopedic_contributions
+- changeSet:
+    id: 1778162824365-185
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: informative_attachments
+- changeSet:
+    id: 1778162824365-186
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: datasets
+- changeSet:
+    id: 1778162824365-187
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: patents
+- changeSet:
+    id: 1778162824365-188
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: monographs
+- changeSet:
+    id: 1778162824365-189
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: genetic_materials
+- changeSet:
+    id: 1778162824365-190
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: intangible_products
+- changeSet:
+    id: 1778162824365-191
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: material_products
+- changeSet:
+    id: 1778162824365-192
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: monograph_publications
+- changeSet:
+    id: 1778162824365-193
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: proceedings_publications
+- changeSet:
+    id: 1778162824365-194
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: datasets
+- changeSet:
+    id: 1778162824365-195
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: patents
+- changeSet:
+    id: 1778162824365-196
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: journal_publications
+- changeSet:
+    id: 1778162824365-197
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: genetic_materials
+- changeSet:
+    id: 1778162824365-198
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: intangible_products
+- changeSet:
+    id: 1778162824365-199
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: material_products
+- changeSet:
+    id: 1778162824365-200
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: monograph_publications
+- changeSet:
+    id: 1778162824365-201
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: proceedings_publications
+- changeSet:
+    id: 1778162824365-202
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: proceedings
+- changeSet:
+    id: 1778162824365-203
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: journal_publications
+- changeSet:
+    id: 1778162824365-204
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: monographs
+- changeSet:
+    id: 1778162824365-205
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: proceedings
+- changeSet:
+    id: 1778162824365-206
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: monographs
+- changeSet:
+    id: 1778162824365-207
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: arxiv_id
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1778162824365-208
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: handle_id
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1778162824365-209
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: pubmed_id
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1778162824365-210
+    author: milospopovic (generated)
+    changes:
+    - addColumn:
+        columns:
+        - column:
+            name: ssrn_id
+            type: VARCHAR(255)
+        tableName: theses
+- changeSet:
+    id: 1778162824365-211
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: encyclopedic_contributions
+        constraintName: fk_3x2n58daymxbkotum9b0cuwxh
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-212
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: informative_attachments
+        constraintName: fk_4tmfsm7893be5sf8kgchcaumf
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-213
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: monograph_publications
+        constraintName: fk_d2d3puan25ydanadnv6akirg2
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-214
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: proceedings_publications
+        constraintName: fk_fgmt6tughwggt3kvtdw8k396
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-215
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: material_products
+        constraintName: fk_fx1u3rleu6ca494de0b6l9o5i
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-216
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: genetic_materials
+        constraintName: fk_gjro4saelhkxjdin5xtwkug3i
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-217
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: theses
+        constraintName: fk_guu5miweuxguqb3xedwnxwbhc
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-218
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: proceedings
+        constraintName: fk_j0dd052vxjc3joi0o83s3h9uh
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-219
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: datasets
+        constraintName: fk_l86bt5byltucmq4nys2lg51m1
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-220
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: monographs
+        constraintName: fk_n2xeeh45oo26kcurncg43jddb
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-221
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: journal_publications
+        constraintName: fk_p9w2nj7anw18ke7e0jom4a6f4
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-222
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: intangible_products
+        constraintName: fk_puo7tx03lbi1t3vrl791hto3l
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-223
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: country_id
+        baseTableName: patents
+        constraintName: fk_xs5j7p42qs6paorhjcsgi8y5
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: countries
+        validate: true
+- changeSet:
+    id: 1778162824365-224
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: geo_space_description_id
+        baseTableName: documents_geo_space_description
+        constraintName: fkfenkvcadvnglnkyxkn6ss6o92
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1778162824365-225
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: city_id
+        baseTableName: documents_city
+        constraintName: fkfhbl0naxwk32yjgtvbsfjt27k
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+- changeSet:
+    id: 1778162824365-226
+    author: milospopovic (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: chronological_space_description_id
+        baseTableName: documents_chronological_space_description
+        constraintName: fkj26c1lrv4oui3nytawvistdyh
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: multi_lingual_content
+        validate: true
+
