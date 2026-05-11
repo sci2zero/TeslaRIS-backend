@@ -92,6 +92,7 @@ public class ShareController {
             case THESIS -> "thesis";
             case MATERIAL_PRODUCT -> "material-product";
             case GENETIC_MATERIAL -> "genetic-material";
+            case PERFORMANCE_RELATED_OUTPUT -> "performance-related-output";
         };
     }
 }

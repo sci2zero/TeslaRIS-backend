@@ -21,6 +21,7 @@ import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Thesis;
@@ -32,6 +33,7 @@ import rs.teslaris.core.repository.document.MaterialProductRepository;
 import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.ProceedingsPublicationRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.ThesisRepository;
@@ -77,6 +79,9 @@ class DocumentLookupServiceTest {
     @Mock
     private GeneticMaterialRepository geneticMaterialRepository;
 
+    @Mock
+    private PerformanceRelatedOutputRepository performanceRelatedOutputRepository;
+
     @InjectMocks
     private DocumentLookupServiceImpl documentLookupService;
 
@@ -106,6 +111,8 @@ class DocumentLookupServiceTest {
         var materialDocument = new MaterialProduct();
         var geneticIndex = createIndex(DocumentPublicationType.GENETIC_MATERIAL);
         var geneticDocument = new GeneticMaterial();
+        var performanceIndex = createIndex(DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT);
+        var performanceDocument = new PerformanceRelatedOutput();
 
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
@@ -119,7 +126,8 @@ class DocumentLookupServiceTest {
             .thenReturn(Optional.of(intangibleIndex))
             .thenReturn(Optional.of(datasetIndex))
             .thenReturn(Optional.of(materialIndex))
-            .thenReturn(Optional.of(geneticIndex));
+            .thenReturn(Optional.of(geneticIndex))
+            .thenReturn(Optional.of(performanceIndex));
 
         when(journalPublicationRepository.findById(documentId)).thenReturn(
             Optional.of(journalDocument));
@@ -138,6 +146,8 @@ class DocumentLookupServiceTest {
             Optional.of(materialDocument));
         when(geneticMaterialRepository.findById(documentId)).thenReturn(
             Optional.of(geneticDocument));
+        when(performanceRelatedOutputRepository.findById(documentId)).thenReturn(
+            Optional.of(performanceDocument));
 
         // When & Then
         assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(journalDocument);
@@ -156,6 +166,8 @@ class DocumentLookupServiceTest {
         assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(
             materialDocument);
         assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(geneticDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentId)).isEqualTo(
+            performanceDocument);
     }
 
     @Test
@@ -174,7 +186,8 @@ class DocumentLookupServiceTest {
             .thenReturn(DocumentPublicationType.INTANGIBLE_PRODUCT.name())
             .thenReturn(DocumentPublicationType.DATASET.name())
             .thenReturn(DocumentPublicationType.MATERIAL_PRODUCT.name())
-            .thenReturn(DocumentPublicationType.GENETIC_MATERIAL.name());
+            .thenReturn(DocumentPublicationType.GENETIC_MATERIAL.name())
+            .thenReturn(DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT.name());
         when(documentIndex.getDatabaseId()).thenReturn(documentId);
 
         var journalDocument = new JournalPublication();
@@ -188,6 +201,7 @@ class DocumentLookupServiceTest {
         var datasetDocument = new Dataset();
         var materialDocument = new MaterialProduct();
         var geneticDocument = new GeneticMaterial();
+        var performanceRelatedOutput = new PerformanceRelatedOutput();
 
         when(journalPublicationRepository.findById(documentId)).thenReturn(
             Optional.of(journalDocument));
@@ -206,6 +220,8 @@ class DocumentLookupServiceTest {
             Optional.of(materialDocument));
         when(geneticMaterialRepository.findById(documentId)).thenReturn(
             Optional.of(geneticDocument));
+        when(performanceRelatedOutputRepository.findById(documentId)).thenReturn(
+            Optional.of(performanceRelatedOutput));
 
         // When & Then
         assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
@@ -229,6 +245,8 @@ class DocumentLookupServiceTest {
             materialDocument);
         assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
             geneticDocument);
+        assertThat(documentLookupService.fastDocumentLookup(documentIndex)).isEqualTo(
+            performanceRelatedOutput);
     }
 
     @Test
@@ -246,6 +264,7 @@ class DocumentLookupServiceTest {
         var datasetIndex = createIndex(DocumentPublicationType.DATASET);
         var materialIndex = createIndex(DocumentPublicationType.MATERIAL_PRODUCT);
         var geneticIndex = createIndex(DocumentPublicationType.GENETIC_MATERIAL);
+        var performanceIndex = createIndex(DocumentPublicationType.PERFORMANCE_RELATED_OUTPUT);
 
         when(
             documentPublicationIndexRepository.findDocumentPublicationIndexByDatabaseId(documentId))
@@ -259,7 +278,8 @@ class DocumentLookupServiceTest {
             .thenReturn(Optional.of(intangibleIndex))
             .thenReturn(Optional.of(datasetIndex))
             .thenReturn(Optional.of(materialIndex))
-            .thenReturn(Optional.of(geneticIndex));
+            .thenReturn(Optional.of(geneticIndex))
+            .thenReturn(Optional.of(performanceIndex));
 
         when(journalPublicationRepository.findById(documentId)).thenReturn(Optional.empty());
         when(proceedingsPublicationRepository.findById(documentId)).thenReturn(Optional.empty());
@@ -272,8 +292,11 @@ class DocumentLookupServiceTest {
         when(datasetRepository.findById(documentId)).thenReturn(Optional.empty());
         when(materialProductRepository.findById(documentId)).thenReturn(Optional.empty());
         when(geneticMaterialRepository.findById(documentId)).thenReturn(Optional.empty());
+        when(performanceRelatedOutputRepository.findById(documentId)).thenReturn(Optional.empty());
 
         // When & Then
+        assertThatThrownBy(() -> documentLookupService.fastDocumentLookup(documentId))
+            .isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> documentLookupService.fastDocumentLookup(documentId))
             .isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> documentLookupService.fastDocumentLookup(documentId))

@@ -15,6 +15,7 @@ public enum ExportPublicationType {
     GENETIC_MATERIAL("GENETIC_MATERIAL"),
     BOOK_SERIES("BOOK_SERIES");
 
+
     private final String value;
 
     ExportPublicationType(String value) {
