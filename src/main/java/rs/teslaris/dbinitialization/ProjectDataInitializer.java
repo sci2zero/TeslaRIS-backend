@@ -16,12 +16,17 @@ import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingProgram;
+import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.model.project.ProjectCollaborationType;
+import rs.teslaris.project.model.project.ProjectResearchType;
+import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.repository.common.CurrencyRepository;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.funding.FundingProgramRepository;
 import rs.teslaris.project.repository.funding.FundingRepository;
+import rs.teslaris.project.repository.project.ProjectRepository;
 
 @Component
 @RequiredArgsConstructor
