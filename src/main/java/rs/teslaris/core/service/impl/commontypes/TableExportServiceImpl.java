@@ -250,7 +250,9 @@ public class TableExportServiceImpl implements TableExportService {
 
         return switch (endpointType) {
             case PERSON_SEARCH -> (Page<T>) personService.findPeopleByNameAndEmployment(
-                endpointTokenParameters, pageable, false, null, false);
+                endpointTokenParameters, pageable, false, null,
+                false, false, false
+            );
             case PERSON_SEARCH_ADVANCED -> (Page<T>) personService.advancedSearch(
                 endpointTokenParameters, pageable);
             case DOCUMENT_SEARCH, THESIS_SIMPLE_SEARCH ->
