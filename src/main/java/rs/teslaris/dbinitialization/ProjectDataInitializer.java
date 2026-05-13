@@ -16,12 +16,17 @@ import rs.teslaris.project.model.funding.FundingApplication;
 import rs.teslaris.project.model.funding.FundingCall;
 import rs.teslaris.project.model.funding.FundingPart;
 import rs.teslaris.project.model.funding.FundingProgram;
+import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.model.project.ProjectCollaborationType;
+import rs.teslaris.project.model.project.ProjectResearchType;
+import rs.teslaris.project.model.project.ProjectStatus;
 import rs.teslaris.project.repository.common.CurrencyRepository;
 import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.repository.funding.FundingCallRepository;
 import rs.teslaris.project.repository.funding.FundingPartRepository;
 import rs.teslaris.project.repository.funding.FundingProgramRepository;
 import rs.teslaris.project.repository.funding.FundingRepository;
+import rs.teslaris.project.repository.project.ProjectRepository;
 
 @Component
 @RequiredArgsConstructor
@@ -39,6 +44,8 @@ public class ProjectDataInitializer {
     private final FundingPartRepository fundingPartRepository;
 
     private final FundingApplicationRepository fundingApplicationRepository;
+
+    private final ProjectRepository projectRepository;
 
 
     public void initializeProjectTestingData(LanguageTag englishTag, OrganisationUnit funder1) {
@@ -94,17 +101,50 @@ public class ProjectDataInitializer {
 
         fundingCallRepository.saveAll(List.of(fundingCall1, fundingCall2));
 
+        var project1 = new Project();
+        project1.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 1", 1)));
+        project1.setStatus(ProjectStatus.SUBMITTED);
+        project1.setCollaborationType(ProjectCollaborationType.INTERNAL);
+        project1.setResearchType(ProjectResearchType.OTHER);
+        project1.setDateFrom(LocalDate.of(2023, 1, 1));
+        project1.setDateTo(LocalDate.of(2026, 12, 31));
+
+        var project2 = new Project();
+        project2.setName(Set.of(new MultiLingualContent(englishTag, "Test Project 2", 1)));
+        project2.setStatus(ProjectStatus.SUBMITTED);
+        project2.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        project2.setResearchType(ProjectResearchType.OTHER);
+        project2.setDateFrom(LocalDate.of(2020, 6, 1));
+        project2.setDateTo(LocalDate.of(2023, 5, 31));
+
+        projectRepository.saveAll(List.of(project1, project2));
+
         var funding1 = new Funding();
-        funding1.setName(Set.of(new MultiLingualContent(englishTag, "Funding 1", 1)));
+        funding1.setName(Set.of(new MultiLingualContent(englishTag, "Test Funding", 1)));
+        funding1.setDateFrom(LocalDate.of(2022, 7, 6));
+        funding1.setDateTo(LocalDate.of(2023, 3, 17));
         funding1.setAmount(new MonetaryAmount(1000000, currencyEuro));
+        funding1.setFunder(funder1);
+        funding1.setFundingCall(fundingCall1);
+        funding1.setProject(project1);
 
         var funding2 = new Funding();
-        funding2.setName(Set.of(new MultiLingualContent(englishTag, "Funding 2", 1)));
+        funding2.setName(Set.of(new MultiLingualContent(englishTag, "Small Funding", 1)));
+        funding2.setDateFrom(LocalDate.of(2023, 7, 6));
+        funding2.setDateTo(LocalDate.of(2024, 3, 17));
         funding2.setAmount(new MonetaryAmount(1000000, currencyEuro));
+        funding1.setFunder(funder1);
+        funding1.setFundingCall(fundingCall1);
+        funding1.setProject(project2);
 
         var funding3 = new Funding();
         funding3.setName(Set.of(new MultiLingualContent(englishTag, "Big Funding", 1)));
+        funding1.setDateFrom(LocalDate.of(2024, 7, 6));
+        funding1.setDateTo(LocalDate.of(2025, 3, 17));
         funding3.setAmount(new MonetaryAmount(1000000000, currencyEuro));
+        funding1.setFunder(funder1);
+        funding1.setFundingCall(fundingCall1);
+        funding1.setProject(project1);
 
         fundingRepository.saveAll(List.of(funding1, funding2, funding3));
 
