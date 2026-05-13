@@ -12,14 +12,14 @@ import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.integration.BaseTest;
 import rs.teslaris.core.util.language.LanguageAbbreviations;
+import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
-import rs.teslaris.project.model.project.ProjectResearchType;
-import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.model.project.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -99,6 +99,30 @@ public class ProjectControllerTest extends BaseTest {
         dto.setResearchType(ProjectResearchType.INNOVATION);
         dto.setNotFunded(true);
         dto.setCosts(new MonetaryAmountDTO(1, 50000));
+
+        var teamMember = new PersonProjectContributionDTO();
+        teamMember.setPersonId(1);
+        teamMember.setOrderNumber(1);
+        teamMember.setContributionType(PersonProjectContributionType.TEAM_MEMBER);
+        teamMember.setInvestigationRole(PersonProjectInvestigationRole.RESEARCHER);
+
+        var contribDesc = new MultilingualContentDTO();
+        contribDesc.setLanguageTagId(1);
+        contribDesc.setLanguageTag(LanguageAbbreviations.ENGLISH);
+        contribDesc.setContent("Lead researcher");
+        contribDesc.setPriority(1);
+        teamMember.setContributionDescription(List.of(contribDesc));
+
+        var displayAffiliation = new MultilingualContentDTO();
+        displayAffiliation.setLanguageTagId(1);
+        displayAffiliation.setLanguageTag(LanguageAbbreviations.ENGLISH);
+        displayAffiliation.setContent("University of Novi Sad");
+        displayAffiliation.setPriority(1);
+        teamMember.setDisplayAffiliationStatement(List.of(displayAffiliation));
+
+        teamMember.setInstitutionIds(List.of(1));
+
+        dto.setTeam(List.of(teamMember));
 
         return dto;
     }
