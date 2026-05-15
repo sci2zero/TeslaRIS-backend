@@ -293,8 +293,11 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
             contribution.setPersonName(inferAuthorName(authorNameTokens));
 
             var personResults =
-                personService.findPeopleByNameAndEmployment(authorNameTokens,
-                    PageRequest.of(0, 5), false, null, false).getContent();
+                personService.findPeopleByNameAndEmployment(
+                    authorNameTokens, PageRequest.of(0, 5),
+                    false, null, false,
+                    false, false
+                ).getContent();
 
             if (Objects.nonNull(inputPersonId) && !selfBindCompleted && personResults.stream()
                 .anyMatch(index -> index.getDatabaseId().equals(inputPersonId))) {
@@ -335,9 +338,8 @@ public class MetadataPrepopulationServiceImpl implements MetadataPrepopulationSe
         return switch (bibtexType.toLowerCase()) {
             case "article" -> DocumentPublicationType.JOURNAL_PUBLICATION;
             case "book", "booklet" -> DocumentPublicationType.MONOGRAPH;
-            case "conference", "inproceedings", "inbook" ->
-                DocumentPublicationType.PROCEEDINGS_PUBLICATION;
-            case "incollection" -> DocumentPublicationType.MONOGRAPH_PUBLICATION;
+            case "conference", "inproceedings" -> DocumentPublicationType.PROCEEDINGS_PUBLICATION;
+            case "incollection", "inbook" -> DocumentPublicationType.MONOGRAPH_PUBLICATION;
             case "manual" ->
                 DocumentPublicationType.INTANGIBLE_PRODUCT; // Closest guess; could be custom
             case "masterthesis", "phdthesis" -> DocumentPublicationType.THESIS;

@@ -27,6 +27,7 @@ import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.Thesis;
@@ -290,6 +291,9 @@ public class DocumentPublicationConverter {
                 MaterialProductConverter.toBibTexEntry(materialProduct, defaultLanguageTag);
             case GeneticMaterial geneticMaterial ->
                 GeneticMaterialConverter.toBibTexEntry(geneticMaterial, defaultLanguageTag);
+            case PerformanceRelatedOutput performanceRelatedOutput ->
+                PerformanceRelatedOutputConverter.toBibTexEntry(performanceRelatedOutput,
+                    defaultLanguageTag);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };
@@ -326,6 +330,9 @@ public class DocumentPublicationConverter {
             case GeneticMaterial geneticMaterial ->
                 GeneticMaterialConverter.toTaggedFormat(geneticMaterial, defaultLanguageTag,
                     refMan);
+            case PerformanceRelatedOutput performanceRelatedOutput ->
+                PerformanceRelatedOutputConverter.toTaggedFormat(performanceRelatedOutput,
+                    defaultLanguageTag, refMan);
             default -> throw new IllegalArgumentException(
                 "Unsupported document type: " + document.getClass().getSimpleName());
         };

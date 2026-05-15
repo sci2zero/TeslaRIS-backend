@@ -621,7 +621,10 @@ public class PersonServiceTest {
             new PageImpl<>(List.of(new PersonIndex(), new PersonIndex())));
 
         // when
-        var result = personService.findPeopleByNameAndEmployment(tokens, pageable, false, 0, false);
+        var result = personService.findPeopleByNameAndEmployment(
+            tokens, pageable, false, 0,
+            false, false, false
+        );
 
         // then
         assertEquals(result.getTotalElements(), 2L);

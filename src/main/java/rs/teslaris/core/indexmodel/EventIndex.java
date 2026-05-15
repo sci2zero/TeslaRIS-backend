@@ -72,6 +72,12 @@ public class EventIndex {
     @Field(type = FieldType.Text, name = "date_from_to", store = true)
     private String dateFromTo;
 
+    @Field(type = FieldType.Date, name = "date_from")
+    private LocalDate dateFrom;
+
+    @Field(type = FieldType.Date, name = "date_to")
+    private LocalDate dateTo;
+
     @Field(type = FieldType.Date, name = "date_sortable")
     private LocalDate dateSortable;
 

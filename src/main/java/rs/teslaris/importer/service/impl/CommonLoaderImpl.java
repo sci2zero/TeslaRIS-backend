@@ -610,7 +610,9 @@ public class CommonLoaderImpl implements CommonLoader {
         }
 
         var createdConference = createConference(currentlyLoadedEntity.getEvent());
-        return createProceedings(currentlyLoadedEntity, createdConference.getId());
+        return createProceedings(currentlyLoadedEntity, createdConference.getId(),
+            Objects.nonNull(createdConference.getDateFrom()) ?
+                String.valueOf(createdConference.getDateFrom().getYear()) : "");
     }
 
     @Override
@@ -852,9 +854,10 @@ public class CommonLoaderImpl implements CommonLoader {
     }
 
     private ProceedingsDTO createProceedings(DocumentImport proceedingsPublication,
-                                             Integer eventId) {
+                                             Integer eventId, String year) {
         var proceedingsDTO = new ProceedingsDTO();
         proceedingsDTO.setEventId(eventId);
+        proceedingsDTO.setDocumentDate(year);
 
         proceedingsDTO.setTitle(new ArrayList<>());
         setMultilingualContent(proceedingsDTO.getTitle(), proceedingsPublication.getPublishedIn());

@@ -164,8 +164,9 @@ public class ProjectControllerTest extends BaseTest {
     public void testDeleteProject() throws Exception {
         String jwtToken = authenticateAdminAndGetToken();
 
+        // project id set to 3 to avoid dependencies between test cases
         mockMvc.perform(MockMvcRequestBuilders.delete(
-                                    "http://localhost:8081/api/project/{projectId}", 1)
+                                    "http://localhost:8081/api/project/{projectId}", 3)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
                 .andExpect(status().isNoContent());

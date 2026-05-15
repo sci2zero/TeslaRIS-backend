@@ -245,6 +245,8 @@ public class DbInitializer implements ApplicationRunner {
         var editPublicationSeriesIdentifiers = new Privilege("EDIT_PUBLICATION_SERIES_IDENTIFIERS");
         var readFundingApplications = new Privilege("READ_FUNDING_APPLICATIONS");
         var editFundingApplications = new Privilege("EDIT_FUNDING_APPLICATIONS");
+        var readFunding = new Privilege("READ_FUNDING");
+        var editFunding = new Privilege("EDIT_FUNDING");
         var readProjects = new Privilege("READ_PROJECTS");
         var editProjects = new Privilege("EDIT_PROJECTS");
 
@@ -293,8 +295,8 @@ public class DbInitializer implements ApplicationRunner {
                 createOtherEvents, editOtherEvents, mergeCourses, mergeOtherEvents,
                 editIdentifiers, editEntityIdentifier, editEventIdentifiers, editPersonIdentifiers,
                 editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications,
-                readProjects, editProjects
+                editPublicationSeriesIdentifiers, readFundingApplications,
+                editFundingApplications, readFunding, editFunding, readProjects, editProjects
             ));
 
         // AUTHORITIES
@@ -340,8 +342,8 @@ public class DbInitializer implements ApplicationRunner {
                 createCourses, editCourses, createOtherEvents, editOtherEvents, mergeCourses,
                 mergeOtherEvents, editIdentifiers, editEntityIdentifier, editEventIdentifiers,
                 editPersonIdentifiers, editDocumentIdentifiers, editOrganisationUnitIdentifiers,
-                editPublicationSeriesIdentifiers, readFundingApplications, editFundingApplications,
-                readProjects, editProjects
+                editPublicationSeriesIdentifiers, readFundingApplications,
+                editFundingApplications, readFunding, editFunding, readProjects, editProjects
             )));
 
         var researcherAuthority = new Authority(UserRole.RESEARCHER.toString(), new HashSet<>(

@@ -74,6 +74,8 @@ import rs.teslaris.core.model.document.MonographType;
 import rs.teslaris.core.model.document.OtherEvent;
 import rs.teslaris.core.model.document.OtherEventType;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
+import rs.teslaris.core.model.document.PerformanceRelatedOutputType;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonPublicationSeriesContribution;
 import rs.teslaris.core.model.document.Proceedings;
@@ -129,6 +131,7 @@ import rs.teslaris.core.repository.document.MonographPublicationRepository;
 import rs.teslaris.core.repository.document.MonographRepository;
 import rs.teslaris.core.repository.document.OtherEventRepository;
 import rs.teslaris.core.repository.document.PatentRepository;
+import rs.teslaris.core.repository.document.PerformanceRelatedOutputRepository;
 import rs.teslaris.core.repository.document.PersonContributionRepository;
 import rs.teslaris.core.repository.document.ProceedingsRepository;
 import rs.teslaris.core.repository.document.PublisherRepository;
@@ -223,6 +226,8 @@ public class TestingDataInitializer {
     private final MaterialProductRepository materialProductRepository;
 
     private final GeneticMaterialRepository geneticMaterialRepository;
+
+    private final PerformanceRelatedOutputRepository performanceRelatedOutputRepository;
 
     private final PrizeAssessmentClassificationRepository prizeAssessmentClassificationRepository;
 
@@ -1398,5 +1403,14 @@ public class TestingDataInitializer {
         publicationSeriesIdentifier1.setIdentifier(identifier1);
         publicationSeriesIdentifier1.setPublicationSeries(dummyJournal);
         publicationSeriesIdentifierRepository.save(publicationSeriesIdentifier1);
+
+        var play1 = new PerformanceRelatedOutput();
+        play1.setTitle(Set.of(new MultiLingualContent(serbianTag,
+            "Predstava 1", 1)));
+        play1.setLanguages(new HashSet<>(List.of(serbianTag)));
+        play1.setApproveStatus(ApproveStatus.APPROVED);
+        play1.setDocumentDate("2003-1-1");
+        play1.setType(PerformanceRelatedOutputType.ART_PERFORMANCE);
+        performanceRelatedOutputRepository.save(play1);
     }
 }

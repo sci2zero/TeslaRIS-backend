@@ -48,6 +48,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.core.dto.document.DocumentIdentifierUpdateDTO;
+import rs.teslaris.core.dto.document.ThesisDTO;
 import rs.teslaris.core.indexmodel.DocumentFileIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationIndex;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
@@ -1068,7 +1069,10 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setPeerReviewed(documentDTO.getPeerReviewed());
         document.setOpenAccess(documentDTO.getOpenAccess());
-        document.setPublicationStatus(documentDTO.getPublicationStatus());
+
+        if (!(documentDTO instanceof ThesisDTO)) {
+            document.setPublicationStatus(documentDTO.getPublicationStatus());
+        }
 
         personContributionService.setPersonDocumentContributionsForDocument(document, documentDTO);
 

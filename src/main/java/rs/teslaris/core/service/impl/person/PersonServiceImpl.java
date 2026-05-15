@@ -1219,6 +1219,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
         personIndex.setEmploymentsOtherSortable(
             !personIndex.getEmploymentsOther().isEmpty() ? personIndex.getEmploymentsOther() :
                 null);
+
+        personIndex.setHasInvolvements(personRepository.hasInvolvement(savedPerson.getId()));
+        personIndex.setHasContributions(personRepository.hasContribution(savedPerson.getId()));
     }
 
     private void setPersonIndexKeywords(PersonIndex personIndex, Person savedPerson) {
@@ -1250,9 +1253,12 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     public Page<PersonIndex> findPeopleByNameAndEmployment(List<String> tokens, Pageable
                                                                pageable,
                                                            boolean strict, Integer institutionId,
-                                                           boolean onlyHarvestable) {
+                                                           boolean onlyHarvestable,
+                                                           boolean withoutInvolvements,
+                                                           boolean withoutContributions) {
         var page = searchService.runQuery(
-            buildNameAndEmploymentQuery(tokens, strict, institutionId, onlyHarvestable),
+            buildNameAndEmploymentQuery(tokens, strict, institutionId, onlyHarvestable,
+                withoutInvolvements, withoutContributions),
             pageable,
             PersonIndex.class, "person");
 
@@ -1274,7 +1280,10 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
             tokens = List.of("*");
         }
 
-        var nameAndEmploymentQuery = buildNameAndEmploymentQuery(tokens, false, null, false);
+        var nameAndEmploymentQuery = buildNameAndEmploymentQuery(
+            tokens, false, null,
+            false, false, false
+        );
 
         var institutionFilter = Query.of(q -> q
             .bool(b -> {
@@ -1355,7 +1364,9 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
     }
 
     private Query buildNameAndEmploymentQuery(List<String> tokens, boolean strict,
-                                              Integer institutionId, boolean onlyHarvestable) {
+                                              Integer institutionId, boolean onlyHarvestable,
+                                              boolean withoutInvolvements,
+                                              boolean withoutContributions) {
         return BoolQuery.of(q -> {
             var mustClauses = new ArrayList<Query>();
 
@@ -1454,6 +1465,18 @@ public class PersonServiceImpl extends JPAServiceImpl<Person> implements PersonS
                     .should(sh -> sh.exists(e -> e.field("scopus_author_id")))
                     .should(sh -> sh.exists(e -> e.field("open_alex_id")))
                 ));
+            }
+
+            if (withoutInvolvements) {
+                q.must(mbb ->
+                    mbb.term(tq -> tq.field("has_involvements").value(false))
+                );
+            }
+
+            if (withoutContributions) {
+                q.must(mbb ->
+                    mbb.term(tq -> tq.field("has_contributions").value(false))
+                );
             }
 
             return q.must(mustClauses);

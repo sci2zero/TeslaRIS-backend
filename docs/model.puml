@@ -100,7 +100,7 @@ package commonTypes {
   }
   
   class MonetaryAmount {
-    double amount
+    BigDecimal amount
     Currency currency
   }
     
@@ -120,6 +120,7 @@ package commonTypes {
     Boolean deleted
     String importSource
     Boolean privateInfo /' !!! '/
+    ApproveStatus approveStatus /' !!! '/
   }
   
   enum ExportableEndpointType {
@@ -302,10 +303,11 @@ package person {
     Set<MultiLingualContent> biography
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    String apvnt
-    String eCrisId
-    String eNaukaId
-    String nationalScienceId /' for instance CienciaID '/
+    String apvnt /' !!! to move this in generic identifier structure (PersonIdentifier) '/
+    String eCrisId /' !!! to move this in generic identifier structure (PersonIdentifier) '/
+    String eNaukaId /' !!! to move this in generic identifier structure (PersonIdentifier) or into the nationalScienceId'/
+    String nationalScienceId /' for instance CienciaID or eNaukaId '/
+    String nationalScienceIdRegularExpression /' !!! '/
     String orcid
     String scopusAuthorId
     String openAlexId
@@ -318,7 +320,7 @@ package person {
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds 
     Set<String> urls
-    ApproveStatus approveStatus
+    /' !!! moved to BaseEntity - ApproveStatus approveStatus '/
     PersonalInfo personalInfo
     Set<SDGoal> sdgs /' !!! will be done by using indicators '/
     ProfilePhotoOrLogo profilePhoto
@@ -382,6 +384,17 @@ package person {
     
   PersonFieldVisibility "1" --> "1" Person : person
  
+  class ExpertiseOrSkill {
+    Set<MultiLingualContent> name
+    Set<MultiLingualContent> description
+    Set<DocumentFile> proofs
+    Boolean favourite /' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity '/
+    Set<MultiLingualContent> keywords /' !!! '/
+    Set<ResearchArea> researchAreas /' !!! '/
+  }
+  
+  ExpertiseOrSkill "*" -- "1" Person : expertisesAndSkills / person
+      
   class LanguageKnowledge extends ExpertiseOrSkill {
     Language language
     Boolean motherTongue
@@ -405,10 +418,10 @@ package person {
   }
 
   class Involvement {
-    ApproveStatus approveStatus
+    /' !!! moved to BaseEntity - ApproveStatus approveStatus '/
     InvolvementType involvementType
-    Set<MultiLingualContent> affiliationStatement
-    Boolean favorite 
+    Set<MultiLingualContent> affiliationStatement /' !!! to rename to displayOrganisationUnit? '/
+    Boolean favourite 
     ' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity
     ' an entity OrganisationUnit can be linked with Involvement, or it should be only specified in affiliationStatement
     ' it means if I studied in Germany, that institution record wouldn't be created in the database, it will be only specified in affiliationStatement
@@ -436,7 +449,8 @@ package person {
 
   Involvement "*" -- "1" Person : involvements / personInvolved
   Involvement "*" --> "0..1" OrganisationUnit : organisationUnit
-  Involvement "*" --> "*" OrganisationUnit : otherInstitutions ' !!! or host institutions, skip for now
+  Involvement "*" --> "*" OrganisationUnit : otherInstitutions /' !!! or host institutions, skip for now '/
+  Involvement "0..1" --> "*" FundingPart : fundingParts /' !!! '/    
 
   class Education extends Involvement {
     DegreeType degreeType 
@@ -446,7 +460,6 @@ package person {
     Set<MultiLingualContent> description /' !!! '/
     Set<MultiLingualContent> degreeClassification 
     EducationStatus educationStatus 
-    Set<MultiLingualContent> thesisTitle
     Set<MultiLingualContent> displayThesisSupervisors
   }
   
@@ -467,7 +480,7 @@ package person {
   }
 
   class Employment extends Involvement {
-    EmploymentPosition employmentPosition /' ??? '/
+    EmploymentPosition employmentPosition /' ??? hopefully we can remove this'/
     EmploymentPositionHierarchy employmentPositionHierarchy
     Set<MultiLingualContent> role
   }
@@ -509,18 +522,6 @@ package person {
 	OTHER
   }
 
-  class ExpertiseOrSkill {
-    Set<MultiLingualContent> name
-    Set<MultiLingualContent> description
-    Set<DocumentFile> proofs
-    Boolean favorite /' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity '/
-    Set<MultiLingualContent> keywords /' !!! '/
-    Set<ResearchArea> researchAreas /' !!! '/
-  }
-
-  ExpertiseOrSkill "*" -- "1" Person : expertisesAndSkills / person
-    
-
   class Prize { 
     PrizeType type
     Set<MultiLingualContent> title
@@ -530,7 +531,7 @@ package person {
     FlexibleDate dateTo /' !!! former endDate, skip for now '/
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    Boolean favorite
+    Boolean favourite
   }
 
   enum PrizeType {
@@ -541,7 +542,6 @@ package person {
 
   Prize "*" -- "1" Person : prizes / person
     
-
   enum Sex {
     MALE
     FEMALE
@@ -557,10 +557,10 @@ package institution {
     Set<MultilingualContent> description
     Set<MultiLingualContent> keywords
     Set<ResearchArea> researchAreas
-    String numberOfEmployees /' !!! more research required '/
+    String numberOfEmployees /' !!! should stay String, add in the placeholder or tooltip that it is not mandatory exact number, can be 50-100 for instance '/
     GeoLocation location
     PostalAddress postalAddress
-    ApproveStatus approveStatus
+    /' !!! moved to BaseEntity - ApproveStatus approveStatus '/
     Set<String> oldIds /' !!! changed type, skip for now '/
     Set<Integer> mergedIds
     Set<String> accountingIds 
@@ -571,15 +571,20 @@ package institution {
     String ringgold
     String fundref /' https://bioregistry.io/registry/funderregistry '/
     String isni /' https://bioregistry.io/registry/isni '/
-    /' can remove this to otherIdentifiers based on package Identifier - String athensId '/
-    /' can remove this to otherIdentifiers based on package Identifier - String ncesId '/
+    /' !!! remove this to otherIdentifiers based on package Identifier - String athensId '/
+    /' !!! remove this to otherIdentifiers based on package Identifier - String ncesId '/
     String fctId
+    String grid /' !!! regular expression - ^grid\\.\\d{4,6}\\.[0-9a-f]{1,2}$, no landing page'/
+    String wikidata /' !!! regular expression - ^Q[1-9]\d*$, landing page - https://www.wikidata.org/wiki/Q1263535 '/
     /' can remove this to otherIdentifiers based on package Identifier - String dgeecId '/
     String taxNumber /' !!! renamed from nifId, in Serbia it is PIB '/
     Contact contact
     Set<String> uris
     Boolean startup
     FlexibleDate dateEstablished
+    FlexibleDate dateDissolved /' !!! '/
+    Boolean active /' !!! if dateDissolved is defined and in the past, active can't be true, in other cases user can define whether it is true or false, 
+                    meaning it might be inactive without dateDissolved preserved in the system '/
     Set<String> allowedThesisTypes
     Boolean isClientInstitutionCris
     Boolean isClientInstitutionDl
@@ -619,20 +624,21 @@ package institution {
     OrganisationUnitRelationType relationType
     FlexibleDate dateFrom
     FlexibleDate dateTo
-    ApproveStatus approveStatus
+    /' !!! moved to BaseEntity - ApproveStatus approveStatus '/
     Set<DocumentFile> proofs
   }
 
   class OrganisationUnitTrustConfiguration {
     Boolean trustNewPublications
-    Boolean trustNewPublications
+    Boolean trustNewDocumentFiles
   }
-  OrganisationUnitTrustConfiguration --> OrganisationUnit
+  OrganisationUnitTrustConfiguration "0..1" --> "1" OrganisationUnit
 
   enum OrganisationUnitsRelationType {
     BELONGS_TO
     MEMBER_OF
     SPIN_OF
+    PREDECESSOR
   }
 
   class OrganisationUnitOutputConfiguration {
@@ -691,6 +697,7 @@ package document {
     
   PersonContribution "*" --> "0..*" institution.OrganisationUnit : institutions
   PersonContribution "*" -- "1" Person : contributions / person
+  PersonContribution "0..1" --> "*" FundingPart : fundingParts /' !!! '/ 
   
   class AffiliationStatement {
     Set<MultiLingualContent> displayAffiliationStatement
@@ -706,7 +713,7 @@ package document {
     boolean isBoardPresident
     EmploymentTitle employmentTitle
     PersonalTitle personalTitle
-    Set<MultilingualContent> documentDescription /' !!! in the case Document is not linked, it will be rarely used, only meaningful if it has been started from PersonActivity '/
+    Set<MultilingualContent> displayDocument /' !!! in the case Document is not linked, it will be rarely used, only meaningful if it has been started from PersonActivity '/
     Boolean favorite /' !!! we might implemente later highlight section with most important involvement, output, project, skills and activity '/
   }
   
@@ -941,6 +948,7 @@ package document {
 
   class PersonEventContribution extends PersonContribution {
      EventContributionType contributionType
+     Set<MultilingualContent> displayEvent /' !!! in the case Event is not linked, it will be rarely used '/
      
      ' !!! only available if Event is a Course and contributionType is SPEAKER
      String lectureHoursPerWeek
@@ -1072,6 +1080,8 @@ package document {
 
   class PersonPublicationSeriesContribution extends PersonContribution {
     PublicationSeriesContributionType contributionType
+    Set<MultilingualContent> displayPublicationSeries /' !!! in the case PublicationSeries is not linked, it will be rarely used '/         
+    
     ' !!! dateFrom and dateTo removed to PersonContribution
     
     ' !!! only available if contributionType is REGULAR_REVIEWER or ADHOC_REVIEWER
@@ -1335,7 +1345,7 @@ package document {
     OTHER
   }
 
-  PublicationSeries "1" -- "*" PersonPublicationSeriesContribution : publicationSeries / contributors
+  PublicationSeries "0..1" -- "*" PersonPublicationSeriesContribution : publicationSeries / contributors
   Event "1" --> "*" PersonEventContribution : contributors
   Event "*" --> "0..1" OrganisationUnit : organizer /' !!! '/
   Document "*" --> "0..1" Publisher : publisher /' !!! '/
@@ -1415,8 +1425,9 @@ package project {
     ' !!! similar as for PersonActivity. If that is the case, we will move timeframe from here to OrgUnitContribution. Org Unit involvements are 
     ' !!! defined by OrganisationUnitsRelations (Member), moreover, we don't have option that org unit is creator (author) of a document
     Set<MultiLingualContent> displayOU
+    Set<MultilingualContent> displayProject /' !!! in the case Project is not linked, it will be rarely used, no sense there is no link to OU and Project, only one might be missing '/ 
     Set<MultiLingualContent> description
-    Set<MultilingualContent> contactPoint
+    Set<MultilingualContent> contactPoint        
     Integer orderNumber
     ApproveStatus approveStatus
   }
@@ -1437,6 +1448,7 @@ package project {
     PersonProjectContributionType contributionType
     PersonProjectInvestigationRole investigationRole 
     Set<MultiLingualContent> otherRoleDescription 
+    Set<MultilingualContent> displayProject /' !!! in the case Project is not linked, it will be rarely used '/         
   }
     
   PersonProjectContribution "0..1" --> "*" FundingPart : fundingParts      
@@ -1583,6 +1595,7 @@ package project {
   Funding "*" --> "0..1" institution.OrganisationUnit : funder
   Funding "1" -- "*" FundingPart : funding / fundingParts
   Funding "*" -- "0..1" Project : fundings/project
+  Funding "*" -- "0..1" Involvement : fundings/involvement /' !!! '/
   
   class FundingPart{
     Set<MultiLingualContent> description
@@ -1630,6 +1643,8 @@ package project {
 
   class PersonFundingCallContribution extends PersonContribution {
     FundingCallContributionType contributionType 
+    Set<MultilingualContent> displayFundingCall /' !!! in the case FundingCall is not linked, it will be rarely used '/         
+         
     ' !!! only available if contributionType is ASSESSMENT_EVALUATOR
     Integer numberOfReviewsOrAssessments
   }

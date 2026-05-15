@@ -130,10 +130,14 @@ public class PersonController {
         @RequestParam(required = false, defaultValue = "false") boolean strict,
         @RequestParam(required = false, defaultValue = "0") Integer institutionId,
         @RequestParam(required = false, defaultValue = "false") boolean harvestable,
+        @RequestParam(required = false, defaultValue = "false") boolean withoutInvolvements,
+        @RequestParam(required = false, defaultValue = "false") boolean withoutContributions,
         Pageable pageable) {
         StringUtil.sanitizeTokens(tokens);
         return personService.findPeopleByNameAndEmployment(tokens,
-            pageable, strict, institutionId, harvestable);
+            pageable, strict, institutionId, harvestable,
+            withoutInvolvements, withoutContributions
+        );
     }
 
     @GetMapping("/import-identifier/{identifier}")
