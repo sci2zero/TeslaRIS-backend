@@ -291,15 +291,16 @@ public class SKGIFHarvesterImpl implements SKGIFHarvester {
                                  PersonDocumentContribution authorship) {
         personService.findPeopleByNameAndEmployment(Arrays.stream(
                     authorship.getPerson().getName().toString().split(" "))
-                .toList(), Pageable.unpaged(), false, null, false)
-            .forEach(person -> {
-                if (Objects.nonNull(person.getUserId()) && person.getUserId() > 0) {
-                    documentImport.getImportUsersId().add(person.getUserId());
-                }
+                .toList(), Pageable.unpaged(), false, null,
+            false, false, false
+        ).forEach(person -> {
+            if (Objects.nonNull(person.getUserId()) && person.getUserId() > 0) {
+                documentImport.getImportUsersId().add(person.getUserId());
+            }
 
-                documentImport.getImportInstitutionsId()
-                    .addAll(person.getEmploymentInstitutionsIdHierarchy());
-            });
+            documentImport.getImportInstitutionsId()
+                .addAll(person.getEmploymentInstitutionsIdHierarchy());
+        });
     }
 
     private String constructIdentifierFilter(String authorIdentifier, String institutionIdentifier,

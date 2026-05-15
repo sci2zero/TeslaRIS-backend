@@ -3,6 +3,10 @@ package rs.teslaris.project.service.impl.funding;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,11 +39,6 @@ import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
-
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -75,7 +74,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
     @Override
     @Transactional
-    public FundingApplication createFundingApplication(FundingApplicationDTO fundingApplicationDTO) {
+    public FundingApplication createFundingApplication(
+        FundingApplicationDTO fundingApplicationDTO) {
         var newApplication = new FundingApplication();
 
         setCommonFields(newApplication, fundingApplicationDTO);
@@ -83,14 +83,15 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         var saved = save(newApplication);
 
         fundingApplicationIndexRepository.save(
-                indexCommonFields(saved, new FundingApplicationIndex()));
+            indexCommonFields(saved, new FundingApplicationIndex()));
 
         return saved;
     }
 
     @Override
     @Transactional
-    public void updateFundingApplication(Integer fundingApplicationId, FundingApplicationDTO fundingApplicationDTO) {
+    public void updateFundingApplication(Integer fundingApplicationId,
+                                         FundingApplicationDTO fundingApplicationDTO) {
         var applicationToUpdate = findOne(fundingApplicationId);
 
         clearCommonFields(applicationToUpdate);
@@ -99,8 +100,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         save(applicationToUpdate);
 
         fundingApplicationIndexRepository
-                .findFundingApplicationIndexByDatabaseId(fundingApplicationId)
-                .ifPresent(index -> indexFundingApplication(applicationToUpdate, index));
+            .findFundingApplicationIndexByDatabaseId(fundingApplicationId)
+            .ifPresent(index -> indexFundingApplication(applicationToUpdate, index));
     }
 
     @Override
@@ -108,29 +109,30 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     public void deleteFundingApplication(Integer fundingApplicationId) {
         if (fundingApplicationRepository.isRevisedByOther(fundingApplicationId)) {
             throw new ReferenceConstraintException(
-                    "fundingApplicationIsRevisedMessage");
+                "fundingApplicationIsRevisedMessage");
         }
 
         if (fundingApplicationRepository.hasFunding(fundingApplicationId)) {
             throw new ReferenceConstraintException(
-                    "fundingApplicationHasFundingMessage");
+                "fundingApplicationHasFundingMessage");
         }
 
         delete(fundingApplicationId);
 
         fundingApplicationIndexRepository
-                .findFundingApplicationIndexByDatabaseId(fundingApplicationId)
-                .ifPresent(fundingApplicationIndexRepository::delete);
+            .findFundingApplicationIndexByDatabaseId(fundingApplicationId)
+            .ifPresent(fundingApplicationIndexRepository::delete);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<Void> reindexFundingApplications() {
         FunctionalUtil.processAllPages(
-                100,
-                Sort.by(Sort.Direction.ASC, "id"),
-                this::findAll,
-                fundingApplication -> indexFundingApplication(fundingApplication, new FundingApplicationIndex())
+            100,
+            Sort.by(Sort.Direction.ASC, "id"),
+            this::findAll,
+            fundingApplication -> indexFundingApplication(fundingApplication,
+                new FundingApplicationIndex())
         );
 
         return CompletableFuture.completedFuture(null);
@@ -138,7 +140,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
     @Override
     @Transactional(readOnly = true)
-    public void indexFundingApplication(FundingApplication fundingApplication, FundingApplicationIndex index) {
+    public void indexFundingApplication(FundingApplication fundingApplication,
+                                        FundingApplicationIndex index) {
         indexCommonFields(fundingApplication, index);
         fundingApplicationIndexRepository.save(index);
     }
@@ -186,16 +189,16 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
                                                                    LocalDate decisionDateTo,
                                                                    Pageable pageable) {
         return searchService.runQuery(
-                buildFilterQuery(fundingCallId, funderId, result,
-                        submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo),
-                pageable, FundingApplicationIndex.class, "funding_application");
+            buildFilterQuery(fundingCallId, funderId, result,
+                submissionDateFrom, submissionDateTo, decisionDateFrom, decisionDateTo),
+            pageable, FundingApplicationIndex.class, "funding_application");
     }
 
     private void setCommonFields(FundingApplication application,
                                  FundingApplicationDTO dto) {
         if (Objects.isNull(dto.getFundingCallId())) {
             throw new ReferenceConstraintException(
-                    "Funding application must be bound to a funding call.");
+                "Funding application must be bound to a funding call.");
         }
 
         var fundingCall = fundingCallService.findOne(dto.getFundingCallId());
@@ -208,7 +211,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
         if (Objects.nonNull(dto.getRevisedFundingApplicationId())) {
             application.setRevisedFundingApplication(
-                    findOne(dto.getRevisedFundingApplicationId()));
+                findOne(dto.getRevisedFundingApplicationId()));
         } else {
             application.setRevisedFundingApplication(null);
         }
@@ -220,16 +223,16 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         }
 
         application.setDescription(
-                multilingualContentService.getMultilingualContent(dto.getDescription()));
+            multilingualContentService.getMultilingualContent(dto.getDescription()));
         application.setResponseSummary(
-                multilingualContentService.getMultilingualContent(dto.getResponseSummary()));
+            multilingualContentService.getMultilingualContent(dto.getResponseSummary()));
 
         if (Objects.nonNull(dto.getRequestedAmount())) {
             if (Objects.isNull(application.getRequestedAmount())) {
                 application.setRequestedAmount(new MonetaryAmount());
             }
             application.getRequestedAmount().setCurrency(
-                    currencyService.findOne(dto.getRequestedAmount().getCurrencyId()));
+                currencyService.findOne(dto.getRequestedAmount().getCurrencyId()));
             application.getRequestedAmount().setAmount(dto.getRequestedAmount().getAmount());
         } else {
             application.setRequestedAmount(null);
@@ -240,7 +243,7 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         application.setReviewDateTo(dto.getReviewDateTo());
         application.setDecisionDate(dto.getDecisionDate());
         application.setRevisedProposalOrNextRoundDeadlineDate(
-                dto.getRevisedProposalOrNextRoundDeadlineDate());
+            dto.getRevisedProposalOrNextRoundDeadlineDate());
         application.setResult(dto.getResult());
 
         rebuildOtherFundingSources(application, dto);
@@ -262,11 +265,11 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         var part = new FundingPart();
 
         part.setDescription(
-                multilingualContentService.getMultilingualContent(partDto.getDescription()));
+            multilingualContentService.getMultilingualContent(partDto.getDescription()));
 
         part.setAmount(new MonetaryAmount());
         part.getAmount().setCurrency(
-                currencyService.findOne(partDto.getAmount().getCurrencyId()));
+            currencyService.findOne(partDto.getAmount().getCurrencyId()));
         part.getAmount().setAmount(partDto.getAmount().getAmount());
 
         if (Objects.nonNull(partDto.getFundingId())) {
@@ -286,19 +289,19 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
         if (Objects.nonNull(sub) && Objects.nonNull(revFrom) && revFrom.isBefore(sub)) {
             throw new DateRangeException(
-                    "Review start date must be on or after submission date.");
+                "Review start date must be on or after submission date.");
         }
         if (Objects.nonNull(revFrom) && Objects.nonNull(revTo) && revTo.isBefore(revFrom)) {
             throw new DateRangeException(
-                    "Review end date must be on or after review start date.");
+                "Review end date must be on or after review start date.");
         }
         if (Objects.nonNull(revTo) && Objects.nonNull(dec) && dec.isBefore(revTo)) {
             throw new DateRangeException(
-                    "Decision date must be on or after review end date.");
+                "Decision date must be on or after review end date.");
         }
         if (Objects.nonNull(sub) && Objects.nonNull(dec) && dec.isBefore(sub)) {
             throw new DateRangeException(
-                    "Decision date must be on or after submission date.");
+                "Decision date must be on or after submission date.");
         }
     }
 
@@ -307,14 +310,14 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
             return;
         }
         if (Objects.nonNull(call.getDateFrom()) &&
-                dto.getSubmissionDate().isBefore(call.getDateFrom())) {
+            dto.getSubmissionDate().isBefore(call.getDateFrom())) {
             throw new DateRangeException(
-                    "Submission date must be on or after funding call opening.");
+                "Submission date must be on or after funding call opening.");
         }
         if (Objects.nonNull(call.getDateTo()) &&
-                dto.getSubmissionDate().isAfter(call.getDateTo())) {
+            dto.getSubmissionDate().isAfter(call.getDateTo())) {
             throw new DateRangeException(
-                    "Submission date must be on or before funding call closing.");
+                "Submission date must be on or before funding call closing.");
         }
     }
 
@@ -359,17 +362,17 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
 
             if (Objects.nonNull(fundingCallId)) {
                 b.must(m -> m.term(
-                        t -> t.field("funding_call_id").value(fundingCallId)));
+                    t -> t.field("funding_call_id").value(fundingCallId)));
             }
 
             if (Objects.nonNull(funderId)) {
                 b.must(m -> m.term(
-                        t -> t.field("funder_id").value(funderId)));
+                    t -> t.field("funder_id").value(funderId)));
             }
 
             if (Objects.nonNull(result)) {
                 b.must(m -> m.term(
-                        t -> t.field("result").value(result)));
+                    t -> t.field("result").value(result)));
             }
 
             if (Objects.nonNull(submissionDateFrom) || Objects.nonNull(submissionDateTo)) {

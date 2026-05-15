@@ -36,6 +36,7 @@ import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
+import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -122,6 +123,9 @@ public class ReindexServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private PerformanceRelatedOutputService performanceRelatedOutputService;
 
     @InjectMocks
     private ReindexServiceImpl reindexService;
@@ -221,6 +225,7 @@ public class ReindexServiceTest {
             verify(thesisService).reindexTheses();
             verify(geneticMaterialService).reindexGeneticMaterials();
             verify(materialProductService).reindexMaterialProducts();
+            verify(performanceRelatedOutputService).reindexPerformanceRelatedOutputs();
             verify(applicationEventPublisher).publishEvent(
                 any(AllResearcherPointsReindexingEvent.class));
         } else if (indexType.a.equals(EntityType.DOCUMENT_FILE)) {

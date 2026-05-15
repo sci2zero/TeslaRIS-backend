@@ -208,7 +208,9 @@ public class EventServiceTest {
             new PageImpl<>(List.of(new EventIndex(), new EventIndex())));
 
         // When
-        var result = eventService.searchEventsImport(names, "dateFrom", "dateTo");
+        var result = eventService.searchEventsImport(
+            names, "2000-01-01", "2000-01-12"
+        );
 
         // Then
         assertEquals(2L, result.getTotalElements());

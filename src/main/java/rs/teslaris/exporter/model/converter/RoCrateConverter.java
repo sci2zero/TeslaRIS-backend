@@ -25,6 +25,7 @@ import rs.teslaris.core.model.document.MaterialProduct;
 import rs.teslaris.core.model.document.Monograph;
 import rs.teslaris.core.model.document.MonographPublication;
 import rs.teslaris.core.model.document.Patent;
+import rs.teslaris.core.model.document.PerformanceRelatedOutput;
 import rs.teslaris.core.model.document.Proceedings;
 import rs.teslaris.core.model.document.ProceedingsPublication;
 import rs.teslaris.core.model.document.PublicationSeries;
@@ -157,6 +158,19 @@ public class RoCrateConverter {
         metadata.setIdentifier(document.getInternalNumber());
 
         metadata.setAdditionalType(document.getGeneticMaterialType().name());
+
+        return metadata;
+    }
+
+    public static RoCrateGeneticMaterial toRoCrateModel(PerformanceRelatedOutput document,
+                                                        String documentIdentifier,
+                                                        RoCrate metadataInfo) {
+        documentIdentifier = documentIdentifier.replace("DOC_TYPE", "performance-related-output");
+
+        var metadata = new RoCrateGeneticMaterial();
+        setCommonFields(metadata, document, documentIdentifier, metadataInfo);
+
+        metadata.setAdditionalType(document.getType().name());
 
         return metadata;
     }

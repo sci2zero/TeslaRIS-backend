@@ -104,7 +104,9 @@ public class ProceedingsPublicationConverter extends DocumentConverter implement
         dto.setConfId(document.getEvent().getConfId());
         dto.setEIssn(document.getEIssn());
         dto.setPrintIssn(document.getPrintIssn());
-        dto.setEventDateFrom(document.getEvent().getDateFrom().toString());
+        dto.setEventDateFrom(
+            document.getEvent().getDateFrom().minusYears(1).toString()
+        );
         dto.setEventDateTo(document.getEvent().getDateTo().toString());
         dto.setIsbn(document.getIsbn());
 

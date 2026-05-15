@@ -35,6 +35,7 @@ import rs.teslaris.core.service.interfaces.document.MonographPublicationService;
 import rs.teslaris.core.service.interfaces.document.MonographService;
 import rs.teslaris.core.service.interfaces.document.OtherEventService;
 import rs.teslaris.core.service.interfaces.document.PatentService;
+import rs.teslaris.core.service.interfaces.document.PerformanceRelatedOutputService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsPublicationService;
 import rs.teslaris.core.service.interfaces.document.ProceedingsService;
 import rs.teslaris.core.service.interfaces.document.PublisherService;
@@ -97,6 +98,8 @@ public class ReindexServiceImpl implements ReindexService {
     private final MaterialProductService materialProductService;
 
     private final GeneticMaterialService geneticMaterialService;
+
+    private final PerformanceRelatedOutputService performanceRelatedOutputService;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -203,6 +206,8 @@ public class ReindexServiceImpl implements ReindexService {
             "Error reindexing material products");
         safeReindex(geneticMaterialService::reindexGeneticMaterials,
             "Error reindexing genetic materials");
+        safeReindex(performanceRelatedOutputService::reindexPerformanceRelatedOutputs,
+            "Error reindexing performance related outputs");
 
         applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());
 
@@ -234,6 +239,8 @@ public class ReindexServiceImpl implements ReindexService {
                 monographPublicationService.reindexMonographPublications();
             case MATERIAL_PRODUCT -> materialProductService.reindexMaterialProducts();
             case GENETIC_MATERIAL -> geneticMaterialService.reindexGeneticMaterials();
+            case PERFORMANCE_RELATED_OUTPUT ->
+                performanceRelatedOutputService.reindexPerformanceRelatedOutputs();
             case THESIS -> {
                 thesisService.reindexTheses();
                 applicationEventPublisher.publishEvent(new RegistryBookInfoReindexEvent());

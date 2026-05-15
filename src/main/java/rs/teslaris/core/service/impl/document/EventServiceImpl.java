@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQuery;
+import co.elastic.clients.json.JsonData;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ValidationException;
 import java.time.LocalDate;
@@ -200,8 +201,16 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
 
     @Override
     public Page<EventIndex> searchEventsImport(List<String> names, String dateFrom, String dateTo) {
-        return searchService.runQuery(buildEventImportSearchQuery(names, dateFrom, dateTo),
-            Pageable.ofSize(5), EventIndex.class, "events");
+        return searchService.runQuery(buildEventImportSearchQuery(
+                names,
+                Math.max(
+                    Integer.parseInt(dateFrom.substring(0, 4)),
+                    Integer.parseInt(dateTo.substring(0, 4))
+                )
+            ),
+            Pageable.ofSize(5),
+            EventIndex.class, "events"
+        );
     }
 
     @Override
@@ -317,29 +326,49 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
         });
     }
 
-    private Query buildEventImportSearchQuery(List<String> names, String dateFrom, String dateTo) {
+    private Query buildEventImportSearchQuery(List<String> names, int publicationYear) {
+        String from = (publicationYear - 1) + "-01-01";
+        String to = publicationYear + "-12-31";
+
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+
             b.must(bq -> {
                 bq.bool(eq -> {
+
                     names.forEach(name -> {
-                        eq.should(sb -> sb.matchPhrase(m -> m.field("name_sr").query(name)));
-                        eq.should(sb -> sb.matchPhrase(m -> m.field("name_other").query(name)));
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("name_sr").query(name)
+                        ));
+
+                        eq.should(sb -> sb.matchPhrase(
+                            m -> m.field("name_other").query(name)
+                        ));
                     });
-                    eq.should(sb -> sb.wildcard(
-                        m -> m.field("date_from_to").value(dateFrom)));
-                    eq.should(sb -> sb.wildcard(
-                        m -> m.field("date_from_to").value(dateTo)));
-                    eq.should(sb -> sb.match(
-                        m -> m.field("date_sortable").query(dateFrom)));
+
+                    eq.minimumShouldMatch("1");
+
+                    eq.must(sb -> sb.range(r -> r
+                        .field("date_sortable")
+                        .gte(JsonData.of(from))
+                        .lte(JsonData.of(to))
+                    ));
+
                     return eq;
                 });
+
                 return bq;
             });
-            b.must(sb -> {
-                sb.match(m -> m.field("event_type").query(EventType.CONFERENCE.name()));
-                sb.match(m -> m.field("is_serial_event").query(false));
-                return sb;
-            });
+
+            b.must(sb -> sb.match(
+                m -> m.field("event_type")
+                    .query(EventType.CONFERENCE.name())
+            ));
+
+            b.must(sb -> sb.match(
+                m -> m.field("is_serial_event")
+                    .query(false)
+            ));
+
             return b;
         })))._toQuery();
     }
@@ -636,6 +665,8 @@ public class EventServiceImpl extends JPAServiceImpl<Event> implements EventServ
                     event.getDateTo().format(formatter));
         }
 
+        index.setDateFrom(event.getDateFrom());
+        index.setDateTo(event.getDateTo());
         index.setDateSortable(event.getDateFrom());
     }
 

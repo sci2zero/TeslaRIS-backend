@@ -162,6 +162,7 @@ public class ExportConverterBase {
                 "http://purl.org/coar/resource_type/c_46ec";
             case MATERIAL_PRODUCT -> "http://purl.org/coar/resource_type/JBNF-DYAD";
             case GENETIC_MATERIAL -> "http://purl.org/coar/resource_type/S7R1-K5P0";
+            case PERFORMANCE_RELATED_OUTPUT -> "http://purl.org/coar/resource_type/F8RT-TJK0";
         };
 
         return new PublicationType(coarType, null, scheme);
@@ -334,6 +335,7 @@ public class ExportConverterBase {
             case THESIS -> "thesis";
             case MATERIAL_PRODUCT -> "material-product";
             case GENETIC_MATERIAL -> "genetic-material";
+            case PERFORMANCE_RELATED_OUTPUT -> "performance-related-output";
             case BOOK_SERIES -> "book-series";
         };
     }
