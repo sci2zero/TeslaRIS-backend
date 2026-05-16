@@ -58,6 +58,21 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
         return savedProjectDocument;
     }
 
+    @Override
+    @Transactional
+    public void deleteProjectDocument(Integer projectDocumentId) {
+        var projectDocument = findOne(projectDocumentId);
+
+        var projectId = projectDocument.getProject().getId();
+        var documentId = projectDocument.getDocument().getId();
+
+        delete(projectDocumentId);
+
+        indexBulkUpdateService.removeIdFieldFromRecord("document_publication", "databaseId",
+                documentId, "project_id", projectId);
+
+    }
+
     private void setCommonFields(ProjectDocument projectDocument, ProjectDocumentDTO dto) {
 
         buildFundingParts(projectDocument, dto);

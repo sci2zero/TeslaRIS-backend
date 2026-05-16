@@ -28,5 +28,11 @@ public class ProjectDocumentController {
         return projectDocument;
     }
 
+    @DeleteMapping("/remove-document/{projectDocumentId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectDocument(@PathVariable Integer projectDocumentId) {
+        projectDocumentService.deleteProjectDocument(projectDocumentId);
+    }
 
 }

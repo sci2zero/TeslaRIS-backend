@@ -80,4 +80,17 @@ public class ProjectDocumentControllerTest extends BaseTest {
                 .andExpect(status().isCreated());
     }
 
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testRemoveProjectDocument() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders.delete(
+                                        "http://localhost:8081/api/project/remove-document/{projectDocumentId}", 1)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isNoContent());
+    }
+
 }

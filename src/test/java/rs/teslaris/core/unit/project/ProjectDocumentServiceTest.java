@@ -21,6 +21,7 @@ import rs.teslaris.project.service.impl.project.ProjectDocumentServiceImpl;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -210,5 +211,67 @@ public class ProjectDocumentServiceTest {
         // then
         verify(indexBulkUpdateService).setIdFieldForRecord(
                 "document_publication", "databaseId", 2, "project_id", 1);
+    }
+
+    @Test
+    public void shouldDeleteProjectDocumentSuccessfully() {
+        // given
+        var project = new Project();
+        project.setId(1);
+
+        var document = new Proceedings();
+        document.setId(2);
+
+        var projectDocument = new ProjectDocument();
+        projectDocument.setId(10);
+        projectDocument.setProject(project);
+        projectDocument.setDocument(document);
+
+        when(projectDocumentRepository.findById(10)).thenReturn(Optional.of(projectDocument));
+
+        // when
+        projectDocumentService.deleteProjectDocument(10);
+
+        // then
+        verify(projectDocumentRepository).save(argThat(pd -> pd.getDeleted().equals(true)));
+        verify(indexBulkUpdateService).removeIdFieldFromRecord(
+                "document_publication", "databaseId", 2, "project_id", 1);
+    }
+
+    @Test
+    public void shouldThrowWhenProjectDocumentNotFound() {
+        // given
+        when(projectDocumentRepository.findById(999)).thenThrow(NotFoundException.class);
+
+        // when & then
+        assertThrows(NotFoundException.class,
+                () -> projectDocumentService.deleteProjectDocument(999));
+
+        verify(projectDocumentRepository, never()).delete(any());
+        verify(indexBulkUpdateService, never()).removeIdFieldFromRecord(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotCallElasticsearchWhenDeleteFails() {
+        // given
+        var project = new Project();
+        project.setId(1);
+
+        var document = new Proceedings();
+        document.setId(2);
+
+        var projectDocument = new ProjectDocument();
+        projectDocument.setId(10);
+        projectDocument.setProject(project);
+        projectDocument.setDocument(document);
+
+        when(projectDocumentRepository.findById(10)).thenReturn(Optional.of(projectDocument));
+        when(projectDocumentRepository.save(any(ProjectDocument.class))).thenThrow(RuntimeException.class);
+
+        // when & then
+        assertThrows(RuntimeException.class,
+                () -> projectDocumentService.deleteProjectDocument(10));
+
+        verify(indexBulkUpdateService, never()).removeIdFieldFromRecord(any(), any(), any(), any(), any());
     }
 }
