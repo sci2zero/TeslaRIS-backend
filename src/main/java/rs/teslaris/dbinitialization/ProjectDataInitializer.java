@@ -185,13 +185,12 @@ public class ProjectDataInitializer {
         fundingApplicationRepository.saveAll(List.of(fundingApplication1, fundingApplication2));
 
         var document1 = new Thesis();
+        document1.setId(101);
         document1.setApproveStatus(ApproveStatus.APPROVED);
         document1.setThesisType(ThesisType.PHD);
         document1.setOrganisationUnit(funder1);
         document1.setTitle(
                 Set.of(new MultiLingualContent(englishTag, "Dummy Document", 1)));
-
-        thesisRepository.save(document1);
 
         var projectDocument1 = new ProjectDocument();
         projectDocument1.setProject(project1);
