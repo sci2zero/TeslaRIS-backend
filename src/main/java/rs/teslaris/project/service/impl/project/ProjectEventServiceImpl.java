@@ -54,6 +54,19 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
         return savedProjectEvent;
     }
 
+    @Override
+    public void deleteProjectEvent(Integer projectEventId) {
+        var projectEvent = findOne(projectEventId);
+
+        var projectId = projectEvent.getProject().getId();
+        var eventId = projectEvent.getEvent().getId();
+
+        delete(projectEventId);
+
+        indexBulkUpdateService.removeIdFieldFromRecord("events", "databaseId",
+                eventId, "project_id", projectId);
+    }
+
     private void setCommonFields(ProjectEvent projectEvent, ProjectEventDTO dto) {
 
         buildFundingParts(projectEvent, dto);

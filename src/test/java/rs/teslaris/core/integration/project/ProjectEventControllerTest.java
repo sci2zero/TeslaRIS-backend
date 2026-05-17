@@ -79,4 +79,17 @@ public class ProjectEventControllerTest extends BaseTest {
                 .andExpect(status().isCreated());
     }
 
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testRemoveProjectEvent() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders.delete(
+                                        "http://localhost:8081/api/project/remove-event/{projectEventId}", 1)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isNoContent());
+    }
+
 }

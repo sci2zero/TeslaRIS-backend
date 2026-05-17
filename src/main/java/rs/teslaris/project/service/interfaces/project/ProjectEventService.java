@@ -10,4 +10,6 @@ public interface ProjectEventService extends JPAService<ProjectEvent> {
 
     ProjectEvent createProjectEvent(ProjectEventDTO projectEventDTO);
 
+    void deleteProjectEvent(Integer projectEventId);
+
 }

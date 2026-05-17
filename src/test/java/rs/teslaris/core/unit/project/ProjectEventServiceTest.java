@@ -21,6 +21,7 @@ import rs.teslaris.project.service.impl.project.ProjectEventServiceImpl;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -211,6 +212,68 @@ public class ProjectEventServiceTest {
         // then
         verify(indexBulkUpdateService).setIdFieldForRecord(
                 "events", "databaseId", 2, "project_id", 1);
+    }
+
+    @Test
+    public void shouldDeleteProjectEventSuccessfully() {
+        // given
+        var project = new Project();
+        project.setId(1);
+
+        var event = new OtherEvent();
+        event.setId(2);
+
+        var projectEvent = new ProjectEvent();
+        projectEvent.setId(10);
+        projectEvent.setProject(project);
+        projectEvent.setEvent(event);
+
+        when(projectEventRepository.findById(10)).thenReturn(Optional.of(projectEvent));
+
+        // when
+        projectEventService.deleteProjectEvent(10);
+
+        // then
+        verify(projectEventRepository).save(argThat(pe -> pe.getDeleted().equals(true)));
+        verify(indexBulkUpdateService).removeIdFieldFromRecord(
+                "events", "databaseId", 2, "project_id", 1);
+    }
+
+    @Test
+    public void shouldThrowWhenProjectEventNotFound() {
+        // given
+        when(projectEventRepository.findById(999)).thenThrow(NotFoundException.class);
+
+        // when & then
+        assertThrows(NotFoundException.class,
+                () -> projectEventService.deleteProjectEvent(999));
+
+        verify(projectEventRepository, never()).save(any());
+        verify(indexBulkUpdateService, never()).removeIdFieldFromRecord(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotCallElasticsearchWhenEventDeleteFails() {
+        // given
+        var project = new Project();
+        project.setId(1);
+
+        var event = new OtherEvent();
+        event.setId(2);
+
+        var projectEvent = new ProjectEvent();
+        projectEvent.setId(10);
+        projectEvent.setProject(project);
+        projectEvent.setEvent(event);
+
+        when(projectEventRepository.findById(10)).thenReturn(Optional.of(projectEvent));
+        when(projectEventRepository.save(any(ProjectEvent.class))).thenThrow(RuntimeException.class);
+
+        // when & then
+        assertThrows(RuntimeException.class,
+                () -> projectEventService.deleteProjectEvent(10));
+
+        verify(indexBulkUpdateService, never()).removeIdFieldFromRecord(any(), any(), any(), any(), any());
     }
 
 }

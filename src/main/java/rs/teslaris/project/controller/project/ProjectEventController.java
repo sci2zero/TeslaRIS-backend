@@ -28,4 +28,11 @@ public class ProjectEventController {
         return projectEvent;
     }
 
+    @DeleteMapping("/remove-event/{projectEventId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeProjectEvent(@PathVariable Integer projectEventId) {
+        projectEventService.deleteProjectEvent(projectEventId);
+    }
+
 }
