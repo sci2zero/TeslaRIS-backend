@@ -5,6 +5,8 @@ import rs.teslaris.core.service.interfaces.JPAService;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
 import rs.teslaris.project.model.project.ProjectEvent;
 
+import java.util.concurrent.CompletableFuture;
+
 @Service
 public interface ProjectEventService extends JPAService<ProjectEvent> {
 
@@ -12,4 +14,5 @@ public interface ProjectEventService extends JPAService<ProjectEvent> {
 
     void deleteProjectEvent(Integer projectEventId);
 
+    CompletableFuture<Void> reindexProjectEvents();
 }
