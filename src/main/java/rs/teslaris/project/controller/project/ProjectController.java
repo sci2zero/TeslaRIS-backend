@@ -9,7 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.project.dto.project.ProjectDTO;
-import rs.teslaris.project.indexmodel.funding.FundingCallIndex;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
@@ -66,4 +65,5 @@ public class ProjectController {
     public void deleteProjects(@PathVariable Integer projectId) {
         projectService.deleteProject(projectId);
     }
+
 }

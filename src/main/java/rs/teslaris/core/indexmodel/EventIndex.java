@@ -110,4 +110,7 @@ public class EventIndex {
 
     @Field(type = FieldType.Object, name = "commission_assessments")
     private List<Triple<Integer, String, Boolean>> commissionAssessments = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "project_id", store = true)
+    private Integer projectId;
 }

@@ -16,6 +16,8 @@ import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingProgramService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
+import rs.teslaris.project.service.interfaces.project.ProjectDocumentService;
+import rs.teslaris.project.service.interfaces.project.ProjectEventService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @Service
@@ -32,6 +34,10 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
     private final FundingService fundingService;
 
     private final ProjectService projectService;
+
+    private final ProjectDocumentService projectDocumentService;
+
+    private final ProjectEventService projectEventService;
 
 
     @Override
@@ -56,6 +62,14 @@ public class ProjectReindexServiceImpl implements ProjectReindexService {
 
         if (indexesToRepopulate.contains(EntityType.PROJECT)) {
             futures.add(projectService.reindexProject());
+        }
+
+        if (indexesToRepopulate.contains(EntityType.PROJECT_DOCUMENT)) {
+            futures.add(projectDocumentService.reindexProjectDocuments());
+        }
+
+        if (indexesToRepopulate.contains(EntityType.PROJECT_EVENT)) {
+            futures.add(projectEventService.reindexProjectEvents());
         }
 
         try {

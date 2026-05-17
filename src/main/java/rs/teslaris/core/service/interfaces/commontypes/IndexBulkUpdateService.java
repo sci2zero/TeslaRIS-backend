@@ -7,12 +7,19 @@ public interface IndexBulkUpdateService {
 
     void removeIdFromRecord(String indexName, String fieldMappingName, Integer queryValue);
 
+    void removeIdFieldFromRecord(String indexName,
+                            String fieldMappingName,
+                            Integer queryValue,
+                            String idField,
+                            Integer idToRemove);
+
     void removeIdFromListField(String indexName, String fieldMappingName, Integer idToRemove);
 
     void removeIdFromListAndRelatedArrayField(String indexName, String fieldMappingName,
                                               String relatedArrayFieldName,
                                               String relatedSortFieldName,
                                               Integer idToRemove);
+
 
     void setIdFieldForRecord(String indexName, String fieldMappingName, Integer queryValue,
                              String idField, Integer idToSet);
