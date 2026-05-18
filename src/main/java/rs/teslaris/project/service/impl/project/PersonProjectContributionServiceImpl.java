@@ -43,9 +43,6 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
 
     private final CurrencyService currencyService;
 
-    private final FundingService fundingService;
-
-
     @Override
     protected JpaRepository<PersonProjectContribution, Integer> getEntityRepository() {
         return personProjectContributionRepository;
@@ -72,7 +69,6 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
 
         contribution.setAffiliationStatement(buildAffiliationStatement(dto));
 
-        // --- specifična polja ---
         contribution.setContributionType(dto.getContributionType());
         contribution.setInvestigationRole(dto.getInvestigationRole());
 
@@ -81,7 +77,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
 
         contribution.setFundingParts(new HashSet<>());
         dto.getFundingParts().forEach(partDto ->
-                contribution.getFundingParts().add(buildContributionFundingPart(partDto)));
+                contribution.getFundingParts().add(buildContributionFundingPart(partDto, contribution)));
 
         contribution.setProject(parent);
 
@@ -110,7 +106,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         return affiliation;
     }
 
-    private FundingPart buildContributionFundingPart(FundingPartDTO partDto) {
+    private FundingPart buildContributionFundingPart(FundingPartDTO partDto, PersonProjectContribution contribution) {
         var part = new FundingPart();
 
         part.setDescription(
@@ -122,7 +118,7 @@ public class PersonProjectContributionServiceImpl extends JPAServiceImpl<PersonP
         part.getAmount().setAmount(partDto.getAmount().getAmount());
 
         if (Objects.nonNull(partDto.getFundingId())) {
-            part.setFunding(fundingService.findOne(partDto.getFundingId()));
+            part.setPersonProjectContribution(contribution);
         }
 
         return part;

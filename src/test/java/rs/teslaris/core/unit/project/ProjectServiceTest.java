@@ -477,4 +477,113 @@ public class ProjectServiceTest {
                 .createContribution(any(), any());
     }
 
+    @Test
+    public void shouldUpdateProjectAndRebuildTeam() {
+        // given
+        var projectId = 1;
+        var existingProject = new Project();
+        existingProject.setId(projectId);
+        existingProject.setName(new HashSet<>());
+        existingProject.setDescription(new HashSet<>());
+        existingProject.setNameAbbreviation(new HashSet<>());
+        existingProject.setKeywords(new HashSet<>());
+        existingProject.setResearchAreas(new HashSet<>());
+        existingProject.setTeam(new HashSet<>());
+        existingProject.setStatus(ProjectStatus.ONGOING);
+        existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        existingProject.setResearchType(ProjectResearchType.INNOVATION);
+
+        var projectDTO = new ProjectDTO();
+        projectDTO.setName(List.of());
+        projectDTO.setDescription(List.of());
+        projectDTO.setNameAbbreviation(List.of());
+        projectDTO.setKeywords(List.of());
+        projectDTO.setResearchAreasId(Set.of());
+        projectDTO.setStatus(ProjectStatus.ONGOING);
+        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
+        projectDTO.setDateFrom(LocalDate.now());
+        projectDTO.setDateTo(LocalDate.now().plusYears(1));
+        projectDTO.setTeam(List.of(
+                new PersonProjectContributionDTO(),
+                new PersonProjectContributionDTO()
+        ));
+
+        var projectIndex = new ProjectIndex();
+        projectIndex.setDatabaseId(projectId);
+
+        when(projectRepository.findById(projectId))
+                .thenReturn(Optional.of(existingProject));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList()))
+                .thenReturn(List.of());
+        when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
+                .thenReturn(List.of());
+        when(personProjectContributionService.createContribution(any(), any()))
+                .thenReturn(new PersonProjectContribution());
+        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
+                .thenReturn(Optional.of(projectIndex));
+
+        // when
+        projectService.updateProject(projectId, projectDTO);
+
+        // then
+        verify(personProjectContributionService, times(2))
+                .createContribution(any(), any());
+    }
+
+    @Test
+    public void shouldUpdateProjectWithEmptyTeam() {
+        // given
+        var projectId = 1;
+        var existingProject = new Project();
+        existingProject.setId(projectId);
+        existingProject.setName(new HashSet<>());
+        existingProject.setDescription(new HashSet<>());
+        existingProject.setNameAbbreviation(new HashSet<>());
+        existingProject.setKeywords(new HashSet<>());
+        existingProject.setResearchAreas(new HashSet<>());
+        existingProject.setTeam(new HashSet<>());
+        existingProject.setStatus(ProjectStatus.ONGOING);
+        existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        existingProject.setResearchType(ProjectResearchType.INNOVATION);
+
+        var projectDTO = new ProjectDTO();
+        projectDTO.setName(List.of());
+        projectDTO.setDescription(List.of());
+        projectDTO.setNameAbbreviation(List.of());
+        projectDTO.setKeywords(List.of());
+        projectDTO.setResearchAreasId(Set.of());
+        projectDTO.setStatus(ProjectStatus.ONGOING);
+        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
+        projectDTO.setDateFrom(LocalDate.now());
+        projectDTO.setDateTo(LocalDate.now().plusYears(1));
+        projectDTO.setTeam(List.of());
+
+        when(projectRepository.findById(projectId))
+                .thenReturn(Optional.of(existingProject));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList()))
+                .thenReturn(List.of());
+        when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
+                .thenReturn(List.of());
+        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
+                .thenReturn(Optional.of(projectIndex()));
+
+        // when
+        projectService.updateProject(projectId, projectDTO);
+
+        // then
+        verify(personProjectContributionService, never())
+                .createContribution(any(), any());
+    }
+
+    private ProjectIndex projectIndex() {
+        var idx = new ProjectIndex();
+        idx.setDatabaseId(1);
+        return idx;
+    }
 }

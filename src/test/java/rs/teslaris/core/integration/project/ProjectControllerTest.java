@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,66 +34,24 @@ public class ProjectControllerTest extends BaseTest {
     public static ProjectDTO getTestPayload() {
         var dto = new ProjectDTO();
 
-        var nameList = new ArrayList<MultilingualContentDTO>();
-        MultilingualContentDTO englishName = new MultilingualContentDTO();
-        englishName.setLanguageTagId(1);
-        englishName.setLanguageTag(LanguageAbbreviations.ENGLISH);
-        englishName.setContent("Test Project");
-        englishName.setPriority(1);
-        nameList.add(englishName);
-        dto.setName(nameList);
+        dto.setName(List.of(buildMultilingualContent("Test Project")));
+        dto.setDescription(List.of(buildMultilingualContent("This is a test project description.")));
+        dto.setNameAbbreviation(List.of(buildMultilingualContent("TFP")));
+        dto.setKeywords(List.of(
+                buildMultilingualContent("research", 1),
+                buildMultilingualContent("innovation", 2)
+        ));
 
-        var descriptionList = new ArrayList<MultilingualContentDTO>();
-        MultilingualContentDTO englishDesc = new MultilingualContentDTO();
-        englishDesc.setLanguageTagId(1);
-        englishDesc.setLanguageTag(LanguageAbbreviations.ENGLISH);
-        englishDesc.setContent("This is a test project description.");
-        englishDesc.setPriority(1);
-        descriptionList.add(englishDesc);
-        dto.setDescription(descriptionList);
-
-        var abbreviationList = new ArrayList<MultilingualContentDTO>();
-        MultilingualContentDTO englishAbbr = new MultilingualContentDTO();
-        englishAbbr.setLanguageTagId(1);
-        englishAbbr.setLanguageTag(LanguageAbbreviations.ENGLISH);
-        englishAbbr.setContent("TFP");
-        englishAbbr.setPriority(1);
-        abbreviationList.add(englishAbbr);
-        dto.setNameAbbreviation(abbreviationList);
-
-        var keywordsList = new ArrayList<MultilingualContentDTO>();
-        MultilingualContentDTO keyword1 = new MultilingualContentDTO();
-        keyword1.setLanguageTagId(1);
-        keyword1.setLanguageTag(LanguageAbbreviations.ENGLISH);
-        keyword1.setContent("research");
-        keyword1.setPriority(1);
-        keywordsList.add(keyword1);
-
-        var keyword2 = new MultilingualContentDTO();
-        keyword2.setLanguageTagId(1);
-        keyword2.setLanguageTag(LanguageAbbreviations.ENGLISH);
-        keyword2.setContent("innovation");
-        keyword2.setPriority(2);
-        keywordsList.add(keyword2);
-        dto.setKeywords(keywordsList);
-
-        var researchAreas = new HashSet<Integer>();
-        researchAreas.add(1);
-        researchAreas.add(2);
-        dto.setResearchAreasId(researchAreas);
-
-        var consortium = new HashSet<Integer>();
-        consortium.add(1);
-        consortium.add(2);
-        dto.setConsortiumIds(consortium);
+        dto.setResearchAreasId(new HashSet<>(Set.of(1, 2)));
+        dto.setConsortiumIds(new HashSet<>(Set.of(1, 2)));
 
         dto.setDateFrom(LocalDate.of(2025, 1, 1));
         dto.setDateTo(LocalDate.of(2026, 3, 1));
 
-        var uris = new HashSet<String>();
-        uris.add("https://example.com/project");
-        uris.add("https://example.com/guidelines");
-        dto.setUris(uris);
+        dto.setUris(new HashSet<>(Set.of(
+                "https://example.com/project",
+                "https://example.com/guidelines"
+        )));
 
         dto.setStatus(ProjectStatus.SUBMITTED);
         dto.setCollaborationType(ProjectCollaborationType.INTERNATIONAL_BILATERAL);
@@ -100,31 +59,47 @@ public class ProjectControllerTest extends BaseTest {
         dto.setNotFunded(true);
         dto.setCosts(new MonetaryAmountDTO(1, 50000));
 
-        var teamMember = new PersonProjectContributionDTO();
-        teamMember.setPersonId(1);
-        teamMember.setOrderNumber(1);
-        teamMember.setContributionType(PersonProjectContributionType.TEAM_MEMBER);
-        teamMember.setInvestigationRole(PersonProjectInvestigationRole.RESEARCHER);
-
-        var contribDesc = new MultilingualContentDTO();
-        contribDesc.setLanguageTagId(1);
-        contribDesc.setLanguageTag(LanguageAbbreviations.ENGLISH);
-        contribDesc.setContent("Lead researcher");
-        contribDesc.setPriority(1);
-        teamMember.setContributionDescription(List.of(contribDesc));
-
-        var displayAffiliation = new MultilingualContentDTO();
-        displayAffiliation.setLanguageTagId(1);
-        displayAffiliation.setLanguageTag(LanguageAbbreviations.ENGLISH);
-        displayAffiliation.setContent("University of Novi Sad");
-        displayAffiliation.setPriority(1);
-        teamMember.setDisplayAffiliationStatement(List.of(displayAffiliation));
-
-        teamMember.setInstitutionIds(List.of(1));
-
-        dto.setTeam(List.of(teamMember));
+        dto.setTeam(List.of(buildTeamMember(
+                1, 1,
+                PersonProjectContributionType.TEAM_MEMBER,
+                PersonProjectInvestigationRole.RESEARCHER,
+                "Lead researcher",
+                "University of Novi Sad"
+        )));
 
         return dto;
+    }
+
+    private static MultilingualContentDTO buildMultilingualContent(String content) {
+        return buildMultilingualContent(content, 1);
+    }
+
+    private static MultilingualContentDTO buildMultilingualContent(String content, int priority) {
+        var mlc = new MultilingualContentDTO();
+        mlc.setLanguageTagId(1);
+        mlc.setLanguageTag(LanguageAbbreviations.ENGLISH);
+        mlc.setContent(content);
+        mlc.setPriority(priority);
+        return mlc;
+    }
+
+    private static PersonProjectContributionDTO buildTeamMember(
+            Integer personId,
+            Integer orderNumber,
+            PersonProjectContributionType contributionType,
+            PersonProjectInvestigationRole investigationRole,
+            String contributionDescription,
+            String affiliation) {
+
+        var member = new PersonProjectContributionDTO();
+        member.setPersonId(personId);
+        member.setOrderNumber(orderNumber);
+        member.setContributionType(contributionType);
+        member.setInvestigationRole(investigationRole);
+        member.setContributionDescription(List.of(buildMultilingualContent(contributionDescription)));
+        member.setDisplayAffiliationStatement(List.of(buildMultilingualContent(affiliation)));
+        member.setInstitutionIds(List.of(1));
+        return member;
     }
 
     @Test
@@ -179,6 +154,47 @@ public class ProjectControllerTest extends BaseTest {
         mockMvc.perform(MockMvcRequestBuilders.put(
                                 "http://localhost:8081/api/project/{project}", 1)
                         .content(requestBody).contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testUpdateProjectAddingTeamMember() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var payload = getTestPayload();
+        var secondMember = buildTeamMember(
+                2, 2,
+                PersonProjectContributionType.PRINCIPLE_INVESTIGATOR,
+                PersonProjectInvestigationRole.SUPERVISOR,
+                "Project supervisor",
+                "Faculty of Technical Sciences"
+        );
+        payload.setTeam(List.of(payload.getTeam().getFirst(), secondMember));
+
+        String requestBody = objectMapper.writeValueAsString(payload);
+        mockMvc.perform(MockMvcRequestBuilders.put(
+                                "http://localhost:8081/api/project/{projectId}", 1)
+                        .content(requestBody)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test.admin@test.com", password = "testAdmin")
+    public void testUpdateProjectRemovingTeamMembers() throws Exception {
+        String jwtToken = authenticateAdminAndGetToken();
+
+        var payload = getTestPayload();
+        payload.setTeam(List.of());
+
+        String requestBody = objectMapper.writeValueAsString(payload);
+        mockMvc.perform(MockMvcRequestBuilders.put(
+                                "http://localhost:8081/api/project/{projectId}", 1)
+                        .content(requestBody)
+                        .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken))
                 .andExpect(status().isNoContent());
     }
