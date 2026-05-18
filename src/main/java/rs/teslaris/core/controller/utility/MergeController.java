@@ -32,6 +32,7 @@ import rs.teslaris.core.dto.deduplication.MergedMonographsDTO;
 import rs.teslaris.core.dto.deduplication.MergedOrganisationUnitsDTO;
 import rs.teslaris.core.dto.deduplication.MergedOtherEventDTO;
 import rs.teslaris.core.dto.deduplication.MergedPatentsDTO;
+import rs.teslaris.core.dto.deduplication.MergedPerformanceRelatedOutputDTO;
 import rs.teslaris.core.dto.deduplication.MergedPersonsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsDTO;
 import rs.teslaris.core.dto.deduplication.MergedProceedingsPublicationsDTO;
@@ -386,6 +387,21 @@ public class MergeController {
             mergedGeneticMaterial.getRightGeneticMaterial());
 
         mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedGeneticMaterial);
+    }
+
+    @PatchMapping("/performance-related-output/metadata/{leftDocumentId}/{rightDocumentId}")
+    @PreAuthorize("hasAuthority('MERGE_DOCUMENTS_METADATA')")
+    @PublicationMergeCheck
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveMergedPerformanceRelatedOutputMetadata(
+        @PathVariable Integer leftDocumentId,
+        @PathVariable Integer rightDocumentId,
+        @NotNull @RequestBody MergedPerformanceRelatedOutputDTO mergedPerformanceRelatedOutput) {
+        mergeService.saveMergedPerformanceRelatedOutputMetadata(leftDocumentId, rightDocumentId,
+            mergedPerformanceRelatedOutput.getLeftPerformanceRelatedOutput(),
+            mergedPerformanceRelatedOutput.getRightPerformanceRelatedOutput());
+
+        mergeDocumentFiles(leftDocumentId, rightDocumentId, mergedPerformanceRelatedOutput);
     }
 
     @PatchMapping("/dataset/metadata/{leftDocumentId}/{rightDocumentId}")
