@@ -81,7 +81,7 @@ public class Project extends BaseEntity {
     @BatchSize(size = 50)
     private Set<OrganisationUnitProjectContribution> consortium = new HashSet<>();
 
-    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @BatchSize(size = 50)
     private Set<PersonProjectContribution> team = new HashSet<>();
 
