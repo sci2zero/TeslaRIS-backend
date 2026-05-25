@@ -235,8 +235,8 @@ public class ProjectEventServiceTest {
 
         // then
         verify(projectEventRepository).save(argThat(pe -> pe.getDeleted().equals(true)));
-        verify(indexBulkUpdateService).removeIdFieldFromRecord(
-                "events", "databaseId", 2, "project_id", 1);
+        verify(indexBulkUpdateService).setIdFieldForRecord(
+                "events", "databaseId", 2, "project_id", null);
     }
 
     @Test
@@ -249,7 +249,7 @@ public class ProjectEventServiceTest {
                 () -> projectEventService.deleteProjectEvent(999));
 
         verify(projectEventRepository, never()).save(any());
-        verify(indexBulkUpdateService, never()).removeIdFieldFromRecord(any(), any(), any(), any(), any());
+        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -273,7 +273,7 @@ public class ProjectEventServiceTest {
         assertThrows(RuntimeException.class,
                 () -> projectEventService.deleteProjectEvent(10));
 
-        verify(indexBulkUpdateService, never()).removeIdFieldFromRecord(any(), any(), any(), any(), any());
+        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(), any());
     }
 
 }

@@ -6,6 +6,8 @@ import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
 import co.elastic.clients.json.JsonData;
 import java.util.Map;
 import java.util.Objects;
+
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,38 +47,8 @@ public class IndexBulkUpdateServiceImpl implements IndexBulkUpdateService {
     }
 
     @Override
-    public void removeIdFieldFromRecord(String indexName, String fieldMappingName, Integer queryValue,
-                                        String idField, Integer idToRemove) {
-        var request = new UpdateByQueryRequest.Builder()
-                .index(indexName)
-                .waitForCompletion(true)
-                .query(q -> q.bool(b -> b
-                        .must(m -> m.term(t -> t
-                                .field(fieldMappingName)
-                                .value(queryValue)))
-                        .must(m -> m.term(t -> t
-                                .field(idField)
-                                .value(idToRemove)))))
-                .script(s -> s
-                        .inline(i -> i
-                                .source("ctx._source.remove('" + idField + "')")
-                                .lang("painless")))
-                .build();
-
-        try {
-            elasticsearchClient.updateByQuery(request);
-            elasticsearchClient.indices().refresh(r -> r.index(indexName));
-
-            log.info("Removed field {} from document in index {} found by field {} with value {}",
-                    idField, indexName, fieldMappingName, queryValue);
-        } catch (Exception e) {
-            log.error("An error occurred while removing id field from index records: {}", e.getMessage());
-        }
-    }
-
-    @Override
     public void setIdFieldForRecord(String indexName, String fieldMappingName, Integer queryValue,
-                                    String idField, Integer idToSet) {
+                                    String idField, @Nullable Integer idToSet) {
         var request = Objects.nonNull(idToSet) ?
             new UpdateByQueryRequest.Builder()
                 .index(indexName)

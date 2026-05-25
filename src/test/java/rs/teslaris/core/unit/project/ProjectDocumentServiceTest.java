@@ -234,8 +234,8 @@ public class ProjectDocumentServiceTest {
 
         // then
         verify(projectDocumentRepository).save(argThat(pd -> pd.getDeleted().equals(true)));
-        verify(indexBulkUpdateService).removeIdFieldFromRecord(
-                "document_publication", "databaseId", 2, "project_id", 1);
+        verify(indexBulkUpdateService).setIdFieldForRecord(
+                "document_publication", "databaseId", 2, "project_id", null);
     }
 
     @Test
@@ -248,7 +248,7 @@ public class ProjectDocumentServiceTest {
                 () -> projectDocumentService.deleteProjectDocument(999));
 
         verify(projectDocumentRepository, never()).delete(any());
-        verify(indexBulkUpdateService, never()).removeIdFieldFromRecord(any(), any(), any(), any(), any());
+        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -272,6 +272,6 @@ public class ProjectDocumentServiceTest {
         assertThrows(RuntimeException.class,
                 () -> projectDocumentService.deleteProjectDocument(10));
 
-        verify(indexBulkUpdateService, never()).removeIdFieldFromRecord(any(), any(), any(), any(), any());
+        verify(indexBulkUpdateService, never()).setIdFieldForRecord(any(), any(), any(), any(), any());
     }
 }

@@ -66,13 +66,12 @@ public class ProjectDocumentServiceImpl extends JPAServiceImpl<ProjectDocument>
     public void deleteProjectDocument(Integer projectDocumentId) {
         var projectDocument = findOne(projectDocumentId);
 
-        var projectId = projectDocument.getProject().getId();
         var documentId = projectDocument.getDocument().getId();
 
         delete(projectDocumentId);
 
-        indexBulkUpdateService.removeIdFieldFromRecord("document_publication", "databaseId",
-                documentId, "project_id", projectId);
+        indexBulkUpdateService.setIdFieldForRecord("document_publication", "databaseId",
+                documentId, "project_id", null);
 
     }
 
