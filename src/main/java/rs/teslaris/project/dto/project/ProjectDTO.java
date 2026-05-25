@@ -70,4 +70,7 @@ public class ProjectDTO {
     private Boolean notFunded;
 
     private MonetaryAmountDTO costs;
+
+    @Valid
+    private List<PersonProjectContributionDTO> team = new ArrayList<>();
 }

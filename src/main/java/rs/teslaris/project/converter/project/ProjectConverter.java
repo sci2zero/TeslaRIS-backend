@@ -48,6 +48,9 @@ public class ProjectConverter {
             dto.getCosts().setCurrencyId(project.getCosts().getCurrency().getId());
         }
 
+        project.getTeam().forEach(member ->
+                dto.getTeam().add(PersonProjectContributionConverter.toDTO(member)));
+
         return dto;
     }
 

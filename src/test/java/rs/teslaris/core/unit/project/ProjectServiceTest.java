@@ -15,16 +15,15 @@ import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentServic
 import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
 import rs.teslaris.core.service.interfaces.commontypes.SearchService;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
+import rs.teslaris.project.dto.project.PersonProjectContributionDTO;
 import rs.teslaris.project.dto.project.ProjectDTO;
 import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
-import rs.teslaris.project.model.project.Project;
-import rs.teslaris.project.model.project.ProjectCollaborationType;
-import rs.teslaris.project.model.project.ProjectResearchType;
-import rs.teslaris.project.model.project.ProjectStatus;
+import rs.teslaris.project.model.project.*;
 import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.service.impl.project.ProjectServiceImpl;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
+import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -63,6 +62,9 @@ public class ProjectServiceTest {
 
     @InjectMocks
     private ProjectServiceImpl projectService;
+
+    @Mock
+    private PersonProjectContributionService personProjectContributionService;
 
     @Test
     public void shouldReturnEmptyPageWhenNoProjectsFound() {
@@ -439,4 +441,149 @@ public class ProjectServiceTest {
         verify(projectIndexRepository, never()).findProjectIndexByDatabaseId(anyInt());
     }
 
+    @Test
+    public void shouldCreateProjectWithTeamMembers() {
+        // given
+        var projectDTO = new ProjectDTO();
+        projectDTO.setName(List.of());
+        projectDTO.setDescription(List.of());
+        projectDTO.setNameAbbreviation(List.of());
+        projectDTO.setKeywords(List.of());
+        projectDTO.setResearchAreasId(Set.of());
+        projectDTO.setStatus(ProjectStatus.ONGOING);
+        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
+        projectDTO.setDateFrom(LocalDate.now());
+        projectDTO.setDateTo(LocalDate.now().plusYears(1));
+
+        var member1 = new PersonProjectContributionDTO();
+        var member2 = new PersonProjectContributionDTO();
+        projectDTO.setTeam(List.of(member1, member2));
+
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(personProjectContributionService.createContribution(any(), any()))
+                .thenReturn(new PersonProjectContribution());
+        when(projectRepository.save(any(Project.class)))
+                .thenReturn(new Project());
+        when(projectIndexRepository.save(any(ProjectIndex.class)))
+                .thenReturn(new ProjectIndex());
+
+        // when
+        projectService.createProject(projectDTO);
+
+        // then
+        verify(personProjectContributionService, times(2))
+                .createContribution(any(), any());
+    }
+
+    @Test
+    public void shouldUpdateProjectAndRebuildTeam() {
+        // given
+        var projectId = 1;
+        var existingProject = new Project();
+        existingProject.setId(projectId);
+        existingProject.setName(new HashSet<>());
+        existingProject.setDescription(new HashSet<>());
+        existingProject.setNameAbbreviation(new HashSet<>());
+        existingProject.setKeywords(new HashSet<>());
+        existingProject.setResearchAreas(new HashSet<>());
+        existingProject.setTeam(new HashSet<>());
+        existingProject.setStatus(ProjectStatus.ONGOING);
+        existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        existingProject.setResearchType(ProjectResearchType.INNOVATION);
+
+        var projectDTO = new ProjectDTO();
+        projectDTO.setName(List.of());
+        projectDTO.setDescription(List.of());
+        projectDTO.setNameAbbreviation(List.of());
+        projectDTO.setKeywords(List.of());
+        projectDTO.setResearchAreasId(Set.of());
+        projectDTO.setStatus(ProjectStatus.ONGOING);
+        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
+        projectDTO.setDateFrom(LocalDate.now());
+        projectDTO.setDateTo(LocalDate.now().plusYears(1));
+        projectDTO.setTeam(List.of(
+                new PersonProjectContributionDTO(),
+                new PersonProjectContributionDTO()
+        ));
+
+        var projectIndex = new ProjectIndex();
+        projectIndex.setDatabaseId(projectId);
+
+        when(projectRepository.findById(projectId))
+                .thenReturn(Optional.of(existingProject));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList()))
+                .thenReturn(List.of());
+        when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
+                .thenReturn(List.of());
+        when(personProjectContributionService.createContribution(any(), any()))
+                .thenReturn(new PersonProjectContribution());
+        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
+                .thenReturn(Optional.of(projectIndex));
+
+        // when
+        projectService.updateProject(projectId, projectDTO);
+
+        // then
+        verify(personProjectContributionService, times(2))
+                .createContribution(any(), any());
+    }
+
+    @Test
+    public void shouldUpdateProjectWithEmptyTeam() {
+        // given
+        var projectId = 1;
+        var existingProject = new Project();
+        existingProject.setId(projectId);
+        existingProject.setName(new HashSet<>());
+        existingProject.setDescription(new HashSet<>());
+        existingProject.setNameAbbreviation(new HashSet<>());
+        existingProject.setKeywords(new HashSet<>());
+        existingProject.setResearchAreas(new HashSet<>());
+        existingProject.setTeam(new HashSet<>());
+        existingProject.setStatus(ProjectStatus.ONGOING);
+        existingProject.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        existingProject.setResearchType(ProjectResearchType.INNOVATION);
+
+        var projectDTO = new ProjectDTO();
+        projectDTO.setName(List.of());
+        projectDTO.setDescription(List.of());
+        projectDTO.setNameAbbreviation(List.of());
+        projectDTO.setKeywords(List.of());
+        projectDTO.setResearchAreasId(Set.of());
+        projectDTO.setStatus(ProjectStatus.ONGOING);
+        projectDTO.setCollaborationType(ProjectCollaborationType.NATIONAL);
+        projectDTO.setResearchType(ProjectResearchType.INNOVATION);
+        projectDTO.setDateFrom(LocalDate.now());
+        projectDTO.setDateTo(LocalDate.now().plusYears(1));
+        projectDTO.setTeam(List.of());
+
+        when(projectRepository.findById(projectId))
+                .thenReturn(Optional.of(existingProject));
+        when(multilingualContentService.getMultilingualContent(anyList()))
+                .thenReturn(Set.of(new MultiLingualContent()));
+        when(researchAreaService.getResearchAreasByIds(anyList()))
+                .thenReturn(List.of());
+        when(organisationUnitProjectContributionService.getOrganisationUnitsByIds(anyList()))
+                .thenReturn(List.of());
+        when(projectIndexRepository.findProjectIndexByDatabaseId(projectId))
+                .thenReturn(Optional.of(projectIndex()));
+
+        // when
+        projectService.updateProject(projectId, projectDTO);
+
+        // then
+        verify(personProjectContributionService, never())
+                .createContribution(any(), any());
+    }
+
+    private ProjectIndex projectIndex() {
+        var idx = new ProjectIndex();
+        idx.setDatabaseId(1);
+        return idx;
+    }
 }

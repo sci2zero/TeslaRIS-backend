@@ -25,6 +25,7 @@ import rs.teslaris.project.repository.project.ProjectDocumentRepository;
 import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
+import rs.teslaris.project.service.interfaces.project.PersonProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 import java.time.LocalDate;
@@ -54,6 +55,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final IndexBulkUpdateService indexBulkUpdateService;
     private final ProjectEventRepository projectEventRepository;
 
+    private final PersonProjectContributionService personProjectContributionService;
+
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
         return projectRepository;
@@ -73,6 +76,7 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     }
 
     @Override
+    @Transactional
     public Project createProject(ProjectDTO projectDTO) {
         var newProject = new Project();
 
@@ -204,6 +208,8 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         } else {
             project.setCosts(null);
         }
+
+        rebuildTeam(project, projectDTO);
     }
 
     private void clearCommonFields(Project project) {
@@ -212,6 +218,16 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
         project.getNameAbbreviation().clear();
         project.getKeywords().clear();
         project.getResearchAreas().clear();
+        project.getTeam().clear();
+    }
+
+    private void rebuildTeam(Project project, ProjectDTO projectDTO) {
+        if (Objects.isNull(project.getTeam())) {
+            project.setTeam(new HashSet<>());
+        }
+        projectDTO.getTeam().forEach(memberDto ->
+                project.getTeam().add(
+                        personProjectContributionService.createContribution(memberDto, project)));
     }
 
     private ProjectIndex indexCommonFields(Project project, ProjectIndex index) {

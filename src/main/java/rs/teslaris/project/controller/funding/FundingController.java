@@ -1,21 +1,31 @@
 package rs.teslaris.project.controller.funding;
 
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import rs.teslaris.core.annotation.Idempotent;
 import rs.teslaris.core.dto.document.DocumentFileDTO;
 import rs.teslaris.core.dto.document.DocumentFileResponseDTO;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.indexmodel.funding.FundingIndex;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/funding")
@@ -39,7 +49,7 @@ public class FundingController {
                                             Integer funderId,
                                             Pageable pageable) {
         return fundingService.searchFunding(tokens, dateFrom, dateTo, projectId,
-                fundingCallId, funderId, pageable);
+            fundingCallId, funderId, pageable);
     }
 
     @GetMapping("/{fundingId}")
@@ -53,7 +63,7 @@ public class FundingController {
     @ResponseStatus(HttpStatus.CREATED)
     @Idempotent
     public FundingDTO createFunding(
-            @RequestBody @Valid FundingDTO fundingDTO) {
+        @RequestBody @Valid FundingDTO fundingDTO) {
         var savedFunding = fundingService.createFunding(fundingDTO);
         fundingDTO.setId(savedFunding.getId());
 
@@ -64,7 +74,7 @@ public class FundingController {
     @PreAuthorize("hasAuthority('EDIT_FUNDING')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateFunding(@PathVariable Integer fundingId,
-                                  @RequestBody @Valid FundingDTO fundingDTO) {
+                              @RequestBody @Valid FundingDTO fundingDTO) {
         fundingService.updateFunding(fundingId, fundingDTO);
     }
 
@@ -88,7 +98,7 @@ public class FundingController {
     @PreAuthorize("hasAuthority('EDIT_FUNDING')")
     @Idempotent
     public DocumentFileResponseDTO updateAgreementDocument(
-            @ModelAttribute @Valid DocumentFileDTO documentFile) {
+        @ModelAttribute @Valid DocumentFileDTO documentFile) {
         return fundingService.updateAgreementDocument(documentFile);
     }
 
@@ -96,7 +106,7 @@ public class FundingController {
     @PreAuthorize("hasAuthority('EDIT_FUNDING')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAgreementDocument(@PathVariable Integer fundingId,
-                                          @PathVariable Integer documentFileId) {
+                                        @PathVariable Integer documentFileId) {
         fundingService.deleteAgreementDocument(documentFileId, fundingId);
     }
 }

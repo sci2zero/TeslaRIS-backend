@@ -1,12 +1,11 @@
 package rs.teslaris.project.converter.funding;
 
+import java.util.Objects;
 import rs.teslaris.core.converter.commontypes.MultilingualContentConverter;
 import rs.teslaris.core.converter.document.DocumentFileConverter;
 import rs.teslaris.core.dto.commontypes.MonetaryAmountDTO;
 import rs.teslaris.project.dto.funding.FundingDTO;
 import rs.teslaris.project.model.funding.Funding;
-
-import java.util.Objects;
 
 public class FundingConverter {
 
@@ -50,17 +49,25 @@ public class FundingConverter {
 
     private static void mapTranslations(Funding funding, FundingDTO dto) {
         dto.setName(MultilingualContentConverter.getMultilingualContentDTO(funding.getName()));
-        dto.setDescription(MultilingualContentConverter.getMultilingualContentDTO(funding.getDescription()));
-        dto.setNameAbbreviation(MultilingualContentConverter.getMultilingualContentDTO(funding.getNameAbbreviation()));
-        dto.setKeywords(MultilingualContentConverter.getMultilingualContentDTO(funding.getKeywords()));
-        dto.setDisplayCall(MultilingualContentConverter.getMultilingualContentDTO(funding.getDisplayCall()));
-        dto.setDisplayProgram(MultilingualContentConverter.getMultilingualContentDTO(funding.getDisplayProgram()));
-        dto.setDisplayFunder(MultilingualContentConverter.getMultilingualContentDTO(funding.getDisplayFunder()));
+        dto.setDescription(
+            MultilingualContentConverter.getMultilingualContentDTO(funding.getDescription()));
+        dto.setNameAbbreviation(
+            MultilingualContentConverter.getMultilingualContentDTO(funding.getNameAbbreviation()));
+        dto.setKeywords(
+            MultilingualContentConverter.getMultilingualContentDTO(funding.getKeywords()));
+        dto.setDisplayCall(
+            MultilingualContentConverter.getMultilingualContentDTO(funding.getDisplayCall()));
+        dto.setDisplayProgram(
+            MultilingualContentConverter.getMultilingualContentDTO(funding.getDisplayProgram()));
+        dto.setDisplayFunder(
+            MultilingualContentConverter.getMultilingualContentDTO(funding.getDisplayFunder()));
     }
 
     private static void mapCollectionsAndAmount(Funding funding, FundingDTO dto) {
-        funding.getAgreements().forEach(f -> dto.getAgreements().add(DocumentFileConverter.toDTO(f)));
-        funding.getFundingParts().forEach(fp -> dto.getFundingParts().add(FundingPartConverter.toDTO(fp)));
+        funding.getAgreements()
+            .forEach(f -> dto.getAgreements().add(DocumentFileConverter.toDTO(f)));
+        funding.getFundingParts()
+            .forEach(fp -> dto.getFundingParts().add(FundingPartConverter.toDTO(fp)));
         funding.getResearchAreas().forEach(ra -> dto.getResearchAreasId().add(ra.getId()));
 
         dto.setAmount(new MonetaryAmountDTO());

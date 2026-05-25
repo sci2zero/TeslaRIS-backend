@@ -39,6 +39,7 @@ import rs.teslaris.project.repository.funding.FundingApplicationRepository;
 import rs.teslaris.project.service.interfaces.funding.FundingApplicationService;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.funding.FundingService;
+import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 @Service
 @RequiredArgsConstructor
@@ -60,6 +61,8 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
     private final DocumentFileService documentFileService;
 
     private final SearchService<FundingApplicationIndex> searchService;
+
+    private final ProjectService projectService;
 
     @Override
     protected JpaRepository<FundingApplication, Integer> getEntityRepository() {
@@ -207,7 +210,11 @@ public class FundingApplicationServiceImpl extends JPAServiceImpl<FundingApplica
         validateDateChain(dto);
         validateSubmissionWithinCall(dto, fundingCall);
 
-        application.setProject(null); // ToDO change when project is finished
+        if (Objects.nonNull(dto.getProjectId())) {
+            application.setProject(projectService.findOne(dto.getProjectId()));
+        } else {
+            application.setProject(null);
+        }
 
         if (Objects.nonNull(dto.getRevisedFundingApplicationId())) {
             application.setRevisedFundingApplication(

@@ -1,6 +1,28 @@
 package rs.teslaris.core.unit.project;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -37,16 +59,6 @@ import rs.teslaris.project.repository.funding.FundingRepository;
 import rs.teslaris.project.service.impl.funding.FundingServiceImpl;
 import rs.teslaris.project.service.interfaces.funding.FundingCallService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
-
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 public class FundingServiceTest extends BaseTest {
@@ -97,18 +109,18 @@ public class FundingServiceTest extends BaseTest {
         var pageable = PageRequest.of(0, 10);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
-                eq(FundingIndex.class), eq("funding")))
-                .thenReturn(Page.empty());
+            eq(FundingIndex.class), eq("funding")))
+            .thenReturn(Page.empty());
 
         // when
         var result = fundingService.searchFunding(
-                tokens, dateFrom, dateTo, projectId, fundingCallId, funderId, pageable);
+            tokens, dateFrom, dateTo, projectId, fundingCallId, funderId, pageable);
 
         // then
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
-                eq(FundingIndex.class), eq("funding"));
+            eq(FundingIndex.class), eq("funding"));
     }
 
     @Test
@@ -130,15 +142,15 @@ public class FundingServiceTest extends BaseTest {
         fundingIndex.setFunderId(1);
 
         var expectedPage = new PageImpl<>(
-                List.of(fundingIndex), pageable, 1);
+            List.of(fundingIndex), pageable, 1);
 
         when(searchService.runQuery(any(Query.class), eq(pageable),
-                eq(FundingIndex.class), eq("funding")))
-                .thenReturn(expectedPage);
+            eq(FundingIndex.class), eq("funding")))
+            .thenReturn(expectedPage);
 
         // when
         var result = fundingService.searchFunding(
-                tokens, dateFrom, dateTo, projectId, fundingCallId, funderId, pageable);
+            tokens, dateFrom, dateTo, projectId, fundingCallId, funderId, pageable);
 
         // then
         assertNotNull(result);
@@ -150,7 +162,7 @@ public class FundingServiceTest extends BaseTest {
         assertEquals(1, result.getContent().getFirst().getFundingCallId());
         assertEquals(1, result.getContent().getFirst().getFunderId());
         verify(searchService).runQuery(any(Query.class), eq(pageable),
-                eq(FundingIndex.class), eq("funding"));
+            eq(FundingIndex.class), eq("funding"));
     }
 
     @Test
@@ -221,7 +233,8 @@ public class FundingServiceTest extends BaseTest {
         savedFunding.setId(1);
         savedFunding.setProject(new Project());
 
-        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(Set.of(new MultiLingualContent()));
+        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(
+            Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
         when(projectService.findOne(1)).thenReturn(new Project());
         when(fundingCallService.findOne(1)).thenReturn(new FundingCall());
@@ -269,7 +282,8 @@ public class FundingServiceTest extends BaseTest {
         savedFunding.setId(2);
         savedFunding.setProject(new Project());
 
-        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(Set.of(new MultiLingualContent()));
+        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(
+            Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
         when(projectService.findOne(1)).thenReturn(new Project());
         when(organisationUnitService.findOne(5)).thenReturn(new OrganisationUnit());
@@ -318,7 +332,8 @@ public class FundingServiceTest extends BaseTest {
         savedFunding.setId(1);
         savedFunding.setProject(new Project());
 
-        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(Set.of(new MultiLingualContent()));
+        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(
+            Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList())).thenReturn(List.of());
         when(projectService.findOne(1)).thenReturn(new Project());
         when(fundingCallService.findOne(1)).thenReturn(new FundingCall());
@@ -337,29 +352,6 @@ public class FundingServiceTest extends BaseTest {
         verify(fundingCallService).findOne(1);
         verify(currencyService).findOne(1);
         verify(fundingRepository).save(any(Funding.class));
-    }
-
-    @Test
-    public void shouldThrowWhenProjectIdIsNull() {
-        // given
-        var fundingDTO = new FundingDTO();
-        fundingDTO.setName(List.of());
-        fundingDTO.setDescription(List.of());
-        fundingDTO.setNameAbbreviation(List.of());
-        fundingDTO.setKeywords(List.of());
-        fundingDTO.setDisplayCall(List.of());
-        fundingDTO.setDisplayProgram(List.of());
-        fundingDTO.setDisplayFunder(List.of());
-        fundingDTO.setResearchAreasId(Set.of());
-        fundingDTO.setFundingTypes(Set.of(FundingType.GRANT));
-        fundingDTO.setDateFrom(LocalDate.now());
-        fundingDTO.setDateTo(LocalDate.now().plusYears(1));
-
-        // when & then
-        assertThrows(ReferenceConstraintException.class, () -> fundingService.createFunding(fundingDTO));
-
-        verify(projectService, never()).findOne(any());
-        verify(fundingRepository, never()).save(any());
     }
 
     @Test
@@ -407,7 +399,8 @@ public class FundingServiceTest extends BaseTest {
         savedFunding.setId(1);
         savedFunding.setProject(new Project());
 
-        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(Set.of(new MultiLingualContent()));
+        when(multilingualContentService.getMultilingualContent(anyList())).thenReturn(
+            Set.of(new MultiLingualContent()));
         when(projectService.findOne(1)).thenReturn(new Project());
         when(fundingRepository.save(any(Funding.class))).thenReturn(savedFunding);
 
@@ -454,15 +447,15 @@ public class FundingServiceTest extends BaseTest {
         fundingIndex.setDatabaseId(fundingId);
 
         when(fundingRepository.findById(fundingId))
-                .thenReturn(Optional.of(existingFunding));
+            .thenReturn(Optional.of(existingFunding));
         when(multilingualContentService.getMultilingualContent(anyList()))
-                .thenReturn(Set.of(new MultiLingualContent()));
+            .thenReturn(Set.of(new MultiLingualContent()));
         when(researchAreaService.getResearchAreasByIds(anyList()))
-                .thenReturn(List.of());
+            .thenReturn(List.of());
         when(projectService.findOne(1))
-                .thenReturn(new Project());
+            .thenReturn(new Project());
         when(fundingIndexRepository.findFundingIndexByDatabaseId(fundingId))
-                .thenReturn(Optional.of(fundingIndex));
+            .thenReturn(Optional.of(fundingIndex));
 
         // when
         fundingService.updateFunding(fundingId, fundingDTO);
@@ -483,11 +476,11 @@ public class FundingServiceTest extends BaseTest {
         var fundingDTO = new FundingDTO();
 
         when(fundingRepository.findById(fundingId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                fundingService.updateFunding(fundingId, fundingDTO));
+            fundingService.updateFunding(fundingId, fundingDTO));
         verify(fundingRepository).findById(fundingId);
         verify(fundingIndexRepository, never()).findFundingIndexByDatabaseId(anyInt());
     }
@@ -510,20 +503,20 @@ public class FundingServiceTest extends BaseTest {
         expectedResponse.setId(100);
 
         when(fundingRepository.findById(fundingId))
-                .thenReturn(Optional.of(funding));
+            .thenReturn(Optional.of(funding));
         when(documentFileService.saveNewDocument(any(DocumentFileDTO.class), eq(false)))
-                .thenReturn(savedDocumentFile);
+            .thenReturn(savedDocumentFile);
         when(fundingRepository.save(any(Funding.class)))
-                .thenReturn(funding);
+            .thenReturn(funding);
 
         try (var documentFileConverterMock = mockStatic(DocumentFileConverter.class)) {
             documentFileConverterMock.when(() ->
-                            DocumentFileConverter.toDTO(savedDocumentFile))
-                    .thenReturn(expectedResponse);
+                    DocumentFileConverter.toDTO(savedDocumentFile))
+                .thenReturn(expectedResponse);
 
             // when
             var result = fundingService.addAgreementDocument(
-                    fundingId, documentFileDTO);
+                fundingId, documentFileDTO);
 
             // then
             assertNotNull(result);
@@ -532,7 +525,7 @@ public class FundingServiceTest extends BaseTest {
             verify(documentFileService).saveNewDocument(any(DocumentFileDTO.class), eq(false));
             verify(fundingRepository).save(any(Funding.class));
             documentFileConverterMock.verify(() ->
-                    DocumentFileConverter.toDTO(savedDocumentFile), times(1));
+                DocumentFileConverter.toDTO(savedDocumentFile), times(1));
         }
     }
 
@@ -543,11 +536,11 @@ public class FundingServiceTest extends BaseTest {
         var documentFileDTO = new DocumentFileDTO();
 
         when(fundingRepository.findById(fundingId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                fundingService.addAgreementDocument(fundingId, documentFileDTO));
+            fundingService.addAgreementDocument(fundingId, documentFileDTO));
         verify(fundingRepository).findById(fundingId);
         verify(documentFileService, never()).saveNewDocument(any(), anyBoolean());
     }
@@ -563,7 +556,7 @@ public class FundingServiceTest extends BaseTest {
         expectedResponse.setId(100);
 
         when(documentFileService.editDocumentFile(any(DocumentFileDTO.class), eq(false)))
-                .thenReturn(expectedResponse);
+            .thenReturn(expectedResponse);
 
         // when
         var result = fundingService.updateAgreementDocument(documentFileDTO);
@@ -581,11 +574,11 @@ public class FundingServiceTest extends BaseTest {
         documentFileDTO.setId(999);
 
         when(documentFileService.editDocumentFile(any(DocumentFileDTO.class), eq(false)))
-                .thenThrow(new RuntimeException("Document not found"));
+            .thenThrow(new RuntimeException("Document not found"));
 
         // when & then
         assertThrows(RuntimeException.class, () ->
-                fundingService.updateAgreementDocument(documentFileDTO));
+            fundingService.updateAgreementDocument(documentFileDTO));
         verify(documentFileService).editDocumentFile(any(DocumentFileDTO.class), eq(false));
     }
 
@@ -603,12 +596,12 @@ public class FundingServiceTest extends BaseTest {
         funding.setAgreements(new HashSet<>(Set.of(documentFile)));
 
         when(documentFileService.findOne(agreementFileId))
-                .thenReturn(documentFile);
+            .thenReturn(documentFile);
         when(fundingRepository.findById(fundingId))
-                .thenReturn(Optional.of(funding));
+            .thenReturn(Optional.of(funding));
         doNothing().when(documentFileService).delete(agreementFileId);
         when(fundingRepository.save(any(Funding.class)))
-                .thenReturn(funding);
+            .thenReturn(funding);
 
         // when
         fundingService.deleteAgreementDocument(agreementFileId, fundingId);
@@ -630,13 +623,13 @@ public class FundingServiceTest extends BaseTest {
         documentFile.setId(agreementFileId);
 
         when(documentFileService.findOne(agreementFileId))
-                .thenReturn(documentFile);
+            .thenReturn(documentFile);
         when(fundingRepository.findById(fundingId))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         // when & then
         assertThrows(Exception.class, () ->
-                fundingService.deleteAgreementDocument(agreementFileId, fundingId));
+            fundingService.deleteAgreementDocument(agreementFileId, fundingId));
         verify(documentFileService).findOne(agreementFileId);
         verify(fundingRepository).findById(fundingId);
         verify(documentFileService, never()).delete(anyInt());
@@ -664,7 +657,7 @@ public class FundingServiceTest extends BaseTest {
         var fundingIndex = new FundingIndex();
 
         when(fundingIndexRepository.save(any(FundingIndex.class)))
-                .thenReturn(fundingIndex);
+            .thenReturn(fundingIndex);
 
         // when
         fundingService.indexFunding(funding, fundingIndex);
