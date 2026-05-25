@@ -14,5 +14,4 @@ public interface ProjectDocumentService extends JPAService<ProjectDocument> {
 
     void deleteProjectDocument(Integer projectDocumentId);
 
-    CompletableFuture<Void> reindexProjectDocuments();
 }

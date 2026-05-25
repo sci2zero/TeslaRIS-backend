@@ -14,5 +14,4 @@ public interface ProjectEventService extends JPAService<ProjectEvent> {
 
     void deleteProjectEvent(Integer projectEventId);
 
-    CompletableFuture<Void> reindexProjectEvents();
 }

@@ -1,7 +1,6 @@
 package rs.teslaris.project.service.impl.project;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +9,6 @@ import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
 import rs.teslaris.core.service.interfaces.commontypes.IndexBulkUpdateService;
 import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
 import rs.teslaris.core.service.interfaces.document.EventService;
-import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.project.dto.funding.FundingPartDTO;
 import rs.teslaris.project.dto.project.ProjectEventDTO;
 import rs.teslaris.project.model.common.MonetaryAmount;
@@ -22,7 +20,6 @@ import rs.teslaris.project.service.interfaces.project.ProjectService;
 
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -67,20 +64,6 @@ public class ProjectEventServiceImpl extends JPAServiceImpl<ProjectEvent>
 
         indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
                 eventId, "project_id", null);
-    }
-
-    @Override
-    public CompletableFuture<Void> reindexProjectEvents() {
-        // TODO: Find a way to make it more optimal
-        FunctionalUtil.processAllPages(
-                100,
-                Sort.by(Sort.Direction.ASC, "id"),
-                this::findAll,
-                projectDocument ->  indexBulkUpdateService.setIdFieldForRecord("events", "databaseId",
-                        projectDocument.getEvent().getId(), "project_id", projectDocument.getProject().getId())
-        );
-
-        return CompletableFuture.completedFuture(null);
     }
 
     private void setCommonFields(ProjectEvent projectEvent, ProjectEventDTO dto) {
