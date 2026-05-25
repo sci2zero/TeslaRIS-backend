@@ -11,10 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.teslaris.core.service.impl.JPAServiceImpl;
-import rs.teslaris.core.service.interfaces.commontypes.CurrencyService;
-import rs.teslaris.core.service.interfaces.commontypes.MultilingualContentService;
-import rs.teslaris.core.service.interfaces.commontypes.ResearchAreaService;
-import rs.teslaris.core.service.interfaces.commontypes.SearchService;
+import rs.teslaris.core.service.interfaces.commontypes.*;
 import rs.teslaris.core.util.exceptionhandling.exception.DateRangeException;
 import rs.teslaris.core.util.functional.FunctionalUtil;
 import rs.teslaris.core.util.search.StringUtil;
@@ -24,6 +21,8 @@ import rs.teslaris.project.indexmodel.project.ProjectIndex;
 import rs.teslaris.project.indexrepository.project.ProjectIndexRepository;
 import rs.teslaris.project.model.common.MonetaryAmount;
 import rs.teslaris.project.model.project.Project;
+import rs.teslaris.project.repository.project.ProjectDocumentRepository;
+import rs.teslaris.project.repository.project.ProjectEventRepository;
 import rs.teslaris.project.repository.project.ProjectRepository;
 import rs.teslaris.project.service.interfaces.project.OrganisationUnitProjectContributionService;
 import rs.teslaris.project.service.interfaces.project.ProjectService;
@@ -51,6 +50,9 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     private final SearchService<ProjectIndex> searchService;
 
     private final OrganisationUnitProjectContributionService organisationUnitProjectContributionService;
+    private final ProjectDocumentRepository projectDocumentRepository;
+    private final IndexBulkUpdateService indexBulkUpdateService;
+    private final ProjectEventRepository projectEventRepository;
 
     @Override
     protected JpaRepository<Project, Integer> getEntityRepository() {
@@ -113,7 +115,11 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
                 100,
                 Sort.by(Sort.Direction.ASC, "id"),
                 this::findAll,
-                project -> indexProject(project, new ProjectIndex())
+                project -> {
+                    indexProject(project, new ProjectIndex());
+                    indexProjectDocuments(project.getId());
+                    indexProjectEvents(project.getId());
+                }
         );
 
         return CompletableFuture.completedFuture(null);
@@ -124,6 +130,32 @@ public class ProjectServiceImpl extends JPAServiceImpl<Project> implements Proje
     public void indexProject(Project project, ProjectIndex index) {
         indexCommonFields(project, index);
         projectIndexRepository.save(index);
+    }
+
+    private void indexProjectDocuments(Integer projectId) {
+        List<Integer> documentIds = projectDocumentRepository.findDocumentIdsByProjectId(projectId);
+        documentIds.forEach(documentId ->
+                indexBulkUpdateService.setIdFieldForRecord(
+                        "document_publication",
+                        "databaseId",
+                        documentId,
+                        "project_id",
+                        projectId
+                )
+        );
+    }
+
+    private void indexProjectEvents(Integer projectId) {
+        List<Integer> eventIds = projectEventRepository.findEventIdsByProjectId(projectId);
+        eventIds.forEach(eventId ->
+                indexBulkUpdateService.setIdFieldForRecord(
+                        "events",
+                        "databaseId",
+                        eventId,
+                        "project_id",
+                        projectId
+                )
+        );
     }
 
     private void setCommonFields(Project project, ProjectDTO projectDTO) {

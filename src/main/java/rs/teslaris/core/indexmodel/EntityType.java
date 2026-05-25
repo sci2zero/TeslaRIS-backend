@@ -23,6 +23,4 @@ public enum EntityType {
     OTHER_EVENT,
     FUNDING_APPLICATION,
     FUNDING,
-    PROJECT_DOCUMENT,
-    PROJECT_EVENT
 }
