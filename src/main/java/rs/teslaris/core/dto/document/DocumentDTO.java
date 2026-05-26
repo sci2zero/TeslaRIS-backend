@@ -76,11 +76,15 @@ public class DocumentDTO {
 
     private List<MultilingualContentDTO> city = new ArrayList<>();
 
+    private List<MultilingualContentDTO> edition = new ArrayList<>();
+
     private Boolean peerReviewed = false;
 
     private Boolean openAccess = false;
 
     private PublicationStatus publicationStatus;
+
+    private Boolean authorReprint;
 
     // Used only for responses
     private List<DocumentFileResponseDTO> fileItems = new ArrayList<>();

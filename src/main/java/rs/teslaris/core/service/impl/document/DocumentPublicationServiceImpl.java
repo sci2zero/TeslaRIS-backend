@@ -1060,6 +1060,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             multilingualContentService.getMultilingualContent(
                 documentDTO.getChronologicalSpaceDescription()));
         document.setCity(multilingualContentService.getMultilingualContent(documentDTO.getCity()));
+        document.setEdition(
+            multilingualContentService.getMultilingualContent(documentDTO.getEdition()));
 
         if (Objects.nonNull(documentDTO.getCountryId())) {
             document.setCountry(countryService.findOne(documentDTO.getCountryId()));
@@ -1069,6 +1071,7 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
 
         document.setPeerReviewed(documentDTO.getPeerReviewed());
         document.setOpenAccess(documentDTO.getOpenAccess());
+        document.setAuthorReprint(documentDTO.getAuthorReprint());
 
         if (!(documentDTO instanceof ThesisDTO)) {
             document.setPublicationStatus(documentDTO.getPublicationStatus());

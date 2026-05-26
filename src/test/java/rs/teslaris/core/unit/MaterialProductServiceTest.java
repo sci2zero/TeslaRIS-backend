@@ -206,7 +206,7 @@ public class MaterialProductServiceTest {
         var result = materialProductService.createMaterialProduct(dto, true);
 
         // Then
-        verify(multilingualContentService, times(9))
+        verify(multilingualContentService, times(10))
             .getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(
             any(), any());

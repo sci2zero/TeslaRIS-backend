@@ -259,6 +259,9 @@ public class MonographPublicationServiceImpl extends DocumentPublicationServiceI
         monographPublication.setDocumentDate(
             Objects.nonNull(monograph.getDocumentDate()) ? monograph.getDocumentDate() :
                 monographPublicationDTO.getDocumentDate());
+
+        monographPublication.setSection(multilingualContentService.getMultilingualContent(
+            monographPublicationDTO.getSection()));
     }
 
     @Override

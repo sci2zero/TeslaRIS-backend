@@ -163,7 +163,7 @@ public class JournalPublicationServiceTest {
         journalPublicationService.createJournalPublication(publicationDTO, true);
 
         // Then
-        verify(multilingualContentService, times(8)).getMultilingualContent(any());
+        verify(multilingualContentService, times(10)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(publicationDTO));
         verify(journalPublicationJPAService).save(eq(document));

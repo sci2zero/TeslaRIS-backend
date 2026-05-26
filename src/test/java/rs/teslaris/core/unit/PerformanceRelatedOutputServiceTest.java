@@ -221,7 +221,7 @@ public class PerformanceRelatedOutputServiceTest {
 
         // Then
         assertNotNull(result);
-        verify(multilingualContentService, times(12)).getMultilingualContent(any());
+        verify(multilingualContentService, times(13)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(any(), eq(dto));
         verify(performanceRelatedOutputJPAService).save(any());
     }

@@ -211,7 +211,7 @@ public class ThesisServiceTest {
         var result = thesisService.createThesis(dto, true);
 
         // Then
-        verify(multilingualContentService, times(14)).getMultilingualContent(any());
+        verify(multilingualContentService, times(15)).getMultilingualContent(any());
         verify(personContributionService).setPersonDocumentContributionsForDocument(eq(document),
             eq(dto));
         verify(thesisJPAService).save(eq(document));

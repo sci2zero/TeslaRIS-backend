@@ -9,4 +9,6 @@ public enum ProceedingsPublicationType implements PublicationType {
     LEXICOGRAPHIC_UNIT,
     POLEMICS,
     SCIENTIFIC_CRITIC,
+    POSTFACE,
+    BOOK_REVIEW
 }

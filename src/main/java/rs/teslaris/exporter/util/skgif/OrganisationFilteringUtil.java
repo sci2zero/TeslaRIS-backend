@@ -9,7 +9,8 @@ import rs.teslaris.core.util.search.StringUtil;
 public class OrganisationFilteringUtil {
 
     public static final List<String> SUPPORTED_FILTERS = Arrays.asList(
-        "identifiers.scheme", "identifiers.value", "name", "short_name", "other_names"
+        "identifiers.scheme", "identifiers.value", "name", "short_name", "other_names",
+        "country", "website"
     );
 
 
@@ -35,7 +36,8 @@ public class OrganisationFilteringUtil {
                     query.addCriteria(Criteria.where("country").is(value));
                     break;
                 case "short_name":
-                    query.addCriteria(Criteria.where("name_abbreviation").is(value));
+                    query.addCriteria(Criteria.where("name_abbreviation")
+                        .elemMatch(Criteria.where("content").is(value)));
                     break;
                 case "name", "other_names":
                     query.addCriteria(

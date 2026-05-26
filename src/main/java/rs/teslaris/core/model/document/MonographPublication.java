@@ -1,15 +1,20 @@
 package rs.teslaris.core.model.document;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
+import rs.teslaris.core.model.commontypes.MultiLingualContent;
 
 @Getter
 @Setter
@@ -36,6 +41,9 @@ public class MonographPublication extends Document implements PrintedPageable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "monograph_id", nullable = false)
     private Monograph monograph;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<MultiLingualContent> section = new HashSet<>();
 
 
     public MonographPublication() {
