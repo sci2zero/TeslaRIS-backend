@@ -74,6 +74,8 @@ public class DocumentPublicationConverter {
                 publication.getChronologicalSpaceDescription()));
         publicationDTO.setCity(
             MultilingualContentConverter.getMultilingualContentDTO(publication.getCity()));
+        publicationDTO.setEdition(
+            MultilingualContentConverter.getMultilingualContentDTO(publication.getEdition()));
 
         if (Objects.nonNull(publication.getCountry())) {
             publicationDTO.setCountryId(publication.getCountry().getId());

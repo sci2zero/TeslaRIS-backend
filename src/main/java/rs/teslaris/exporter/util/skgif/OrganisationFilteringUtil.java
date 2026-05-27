@@ -1,5 +1,6 @@
 package rs.teslaris.exporter.util.skgif;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -15,15 +16,17 @@ public class OrganisationFilteringUtil {
 
 
     public static void addQueryFilters(SKGIFFilterCriteria criteria, Query query) {
+        var criteriaList = new ArrayList<Criteria>();
+
         criteria.getFilters().forEach((key, value) -> {
             switch (key) {
                 case "identifiers.scheme":
                     var fieldName = getIdentifierFieldName(value);
-                    query.addCriteria(Criteria.where(fieldName).exists(true));
+                    criteriaList.add(Criteria.where(fieldName).exists(true));
                     break;
                 case "identifiers.value":
                     value = StringUtil.normalizeIdentifier(value);
-                    query.addCriteria(
+                    criteriaList.add(
                         new Criteria().orOperator(
                             Criteria.where("orcid").is(value),
                             Criteria.where("scopus_afid").is(value),
@@ -33,21 +36,27 @@ public class OrganisationFilteringUtil {
                     );
                     break;
                 case "country":
-                    query.addCriteria(Criteria.where("country").is(value));
+                    criteriaList.add(Criteria.where("country").is(value));
                     break;
                 case "short_name":
-                    query.addCriteria(Criteria.where("name_abbreviation")
+                    criteriaList.add(Criteria.where("name_abbreviation")
                         .elemMatch(Criteria.where("content").is(value)));
                     break;
                 case "name", "other_names":
-                    query.addCriteria(
+                    criteriaList.add(
                         Criteria.where("name").elemMatch(Criteria.where("content").is(value)));
                     break;
                 case "website":
-                    query.addCriteria(Criteria.where("uris").in(value));
+                    criteriaList.add(Criteria.where("uris").in(value));
                     break;
             }
         });
+
+        if (!criteriaList.isEmpty()) {
+            query.addCriteria(
+                new Criteria().andOperator(criteriaList.toArray(new Criteria[0]))
+            );
+        }
     }
 
     private static String getIdentifierFieldName(String skgifFieldName) {
