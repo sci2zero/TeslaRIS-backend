@@ -14,6 +14,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import rs.teslaris.core.model.document.OtherEventType;
 import rs.teslaris.core.util.functional.Triple;
 
 @Getter
@@ -86,6 +87,9 @@ public class EventIndex {
 
     @Field(type = FieldType.Keyword, name = "event_type", store = true)
     private EventType eventType;
+
+    @Field(type = FieldType.Keyword, name = "other_event_type", store = true)
+    private OtherEventType otherEventType;
 
     @Field(type = FieldType.Boolean, name = "is_serial_event", store = true)
     private Boolean serialEvent;

@@ -139,7 +139,7 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
     public Exhibition createExhibition(ExhibitionDTO exhibitionDTO, Boolean index) {
         var exhibition = new Exhibition();
 
-        setEventCommonFields(exhibition, exhibitionDTO);
+        setEventCommonFields(exhibition, EventType.EXHIBITION, exhibitionDTO);
         setExhibitionRelatedFields(exhibition, exhibitionDTO);
 
         var savedExhibition = exhibitionJPAService.save(exhibition);
@@ -157,7 +157,7 @@ public class ExhibitionServiceImpl extends EventServiceImpl implements Exhibitio
         var exhibitionToUpdate = findExhibitionById(exhibitionId);
 
         clearEventCommonFields(exhibitionToUpdate);
-        setEventCommonFields(exhibitionToUpdate, exhibitionDTO);
+        setEventCommonFields(exhibitionToUpdate, EventType.EXHIBITION, exhibitionDTO);
         setExhibitionRelatedFields(exhibitionToUpdate, exhibitionDTO);
 
         exhibitionJPAService.save(exhibitionToUpdate);

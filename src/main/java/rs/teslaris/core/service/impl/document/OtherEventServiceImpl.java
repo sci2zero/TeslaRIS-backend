@@ -108,8 +108,8 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     public OtherEvent createOtherEvent(OtherEventDTO dto, Boolean index) {
         var event = new OtherEvent();
 
-        setEventCommonFields(event, dto);
         event.setType(dto.getType());
+        setEventCommonFields(event, EventType.OTHER_EVENT, dto);
 
         var saved = otherEventJPAService.save(event);
 
@@ -126,8 +126,9 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
         var event = findOtherEventById(id);
 
         clearEventCommonFields(event);
-        setEventCommonFields(event, dto);
         event.setType(dto.getType());
+
+        setEventCommonFields(event, EventType.OTHER_EVENT, dto);
 
         otherEventJPAService.save(event);
 
@@ -173,6 +174,7 @@ public class OtherEventServiceImpl extends EventServiceImpl implements OtherEven
     private void indexOtherEvent(OtherEvent event, EventIndex index) {
         index.setDatabaseId(event.getId());
         index.setEventType(EventType.OTHER_EVENT);
+        index.setOtherEventType(event.getType());
 
         indexEventCommonFields(index, event);
         eventIndexRepository.save(index);

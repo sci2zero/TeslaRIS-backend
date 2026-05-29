@@ -133,11 +133,11 @@ public class EventServiceTest {
 
         // when
         when(countryService.findOne(1)).thenReturn(new Country());
-        eventService.setEventCommonFields(conference, conferenceDTO);
+        eventService.setEventCommonFields(conference, EventType.CONFERENCE, conferenceDTO);
 
         // then
-        verify(personContributionService, times(1)).setPersonEventContributionForEvent(conference,
-            conferenceDTO);
+        verify(personContributionService, times(1))
+            .setPersonEventContributionForEvent(conference, EventType.CONFERENCE, conferenceDTO);
     }
 
     @Test

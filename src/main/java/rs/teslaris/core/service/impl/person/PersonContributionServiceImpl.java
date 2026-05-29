@@ -23,6 +23,7 @@ import rs.teslaris.core.dto.document.DocumentDTO;
 import rs.teslaris.core.dto.document.EventDTO;
 import rs.teslaris.core.dto.document.PersonContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.indexmodel.EventType;
 import rs.teslaris.core.model.commontypes.ApproveStatus;
 import rs.teslaris.core.model.commontypes.MultiLingualContent;
 import rs.teslaris.core.model.commontypes.Notification;
@@ -31,6 +32,9 @@ import rs.teslaris.core.model.document.AffiliationStatement;
 import rs.teslaris.core.model.document.Document;
 import rs.teslaris.core.model.document.DocumentContributionType;
 import rs.teslaris.core.model.document.Event;
+import rs.teslaris.core.model.document.EventContributionType;
+import rs.teslaris.core.model.document.OtherEvent;
+import rs.teslaris.core.model.document.OtherEventType;
 import rs.teslaris.core.model.document.PersonContribution;
 import rs.teslaris.core.model.document.PersonDocumentContribution;
 import rs.teslaris.core.model.document.PersonEventContribution;
@@ -186,12 +190,34 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
 
     @Override
     @Transactional
-    public void setPersonEventContributionForEvent(Event event, EventDTO eventDTO) {
+    public void setPersonEventContributionForEvent(Event event, EventType eventType,
+                                                   EventDTO eventDTO) {
         eventDTO.getContributions().forEach(contributionDTO -> {
             var contribution = new PersonEventContribution();
             setPersonContributionCommonFields(contribution, contributionDTO);
 
             contribution.setContributionType(contributionDTO.getEventContributionType());
+
+            if (eventType.equals(EventType.COURSE) &&
+                contribution.getContributionType().equals(EventContributionType.SPEAKER)) {
+                contribution.setLectureHoursPerWeek(contributionDTO.getLectureHoursPerWeek());
+                contribution.setTutorialHoursPerWeek(contributionDTO.getTutorialHoursPerWeek());
+                contribution.setLabHoursPerWeek(contributionDTO.getLabHoursPerWeek());
+                contribution.setOtherContactHoursPerWeek(
+                    contributionDTO.getOtherContactHoursPerWeek());
+            } else if (eventType.equals(EventType.CONFERENCE) &&
+                contribution.getContributionType().equals(EventContributionType.REVIEWER)) {
+                contribution.setNumberOfReviewsOrAssessment(
+                    contributionDTO.getNumberOfReviewsOrAssessment());
+            } else if (eventType.equals(EventType.OTHER_EVENT) &&
+                ((OtherEvent) event).getType().equals(OtherEventType.TRIAL) &&
+                contribution.getContributionType().equals(EventContributionType.WITNESS)) {
+                contribution.setCaseName(multilingualContentService.getMultilingualContent(
+                    contributionDTO.getCaseName()));
+                contribution.setLocationJurisdiction(
+                    multilingualContentService.getMultilingualContent(
+                        contributionDTO.getLocationJurisdiction()));
+            }
 
             var addedPreviously = event.getContributions().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
