@@ -208,8 +208,9 @@ public class CommissionServiceImpl extends JPAServiceImpl<Commission> implements
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommissionRelationProjection> findRelationsWithTargetIds(Integer commissionId) {
-        return commissionRepository.findRelationsWithTargetIds(commissionId)
+    public List<CommissionRelationProjection> findRelationsWithTargetIds(Integer commissionId,
+                                                                         String researchArea) {
+        return commissionRepository.findRelationsWithTargetIds(commissionId, researchArea)
             .stream()
             .map(row -> CommissionRelationProjection.fromNative(
                 (Integer) row[0],       // relationId

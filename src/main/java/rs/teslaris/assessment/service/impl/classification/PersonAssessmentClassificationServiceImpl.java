@@ -260,9 +260,15 @@ public class PersonAssessmentClassificationServiceImpl
 
         assessmentResult.setPersonPosition(employments.getFirst().getEmploymentPosition());
 
-        processResearcher(personIndex, commission, assessmentMeasures, pointsRuleEngine,
-            scalingRuleEngine, assessmentResult, startYear, endYear, subOUsForTopLevelInstitution,
-            commissionService.findRelationsWithTargetIds(commission.getId()));
+        var researchArea = getResearchArea(personIndex.getDatabaseId(), commission);
+        researchArea.ifPresent(assessmentResearchArea ->
+            processResearcher(personIndex, commission, assessmentMeasures, pointsRuleEngine,
+                scalingRuleEngine, assessmentResult, startYear, endYear,
+                subOUsForTopLevelInstitution,
+                commissionService.findRelationsWithTargetIds(commission.getId(),
+                    assessmentResearchArea.getResearchAreaCode()),
+                assessmentResearchArea)
+        );
 
         responses.add(assessmentResult);
     }
@@ -297,9 +303,14 @@ public class PersonAssessmentClassificationServiceImpl
                 MultilingualContentConverter.getMultilingualContentDTO(
                     commission.getDescription()));
 
-            processResearcher(index.get(), commission, assessmentMeasures,
-                pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
-                endDate.getYear(), Collections.emptyList(), Collections.emptyList());
+            var researchArea = getResearchArea(index.get().getDatabaseId(), commission);
+            researchArea.ifPresent(assessmentResearchArea ->
+                processResearcher(index.get(), commission, assessmentMeasures,
+                    pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
+                    endDate.getYear(), Collections.emptyList(), Collections.emptyList(),
+                    assessmentResearchArea)
+            );
+
             assessmentResponse.add(assessmentResult);
         });
 
@@ -511,32 +522,28 @@ public class PersonAssessmentClassificationServiceImpl
                                    EnrichedResearcherAssessmentResponseDTO assessmentResult,
                                    int startYear, int endYear,
                                    List<Integer> subOUsForTopLevelInstitution,
-                                   List<CommissionRelationProjection> commissionRelationProjections) {
-        var researchArea = getResearchArea(personIndex.getDatabaseId(), commission);
+                                   List<CommissionRelationProjection> commissionRelationProjections,
+                                   AssessmentResearchArea assessmentResearchArea) {
+        if (!commission.getRecognisedResearchAreas()
+            .contains(assessmentResearchArea.getResearchAreaCode())) {
+            return;
+        }
 
-        researchArea.ifPresent(
-            assessmentResearchArea -> {
-                if (!commission.getRecognisedResearchAreas()
-                    .contains(assessmentResearchArea.getResearchAreaCode())) {
-                    return;
-                }
+        assessResearcherPublications(personIndex, commission, assessmentMeasures,
+            pointsRuleEngine, scalingRuleEngine,
+            assessmentResearchArea, startYear, endYear,
+            assessmentResult, subOUsForTopLevelInstitution,
+            commissionRelationProjections);
 
-                assessResearcherPublications(personIndex, commission, assessmentMeasures,
-                    pointsRuleEngine, scalingRuleEngine,
-                    assessmentResearchArea, startYear, endYear,
-                    assessmentResult, subOUsForTopLevelInstitution,
-                    commissionRelationProjections);
+        if (!CollectionOperations.containsValues(subOUsForTopLevelInstitution)) {
+            assessResearcherPrizes(personIndex, commission, assessmentMeasures,
+                pointsRuleEngine, scalingRuleEngine, assessmentResearchArea,
+                startYear, endYear, assessmentResult);
 
-                if (!CollectionOperations.containsValues(subOUsForTopLevelInstitution)) {
-                    assessResearcherPrizes(personIndex, commission, assessmentMeasures,
-                        pointsRuleEngine, scalingRuleEngine, assessmentResearchArea,
-                        startYear, endYear, assessmentResult);
-
-                    assessResearcherEventContributions(personIndex, commission, assessmentMeasures,
-                        pointsRuleEngine, scalingRuleEngine, assessmentResearchArea,
-                        startYear, endYear, assessmentResult);
-                }
-            });
+            assessResearcherEventContributions(personIndex, commission, assessmentMeasures,
+                pointsRuleEngine, scalingRuleEngine, assessmentResearchArea,
+                startYear, endYear, assessmentResult);
+        }
     }
 
     private Optional<AssessmentResearchArea> getResearchArea(Integer personId,

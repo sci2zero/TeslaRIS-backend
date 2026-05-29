@@ -74,7 +74,7 @@ public class ClassificationPriorityMapping {
         List<Pair<AssessmentClassification, Set<MultiLingualContent>>> classifications,
         ResultCalculationMethod resultCalculationMethod) {
         return switch (resultCalculationMethod) {
-            case BEST_VALUE -> classifications.stream()
+            case BEST_VALUE, BEST_VALUE_BY_RESEARCH_AREA -> classifications.stream()
                 .min(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
                         assessmentClassification.a.getCode(), Integer.MAX_VALUE)));
@@ -89,7 +89,7 @@ public class ClassificationPriorityMapping {
         Set<Triple<Integer, String, Boolean>> classifications,
         ResultCalculationMethod resultCalculationMethod) {
         return switch (resultCalculationMethod) {
-            case BEST_VALUE -> classifications.stream()
+            case BEST_VALUE, BEST_VALUE_BY_RESEARCH_AREA -> classifications.stream()
                 .min(Comparator.comparingInt(
                     assessmentClassification -> assessmentConfig.classificationPriorities.getOrDefault(
                         assessmentClassification.b, Integer.MAX_VALUE)));
