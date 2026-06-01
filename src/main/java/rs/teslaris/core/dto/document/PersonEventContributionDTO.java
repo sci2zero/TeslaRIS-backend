@@ -32,4 +32,6 @@ public class PersonEventContributionDTO extends PersonContributionDTO {
     private List<MultilingualContentDTO> caseName = new ArrayList<>();
 
     private List<MultilingualContentDTO> locationJurisdiction = new ArrayList<>();
+
+    private Boolean mainArguer;
 }

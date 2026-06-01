@@ -68,6 +68,17 @@ public class PersonContributionConverter {
                 setCommonFields(contribution, c);
 
                 contribution.setEventContributionType(c.getContributionType());
+                contribution.setLectureHoursPerWeek(c.getLectureHoursPerWeek());
+                contribution.setTutorialHoursPerWeek(c.getTutorialHoursPerWeek());
+                contribution.setLabHoursPerWeek(c.getLabHoursPerWeek());
+                contribution.setOtherContactHoursPerWeek(c.getOtherContactHoursPerWeek());
+                contribution.setNumberOfReviewsOrAssessment(c.getNumberOfReviewsOrAssessment());
+                contribution.setCaseName(
+                    MultilingualContentConverter.getMultilingualContentDTO(c.getCaseName()));
+                contribution.setLocationJurisdiction(
+                    MultilingualContentConverter.getMultilingualContentDTO(
+                        c.getLocationJurisdiction()));
+                contribution.setMainArguer(c.getMainArguer());
 
                 contributionDTOs.add(contribution);
             });

@@ -18,9 +18,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import rs.teslaris.core.dto.commontypes.MultilingualContentDTO;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.dto.document.PersonPublicationSeriesContributionDTO;
 import rs.teslaris.core.dto.document.PublicationSeriesDTO;
 import rs.teslaris.core.dto.person.PersonNameDTO;
+import rs.teslaris.core.model.document.ArticleCollectionSeriesType;
 import rs.teslaris.core.model.document.PublicationSeriesContributionType;
 import rs.teslaris.core.model.person.PersonNameType;
 import rs.teslaris.core.util.signposting.LinksetFormat;
@@ -35,11 +37,12 @@ public class JournalControllerTest extends BaseTest {
     private PublicationSeriesDTO getTestPayload() {
         var dummyMC = List.of(new MultilingualContentDTO(1, "EN", "Content", 1));
 
-        var journalDTO = new PublicationSeriesDTO();
+        var journalDTO = new JournalDTO();
         journalDTO.setTitle(dummyMC);
         journalDTO.setNameAbbreviation(dummyMC);
         journalDTO.setEissn("1234-5678");
         journalDTO.setPrintISSN("1234-5678");
+        journalDTO.setType(ArticleCollectionSeriesType.JOURNAL);
 
         var contribution =
             new PersonPublicationSeriesContributionDTO(

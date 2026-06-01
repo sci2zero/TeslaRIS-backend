@@ -33,12 +33,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import rs.teslaris.core.dto.document.JournalBasicAdditionDTO;
-import rs.teslaris.core.dto.document.PublicationSeriesDTO;
+import rs.teslaris.core.dto.document.JournalDTO;
 import rs.teslaris.core.indexmodel.DocumentPublicationType;
 import rs.teslaris.core.indexmodel.JournalIndex;
 import rs.teslaris.core.indexrepository.DocumentPublicationIndexRepository;
 import rs.teslaris.core.indexrepository.JournalIndexRepository;
 import rs.teslaris.core.model.commontypes.Language;
+import rs.teslaris.core.model.document.ArticleCollectionSeriesType;
 import rs.teslaris.core.model.document.Journal;
 import rs.teslaris.core.repository.document.JournalRepository;
 import rs.teslaris.core.repository.document.PublicationSeriesRepository;
@@ -113,13 +114,14 @@ public class JournalServiceTest {
     @Test
     public void shouldCreateJournalWhenProvidedWithValidData() {
         // given
-        var journalDTO = new PublicationSeriesDTO();
+        var journalDTO = new JournalDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
         journalDTO.setEissn("8765-4322");
         journalDTO.setPrintISSN("8765-4322");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageIds(new HashSet<>());
+        journalDTO.setType(ArticleCollectionSeriesType.JOURNAL);
 
         when(journalJPAService.save(any())).thenReturn(new Journal());
 
@@ -156,13 +158,14 @@ public class JournalServiceTest {
     public void shouldUpdateJournalWhenProvidedWithValidData() {
         // given
         var journalId = 1;
-        var journalDTO = new PublicationSeriesDTO();
+        var journalDTO = new JournalDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
         journalDTO.setEissn("1234-5678");
         journalDTO.setPrintISSN("1234-5678");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageIds(new HashSet<>());
+        journalDTO.setType(ArticleCollectionSeriesType.NEWSLETTER);
 
         var journal = new Journal();
         var journalIndex = new JournalIndex();
@@ -184,13 +187,14 @@ public class JournalServiceTest {
     public void shouldUpdateJournalWhenProvidedWithValidDataNonIndexed() {
         // given
         var journalId = 1;
-        var journalDTO = new PublicationSeriesDTO();
+        var journalDTO = new JournalDTO();
         journalDTO.setTitle(new ArrayList<>());
         journalDTO.setNameAbbreviation(new ArrayList<>());
         journalDTO.setEissn("8765-4321");
         journalDTO.setPrintISSN("8765-4321");
         journalDTO.setContributions(new ArrayList<>());
         journalDTO.setLanguageIds(new HashSet<>());
+        journalDTO.setType(ArticleCollectionSeriesType.MAGAZINE);
 
         var journal = new Journal();
 

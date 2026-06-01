@@ -7,13 +7,12 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
+import rs.teslaris.core.indexmodel.EventType;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "conferences", indexes = {
@@ -33,4 +32,8 @@ public class Conference extends Event {
 
     @Column(name = "open_alex_id")
     private String openAlexId;
+
+    public Conference() {
+        this.setEventType(EventType.CONFERENCE);
+    }
 }

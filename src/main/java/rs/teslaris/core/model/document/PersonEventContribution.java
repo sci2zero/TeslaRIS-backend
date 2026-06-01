@@ -52,4 +52,7 @@ public class PersonEventContribution extends PersonContribution {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<MultiLingualContent> locationJurisdiction = new HashSet<>();
+
+    @Column(name = "main_arguer")
+    private Boolean mainArguer = false;
 }

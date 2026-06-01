@@ -48,7 +48,7 @@ public class ConferenceControllerTest extends BaseTest {
             new PersonEventContributionDTO(EventContributionType.ORGANIZATION_BOARD_CHAIR,
                 null, null, null,
                 null, null, null,
-                new ArrayList<>(), new ArrayList<>()
+                new ArrayList<>(), new ArrayList<>(), false
             );
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);

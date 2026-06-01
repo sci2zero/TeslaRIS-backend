@@ -219,6 +219,12 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
                         contributionDTO.getLocationJurisdiction()));
             }
 
+            if (contribution.getContributionType().equals(EventContributionType.ARGUER)) {
+                contribution.setMainArguer(contributionDTO.getMainArguer());
+            } else {
+                contribution.setMainArguer(false);
+            }
+
             var addedPreviously = event.getContributions().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
 
