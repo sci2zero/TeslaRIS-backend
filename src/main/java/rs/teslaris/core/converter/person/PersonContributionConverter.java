@@ -53,6 +53,7 @@ public class PersonContributionConverter {
                 contribution.setContributionType(c.getContributionType());
                 contribution.setDateFrom(c.getDateFrom());
                 contribution.setDateTo(c.getDateTo());
+                contribution.setIsMainContributor(c.getIsMainContributor());
 
                 contributionDTOs.add(contribution);
             });

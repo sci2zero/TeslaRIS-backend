@@ -47,7 +47,7 @@ public class JournalControllerTest extends BaseTest {
         var contribution =
             new PersonPublicationSeriesContributionDTO(
                 PublicationSeriesContributionType.SCIENTIFIC_BOARD_MEMBER,
-                LocalDate.now(), LocalDate.now());
+                LocalDate.now(), LocalDate.now(), true);
         contribution.setOrderNumber(1);
         contribution.setPersonId(1);
         contribution.setContributionDescription(dummyMC);

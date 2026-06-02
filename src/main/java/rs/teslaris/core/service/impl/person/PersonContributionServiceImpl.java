@@ -155,6 +155,8 @@ public class PersonContributionServiceImpl extends JPAServiceImpl<PersonContribu
             contribution.setContributionType(contributionDTO.getContributionType());
             contribution.setDateFrom(contributionDTO.getDateFrom());
             contribution.setDateTo(contributionDTO.getDateTo());
+            contribution.setIsMainContributor(
+                Objects.requireNonNullElse(contributionDTO.getIsMainContributor(), false));
 
             var addedPreviously = publicationSeries.getContributions().stream().anyMatch(
                 previousContribution -> compareContributions(previousContribution, contribution));
