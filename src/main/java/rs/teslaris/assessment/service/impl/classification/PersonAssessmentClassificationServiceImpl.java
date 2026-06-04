@@ -174,7 +174,8 @@ public class PersonAssessmentClassificationServiceImpl
                                                                            List<Integer> researcherIds,
                                                                            Integer startYear,
                                                                            Integer endYear,
-                                                                           Integer topLevelInstitutionId) {
+                                                                           Integer topLevelInstitutionId,
+                                                                           boolean processUnclassifiedPublications) {
         var commission = commissionService.findOneWithFetchedRelations(commissionId);
         var commissionOuOpt = userRepository.findOUForCommission(commissionId);
         if (commissionOuOpt.isEmpty()) {
@@ -223,7 +224,7 @@ public class PersonAssessmentClassificationServiceImpl
             chunk.forEach(personIndex -> processPerson(
                 personIndex, commission, organisationUnit, assessmentMeasures, pointsRuleEngine,
                 scalingRuleEngine, responses, startYear, endYear, subOUs,
-                subOUsForTopLevelInstitution
+                subOUsForTopLevelInstitution, processUnclassifiedPublications
             ));
         }
 
@@ -238,7 +239,8 @@ public class PersonAssessmentClassificationServiceImpl
                                AssessmentPointsScalingRuleEngine scalingRuleEngine,
                                List<EnrichedResearcherAssessmentResponseDTO> responses,
                                Integer startYear, Integer endYear, List<Integer> subOUs,
-                               List<Integer> subOUsForTopLevelInstitution) {
+                               List<Integer> subOUsForTopLevelInstitution,
+                               boolean processUnclassifiedPublications) {
         var assessmentResult = new EnrichedResearcherAssessmentResponseDTO();
         assessmentResult.setCommissionId(commission.getId());
         assessmentResult.setCommissionDescription(
@@ -267,7 +269,7 @@ public class PersonAssessmentClassificationServiceImpl
                 subOUsForTopLevelInstitution,
                 commissionService.findRelationsWithTargetIds(commission.getId(),
                     assessmentResearchArea.getResearchAreaCode()),
-                assessmentResearchArea)
+                assessmentResearchArea, processUnclassifiedPublications)
         );
 
         responses.add(assessmentResult);
@@ -308,7 +310,7 @@ public class PersonAssessmentClassificationServiceImpl
                 processResearcher(index.get(), commission, assessmentMeasures,
                     pointsRuleEngine, scalingRuleEngine, assessmentResult, startDate.getYear(),
                     endDate.getYear(), Collections.emptyList(), Collections.emptyList(),
-                    assessmentResearchArea)
+                    assessmentResearchArea, false)
             );
 
             assessmentResponse.add(assessmentResult);
@@ -523,7 +525,8 @@ public class PersonAssessmentClassificationServiceImpl
                                    int startYear, int endYear,
                                    List<Integer> subOUsForTopLevelInstitution,
                                    List<CommissionRelationProjection> commissionRelationProjections,
-                                   AssessmentResearchArea assessmentResearchArea) {
+                                   AssessmentResearchArea assessmentResearchArea,
+                                   boolean processUnclassifiedPublications) {
         if (!commission.getRecognisedResearchAreas()
             .contains(assessmentResearchArea.getResearchAreaCode())) {
             return;
@@ -533,7 +536,7 @@ public class PersonAssessmentClassificationServiceImpl
             pointsRuleEngine, scalingRuleEngine,
             assessmentResearchArea, startYear, endYear,
             assessmentResult, subOUsForTopLevelInstitution,
-            commissionRelationProjections);
+            commissionRelationProjections, processUnclassifiedPublications);
 
         if (!CollectionOperations.containsValues(subOUsForTopLevelInstitution)) {
             assessResearcherPrizes(personIndex, commission, assessmentMeasures,
@@ -563,7 +566,8 @@ public class PersonAssessmentClassificationServiceImpl
         int startYear, int endYear,
         EnrichedResearcherAssessmentResponseDTO assessmentResult,
         List<Integer> subOUsForTopLevelInstitution,
-        List<CommissionRelationProjection> commissionRelationProjections) {
+        List<CommissionRelationProjection> commissionRelationProjections,
+        boolean processUnclassifiedPublications) {
 
         var isUserLoggedIn = SessionUtil.isUserLoggedIn();
         List<Integer> publicationIdsBatch = new ArrayList<>();
@@ -573,7 +577,8 @@ public class PersonAssessmentClassificationServiceImpl
 
         while (hasNextPage) {
             List<DocumentPublicationIndex> publications =
-                fetchPublications(personIndex, pageNumber, CHUNK_SIZE, startYear, endYear);
+                fetchPublications(personIndex, pageNumber, CHUNK_SIZE, startYear, endYear,
+                    processUnclassifiedPublications);
 
             publications.forEach(pub ->
                 publicationIdsBatch.add(pub.getDatabaseId())
@@ -592,7 +597,7 @@ public class PersonAssessmentClassificationServiceImpl
                     subOUsForTopLevelInstitution,
                     indicatorsByDocumentId.getOrDefault(publication.getDatabaseId(),
                         Collections.emptyList()), isUserLoggedIn,
-                    commissionRelationProjections));
+                    commissionRelationProjections, processUnclassifiedPublications));
 
             pageNumber++;
             hasNextPage = publications.size() == CHUNK_SIZE;
@@ -664,8 +669,17 @@ public class PersonAssessmentClassificationServiceImpl
 
     private List<DocumentPublicationIndex> fetchPublications(PersonIndex personIndex,
                                                              int pageNumber, int chunkSize,
-                                                             int startYear, int endYear) {
-        return documentPublicationIndexRepository.findByAuthorIdsAndYearBetween(
+                                                             int startYear, int endYear,
+                                                             boolean processUnclassifiedPublications) {
+        if (processUnclassifiedPublications) {
+            return documentPublicationIndexRepository.findAllByAuthorIdsAndYearBetween(
+                    personIndex.getDatabaseId(),
+                    startYear, endYear,
+                    PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
+                .getContent();
+        }
+
+        return documentPublicationIndexRepository.findAssessedByAuthorIdsAndYearBetween(
                 personIndex.getDatabaseId(),
                 startYear, endYear,
                 PageRequest.of(pageNumber, chunkSize, Sort.by(Sort.Direction.ASC, "databaseId")))
@@ -703,7 +717,8 @@ public class PersonAssessmentClassificationServiceImpl
         List<Integer> subOUsForTopLevelInstitution,
         List<DocumentIndicator> indicators,
         boolean isUserLoggedIn,
-        List<CommissionRelationProjection> commissionRelationProjections) {
+        List<CommissionRelationProjection> commissionRelationProjections,
+        boolean processUnclassifiedPublications) {
 
         var assessments = publication.getCommissionAssessments().stream()
             .filter(ca -> ca.a.equals(commission.getId()))
@@ -734,7 +749,15 @@ public class PersonAssessmentClassificationServiceImpl
                     .findFirst();
         }
 
-        if (assessment.isEmpty()) {
+        if (assessment.isEmpty() && processUnclassifiedPublications) {
+            assessmentResult.getPublicationsPerCategory()
+                .computeIfAbsent(ClassificationPriorityMapping.getCodeForUnclassifiedPublications(),
+                    k -> new ArrayList<>())
+                .add(new Triple<>(
+                    citationService.craftCitationInGivenStyle("apa", publication,
+                        LanguageAbbreviations.ENGLISH),
+                    0.0,
+                    publication.getDatabaseId()));
             return;
         }
 

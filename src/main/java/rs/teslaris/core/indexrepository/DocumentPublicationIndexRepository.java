@@ -59,9 +59,25 @@ public interface DocumentPublicationIndexRepository extends
             }
         }
         """)
-    Page<DocumentPublicationIndex> findByAuthorIdsAndYearBetween(Integer authorId,
-                                                                 Integer startYear, Integer endYear,
-                                                                 Pageable pageable);
+    Page<DocumentPublicationIndex> findAssessedByAuthorIdsAndYearBetween(Integer authorId,
+                                                                         Integer startYear,
+                                                                         Integer endYear,
+                                                                         Pageable pageable);
+
+    @Query("""
+        {
+            "bool": {
+                "must": [
+                    {"term": {"author_ids": ?0}},
+                    {"range": {"year": {"gte": ?1, "lte": ?2}}}
+                ]
+            }
+        }
+        """)
+    Page<DocumentPublicationIndex> findAllByAuthorIdsAndYearBetween(Integer authorId,
+                                                                    Integer startYear,
+                                                                    Integer endYear,
+                                                                    Pageable pageable);
 
     @Query("""
         {

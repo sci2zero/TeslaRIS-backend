@@ -116,6 +116,12 @@ public class DocumentPublicationIndex implements ExternallyEnrichable {
     @Field(type = FieldType.Integer, name = "owner_ids", store = true)
     private List<Integer> ownerIds = new ArrayList<>();
 
+    @Field(type = FieldType.Integer, name = "associated_editor_ids", store = true)
+    private List<Integer> associatedEditorIds = new ArrayList<>();
+
+    @Field(type = FieldType.Integer, name = "invited_editor_ids", store = true)
+    private List<Integer> invitedEditorIds = new ArrayList<>();
+
     @Field(type = FieldType.Integer, name = "year", store = true)
     private Integer year;
 

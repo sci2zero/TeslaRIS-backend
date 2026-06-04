@@ -602,6 +602,8 @@ public class PersonVisualizationDataServiceImpl implements PersonVisualizationDa
             case ASSISTANT_STAFF -> "assistant_staff_ids";
             case ARGUER -> "arguer_ids";
             case OWNER -> "owner_ids";
+            case ASSOCIATED_EDITOR -> "associated_editor_ids";
+            case INVITED_EDITOR -> "invited_editor_ids";
         };
     }
 }

@@ -625,7 +625,9 @@ public class AssessmentReportGenerator {
                         }
 
                         var institutionIds =
-                            assessmentResponse.getPublicationToInstitution().get(publication.c);
+                            assessmentResponse.getPublicationToInstitution()
+                                .getOrDefault(publication.c, List.of(
+                                    publication.c)); // in case institution is already a top-level
                         var color = TableRowColors.RED;
                         if (institutionIds.isEmpty()) {
                             color = TableRowColors.YELLOW;

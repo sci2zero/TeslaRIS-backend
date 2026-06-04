@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -51,7 +52,8 @@ public class ReportingController {
         @RequestParam(value = "timestamp", required = false) LocalDateTime timestamp,
         @RequestParam("type") ReportType reportType,
         @RequestParam("commissionId") List<Integer> commissionIds,
-        @RequestParam("year") Integer year,
+        @RequestParam(value = "startYear", required = false) Integer startYear,
+        @RequestParam("year") Integer endYear,
         @RequestParam("lang") String lang,
         @RequestParam(value = "topLevelInstitutionId", required = false)
         Integer topLevelInstitutionId,
@@ -60,8 +62,14 @@ public class ReportingController {
         if (commissionIds.isEmpty()) {
             return;
         }
-        reportingService.scheduleReportGeneration(timestamp, reportType, year, commissionIds, lang,
-            topLevelInstitutionId, tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
+
+        if (Objects.isNull(startYear)) {
+            startYear = endYear;
+        }
+
+        reportingService.scheduleReportGeneration(timestamp, reportType, startYear, endYear,
+            commissionIds, lang, topLevelInstitutionId,
+            tokenUtil.extractUserIdFromToken(bearerToken), recurrence);
     }
 
     @GetMapping("/{commissionId}")

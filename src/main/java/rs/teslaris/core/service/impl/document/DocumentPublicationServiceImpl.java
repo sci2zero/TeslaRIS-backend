@@ -266,6 +266,8 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
             case ASSISTANT_STAFF -> "assistant_staff_ids";
             case ARGUER -> "arguer_ids";
             case OWNER -> "owner_ids";
+            case ASSOCIATED_EDITOR -> "associated_editor_ids";
+            case INVITED_EDITOR -> "invited_editor_ids";
         };
     }
 
@@ -711,6 +713,14 @@ public class DocumentPublicationServiceImpl extends JPAServiceImpl<Document>
                 handleAuthorContribution(contribution, index, contributorName, personExists);
             case EDITOR -> handleGenericContribution(contribution, index::getEditorIds,
                 index::setEditorNames, contributorName, personExists);
+            case ASSOCIATED_EDITOR ->
+                handleGenericContribution(contribution, index::getAssociatedEditorIds,
+                    (ignored) -> {
+                    }, contributorName, personExists);
+            case INVITED_EDITOR ->
+                handleGenericContribution(contribution, index::getInvitedEditorIds,
+                    (ignored) -> {
+                    }, contributorName, personExists);
             case ADVISOR -> handleGenericContribution(contribution, index::getAdvisorIds,
                 index::setAdvisorNames, contributorName, personExists);
             case REVIEWER -> handleGenericContribution(contribution, index::getReviewerIds,
